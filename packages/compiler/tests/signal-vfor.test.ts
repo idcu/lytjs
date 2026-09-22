@@ -148,11 +148,50 @@ describe('Signal 模式 - 子组件（两版 codegen 均已支持挂载）', () 
     expect(on).toContain('V("span",{"onClick":_c.fn}');
   });
 
-  it('插槽内含 v-if 的元素应整体跳过（不静默错渲）', () => {
+  it('插槽内 v-if 应编译为条件 vnode', () => {
     const code = compile('<div><Child><span v-if="ok">x</span></Child></div>', {
       rendererMode: 'signal',
     }).code;
+    expect(code).toContain('(_c.ok?V("span",null,[V(T,null,"x")]):null)');
+  });
+
+  it('插槽内 v-else 应整体跳过（严格模式，不静默错渲）', () => {
+    const code = compile(
+      '<div><Child><span v-if="ok">a</span><span v-else>b</span></Child></div>',
+      {
+        rendererMode: 'signal',
+      },
+    ).code;
     expect(code).not.toContain('default:');
+  });
+
+  it('插槽内 v-if 内容含 v-for 时整体跳过', () => {
+    const code = compile(
+      '<div><Child><span v-if="ok"><i v-for="x in xs">y</i></span></Child></div>',
+      {
+        rendererMode: 'signal',
+      },
+    ).code;
+    expect(code).not.toContain('default:');
+  });
+
+  it('插槽内 v-if 空内容应生成 null children', () => {
+    const code = compile('<div><Child><span v-if="ok"></span></Child></div>', {
+      rendererMode: 'signal',
+    }).code;
+    expect(code).toContain('(_c.ok?V("span",null,null):null)');
+  });
+
+  it('插槽内 v-for / v-show 元素应整体跳过', () => {
+    const forCode = compile('<div><Child><i v-for="x in xs">y</i></Child></div>', {
+      rendererMode: 'signal',
+    }).code;
+    expect(forCode).not.toContain('default:');
+
+    const showCode = compile('<div><Child><i v-show="s">y</i></Child></div>', {
+      rendererMode: 'signal',
+    }).code;
+    expect(showCode).not.toContain('default:');
   });
 
   it('VNode 模式组件标签应前缀化', () => {

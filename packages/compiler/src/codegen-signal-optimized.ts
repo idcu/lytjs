@@ -1,6 +1,10 @@
 // src/codegen-signal-optimized.ts
 // Signal 模式代码生成器 - 优化版本
 // 目标：生成代码体积减少 30%+
+//
+// 注：插槽相关的 vnode 序列化辅助函数（serializeVNodeCall* / serializeConditionalVNode*）
+// 带 `export` 仅为便于单测其**严格模式边界**（正常模板无法触达的防御分支），
+// 它们不经过 index.ts / signal.ts 转出，不属于公开 API。
 
 import { NodeTypes, ElementTypes } from './constants';
 import { getMemoMeta } from './transforms/v-memo';
@@ -1392,6 +1396,132 @@ function buildComponentPropsObject(node: ElementNode): string {
 }
 
 /**
+ * `JS_CONDITIONAL_EXPRESSION`（v-if 产物）→ `(cond ? vnode : null)`（优化版）
+ *
+ * v-else / v-else-if（alternate 非空）与无法完整还原的情况一律返回 null。
+ */
+export function serializeConditionalVNodeOptimized(
+  node: unknown,
+  usedRuntime: Set<string>,
+  options: SignalCodegenOptions,
+): string | null {
+  const cond = node as { test?: unknown; consequent?: unknown; alternate?: unknown };
+  if (!cond || !cond.test) return null;
+  if (cond.alternate) return null;
+
+  const testExp = getExpContent(cond.test as SimpleExpressionNode);
+  if (!testExp) return null;
+
+  const inner = serializeVNodeCallOptimized(cond.consequent, usedRuntime, options);
+  if (!inner) return null;
+
+  const expr = prefixIdentifiers(testExp, new Set()).replace(/\b_ctx\./g, '_c.');
+  return `(${expr}?${inner}:null)`;
+}
+
+/** `VNODE_CALL` → `${cv}(tag, props, children)`（优化版；严格模式，失败即 null） */
+export function serializeVNodeCallOptimized(
+  vnode: unknown,
+  usedRuntime: Set<string>,
+  options: SignalCodegenOptions,
+): string | null {
+  const vn = vnode as { type?: number; tag?: unknown; props?: unknown; children?: unknown };
+  if (!vn || vn.type !== NodeTypes.VNODE_CALL) return null;
+  if (typeof vn.tag !== 'string' || !vn.tag) return null;
+
+  const cv = getShortName('createVNode', options.useShortNames ?? true);
+  usedRuntime.add('createVNode');
+
+  let propsCode = 'null';
+  if (vn.props !== undefined && vn.props !== null) {
+    const obj = vn.props as { type?: number; properties?: unknown[] };
+    if (obj.type !== NodeTypes.JS_OBJECT_EXPRESSION || !Array.isArray(obj.properties)) return null;
+    const parts: string[] = [];
+    for (const raw of obj.properties) {
+      const prop = raw as {
+        type?: number;
+        key?: { content?: unknown };
+        value?: { content?: unknown };
+      };
+      if (!prop || prop.type !== NodeTypes.JS_PROPERTY) return null;
+      const keyCode = prop.key && typeof prop.key.content === 'string' ? prop.key.content : null;
+      const valCode =
+        prop.value && typeof prop.value.content === 'string' ? prop.value.content : null;
+      if (keyCode === null || valCode === null) return null;
+      const expr = prefixIdentifiers(valCode, new Set()).replace(/\b_ctx\./g, '_c.');
+      parts.push(`${keyCode}:${expr}`);
+    }
+    propsCode = `{${parts.join(',')}}`;
+  }
+
+  const childrenCode = serializeVNodeCallChildrenOptimized(vn.children, usedRuntime, options);
+  if (childrenCode === null) return null;
+
+  return `${cv}(${vn.tag},${propsCode},${childrenCode})`;
+}
+
+/** `VNODE_CALL.children` → 数组代码（优化版）；无法完整识别返回 null */
+export function serializeVNodeCallChildrenOptimized(
+  children: unknown,
+  usedRuntime: Set<string>,
+  options: SignalCodegenOptions,
+): string | null {
+  if (children === undefined || children === null) return 'null';
+
+  if (typeof children === 'string') {
+    if (!children.trim()) return 'null';
+    usedRuntime.add('createVNode');
+    usedRuntime.add('Text');
+    const cv = getShortName('createVNode', options.useShortNames ?? true);
+    const tx = getShortName('Text', options.useShortNames ?? true);
+    return `[${cv}(${tx},null,${JSON.stringify(children)})]`;
+  }
+
+  if (Array.isArray(children)) {
+    const parts: string[] = [];
+    for (const ch of children) {
+      const code = serializeVNodeCallChildOptimized(ch, usedRuntime, options);
+      if (code === null) return null;
+      parts.push(code);
+    }
+    return parts.length ? `[${parts.join(',')}]` : 'null';
+  }
+
+  const one = serializeVNodeCallChildOptimized(children, usedRuntime, options);
+  return one === null ? null : `[${one}]`;
+}
+
+/** 单个 child → vnode 代码（优化版）；无法识别返回 null */
+export function serializeVNodeCallChildOptimized(
+  child: unknown,
+  usedRuntime: Set<string>,
+  options: SignalCodegenOptions,
+): string | null {
+  if (!child || typeof child !== 'object') return null;
+  const node = child as { type?: number };
+
+  if (node.type === NodeTypes.JS_CALL_EXPRESSION) {
+    const call = child as { callee?: unknown; arguments?: unknown[] };
+    if (call.callee !== 'TO_DISPLAY_STRING') return null;
+    const arg = (call.arguments && call.arguments[0]) as SimpleExpressionNode | undefined;
+    const exp = arg && typeof arg.content === 'string' ? arg.content : null;
+    if (!exp) return null;
+    usedRuntime.add('createVNode');
+    usedRuntime.add('Text');
+    const cv = getShortName('createVNode', options.useShortNames ?? true);
+    const tx = getShortName('Text', options.useShortNames ?? true);
+    const expr = prefixIdentifiers(exp, new Set()).replace(/\b_ctx\./g, '_c.');
+    return `${cv}(${tx},null,${expr})`;
+  }
+
+  if (node.type === NodeTypes.ELEMENT) {
+    return serializeVNodeElementOptimized(child as ElementNode, usedRuntime, options);
+  }
+
+  return null;
+}
+
+/**
  * 把组件的子内容编译为「插槽对象」字面量：`{default:()=>[vnode,...]}`
  *
  * 优化版：vnode 构造使用短别名（createVNode/Text），并登记到 usedRuntime 以便生成 import。
@@ -1438,9 +1568,15 @@ function collectSlotVNodesOptimized(
       }
       continue;
     }
+    // v-if 的产物是条件表达式（元素已被 transform 替换掉）
+    if (child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
+      const cond = serializeConditionalVNodeOptimized(child, usedRuntime, options);
+      if (cond) out.push(cond);
+      continue;
+    }
     if (child.type === NodeTypes.ELEMENT) {
       const el = child as ElementNode;
-      // 含结构性指令（v-if / v-for / v-show …）的元素暂不参与插槽编译 —— 宁缺勿错渲
+      // 含其它结构性指令（v-for / v-show …）的元素暂不参与插槽编译 —— 宁缺勿错渲
       if (hasUnsupportedSlotDirectiveOptimized(el)) continue;
       out.push(serializeVNodeElementOptimized(el, usedRuntime, options));
     }

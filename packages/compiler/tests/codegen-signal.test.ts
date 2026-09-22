@@ -497,10 +497,72 @@ describe('codegen-signal', () => {
       expect(on.code).toContain('createVNode("span",{"onClick":_ctx.fn}');
     });
 
-    it('should SKIP slot elements carrying unsupported directives instead of mis-rendering', () => {
-      // v-if 若被静默忽略，会渲染出"本不该出现"的内容；此时宁可缺失
+    it('should compile v-if inside a slot into a conditional vnode', () => {
       const result = compile('<div><Child><span v-if="ok">x</span></Child></div>', opts);
+      expect(result.code).toContain(
+        '(_ctx.ok?createVNode("span",null,[createVNode(Text,null,"x")]):null)',
+      );
+    });
+
+    it('should keep props and interpolation inside a v-if slot', () => {
+      const withProp = compile(
+        '<div><Child><span v-if="ok" :title="t">x</span></Child></div>',
+        opts,
+      );
+      expect(withProp.code).toContain('{"title":_ctx.t}');
+
+      const withInterp = compile(
+        '<div><Child><span v-if="ok">{{ msg }}</span></Child></div>',
+        opts,
+      );
+      expect(withInterp.code).toContain('createVNode(Text,null,_ctx.msg)');
+    });
+
+    it('should SKIP a slot element whose structural directive is unsupported (v-else)', () => {
+      // v-else / v-else-if（alternate 非空）暂不支持；严格模式下**整体跳过**，绝不下发半成品
+      const result = compile(
+        '<div><Child><span v-if="ok">a</span><span v-else>b</span></Child></div>',
+        opts,
+      );
       expect(result.code).toContain('mountComponent(_ctx.Child,{},_lytComp);');
+    });
+
+    it('should SKIP a slot v-if whose content uses an unsupported construct (v-for)', () => {
+      const result = compile(
+        '<div><Child><span v-if="ok"><i v-for="x in xs">y</i></span></Child></div>',
+        opts,
+      );
+      expect(result.code).toContain('mountComponent(_ctx.Child,{},_lytComp);');
+    });
+
+    it('should SKIP a slot v-if whose content node cannot be reconstructed', () => {
+      const result = compile('<div><Child><div v-if="ok"><Inner/></div></Child></div>', opts);
+      expect(result.code).toContain('mountComponent(_ctx.Child,{},_lytComp);');
+    });
+
+    it('should SKIP a slot element combining v-if with another structural directive (v-show)', () => {
+      const result = compile('<div><Child><span v-if="ok" v-show="s">x</span></Child></div>', opts);
+      expect(result.code).toContain('mountComponent(_ctx.Child,{},_lytComp);');
+    });
+
+    it('should render a v-if slot element with no children (null children)', () => {
+      const result = compile('<div><Child><span v-if="ok"></span></Child></div>', opts);
+      expect(result.code).toContain('(_ctx.ok?createVNode("span",null,null):null)');
+    });
+
+    it('should SKIP a slot element with v-show (unsupported structural directive)', () => {
+      const result = compile('<div><Child><i v-show="s">y</i></Child></div>', opts);
+      expect(result.code).toContain('mountComponent(_ctx.Child,{},_lytComp);');
+    });
+
+    it('should SKIP a top-level v-for slot element (unsupported)', () => {
+      const result = compile('<div><Child><i v-for="x in xs">y</i></Child></div>', opts);
+      expect(result.code).toContain('mountComponent(_ctx.Child,{},_lytComp);');
+    });
+
+    it('should treat blank-only slot content inside v-if as null children', () => {
+      const result = compile('<div><Child><span v-if="ok"> </span></Child></div>', opts);
+      expect(result.code).toContain('(_ctx.ok?createVNode("span",null,null):null)');
     });
   });
 });

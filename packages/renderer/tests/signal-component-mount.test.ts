@@ -129,4 +129,31 @@ describe('SignalRenderer + 组件挂载', () => {
 
     renderer.unmount();
   });
+
+  it('插槽内的 v-if 应随条件出现 / 消失', () => {
+    const ok = ref(true);
+    const Child = {
+      name: 'Child',
+      setup(_props: unknown, ctx: { slots: { default?: () => unknown } }) {
+        return () =>
+          createVNode(
+            'section',
+            { class: 'child' },
+            ctx.slots.default ? ctx.slots.default() : null,
+          );
+      },
+    };
+
+    const renderer = createSignalRenderer('<div><Child><b v-if="ok">yes</b></Child></div>', {
+      ok,
+      Child,
+    });
+    renderer.render(container);
+    expect(container.innerHTML).toContain('yes');
+
+    ok.value = false;
+    expect(container.innerHTML).not.toContain('yes');
+
+    renderer.unmount();
+  });
 });

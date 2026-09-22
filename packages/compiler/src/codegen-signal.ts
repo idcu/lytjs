@@ -1239,6 +1239,117 @@ function processBranchDynamics(
 }
 
 /**
+ * `JS_CONDITIONAL_EXPRESSION`（v-if 在 Signal 模式的 transform 产物）→ `(cond ? vnode : null)`
+ *
+ * 返回 null 表示无法完整还原（此时调用方跳过，不下发半成品）。
+ * v-else / v-else-if 分支暂不支持 —— 有 alternate 时同样返回 null。
+ */
+export function serializeConditionalVNode(node: unknown, prefix: string): string | null {
+  const cond = node as { test?: unknown; consequent?: unknown; alternate?: unknown };
+  if (!cond || !cond.test) return null;
+  // v-else / v-else-if：alternate 非空时整体放弃（宁缺勿错渲）
+  if (cond.alternate) return null;
+
+  const testExp = getExpContent(cond.test as SimpleExpressionNode);
+  if (!testExp) return null;
+
+  const inner = serializeVNodeCall(cond.consequent, prefix);
+  if (!inner) return null;
+
+  return `(${prefixIdentifiers(testExp, new Set())}?${inner}:null)`;
+}
+
+/**
+ * `VNODE_CALL` → `createVNode(tag, props, children)`
+ *
+ * **严格模式**：任何一段无法识别都让整体返回 null（调用方跳过），
+ * 避免"只渲染一半"这种比不渲染更危险的结果。
+ */
+export function serializeVNodeCall(vnode: unknown, prefix: string): string | null {
+  const vn = vnode as {
+    type?: number;
+    tag?: unknown;
+    props?: unknown;
+    children?: unknown;
+  };
+  if (!vn || vn.type !== NodeTypes.VNODE_CALL) return null;
+  if (typeof vn.tag !== 'string' || !vn.tag) return null;
+
+  // props：JS_OBJECT_EXPRESSION（key 已是合法代码串，value 需前缀化）
+  let propsCode = 'null';
+  if (vn.props !== undefined && vn.props !== null) {
+    const obj = vn.props as { type?: number; properties?: unknown[] };
+    if (obj.type !== NodeTypes.JS_OBJECT_EXPRESSION || !Array.isArray(obj.properties)) return null;
+    const parts: string[] = [];
+    for (const raw of obj.properties) {
+      const prop = raw as {
+        type?: number;
+        key?: { content?: unknown };
+        value?: { content?: unknown };
+      };
+      if (!prop || prop.type !== NodeTypes.JS_PROPERTY) return null;
+      const keyCode = prop.key && typeof prop.key.content === 'string' ? prop.key.content : null;
+      const valCode =
+        prop.value && typeof prop.value.content === 'string' ? prop.value.content : null;
+      if (keyCode === null || valCode === null) return null;
+      parts.push(`${keyCode}:${prefixIdentifiers(valCode, new Set())}`);
+    }
+    propsCode = `{${parts.join(',')}}`;
+  }
+
+  const childrenCode = serializeVNodeCallChildren(vn.children, prefix);
+  if (childrenCode === null) return null;
+
+  return `createVNode(${vn.tag},${propsCode},${childrenCode})`;
+}
+
+/** `VNODE_CALL.children` → 数组代码；无法完整识别返回 null */
+export function serializeVNodeCallChildren(children: unknown, prefix: string): string | null {
+  if (children === undefined || children === null) return 'null';
+
+  if (typeof children === 'string') {
+    if (!children.trim()) return 'null';
+    return `[createVNode(Text,null,${JSON.stringify(children)})]`;
+  }
+
+  if (Array.isArray(children)) {
+    const parts: string[] = [];
+    for (const ch of children) {
+      const code = serializeVNodeCallChild(ch, prefix);
+      if (code === null) return null;
+      parts.push(code);
+    }
+    return parts.length ? `[${parts.join(',')}]` : 'null';
+  }
+
+  const one = serializeVNodeCallChild(children, prefix);
+  return one === null ? null : `[${one}]`;
+}
+
+/** 单个 child → vnode 代码；无法识别返回 null */
+export function serializeVNodeCallChild(child: unknown, prefix: string): string | null {
+  if (!child || typeof child !== 'object') return null;
+  const node = child as { type?: number };
+
+  // 插值：JS_CALL_EXPRESSION(TO_DISPLAY_STRING, expr)
+  if (node.type === NodeTypes.JS_CALL_EXPRESSION) {
+    const call = child as { callee?: unknown; arguments?: unknown[] };
+    if (call.callee !== 'TO_DISPLAY_STRING') return null;
+    const arg = (call.arguments && call.arguments[0]) as SimpleExpressionNode | undefined;
+    const exp = arg && typeof arg.content === 'string' ? arg.content : null;
+    if (!exp) return null;
+    return `createVNode(Text,null,${prefixIdentifiers(exp, new Set())})`;
+  }
+
+  // 嵌套元素
+  if (node.type === NodeTypes.ELEMENT) {
+    return serializeVNodeElement(child as ElementNode, prefix);
+  }
+
+  return null;
+}
+
+/**
  * 判断子树中是否存在「带子内容的组件」（这类组件需要把子内容编译为插槽 vnode）
  */
 function hasComponentWithChildren(children: TemplateChildNode[]): boolean {
@@ -1279,9 +1390,15 @@ function collectSlotVNodes(children: TemplateChildNode[], prefix: string): strin
       if (exp) out.push(`createVNode(Text,null,${prefixIdentifiers(exp, new Set())})`);
       continue;
     }
+    // v-if 的产物是条件表达式（元素已被 transform 替换掉，不再是 ELEMENT）
+    if (child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
+      const cond = serializeConditionalVNode(child, prefix);
+      if (cond) out.push(cond);
+      continue;
+    }
     if (child.type === NodeTypes.ELEMENT) {
       const el = child as ElementNode;
-      // 含结构性指令（v-if / v-for / v-show …）的元素暂不参与插槽编译 ——
+      // 含其它结构性指令（v-for / v-show …）的元素暂不参与插槽编译 ——
       // 宁可缺失，也不做「忽略指令后照常渲染」的静默错误
       if (hasUnsupportedSlotDirective(el)) continue;
       out.push(serializeVNodeElement(el, prefix));
