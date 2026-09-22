@@ -3,6 +3,7 @@
 // 目标：生成代码体积减少 30%+
 
 import { NodeTypes, ElementTypes } from './constants';
+import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
 import type {
   RootNode,
@@ -88,8 +89,8 @@ function getShortName(funcName: string, useShortNames: boolean): string {
 // ============================================================
 
 export function generateSignalOptimized(ast: RootNode, _options?: CompilerOptions): CodegenResult {
-  // 优化版已支持子组件（占位元素 + mountComponent 运行时），无需再告警。
-  // 告警只保留在非优化版 generateSignal 中（它尚未实现组件挂载）。
+  // 优化版与非优化版（generateSignal）现在都已支持子组件
+  //（占位元素 + mountComponent 运行时），两版行为一致，均无需告警。
   const options: SignalCodegenOptions = {
     mode: 'signal',
     useShortNames: true, // 启用短别名优化以减少代码体积
@@ -424,6 +425,16 @@ function processChildrenOptimized(
 // 优化的元素处理
 // ============================================================
 
+/**
+ * 元素的"渲染修饰符"：来自 v-once / v-memo，会沿元素树向下传
+ */
+interface ElementModifiers {
+  /** v-once：只渲染一次，不建立响应式 effect */
+  once?: boolean;
+  /** v-memo：依赖数组表达式（已按 `_c.` 前缀化） */
+  memo?: string;
+}
+
 function processElementOptimized(
   node: ElementNode,
   varCounter: Map<string, number>,
@@ -432,7 +443,37 @@ function processElementOptimized(
   consumedCount: Map<string, number>,
   usedRuntime: Set<string>,
   options: SignalCodegenOptions,
+  mods?: ElementModifiers,
 ): void {
+  // v-once / v-memo：此前两条指令在 Signal 模式被静默丢弃（switch 无对应分支），
+  // 元素照常建立响应式 effect —— 语义完全丢失。这里显式实现：
+  //   v-once → 去掉 effect 包裹，只渲染一次
+  //   v-memo → 用依赖数组做守卫，依赖未变则不重新渲染
+  const ownMods: ElementModifiers = { ...(mods ?? {}) };
+
+  // 注意：transformOnce / transformVMemo 已经把 v-once、v-memo 指令**从 props 里摘掉**了，
+  // 所以这里不能再去 props 里找指令，而要读转换留下的痕迹：
+  //   - v-once：transformOnce 把元素的 codegenNode 换成了 `_hoisted_N` 引用
+  //   - v-memo：transformVMemo 把依赖信息写进了元素元数据（getMemoMeta）
+  const maybeCodegen = node.codegenNode as unknown as
+    | { type?: number; content?: unknown }
+    | undefined;
+  if (maybeCodegen && maybeCodegen.type === NodeTypes.SIMPLE_EXPRESSION) {
+    const content = maybeCodegen.content;
+    if (typeof content === 'string' && content.startsWith('_hoisted_')) {
+      ownMods.once = true;
+    }
+  }
+
+  const memoMeta = getMemoMeta(node);
+  if (memoMeta && memoMeta.deps) {
+    ownMods.memo = prefixIdentifiers(memoMeta.deps, new Set()).replace(/\b_ctx\./g, '_c.');
+  }
+
+  // 本元素自身的绑定先收集到局部数组，随后按 once/memo 语义统一后处理
+  const ownBindings: Array<{ varName: string; code: string }> = [];
+  const sink = ownMods.once || ownMods.memo ? ownBindings : dynamicBindings;
+
   // 组件：生成 mountComponent(_c.Tag, props, 占位元素) 调用
   if (node.tagType === ElementTypes.COMPONENT) {
     const hostIdx = findElementIndex(elementVars, 'lyt-comp', consumedCount);
@@ -442,7 +483,7 @@ function processElementOptimized(
     const mc = getShortName('mountComponent', options.useShortNames ?? true);
     const propsObj = buildComponentPropsObject(node);
 
-    dynamicBindings.push({
+    sink.push({
       varName: hostVar,
       code: `${mc}(_c.${node.tag},${propsObj},${hostVar});`,
     });
@@ -496,7 +537,7 @@ function processElementOptimized(
         usedRuntime.add('setText');
         const e = getShortName('effect', options.useShortNames ?? true);
         const st = getShortName('setText', options.useShortNames ?? true);
-        dynamicBindings.push({
+        sink.push({
           varName,
           code: `${e}(()=>${st}(${varName},_c.${exp}));`,
         });
@@ -505,7 +546,7 @@ function processElementOptimized(
         usedRuntime.add('setText');
         const e = getShortName('effect', options.useShortNames ?? true);
         const st = getShortName('setText', options.useShortNames ?? true);
-        dynamicBindings.push({
+        sink.push({
           varName,
           code: `${e}(()=>${st}(${varName},_c.${exp}));`,
         });
@@ -519,6 +560,7 @@ function processElementOptimized(
         consumedCount,
         usedRuntime,
         options,
+        ownMods.once || ownMods.memo ? ownMods : undefined,
       );
     } else if (child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
       processConditionalOptimized(
@@ -542,6 +584,13 @@ function processElementOptimized(
         varName,
       );
     }
+  }
+
+  // v-once / v-memo 的统一后处理
+  if (sink === ownBindings && ownBindings.length > 0) {
+    dynamicBindings.push(
+      ...applyElementModifiers(ownBindings, ownMods, varCounter, usedRuntime, options),
+    );
   }
 }
 
@@ -1310,4 +1359,54 @@ function buildComponentPropsObject(node: ElementNode): string {
   }
 
   return `{${parts.join(',')}}`;
+}
+
+/**
+ * 按 v-once / v-memo 语义改写元素的动态绑定
+ *
+ * - v-once：去掉 `effect(()=>X)` 包裹，只渲染一次
+ * - v-memo：用依赖数组守卫包裹，依赖未变化则不重新渲染（仍需要一次 effect 来判断依赖）
+ */
+function applyElementModifiers(
+  bindings: Array<{ varName: string; code: string }>,
+  mods: ElementModifiers,
+  varCounter: Map<string, number>,
+  usedRuntime: Set<string>,
+  options: SignalCodegenOptions,
+): Array<{ varName: string; code: string }> {
+  const e = getShortName('effect', options.useShortNames ?? true);
+  const prefix = `${e}(()=>`;
+
+  // 去掉 effect 包裹（v-once / v-memo 内部都不需要逐绑定的 effect）
+  const inner = bindings.map((b) => {
+    const code = b.code;
+    if (code.startsWith(prefix) && code.endsWith(');')) {
+      return { varName: b.varName, code: code.slice(prefix.length, -2) + ';' };
+    }
+    return b;
+  });
+
+  if (mods.once) {
+    return inner;
+  }
+
+  if (mods.memo) {
+    usedRuntime.add('effect');
+    const depth = varCounter.get('_memo_depth') ?? 0;
+    varCounter.set('_memo_depth', depth + 1);
+    const memoVar = `_memo_${depth}`;
+    const body = inner.map((b) => b.code).join('');
+
+    return [
+      {
+        varName: inner[0]?.varName ?? '_0',
+        code:
+          `let ${memoVar}=null;` +
+          `${prefix}{const _d=${mods.memo};` +
+          `if(!${memoVar}||${memoVar}.some((v,i)=>v!==_d[i])){${memoVar}=_d;${body}}});`,
+      },
+    ];
+  }
+
+  return bindings;
 }
