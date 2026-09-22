@@ -55,4 +55,31 @@ describe('SignalRenderer + 组件挂载', () => {
     expect(container.innerHTML).toContain('hi');
     renderer.unmount();
   });
+
+  it('组件 emit 的事件应触达父级 @事件处理器', () => {
+    let clicked = 0;
+    const Child = {
+      name: 'Child',
+      emits: ['click'],
+      setup(_props: unknown, ctx: { emit: (e: string, ...a: unknown[]) => void }) {
+        return () => {
+          ctx.emit('click');
+          return createVNode('span', null, 'child');
+        };
+      },
+    };
+
+    const renderer = createSignalRenderer('<div><Child @click="onChildClick"/></div>', {
+      Child,
+      onChildClick: () => {
+        clicked += 1;
+      },
+    });
+    renderer.render(container);
+
+    // 事件链路：codegen 产出 props.onClick → 组件 emit('click') 回查并调用
+    expect(clicked).toBeGreaterThan(0);
+    expect(container.innerHTML).toContain('child');
+    renderer.unmount();
+  });
 });

@@ -1348,17 +1348,36 @@ function buildComponentPropsObject(node: ElementNode): string {
     }
     if (prop.type === NodeTypes.DIRECTIVE) {
       const dir = prop as DirectiveNode;
-      if (dir.name !== 'bind') continue;
       if (!dir.arg || !dir.exp) continue;
       const key = getExpContent(dir.arg as SimpleExpressionNode);
       const raw = getExpContent(dir.exp as SimpleExpressionNode);
       if (!key || !raw) continue;
       const expr = prefixIdentifiers(raw, new Set()).replace(/\b_ctx\./g, '_c.');
-      parts.push(`${JSON.stringify(key)}:${expr}`);
+
+      if (dir.name === 'bind') {
+        parts.push(`${JSON.stringify(key)}:${expr}`);
+        continue;
+      }
+
+      // 组件事件：@click="fn" → `onClick: _c.fn`（与 emit()/toHandlerKey() 约定对齐）
+      if (dir.name === 'on') {
+        parts.push(`${JSON.stringify(toComponentEventKey(key))}:${expr}`);
+      }
     }
   }
 
   return `{${parts.join(',')}}`;
+}
+
+/**
+ * 把模板里的事件名转成组件的 prop 键名
+ *
+ * `click` → `onClick`；`my-event` → `onMyEvent`（kebab 先 camelize）。
+ * 与 `@lytjs/component` 的 `toHandlerKey()` 保持同一约定。
+ */
+function toComponentEventKey(event: string): string {
+  const camelized = event.replace(/-(\w)/g, (_m, c: string) => c.toUpperCase());
+  return `on${camelized.charAt(0).toUpperCase()}${camelized.slice(1)}`;
 }
 
 /**

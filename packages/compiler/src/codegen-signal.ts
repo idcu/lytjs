@@ -1228,6 +1228,18 @@ function processBranchDynamics(
 }
 
 /**
+ * 把模板里的事件名转成组件的 prop 键名
+ *
+ * `click` → `onClick`；`my-event` → `onMyEvent`（kebab 先 camelize）。
+ * 与 `@lytjs/component` 的 `toHandlerKey()` 保持同一约定，否则组件 `emit()` 回查
+ * `props.onXxx` 时会因键名不一致而找不到处理器。
+ */
+function toComponentEventKey(event: string): string {
+  const camelized = event.replace(/-(\w)/g, (_m, c: string) => c.toUpperCase());
+  return `on${camelized.charAt(0).toUpperCase()}${camelized.slice(1)}`;
+}
+
+/**
  * 判断子树中是否包含组件元素
  */
 function containsComponent(children: TemplateChildNode[]): boolean {
@@ -1253,13 +1265,26 @@ function buildComponentPropsObject(node: ElementNode): string {
       parts.push(`${JSON.stringify(prop.name)}:${value}`);
       continue;
     }
-    if (prop.type === NodeTypes.DIRECTIVE && prop.name === 'bind') {
+    if (prop.type === NodeTypes.DIRECTIVE) {
       const dir = prop as DirectiveNode;
       if (!dir.arg || !dir.exp) continue;
       const key = getExpContent(dir.arg as SimpleExpressionNode);
       const raw = getExpContent(dir.exp as SimpleExpressionNode);
       if (!key || !raw) continue;
-      parts.push(`${JSON.stringify(key)}:${prefixIdentifiers(raw, new Set())}`);
+
+      if (dir.name === 'bind') {
+        parts.push(`${JSON.stringify(key)}:${prefixIdentifiers(raw, new Set())}`);
+        continue;
+      }
+
+      // 组件事件：@click="fn" → `onClick: _ctx.fn`
+      // 与 @lytjs/component 的 emit()/toHandlerKey() 约定对齐 —— 事件以 `onXxx`
+      // 形式作为 prop 传入，组件内部 emit('click') 时会回查 props/attrs.onClick。
+      if (dir.name === 'on') {
+        parts.push(
+          `${JSON.stringify(toComponentEventKey(key))}:${prefixIdentifiers(raw, new Set())}`,
+        );
+      }
     }
   }
 

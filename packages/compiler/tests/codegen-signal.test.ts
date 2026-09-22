@@ -440,5 +440,21 @@ describe('codegen-signal', () => {
       const body = result.code.slice(braceStart, braceEnd);
       expect(() => new Function('_ctx', '_container', body)).not.toThrow();
     });
+
+    it('should compile component events (@click) into onClick props', () => {
+      const result = compile('<div><Child @click="onClick"/></div>', opts);
+      expect(result.code).toContain('{"onClick":_ctx.onClick}');
+    });
+
+    it('should camelize kebab-case component event names', () => {
+      const result = compile('<div><Child @my-event="fn"/></div>', opts);
+      expect(result.code).toContain('"onMyEvent":_ctx.fn');
+    });
+
+    it('should support inline arrow handlers on components (single brace set)', () => {
+      // 这条同时守护「正则在 `}` 处提前收尾」的历史 bug：箭头函数体必须完整
+      const result = compile('<div><Child @click="() => count++"/></div>', opts);
+      expect(result.code).toContain('"onClick":() => _ctx.count++');
+    });
   });
 });

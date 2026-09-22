@@ -93,10 +93,15 @@ describe('Signal 模式 - 子组件（两版 codegen 均已支持挂载）', () 
     expect(code).not.toContain('{undefined:');
   });
 
-  it('事件指令不应进入 props 对象', () => {
+  it('事件指令应编译为 onXxx prop（供组件 emit 回查）', () => {
     const code = compile('<div><Child @click="onClick"/></div>', { rendererMode: 'signal' }).code;
     expect(code).toContain('mountComponent');
-    expect(code).not.toContain('onClick');
+    expect(code).toContain('"onClick":_c.onClick');
+  });
+
+  it('kebab-case 事件名应 camelize 为 onXxx', () => {
+    const code = compile('<div><Child @my-event="fn"/></div>', { rendererMode: 'signal' }).code;
+    expect(code).toContain('"onMyEvent":_c.fn');
   });
 
   it('非优化版（optimizeSignal:false）同样支持组件挂载，不再误报告警', () => {
