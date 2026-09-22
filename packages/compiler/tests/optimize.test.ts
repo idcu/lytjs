@@ -3,6 +3,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { parse } from '../src/parser';
+import { compile } from '../src/index';
 import { transform, builtInTransforms, builtInDirectiveTransforms } from '../src/transform';
 import { optimize } from '../src/optimize';
 import { NodeTypes } from '../src/constants';
@@ -158,6 +159,34 @@ describe('optimize', () => {
       const ast = compileForOptimize('<div id="static" :class="dynamicClass">content</div>');
       const element = ast.children[0] as ElementNode;
       expect(element.patchFlag).toBeGreaterThan(0);
+    });
+  });
+
+  describe('静态提升的正确性（regression）', () => {
+    it('含后代指令的子树**不应**被提升（否则常量体引用 _ctx 会在模块级求值）', () => {
+      // 历史 bug：isStatic 判定只检查后代**插值**，漏了后代元素自身的**指令**，
+      // 于是 `<div><span :title="t">x</span></div>` 的 div 被误判静态 → 提升成
+      // `const _hoisted_1 = ... { "title": _ctx.t } ...` ⇒ 运行时 `_ctx is not defined`。
+      const code = compile('<div><span :title="t">x</span></div>').code;
+      expect(code).not.toMatch(/const _hoisted_\d+ = [\s\S]*?_ctx\./);
+      // 动态绑定仍应正常出现在 render 内
+      expect(code).toContain('_ctx.t');
+    });
+
+    it('后代带事件/条件指令时同样不应提升', () => {
+      for (const tpl of [
+        '<div><span @click="f">y</span></div>',
+        '<div><span v-if="ok">y</span></div>',
+        '<div><span :class="c">y</span></div>',
+      ]) {
+        const code = compile(tpl).code;
+        expect(code).not.toMatch(/const _hoisted_\d+ = [\s\S]*?_ctx\./);
+      }
+    });
+
+    it('真正静态的子树**仍应**被提升', () => {
+      const code = compile('<div><span title="s">x</span></div>').code;
+      expect(code).toMatch(/const _hoisted_\d+ = createElementVNode\("div"/);
     });
   });
 });

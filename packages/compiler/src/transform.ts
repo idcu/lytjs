@@ -345,9 +345,9 @@ function markConstants(root: RootNode): void {
       // 2. All its attributes are static
       // 3. All its children are constant (including descendants)
       const hasDirectives = element.props.some((p) => p.type === NodeTypes.DIRECTIVE);
-      const hasInterpolation = hasDescendantInterpolation(element);
+      const hasDynamicChild = hasDescendantDynamicContent(element);
 
-      if (!hasDirectives && !hasInterpolation) {
+      if (!hasDirectives && !hasDynamicChild) {
         element.isStatic = true;
       }
     } else if (node.type === NodeTypes.TEXT) {
@@ -500,13 +500,25 @@ function walk(nodes: TemplateChildNode[], fn: (node: TemplateChildNode) => void)
   }
 }
 
-function hasDescendantInterpolation(element: ElementNode): boolean {
+/**
+ * 后代是否存在**动态内容**（插值或指令）。
+ *
+ * ⚠️ 此前只检查插值，**漏了后代元素自身的指令**（如 `<span :title="t">`）——
+ * 于是 `<div><span :title="t">x</span></div>` 的 `div` 被误判为静态，
+ * 进而被提升成模块级常量，其体内却引用 `_ctx.t` ⇒ 运行时抛 `_ctx is not defined`。
+ */
+function hasDescendantDynamicContent(element: ElementNode): boolean {
   for (const child of element.children) {
     if (child.type === NodeTypes.INTERPOLATION) {
       return true;
     }
     if (child.type === NodeTypes.ELEMENT) {
-      if (hasDescendantInterpolation(child as ElementNode)) {
+      const childElement = child as ElementNode;
+      // 后代元素自身的动态绑定（`:prop` / `@event` / `v-if` / `v-for` …）
+      if (childElement.props.some((p) => p.type === NodeTypes.DIRECTIVE)) {
+        return true;
+      }
+      if (hasDescendantDynamicContent(childElement)) {
         return true;
       }
     }
