@@ -2,6 +2,7 @@
 // Signal 模式代码生成器 - 生成 effect() + DOM 操作代码
 
 import { NodeTypes, ElementTypes } from './constants';
+import { prefixIdentifiers } from './prefix-identifiers';
 import type {
   RootNode,
   ElementNode,
@@ -88,6 +89,15 @@ function serializeStaticHTML(
   varCounter: Map<string, number>,
   elementVars: Array<{ varName: string; tag: string }>,
 ): string {
+  // 组件：输出占位元素（不能是注释 —— 注释不在 element.children 里，会打乱下标），
+  // 由运行时 mountComponent 挂载真实组件（与优化版 codegen 行为一致）
+  if (node.tagType === ElementTypes.COMPONENT) {
+    // 变量名不能含连字符（`genVarName('lyt-comp')` 会产出 `_lyt-comp` 这种非法标识符）
+    const varName = genVarName('lytComp', varCounter);
+    elementVars.push({ varName, tag: 'lyt-comp' });
+    return `<lyt-comp data-lyt-comp="${node.tag}"></lyt-comp>`;
+  }
+
   const varName = genVarName(node.tag, varCounter);
   elementVars.push({ varName, tag: node.tag });
 
@@ -123,7 +133,6 @@ function serializeStaticHTML(
 // ============================================================
 
 export function generateSignal(ast: RootNode, _options?: CompilerOptions): CodegenResult {
-  warnUnsupportedVaporComponents(ast);
   const lines: string[] = [];
   const varCounter = new Map<string, number>();
   const elementVars: Array<{ varName: string; tag: string }> = [];
@@ -145,15 +154,21 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
     );
   }
 
+  // 是否含组件（决定要不要引入 mountComponent）
+  const usedComponents = containsComponent(ast.children);
+
   // ---- Phase 1: Generate imports ----
   // FIX: P1-13 添加 runCleanups 到 import 列表
   lines.push(
     `import { effect, reconcileArray } from '@lytjs/reactivity';`,
     `import { createTemplate, setText, setHTML, setAttribute, setProperty, setStyle, setClass, insert, remove, createEventHandler, onCleanup, runCleanups, reconcileArray } from '@lytjs/dom-runtime';`,
   );
+  // 用到组件挂载时才引入（@lytjs/renderer 提供运行时实现）
+  if (usedComponents) {
+    lines.push(`import { mountComponent } from '@lytjs/renderer';`);
+  }
   lines.push('');
 
-  // ---- Phase 2: Build static HTML and collect element variables ----
   // 先通过 buildStaticHTML 收集所有元素变量（使用 varCounter）
   const staticHTML = buildStaticHTML(ast.children, varCounter, elementVars);
 
@@ -265,6 +280,19 @@ function processElement(
   dynamicBindings: Array<{ varName: string; code: string }>,
   consumedCount: Map<string, number>,
 ): void {
+  // 组件：生成 mountComponent(_ctx.Tag, props, 占位元素)
+  if (node.tagType === ElementTypes.COMPONENT) {
+    const hostEntry = findExistingVar(elementVars, 'lyt-comp', consumedCount);
+    const hostVar = hostEntry ?? genVarName('lytComp', varCounter);
+    if (!hostEntry) elementVars.push({ varName: hostVar, tag: 'lyt-comp' });
+
+    dynamicBindings.push({
+      varName: hostVar,
+      code: `mountComponent(_ctx.${node.tag},${buildComponentPropsObject(node)},${hostVar});`,
+    });
+    return;
+  }
+
   // 查找已由 buildStaticHTML 分配的变量名
   // 使用 elementVars 中已有的条目来获取变量名，而不是重新生成
   const existingEntry = findExistingVar(elementVars, node.tag, consumedCount);
@@ -1199,50 +1227,41 @@ function processBranchDynamics(
   }
 }
 
-// ============================================================
-// Signal/Vapor 模式的已知限制检查
-// ============================================================
-
-let warnedVaporComponents = new Set<string>();
-
 /**
- * Signal/Vapor 模式目前**不支持子组件**：codegen 全文没有 `isComponent` 处理，
- * 组件标签会被当作普通 HTML 元素序列化进 createTemplate（产物里出现字面量
- * `<Child />`，DOM 里也就真的插了一个无意义的自定义标签）。
- *
- * 这里显式告警（每组件一次），避免"编译通过、组件静默不生效"。
+ * 判断子树中是否包含组件元素
  */
-export function warnUnsupportedVaporComponents(ast: RootNode): void {
-  if (!__DEV__) return;
-  const components = new Set<string>();
-
-  const walk = (node: RootNode | TemplateChildNode): void => {
-    if (!node || typeof node !== 'object') return;
-    if (node.type === NodeTypes.ELEMENT) {
-      const element = node as ElementNode;
-      if (element.tagType === ElementTypes.COMPONENT) components.add(element.tag);
-      for (const child of element.children) walk(child);
-      return;
-    }
-    if (node.type === NodeTypes.ROOT) {
-      for (const child of (node as RootNode).children) walk(child);
-    }
-  };
-
-  walk(ast);
-
-  for (const name of components) {
-    const key = `vapor:${name}`;
-    if (warnedVaporComponents.has(key)) continue;
-    warnedVaporComponents.add(key);
-    console.warn(
-      `[lytjs/compiler] Signal/Vapor 模式暂不支持子组件：<${name}> 会被当作普通标签处理，` +
-        '组件逻辑不会执行。请改用 VNode 模式（默认 rendererMode）渲染该组件。',
-    );
+function containsComponent(children: TemplateChildNode[]): boolean {
+  for (const child of children) {
+    if (!child || child.type !== NodeTypes.ELEMENT) continue;
+    const element = child as ElementNode;
+    if (element.tagType === ElementTypes.COMPONENT) return true;
+    if (containsComponent(element.children)) return true;
   }
+  return false;
 }
 
-/** 仅供测试重置告警状态 */
-export function resetVaporComponentWarnings(): void {
-  warnedVaporComponents = new Set<string>();
+/**
+ * 构造传给组件的 props 对象字面量（`_ctx.` 前缀，与本 codegen 的前缀约定一致）
+ */
+function buildComponentPropsObject(node: ElementNode): string {
+  const parts: string[] = [];
+
+  for (const prop of node.props) {
+    if (!prop) continue;
+    if (prop.type === NodeTypes.ATTRIBUTE) {
+      const value = prop.value ? JSON.stringify(prop.value.content) : 'true';
+      parts.push(`${JSON.stringify(prop.name)}:${value}`);
+      continue;
+    }
+    if (prop.type === NodeTypes.DIRECTIVE && prop.name === 'bind') {
+      const dir = prop as DirectiveNode;
+      if (!dir.arg || !dir.exp) continue;
+      const key = getExpContent(dir.arg as SimpleExpressionNode);
+      const raw = getExpContent(dir.exp as SimpleExpressionNode);
+      if (!key || !raw) continue;
+      parts.push(`${JSON.stringify(key)}:${prefixIdentifiers(raw, new Set())}`);
+    }
+  }
+
+  return `{${parts.join(',')}}`;
 }

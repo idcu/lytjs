@@ -789,8 +789,8 @@ mountComponent(_c.Child, { title: _c.t }, _1);
 | 占位元素 | 组件在模板串里被序列化为 `<lyt-comp data-lyt-comp="Child">`（**必须是元素**：注释节点不在 `element.children` 里，会让后续按下标取元素的变量错位） |
 | props    | 静态属性与 `v-bind` 表达式都会进入传给组件的 props 对象（表达式前缀为 `_c.`）                                                                     |
 | 更新策略 | 首版采用 **effect 包裹的整体重渲染**（依赖变化时重建该组件子树），正确性优先；细粒度更新留待后续版本                                              |
-| 非优化版 | `optimizeSignal: false` 走 `generateSignal`，**尚未实现组件挂载**，编译时会给出一次性告警                                                         |
-| 已知限制 | 组件插槽内容（`<Child>...`）暂不参与 Vapor 编译；组件事件（v-on）暂不传入                                                                         |
+| 非优化版 | `optimizeSignal: false` 走 `generateSignal`，**同样支持组件挂载**（输出 `<lyt-comp>` 占位 + `mountComponent`），与优化版行为一致                  |
+| 已知限制 | 组件插槽内容（`<Child>...`）暂不参与 Vapor 编译；组件事件（v-on）暂不传入；嵌套组件的内部子内容不保留（slots 特性待实现）                         |
 
 ```ts
 import { mountComponent } from '@lytjs/renderer';
@@ -801,3 +801,20 @@ export function mountComponent(
   container: unknown,
 ): void;
 ```
+
+### v-once / v-memo（Signal 模式语义）
+
+Signal（Vapor）模式此前在 codegen 的指令分发里**没有这两条指令的分支**，
+元素照常建立响应式 effect，"只渲染一次"与"依赖未变不重渲染"的语义完全丢失。
+现在两条指令的语义均已落地：
+
+| 指令             | 产物形态                                                     | 语义                                               |
+| ---------------- | ------------------------------------------------------------ | -------------------------------------------------- | ------------------------------------------------------------------- | -------------------------- |
+| 普通绑定         | `e(()=>x(_0,_c.msg));`                                       | 每次依赖变化都重新渲染                             |
+| `v-once`         | `x(_0,_c.msg);`                                              | 去掉 effect 包裹，只渲染一次（并沿元素树向下传递） |
+| `v-memo="[a,b]"` | `let \_memo_0=null;e(()=>{const \_d=[_c.a,_c.b];if(!\_memo_0 |                                                    | \_memo_0.some((v,i)=>v!==\_d[i])){\_memo_0=\_d;x(\_0,\_c.msg);}});` | 依赖数组未变化则不重新渲染 |
+
+> 实现要点：`transformOnce` / `transformVMemo` 在 transform 阶段已经把指令
+> **从 props 里摘掉了**，所以 codegen 不能再去 props 里找指令，而要读转换留下的痕迹：
+> v-once 表现为元素 `codegenNode` 被替换成 `_hoisted_N` 引用；v-memo 的依赖信息
+> 写在元素元数据里（可通过 `getMemoMeta()` 读取）。

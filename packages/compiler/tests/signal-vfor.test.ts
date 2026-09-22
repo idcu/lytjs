@@ -9,9 +9,8 @@
  * 而插值在 AST 里是 JS_CALL_EXPRESSION(TO_DISPLAY_STRING)。
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { compile } from '../src/index';
-import { resetVaporComponentWarnings } from '../src/codegen-signal';
 
 const signal = (t: string) => compile(t, { rendererMode: 'signal' }).code;
 
@@ -59,9 +58,7 @@ describe('Signal 模式 - v-for 项内容', () => {
   });
 });
 
-describe('Signal 模式 - 子组件（优化版已支持挂载）', () => {
-  beforeEach(() => resetVaporComponentWarnings());
-
+describe('Signal 模式 - 子组件（两版 codegen 均已支持挂载）', () => {
   it('应生成 mountComponent 调用（而不是把标签当 HTML 输出）', () => {
     const code = compile('<div><Child :title="t"/></div>', { rendererMode: 'signal' }).code;
 
@@ -102,11 +99,18 @@ describe('Signal 模式 - 子组件（优化版已支持挂载）', () => {
     expect(code).not.toContain('onClick');
   });
 
-  it('非优化版（optimizeSignal:false）仍应给出不支持告警', () => {
+  it('非优化版（optimizeSignal:false）同样支持组件挂载，不再误报告警', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    compile('<div><Child/></div>', { rendererMode: 'signal', optimizeSignal: false });
+    const code = compile('<div><Child/></div>', {
+      rendererMode: 'signal',
+      optimizeSignal: false,
+    }).code;
 
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('暂不支持子组件'));
+    // 非优化版此前会把组件标签当普通 HTML 输出，现已与优化版对齐
+    expect(code).toContain('mountComponent');
+    expect(code).toContain('_ctx.Child');
+    // 不再输出"暂不支持子组件"的误导性告警
+    expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('暂不支持子组件'));
     warn.mockRestore();
   });
 

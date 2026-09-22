@@ -382,4 +382,63 @@ describe('codegen-signal', () => {
       expect(result.ast).toBeTruthy();
     });
   });
+  // ============================================================
+  // 非优化版（optimizeSignal: false）组件挂载 —— 运行时 SignalRenderer 走的路径
+  // ============================================================
+
+  describe('non-optimized component mounting (optimizeSignal: false)', () => {
+    const opts = { rendererMode: 'signal' as const, optimizeSignal: false };
+
+    it('should emit a <lyt-comp> placeholder instead of a raw component tag', () => {
+      const result = compile('<div><Child/></div>', opts);
+      expect(result.code).toContain('<lyt-comp');
+      // 引号在模板字符串里会被转义，用宽松匹配
+      expect(result.code).toMatch(/data-lyt-comp=\\?"Child\\?"/);
+      // 不能把组件标签原样写进静态模板（运行时才能解析）
+      expect(result.code).not.toMatch(/createTemplate\("[^"]*<Child[ >]/);
+    });
+
+    it('should import mountComponent from @lytjs/renderer when a component is used', () => {
+      const result = compile('<div><Child/></div>', opts);
+      expect(result.code).toContain("import { mountComponent } from '@lytjs/renderer';");
+    });
+
+    it('should NOT import mountComponent when no component is used', () => {
+      const result = compile('<div>text</div>', opts);
+      expect(result.code).not.toContain('mountComponent');
+    });
+
+    it('should call mountComponent with the ctx component, props object and host element', () => {
+      const result = compile('<div><Child :title="t"/></div>', opts);
+      expect(result.code).toContain('mountComponent(_ctx.Child,{"title":_ctx.t},_lytComp)');
+    });
+
+    it('should pass static attributes as props (with string values)', () => {
+      const result = compile('<div><Child label="hi"/></div>', opts);
+      expect(result.code).toContain('{"label":"hi"}');
+    });
+
+    it('should pass boolean static attributes as true', () => {
+      const result = compile('<div><Child disabled/></div>', opts);
+      expect(result.code).toContain('{"disabled":true}');
+    });
+
+    it('should support nested components (component inside component)', () => {
+      const result = compile('<div><Outer><Inner/></Outer></div>', opts);
+      // 与优化版行为一致：组件内部子内容不保留为 slots（slots 是未来特性），
+      // 外层组件被识别为组件占位并挂载
+      expect(result.code).toMatch(/data-lyt-comp=\\?"Outer\\?"/);
+      expect(result.code).toContain('mountComponent(_ctx.Outer,{');
+    });
+
+    it('should produce syntactically valid render function body', () => {
+      const result = compile('<div><Child :title="t"/></div>', opts);
+      // 从 export function render(_ctx, _container) { 的函数体开始切，避开 import 里的花括号
+      const fnStart = result.code.indexOf('export function render');
+      const braceStart = result.code.indexOf('{', fnStart) + 1;
+      const braceEnd = result.code.lastIndexOf('}');
+      const body = result.code.slice(braceStart, braceEnd);
+      expect(() => new Function('_ctx', '_container', body)).not.toThrow();
+    });
+  });
 });
