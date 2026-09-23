@@ -89,7 +89,8 @@
     "lighthouse": "tsx scripts/lighthouse.ts",
     "lighthouse:verify": "tsx scripts/lighthouse-runner.ts",
     "docs:api": "tsx scripts/gen-api-docs.ts",
-    "check-all": "pnpm run check-build-order && pnpm run check-deps && pnpm run check-circular"
+    "check-all": "pnpm run check-build-order && pnpm run check-deps && pnpm run check-circular",
+    "verify:baseline": "bash scripts/verify-baseline.sh"
   },
   "devDependencies": {
     "@changesets/cli": "^2.28.1",
