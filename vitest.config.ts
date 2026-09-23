@@ -118,7 +118,9 @@ export default defineConfig({
     // 说明：此前还整体排除了 web / plugin-animation / devtools 等包级测试，
     // 但 CI 只跑根 test:coverage，这些"自己的 vitest 配置"从未被执行 —— 等于没测。
     // 现全部纳入根运行；需要浏览器环境的文件用文件头 `// @vitest-environment jsdom` 声明。
-    exclude: ['**/node_modules/**', '**/e2e/**', '**/playground/e2e/**'],
+    // `**/dist/**` 必须排除：dist 是构建产物（每个包一份 .mjs/.cjs/.map），
+    // 让 vitest 的 glob 去扫描它们既无意义又徒增开销（2026-09-24 环境排查时发现此前遗漏）。
+    exclude: ['**/node_modules/**', '**/dist/**', '**/e2e/**', '**/playground/e2e/**'],
     coverage: {
       provider: 'v8',
       // 覆盖率分母覆盖全部源码区（此前漏掉 ecosystem / plugins / tools，
