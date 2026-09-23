@@ -2,6 +2,12 @@
 // 增量编译支持 - v6.9.0
 // 智能增量编译，只重新编译修改的部分
 
+//
+// ⚠️ 状态说明（2026-09 审计）：本模块**未接入编译管线、也未从包入口导出** ——
+//   它在 `optimizations/index.ts` 里被 `export *` 转出，但 `src/index.ts` 未导出，
+//   且 `packages/compiler/src` 内没有任何调用方（实测 4 个导出符号外部引用均为 0，亦无测试）。
+//   如需对外提供增量编译能力，请显式从 index.ts 导出、补测试并在文档中登记。
+//
 import type { RootNode, TemplateChildNode, ElementNode } from '../types';
 import { NodeTypes } from '../constants';
 import { compile } from '../index';

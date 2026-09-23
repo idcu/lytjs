@@ -150,6 +150,31 @@ function optimize(root: RootNode, options: TransformOptions): void;
 
 ---
 
+## 实验性 / 未接入编译管线的 API
+
+以下能力位于 `src/optimizations/`。**它们不参与 `compile()` 的编译管线**，
+调用前请确认行为符合预期（各源文件头部亦有状态说明）。
+
+### 已从包入口导出（可用，有契约测试）
+
+| API                                     | 作用                                                     |
+| --------------------------------------- | -------------------------------------------------------- |
+| `analyzeMemoNeeds(ast)`                 | 判断模板是否需要 memo 边界，返回动态绑定与静态子树       |
+| `analyzeDeadCode(source)`               | 识别未使用变量 / 导入、不可达代码、常量折叠机会          |
+| `eliminateDeadCode(source, analysis)`   | 按分析结果做**文本级**死代码消除（需传入 analysis）      |
+| `precompileTemplate(template, options)` | AOT 预编译：**返回编译后的渲染函数代码**，再做文本级优化 |
+
+### 未从包入口导出、无调用方（预留 / 未完成功能）
+
+| 模块                                   | 行数 | 说明                                                                                                                                                      |
+| -------------------------------------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `optimizations/treeShaking.ts`         | 453  | `analyzeTreeShakingOpportunities` / `applyTreeShakingOptimizations` / `treeShakeTemplate(source, ast, options)`；实测可用，但无导出入口、无调用方、无测试 |
+| `optimizations/staticAnalysis.ts`      | 544  | `performStaticAnalysis` / `formatStaticAnalysisResult`；实测对含绑定与指令的模板返回空结果，实现尚不完整                                                  |
+| `optimizations/incremental-compile.ts` | 519  | `IncrementalCompiler` / `incrementalCompile` / `getIncrementalCompiler` / `clearIncrementalCache`                                                         |
+
+> **处置建议**：若需启用其中能力，应「显式从 `src/index.ts` 导出 + 补契约测试 + 更新本文档」；
+> 否则应视为**未完成功能**，不要在对外材料中声称已支持。
+
 ## CompilerOptions
 
 `CompilerOptions` 是编译器的完整配置接口，继承自 `ParserOptions`、`TransformOptions` 和 `CodegenOptions`。

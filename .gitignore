@@ -113,3 +113,7 @@ package-lock.json
 # 仅忽略 changeset 的本地临时产物：
 .changeset/*.tmp
 
+
+# 构建 / 测试工具产生的临时文件（每次 build / vitest 都会生成，勿提交）
+**/tsup.config.bundled_*.mjs
+vitest.config.ts.timestamp-*.mjs
