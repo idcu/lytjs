@@ -84,7 +84,11 @@ done
 
 pass=0
 fail=0
+env_suspect=0
 failed_names=()
+
+# 环境干扰特征：命中即标注「疑似环境」，避免把环境的账记到代码上
+ENV_PATTERN='safe-delete|SAFE_DELETE|ECONNREFUSED|Broker request timed out|Brokered program policy|broker\.sock'
 
 run() {
   local name="$1"
@@ -94,13 +98,28 @@ run() {
   echo "▶ $name"
   echo "────────────────────────────────────────────────────────"
   local start=$SECONDS
-  if "$@"; then
+  local logf
+  logf="$(mktemp -t vb)"
+
+  if "$@" >"$logf" 2>&1; then
     echo "✅ PASS  $name  ($((SECONDS - start))s)"
     pass=$((pass + 1))
+    rm -f "$logf"
   else
-    echo "❌ FAIL  $name  ($((SECONDS - start))s)"
+    local dur=$((SECONDS - start))
+    if grep -qE "$ENV_PATTERN" "$logf"; then
+      echo "⚠️  FAIL  $name  (${dur}s) —— **疑似环境干扰**（未跑到实质内容）"
+      env_suspect=$((env_suspect + 1))
+      echo "   命中的环境特征行："
+      grep -E "$ENV_PATTERN" "$logf" | head -2 | sed 's/^/     /'
+    else
+      echo "❌ FAIL  $name  (${dur}s)"
+    fi
+    echo "   尾部输出："
+    tail -8 "$logf" | sed 's/^/     /'
     fail=$((fail + 1))
     failed_names+=("$name")
+    rm -f "$logf"
   fi
 }
 
@@ -123,6 +142,9 @@ echo "════════════════════════�
 echo "基线验证结果： ✅ $pass 项通过 · ❌ $fail 项失败 · 耗时 $((SECONDS / 60))m$((SECONDS % 60))s"
 if [ "$fail" -gt 0 ]; then
   printf '失败项：%s\n' "${failed_names[*]}"
+  if [ "$env_suspect" -gt 0 ]; then
+    echo "其中 $env_suspect 项疑似环境干扰（safe-delete 守卫 / broker IPC），建议换一个不经该沙箱的终端重跑以确认。"
+  fi
 fi
 echo "════════════════════════════════════════════════════════"
 
