@@ -35,8 +35,10 @@ describe('SignalRenderer + 组件挂载', () => {
     renderer.render(container);
 
     expect(container.innerHTML).toContain('from-child');
-    // 占位元素会被组件内容替换掉
-    expect(container.querySelector('lyt-comp')).toBeNull();
+    // 占位元素 `lyt-comp` 是**容器**：mountComponent 把组件内容挂载到它内部，容器本身保留
+    //（重渲染时也靠它定位）。真正要保证的是：模板里写的 `<Child/>` **不应以字面量**留在 DOM。
+    expect(container.innerHTML).not.toContain('<Child');
+    expect(container.querySelector('lyt-comp strong')?.textContent).toContain('from-child');
 
     renderer.unmount();
   });

@@ -167,7 +167,7 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
   // FIX: P1-13 添加 runCleanups 到 import 列表
   lines.push(
     `import { effect, reconcileArray } from '@lytjs/reactivity';`,
-    `import { createTemplate, setText, setHTML, setAttribute, setProperty, setStyle, setClass, insert, remove, createEventHandler, onCleanup, runCleanups, reconcileArray } from '@lytjs/dom-runtime';`,
+    `import { createTemplate, getRealNode, setText, setHTML, setAttribute, setProperty, setStyle, setClass, insert, remove, createEventHandler, onCleanup, runCleanups, reconcileArray } from '@lytjs/dom-runtime';`,
   );
   // 用到组件挂载时才引入（@lytjs/renderer 提供运行时实现）
   if (usedComponents) {
@@ -198,7 +198,10 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
     // 解构子元素
     if (elementVars.length > 1) {
       const childVars = elementVars.slice(1).map((v) => v.varName);
-      lines.push(`  const [${childVars.join(', ')}] = ${rootVar}.children;`);
+      // createTemplate 返回的是 **TemplateWrapper**：它的 `.children` 只有 1 项（真实根元素），
+      // 直接解构会把下标整体错位（表现为后续元素为 undefined → "Cannot set properties of undefined"）。
+      // 因此必须先 getRealNode() 取到真实根元素再解构。
+      lines.push(`  const [${childVars.join(', ')}] = getRealNode(${rootVar}).children;`);
     }
 
     lines.push(`  insert(${rootVar}, _container);`);

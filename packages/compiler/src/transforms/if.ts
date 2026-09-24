@@ -94,7 +94,19 @@ export function transformIf(
 
     for (let i = chainStart; i < siblings.length; i++) {
       const sibling = siblings[i];
-      if (!sibling || sibling.type !== NodeTypes.ELEMENT) break;
+      if (!sibling) break;
+
+      // 跳过**纯空白**的 TEXT 节点（模板的缩进 / 换行）。
+      // 若不跳过：v-if 与 v-else 之间只因一个换行就会被判定为“链结束”，
+      // 于是 v-else 退化成独立的 `test=true` 分支而**恒渲染** ——
+      // 实际模板几乎都是多行书写的，这个缺陷影响面很大（由 slots demo 首次暴露）。
+      if (sibling.type === NodeTypes.TEXT) {
+        const text = (sibling as { content?: unknown }).content;
+        if (typeof text !== 'string' || !text.trim()) continue;
+        break;
+      }
+
+      if (sibling.type !== NodeTypes.ELEMENT) break;
 
       const sibElement = sibling as ElementNode;
       const sibIf = findDirective(sibElement, 'if');

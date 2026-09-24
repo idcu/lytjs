@@ -92,8 +92,10 @@ interface TemplateWrapperLike {
   firstChild: Node | null;
 }
 
-// 内部辅助函数：获取真实的 DOM 元素
-function getRealNode(el: unknown): Node | Element {
+// 获取真实的 DOM 元素（createTemplate 返回的是 TemplateWrapper，真实根元素在其 firstChild）
+// 导出：Signal codegen 会生成 `const [...] = getRealNode(root).children` —— 直接用
+// `root.children` 取到的是 wrapper 的子节点（只有 1 个真实根元素），会导致解构错位。
+export function getRealNode(el: unknown): Node | Element {
   const wrapper = el as TemplateWrapperLike;
   if ('content' in wrapper && 'firstChild' in wrapper) {
     // This is our TemplateWrapper!
