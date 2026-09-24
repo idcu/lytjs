@@ -20,30 +20,50 @@ cd "$(dirname "$0")/.." || exit 1
 # ── 探测包管理器 ──────────────────────────────────────────
 # 不同终端的 PATH 差异很大（nvm / conda / 官方安装 / agent 沙箱），
 # 不能硬编码 corepack —— 2026-09-24 首次在用户终端跑就因 `corepack: command not found` 全项失败。
-# 优先级：corepack pnpm@11.3.0（锁版本）> 直接 pnpm > node 同目录的 corepack。
+# 优先级：corepack(PATH) > corepack(node 同目录) > 全局 pnpm（最后手段，见下方预检）。
 export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 
+# 项目声明 `packageManager: pnpm@11.3.0`，因此**优先能锁版本的方式**（corepack），
+# 最后才回退全局 pnpm —— 2026-09-24 第二次踩坑：全局 pnpm（新版）报
+#   "Cannot verify the identity of the @pnpm/exe.darwin-x64 native binary:
+#    it is missing from pnpm-lock.yaml"
+# 导致 6 项在 1s 内全红；改由 corepack 提供 pnpm@11.3.0 即可。
 PNPM=()
+node_path="$(command -v node 2>/dev/null || true)"
+
 if command -v corepack >/dev/null 2>&1; then
   PNPM=(corepack pnpm@11.3.0)
+elif [ -n "$node_path" ] && [ -x "$(dirname "$node_path")/corepack" ]; then
+  PNPM=("$(dirname "$node_path")/corepack" pnpm@11.3.0)
 elif command -v pnpm >/dev/null 2>&1; then
   PNPM=(pnpm)
-else
-  node_path="$(command -v node 2>/dev/null || true)"
-  if [ -n "$node_path" ] && [ -x "$(dirname "$node_path")/corepack" ]; then
-    PNPM=("$(dirname "$node_path")/corepack" pnpm@11.3.0)
-  fi
+  echo "⚠️  未找到 corepack，回退到全局 pnpm（可能与项目声明的 pnpm@11.3.0 版本不同）。"
 fi
 
 if [ ${#PNPM[@]} -eq 0 ]; then
-  echo "❌ 找不到 pnpm 或 corepack。请先准备其一，例如："
-  echo "     npm i -g pnpm@11.3.0"
-  echo "   或确认 node 已在 PATH（node -v）后再试（corepack 通常随 node 提供）。"
+  echo "❌ 找不到 corepack 或 pnpm。请准备其一："
+  echo "     corepack enable          （corepack 通常随 node 提供）"
+  echo "     或直接安装：npm i -g pnpm@11.3.0"
   exit 127
 fi
 
 echo "包管理器：${PNPM[*]}"
 echo "node：$(node -v 2>/dev/null || echo '未知')"
+
+# ── 预检：避免 6 项重复报同一个环境错误 ──
+if ! "${PNPM[@]}" -v >/dev/null 2>&1; then
+  echo ""
+  echo "❌ 包管理器自检失败（下面是它的原始输出）："
+  "${PNPM[@]}" -v 2>&1 | sed 's/^/   /'
+  echo ""
+  echo "常见原因：全局 pnpm 的新版完整性校验（@pnpm/exe 不在 pnpm-lock.yaml）。"
+  echo "修复建议（任选其一）："
+  echo "  1) 启用 corepack 以使用项目声明的 pnpm@11.3.0：  corepack enable"
+  echo "  2) 直接用 node 自带的 corepack（本脚本已尝试）："
+  echo "       \$(dirname \$(command -v node))/corepack enable pnpm"
+  exit 127
+fi
+echo "pnpm：$("${PNPM[@]}" -v 2>/dev/null)"
 
 SKIP_COV=0
 for arg in "$@"; do
