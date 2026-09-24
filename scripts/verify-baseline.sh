@@ -52,18 +52,24 @@ echo "node：$(node -v 2>/dev/null || echo '未知')"
 
 # ── 预检：避免 6 项重复报同一个环境错误 ──
 if ! "${PNPM[@]}" -v >/dev/null 2>&1; then
-  echo ""
-  echo "❌ 包管理器自检失败（下面是它的原始输出）："
-  "${PNPM[@]}" -v 2>&1 | sed 's/^/   /'
-  echo ""
-  echo "常见原因：全局 pnpm 的新版完整性校验（@pnpm/exe 不在 pnpm-lock.yaml）。"
-  echo "修复建议（任选其一）："
-  echo "  1) 启用 corepack 以使用项目声明的 pnpm@11.3.0：  corepack enable"
-  echo "  2) 直接用 node 自带的 corepack（本脚本已尝试）："
-  echo "       \$(dirname \$(command -v node))/corepack enable pnpm"
-  exit 127
+  # 兜底：新版 pnpm 会对原生二进制做完整性校验，而 pnpm 自身的 @pnpm/exe
+  # 不在项目的 pnpm-lock.yaml 里 ⇒ 直接报错。关掉该校验即可继续。
+  if "${PNPM[@]}" --config.verifyDepsBeforeRun=false -v >/dev/null 2>&1; then
+    echo "⚠️  包管理器自检告警，已自动追加 --config.verifyDepsBeforeRun=false 继续"
+    PNPM+=("--config.verifyDepsBeforeRun=false")
+  else
+    echo ""
+    echo "❌ 包管理器自检失败（下面是它的原始输出）："
+    "${PNPM[@]}" -v 2>&1 | sed 's/^/   /'
+    echo ""
+    echo "常见原因：全局 pnpm 的新版完整性校验（@pnpm/exe 不在 pnpm-lock.yaml）。"
+    echo "推荐修复（直接对齐项目声明的 pnpm@11.3.0）："
+    echo "     npm i -g corepack && corepack enable"
+    echo "  然后重跑本脚本。备选：npm i -g pnpm@11.3.0"
+    exit 127
+  fi
 fi
-echo "pnpm：$("${PNPM[@]}" -v 2>/dev/null)"
+echo "pnpm：$(pnpm -v 2>/dev/null || "${PNPM[@]}" -v 2>/dev/null)"
 
 SKIP_COV=0
 for arg in "$@"; do
