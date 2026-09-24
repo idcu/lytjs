@@ -30,11 +30,17 @@ export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 # 导致 6 项在 1s 内全红；改由 corepack 提供 pnpm@11.3.0 即可。
 PNPM=()
 node_path="$(command -v node 2>/dev/null || true)"
+# npm 的全局目录可能是自定义的（本机为 /Volumes/Repos/npm/global），其 bin **不在 PATH**，
+# 于是 `npm i -g corepack` 装好了却仍 `command not found` —— 需要显式去该目录找。
+npm_bin="$(npm prefix -g 2>/dev/null || true)/bin"
 
 if command -v corepack >/dev/null 2>&1; then
   PNPM=(corepack pnpm@11.3.0)
 elif [ -n "$node_path" ] && [ -x "$(dirname "$node_path")/corepack" ]; then
   PNPM=("$(dirname "$node_path")/corepack" pnpm@11.3.0)
+elif [ -n "$npm_bin" ] && [ -x "$npm_bin/corepack" ]; then
+  PNPM=("$npm_bin/corepack" pnpm@11.3.0)
+  echo "ℹ️  使用 npm 全局目录中的 corepack：$npm_bin/corepack"
 elif command -v pnpm >/dev/null 2>&1; then
   PNPM=(pnpm)
   echo "⚠️  未找到 corepack，回退到全局 pnpm（可能与项目声明的 pnpm@11.3.0 版本不同）。"
