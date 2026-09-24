@@ -97,6 +97,54 @@ describe('SSR 端到端（renderVaporToString）', () => {
     expect(html).toContain('display:none');
   });
 
+  it('组件应被真正渲染（不再输出 <Child> 非法标签）', async () => {
+    const html = await ssr('<div><Child/></div>', {
+      Child: {
+        name: 'Child',
+        setup: () => () => ({ tag: 'strong', props: null, children: 'from-child' }),
+      },
+    });
+    expect(html).toContain('<strong>from-child</strong>');
+    expect(html).not.toContain('<Child');
+  });
+
+  it('组件的 props（静态 + :bind）应传入', async () => {
+    const html = await ssr('<Child label="hi" :n="num" />', {
+      num: 7,
+      Child: {
+        name: 'Child',
+        setup: (p: Record<string, unknown>) => () => ({
+          tag: 'em',
+          props: null,
+          children: String(p.label) + ':' + String(p.n),
+        }),
+      },
+    });
+    expect(html).toContain('<em>hi:7</em>');
+  });
+
+  it('组件的默认插槽应渲染出来', async () => {
+    const html = await ssr('<Box><b>slot-content</b></Box>', {
+      Box: {
+        name: 'Box',
+        setup: (_p: unknown, ctx: { slots: { default?: () => unknown } }) => () => ({
+          tag: 'div',
+          props: { class: 'box' },
+          children: ctx.slots.default ? ctx.slots.default() : null,
+        }),
+      },
+    });
+    expect(html).toContain('slot-content');
+  });
+
+  it('只有 template 未预编译的组件应降级为空（不输出非法标签）', async () => {
+    const html = await ssr('<div><Tpl/></div>', {
+      Tpl: { name: 'Tpl', template: '<span>t</span>' },
+    });
+    expect(html).not.toContain('<Tpl');
+    expect(html).toContain('<div>');
+  });
+
   it('插值仍应转义', async () => {
     const html = await ssr('<div>{{ msg }}</div>', { msg: '<x>' });
     expect(html).toContain('&lt;x&gt;');

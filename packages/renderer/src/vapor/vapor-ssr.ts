@@ -3,7 +3,12 @@
 // Phase 1.3: 服务端渲染 Vapor 组件
 
 import type { VaporComponentDefinition } from './vapor-app';
-import { sanitizeHTML, normalizeClass, normalizeStyle } from '@lytjs/dom-runtime';
+import {
+  sanitizeHTML,
+  normalizeClass,
+  normalizeStyle,
+  renderComponentVNode,
+} from '@lytjs/dom-runtime';
 import { compile } from '@lytjs/compiler';
 
 // ============================================================
@@ -233,18 +238,26 @@ function renderTemplateToHTML(compiledCode: string, ctx: Record<string, unknown>
       'sanitizeHTML',
       'normalizeClass',
       'normalizeStyle',
+      'renderComponentVNode',
       `${compiledCode}\n; return render(_ctx);`,
     ) as (
       context: Record<string, unknown>,
       sanitize: (html: string) => string,
       normClass: (v: unknown) => string,
       normStyle: (v: unknown) => string,
+      renderComp: (c: unknown, p: unknown, s: unknown) => unknown,
     ) => unknown;
 
     // 产物是 new Function 执行的、不能 import，故把运行时依赖**注入**：
     // 与客户端共用同一份 sanitizeHTML / normalizeClass / normalizeStyle，
     // 避免安全与序列化逻辑出现两份实现（会漂移）。
-    const result = executor(ctx, sanitizeHTML, normalizeClass, normalizeStyle);
+    const result = executor(
+      ctx,
+      sanitizeHTML,
+      normalizeClass,
+      normalizeStyle,
+      renderComponentVNode,
+    );
     if (typeof result === 'string') return result;
     if (result === null || result === undefined) return '';
     return String(result);

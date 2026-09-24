@@ -115,7 +115,16 @@ export function generateSSR(ast: RootNode, _options: CodegenOptions = {}): Codeg
   parts.push(`  if (typeof vnode === 'string') return vnode;\n`);
   parts.push(`  if (vnode == null) return '';\n`);
   parts.push(`  if (Array.isArray(vnode)) return vnode.map(renderToString).join('');\n`);
-  parts.push(`  const { tag, props, children } = vnode;\n`);
+  // 组件 vnode（type 为对象/函数）⇒ 先渲染成 vnode 再递归序列化。
+  // renderComponentVNode 由执行方注入（与 sanitizeHTML 同一机制）。
+  parts.push(`  if (typeof vnode.type === 'object' || typeof vnode.type === 'function') {\n`);
+  parts.push(
+    `    return renderToString(renderComponentVNode(vnode.type, vnode.props, vnode.children));\n`,
+  );
+  parts.push(`  }\n`);
+  // 兼容两种形态：codegen 生成的内部对象用 tag；真 vnode 用 type。
+  parts.push(`  const tag = vnode.tag !== undefined ? vnode.tag : vnode.type;\n`);
+  parts.push(`  const { props, children } = vnode;\n`);
   parts.push(`  let html = '<' + tag;\n`);
   parts.push(`  if (props) {\n`);
   parts.push(`    for (const [key, value] of Object.entries(props)) {\n`);
@@ -257,11 +266,45 @@ function genSSRChildren(children: TemplateChildNode[]): string {
 // 生成 SSR 元素
 // ============================================================
 
+/**
+ * 组件在 SSR 下的渲染：`renderToString(renderComponentVNode(Comp, props, slots))`
+ *
+ * 组件从 `_ctx` 解析（与客户端一致）；props 支持静态属性与 `:bind`；
+ * 默认插槽即组件的 children（具名/作用域插槽见方案 4.3，后续补）。
+ */
+function genSSRComponent(element: ElementNode): string {
+  const compExpr = `_ctx.${element.tag}`;
+
+  const propsParts: string[] = [];
+  for (const prop of element.props) {
+    if (prop.type === NodeTypes.ATTRIBUTE) {
+      const v = prop.value ? JSON.stringify(prop.value.content) : 'true';
+      propsParts.push(`${JSON.stringify(prop.name)}:${v}`);
+    } else if (prop.type === NodeTypes.DIRECTIVE && prop.name === 'bind') {
+      const arg = prop.arg ? (prop.arg as SimpleExpressionNode).content : undefined;
+      const exp = prop.exp ? (prop.exp as SimpleExpressionNode).content : undefined;
+      if (arg && exp) propsParts.push(`${JSON.stringify(arg)}:${px(exp)}`);
+    }
+  }
+  const propsCode = propsParts.length ? `{${propsParts.join(',')}}` : 'null';
+
+  const defaultSlot = element.children.length ? genSSRChildren(element.children) : '';
+  const slotsCode = defaultSlot ? `{default:()=>${defaultSlot}}` : 'null';
+
+  return `renderToString(renderComponentVNode(${compExpr},${propsCode},${slotsCode}))`;
+}
+
 function genSSRElement(element: ElementNode): string {
   // <slot> 出口：SSR 下优先渲染父组件提供的插槽内容，否则渲染回退内容。
   // 此前会把 <slot> 当成普通标签输出成 `<slot ...></slot>` —— 这不是合法 HTML。
   if ((element as { tagType?: number }).tagType === ElementTypes_SLOT) {
     return genSSRSlotOutlet(element);
+  }
+
+  // 组件：此前被当普通标签输出成 `<Child></Child>`（非法 HTML）。
+  // 现改为走 renderComponentVNode（由执行方注入），默认插槽即其 children。
+  if ((element as { tagType?: number }).tagType === ElementTypes.COMPONENT) {
+    return genSSRComponent(element);
   }
 
   const tag = element.tag;

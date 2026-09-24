@@ -28,6 +28,65 @@ const DANGEROUS_SELF_CLOSING_TAG_NAMES = `${DANGEROUS_TAG_NAMES}|input|textarea|
  * @internal 仅供内部使用，不作为公共 API 暴露
  */
 /**
+ * SSR：把**组件**渲染成 vnode（供 SSR 产物序列化为 HTML）。
+ *
+ * 首期只支持**已编译的组件**（`setup` 返回 render 函数，或组件带 `render`）——
+ * SSR 产物由 `new Function` 执行、不含编译器，无法处理 `template` 字符串。
+ * 带 `template` 且未预编译者**显式降级**（返回空），并给出开发期警告，
+ * 绝不静默输出 `<Child>` 这类非法标签。
+ */
+export function renderComponentVNode(comp: unknown, props: unknown, slots: unknown): unknown {
+  const c = comp as
+    | {
+        setup?: (props: unknown, ctx: unknown) => unknown;
+        render?: (ctx: unknown) => unknown;
+        template?: string;
+        name?: string;
+      }
+    | undefined;
+  if (!c) return null;
+
+  const ctx = {
+    slots: (slots ?? {}) as Record<string, (scope?: unknown) => unknown>,
+    attrs: props,
+  };
+  let renderFn: ((ctx: unknown) => unknown) | undefined;
+
+  if (typeof c.setup === 'function') {
+    const ret = c.setup((props ?? {}) as Record<string, unknown>, ctx);
+    if (typeof ret === 'function') {
+      // 约定：setup 返回函数即 render
+      renderFn = ret as (ctx: unknown) => unknown;
+    } else if (ret && typeof ret === 'object') {
+      // setup 返回状态对象：调用组件自带的 render，并把状态作为 ctx
+      const state = ret as Record<string, unknown>;
+      if (typeof c.render === 'function') {
+        renderFn = (innerCtx: unknown) => c.render!({ ...(innerCtx as object), ...state });
+      }
+    }
+  } else if (typeof c.render === 'function') {
+    renderFn = (innerCtx: unknown) => c.render!(innerCtx);
+  }
+
+  if (!renderFn) {
+    if (typeof c.template === 'string') {
+      // 开发期警告：SSR 首期不编译 template（见 docs/design/ssr-component-slots.md 3.2）
+      if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+        console.warn(
+          `[LytJS] SSR: 组件「${c.name ?? 'anonymous'}」只有 template、未预编译，SSR 下无法渲染。` +
+            '请用 defineXxx 预编译，或改用具名 render/setup 返回渲染函数。',
+        );
+      }
+      return null;
+    }
+    return null;
+  }
+
+  // 调用 render 一次（SSR 无响应式追踪，无需预热）
+  return renderFn(ctx);
+}
+
+/**
  * 归一化 class 值（Vue 语义）：
  * - string 原样
  * - array 递归展开并过滤空值
