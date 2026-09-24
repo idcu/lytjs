@@ -27,7 +27,10 @@ const DANGEROUS_SELF_CLOSING_TAG_NAMES = `${DANGEROUS_TAG_NAMES}|input|textarea|
  *
  * @internal 仅供内部使用，不作为公共 API 暴露
  */
-function sanitizeHTML(html: string): string {
+// 导出：SSR 产物也需要它 —— v-html 在 SSR 下必须与客户端 setHTML **同一套净化逻辑**，
+// 否则两端输出不一致（ hydration 不匹配 ）；SSR 产物用 new Function 执行、不能 import，
+// 故由执行方把它作为参数注入。
+export function sanitizeHTML(html: string): string {
   // FIX: P2-52 添加最大迭代次数限制，防止无限循环攻击
   const MAX_ITERATIONS = 10;
   let iterations = 0;

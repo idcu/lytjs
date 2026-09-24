@@ -295,10 +295,13 @@ function genSSRElement(element: ElementNode): string {
       if (prop.name === 'html') {
         const expContent = prop.exp ? (prop.exp as SimpleExpressionNode).content : undefined;
         if (expContent) {
-          // FIX: P0-1 v-html SSR 模式下需要转义输出，防止 XSS
+          // v-html 的语义是**输出原始 HTML**（不是转义成文本）。
+          // 此前误用 escapeHtml —— 会把 `<b>x</b>` 输出成字面文本，v-html 完全失效，
+          // 且与客户端 setHTML（sanitizeHTML + innerHTML）行为不一致 ⇒ SSR 与 hydration 对不上。
+          // 现在与客户端统一走 sanitizeHTML：保留 HTML 结构、移除危险内容。
           directiveChildren =
             (directiveChildren ? directiveChildren + ' + ' : '') +
-            `escapeHtml(String(${px(expContent)}))`;
+            `sanitizeHTML(String(${px(expContent)}))`;
         }
       }
       // v-text: output escaped text content as children (not as attribute)
