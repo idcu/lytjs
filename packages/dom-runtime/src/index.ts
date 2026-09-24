@@ -27,6 +27,63 @@ const DANGEROUS_SELF_CLOSING_TAG_NAMES = `${DANGEROUS_TAG_NAMES}|input|textarea|
  *
  * @internal 仅供内部使用，不作为公共 API 暴露
  */
+/**
+ * 归一化 class 值（Vue 语义）：
+ * - string 原样
+ * - array 递归展开并过滤空值
+ * - object 取值为真的键名
+ *
+ * ⚠️ 此前两端都直接用 `String(value)` —— 数组/对象会得到 `[object Object]`，
+ * 导致 `:class="['a',{'b':ok}]"` 这类**常见写法**完全失效（客户端与 SSR 都错）。
+ * 现由客户端 setClass 与 SSR 产物**共用同一份**实现（SSR 通过参数注入）。
+ */
+export function normalizeClass(value: unknown): string {
+  const unwrap = (v: unknown): unknown => unwrapValue(v);
+  const raw = unwrap(value);
+  if (raw === null || raw === undefined || raw === false) return '';
+  if (typeof raw === 'string') return raw;
+  if (Array.isArray(raw)) {
+    return raw
+      .map((item) => normalizeClass(item))
+      .filter((item) => item !== '')
+      .join(' ');
+  }
+  if (typeof raw === 'object') {
+    return Object.entries(raw as Record<string, unknown>)
+      .filter(([, v]) => Boolean(unwrap(v)))
+      .map(([k]) => k)
+      .join(' ');
+  }
+  return String(raw);
+}
+
+/**
+ * 归一化 style 值：string 原样；object → `key:value;...`（camelCase → kebab-case，数值补 px）。
+ * 与 normalizeClass 同理，两端共用（此前对象 style 在 SSR/客户端都会输出 `[object Object]`）。
+ */
+export function normalizeStyle(style: unknown): string {
+  const raw = unwrapValue(style);
+  if (raw === null || raw === undefined || raw === false) return '';
+  if (typeof raw === 'string') return raw;
+  if (typeof raw !== 'object') return String(raw);
+
+  const parts: string[] = [];
+  for (const [key, val] of Object.entries(raw as Record<string, unknown>)) {
+    const cssKey = camelToKebab(key);
+    const unwrappedVal = unwrapValue(val);
+    if (
+      typeof unwrappedVal === 'number' &&
+      typeof isNumericStyleProperty === 'function' &&
+      isNumericStyleProperty(cssKey)
+    ) {
+      parts.push(`${cssKey}:${unwrappedVal}px`);
+    } else {
+      parts.push(`${cssKey}:${unwrappedVal}`);
+    }
+  }
+  return parts.join(';');
+}
+
 // 导出：SSR 产物也需要它 —— v-html 在 SSR 下必须与客户端 setHTML **同一套净化逻辑**，
 // 否则两端输出不一致（ hydration 不匹配 ）；SSR 产物用 new Function 执行、不能 import，
 // 故由执行方把它作为参数注入。
@@ -471,11 +528,12 @@ export function setProperty(el: unknown, key: string, value: unknown): void {
 export function setStyle(el: unknown, style: unknown): void {
   if (!isBrowser) return;
   const realNode = getRealNode(el) as HTMLElement;
-  if (typeof style === 'string') {
+  const rawStyle = unwrapValue(style);
+  if (typeof rawStyle === 'string') {
     // 增量更新：值相同时跳过
-    if (realNode.style.cssText === style) return;
-    realNode.style.cssText = style;
-  } else if (style !== null && typeof style === 'object') {
+    if (realNode.style.cssText === rawStyle) return;
+    realNode.style.cssText = rawStyle;
+  } else if (rawStyle !== null && typeof rawStyle === 'object') {
     const styleObj = style as Record<string, string | number>;
     for (const [key, val] of Object.entries(styleObj)) {
       // FIX: P1-54 使用 style.setProperty 替代直接属性赋值，
@@ -511,7 +569,8 @@ function camelToKebab(str: string): string {
 export function setClass(el: unknown, value: unknown): void {
   if (!isBrowser) return;
   const realNode = getRealNode(el) as Element;
-  const realValue = String(unwrapValue(value));
+  // 归一化：数组 / 对象形式的 class 需要序列化（此前 String(value) 会得到 [object Object]）
+  const realValue = normalizeClass(value);
   // 增量更新：值相同时跳过
   if (realNode.getAttribute('class') === realValue) return;
   realNode.setAttribute('class', realValue);

@@ -3,6 +3,7 @@
 // Phase 1.3: 服务端渲染 Vapor 组件
 
 import type { VaporComponentDefinition } from './vapor-app';
+import { sanitizeHTML, normalizeClass, normalizeStyle } from '@lytjs/dom-runtime';
 import { compile } from '@lytjs/compiler';
 
 // ============================================================
@@ -67,6 +68,8 @@ export type PrefetchFunction = () => Promise<Record<string, unknown>>;
  * console.log(result.html); // '<div>Hello SSR</div>'
  * ```
  */
+// 导出：SSR 渲染入口（此前未导出，导致无法做端到端验证 —— 上一批的 v-html 修复
+// 正是只测了『产物字符串』、没走这条真实链路，才漏掉了执行器未注入 sanitizeHTML）。
 export async function renderVaporToString(
   component: VaporComponentDefinition,
   props: Record<string, unknown> = {},
@@ -225,11 +228,23 @@ function renderTemplateToHTML(compiledCode: string, ctx: Record<string, unknown>
   try {
     // 编译产物是 `function render(_ctx) {...}`，绑定已在前缀化阶段写成 `_ctx.xxx`，
     // 因此可以直接求值（此前需要 `with (_ctx)` 兜底未前缀化的裸标识符）。
-    const executor = new Function('_ctx', `${compiledCode}\n; return render(_ctx);`) as (
+    const executor = new Function(
+      '_ctx',
+      'sanitizeHTML',
+      'normalizeClass',
+      'normalizeStyle',
+      `${compiledCode}\n; return render(_ctx);`,
+    ) as (
       context: Record<string, unknown>,
+      sanitize: (html: string) => string,
+      normClass: (v: unknown) => string,
+      normStyle: (v: unknown) => string,
     ) => unknown;
 
-    const result = executor(ctx);
+    // 产物是 new Function 执行的、不能 import，故把运行时依赖**注入**：
+    // 与客户端共用同一份 sanitizeHTML / normalizeClass / normalizeStyle，
+    // 避免安全与序列化逻辑出现两份实现（会漂移）。
+    const result = executor(ctx, sanitizeHTML, normalizeClass, normalizeStyle);
     if (typeof result === 'string') return result;
     if (result === null || result === undefined) return '';
     return String(result);

@@ -288,7 +288,18 @@ function genSSRElement(element: ElementNode): string {
         const expContent = prop.exp ? (prop.exp as SimpleExpressionNode).content : undefined;
         // FIX: P2-17 对 v-bind 属性值进行 HTML 转义，防止 XSS 攻击
         if (argContent && expContent) {
-          propParts.push(`' ${argContent}="' + escapeHtml(String(${px(expContent)})) + '"'`);
+          // class / style 需要**归一化**：数组与对象形式（`:class="['a',{'b':ok}]"`）
+          // 若直接 String(...) 会得到 `[object Object]` —— 客户端与 SSR 曾都有此问题。
+          // 现两端共用 dom-runtime 的 normalizeClass / normalizeStyle（SSR 由执行方注入）。
+          let valueExpr: string;
+          if (argContent === 'class') {
+            valueExpr = `normalizeClass(${px(expContent)})`;
+          } else if (argContent === 'style') {
+            valueExpr = `normalizeStyle(${px(expContent)})`;
+          } else {
+            valueExpr = `String(${px(expContent)})`;
+          }
+          propParts.push(`' ${argContent}="' + escapeHtml(${valueExpr}) + '"'`);
         }
       }
       // v-html: output raw HTML content as children (not as attribute)
