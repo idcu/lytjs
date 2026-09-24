@@ -43,6 +43,60 @@ describe('SSR 端到端（renderVaporToString）', () => {
     expect(html).toContain('color:red');
   });
 
+  it('v-model 应输出受控元素的当前值', async () => {
+    const html = await ssr('<input v-model="v" />', { v: 'hello' });
+    expect(html).toContain('value="hello"');
+  });
+
+  it('v-show 为假时应输出 display:none，为真时不输出', async () => {
+    expect(await ssr('<div v-show="ok">x</div>', { ok: false })).toContain('display:none');
+    expect(await ssr('<div v-show="ok">x</div>', { ok: true })).not.toContain('display:none');
+  });
+
+  it('v-show 与 :style 并存时应合并为**一个** style 属性', async () => {
+    const html = await ssr('<div v-show="ok" :style="s">x</div>', {
+      ok: false,
+      s: { color: 'red' },
+    });
+    // 只能出现一个 style，且含两段内容
+    expect(html.match(/style=/g)?.length).toBe(1);
+    expect(html).toContain('color:red');
+    expect(html).toContain('display:none');
+  });
+
+  it('静态 style + v-show 也应合并', async () => {
+    const html = await ssr('<div v-show="ok" style="color:red">x</div>', { ok: false });
+    expect(html.match(/style=/g)?.length).toBe(1);
+    expect(html).toContain('display:none');
+  });
+
+  it('v-model 应输出受控元素的当前值', async () => {
+    const html = await ssr('<input v-model="v" />', { v: 'hello' });
+    expect(html).toContain('value="hello"');
+  });
+
+  it('v-show 为假时应输出 display:none，为真时不输出', async () => {
+    expect(await ssr('<div v-show="ok">x</div>', { ok: false })).toContain('display:none');
+    expect(await ssr('<div v-show="ok">x</div>', { ok: true })).not.toContain('display:none');
+  });
+
+  it('v-show 与 :style 并存时应合并为**一个** style 属性', async () => {
+    const html = await ssr('<div v-show="ok" :style="s">x</div>', {
+      ok: false,
+      s: { color: 'red' },
+    });
+    // 只能出现一个 style，且含两段内容
+    expect(html.match(/style=/g)?.length).toBe(1);
+    expect(html).toContain('color:red');
+    expect(html).toContain('display:none');
+  });
+
+  it('静态 style + v-show 也应合并', async () => {
+    const html = await ssr('<div v-show="ok" style="color:red">x</div>', { ok: false });
+    expect(html.match(/style=/g)?.length).toBe(1);
+    expect(html).toContain('display:none');
+  });
+
   it('插值仍应转义', async () => {
     const html = await ssr('<div>{{ msg }}</div>', { msg: '<x>' });
     expect(html).toContain('&lt;x&gt;');

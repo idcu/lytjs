@@ -275,11 +275,37 @@ function genSSRElement(element: ElementNode): string {
   // 收集 v-html/v-text 内容以便在 children 区域渲染（而非属性）
   let directiveChildren: string | undefined;
 
+  // v-show 先扫一遍：它需要**合并进 style**，不能额外再输出一个 style 属性
+  // （HTML 里重复的 style 属性只有第一个生效，会让 v-show 失效）。
+  let showExpr: string | undefined;
+  for (const p of element.props) {
+    if (p.type === NodeTypes.DIRECTIVE && p.name === 'show') {
+      const e = p.exp ? (p.exp as SimpleExpressionNode).content : undefined;
+      if (e) showExpr = px(e);
+    }
+  }
+  // 是否存在 style 属性（静态 style 或 :style）——**预扫描**决定 v-show 的去向。
+  // 不能用循环中的动态标志：props 顺序不定，v-show 可能出现在 :style 之前，那样判断会失效
+  // （曾导致同时输出两个 style 属性 ⇒ 后者被浏览器忽略）。
+  const hasStyleAttr = element.props.some(
+    (p) =>
+      (p.type === NodeTypes.ATTRIBUTE && p.name === 'style') ||
+      (p.type === NodeTypes.DIRECTIVE &&
+        p.name === 'bind' &&
+        (p.arg as SimpleExpressionNode | undefined)?.content === 'style'),
+  );
+
   for (const prop of element.props) {
     if (prop.type === NodeTypes.ATTRIBUTE) {
       const name = prop.name;
-      const value = prop.value ? escapeHtml(prop.value.content) : '';
-      propParts.push(`' ${name}="${value}"'`);
+      if (name === 'style' && showExpr) {
+        // 静态 style + v-show：合并成一个属性
+        const base = prop.value ? escapeHtml(prop.value.content) : '';
+        propParts.push(`' style="${base}' + (${showExpr} ? '' : ';display:none') + '"'`);
+      } else {
+        const value = prop.value ? escapeHtml(prop.value.content) : '';
+        propParts.push(`' ${name}="${value}"'`);
+      }
     } else if (prop.type === NodeTypes.DIRECTIVE) {
       // 在 SSR 模式下，只处理 bind 指令（v-bind）
       // 跳过 v-on、v-model、v-show
@@ -295,7 +321,10 @@ function genSSRElement(element: ElementNode): string {
           if (argContent === 'class') {
             valueExpr = `normalizeClass(${px(expContent)})`;
           } else if (argContent === 'style') {
-            valueExpr = `normalizeStyle(${px(expContent)})`;
+            // v-show 为假时追加 display:none（与 :style 合并成一个属性）
+            valueExpr =
+              `normalizeStyle(${px(expContent)})` +
+              (showExpr ? ` + (${showExpr} ? '' : ';display:none')` : '');
           } else {
             valueExpr = `String(${px(expContent)})`;
           }
@@ -322,6 +351,22 @@ function genSSRElement(element: ElementNode): string {
           directiveChildren =
             (directiveChildren ? directiveChildren + ' + ' : '') +
             `escapeHtml(String(${px(expContent)}))`;
+        }
+      }
+
+      // v-model：SSR 下应输出受控元素的当前值（此前完全没处理 ⇒ 表单初始值丢失）
+      if (prop.name === 'model') {
+        const expContent = prop.exp ? (prop.exp as SimpleExpressionNode).content : undefined;
+        if (expContent && (tag === 'input' || tag === 'textarea' || tag === 'select')) {
+          propParts.push(`' value="' + escapeHtml(String(${px(expContent)})) + '"'`);
+        }
+      }
+
+      // v-show：只在**没有 style 属性**时才单独输出（有则已在上面合并进 style）
+      if (prop.name === 'show' && !hasStyleAttr) {
+        const expContent = prop.exp ? (prop.exp as SimpleExpressionNode).content : undefined;
+        if (expContent) {
+          propParts.push(`' style="' + (${px(expContent)} ? '' : 'display:none') + '"'`);
         }
       }
     }
