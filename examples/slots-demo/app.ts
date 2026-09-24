@@ -35,13 +35,12 @@ const DataList = {
     return () => {
       const slot = ctx.slots.default;
       if (!slot) return createVNode('ul', { class: 'list' }, null);
-      // 注意：槽函数返回的是**数组**；两次调用若直接放进数组会形成嵌套数组
-      //（children = [[li1],[li2]]），渲染器不会自动展平 ⇒ 必须展开。
-      const rows = [
-        ...((slot({ item: { id: 1, label: '第一条' } }) as unknown[]) ?? []),
-        ...((slot({ item: { id: 2, label: '第二条' } }) as unknown[]) ?? []),
-      ];
-      return createVNode('ul', { class: 'list' }, rows);
+      // 槽函数返回数组；两次调用直接组合即形成嵌套数组 [[li1],[li2]]。
+      // 框架会**自动展平**（vdom/normalizeChildren），调用方无需手动展开。
+      return createVNode('ul', { class: 'list' }, [
+        slot({ item: { id: 1, label: '第一条' } }) as never,
+        slot({ item: { id: 2, label: '第二条' } }) as never,
+      ]);
     };
   },
 };

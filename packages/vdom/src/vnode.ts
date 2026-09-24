@@ -431,6 +431,13 @@ function flattenChildren(children: unknown[]): unknown[] {
   for (const child of children) {
     if (!child) continue;
 
+    // 嵌套数组：例如「槽函数返回数组」后再组合成 children ⇒ [[a],[b]]。
+    // 若不展平，渲染器会静默丢掉整组节点（没有报错，最难排查）。
+    if (isArray(child)) {
+      flattened.push(...flattenChildren(child));
+      continue;
+    }
+
     // 检查是否为 Fragment vnode
     if (isObject(child) && 'type' in child && child.type === Fragment) {
       const fragmentChildren = (child as VNode).children;
@@ -456,8 +463,13 @@ export function normalizeChildren(vnode: VNode, children: VNodeChildren): void {
   if (isNullish(children)) {
     // 无 children
   } else if (isArray(children)) {
-    // FIX: P2-6 如果是 Fragment，扁平化嵌套的 children
-    if (vnode.type === Fragment) {
+    // 扁平化：
+    // - Fragment 一直都会展平（P2-6 既有行为）；
+    // - 其它元素**若存在嵌套数组**也要展平 —— 否则槽函数返回数组再组合成的
+    //   [[a],[b]] 会被静默丢弃（不渲染且无报错）。
+    // 为控制影响面：仅在「确实有嵌套数组」或「原本就是 Fragment」时才改写 children，
+    // 其余情况保持原样。
+    if (vnode.type === Fragment || children.some(isArray)) {
       const flattened = flattenChildren(children);
       vnode.children = flattened as VNodeChildren;
       type = ShapeFlags.ARRAY_CHILDREN;
