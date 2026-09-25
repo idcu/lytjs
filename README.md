@@ -20,16 +20,17 @@
 pnpm add @lytjs/core
 ```
 
-> ⚠️ **构建工具需替换编译期常量**（否则浏览器会报 `ReferenceError: __DEV__ is not defined`）。
-> 以 Vite 为例，在 `vite.config.js` 中：
+> ⚠️ **注意版本**：npm 上发布的是 **6.9.6**，本仓库当前为 `v7.0.0-dev`，**两者不是同一份代码**。
+> 想看本仓库的最新能力，请**从仓库跑**，见 [小白上手（基于仓库）](./docs/getting-started/for-beginners.md)。
+>
+> ⚠️ 若从 npm 安装，构建工具还需替换编译期常量（否则浏览器报
+> `ReferenceError: __DEV__ is not defined`）—— 以 Vite 为例：
 >
 > ```js
 > export default {
 >   define: { __DEV__: 'true', __PROD__: 'false', __TEST__: 'false' },
 > };
 > ```
->
-> 完整可跑步骤（含 5 个已知坑）见 [小白上手](./docs/getting-started/for-beginners.md)。
 
 ```typescript
 import { createApp, ref, computed } from '@lytjs/core';

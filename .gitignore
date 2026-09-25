@@ -119,4 +119,4 @@ package-lock.json
 vitest.config.ts.timestamp-*.mjs
 
 # demo 打包产物
-examples/slots-demo/bundle.js
+examples/*/bundle.js

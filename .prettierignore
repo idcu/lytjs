@@ -5,3 +5,4 @@ coverage
 pnpm-lock.yaml
 CHANGELOG.md
 .size-limit.json.tmp
+examples/*/bundle.js

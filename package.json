@@ -90,6 +90,7 @@
     "lighthouse:verify": "tsx scripts/lighthouse-runner.ts",
     "docs:api": "tsx scripts/gen-api-docs.ts",
     "check-all": "pnpm run check-build-order && pnpm run check-deps && pnpm run check-circular",
+    "link:workspace": "node scripts/link-workspace-packages.mjs",
     "verify:baseline": "bash scripts/verify-baseline.sh"
   },
   "devDependencies": {

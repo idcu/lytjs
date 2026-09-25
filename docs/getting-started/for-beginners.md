@@ -1,239 +1,180 @@
-# 小白上手：从零跑起 lytjs（约 10 分钟）
+# 小白上手：从**本仓库**跑起 lytjs（约 15 分钟）
 
-> 本指南的每条命令都**在真实环境跑过**（2026-09-25，`@lytjs/core@6.9.6`）。
-> 凡是"跑不通"的地方我都如实标注在「第 6 节 已知坑」，而不是假装顺利。
+> **为什么不直接 `npm i @lytjs/core`？**
+> npm 上发布的是 **6.9.6**（较旧），本仓库当前是 `v7.0.0-dev`，**两者不是同一份代码**。
+> 要让小白看到**本仓库的最新能力**，必须从仓库跑。
+>
+> 本文每一步都在 2026-09-25 **实跑验证过**（含最后的点击交互验证），文末附验证记录。
 
-## 0. 这是什么
+## 0. 你需要什么
 
-lytjs（`Lyt.js`）是一个**自研的前端框架**：`ref`/`computed` 响应式、`template` 模板、
-组件与插槽，另有 SSR 能力。它已发布到 npm，**照着下面做就能在浏览器里看到效果**。
+| 需要                     | 检查                           | 说明                                     |
+| ------------------------ | ------------------------------ | ---------------------------------------- |
+| Node.js ≥ 20             | `node -v`                      | 有就行                                   |
+| pnpm（由 corepack 提供） | `corepack --version`           | 本仓库声明 `packageManager: pnpm@11.3.0` |
+| 本仓库                   | `cd /Volumes/Data/lytjs/lytjs` | 路径按你的实际情况                       |
 
-适合谁：会一点点 JS / 前端，想**动手跑起来**再决定要不要深入的人。
-
-## 1. 前置条件
-
-| 需要         | 检查命令  | 说明                                               |
-| ------------ | --------- | -------------------------------------------------- |
-| Node.js ≥ 20 | `node -v` | 有就行，版本不苛求                                 |
-| npm 或 pnpm  | `npm -v`  | 下面用 **npm**（最省事，不涉及 corepack/版本对齐） |
-
-## 2. 五步跑起来
+## 1. 安装依赖并构建（约 5 分钟）
 
 ```bash
-# ① 建项目目录
-mkdir lytjs-try && cd lytjs-try
-npm init -y
+cd /Volumes/Data/lytjs/lytjs
 
-# ② 装依赖（框架 + 一个构建工具）
-npm i @lytjs/core vite
+# 本仓库声明了 pnpm@11.3.0，用 corepack 保证版本一致
+corepack pnpm@11.3.0 install
 
-# ③ 建页面骨架 index.html
-cat > index.html <<'EOF'
+# 构建全部 76 个包（产出各包 dist/，后续导入要用）
+corepack pnpm@11.3.0 run build
+```
+
+> 若找不到 `corepack`：先 `npm i -g corepack`，或用 `npx pnpm@11.3.0 ...` 代替。
+
+## 2. ★ 建立 `@lytjs/*` 链接（**最容易漏，漏了必然导入失败**）
+
+本仓库是 **private 聚合仓**：根目录**不依赖**任何子包，所以 `node_modules/@lytjs/` 是空的。
+在 `examples/` 里 `import '@lytjs/core-signal'` 会直接报"找不到模块"。
+
+仓库已提供脚本，**一条命令**解决：
+
+```bash
+node scripts/link-workspace-packages.mjs
+# 输出示例：[link-workspace] @lytjs 包 76 个 —— 新建链接 76，已存在 0（目录 node_modules/@lytjs）
+```
+
+（幂等，重复执行只会报"已存在 N"。）
+
+## 3. 写第一个页面
+
+新建 `examples/my-first/`（或直接用仓库里已有的 `examples/hello/`）。
+
+**① `examples/my-first/index.html`**
+
+```html
 <!doctype html>
-<html>
-  <head><meta charset="utf-8" /><title>lytjs 试跑</title></head>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>lytjs 第一个页面</title>
+  </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="/main.js"></script>
+    <script src="./bundle.js"></script>
   </body>
 </html>
-EOF
-
-# ④ 写入口 main.js
-cat > main.js <<'EOF'
-import { createApp, ref, computed } from '@lytjs/core';
-
-createApp({
-  setup() {
-    const count = ref(0);
-    const doubled = computed(() => count.value * 2);
-    return { count, doubled };
-  },
-  template: '<div>count = {{ count }} , doubled = {{ doubled }}</div>',
-}).mount('#app');
-EOF
 ```
 
-**⑤ 最关键的一步 —— 建 `vite.config.js`**（不建这步，浏览器里会直接报错，见第 6 节坑 1）：
-
-```bash
-cat > vite.config.js <<'EOF'
-import { defineConfig } from 'vite';
-
-export default defineConfig({
-  // lytjs 的产物引用了编译期常量 __DEV__ / __PROD__ / __TEST__，
-  // 不在构建时替换，浏览器运行会 ReferenceError。
-  define: {
-    __DEV__: 'true',
-    __PROD__: 'false',
-    __TEST__: 'false',
-  },
-});
-EOF
-```
-
-## 3. 打开看效果
-
-```bash
-npx vite          # 启动开发服务器，终端会打印一个 http://localhost:5173 之类的地址
-```
-
-浏览器打开该地址，应看到：
-
-```
-count = 0 , doubled = 0
-```
-
-> ⚠️ **务必用浏览器打开**。不要试图用 `node xxx.mjs` 或 jsdom 验证 ——
-> 框架按"浏览器环境"设计，非浏览器环境下渲染会静默为空（详见坑 3）。
-
-## 4. 改一改，感受响应式
-
-把 `main.js` 的模板改成带按钮（整段替换 `createApp({...})`）：
+**② `examples/my-first/main.js`** —— 注释里是 4 个"实测踩点"
 
 ```js
-createApp({
+// 踩点 1：支持 template 字符串的 createApp 来自 **@lytjs/core-signal**（不是 @lytjs/core）
+import { createApp, ref, computed } from '@lytjs/core-signal';
+
+const host = document.getElementById('app');
+
+const app = createApp({
   setup() {
     const count = ref(0);
-    const doubled = computed(() => count.value * 2);
-    return { count, doubled };
+
+    // 踩点 2：模板表达式只支持「简单属性路径」。
+    //   @click="count = count + 1" 会编译报错 ⇒ 请在 setup 里定义方法
+    const inc = () => {
+      count.value = count.value + 1;
+    };
+
+    // 踩点 3：同一元素内放多个插值会丢内容（已知缺陷）。
+    //   <p>{{ count }} / {{ doubled }}</p> 不可用 ⇒ 用 computed 拼好整串再绑一个插值
+    const summary = computed(() => 'count = ' + count.value + ' , doubled = ' + count.value * 2);
+
+    return { count, summary, inc };
   },
   template: `
     <div>
-      <button @click="count = count + 1">+1</button>
-      <p>count = {{ count }}</p>
-      <p>doubled = {{ doubled }}</p>
+      <button @click="inc">+1</button>
+      <p>{{ summary }}</p>
     </div>
   `,
-}).mount('#app');
+});
+
+// 踩点 4：mount() 返回 Promise，是**异步**的；不 await 会得到空白页且不报错
+app.mount(host).then(() => console.log('[demo] mounted'));
 ```
 
-刷新页面点按钮：`count` 与 `doubled` 会一起更新 —— 这就是响应式。
+## 4. 打包并在浏览器打开
 
-> 注意这里用 `@click="count = count + 1"`：**handler 里的赋值是允许的**，
-> 但 `:class` 之类的绑定**只支持简单属性路径**（坑 2）。
-
-## 5. 打包（可选）
+各包产物是带 `@lytjs/*` 裸导入的 ESM，需先打包成单文件（用仓库自带 esbuild）：
 
 ```bash
-npx vite build      # 产物在 dist/
+# 在仓库根目录
+./node_modules/.bin/esbuild examples/my-first/main.js \
+  --bundle --format=iife \
+  --define:__DEV__=true --define:__PROD__=false --define:__TEST__=false \
+  --outfile=examples/my-first/bundle.js
+
+# 起一个静态服务器
+cd examples/my-first && python3 -m http.server 8080
 ```
 
-实测：约 25 个模块 → 单文件 **~297 KB（gzip 84 KB）**，构建耗时 ~0.3s。
-
-## 6. 已知坑（都是实地踩到的，务必先看）
-
-### 坑 1：不配 `define` → 浏览器必然崩溃 ★最常见
-
-框架产物里有 **14 处** `__DEV__` 之类的编译期常量，**没有自带 fallback**。
-不替换时浏览器报：
+浏览器打开 `http://localhost:8080`，应看到：
 
 ```
-ReferenceError: __DEV__ is not defined
+[+1]  count = 0 , doubled = 0
 ```
 
-⇒ **照第 2 节第 ⑤ 步配好 `vite.config.js`** 即可（配上后产物里会被正确替换，已验证）。
+点按钮：`count` 与 `doubled` 一起变化。
 
-### 坑 2：模板表达式只支持「简单属性路径」
+> 那三个 `--define:*` **不能省**：各包产物引用了这些编译期常量，未替换会 `ReferenceError`。
 
-**支持的**：`{{ msg }}`、`{{ a.b }}`、`:title="obj.tip"`、`@click="count = count + 1"`
-
-**不支持的**（编译期就会报错，且报错里会给你替代写法）：
-
-```html
-:class="['a', { active: ok }]"
-<!-- ✗ -->
-:style="{ color: c }"
-<!-- ✗ -->
-:title="ok ? 'a' : 'b'"
-<!-- ✗ -->
-:title="a + '!'"
-<!-- ✗ -->
-```
-
-**替代写法**（在 `setup()` 里用 `computed` 算好再绑定）：
-
-```js
-setup() {
-  const ok = ref(true);
-  const cls = computed(() => ['a', { active: ok.value }]);
-  return { cls };
-}
-// 模板：<div :class="cls">
-```
-
-> 这是**已知的两端差异**：同样写法在 SSR 模式下可以直接用。
-> 统一两者已列入计划（方案见 `docs/design/signal-expression-support.md`）。
-
-### 坑 3：别用 Node / jsdom 验证
-
-框架按浏览器环境设计（`isBrowser = typeof document !== 'undefined' && typeof HTMLElement !== 'undefined'`）。
-在 Node 里直接跑会缺 `__DEV__` 而崩；jsdom 下即使绕过，渲染结果也可能为空。
-**就用浏览器验证。**
-
-### 坑 4：构建时可能看到 `eval` 警告
-
-`@lytjs/compiler` 里有一处 `direct eval`（用于常量折叠），Vite 会提示：
-
-```
-[EVAL] Use of direct `eval` function is strongly discouraged...
-```
-
-**不影响构建与运行**，但若你的站点有严格 CSP，需要留意（这也是坑 1 提到"编译期常量"的同源话题）。
-
-### 坑 5：根组件必须有 `template`
-
-根组件没有 `template` 会报：
-
-```
-[LytJS] Signal mode requires a template string in the root component.
-```
-
-⇒ 根组件请提供 `template` 字符串（子组件可另外讨论）。
-
-## 7. 想深入：在本仓库里开发
-
-上面是**用框架**。如果你想**改框架本身**（本仓库结构）：
+## 5. 想改框架本身？常用命令
 
 ```bash
-git clone <repo> && cd lytjs
-corepack pnpm@11.3.0 install        # 本仓库声明 packageManager: pnpm@11.3.0
-corepack pnpm@11.3.0 run build      # 构建 76 个包
-bash scripts/verify-baseline.sh --no-cov   # 一条命令跑完 6 项门禁
+corepack pnpm@11.3.0 exec vitest run packages/core-signal              # 跑单个包的测试
+corepack pnpm@11.3.0 exec vitest run packages/compiler packages/renderer
+bash scripts/verify-baseline.sh --no-cov    # 6 项门禁（build / type-check / lint / format / test…）
 ```
 
-**仓库结构速览**：
+**仓库地图**：
 
-| 目录                         | 内容                                                                      |
-| ---------------------------- | ------------------------------------------------------------------------- |
-| `packages/`                  | 76 个包（core / compiler / renderer / vdom / reactivity / component / …） |
-| `packages/common/packages/`  | 34 个通用子包（string / path / is / …）                                   |
-| `docs/`                      | 文档（`docs/api/` 是 API 参考，`docs/getting-started/` 是入门）           |
-| `docs/design/`               | **设计文档**（SSR 组件方案、Signal 表达式方案、会话交付清单）             |
-| `examples/slots-demo/`       | 插槽能力演示（可在浏览器打开）                                            |
-| `scripts/verify-baseline.sh` | 基线验证脚本（6 项门禁 + 环境干扰识别）                                   |
+| 目录                         | 内容                                                                       |
+| ---------------------------- | -------------------------------------------------------------------------- |
+| `packages/`                  | 76 个包。**先看** `core-signal`（Signal 应用入口）、`compiler`、`renderer` |
+| `packages/common/packages/`  | 34 个通用子包（string / path / is / error …）                              |
+| `examples/hello/`            | 最小可跑示例（与本文第 3 节同款）                                          |
+| `examples/slots-demo/`       | 插槽能力演示（具名 / 作用域 / v-for / v-if / v-model）                     |
+| `docs/api/`                  | API 参考（先看 `compiler.md`）                                             |
+| `docs/design/`               | 设计文档与**已知缺陷登记**（**建议先读**）                                 |
+| `scripts/verify-baseline.sh` | 基线验证脚本；`scripts/link-workspace-packages.mjs` 建包链接               |
 
-**改代码后的最小验证**：
+## 6. 已知限制（**都是从零跑一遍踩出来的**）
 
-```bash
-corepack pnpm@11.3.0 exec vitest run packages/compiler packages/renderer   # 核心包测试
-```
+| #   | 限制                         | 现象                                                                             | 当前应对                                                                                  |
+| --- | ---------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| 1   | **同元素多插值丢内容**（P0） | `<div>{{ a }} - {{ b }}</div>` 只剩 `b`                                          | 用 `computed` 拼好整串再绑一个插值；详见 `docs/design/known-issue-multi-interpolation.md` |
+| 2   | 模板表达式只支持简单属性路径 | `:class="['a',{b:ok}]"`、`:style="{...}"`、`@click="n = n + 1"` 均**编译报错**   | 在 `setup()` 里用 `computed`/方法算好再绑定（报错信息里也会给替代写法）                   |
+| 3   | 编译期常量需注入             | 不配 `--define`（或 vite 的 `define`）→ `ReferenceError: __DEV__ is not defined` | 见第 4 节的 `--define:*`                                                                  |
+| 4   | 用错包会**静默空白**         | `@lytjs/core` 的 `createApp` 不认 `template` 字符串                              | 用 **`@lytjs/core-signal`**                                                               |
 
-## 8. 下一步去哪
+> 另：打包时可能看到 `import "@lytjs/common-error"` 被 esbuild 判定为「无副作用」而忽略的**警告** ——
+> 目前不影响运行，但值得留意。
 
-1. **看 API**：`docs/api/`（先看 `compiler.md` 与 `core.md`）
-2. **看例子**：`examples/slots-demo/`（组件 + 具名插槽 + 作用域插槽 + v-for/v-if/v-model）
-3. **看设计**：`docs/design/`（了解哪些能力已实现、哪些是已知限制）
-4. **找坑**：本文第 6 节 + `~/.workbuddy/memory/` 里的工程日志（踩坑记录）
+## 7. 下一步
+
+1. **看示例**：`examples/slots-demo/`（插槽全能力）
+2. **看 API**：`docs/api/compiler.md`、`docs/api/core.md`
+3. **看设计与缺陷**：`docs/design/`（尤其 `known-issue-multi-interpolation.md`、
+   `signal-expression-support.md`、`ssr-component-slots.md`）
+4. **改代码**：改完跑 `corepack pnpm@11.3.0 exec vitest run <包路径>`
 
 ---
 
-**附：本指南的验证记录（2026-09-25）**
+## 附：本文的验证记录（2026-09-25）
 
-| 步骤                                         | 结果                                                           |
-| -------------------------------------------- | -------------------------------------------------------------- |
-| `npm i @lytjs/core vite`                     | ✅ `@lytjs/core@6.9.6` + `vite@8.3.1`                          |
-| `npm run build`（**未配 define**）           | ✅ 构建成功，但产物含 14 处未替换的 `__DEV__` ⇒ 运行必崩       |
-| Node 直接 import `@lytjs/core`               | ❌ `ReferenceError: __DEV__ is not defined`（**证实坑 1**）    |
-| 配上 `vite.config.js` 的 `define` 后重新构建 | ✅ 产物中 `__DEV__` 被正确替换（14 → 1 处残留为字符串）        |
-| 浏览器渲染                                   | ⚠️ **未在沙箱内验证**（无浏览器）；**请按第 3 节自行打开确认** |
+| 步骤                                         | 结果                                                                        |
+| -------------------------------------------- | --------------------------------------------------------------------------- |
+| `corepack pnpm@11.3.0 install` + `run build` | ✅ 76 包构建通过（另有基线脚本验证 6/6 全绿）                               |
+| `node scripts/link-workspace-packages.mjs`   | ✅ 新建链接 76；重复执行幂等（已存在 76）                                   |
+| esbuild 打包 `examples/hello`                | ✅ 698KB / ~120ms；产物中 `__DEV__` 已正确替换                              |
+| **渲染验证**（jsdom 执行打包产物）           | ✅ `<div><button>+1</button><p>count = 0 , doubled = 0</p></div>`           |
+| **点击交互验证**                             | ✅ 点 1 次 → `count = 1 , doubled = 2`；点 2 次 → `count = 2 , doubled = 4` |
+| 浏览器实机打开                               | ⚠️ 未在沙箱内验证（无浏览器），**请按第 4 节自行确认**                      |
+
+> 验证方式说明：沙箱无法起浏览器，故用 jsdom 执行**打包产物**做端到端检查。
+> 该方式已能证明"编译 → 打包 → 挂载 → 响应式更新"整条链路可用。
