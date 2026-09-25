@@ -553,13 +553,20 @@ const VALID_COMPONENT_NAME = /^[a-zA-Z][a-zA-Z0-9-]*$/;
 
 function validateExpression(exp: string | undefined, context: string): void {
   if (!exp) return;
-  // 允许：属性路径 / 数组 / 对象 / 拼接 / 三元 / 调用 / 索引 / 比较等常见表达式。
-  // 拒绝：语句分隔 `;`、箭头函数、`function`/`new`/`import`/`require`/`delete`/`throw`/`await`、
-  //       以及赋值（避免副作用与代码注入）。
-  if (DANGEROUS_EXPRESSION.test(exp)) {
+  // ⚠️ 仍保持**白名单**（只允许简单属性访问路径）。原因：Signal codegen 里有十余处
+  // 直接拼接 `` `_ctx.${exp}` ``（假定表达式就是属性路径），若放行数组/对象/三元等
+  // 表达式，会生成 `_ctx.['a','b']` 这类**语法错误的产物**（比"明确报错"更糟）。
+  //
+  // 已确认的缺陷与正确修法（**待专项**）：
+  //   `:class="['a',{b:ok}]"` / `:style="{color:c}"` / `:title="a+'!'"` 在 Signal 下不可用，
+  //   而 SSR **可以**（SSR 用 px()/prefixIdentifiers 处理表达式）⇒ 两端不一致。
+  //   修法：把那十余处 `_ctx.${exp}` 统一改为 `prefixIdentifiers(exp, locals)`，
+  //   并处理 v-for / 插槽等 locals 的传递。属架构级改动，宜单独立项。
+  if (!VALID_EXPRESSION.test(exp)) {
     throw new Error(
-      `[lytjs/compiler] Unsafe expression in ${context}: "${exp}". ` +
-        `Statements, arrow functions, declarations and assignments are not allowed in templates.`,
+      `[lytjs/compiler] Unsupported expression in ${context}: "${exp}". ` +
+        `Signal mode currently only supports simple property paths (e.g. \`a\` or \`a.b\`). ` +
+        `Expressions like arrays/objects/ternaries are not supported yet in signal mode.`,
     );
   }
 }
