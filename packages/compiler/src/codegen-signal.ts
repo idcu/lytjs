@@ -564,9 +564,15 @@ function validateExpression(exp: string | undefined, context: string): void {
   //   并处理 v-for / 插槽等 locals 的传递。属架构级改动，宜单独立项。
   if (!VALID_EXPRESSION.test(exp)) {
     throw new Error(
-      `[lytjs/compiler] Unsupported expression in ${context}: "${exp}". ` +
-        `Signal mode currently only supports simple property paths (e.g. \`a\` or \`a.b\`). ` +
-        `Expressions like arrays/objects/ternaries are not supported yet in signal mode.`,
+      `[lytjs/compiler] Unsupported expression in ${context}: "${exp}".\n` +
+        `  Signal mode currently only supports simple property paths (e.g. \`a\` or \`a.b\`).\n` +
+        `  Workaround: compute it in setup() and bind the result —\n` +
+        `    // setup()\n` +
+        `    const cls = computed(() => ['a', { active: ok.value }]);\n` +
+        `    return { cls };\n` +
+        `    <!-- template -->\n` +
+        `    <div :class="cls">…</div>\n` +
+        `  (SSR mode supports such expressions directly; unifying the two is tracked as a separate task.)`,
     );
   }
 }

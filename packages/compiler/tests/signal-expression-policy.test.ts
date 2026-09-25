@@ -59,6 +59,19 @@ describe('Signal 表达式 - 当前不支持（应明确报错，而非产出坏
     });
   }
 
+  it('不支持的表达式：报错信息应**给出可用替代写法**（而非只说"不支持"）', () => {
+    let msg = '';
+    try {
+      signal(`<div :class="['a','b']">x</div>`)();
+    } catch (e) {
+      msg = (e as Error).message;
+    }
+    expect(msg).toContain('Unsupported expression');
+    // 用户需要"然后怎么办"，而不只是"不能这么做"
+    expect(msg).toContain('Workaround');
+    expect(msg).toContain('computed');
+  });
+
   const dangerous = [
     ['语句分隔', `<div :title="a; alert(1)">x</div>`],
     ['箭头函数', `<div :title="() => 1">x</div>`],
