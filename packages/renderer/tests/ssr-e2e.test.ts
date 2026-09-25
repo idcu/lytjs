@@ -145,6 +145,36 @@ describe('SSR 端到端（renderVaporToString）', () => {
     expect(html).toContain('<div>');
   });
 
+  it('具名插槽应被分离传入（且不输出 <template> 标签）', async () => {
+    const html = await ssr('<Card><template #hd>HEAD</template>BODY</Card>', {
+      Card: {
+        name: 'Card',
+        setup: (_p: unknown, ctx: { slots: Record<string, () => unknown> }) => () => ({
+          tag: 'section',
+          props: null,
+          children: [ctx.slots.hd(), ctx.slots.default()],
+        }),
+      },
+    });
+    expect(html).toContain('<section>HEADBODY</section>');
+    expect(html).not.toContain('<template');
+    expect(html).not.toContain('#hd');
+  });
+
+  it('作用域插槽的参数应可访问（不能被前缀化成 _ctx.）', async () => {
+    const html = await ssr('<List v-slot="scope">{{ scope.item }}</List>', {
+      List: {
+        name: 'List',
+        setup: (_p: unknown, ctx: { slots: { default?: (s: unknown) => unknown } }) => () => ({
+          tag: 'ul',
+          props: null,
+          children: ctx.slots.default ? ctx.slots.default({ item: 'ROW' }) : null,
+        }),
+      },
+    });
+    expect(html).toContain('<ul>ROW</ul>');
+  });
+
   it('插值仍应转义', async () => {
     const html = await ssr('<div>{{ msg }}</div>', { msg: '<x>' });
     expect(html).toContain('&lt;x&gt;');

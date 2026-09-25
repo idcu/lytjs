@@ -16,6 +16,7 @@ import type {
   ElementNode,
   TextNode,
   InterpolationNode,
+  DirectiveNode,
   SimpleExpressionNode,
   CompoundExpressionNode,
   TemplateChildNode,
@@ -288,10 +289,58 @@ function genSSRComponent(element: ElementNode): string {
   }
   const propsCode = propsParts.length ? `{${propsParts.join(',')}}` : 'null';
 
-  const defaultSlot = element.children.length ? genSSRChildren(element.children) : '';
-  const slotsCode = defaultSlot ? `{default:()=>${defaultSlot}}` : 'null';
+  // 组件上的 `v-slot="scope"`：作用于**默认插槽**（作用域插槽）
+  let defaultScope: string | undefined;
+  for (const prop of element.props) {
+    if (prop.type === NodeTypes.DIRECTIVE && prop.name === 'slot' && !prop.arg && prop.exp) {
+      defaultScope = (prop.exp as SimpleExpressionNode).content;
+    }
+  }
+
+  // 分拣 children：`<template #name>` ⇒ 具名插槽；其余 ⇒ 默认插槽
+  const slotEntries: string[] = [];
+  const defaultChildren: TemplateChildNode[] = [];
+  for (const child of element.children) {
+    if (child && child.type === NodeTypes.ELEMENT) {
+      const el = child as ElementNode;
+      if (el.tagType === ElementTypes.TEMPLATE) {
+        const slotDir = el.props.find(
+          (pp) => pp.type === NodeTypes.DIRECTIVE && pp.name === 'slot',
+        ) as DirectiveNode | undefined;
+        const name = slotDir?.arg ? (slotDir.arg as SimpleExpressionNode).content : undefined;
+        if (name) {
+          const innerScope = slotDir?.exp
+            ? (slotDir.exp as SimpleExpressionNode).content
+            : undefined;
+          slotEntries.push(`${JSON.stringify(name)}:${genSSRSlotFn(el.children, innerScope)}`);
+          continue;
+        }
+      }
+    }
+    defaultChildren.push(child);
+  }
+  if (defaultChildren.length) {
+    slotEntries.unshift(`default:${genSSRSlotFn(defaultChildren, defaultScope)}`);
+  }
+  const slotsCode = slotEntries.length ? `{${slotEntries.join(',')}}` : 'null';
 
   return `renderToString(renderComponentVNode(${compExpr},${propsCode},${slotsCode}))`;
+}
+
+/**
+ * 生成插槽函数：`()=>…` 或 `(scope)=>…`
+ *
+ * 作用域插槽的关键：插槽参数必须作为 **locals** 参与前缀化，
+ * 否则 `scope.item` 会被误写成 `_ctx.scope.item`（作用域插槽完全失效）。
+ */
+function genSSRSlotFn(children: TemplateChildNode[], scopeParam?: string): string {
+  if (!scopeParam) return `()=>${genSSRChildren(children)}`;
+
+  const prev = ssrLocals;
+  ssrLocals = new Set<string>([...prev, scopeParam]);
+  const inner = genSSRChildren(children);
+  ssrLocals = prev;
+  return `(${scopeParam})=>${inner}`;
 }
 
 function genSSRElement(element: ElementNode): string {
