@@ -2,9 +2,16 @@
 // Hydration 完善模块
 // Phase 1.15-1.17: 全应用 Hydration、选择性 Hydration、水合错误恢复
 
-// 临时类型声明，解决循环依赖问题
+// 说明（2026-09 修正）：
+//   `App` 仍需占位 —— renderer 不能**运行时**依赖 @lytjs/core（会形成循环依赖）。
+//   `Component` 则**直接从 createApp 的签名里取**：这是**类型层查询**（编译期擦除，不产生运行时依赖），
+//   因此类型必然与 core 完全一致，不会出现"两套检查结论相反"的情况：
+//     · 写成 `unknown`              ⇒ tsc 报 TS2345（createApp(component) 类型不符）
+//     · 压制成 @ts-expect-error     ⇒ tsup DTS 报 TS2578（指令多余）
+//     · 取 createApp 的参数类型      ⇒ 两者都通过 ✅
 type App = unknown;
-type Component = unknown;
+
+type Component = Parameters<typeof import('@lytjs/core').createApp>[0];
 import { warn } from '@lytjs/common-error';
 
 // ============================================================

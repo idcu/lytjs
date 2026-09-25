@@ -532,20 +532,6 @@ function processVNodeCallProps(
 // FIX: P1-1~3 Signal 模式代码注入防护 - 表达式白名单验证
 const VALID_EXPRESSION = /^[a-zA-Z_$][a-zA-Z0-9_$]*(\.([a-zA-Z_$][a-zA-Z0-9_$]*))*$/;
 
-/**
- * ⚠️ 安全策略修订（2026-09）——原因：
- * 原实现把 `v-bind` 的表达式限制为「简单属性访问路径」（`a.b.c`），于是
- *   `:class="['a',{active:ok}]"` / `:style="{color:c}"` / `:title="a+'!'"` / `:title="ok?'a':'b'"`
- * 这些**极常见**的写法在 Signal 模式下**直接编译失败**，而同样模板在 SSR 模式下却能通过
- * ⇒ 两端不一致（hydration 无从谈起），客户端可用性也严重受限。
- * （此前还误以为「客户端 class 数组可用」，其实编译阶段就挂了。）
- *
- * 现改与**插值分支**同策略：默认信任模板（模板由开发者书写，与 Vue 一致），
- * 只**黑名单式拒绝明显危险/带副作用的模式**（语句分隔、箭头函数、声明关键字、赋值等）。
- */
-const DANGEROUS_EXPRESSION =
-  /;|=>|\bfunction\b|\bnew\s|\bimport\b|\brequire\b|\bdelete\b|\bthrow\b|\bawait\b|(^|[^=!<>])\b[a-zA-Z_$][\w$]*\s*=(?!=)/;
-
 // FIX: P1-S1, P1-S2 属性名和事件名验证正则
 const VALID_ATTRIBUTE_NAME = /^[a-zA-Z][a-zA-Z0-9-:]*$/;
 const VALID_EVENT_NAME = /^[a-zA-Z][a-zA-Z0-9-]*$/;
