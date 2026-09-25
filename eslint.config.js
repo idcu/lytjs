@@ -14,6 +14,8 @@ export default tseslint.config(
       'docs/.vitepress/cache/**',
       'docs/.vitepress/dist/**',
       'packages/_templates/**',
+      // 示例目录里的 esbuild 打包产物（与 .gitignore / .prettierignore 保持一致）
+      'examples/*/bundle.js',
     ],
   },
 
@@ -31,6 +33,16 @@ export default tseslint.config(
       globals: {
         ...globals.node,
         ...globals.es2020,
+      },
+    },
+  },
+
+  // 示例目录运行在浏览器里（`examples/*/main.js` 直接用 document 等）
+  {
+    files: ['examples/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
       },
     },
   },

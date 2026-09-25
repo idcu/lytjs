@@ -2,16 +2,24 @@
 // Hydration 完善模块
 // Phase 1.15-1.17: 全应用 Hydration、选择性 Hydration、水合错误恢复
 
-// 说明（2026-09 修正）：
-//   `App` 仍需占位 —— renderer 不能**运行时**依赖 @lytjs/core（会形成循环依赖）。
-//   `Component` 则**直接从 createApp 的签名里取**：这是**类型层查询**（编译期擦除，不产生运行时依赖），
-//   因此类型必然与 core 完全一致，不会出现"两套检查结论相反"的情况：
-//     · 写成 `unknown`              ⇒ tsc 报 TS2345（createApp(component) 类型不符）
-//     · 压制成 @ts-expect-error     ⇒ tsup DTS 报 TS2578（指令多余）
-//     · 取 createApp 的参数类型      ⇒ 两者都通过 ✅
+/**
+ * 关于本文件里对 `@lytjs/core` 的处理（踩过两次坑，勿轻易改动）：
+ *
+ * renderer 与 core 是**双向**关系 —— core 运行时依赖 renderer；而这里需要动态 import core。
+ * renderer 的 tsconfig 的 `paths` **没有映射** `@lytjs/core`，于是：
+ *   · `tsc` 解析到 `core/dist/index.mjs`（无声明）⇒ **TS7016**
+ *   · `tsup` 的 DTS 构建用另一套模块解析、能找到类型 ⇒ **没有该错误**
+ * ⇒ 同一处代码，`@ts-expect-error` 在 tsc 下「有用」（消耗 7016）、在 DTS 下「多余」（TS2578），
+ *   两边结论相反，删也错、留也错。
+ *
+ * 解法：在 `src/types/lytjs-core.d.ts` 里给出**模块声明**（独立 .d.ts，不是模块增强），
+ *       让两套检查拿到同一份类型（不再使用任何压制指令）。
+ *   - 不能改成 `Parameters<typeof import('@lytjs/core').createApp>[0]`：该类型会进入本文件
+ *     导出的签名 ⇒ renderer 的 .d.ts 依赖 core ⇒ core 构建时**循环失败**（实测）。
+ *   - 不能移除本声明：动态 import 会重新触发 TS7016。
+ */
 type App = unknown;
-
-type Component = Parameters<typeof import('@lytjs/core').createApp>[0];
+type Component = unknown;
 import { warn } from '@lytjs/common-error';
 
 // ============================================================
