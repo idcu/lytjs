@@ -10,6 +10,7 @@ import {
   createComponentInstance,
   setupComponent,
   callUnmountedHook,
+  callBeforeUnmountHook,
   createAppContext,
 } from '@lytjs/component';
 import type { ComponentOptions, ComponentInternalInstance, AppContext } from '@lytjs/component';
@@ -181,6 +182,8 @@ export function defineCustomElement(
 
     disconnectedCallback(): void {
       if (this._instance) {
+        // ⚠️ 2026-09-26：unmounted 与 beforeUnmount 已拆分（见 component/lifecycle.ts）
+        callBeforeUnmountHook(this._instance);
         callUnmountedHook(this._instance);
       }
 

@@ -359,9 +359,15 @@ export function callUpdatedHook(instance: ComponentInternalInstance): void {
 }
 
 /**
- * 调用 beforeUnmount 和 unmounted 生命周期钩子（选项式 API）。
+ * 调用 beforeUnmount 生命周期钩子（选项式 + 组合式）。
+ *
+ * ⚠️ 2026-09-26 从 `callUnmountedHook` 中**拆出**：
+ * 此前该函数同时调用 beforeUnmount 与 unmounted，于是「DOM 移除**前**」与
+ * 「DOM 移除**后**」两个时机无法分别对应 —— 而 vdom 的卸载流程需要
+ * 移除 DOM 前触发 beforeUnmount、之后触发 unmounted。
+ * 合在一起会造成钩子**重复触发**（实测 beforeUnmount ×2）或时机错位。
  */
-export function callUnmountedHook(instance: ComponentInternalInstance): void {
+export function callBeforeUnmountHook(instance: ComponentInternalInstance): void {
   // FIX: P1-8 COMPONENT-NEW-02 - 添加生命周期调用顺序断言
   // 确保组件已挂载后才能调用卸载钩子
   if (__DEV__ && !instance.isMounted) {
@@ -372,13 +378,23 @@ export function callUnmountedHook(instance: ComponentInternalInstance): void {
   }
   assertLifecycleOrder(instance, 'beforeUnmount', ['mounted']);
 
-  const { beforeUnmount, unmounted } = instance.type;
+  const { beforeUnmount } = instance.type;
   callLifecycleHook(instance, 'beforeUnmount');
   callOptionsHook(instance, beforeUnmount, 'beforeUnmount');
+}
 
+/**
+ * 调用 unmounted 生命周期钩子（选项式 + 组合式）。
+ *
+ * ⚠️ 语义变更（2026-09-26）：本函数**不再**负责 beforeUnmount ——
+ * 调用方需在移除 DOM **之前**先调用 `callBeforeUnmountHook()`。
+ * 既有调用点已同步补齐（core / core-vnode 的 app 与 web-component 卸载路径）。
+ */
+export function callUnmountedHook(instance: ComponentInternalInstance): void {
   // FIX: P1-8 - 确保 onBeforeUnmount 在 onUnmounted 之前调用
   assertLifecycleOrder(instance, 'unmounted', ['beforeUnmount', 'mounted']);
 
+  const { unmounted } = instance.type;
   callLifecycleHook(instance, 'unmounted');
   callOptionsHook(instance, unmounted, 'unmounted');
   instance.isUnmounted = true;

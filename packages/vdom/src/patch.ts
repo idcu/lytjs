@@ -15,7 +15,7 @@
 import { Fragment, Text, Comment, ShapeFlags, isSameVNodeType } from '@lytjs/common-vnode';
 import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
 import { isArray, isFunction } from '@lytjs/common-is';
-import { warn, error } from '@lytjs/common-error';
+import { warn } from '@lytjs/common-error';
 import { shallowEqual } from '@lytjs/common-object';
 import type { RendererHost } from '@lytjs/host-contract';
 import type { RendererOptions, SuspenseBoundary } from './types';
@@ -57,6 +57,11 @@ interface InternalRendererOptions<HN, HE extends HN> {
   normalizeProps:
     | ((instance: ComponentInternalInstance, rawProps: Record<string, unknown> | null) => void)
     | undefined;
+  /** 组件生命周期钩子回调（见 RendererOptions 同名说明；由 @lytjs/core 注入） */
+  invokeMountedHook: ((instance: ComponentInternalInstance) => void) | undefined;
+  invokeUpdatedHook: ((instance: ComponentInternalInstance) => void) | undefined;
+  invokeBeforeUnmountHook: ((instance: ComponentInternalInstance) => void) | undefined;
+  invokeUnmountedHook: ((instance: ComponentInternalInstance) => void) | undefined;
 }
 
 /**
@@ -81,6 +86,10 @@ function hostToOptions<HN, HE extends HN>(
     parentNode: (node) => host.parentNode(node),
     setupChildComponent: undefined,
     normalizeProps: undefined,
+    invokeMountedHook: undefined,
+    invokeUpdatedHook: undefined,
+    invokeBeforeUnmountHook: undefined,
+    invokeUnmountedHook: undefined,
   };
 }
 
@@ -106,6 +115,10 @@ function optionsToInternal<HN, HE extends HN>(
     parentNode: (node) => options.parentNode(node),
     setupChildComponent: options.setupChildComponent,
     normalizeProps: options.normalizeProps,
+    invokeMountedHook: options.invokeMountedHook,
+    invokeUpdatedHook: options.invokeUpdatedHook,
+    invokeBeforeUnmountHook: options.invokeBeforeUnmountHook,
+    invokeUnmountedHook: options.invokeUnmountedHook,
   };
 }
 
@@ -269,6 +282,10 @@ export function createRenderer<HN, HE extends HN>(
     querySelector,
     setupChildComponent,
     normalizeProps,
+    invokeMountedHook,
+    invokeUpdatedHook,
+    invokeBeforeUnmountHook,
+    invokeUnmountedHook,
   } = internal;
 
   // 辅助函数：将宿主节点赋值给 vnode.el（VNode.el 在 common-vnode 中类型为 Node | null，
@@ -302,6 +319,10 @@ export function createRenderer<HN, HE extends HN>(
   ctx.querySelector = querySelector;
   ctx.setupChildComponent = setupChildComponent;
   ctx.normalizeProps = normalizeProps;
+  ctx.invokeMountedHook = invokeMountedHook;
+  ctx.invokeUpdatedHook = invokeUpdatedHook;
+  ctx.invokeBeforeUnmountHook = invokeBeforeUnmountHook;
+  ctx.invokeUnmountedHook = invokeUnmountedHook;
   ctx.setVNodeEl = setVNodeEl;
   ctx.getVNodeEl = getVNodeEl;
 
@@ -511,29 +532,23 @@ export function createRenderer<HN, HE extends HN>(
       (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT ||
         vnode.shapeFlag & ShapeFlags.FUNCTIONAL_COMPONENT)
     ) {
-      // FIX: P1-8 VDOM-NEW-09 - 使用 component.bum (beforeUnmount)
-      // FIX: DTS build error - 使用 bum 字段，ComponentInternalInstance 已定义
-      const bum = (component as ComponentInternalInstance).bum;
-      const beforeUnmountHooks = Array.isArray(bum) ? bum : bum ? [bum] : [];
-      if (beforeUnmountHooks && beforeUnmountHooks.length > 0) {
-        // 逐个执行 beforeUnmount 回调。单个回调抛出异常时，捕获并记录错误后继续执行
-        // 后续回调，确保所有 beforeUnmount 钩子都有机会运行，避免一个组件的卸载错误
-        // 影响其他组件的清理逻辑。
-        for (const hook of beforeUnmountHooks) {
-          try {
-            hook();
-          } catch (e) {
-            error(`Error in beforeUnmount hook: ${e}`);
-          }
-        }
-      }
+      // 生命周期：beforeUnmount / unmounted 通过**回调注入**执行。
+      //
+      // ⚠️ 2026-09-26 修复：此前这里读 `component.bum` 并自行逐个调用，
+      // 但**全仓没有任何地方给 `bum` 赋值** ⇒ `beforeUnmountHooks` 恒为 `[]`
+      // ⇒ `onBeforeUnmount` / `beforeUnmount` 在生产路径**永不执行**。
+      // 现改为与本文件既有的 setupChildComponent 同模式（回调注入），
+      // 由 `@lytjs/core` 注入 component 侧的 `callLifecycleHook(instance, …)`。
+      invokeBeforeUnmountHook?.(component as ComponentInternalInstance);
       component.isUnmounted = true;
 
-      // 同时卸载组件的 subTree 以移除 DOM 元素
+      // 卸载组件的 subTree 以移除 DOM 元素
       const subTree = (component as ComponentInternalInstance).subTree;
       if (subTree) {
         unmount(subTree, component as ComponentInternalInstance, parentSuspense, doRemove);
       }
+      // unmounted 语义上在 DOM 移除**之后**触发
+      invokeUnmountedHook?.(component as ComponentInternalInstance);
       return;
     }
 

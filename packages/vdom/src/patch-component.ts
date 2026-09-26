@@ -223,11 +223,17 @@ export function createComponentPatch<HN, HE extends HN>(
         vnode.el = subTree.el;
         isMounted = true;
         initialSubTree = subTree;
+        // ⚠️ 2026-09-26 新增：此前 vdom **从不调用** mounted 钩子 ——
+        // `callMountedHook` 的调用点只存在于 component 的导出/文档/测试里，
+        // 于是 `onMounted` 在生产 VNode 路径**永不执行**（依赖它的代码静默失效）。
+        // 现通过回调注入（与 setupChildComponent 同模式）由 core 提供实现。
+        ctx.invokeMountedHook?.(component!);
       } else {
         // 更新
         patch(initialSubTree, subTree, container, anchor, component, parentSuspense, isSVG);
         vnode.el = subTree.el;
         initialSubTree = subTree;
+        ctx.invokeUpdatedHook?.(component!);
       }
     };
 

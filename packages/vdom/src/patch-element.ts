@@ -37,6 +37,11 @@ export interface RendererContext<HN, HE extends HN> {
   normalizeProps:
     | ((instance: ComponentInternalInstance, rawProps: Record<string, unknown> | null) => void)
     | undefined;
+  /** 组件生命周期钩子回调（由 @lytjs/core 注入，见 RendererOptions 的同名说明） */
+  invokeMountedHook: ((instance: ComponentInternalInstance) => void) | undefined;
+  invokeUpdatedHook: ((instance: ComponentInternalInstance) => void) | undefined;
+  invokeBeforeUnmountHook: ((instance: ComponentInternalInstance) => void) | undefined;
+  invokeUnmountedHook: ((instance: ComponentInternalInstance) => void) | undefined;
 
   // VNode el helpers
   setVNodeEl: (vnode: VNode, el: HN | null) => void;

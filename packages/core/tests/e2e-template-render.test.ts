@@ -22,7 +22,17 @@
  */
 
 import { describe, it, expect, afterEach } from 'vitest';
-import { createApp, h, ref, computed } from '../src/index';
+import {
+  createApp,
+  h,
+  ref,
+  computed,
+  nextTick,
+  onMounted,
+  onUpdated,
+  onBeforeUnmount,
+  onUnmounted,
+} from '../src/index';
 
 /** 统一的挂载辅助：创建宿主、挂载、返回 innerHTML */
 async function mountAndGetHtml(options: Record<string, unknown>): Promise<string> {
@@ -196,5 +206,43 @@ describe('端到端模板渲染（VNode 模式）', () => {
       template: '<div v-once>{{ msg }}</div>',
     });
     expect(html).toBe('<div>once</div>');
+  });
+});
+
+describe('组件生命周期钩子（端到端）', () => {
+  it('mounted / updated / beforeUnmount / unmounted 各触发一次且顺序正确', async () => {
+    const log: string[] = [];
+    const count = ref(0);
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    hosts.push(host);
+
+    const app = createApp({
+      setup() {
+        onMounted(() => log.push('mounted'));
+        onUpdated(() => log.push('updated'));
+        onBeforeUnmount(() => log.push('beforeUnmount'));
+        onUnmounted(() => log.push('unmounted'));
+        return { count };
+      },
+      template: '<div>{{ count }}</div>',
+    });
+
+    await app.mount(host);
+    expect(log).toEqual(['mounted']);
+
+    count.value = 1;
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(log).toEqual(['mounted', 'updated']);
+
+    app.unmount();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    // 关键：每个钩子**恰好一次**且顺序正确。
+    // 修复前：四个钩子**全部不触发**（vdom 从不调用它们）。
+    // 拆分前：beforeUnmount 会重复（callUnmountedHook 内部也会调它）。
+    expect(log).toEqual(['mounted', 'updated', 'beforeUnmount', 'unmounted']);
+    expect(host.innerHTML).toBe('');
   });
 });

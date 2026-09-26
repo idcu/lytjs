@@ -24,6 +24,9 @@ import {
   setupComponent,
   createComponentPublicInstance,
   callUnmountedHook,
+  callMountedHook,
+  callUpdatedHook,
+  callBeforeUnmountHook,
   initProps,
   setTemplateCompiler,
 } from '@lytjs/component';
@@ -326,11 +329,10 @@ export function createApp(
         // VNode 模式卸载
         if (!context.renderer || !context._vnode) return;
 
-        const instance = context._instance;
-        if (instance) {
-          callUnmountedHook(instance);
-        }
-
+        // ⚠️ 不要在这里再调 `callUnmountedHook(instance)`：
+        // vdom 的 `unmount()` 现在会通过注入的 `invokeBeforeUnmountHook` /
+        // `invokeUnmountedHook` 回调触发钩子（顺序：beforeUnmount → 移除 DOM → unmounted）。
+        // 两处都调会**重复触发**（2026-09-26 实测：beforeUnmount ×3、unmounted ×2）。
         context.renderer.unmount(context._vnode);
         context._vnode = null;
       }
@@ -487,6 +489,28 @@ export function createApp(
       },
       normalizeProps(inst: ComponentInternalInstance, rawProps: Record<string, unknown> | null) {
         initProps(inst, rawProps);
+      },
+      // ── 组件生命周期钩子的实现注入 ──────────────────────────────────────
+      // vdom 不能反向依赖 @lytjs/component（会循环），因此钩子的**实现**由 core 注入，
+      // 与上面的 setupChildComponent / normalizeProps 同模式。
+      //
+      // ⚠️ 2026-09-26 修复：此前这里**完全没有**注入 mounted / updated / beforeUnmount，
+      // 而 vdom 侧读的 `component.bum` 在全仓**无任何写入点** ⇒
+      // `onMounted` / `onUpdated` / `onBeforeUnmount` 在生产 VNode 路径**永不执行**
+      // （`callMountedHook` 的调用点此前仅存在于 component 的导出/文档/测试里）。
+      // 受影响功能举例：error-boundary 的异步错误监听器永不安装、
+      // async component 的定时器永不清理。
+      invokeMountedHook(inst: ComponentInternalInstance) {
+        callMountedHook(inst);
+      },
+      invokeUpdatedHook(inst: ComponentInternalInstance) {
+        callUpdatedHook(inst);
+      },
+      invokeBeforeUnmountHook(inst: ComponentInternalInstance) {
+        callBeforeUnmountHook(inst);
+      },
+      invokeUnmountedHook(inst: ComponentInternalInstance) {
+        callUnmountedHook(inst);
       },
     }) as { mount: (vnode: VNode, container: Node) => void };
     // FIX: P2-batch2-7 跨包类型断言说明：

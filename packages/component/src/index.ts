@@ -56,6 +56,7 @@ export {
   callMountedHook,
   callUpdatedHook,
   callUnmountedHook,
+  callBeforeUnmountHook,
   handleError,
 } from './lifecycle';
 

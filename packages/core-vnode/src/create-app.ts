@@ -22,6 +22,7 @@ import {
   setupComponent,
   createComponentPublicInstance,
   callUnmountedHook,
+  callBeforeUnmountHook,
   initProps,
 } from '@lytjs/component';
 import type {
@@ -179,6 +180,9 @@ export function createApp(
 
       const instance = context._instance;
       if (instance) {
+        // ⚠️ 2026-09-26：`callUnmountedHook` 现在只负责 unmounted，
+        // beforeUnmount 需显式先调（本包未向 vdom 注入钩子回调，故自行调用，不会重复）。
+        callBeforeUnmountHook(instance);
         callUnmountedHook(instance);
       }
 

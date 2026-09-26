@@ -266,10 +266,23 @@ export interface DOMRenderer {
  * 创建完整的渲染器实例。vnodeMap 通过闭包作用域隔离。
  *
  * @param extraOptions 可选的额外渲染器选项，例如 setupChildComponent
+ *
+ * ⚠️ 本类型是**显式 Pick**：`@lytjs/vdom` 的 `RendererOptions` 每新增一个回调，
+ * 必须在此 Pick、并在下方 options 构造里同步转发 —— 否则回调会在本层被静默丢弃
+ * （2026-09-26 实测：新增的 4 个生命周期钩子回调就因漏 Pick 而丢失，
+ *  导致 `onMounted` 依然不触发，而 `beforeUnmount` 却已生效 —— 排查成本很高）。
  */
 export function createDOMRenderer(
   extraOptions?: Partial<
-    Pick<RendererOptions<Node, Element>, 'setupChildComponent' | 'normalizeProps'>
+    Pick<
+      RendererOptions<Node, Element>,
+      | 'setupChildComponent'
+      | 'normalizeProps'
+      | 'invokeMountedHook'
+      | 'invokeUpdatedHook'
+      | 'invokeBeforeUnmountHook'
+      | 'invokeUnmountedHook'
+    >
   >,
 ): DOMRenderer {
   // VNode 存储，作用域隔离到此渲染器实例
@@ -330,6 +343,19 @@ export function createDOMRenderer(
       ? { setupChildComponent: extraOptions.setupChildComponent }
       : {}),
     ...(extraOptions?.normalizeProps ? { normalizeProps: extraOptions.normalizeProps } : {}),
+    // 生命周期钩子回调：必须逐个转发（本处与上方 Pick 是一对，新增回调时两处同改）
+    ...(extraOptions?.invokeMountedHook
+      ? { invokeMountedHook: extraOptions.invokeMountedHook }
+      : {}),
+    ...(extraOptions?.invokeUpdatedHook
+      ? { invokeUpdatedHook: extraOptions.invokeUpdatedHook }
+      : {}),
+    ...(extraOptions?.invokeBeforeUnmountHook
+      ? { invokeBeforeUnmountHook: extraOptions.invokeBeforeUnmountHook }
+      : {}),
+    ...(extraOptions?.invokeUnmountedHook
+      ? { invokeUnmountedHook: extraOptions.invokeUnmountedHook }
+      : {}),
   };
 
   const renderer = createRenderer(options);

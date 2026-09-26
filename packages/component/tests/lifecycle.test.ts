@@ -9,6 +9,7 @@ import {
   defineComponent,
   callMountedHook,
   callUnmountedHook,
+  callBeforeUnmountHook,
   callCreatedHook,
   callUpdatedHook,
   onMounted,
@@ -91,7 +92,7 @@ describe('lifecycle hooks', () => {
     expect(updated).toHaveBeenCalledTimes(1);
   });
 
-  it('should call beforeUnmount and unmounted hooks', () => {
+  it('should call beforeUnmount and unmounted hooks（拆分后需分别调用）', () => {
     const beforeUnmount = vi.fn();
     const unmounted = vi.fn();
     const options = defineComponent({
@@ -101,9 +102,17 @@ describe('lifecycle hooks', () => {
     });
 
     const instance = createAndSetup(options);
-    callUnmountedHook(instance);
 
+    // ⚠️ 2026-09-26：两个钩子已**拆分**为独立函数。
+    // 原因：vdom 的卸载流程需要「移除 DOM **前**」调 beforeUnmount、
+    // 「移除 DOM **之后**」调 unmounted；此前由 `callUnmountedHook` 一并触发，
+    // 导致时机无法对应，且与 vdom 注入的回调叠加后会**重复触发**。
+    callBeforeUnmountHook(instance);
     expect(beforeUnmount).toHaveBeenCalledTimes(1);
+    // 关键：beforeUnmount 阶段**不得**顺带触发 unmounted
+    expect(unmounted).not.toHaveBeenCalled();
+
+    callUnmountedHook(instance);
     expect(unmounted).toHaveBeenCalledTimes(1);
     expect(instance.isUnmounted).toBe(true);
   });

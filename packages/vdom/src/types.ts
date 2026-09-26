@@ -104,6 +104,24 @@ export interface RendererOptions<HN = unknown, HE extends HN = HN> {
     instance: ComponentInternalInstance,
     rawProps: Record<string, unknown> | null,
   ): void;
+  /**
+   * 可选回调：组件**首次挂载完成**后调用（对应 `onMounted` / `mounted`）。
+   *
+   * ⚠️ 2026-09-26 新增。此前 vdom **从不调用** `callMountedHook` ——
+   * 该函数的调用点仅存在于 component 的导出/文档/测试里，
+   * 于是 `onMounted` / `onUpdated` / `onBeforeUnmount` 在生产 VNode 路径**永不执行**
+   * （依赖它们的代码静默失效，例如 error-boundary 的异步错误监听器永不安装）。
+   *
+   * vdom 不能直接 import `@lytjs/component`（会形成循环依赖），
+   * 因此沿用本接口既有的「回调注入」模式，由 `@lytjs/core` 注入实现。
+   */
+  invokeMountedHook?(instance: ComponentInternalInstance): void;
+  /** 可选回调：组件**更新完成**后调用（对应 `onUpdated` / `updated`） */
+  invokeUpdatedHook?(instance: ComponentInternalInstance): void;
+  /** 可选回调：组件**卸载前**调用（对应 `onBeforeUnmount` / `beforeUnmount`） */
+  invokeBeforeUnmountHook?(instance: ComponentInternalInstance): void;
+  /** 可选回调：组件**卸载完成**后调用（对应 `onUnmounted` / `unmounted`） */
+  invokeUnmountedHook?(instance: ComponentInternalInstance): void;
 }
 
 // ============================================================
