@@ -28,6 +28,43 @@ const DANGEROUS_SELF_CLOSING_TAG_NAMES = `${DANGEROUS_TAG_NAMES}|input|textarea|
  * @internal 仅供内部使用，不作为公共 API 暴露
  */
 /**
+ * 为元素下的每个 `<!--lyt-t-->` 注释「槽位」插入一个**空文本节点**，并按文档顺序返回。
+ *
+ * 用途：Signal 模式下同一个元素里可能有**多个插值**（含插值与静态文本混排），
+ * 例如 `<div>{{ a }} - {{ b }}</div>`。而 `setText(el, v)` 的语义是"设置**整个元素**的文本"
+ * ⇒ 若每个插值都往同一个元素写，会**互相覆盖，只剩最后一个**（曾经的缺陷）。
+ *
+ * 因此 codegen 在静态模板里为每个插值位置留一个注释标记，运行时先把它换成独立的空文本节点，
+ * 之后每个插值各自 setText 自己的文本节点，互不干扰。
+ *
+ * ⚠️ 只处理**直接子节点**：嵌套元素内部的槽位由那个元素自己的生成代码领取，
+ * 若在此递归，会把它人的槽位也提前领走（顺序与归属都会错）。
+ */
+export function claimTextSlots(root: unknown): Text[] {
+  if (!isBrowser) return [];
+  const el = getRealNode(root);
+  const out: Text[] = [];
+  const ownerDoc = (el as Element).ownerDocument ?? document;
+  // ⚠️ 必须先**快照**：`childNodes` 是**活的** NodeList，边遍历边 insertBefore 会让
+  // `length` 持续增长 ⇒ **死循环**（实测会把测试挂死）。
+  const snapshot = Array.from(el.childNodes);
+  for (const child of snapshot) {
+    // 8 = COMMENT_NODE
+    if (child.nodeType === 8 && (child as Comment).data === 'lyt-t') {
+      const textNode = ownerDoc.createTextNode('');
+      el.insertBefore(textNode, child);
+      // 注释只是编译期留下的「占位标记」，运行时用完即弃，避免污染 DOM
+      el.removeChild(child);
+      out.push(textNode);
+    }
+  }
+  return out;
+}
+
+/** 插值槽位在静态模板里的注释标记（codegen 与运行时共用同一常量） */
+export const TEXT_SLOT_MARKER = 'lyt-t';
+
+/**
  * SSR：把**组件**渲染成 vnode（供 SSR 产物序列化为 HTML）。
  *
  * 首期只支持**已编译的组件**（`setup` 返回 render 函数，或组件带 `render`）——

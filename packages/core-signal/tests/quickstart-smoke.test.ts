@@ -38,10 +38,10 @@ describe('快速开始示例（新手第一个例子）', () => {
     host.remove();
   });
 
-  // 已知缺陷（P0）：同一元素内多个插值会互相覆盖，只剩最后一个。
-  // 详见 docs/design/known-issue-multi-interpolation.md
-  // 用 it.fails 标记：**修好之后这条会"意外通过"，从而提醒我们更新它**。
-  it.fails('【已知缺陷】同一元素内多个插值应全部渲染（当前只剩最后一个）', async () => {
+  // 该缺陷已修复（2026-09-26）：静态模板为每个插值留 `<!--lyt-t-->` 注释槽位，
+  // 运行时 claimTextSlots() 换成独立文本节点 ⇒ 多个插值各写各的、不再互相覆盖。
+  // 详见 docs/design/known-issue-multi-interpolation.md（已标记为已修复）。
+  it('同一元素内多个插值应全部渲染（修复后升级为正式用例）', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
 

@@ -633,19 +633,21 @@ describe('codegen-signal', () => {
       // 运行时 SignalRenderer 走的正是非优化版；此前的实现里 v-once **完全无效**
       //（插值仍被 effect 包裹），而优化版是对的 —— 典型的「双 codegen 不同步」。
       const result = compile('<div v-once>{{ msg }}</div>', opts);
-      expect(result.code).toContain('setText(_div, _ctx.msg);');
-      expect(result.code).not.toContain('effect(() => setText(_div');
+      // 插值现在写入**各自的文本槽位**（claimTextSlots 从注释标记换来），
+      // 而不是写整个元素 —— 后者会让同元素内的多个插值互相覆盖。
+      expect(result.code).toContain('setText(_divSlots[0], _ctx.msg);');
+      expect(result.code).not.toContain('effect(() => setText(_divSlots');
     });
 
     it('should propagate v-once down the subtree (non-optimized)', () => {
       const result = compile('<div v-once><span>{{ msg }}</span></div>', opts);
-      expect(result.code).toContain('setText(_span, _ctx.msg);');
-      expect(result.code).not.toContain('effect(() => setText(_span');
+      expect(result.code).toContain('setText(_spanSlots[0], _ctx.msg);');
+      expect(result.code).not.toContain('effect(() => setText(_spanSlots');
     });
 
     it('should still wrap ordinary interpolations with effect (non-optimized)', () => {
       const result = compile('<div>{{ msg }}</div>', opts);
-      expect(result.code).toContain('effect(() => setText(_div, _ctx.msg));');
+      expect(result.code).toContain('effect(() => setText(_divSlots[0], _ctx.msg));');
     });
 
     it('should treat blank-only slot content inside v-if as null children', () => {

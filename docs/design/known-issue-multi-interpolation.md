@@ -1,6 +1,12 @@
 # 缺陷登记：Signal 模式「同一元素多个插值」只保留最后一个（P0）
 
-> 状态：**已确认、未修复** · 发现于 2026-09-25（写小白上手指南时实跑暴露）
+> 状态：**✅ 已修复**（2026-09-26）· 发现于 2026-09-25（写小白上手指南时实跑暴露）
+>
+> **修法**：静态模板为每个插值留 \`<!--lyt-t-->\` 注释槽位；运行时 \`claimTextSlots()\`（新增于
+> \`@lytjs/dom-runtime\`）把它们换成**独立空文本节点**，每个插值各写自己的节点；
+> \`codegen-signal\` 侧改为按槽位下标写入，并在产物 import 里加入 \`claimTextSlots\`；
+> \`renderer/signal/signal-renderer\` 的三处符号注入（import / 传参 / paramNames）同步。
+> 回归测试：\`packages/core-signal/tests/multi-interpolation.test.ts\`（7 例）。
 > 复现文件：`packages/core-signal/tests/quickstart-smoke.test.ts`（含通过/失败的对照用例）
 
 ## 1. 现象

@@ -122,8 +122,12 @@ function serializeStaticHTML(
       childrenHTML += escapeHtmlStatic((child as TextNode).content);
     } else if (child.type === NodeTypes.ELEMENT) {
       childrenHTML += serializeStaticHTML(child as ElementNode, varCounter, elementVars);
+    } else if (child.type === NodeTypes.INTERPOLATION) {
+      // 为**每个插值**留一个注释槽位（运行时由 claimTextSlots 换成独立文本节点）。
+      // 不这么做的话，同一元素里的多个插值会全部写到同一个元素上 ⇒ 互相覆盖只剩最后一个。
+      childrenHTML += TEXT_SLOT_COMMENT;
     }
-    // 跳过 CommentNode、InterpolationNode 等动态内容
+    // 跳过 CommentNode 等其它动态内容
   }
 
   if (node.children.length === 0 && node.isSelfClosing) {
@@ -167,7 +171,7 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
   // FIX: P1-13 添加 runCleanups 到 import 列表
   lines.push(
     `import { effect, reconcileArray } from '@lytjs/reactivity';`,
-    `import { createTemplate, getRealNode, setText, setHTML, setAttribute, setProperty, setStyle, setClass, insert, remove, createEventHandler, onCleanup, runCleanups, reconcileArray } from '@lytjs/dom-runtime';`,
+    `import { createTemplate, getRealNode, setText, setHTML, setAttribute, setProperty, setStyle, setClass, insert, remove, createEventHandler, onCleanup, runCleanups, reconcileArray, claimTextSlots } from '@lytjs/dom-runtime';`,
   );
   // 用到组件挂载时才引入（@lytjs/renderer 提供运行时实现）
   if (usedComponents) {
@@ -367,6 +371,10 @@ function processElement(
   }
 
   // 处理子节点中的动态内容
+  // 插值：**每个插值写入各自的文本槽位**（由 claimTextSlots 从注释标记换来），
+  // 而不是写整个元素 —— 后者会让同元素内的多个插值互相覆盖（只剩最后一个）。
+  let slotsVar: string | undefined;
+  let slotIndex = 0;
   for (const child of node.children) {
     if (child.type === NodeTypes.INTERPOLATION) {
       const exp = getExpContent((child as InterpolationNode).content as SimpleExpressionNode);
@@ -381,10 +389,18 @@ function processElement(
         }
         continue;
       }
+      if (!slotsVar) {
+        slotsVar = genVarName(`${node.tag}Slots`, varCounter);
+        dynamicBindings.push({
+          varName,
+          code: `const ${slotsVar} = claimTextSlots(${varName});`,
+        });
+      }
       dynamicBindings.push({
         varName,
-        code: `effect(() => setText(${varName}, _ctx.${exp}));`,
+        code: `effect(() => setText(${slotsVar}[${slotIndex}], _ctx.${exp}));`,
       });
+      slotIndex++;
     } else if (child.type === NodeTypes.ELEMENT) {
       processElement(
         child as ElementNode,
@@ -528,6 +544,12 @@ function processVNodeCallProps(
 // ============================================================
 // 处理指令节点
 // ============================================================
+
+/**
+ * 插值「文本槽位」在静态模板里的注释标记。
+ * 与 `@lytjs/dom-runtime` 的 `claimTextSlots()` / `TEXT_SLOT_MARKER` **必须保持一致**。
+ */
+const TEXT_SLOT_COMMENT = '<!--lyt-t-->';
 
 // FIX: P1-1~3 Signal 模式代码注入防护 - 表达式白名单验证
 const VALID_EXPRESSION = /^[a-zA-Z_$][a-zA-Z0-9_$]*(\.([a-zA-Z_$][a-zA-Z0-9_$]*))*$/;

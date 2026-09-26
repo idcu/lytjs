@@ -25,6 +25,7 @@ import {
   setClass,
   createEventHandler,
   reconcileArray,
+  claimTextSlots,
 } from '@lytjs/dom-runtime';
 
 // ============================================================
@@ -149,6 +150,7 @@ export function createSignalRenderer(
           mountComponent,
           createVNode,
           Text,
+          claimTextSlots,
         );
 
         // 执行渲染函数
@@ -278,6 +280,7 @@ function makeCreateRenderFactory(): (
     'mountComponent',
     'createVNode',
     'Text',
+    'claimTextSlots',
   ];
 
   // 使用 new Function 创建执行器
