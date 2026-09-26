@@ -96,6 +96,18 @@ export function mountComponent(
 
   const host = container as Node;
 
+  // 占位元素（codegen 生成的 `<lyt-comp>`）本身**不应参与布局**：
+  // 它是自定义标签，浏览器按未知元素处理（默认 `display: inline`），
+  // 会让内部的块级子元素布局异常。设为 `display: contents` 后该元素不生成盒子，
+  // 其子元素直接参与父级布局 —— 效果上等同于"内容直接取代了标签"。
+  //
+  // 为什么不直接**移除**占位元素：DOM 渲染器的 `mount(vnode, container)` 只接受
+  // container（没有 anchor 参数），移除后重渲染就没有落点了。要真正移除需要给
+  // 核心 `mount` 增加锚点能力，属更大的改动，收益（DOM 更干净）与风险不成正比。
+  if (typeof (host as Element).setAttribute === 'function') {
+    (host as Element).setAttribute('style', 'display: contents');
+  }
+
   // 首次渲染 + 依赖变化后的整体重渲染
   effect(() => {
     // 插槽「预热」：插槽函数的**真正执行**发生在组件渲染内部（另一层响应式边界），
