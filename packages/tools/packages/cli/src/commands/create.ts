@@ -99,10 +99,14 @@ function generateProjectFiles(targetDir: string, projectName: string, template: 
       preview: 'vite preview',
     },
     dependencies: {
-      '@lytjs/core': '^6.0.0',
+      // ⚠️ 版本必须与主仓实际版本一致（此前硬编码 `^6.0.0`，与实测 6.9.6 不符）
+      '@lytjs/core': '^6.9.6',
     },
     devDependencies: {
-      '@lytjs/plugin-vite': '^6.0.0',
+      // ⚠️ 不再依赖 `@lytjs/plugin-vite`：该包已迁出本仓（见 ../plugins），
+      // 在仓内无法保证可安装（`pnpm install` 会直接失败）。
+      // 模板改用 `.ts` + `template` 字符串 —— 由 @lytjs/core 的**运行时模板编译**
+      // 直接支持（2026-09-26 打通），因此不需要任何构建期插件。
       vite: '^5.0.0',
     },
   };
@@ -113,9 +117,10 @@ function generateProjectFiles(targetDir: string, projectName: string, template: 
     packageJson.devDependencies.vitest = '^1.0.0';
   }
 
-  // SSR template: add @lytjs/server dependency
+  // SSR template: add @lytjs/ssr dependency
   if (isSsr) {
-    packageJson.dependencies['@lytjs/server'] = '^6.0.0';
+    // ⚠️ `@lytjs/server` **并不存在**（此前是错的包名）⇒ 改为真实的 `@lytjs/ssr`
+    packageJson.dependencies['@lytjs/ssr'] = '^6.9.6';
     packageJson.scripts['build:client'] = 'vite build --ssrManifest';
     packageJson.scripts['build:server'] = 'vite build --ssr src/entry-server.ts';
     packageJson.scripts['build'] = 'npm run build:client && npm run build:server';
@@ -124,17 +129,17 @@ function generateProjectFiles(targetDir: string, projectName: string, template: 
 
   // Router template: add @lytjs/router
   if (isRouter) {
-    packageJson.dependencies['@lytjs/router'] = '^1.0.0';
+    packageJson.dependencies['@lytjs/router'] = '^6.9.6';
   }
 
   // Store template: add @lytjs/store
   if (isStore) {
-    packageJson.dependencies['@lytjs/store'] = '^1.0.0';
+    packageJson.dependencies['@lytjs/store'] = '^6.9.6';
   }
 
   // Full template: add @lytjs/ui
   if (isFull) {
-    packageJson.dependencies['@lytjs/ui'] = '^0.4.0';
+    packageJson.dependencies['@lytjs/ui'] = '^6.9.6';
   }
 
   writeFile(join(targetDir, 'package.json'), JSON.stringify(packageJson, null, 2));
@@ -143,10 +148,10 @@ function generateProjectFiles(targetDir: string, projectName: string, template: 
   let viteConfig: string;
   if (isSsr) {
     viteConfig = `import { defineConfig } from 'vite';
-import lytjs from '@lytjs/plugin-vite';
 
+// 不需要构建期插件：模板字符串由 @lytjs/core 在运行时编译
+// （此前这里 import '@lytjs/plugin-vite' —— 该包不在本仓，安装即失败）。
 export default defineConfig({
-  plugins: [lytjs()],
   build: {
     ssrManifest: true,
   },
@@ -154,11 +159,9 @@ export default defineConfig({
 `;
   } else {
     viteConfig = `import { defineConfig } from 'vite';
-import lytjs from '@lytjs/plugin-vite';
 
-export default defineConfig({
-  plugins: [lytjs()],
-});
+// 不需要构建期插件：模板字符串由 @lytjs/core 在运行时编译。
+export default defineConfig({});
 `;
   }
   writeFile(join(targetDir, 'vite.config.ts'), viteConfig);
@@ -184,12 +187,17 @@ export default defineConfig({
   let mainTs: string;
   if (isSsr) {
     mainTs = `import { createApp } from '@lytjs/core';
-import App from './App.lyt';
-import { createSSRApp } from '@lytjs/server';
+import App from './App';
 ${isRouter ? "import { createRouter, createWebHistory } from '@lytjs/router';" : ''}
+${isRouter ? "import Home from './pages/Home';" : ''}
+${isRouter ? "import About from './pages/About';" : ''}
 ${isStore ? "import { createPinia } from '@lytjs/store';" : ''}
 
-const app = createSSRApp(App);
+// ⚠️ 这里用 createApp 挂载（不是 createSSRApp —— 本仓没有该 API，
+//    旧模板里的 '@lytjs/server' 也是不存在的包名）。
+// ⚠️ 本仓的 **hydration 尚未实现**（见审计报告）：当前 SSR 只做到
+//    「服务端输出 HTML」，客户端仍是全新挂载，不是激活。
+const app = createApp(App);
 ${isStore ? 'app.use(createPinia());' : ''}
 ${
   isRouter
@@ -197,8 +205,8 @@ ${
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', component: () => import('./pages/Home.lyt') },
-    { path: '/about', component: () => import('./pages/About.lyt') },
+    { path: '/', component: Home },
+    { path: '/about', component: About },
   ],
 });
 app.use(router);
@@ -209,8 +217,10 @@ app.mount('#app');
 `;
   } else if (isRouter || isStore) {
     mainTs = `import { createApp } from '@lytjs/core';
-import App from './App.lyt';
+import App from './App';
 ${isRouter ? "import { createRouter, createWebHistory } from '@lytjs/router';" : ''}
+${isRouter ? "import Home from './pages/Home';" : ''}
+${isRouter ? "import About from './pages/About';" : ''}
 ${isStore ? "import { createPinia } from '@lytjs/store';" : ''}
 
 const app = createApp(App);
@@ -220,9 +230,11 @@ ${
     ? `
 const router = createRouter({
   history: createWebHistory(),
+  // ⚠️ 使用静态导入：本仓的 RouterView 尚未处理「懒加载返回 Promise」
+  //（\`() => import('./pages/Home')\` 会被同步调用，拿到 Promise 而非组件）。
   routes: [
-    { path: '/', component: () => import('./pages/Home.lyt') },
-    { path: '/about', component: () => import('./pages/About.lyt') },
+    { path: '/', component: Home },
+    { path: '/about', component: About },
   ],
 });
 app.use(router);
@@ -233,161 +245,113 @@ app.mount('#app');
 `;
   } else {
     mainTs = `import { createApp } from '@lytjs/core';
-import App from './App.lyt';
+import App from './App';
 
 createApp(App).mount('#app');
 `;
   }
   writeFile(join(targetDir, 'src/main.ts'), mainTs);
 
-  // src/App.lyt
-  let appLyt: string;
+  // src/App.ts
+  // ⚠️ 用 `.ts` + `template` 字符串（不再用 `.lyt` SFC）：
+  // SFC 需要构建期插件，而 `@lytjs/plugin-vite` 已迁出本仓（无从安装）；
+  // 模板字符串则由 @lytjs/core 的**运行时模板编译**直接支持（2026-09-26 打通）
+  // ⇒ 脚手架生成后**开箱即跑**，无需任何构建插件。
+  let appTs: string;
   if (isMinimal) {
-    appLyt = `<template>
-  <div class="app">
-    <h1>{{ title }}</h1>
-  </div>
-</template>
+    appTs = `import { defineComponent } from '@lytjs/core';
 
-<script setup>
-const title = 'Hello LytJS!';
-</script>
-
-<style scoped>
-.app {
-  text-align: center;
-}
-</style>
+export default defineComponent({
+  name: 'App',
+  setup() {
+    const title = 'Hello LytJS!';
+    return { title };
+  },
+  template: ${JSON.stringify('<div class="app"><h1>{{ title }}</h1></div>')},
+});
 `;
   } else if (isRouter) {
-    appLyt = `<template>
-  <div class="app">
-    <nav class="nav">
-      <router-link to="/">Home</router-link>
-      <router-link to="/about">About</router-link>
-    </nav>
-    <router-view />
-  </div>
-</template>
-
-<script setup lang="ts">
+    appTs = `import { defineComponent } from '@lytjs/core';
 import { RouterLink, RouterView } from '@lytjs/router';
-</script>
 
-<style scoped>
-.app {
-  text-align: center;
-  padding: 2rem;
-}
-
-.nav {
-  margin-bottom: 2rem;
-}
-
-.nav a {
-  margin: 0 1rem;
-  color: #42b883;
-  text-decoration: none;
-}
-
-.nav a:hover {
-  text-decoration: underline;
-}
-</style>
+export default defineComponent({
+  name: 'App',
+  // 局部注册：模板里用 <RouterLink> / <RouterView> 时需能解析到它们
+  components: { RouterLink, RouterView },
+  template: ${JSON.stringify(
+    '<div class="app"><nav class="nav"><RouterLink to="/">Home</RouterLink><RouterLink to="/about">About</RouterLink></nav><RouterView /></div>',
+  )},
+});
 `;
   } else {
-    appLyt = `<template>
-  <div class="app">
-    <h1>{{ title }}</h1>
-    <p>Welcome to your LytJS app!</p>
-  </div>
-</template>
+    appTs = `import { defineComponent } from '@lytjs/core';
 
-<script setup>
-const title = 'Hello LytJS!';
-</script>
-
-<style scoped>
-.app {
-  text-align: center;
-  padding: 2rem;
-}
-
-h1 {
-  color: #42b883;
-}
-</style>
+export default defineComponent({
+  name: 'App',
+  setup() {
+    const title = 'Hello LytJS!';
+    return { title };
+  },
+  template: ${JSON.stringify(
+    '<div class="app"><h1>{{ title }}</h1><p>Welcome to your LytJS app!</p></div>',
+  )},
+});
 `;
   }
-  writeFile(join(targetDir, 'src/App.lyt'), appLyt);
+  writeFile(join(targetDir, 'src', 'App.ts'), appTs);
 
   // Router template: add pages and store
   if (isRouter) {
     // Home page
-    const homePage = `<template>
-  <div class="home">
-    <h1>Home</h1>
-    ${
-      isStore
-        ? `
-    <p>Count: {{ count }}</p>
-    <button @click="increment">Increment</button>
-    <button @click="decrement">Decrement</button>
-    `
-        : ''
-    }
-    <p>Welcome to the Home page!</p>
-  </div>
-</template>
+    const homeTemplate =
+      '<div class="home"><h1>Home</h1>' +
+      (isStore
+        ? '<p>Count: {{ count }}</p><button @click="increment">Increment</button><button @click="decrement">Decrement</button>'
+        : '') +
+      '<p>Welcome to the Home page!</p></div>';
 
-<script setup lang="ts">
+    const homePage = `import { defineComponent } from '@lytjs/core';
+${isStore ? "import { useCounterStore } from '../stores/counter';" : ''}
+
+export default defineComponent({
+  name: 'Home',
 ${
   isStore
-    ? `import { useCounterStore } from '../stores/counter';
-const counterStore = useCounterStore();
-const { count, increment, decrement } = counterStore;
+    ? `  setup() {
+    const store = useCounterStore();
+    return { count: store.count, increment: store.increment, decrement: store.decrement };
+  },
 `
     : ''
-}
-</script>
-
-<style scoped>
-.home {
-  padding: 1rem;
-}
-</style>
+}  template: ${JSON.stringify(homeTemplate)},
+});
 `;
     ensureDir(join(targetDir, 'src', 'pages'));
-    writeFile(join(targetDir, 'src', 'pages', 'Home.lyt'), homePage);
+    writeFile(join(targetDir, 'src', 'pages', 'Home.ts'), homePage);
 
     // About page
-    const aboutPage = `<template>
-  <div class="about">
-    <h1>About</h1>
-    <p>This is the About page!</p>
-  </div>
-</template>
+    const aboutPage = `import { defineComponent } from '@lytjs/core';
 
-<script setup lang="ts">
-</script>
-
-<style scoped>
-.about {
-  padding: 1rem;
-}
-</style>
+export default defineComponent({
+  name: 'About',
+  template: ${JSON.stringify(
+    '<div class="about"><h1>About</h1><p>This is the About page!</p></div>',
+  )},
+});
 `;
-    writeFile(join(targetDir, 'src', 'pages', 'About.lyt'), aboutPage);
+    writeFile(join(targetDir, 'src', 'pages', 'About.ts'), aboutPage);
   }
 
   // Store template: add example store
   if (isStore) {
     const counterStore = `import { defineStore } from '@lytjs/store';
-import { signal, computed } from '@lytjs/reactivity';
+// ⚠️ 用 ref 而非 signal：组件的 setupState 会经 proxyRefs 自动解包 ref，
+// 因此 \`store.count\` 在模板里能直接渲染出值；signal 不会被解包。
+import { ref, computed } from '@lytjs/reactivity';
 
 export const useCounterStore = defineStore('counter', () => {
   // State
-  const count = signal(0);
+  const count = ref(0);
 
   // Getters
   const doubleCount = computed(() => count.value * 2);
@@ -421,29 +385,30 @@ export const useCounterStore = defineStore('counter', () => {
   // SSR-specific files
   if (isSsr) {
     // src/entry-server.ts
-    const entryServer = `import { createSSRApp, h } from '@lytjs/core';
+    const entryServer = `import { h } from '@lytjs/core';
 import { renderToString } from '@lytjs/ssr';
-import App from './App.lyt';
+import App from './App';
 
-export async function render(url: string) {
-  const app = createSSRApp({
-    render() {
-      return h(App);
-    }
-  });
-
-  const html = await renderToString(app);
-  return html;
+/**
+ * 服务端渲染入口。
+ *
+ * ⚠️ 两点与本仓现状相关（详见仓库审计报告）：
+ *  1. \`@lytjs/core\` **没有** \`createSSRApp\`（旧模板里的 \`@lytjs/server\` 也是不存在的包名）；
+ *  2. 本仓的 **hydration 尚未实现** —— \`entry-client\` 是全新挂载而非激活。
+ * ⇒ 当前 SSR 只保证「服务端产出 HTML」这一段可用。
+ */
+export async function render(_url: string): Promise<string> {
+  return renderToString(h(App));
 }
 `;
     writeFile(join(targetDir, 'src/entry-server.ts'), entryServer);
 
     // src/entry-client.ts
     const entryClient = `import { createApp } from '@lytjs/core';
-import App from './App.lyt';
+import App from './App';
 
-const app = createApp(App);
-app.mount('#app');
+// ⚠️ 本仓 hydration 未实现 ⇒ 这里是全新挂载（不是激活）
+createApp(App).mount('#app');
 `;
     writeFile(join(targetDir, 'src/entry-client.ts'), entryClient);
 
@@ -581,7 +546,7 @@ createServer().catch(console.error);
       noUnusedParameters: true,
       noFallthroughCasesInSwitch: true,
     },
-    include: ['src/**/*.ts', 'src/**/*.lyt'],
+    include: ['src/**/*.ts'],
     references: [{ path: './tsconfig.node.json' }],
   };
   writeFile(join(targetDir, 'tsconfig.json'), JSON.stringify(tsConfig, null, 2));

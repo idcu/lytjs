@@ -665,6 +665,12 @@ export async function generate(options: GenerateOptions): Promise<void> {
 
   logger.info('\nAvailable options:');
   logger.info('  --template=sfc : Single File Component (.lyt)');
+  logger.warning(
+    '⚠️ `--template=sfc` 生成的是 `.lyt` SFC，需要构建期插件才能编译；' +
+      '而 `@lytjs/plugin-vite` 已迁出本仓（见 ../plugins），当前**无法在仓内编译**。' +
+      '建议改用 `--template=functional`，或手写 `.ts` + `template` 字符串' +
+      '（运行时模板编译已支持，无需插件）。',
+  );
   logger.info('  --template=functional : Functional component');
   logger.info('  --language=js : JavaScript output');
 }

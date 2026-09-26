@@ -24,31 +24,22 @@ const TEMPLATES: Record<
   (name: string, path: string) => { filePath: string; content: string }[]
 > = {
   component(name, basePath) {
-    const filePath = join(basePath, `${name}.lyt`);
+    // ⚠️ 生成 `.ts`（而非 `.lyt`）：SFC 需要构建期插件，而 `@lytjs/plugin-vite`
+    // 已迁出本仓 ⇒ 生成 `.lyt` 只会得到一个**无法编译**的文件。
+    // 改用 `defineComponent` + `template` 字符串，开箱即用
+    //（运行时模板编译于 2026-09-26 打通；`<slot/>` 由 renderSlot 支持）。
+    const filePath = join(basePath, `${name}.ts`);
     return [
       {
         filePath,
-        content: `<template>
-  <div class="${name}">
-    <slot />
-  </div>
-</template>
+        content: `import { defineComponent } from '@lytjs/core';
 
-<script setup lang="ts">
-defineProps<{
-  /** Component props */
-}>();
-
-defineEmits<{
-  /** Component events */
-}>();
-</script>
-
-<style scoped>
-.${name} {
-  /* styles */
-}
-</style>
+export default defineComponent({
+  name: '${name}',
+  props: {},
+  emits: [],
+  template: ${JSON.stringify(`<div class="${name}"><slot /></div>`)},
+});
 `,
       },
     ];
@@ -56,25 +47,17 @@ defineEmits<{
 
   page(name, basePath) {
     const pascalName = toPascalCase(name);
-    const filePath = join(basePath, `${name}.lyt`);
+    // 同 component：生成 `.ts` + template 字符串（见上方说明）
+    const filePath = join(basePath, `${name}.ts`);
     return [
       {
         filePath,
-        content: `<template>
-  <div class="page-${toKebabCase(name)}">
-    <h1>${pascalName}</h1>
-  </div>
-</template>
+        content: `import { defineComponent } from '@lytjs/core';
 
-<script setup lang="ts">
-// Page logic here
-</script>
-
-<style scoped>
-.page-${toKebabCase(name)} {
-  padding: 1rem;
-}
-</style>
+export default defineComponent({
+  name: '${pascalName}',
+  template: ${JSON.stringify(`<div class="page-${toKebabCase(name)}"><h1>${pascalName}</h1></div>`)},
+});
 `,
       },
     ];
@@ -86,11 +69,12 @@ defineEmits<{
       {
         filePath,
         content: `import { defineStore } from '@lytjs/store';
-import { signal, computed } from '@lytjs/reactivity';
+// ⚠️ 用 ref 而非 signal：组件的 setupState 会经 proxyRefs 自动解包 ref
+import { ref, computed } from '@lytjs/reactivity';
 
 export const use${toPascalCase(name)}Store = defineStore('${name}', () => {
   // State
-  const count = signal(0);
+  const count = ref(0);
 
   // Getters
   const doubleCount = computed(() => count.value * 2);

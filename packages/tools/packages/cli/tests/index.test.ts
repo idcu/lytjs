@@ -311,7 +311,7 @@ describe('@lytjs/cli', () => {
       expect(packageJsonCall[1]).toContain('@lytjs/router');
 
       const homePageCall = mockWriteFileSync.mock.calls.find((call: any[]) =>
-        call[0].includes('Home.lyt'),
+        call[0].includes('Home.ts'),
       );
       expect(homePageCall).toBeDefined();
     });
@@ -396,11 +396,13 @@ describe('@lytjs/cli', () => {
       await add('component', 'Button');
 
       const componentCall = mockWriteFileSync.mock.calls.find((call: any[]) =>
-        call[0].includes('Button.lyt'),
+        call[0].includes('Button.ts'),
       );
       expect(componentCall).toBeDefined();
+      // 模板已从 SFC（`<script setup>`）改为 `defineComponent` + `template` 字符串
+      // —— 因为 SFC 需要构建期插件（`@lytjs/plugin-vite` 已迁出本仓）。
+      expect(componentCall[1]).toContain('defineComponent');
       expect(componentCall[1]).toContain('template');
-      expect(componentCall[1]).toContain('script setup');
     });
 
     it('should generate a page file', async () => {
@@ -409,7 +411,7 @@ describe('@lytjs/cli', () => {
       await add('page', 'About');
 
       const pageCall = mockWriteFileSync.mock.calls.find((call: any[]) =>
-        call[0].includes('About.lyt'),
+        call[0].includes('About.ts'),
       );
       expect(pageCall).toBeDefined();
       expect(pageCall[1]).toContain('page-about');
