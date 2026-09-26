@@ -1,7 +1,7 @@
 {
   "name": "@lytjs/html-renderer",
   "version": "6.9.6",
-  "description": "LytJS HTML Renderer for SSR",
+  "description": "LytJS HTML Renderer for SSR — ⚠️ stub: generateHead() not implemented. See @lytjs/ssr for the real SSR HTML assembly",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
