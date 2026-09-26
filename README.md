@@ -23,8 +23,8 @@ pnpm add @lytjs/core
 > ⚠️ **注意版本**：npm 上发布的是 **6.9.6**，本仓库当前为 `v7.0.0-dev`，**两者不是同一份代码**。
 > 想看本仓库的最新能力，请**从仓库跑**，见 [小白上手（基于仓库）](./docs/getting-started/for-beginners.md)。
 >
-> ⚠️ 若从 npm 安装，构建工具还需替换编译期常量（否则浏览器报
-> `ReferenceError: __DEV__ is not defined`）—— 以 Vite 为例：
+> ℹ️ 历史提示（本仓 2026-09-26 起已修复）：npm 上的旧版本产物会残留 `__DEV__`，需构建工具替换。
+> 本仓已给相关包补齐构建期替换 ⇒ **不再需要手配 `define`**（代价：DEV 警告恒为关闭）。若仍想配置，以 Vite 为例：
 >
 > ```js
 > export default {
