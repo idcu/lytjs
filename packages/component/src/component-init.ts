@@ -10,6 +10,60 @@ import type { VNode } from '@lytjs/common-vnode';
 import { callCreatedHook, handleError } from './lifecycle';
 import { createComponentPublicInstance } from './component-proxy';
 
+// ==================== 模板编译器注入点 ====================
+
+/**
+ * 模板编译器注入点。
+ *
+ * `@lytjs/component` **不硬依赖 `@lytjs/compiler`**（那会把 200KB+ 的编译器拖进
+ * 所有只用组件系统的场景）。运行时编译能力由上层注入：
+ * `@lytjs/core` 在加载 createApp 时调用 `setTemplateCompiler(compileTemplateToRender)`。
+ *
+ * ⚠️ 若未注入而组件又提供了 `template`，会得到**明确警告 + 空渲染**，
+ * 而不是 2026-09-26 之前那种「静默空白、无任何提示」。
+ */
+let templateCompiler: ((template: string, options?: { filename?: string }) => unknown) | null = null;
+
+/** 注册模板编译器（由 `@lytjs/core` 调用；重复调用幂等） */
+export function setTemplateCompiler(
+  compiler: (template: string, options?: { filename?: string }) => unknown,
+): void {
+  templateCompiler = compiler;
+}
+
+/** 读取当前注入的模板编译器（测试/调试用） */
+export function getTemplateCompiler(): typeof templateCompiler {
+  return templateCompiler;
+}
+
+/**
+ * 由组件的 `template` 选项得到一个可用的渲染函数。
+ *
+ * 编译产物形如 `function render(_ctx, _cache) { … }`，
+ * 其第一个参数即组件公共实例代理（`patch-component` 以 `renderFn.call(ctx, ctx)` 调用），
+ * 因此**无需 bind this**。
+ */
+function resolveTemplateRender(
+  type: Record<string, unknown>,
+  instance: ComponentInternalInstance,
+): typeof instance.render {
+  const template = type.template as string;
+
+  if (!templateCompiler) {
+    if (__DEV__) {
+      warn(
+        `组件 "${(type.name as string) || '(anonymous)'}" 提供了 template，但没有可用的模板编译器。` +
+          `请从 '@lytjs/core' 导入 createApp（它会自动注入编译器），` +
+          `或显式调用 setTemplateCompiler()。`,
+      );
+    }
+    return (() => null as unknown as VNode) as typeof instance.render;
+  }
+
+  const render = templateCompiler(template) as typeof instance.render & ((...a: unknown[]) => unknown);
+  return render as typeof instance.render;
+}
+
 // ==================== normalizeWatchHandler ====================
 
 /**
@@ -285,10 +339,19 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
   }
 
   // 步骤 7：设置渲染函数
+  //
+  // 优先级：setup 返回的渲染函数 > options.render > options.template（运行时编译）
+  //
+  // ⚠️ `template` 分支是 2026-09-26 补上的（P0）：此前这里只认 `render`，
+  //    且全仓没有任何 VNode 路径调用 `compile()` ——
+  //    于是 `createApp({ setup, template })` **静默渲染空白**（无报错、无警告），
+  //    而 README 的「快速开始」首个示例正是这种写法。
   try {
     if (!instance.render) {
       if (type.render) {
         instance.render = type.render.bind(instance.ctx);
+      } else if (typeof type.template === 'string' && type.template.length > 0) {
+        instance.render = resolveTemplateRender(type as unknown as Record<string, unknown>, instance);
       }
     }
   } catch (err) {

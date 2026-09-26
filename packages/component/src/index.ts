@@ -18,6 +18,11 @@ export {
 } from './component';
 export type { InjectOptions } from './component';
 
+// 模板编译器注入点（实现见 component-init.ts）
+// `@lytjs/core` 通过 setTemplateCompiler 注入运行时模板编译能力，使
+// `options.template` 可用；component 本身**不依赖** @lytjs/compiler。
+export { setTemplateCompiler, getTemplateCompiler } from './component-init';
+
 // Props
 /** Props 规范化与校验 */
 export { normalizePropsOptions, resolvePropValue, validateType } from './props';

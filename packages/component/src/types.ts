@@ -57,6 +57,22 @@ export interface ComponentOptions<
   emits?: string[] | Record<string, (...args: unknown[]) => void>;
   setup?: (props: Props, ctx: SetupContext) => RawBindings | RenderFunction | void;
   render?: RenderFunction;
+  /**
+   * 模板字符串（运行时编译）。
+   *
+   * 由注入的模板编译器编译为渲染函数 —— 见 component-init.ts 的
+   * `setTemplateCompiler`（`@lytjs/core` 会注入 `compileTemplateToRender`）。
+   *
+   * 优先级：`setup` 返回的渲染函数 > `render` > `template`。
+   *
+   * ⚠️ 2026-09-26 补齐：此前本字段**不存在**，导致
+   * ① TS 用户传 `template` 报类型错误（既有测试里被迫写 `as never`）；
+   * ② 运行时 `finishComponentSetup` 没有 template 分支 ⇒ **静默渲染空白**。
+   * 两点现已一并修复。
+   *
+   * ℹ️ 生产环境建议走 AOT 预编译，运行时编译会引入编译器体积与 `new Function` 开销。
+   */
+  template?: string;
   data?: () => D;
   computed?: C;
   watch?: Record<string, (...args: unknown[]) => void>;

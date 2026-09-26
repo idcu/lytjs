@@ -29,6 +29,10 @@ export {
   customRef,
 } from './ref';
 
+// proxyRefs：自动解包 ref 的对象代理（组件 setupState 依赖它，
+// 否则模板 `{{ msg }}` 会渲染出 Ref 对象本身）
+export { proxyRefs } from './proxy-refs';
+
 export {
   // computed
   computed,

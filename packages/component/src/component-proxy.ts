@@ -158,6 +158,29 @@ export function createComponentPublicInstance(
         return instance.props[key as string];
       }
 
+      // 6. 组件注册表（局部 components → 全局 components）
+      //
+      // ⚠️ 2026-09-26 补充。编译器对**组件标签**生成的是 `_ctx.Child`
+      // （见 codegen 的 genVNodeCall：「组件标签也要前缀化」），
+      // 而不是 Vue 的 `_resolveComponent("Child")`。
+      // 因此代理**必须**能解析组件名，否则 `_ctx.Child` 恒为 undefined ⇒
+      // `createBlock(undefined, …)` ⇒ 子组件拿不到渲染结果 ⇒ 挂载崩溃
+      // （现象：`Cannot read properties of null (reading 'el')`）。
+      //
+      // ⚠️ 命中时**不写 accessCache**：缓存里 `OTHER` 的语义是「未找到」
+      // （见下方 case OTHER → return undefined），一旦写入，第二次 render
+      // 就会直接返回 undefined。组件查找本身是 O(1) 的 hasOwn，无需缓存。
+      const localComponents = (instance.type as { components?: Record<string, unknown> }).components;
+      if (localComponents && hasOwn(localComponents, key)) {
+        return localComponents[key as string];
+      }
+      const appComponents = instance.appContext?.components as
+        | Record<string, unknown>
+        | undefined;
+      if (appComponents && hasOwn(appComponents, key)) {
+        return appComponents[key as string];
+      }
+
       // 未找到，缓存为 OTHER 以避免重复查找
       instance.accessCache![key] = PublicInstanceProxyAccessCache.OTHER;
       return undefined;

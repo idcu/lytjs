@@ -3,6 +3,7 @@
 
 import { isFunction, isObject, hasOwn, NOOP, EMPTY_OBJ, isPromise } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
+import { proxyRefs } from '@lytjs/reactivity';
 import type {
   ComponentOptions,
   ComponentInternalInstance,
@@ -221,7 +222,12 @@ function handleSetupResult(instance: ComponentInternalInstance, setupResult: Set
     instance.render = setupResult as RenderFunction;
   } else if (isObject(setupResult) && setupResult !== null) {
     // Setup 返回了状态对象
-    instance.setupState = setupResult as Record<string, unknown>;
+    //
+    // ⚠️ 必须经 proxyRefs 包装：否则 `setupState.msg` 拿到的是 Ref 对象本身，
+    // 模板 `{{ msg }}`（编译为 `toDisplayString(_ctx.msg)`）会把 Ref 序列化成
+    // `{ "dep": [], "__v_isRef": true, "_rawValue": … }` 渲染到页面上。
+    // 2026-09-26 修复 —— README 首个示例（用 ref 计数）此前正是这种结果。
+    instance.setupState = proxyRefs(setupResult as Record<string, unknown>);
   }
 
   // 完成组件 setup
