@@ -32,6 +32,38 @@ let currentBlock: VNode[] | null = null;
 /** Block 栈，支持嵌套 Block */
 const blockStack: (VNode[] | null)[] = [];
 
+/**
+ * Block 追踪开关计数（由 `setBlockTracking` 增减）。
+ *
+ * `< 0` 表示追踪被关闭：此时 `openBlock()` 不开启新的收集数组
+ * （`currentBlock` 置 null），`trackDynamicChild` 自然成为空操作。
+ * 用于 slot 等「渲染边界切换」场景 —— 见 `withCtx`。
+ */
+let blockTrackingDelta = 0;
+
+// ============================================================
+// setBlockTracking
+// ============================================================
+
+/**
+ * 开关 Block 追踪。
+ *
+ * 编译器产物的 import 契约里有 `setBlockTracking`（helperNameMap），
+ * 此前运行期**没有实现** —— 产物一旦真正调用它就会 `ReferenceError`。
+ * 这里给出真实语义：
+ *   - `value < 0`（如 `-1`）：关闭追踪，`openBlock()` 不再收集动态子节点；
+ *   - `value > 0`：恢复追踪；
+ *   - 计数式，支持嵌套（与 `withCtx` 的 try/finally 配对）。
+ */
+export function setBlockTracking(value: number): void {
+  blockTrackingDelta += value;
+}
+
+/** 当前是否处于「追踪开启」状态（调试/测试用） */
+export function isBlockTrackingEnabled(): boolean {
+  return blockTrackingDelta >= 0;
+}
+
 // ============================================================
 // openBlock
 // ============================================================
@@ -39,10 +71,12 @@ const blockStack: (VNode[] | null)[] = [];
 /**
  * 开启一个新的 Block 作用域。
  * 将当前 dynamicChildren 压栈，创建新的空数组用于收集动态子节点。
+ *
+ * @param disableTracking 显式关闭本次收集（`setBlockTracking(-1)` 的等价写法）
  */
-export function openBlock(): void {
+export function openBlock(disableTracking = false): void {
   blockStack.push(currentBlock);
-  currentBlock = [];
+  currentBlock = disableTracking || blockTrackingDelta < 0 ? null : [];
 }
 
 // ============================================================
@@ -148,4 +182,5 @@ export function getBlockStackDepth(): number {
 export function resetBlockStack(): void {
   currentBlock = null;
   blockStack.length = 0;
+  blockTrackingDelta = 0;
 }

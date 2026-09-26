@@ -4,7 +4,7 @@
  * FIX: P2-28 对象创建优化 - 使用对象池减少 GC 压力
  */
 
-import { Fragment, Text, Comment, ShapeFlags } from '@lytjs/common-vnode';
+import { Fragment, Text, Comment, ShapeFlags, isVNode } from '@lytjs/common-vnode';
 import type { VNode, VNodeChildren, VNodeTypes } from '@lytjs/common-vnode';
 import { isString, isArray, isFunction, isObject, isNullish, EMPTY_OBJ } from '@lytjs/common-is';
 import { normalizeClass, normalizeStyleObject as normalizeStyle } from '@lytjs/common-string';
@@ -495,6 +495,18 @@ export function normalizeChildren(vnode: VNode, children: VNodeChildren): void {
   } else if (typeof children === 'boolean') {
     // 布尔 children 视为 null
     vnode.children = undefined;
+  } else if (isVNode(children)) {
+    // 单个 VNode 作为 children：必须包成数组。
+    //
+    // ⚠️ 2026-09-26 修复：此前它会落到下面的 `isObject(children)` 兜底分支，
+    // 被误判为 **SLOTS_CHILDREN**（shapeFlag 变成 `SLOTS_CHILDREN | ELEMENT`），
+    // 而 `vnode.children` 仍是裸 VNode ⇒ patch 阶段按「插槽对象」处理 ⇒
+    // **子节点被静默丢弃**（不渲染、不报错）。
+    // 实测受害写法（都很常见）：
+    //   · `h('div', null, h('p', null, 'x'))`      → 渲染出空 div
+    //   · 编译产物 `createElementVNode("div", null, createElementVNode("p", …))`
+    vnode.children = [children] as VNodeChildren;
+    type = ShapeFlags.ARRAY_CHILDREN;
   } else if (isObject(children)) {
     // Slots children
     type = ShapeFlags.SLOTS_CHILDREN;

@@ -104,7 +104,24 @@ export {
   getCurrentBlock,
   getBlockStackDepth,
   resetBlockStack,
+  setBlockTracking,
+  isBlockTrackingEnabled,
 } from './block';
+
+// 渲染期 helper —— **编译器产物的 import 契约**
+// （toDisplayString / renderList / createElementVNode 等 9 个名字此前缺失，
+//   见 render-helpers.ts 顶部说明与 scripts/check-runtime-contract.ts）
+export {
+  createElementVNode,
+  createStaticVNode,
+  renderList,
+  toDisplayString,
+  normalizeProps,
+  guardReactiveProps,
+  toHandlerKey,
+  withCtx,
+  createSlots,
+} from './render-helpers';
 
 export type { Block } from './block';
 
