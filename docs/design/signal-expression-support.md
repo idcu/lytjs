@@ -1,6 +1,10 @@
 # Signal 模式的模板表达式支持（方案 / 待专项）
 
-> 状态：**已调研，方案就绪，待专项实施** · 2026-09-25
+> 状态：**✅ 已实施**（2026-09-26）· 原调研于 2026-09-25
+>
+> **落地摘要**：6 个函数的 `locals` 已贯穿；DOM 侧 **17 处**表达式生成改走
+> `prefixIdentifiers(exp, locals)`；校验由白名单改为黑名单；
+> 回归测试 `packages/compiler/tests/signal-expression-policy.test.ts`（23 例）+ 全量 2271 例全绿。
 > 关联：`packages/compiler/src/codegen-signal.ts` 的 `validateExpression` 注释、
 > `packages/compiler/tests/signal-expression-policy.test.ts`、
 > `packages/renderer/tests/ssr-client-consistency.test.ts`

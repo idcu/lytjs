@@ -188,7 +188,15 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
 
   // ---- Phase 3: Process AST children for dynamic bindings ----
   // 此时 varCounter 已被 buildStaticHTML 初始化，processElement 不再重复分配变量名
-  processChildren(ast.children, varCounter, elementVars, dynamicBindings, consumedCount);
+  processChildren(
+    ast.children,
+    varCounter,
+    elementVars,
+    dynamicBindings,
+    consumedCount,
+    false,
+    new Set(),
+  );
 
   // ---- Phase 4: Generate render function ----
   lines.push('export function render(_ctx, _container) {');
@@ -266,6 +274,7 @@ function processChildren(
   dynamicBindings: Array<{ varName: string; code: string }>,
   consumedCount: Map<string, number>,
   inheritedOnce = false,
+  locals: ReadonlySet<string> = new Set(),
 ): void {
   for (const child of children) {
     if (child.type === NodeTypes.ELEMENT) {
@@ -276,6 +285,7 @@ function processChildren(
         dynamicBindings,
         consumedCount,
         inheritedOnce,
+        locals,
       );
     } else if (child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
       processConditional(
@@ -285,9 +295,17 @@ function processChildren(
         dynamicBindings,
         undefined,
         consumedCount,
+        locals,
       );
     } else if (child.type === NodeTypes.JS_CALL_EXPRESSION) {
-      processCallExpression(child as JSCallExpression, varCounter, elementVars, dynamicBindings);
+      processCallExpression(
+        child as JSCallExpression,
+        varCounter,
+        elementVars,
+        dynamicBindings,
+        undefined,
+        new Set(),
+      );
     }
     // 根级别的 TextNode、CommentNode、InterpolationNode 已处理
     // by the static HTML generation
@@ -305,6 +323,7 @@ function processElement(
   dynamicBindings: Array<{ varName: string; code: string }>,
   consumedCount: Map<string, number>,
   inheritedOnce = false,
+  locals: ReadonlySet<string> = new Set(),
 ): void {
   // v-once：沿元素树向下传递（整个子树都只渲染一次）
   const onceMode = inheritedOnce || node.__isOnce === true;
@@ -360,14 +379,14 @@ function processElement(
           }
         }
       }
-      processDirective(dir, varName, node.tag, dynamicBindings);
+      processDirective(dir, varName, node.tag, dynamicBindings, locals);
     }
   }
 
   // 处理 codegenNode 中的属性（transform 阶段将 v-text/v-html 转换为 textContent/innerHTML 属性）
   if (node.codegenNode && node.codegenNode.type === NodeTypes.VNODE_CALL) {
     const vnode = node.codegenNode as VNodeCall;
-    processVNodeCallProps(vnode, varName, dynamicBindings);
+    processVNodeCallProps(vnode, varName, dynamicBindings, locals);
   }
 
   // 处理子节点中的动态内容
@@ -398,7 +417,7 @@ function processElement(
       }
       dynamicBindings.push({
         varName,
-        code: `effect(() => setText(${slotsVar}[${slotIndex}], _ctx.${exp}));`,
+        code: `effect(() => setText(${slotsVar}[${slotIndex}], ${prefixIdentifiers(exp, locals)}));`,
       });
       slotIndex++;
     } else if (child.type === NodeTypes.ELEMENT) {
@@ -409,6 +428,7 @@ function processElement(
         dynamicBindings,
         consumedCount,
         onceMode,
+        locals,
       );
     } else if (child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
       processConditional(
@@ -418,6 +438,7 @@ function processElement(
         dynamicBindings,
         varName,
         consumedCount,
+        locals,
       );
     } else if (child.type === NodeTypes.JS_CALL_EXPRESSION) {
       processCallExpression(
@@ -426,6 +447,7 @@ function processElement(
         elementVars,
         dynamicBindings,
         varName,
+        locals,
       );
     }
   }
@@ -499,6 +521,7 @@ function processVNodeCallProps(
   vnode: VNodeCall,
   varName: string,
   dynamicBindings: Array<{ varName: string; code: string }>,
+  locals: ReadonlySet<string> = new Set(),
 ): void {
   if (!vnode.props || vnode.props.type !== NodeTypes.JS_OBJECT_EXPRESSION) return;
 
@@ -520,13 +543,13 @@ function processVNodeCallProps(
       // v-text 转换后的结果
       dynamicBindings.push({
         varName,
-        code: `effect(() => setText(${varName}, _ctx.${value}));`,
+        code: `effect(() => setText(${varName}, ${prefixIdentifiers(value, locals)}));`,
       });
     } else if (key === 'innerHTML') {
       // v-html 转换后的结果
       dynamicBindings.push({
         varName,
-        code: `effect(() => setHTML(${varName}, _ctx.${value}));`,
+        code: `effect(() => setHTML(${varName}, ${prefixIdentifiers(value, locals)}));`,
       });
     } else if (key === 'modelValue') {
       // v-model 转换后的结果 - 已在 processDirective 中处理
@@ -554,6 +577,14 @@ const TEXT_SLOT_COMMENT = '<!--lyt-t-->';
 // FIX: P1-1~3 Signal 模式代码注入防护 - 表达式白名单验证
 const VALID_EXPRESSION = /^[a-zA-Z_$][a-zA-Z0-9_$]*(\.([a-zA-Z_$][a-zA-Z0-9_$]*))*$/;
 
+/**
+ * 危险/带副作用的表达式模式（黑名单）。
+ * 模板表达式默认**信任**（模板由开发者书写），只拦这些：
+ * 语句分隔、箭头函数、声明关键字、动态导入、赋值（避免副作用与注入）。
+ */
+const DANGEROUS_EXPRESSION =
+  /;|=>|\bfunction\b|\bnew\s|\bimport\b|\brequire\b|\bdelete\b|\bthrow\b|\bawait\b|(^|[^=!<>])\b[a-zA-Z_$][\w$]*\s*=(?!=)/;
+
 // FIX: P1-S1, P1-S2 属性名和事件名验证正则
 const VALID_ATTRIBUTE_NAME = /^[a-zA-Z][a-zA-Z0-9-:]*$/;
 const VALID_EVENT_NAME = /^[a-zA-Z][a-zA-Z0-9-]*$/;
@@ -561,26 +592,13 @@ const VALID_COMPONENT_NAME = /^[a-zA-Z][a-zA-Z0-9-]*$/;
 
 function validateExpression(exp: string | undefined, context: string): void {
   if (!exp) return;
-  // ⚠️ 仍保持**白名单**（只允许简单属性访问路径）。原因：Signal codegen 里有十余处
-  // 直接拼接 `` `_ctx.${exp}` ``（假定表达式就是属性路径），若放行数组/对象/三元等
-  // 表达式，会生成 `_ctx.['a','b']` 这类**语法错误的产物**（比"明确报错"更糟）。
-  //
-  // 已确认的缺陷与正确修法（**待专项**）：
-  //   `:class="['a',{b:ok}]"` / `:style="{color:c}"` / `:title="a+'!'"` 在 Signal 下不可用，
-  //   而 SSR **可以**（SSR 用 px()/prefixIdentifiers 处理表达式）⇒ 两端不一致。
-  //   修法：把那十余处 `_ctx.${exp}` 统一改为 `prefixIdentifiers(exp, locals)`，
-  //   并处理 v-for / 插槽等 locals 的传递。属架构级改动，宜单独立项。
-  if (!VALID_EXPRESSION.test(exp)) {
+  // 表达式生成已统一改走 `prefixIdentifiers(exp, locals)`（见各调用点），
+  // 它能正确处理数组/对象/三元/拼接/索引等，并跳过属性名、字符串、locals。
+  // ⇒ 这里不再限制为「简单属性路径」，改为**黑名单式**拒绝明显危险/带副作用的模式。
+  if (DANGEROUS_EXPRESSION.test(exp)) {
     throw new Error(
-      `[lytjs/compiler] Unsupported expression in ${context}: "${exp}".\n` +
-        `  Signal mode currently only supports simple property paths (e.g. \`a\` or \`a.b\`).\n` +
-        `  Workaround: compute it in setup() and bind the result —\n` +
-        `    // setup()\n` +
-        `    const cls = computed(() => ['a', { active: ok.value }]);\n` +
-        `    return { cls };\n` +
-        `    <!-- template -->\n` +
-        `    <div :class="cls">…</div>\n` +
-        `  (SSR mode supports such expressions directly; unifying the two is tracked as a separate task.)`,
+      `[lytjs/compiler] Unsafe expression in ${context}: "${exp}".\n` +
+        `  Statements, arrow functions, declarations and assignments are not allowed in templates.`,
     );
   }
 }
@@ -641,6 +659,7 @@ function processDirective(
   varName: string,
   tag: string,
   dynamicBindings: Array<{ varName: string; code: string }>,
+  locals: ReadonlySet<string> = new Set(),
 ): void {
   const expContent = dir.exp ? getExpContent(dir.exp as SimpleExpressionNode) : undefined;
   const argContent = dir.arg ? getExpContent(dir.arg as SimpleExpressionNode) : undefined;
@@ -670,7 +689,7 @@ function processDirective(
       if (expContent) {
         dynamicBindings.push({
           varName,
-          code: `let _ifFallbackEl = null;\n  effect(() => {\n    if (_ctx.${expContent}) {\n      if (!_ifFallbackEl) {\n        _ifFallbackEl = ${varName};\n        insert(_ifFallbackEl, _container);\n      }\n    } else {\n      if (_ifFallbackEl) {\n        remove(_ifFallbackEl);\n        _ifFallbackEl = null;\n      }\n    }\n  });`,
+          code: `let _ifFallbackEl = null;\n  effect(() => {\n    if (${prefixIdentifiers(expContent, locals)}) {\n      if (!_ifFallbackEl) {\n        _ifFallbackEl = ${varName};\n        insert(_ifFallbackEl, _container);\n      }\n    } else {\n      if (_ifFallbackEl) {\n        remove(_ifFallbackEl);\n        _ifFallbackEl = null;\n      }\n    }\n  });`,
         });
       }
       break;
@@ -680,7 +699,7 @@ function processDirective(
       if (expContent) {
         dynamicBindings.push({
           varName,
-          code: `effect(() => {\n    ${varName}.style.display = _ctx.${expContent} ? '' : 'none';\n  });`,
+          code: `effect(() => {\n    ${varName}.style.display = ${prefixIdentifiers(expContent, locals)} ? '' : 'none';\n  });`,
         });
       }
       break;
@@ -693,7 +712,7 @@ function processDirective(
       if (expContent) {
         dynamicBindings.push({
           varName,
-          code: `effect(() => setHTML(${varName}, _ctx.${expContent}));`,
+          code: `effect(() => setHTML(${varName}, ${prefixIdentifiers(expContent, locals)}));`,
         });
       }
       break;
@@ -704,17 +723,17 @@ function processDirective(
         if (argContent === 'class') {
           dynamicBindings.push({
             varName,
-            code: `effect(() => setClass(${varName}, _ctx.${expContent}));`,
+            code: `effect(() => setClass(${varName}, ${prefixIdentifiers(expContent, locals)}));`,
           });
         } else if (argContent === 'style') {
           dynamicBindings.push({
             varName,
-            code: `effect(() => setStyle(${varName}, _ctx.${expContent}));`,
+            code: `effect(() => setStyle(${varName}, ${prefixIdentifiers(expContent, locals)}));`,
           });
         } else {
           dynamicBindings.push({
             varName,
-            code: `effect(() => setAttribute(${varName}, '${argContent}', _ctx.${expContent}));`,
+            code: `effect(() => setAttribute(${varName}, '${argContent}', ${prefixIdentifiers(expContent, locals)}));`,
           });
         }
       }
@@ -727,13 +746,13 @@ function processDirective(
           const mods = dir.modifiers.map((m) => `${m}: true`).join(', ');
           dynamicBindings.push({
             varName,
-            code: `onCleanup(createEventHandler(${varName}, '${argContent}', _ctx.${expContent}, { ${mods} }));`,
+            code: `onCleanup(createEventHandler(${varName}, '${argContent}', ${prefixIdentifiers(expContent, locals)}, { ${mods} }));`,
           });
         } else {
           // FIX: P1-12 使用 createEventHandler 替代未导入的 addEventListener
           dynamicBindings.push({
             varName,
-            code: `onCleanup(createEventHandler(${varName}, '${argContent}', _ctx.${expContent}));`,
+            code: `onCleanup(createEventHandler(${varName}, '${argContent}', ${prefixIdentifiers(expContent, locals)}));`,
           });
         }
       }
@@ -781,11 +800,11 @@ function processDirective(
         // 生成双向绑定代码
         dynamicBindings.push({
           varName,
-          code: `effect(() => { ${varName}.value = _ctx.${expContent}; });`,
+          code: `effect(() => { ${varName}.value = ${prefixIdentifiers(expContent, locals)}; });`,
         });
         dynamicBindings.push({
           varName,
-          code: `onCleanup(createEventHandler(${varName}, '${eventName}', ($e) => { _ctx.${expContent} = ${setValueExpr}; }));`,
+          code: `onCleanup(createEventHandler(${varName}, '${eventName}', ($e) => { ${prefixIdentifiers(expContent, locals)} = ${setValueExpr}; }));`,
         });
       }
       break;
@@ -811,6 +830,7 @@ function processConditional(
   dynamicBindings: Array<{ varName: string; code: string }>,
   parentVar?: string,
   consumedCount?: Map<string, number>,
+  locals: ReadonlySet<string> = new Set(),
 ): void {
   const testExpr = getTestExpr(node.test);
 
@@ -905,7 +925,7 @@ function processConditional(
     }
 
     if (branchInfo.condition !== null) {
-      code += `if (_ctx.${branchInfo.condition}) `;
+      code += `if (${prefixIdentifiers(branchInfo.condition, locals)}) `;
     }
 
     code += `{\n`;
@@ -932,7 +952,7 @@ function processConditional(
     // FIX: P2-44 缓存 extractChildrenText 结果，避免对同一分支重复调用
     const childrenText = extractChildrenText(branchInfo.branch);
     if (childrenText && branchHTML.trim()) {
-      code += `        setText(${ifVarName}El, _ctx.${childrenText});\n`;
+      code += `        setText(${ifVarName}El, ${prefixIdentifiers(childrenText, locals)});\n`;
     }
 
     code += `      }`;
@@ -940,7 +960,7 @@ function processConditional(
     // 如果分支已激活，更新动态内容（复用已缓存的 childrenText）
     if (childrenText && branchHTML.trim()) {
       code += ` else {\n`;
-      code += `        setText(${ifVarName}El, _ctx.${childrenText});\n`;
+      code += `        setText(${ifVarName}El, ${prefixIdentifiers(childrenText, locals)});\n`;
       code += `      }`;
     }
 
@@ -1044,6 +1064,7 @@ function processCallExpression(
   _elementVars: Array<{ varName: string; tag: string }>,
   dynamicBindings: Array<{ varName: string; code: string }>,
   parentVar?: string,
+  locals: ReadonlySet<string> = new Set(),
 ): void {
   const callee = typeof node.callee === 'string' ? node.callee : String(node.callee);
 
@@ -1181,7 +1202,7 @@ function processCallExpression(
 
     dynamicBindings.push({
       varName: containerVar,
-      code: `effect(() => {\n    reconcileArray(${containerVar}, _ctx.${source}, {\n      key: (${itemVar}) => ${keyExpr},\n      create: (${itemVar}) => {\n        ${createBody}\n      }${updateBody ? `,\n      update: (_el, ${itemVar}) => {\n        ${updateBody}\n      }` : ''}\n    });\n  });`,
+      code: `effect(() => {\n    reconcileArray(${containerVar}, ${prefixIdentifiers(source, locals)}, {\n      key: (${itemVar}) => ${keyExpr},\n      create: (${itemVar}) => {\n        ${createBody}\n      }${updateBody ? `,\n      update: (_el, ${itemVar}) => {\n        ${updateBody}\n      }` : ''}\n    });\n  });`,
     });
   }
 }
