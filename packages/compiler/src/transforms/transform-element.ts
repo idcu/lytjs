@@ -182,7 +182,18 @@ function buildElementCodegen(node: ElementNode, context: TransformContext): void
       }
       if (parts.length > 0) {
         context.helper('TO_DISPLAY_STRING');
-        vnodeChildren = createCompoundExpression(parts);
+        // ⚠️ 相邻片段之间必须显式插入 ` + `：
+        // `genCompoundExpression` 对**字符串片段是原样输出代码**（不做任何包裹），
+        // 因此拼接运算符要自己写进 children 里。
+        // 此前直接把 `JSON.stringify(text)` 与插值节点相邻放入 ⇒ 产物是
+        //   `toDisplayString(_ctx.a)" "toDisplayString(_ctx.b)`
+        // —— 缺 `+` 的语法错误 ⇒ 渲染函数无法生成（表现为静默空白 / 挂载报错）。
+        const joined: (string | SimpleExpressionNode | InterpolationNode)[] = [];
+        for (let i = 0; i < parts.length; i++) {
+          if (i > 0) joined.push(' + ');
+          joined.push(parts[i]!);
+        }
+        vnodeChildren = createCompoundExpression(joined);
       }
     } else {
       // 从代码生成中过滤非 JSChildNode 类型
@@ -537,10 +548,22 @@ function handleVHtml(
     // 在开发模式下额外发出安全警告
     // FIX: P1-32 使用 __DEV__ 替代 process.env.NODE_ENV，
     // 与框架其他部分的开发模式检测保持一致
+    // ⚠️ 历史缺陷（2026-09-26 修复）：此前把 createConditionalExpression(...) 的
+    // **返回值（AST 对象）**用模板字符串插值进一个字符串 ⇒ `${obj}` 得到
+    // `"[object Object]"`，产物变成 `{ "innerHTML": ([object Object]) }`，
+    // `new Function` 抛 `Unexpected identifier 'Object'`。
+    // 正确做法：把它作为 compound expression 的**子节点**（数组元素）由 codegen
+    // 递归生成，括号用独立的字符串片段给出。
     const safeValue = createCompoundExpression([
-      `(${createConditionalExpression(
-        createSimpleExpression('__DEV__', false, prop.loc, false),
+      '(',
+      createConditionalExpression(
+        // ⚠️ `__DEV__` 是**构建期常量**，必须 isStatic=true：
+        // 若为 false，prefixIdentifiers 会把它改写成 `_ctx.__DEV__`（运行期不存在）。
+        createSimpleExpression('__DEV__', true, prop.loc, true),
+        // ⚠️ 逗号序列出现在 `?:` 的 consequent 位置时**必须自带括号**：
+        // `a ? b, c : d` 是语法错误，`a ? (b, c) : d` 才合法。
         createCompoundExpression([
+          '(',
           createCallExpression(
             'console.warn',
             [
@@ -555,11 +578,13 @@ function handleVHtml(
           ),
           ', ',
           sanitizedValue,
+          ')',
         ]),
         sanitizedValue,
         false,
         prop.loc,
-      )})`,
+      ),
+      ')',
     ]);
     properties.push(
       createObjectProperty(

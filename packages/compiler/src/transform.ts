@@ -3,7 +3,7 @@
 // 包含 transform、markConstants、hoistStatic、collectDynamicChildren
 // optimize 阶段的逻辑已合并到此模块中
 
-import { NodeTypes } from './constants';
+import { NodeTypes, ElementTypes } from './constants';
 import type {
   RootNode,
   ElementNode,
@@ -19,7 +19,6 @@ import type {
   JSChildNode,
   BaseNode,
   CompilerOptions,
-  VNodeCall,
   ExpressionNode,
 } from './types';
 import { createSimpleExpression, createCallExpression, createArrayExpression } from './ast';
@@ -57,6 +56,28 @@ export function transform(root: RootNode, options: TransformOptions = {}): void 
   // 把编译期收集到的局部标识符带给 codegen（用于标识符前缀化时排除）
   if (context.__locals && context.__locals.size > 0) {
     root.localIdentifiers = Array.from(context.__locals);
+  }
+
+  // 以下原为 optimize 阶段的逻辑，**必须在「构建根 codegenNode」之前**执行。
+  //
+  // ⚠️ 历史缺陷（2026-09-26 修复）：hoistStatic 的实现是「把 element.codegenNode
+  // 重新赋值为 _hoisted_N 引用」。而单根场景下 `root.codegenNode = child.codegenNode`
+  // 持有的是**旧对象的引用** ⇒ 若先构建 root.codegenNode 再提升，
+  // 替换不会反映到产物里：render 里重新内联整棵静态子树，
+  // 而模块级 `_hoisted_N` 声明成了**纯开销**（比不做提升更差）。
+  // 实测修复前 `<div class="a"><span>hi</span></div>` 的 render 就重造了整棵树。
+  markConstants(root);
+
+  // ⚠️ 静态提升**只对 vnode 模式生效**：
+  // signal / vapor 的产物是 DOM 操作，不消费 `_hoisted_N`；更要紧的是
+  // codegen-signal.ts 会把 `element.codegenNode` 当作「属性/子内容携带者」读取
+  // （`node.codegenNode.type === VNODE_CALL` 分支）—— 一旦被换成
+  // SimpleExpression，该分支静默跳过，组件会退化成占位标签、静态属性丢失。
+  // SSR 产物是字符串拼接，同样不消费 `_hoisted_N`，故一并排除。
+  const { rendererMode, ssr } = options;
+  const usesVNodeCodegen = !ssr && rendererMode !== 'signal' && rendererMode !== 'vapor';
+  if (usesVNodeCodegen) {
+    hoistStatic(root);
   }
 
   // 创建根代码生成节点
@@ -98,10 +119,7 @@ export function transform(root: RootNode, options: TransformOptions = {}): void 
     }
   }
 
-  // 以下原为 optimize 阶段的逻辑，现已合并到 transform 阶段
   // patchFlag 由 transform-element.ts 在 transform 过程中统一设置
-  markConstants(root);
-  hoistStatic(root);
   collectDynamicChildren(root);
 }
 
@@ -381,6 +399,14 @@ function containsCtxReference(node: unknown, seen = new Set<unknown>()): boolean
   const record = node as Record<string, unknown>;
   if (typeof record['content'] === 'string' && record['content'].includes('_ctx.')) return true;
   if (typeof record['tag'] === 'string' && record['tag'].includes('_ctx.')) return true;
+  // ⚠️ 组件 vnode 不能靠上面的字符串匹配发现：
+  // 它的 `_ctx.` 前缀是 **codegen 阶段**才加的（见 genVNodeCall 的
+  // `node.isComponent` 分支），此刻 `node.tag` 仍是裸名 `"Child"`。
+  // 若不显式用 isComponent 标记否决，含组件的子树会被提升到模块级常量，
+  // 而模块级立即求值 `_ctx.Child` ⇒ `ReferenceError: _ctx is not defined`
+  // （实测 `<div><Child /></div>` 正是如此：产物 `const _hoisted_1 =
+  // createElementVNode("div", null, createElementVNode(_ctx.Child, null))`）。
+  if (record['isComponent'] === true) return true;
   // 任何运行期调用（renderList / renderSlot / withMemo / 条件表达式…）都不能提升到模块作用域
   if (record['type'] === NodeTypes.JS_CALL_EXPRESSION) return true;
   if (record['type'] === NodeTypes.JS_CONDITIONAL_EXPRESSION) return true;
@@ -396,42 +422,59 @@ function hoistStatic(root: RootNode): void {
   const hoists: JSChildNode[] = [];
   const existingHoistsLen = root.hoists.length;
 
-  walk(root.children, (node) => {
-    if (node.type === NodeTypes.ELEMENT) {
+  // ⚠️ 提升一个节点后**必须停止下降**：父节点被整棵提升后，其静态子孙已包含在
+  // 父的 codegenNode 里；若继续下降并对子孙再提升一次，会产出重复的模块级常量
+  // （实测 `<div class="a"><span>hi</span></div>` 曾同时生成
+  //   `_hoisted_1 = div(…, span(…))` 与 `_hoisted_2 = span(…)` 两份）。
+  const visit = (nodes: TemplateChildNode[]): void => {
+    for (const node of nodes) {
+      if (node.type !== NodeTypes.ELEMENT) continue;
       const element = node as ElementNode;
 
-      // 静态提升的两个必要条件：
-      // 1) 元素本身被标记为静态；2) 其 codegen 子树不含 `_ctx.` 运行期引用
-      if (element.isStatic && element.codegenNode && !containsCtxReference(element.codegenNode)) {
+      // 静态提升的三个必要条件：
+      // 1) 元素本身被标记为静态；
+      // 2) 其 codegen 子树不含 `_ctx.` 运行期引用；
+      // 3) 尚未被提升过（hoistStatic 可能被 transform + optimize 各调一次，需幂等）
+      if (
+        element.isStatic &&
+        element.codegenNode &&
+        !isHoistedRef(element.codegenNode) &&
+        !containsCtxReference(element.codegenNode)
+      ) {
         // 提升静态元素
         hoists.push(element.codegenNode);
         // 全局索引 = 已有提升 + 当前新提升数量 - 1
         element.codegenNode = createHoistedReference(existingHoistsLen + hoists.length - 1);
+        continue; // 已整棵提升，不再下降
       }
+
+      visit(element.children);
     }
-  });
+  };
+  visit(root.children);
 
   root.hoists = [...root.hoists, ...hoists];
 }
 
-function createHoistedReference(index: number): VNodeCall {
-  return {
-    type: NodeTypes.VNODE_CALL,
-    tag: `_hoisted_${index + 1}`,
-    props: undefined,
-    children: undefined,
-    patchFlag: undefined,
-    dynamicProps: undefined,
-    directives: undefined,
-    isBlock: false,
-    disableTracking: false,
-    isComponent: false,
-    loc: {
-      start: { line: 1, column: 1, offset: 0 },
-      end: { line: 1, column: 1, offset: 0 },
-      source: '',
-    },
-  };
+/**
+ * 生成对已提升常量的**引用**（`_hoisted_N`）。
+ *
+ * ⚠️ 必须返回 SIMPLE_EXPRESSION，不能返回 VNODE_CALL：
+ * 此前返回 `{ type: VNODE_CALL, tag: '_hoisted_1' }`，codegen 会把它当作
+ * 「元素标签」再包一层 —— 产物是 `createElementVNode(_hoisted_1, null)`，
+ * 即把一个 **VNode 当作标签名**传入，运行时不可能正确。
+ * 正确产物应是直接 `return _hoisted_1`（SIMPLE_EXPRESSION 走 genExpression，
+ * isStatic=true ⇒ 不加 `_ctx.` 前缀、不额外包裹）。
+ */
+function createHoistedReference(index: number) {
+  return createSimpleExpression(`_hoisted_${index + 1}`, true);
+}
+
+/** 判断某 codegenNode 是否已是 `_hoisted_N` 引用（用于 hoistStatic 的幂等防御） */
+function isHoistedRef(node: unknown): boolean {
+  const n = node as { type?: unknown; content?: unknown } | undefined;
+  if (!n || n.type !== NodeTypes.SIMPLE_EXPRESSION) return false;
+  return typeof n.content === 'string' && /^_hoisted_\d+$/.test(n.content);
 }
 
 // ============================================================
@@ -501,11 +544,15 @@ function walk(nodes: TemplateChildNode[], fn: (node: TemplateChildNode) => void)
 }
 
 /**
- * 后代是否存在**动态内容**（插值或指令）。
+ * 后代是否存在**动态内容**（插值 / 指令 / 组件）。
  *
  * ⚠️ 此前只检查插值，**漏了后代元素自身的指令**（如 `<span :title="t">`）——
  * 于是 `<div><span :title="t">x</span></div>` 的 `div` 被误判为静态，
  * 进而被提升成模块级常量，其体内却引用 `_ctx.t` ⇒ 运行时抛 `_ctx is not defined`。
+ *
+ * ⚠️ 2026-09-26 再补：**后代是组件**同样是动态的 —— 组件标签在 codegen 阶段
+ * 会被前缀化为 `_ctx.Child`（裸名不含 `_ctx.`，字符串匹配发现不了），
+ * 误判静态同样会导致模块级 `_ctx is not defined`。
  */
 function hasDescendantDynamicContent(element: ElementNode): boolean {
   for (const child of element.children) {
@@ -514,6 +561,12 @@ function hasDescendantDynamicContent(element: ElementNode): boolean {
     }
     if (child.type === NodeTypes.ELEMENT) {
       const childElement = child as ElementNode;
+      // 后代是**组件**（标签会在 codegen 时解析为 `_ctx.Xxx`）
+      // 注意：ElementNode 类型上没有 isComponent 字段，组件性由 tagType 承载
+      // （ElementTypes.COMPONENT = 1）。
+      if (childElement.tagType === ElementTypes.COMPONENT) {
+        return true;
+      }
       // 后代元素自身的动态绑定（`:prop` / `@event` / `v-if` / `v-for` …）
       if (childElement.props.some((p) => p.type === NodeTypes.DIRECTIVE)) {
         return true;

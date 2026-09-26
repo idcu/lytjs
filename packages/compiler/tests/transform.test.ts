@@ -18,8 +18,22 @@ function transformTemplate(source: string) {
 
 describe('transform', () => {
   describe('transformElement', () => {
-    it('should create VNodeCall for element', () => {
+    it('静态元素应被静态提升为 _hoisted_N 引用（而非内联 VNodeCall）', () => {
+      // 2026-09-26 修复：此前 hoistStatic 在 root.codegenNode 构建之后执行，
+      // 而单根场景 root.codegenNode 持有的是**旧对象引用** ⇒ 提升不反映到产物，
+      // render 里重造整棵静态子树、`_hoisted_N` 声明成为纯开销。
+      // 现在提升在构建根 codegenNode 之前完成，元素被替换为对常量的引用。
       const ast = transformTemplate('<div></div>');
+      const element = ast.children[0] as ElementNode;
+      expect(element.codegenNode).toBeDefined();
+      expect(element.codegenNode!.type).toBe(NodeTypes.SIMPLE_EXPRESSION);
+      expect((element.codegenNode as unknown as { content: string }).content).toBe('_hoisted_1');
+      // 模块级提升表里应有对应声明，供 codegen 生成 `const _hoisted_1 = …`
+      expect(ast.hoists.length).toBe(1);
+    });
+
+    it('含动态内容的元素应生成 VNodeCall（不被提升）', () => {
+      const ast = transformTemplate('<div>{{ msg }}</div>');
       const element = ast.children[0] as ElementNode;
       expect(element.codegenNode).toBeDefined();
       expect(element.codegenNode!.type).toBe(NodeTypes.VNODE_CALL);

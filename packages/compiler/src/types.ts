@@ -75,7 +75,15 @@ export interface ElementNode extends BaseNode {
    */
   __isOnce?: boolean;
   children: TemplateChildNode[];
-  codegenNode: VNodeCall | undefined;
+  /**
+   * 该元素的 codegen 节点。
+   *
+   * ⚠️ 注意：静态提升（hoistStatic）会把**整棵静态子树**替换为对模块级常量的
+   * 引用，此时这里是 `SimpleExpressionNode`（内容形如 `_hoisted_1`），
+   * 而不是 VNodeCall。消费者在读取后需按 `type` 收敛（见 codegen 的
+   * `SIMPLE_EXPRESSION` 分支）。
+   */
+  codegenNode: VNodeCall | SimpleExpressionNode | undefined;
   patchFlag: number;
   patchFlagForChildren?: number;
   dynamicChildren?: JSChildNode[];
@@ -301,6 +309,15 @@ export interface TransformOptions {
   isTS?: boolean;
   onError?: (error: Error) => void;
   onWarn?: (warning: string) => void;
+  /**
+   * 渲染模式。
+   *
+   * ⚠️ 这不是「仅用于选择 codegen」的元数据 —— transform 阶段也要用它做**分支决策**：
+   * signal / vapor 产物是 DOM 操作（不消费 `_hoisted_N`），且其 codegen 会把
+   * `element.codegenNode` 当作「属性/子内容携带者」读取（见 codegen-signal.ts 的
+   * `node.codegenNode.type === VNODE_CALL` 分支）。因此静态提升必须只对 vnode 生效。
+   */
+  rendererMode?: 'vnode' | 'signal' | 'vapor';
 }
 
 export interface CodegenOptions {

@@ -177,33 +177,43 @@ export function transformFor(
                 `[lytjs/compiler] v-for: unexpected codegenNode type: ${(codegenNode as { type?: number }).type}. Expected VNodeCall or JSCallExpression.`,
               );
             }
-            return codegenNode as VNodeCall;
+            // 类型放宽（2026-09-26）：静态提升会把 element.codegenNode 换成
+            // SimpleExpressionNode（`_hoisted_N` 引用）。v-for 元素必然含动态内容、
+            // 不会被提升，故此分支实际不可达；保留 warn 后经 unknown 收敛即可。
+            return codegenNode as unknown as VNodeCall;
           })();
 
     context.helper('RENDER_LIST');
 
     // 构建箭头函数体
-    let arrowBody: TemplateChildNode[];
     // FIX: P2-10 使用类型守卫函数安全转换，替代 as unknown as 双重断言
     // renderItem 在此上下文中已被验证为 VNodeCall 或 JSCallExpression，
     // 两者都可作为 TemplateChildNode 使用（通过 replaceNode 插入父节点 children）
     const renderItemAsChild = isTemplateChildCompatible(renderItem)
       ? renderItem
       : (renderItem as TemplateChildNode);
+
+    // ⚠️ 箭头函数的**块体必须以 `return` 结束**。此前生成的是
+    //     `(i) => { (openBlock(), createBlock("li", …)) }`
+    //   —— 块体没有 return ⇒ 每一项都求值为 undefined ⇒
+    //   `renderList()` 产出 `[undefined, undefined]` ⇒ 列表**渲染为空**
+    //   （不报错、不警告，是典型的静默错渲）。
+    // ⚠️ `return` 必须落在解构语句**之后**、renderItem 之前，
+    //   否则会生成 `return const {a} = i` 这种非法语句。
+    const bodyParts: (string | TemplateChildNode)[] = [];
     if (destructureExpr) {
-      // 对于解构，在渲染项之前添加解构语句
-      arrowBody = [
-        createSimpleExpression(`const ${destructureExpr} = ${itemVar}`, false, forExp.loc, false),
-        renderItemAsChild,
-      ];
-    } else {
-      arrowBody = [renderItemAsChild];
+      // 对于解构，在渲染项之前添加解构语句（末尾分号，避免与 return 粘连）
+      bodyParts.push(
+        createSimpleExpression(`const ${destructureExpr} = ${itemVar};`, false, forExp.loc, false),
+      );
     }
+    bodyParts.push(' return ');
+    bodyParts.push(renderItemAsChild);
 
     const renderListCall = createCallExpression('RENDER_LIST', [
       createSimpleExpression(right, false, forExp.loc, false),
       createCompoundExpression(
-        [`(${itemVar}${indexVar ? `, ${indexVar}` : ''}) => { `, ...arrowBody, ` }`],
+        [`(${itemVar}${indexVar ? `, ${indexVar}` : ''}) => {`, ...bodyParts, ` }`],
         forExp.loc,
       ),
     ]);

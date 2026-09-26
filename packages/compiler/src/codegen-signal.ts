@@ -170,7 +170,11 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
   // ---- Phase 1: Generate imports ----
   // FIX: P1-13 添加 runCleanups 到 import 列表
   lines.push(
-    `import { effect, reconcileArray } from '@lytjs/reactivity';`,
+    // ⚠️ `reconcileArray` 属于 `@lytjs/dom-runtime`（下一行的列表里已正确列出）。
+    // 此前它被重复写在此处的 `@lytjs/reactivity` 导入里 ⇒ 契约守卫
+    // （scripts/check-runtime-contract.ts）报「reactivity 缺少导出 reconcileArray」。
+    // 运行时因「剥掉 import + 按本地名注入」而侥幸不受影响，但 AOT / 直接 ESM 消费会解析失败。
+    `import { effect } from '@lytjs/reactivity';`,
     `import { createTemplate, getRealNode, setText, setHTML, setAttribute, setProperty, setStyle, setClass, insert, remove, createEventHandler, onCleanup, runCleanups, reconcileArray, claimTextSlots } from '@lytjs/dom-runtime';`,
   );
   // 用到组件挂载时才引入（@lytjs/renderer 提供运行时实现）

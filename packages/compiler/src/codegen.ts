@@ -269,11 +269,19 @@ function genVNodeCall(node: VNodeCall, context: CodegenContext): void {
   const { tag, props, children, patchFlag, isBlock } = node;
 
   if (isBlock) {
-    // Block 节点：生成 openBlock() 前缀
-    context.push(`${context.helper('OPEN_BLOCK')}()`, node);
-    context.push('\n');
-    context.indent();
-
+    // Block 节点：用**逗号表达式**包住 `openBlock(), createBlock(...)`。
+    //
+    // ⚠️ 历史缺陷（2026-09-26 修复）：此前产物是
+    //      `openBlock()` + 换行 + `createBlock(...)`
+    //   两种典型后果：
+    //   ① 顶层 `return openBlock()⏎createBlock(...)` 会被 **ASI** 断句，
+    //      return 的是 `openBlock()`（声明为 `: void`，无返回值）⇒ render 返回
+    //      undefined、页面空白，真正的 createBlock 永远执行不到；
+    //   ② 当该形态出现在**表达式内部**时（v-once 的 `(_once_0 || (_once_0 = …))`、
+    //      组件 slot 的 children 数组）是纯粹语法错误 ⇒
+    //      `new Function` 抛 `Unexpected identifier 'createBlock'`。
+    //   逗号表达式同时解决两者（与 Vue 的产物形态一致）。
+    context.push(`(${context.helper('OPEN_BLOCK')}(), `, node);
     context.push(`${context.helper('CREATE_BLOCK')}(`, node);
   } else {
     // 普通节点：生成 createVNode 调用
@@ -307,6 +315,12 @@ function genVNodeCall(node: VNodeCall, context: CodegenContext): void {
     } else {
       genNode(children, context);
     }
+  } else if (patchFlag !== undefined) {
+    // ⚠️ children 缺省时必须补 `null` 占位，否则 patchFlag 会**落到 children 形参**上。
+    // 实测（2026-09-26）：`<div v-html="raw">` 的产物是
+    //   `createBlock("div", { "innerHTML": … }, 16 /* FULL_PROPS */)`
+    // —— `16` 被当成 children 渲染成了文本，页面出现莫名的 "16"。
+    context.push(', null', node);
   }
 
   // Patch flag
@@ -323,8 +337,8 @@ function genVNodeCall(node: VNodeCall, context: CodegenContext): void {
   context.push(')', node);
 
   if (isBlock) {
-    context.push('\n');
-    context.deindent();
+    // 闭合逗号表达式的左括号（见 genVNodeCall 开头）
+    context.push(')', node);
   }
 }
 
@@ -451,6 +465,12 @@ function genConditional(node: JSConditionalExpression, context: CodegenContext):
     genChildrenArray(alternate, context);
   } else if (alternate) {
     genNode(alternate, context);
+  } else {
+    // ⚠️ 无 else 分支（如单独的 `v-if`，或 `v-show` 之类的三元回退）：
+    // 必须显式输出 `null`。此前这里什么都不 push，产物是
+    //   `(_ctx.ok ? createElementVNode("span", null, "Y") : )`
+    // —— 冒号后为空 ⇒ 语法错误 ⇒ 组件渲染函数无法生成（表现为静默空白）。
+    context.push('null', node);
   }
 
   context.push(')', node);
