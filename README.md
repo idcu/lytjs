@@ -14,6 +14,55 @@
 - **运行时零第三方依赖** - 完全自研实现，极致轻量
 - **可插拔官方插件** - 主题、日志、国际化等官方插件
 
+## 能力状态
+
+> 本表以**磁盘实测**为准（2026-09-26 全维度审计 + 同日整改）。
+> 详见 [审计报告](../LYTJS_FULL_AUDIT_2026-09-26.md) 与 [整改进展](../AUDIT_REMEDIATION_PROGRESS.md)。
+> 门禁：`pnpm check-runtime-contract`（产物 ↔ 运行时契约）与
+> `packages/core/tests/e2e-template-render.test.ts`（端到端真实 DOM 断言）。
+
+### ✅ 已可用（有端到端验证）
+
+| 能力 | 说明 |
+| --- | --- |
+| 响应式内核 | `ref` / `reactive` / `computed` / `watch` / `effect` / `effectScope`（Proxy + Signal 双轨） |
+| **VNode 模式模板渲染** | `createApp({ setup, template })`、`v-if/else-if/else`、`v-for`、`v-show`、`v-model`、`v-bind`、`v-on`、`:class` / `:style`、`v-html`、`v-once`、`v-pre`、`v-memo` |
+| Signal / Vapor 模式 | `createSignalRenderer`（**async**，需 `await`） |
+| 组件系统 | 实例 / props / emit / slots / provide-inject / `components` 注册 / 异步组件 / ErrorBoundary |
+| 生命周期钩子 | `onMounted` / `onUpdated` / `onBeforeUnmount` / `onUnmounted`（含选项式同名钩子） |
+| scoped CSS | `compileSFC(descriptor, { scoped: true })` —— 产物属性名与 CSS 选择器一致 |
+| SSR（`@lytjs/ssr`） | `renderToString` / 流式渲染 / SSG 写文件 / ISR / 组件级数据预取 |
+| UI 组件库 | `@lytjs/ui` 56 个组件（部分为半成品，见下） |
+
+### ⚠️ 实验性 / 不完整
+
+| 能力 | 状态 |
+| --- | --- |
+| 模板编译的 AOT | 目前为**运行时编译**（`new Function` 注入 helper）；生产建议走 AOT 预编译 |
+| `activated` / `deactivated` 钩子 | 需先补 vdom 对 `ShapeFlags.COMPONENT_KEPT_ALIVE` 的消费 |
+| **KeepAlive** | **当前不生效**：缓存写入时机错（render 阶段拿不到子实例）+ vdom 无对应消费方，详见 `packages/component/src/keep-alive.ts` 注释 |
+| Suspense | `useSuspense` 恒返回 `undefined` |
+| Hydration | 未实现（`enhanced-hydration` 为 DOM 遍历占位） |
+| UI 组件库 | 约 16/56 组件存在「已声明 prop 未接线」；Carousel / Transition 为壳；无虚拟滚动 |
+| `@lytjs/ssg` / `@lytjs/html-renderer` | **壳实现**（不生成文件 / head 生成未实现）；真实现在 `@lytjs/ssr` |
+| 路由 | `RouterView` 未处理返回 Promise 的懒加载；无数据预取 |
+
+### ❌ 占位 / 未接入（对外暴露但无行为）
+
+| 能力 | 状态 |
+| --- | --- |
+| `@lytjs/compiler/wasm` | **不是 WebAssembly**：0 处 `WebAssembly` API，纯 JS 包装，无性能收益 |
+| `optimizations/{treeShaking,staticAnalysis,incremental-compile}` | **未接入编译管线**（全仓外部引用 0） |
+| `@lytjs/compat` | 未实现（Vue 2/3 兼容层为 TODO） |
+| `@lytjs/bundler` | 插件骨架：`.lyt` / `.vue` 不做任何转换 |
+| 性能基准 | 历史报告自承口径问题，**当前没有可信数字** |
+
+### 已知环境限制
+
+- 13 个官方插件已于 2026-09 迁出到独立仓 `../plugins`；
+- `.lyt` SFC 需要构建期插件，而 `@lytjs/plugin-vite` **不在本仓** ⇒
+  CLI 脚手架已改为生成 `.ts` + `template` 字符串（开箱即跑，无需插件）。
+
 ## 快速开始
 
 ```bash
