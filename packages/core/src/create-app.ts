@@ -25,12 +25,24 @@ import {
   createComponentPublicInstance,
   callUnmountedHook,
   initProps,
+  setTemplateCompiler,
 } from '@lytjs/component';
 import type {
   AppContext as ComponentAppContext,
   ComponentInternalInstance,
 } from '@lytjs/component';
 import type { SignalRenderer } from '@lytjs/renderer';
+import { compileTemplateToRender } from './template-compiler';
+
+// ---------------------------------------------------------------------------
+// 注入运行时模板编译能力（幂等）
+//
+// `@lytjs/component` 不硬依赖 `@lytjs/compiler`，`options.template` 的支持
+// 由 core 提供实现（core 已依赖 compiler）。放在模块级：本模块只加载一次；
+// 且只要用户调用 createApp，注入必然已完成。
+// 修复前 `createApp({ setup, template })` 会静默渲染空白（P0）。
+// ---------------------------------------------------------------------------
+setTemplateCompiler(compileTemplateToRender);
 
 let createSignalRenderer:
   | ((template: string, ctx: Record<string, unknown>) => Promise<SignalRenderer>)

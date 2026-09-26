@@ -36,6 +36,7 @@
     "@lytjs/compiler": "workspace:*",
     "@lytjs/renderer": "workspace:*",
     "@lytjs/component": "workspace:*",
+    "@lytjs/dom-runtime": "workspace:*",
     "@lytjs/common-is": "workspace:*",
     "@lytjs/common-string": "workspace:*",
     "@lytjs/common-scheduler": "workspace:*",

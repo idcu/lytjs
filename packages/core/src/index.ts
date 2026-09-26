@@ -104,12 +104,61 @@ export type {
 
 // Re-export from sub-packages
 export { ref, reactive, computed, watch, watchEffect, effect } from '@lytjs/reactivity';
-export { createVNode, Fragment, Text, Comment, cloneVNode, mergeProps } from '@lytjs/vdom';
 export { compile } from '@lytjs/compiler';
 
-// 模板运行时辅助函数（模板编译产物默认从 '@lytjs/core' 导入这些 helper）
-// <slot> 编译为 renderSlot(_ctx.$slots, name, props, fallback)
-export { renderSlot } from '@lytjs/component';
+// ---------------------------------------------------------------------------
+// 模板运行时辅助函数 —— **编译器产物的 import 契约**
+//
+// VNode 模式的编译产物默认从 '@lytjs/core' 导入 helper
+// （见 compiler 的 `genHelperImports`，默认 runtimeModuleName = '@lytjs/core'）。
+// 因此 core 的导出面必须覆盖 `helperNameMap` 中出现的**每一个**名字，
+// 否则产物会因「ESM 具名导入失败」而整模块崩掉 —— 此前 openBlock / createBlock /
+// toDisplayString / renderList / sanitizeHTML / createElementVNode 等就处于这种状态
+// （2026-09-26 全维度审计发现，现由 `scripts/check-runtime-contract.ts` 持续守卫）。
+//
+// ⚠️ 全部经 `./runtime-helpers` 转出，与 `template-compiler.ts` 的注入对象**同源**；
+// 不要在这里另写一份清单，否则会出现「守卫绿、执行时 undefined」的落差。
+// ---------------------------------------------------------------------------
+export {
+  // VNode 原语
+  createVNode,
+  createTextVNode,
+  createCommentVNode,
+  createStaticVNode,
+  createElementVNode,
+  Fragment,
+  Text,
+  Comment,
+  cloneVNode,
+  mergeProps,
+  // Block Tree
+  createBlock,
+  openBlock,
+  closeBlock,
+  setBlockTracking,
+  trackDynamicChild,
+  getCurrentBlock,
+  getBlockStackDepth,
+  resetBlockStack,
+  // 插值 / 列表 / 插槽 / props 归一化
+  toDisplayString,
+  renderList,
+  createSlots,
+  withCtx,
+  normalizeProps,
+  guardReactiveProps,
+  toHandlerKey,
+  // DOM 侧：class / style 归一化 + HTML 消毒
+  normalizeClass,
+  normalizeStyle,
+  sanitizeHTML,
+  // 插槽渲染：<slot> 编译为 renderSlot(_ctx.$slots, name, props, fallback)
+  renderSlot,
+} from './runtime-helpers';
+export type { Block } from './runtime-helpers';
+
+// 运行时模板编译（`options.template` 的支持，见 template-compiler.ts）
+export { compileTemplateToRender, clearTemplateRenderCache } from './template-compiler';
 
 export type {
   App,
