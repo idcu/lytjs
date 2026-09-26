@@ -3,7 +3,7 @@
 # 基线验证 —— 在系统终端（不经 agent 沙箱）跑完整门禁，输出 PASS / FAIL 摘要。
 #
 # 用法：
-#   bash scripts/verify-baseline.sh            # 跑全部 6 项
+#   bash scripts/verify-baseline.sh            # 跑全部 7 项
 #   bash scripts/verify-baseline.sh --no-cov   # 跳过覆盖率（最慢的一项）
 #
 # 为什么要这个脚本：
@@ -127,6 +127,8 @@ echo "lytjs 基线验证 —— 开始于 $(date '+%F %T')"
 
 run "check-build-order" "${PNPM[@]}" run check-build-order
 run "build (76 包)"     "${PNPM[@]}" run build
+# 契约守卫必须在 build **之后**跑：它要自省各包 dist 的导出面
+run "check-runtime-contract" "${PNPM[@]}" run check-runtime-contract
 run "type-check"        "${PNPM[@]}" -r run type-check
 run "lint:check"        "${PNPM[@]}" run lint:check
 run "format:check"      "${PNPM[@]}" run format:check
