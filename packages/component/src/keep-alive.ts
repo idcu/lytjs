@@ -222,6 +222,27 @@ export const KeepAlive: ComponentOptions = {
     }
 
     // 存储引用以便在卸载时停用
+    //
+    // ⚠️⚠️ 2026-09-26 诊断：**KeepAlive 目前无法生效，且缺两个必要条件**
+    // （审计已定位，但未在本轮修复 —— 因为「先补消费方，再修实现」，
+    //   否则只改本文件是**白修**：改完依然不生效）。
+    //
+    // 条件 1（本文件）：**缓存写入时机错了**
+    //   缓存的 value 类型是 `ComponentInternalInstance`，而 `render()` 阶段
+    //   子组件实例**还不存在**（它在 patch → mountComponent 时才被创建）。
+    //   因此"未命中就 cacheInstance()"在 render 里根本写不了 ——
+    //   正确做法是 Vue 的模式：render 只记录待缓存 vnode，
+    //   在本组件的 `mounted` / `updated`（此时 `instance.subTree.component` 已就绪）写入。
+    //   现状：未命中分支只赋值 `_currentVNode` 就返回，**从不写缓存**
+    //   ⇒ LRU 恒为空 ⇒ `getCachedInstance` 恒 undefined ⇒ KeepAlive 退化为 pass-through。
+    //
+    // 条件 2（@lytjs/vdom）：**`ShapeFlags.COMPONENT_KEPT_ALIVE` 没有消费方**
+    //   全仓 grep 该 flag，**只有本文件在写**，`@lytjs/vdom` 的 patch 路径**从不读**
+    //   ⇒ 即使缓存命中并打了标记，渲染器也不会走"复用既有 DOM"的激活路径，
+    //   仍会重新 mount 子树（实例状态虽保留，DOM 会重建且旧节点残留）。
+    //   修复需在 `patch-component.ts` 的 `mountComponent` 增加激活分支：
+    //   命中时把 `component.subTree.el` 直接 insert 回容器，并触发 activated 钩子
+    //   （注意 `callLifecycleHook` 的 hookName 联合类型当前不含 `'activated'`，需先扩展）。
     (instance.setupState as Record<string, unknown>)._currentVNode = rawVNode;
 
     return rawVNode;
