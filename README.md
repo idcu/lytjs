@@ -47,6 +47,19 @@ const app = createApp({
 app.mount('#app');
 ```
 
+> ✅ **运行时模板编译（2026-09-26 修复）**：上面这个 `template` 写法此前在
+> `@lytjs/core` 的默认 VNode 模式下**会静默渲染空白**（`template` 被完全忽略，
+> 且不报错）—— 因为全仓没有任何 VNode 路径调用 `compile()`，`finishComponentSetup`
+> 也只认 `render` / `options.render`。现已在 `@lytjs/core` 侧接上：
+> `compile()` → helper 注入 `new Function` → 挂到组件实例（`packages/core/src/template-compiler.ts`）。
+>
+> 该能力由 **端到端门禁** `packages/core/tests/e2e-template-render.test.ts`（16 例）
+> 守住 —— 每例都断言**真实 DOM 文本**，而不是编译产物的字符串形状。
+> 同时新增 `pnpm check-runtime-contract`：断言编译产物 import 的每个 helper
+> 都真实存在于运行时导出面（首批即抓出 8 处断裂）。
+>
+> ℹ️ 生产环境仍建议走 AOT 预编译；运行时编译会引入编译器体积与 `new Function` 开销。
+
 ## 双核心模式
 
 Lyt.js 提供两种渲染模式，可根据场景选择：
