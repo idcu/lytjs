@@ -177,6 +177,10 @@ function createTransformContext(root: RootNode, options: TransformOptions): Tran
     cached: 0,
     identifiers: new Set(),
     scopes: [{ vFor: 0, vOnce: 0 }],
+    // ⚠️ 必须显式透传：本 context 是逐字段构造的（不是 `{...options}`），
+    // 漏掉任何一个字段都会让对应 transform 静默失效 ——
+    // scopeId 漏掉时，`transformScoped` 直接 return，scoped CSS 端到端失效。
+    scopeId: options.scopeId ?? undefined,
     childIndex: 0,
     currentNode,
     helper<T extends string>(name: T): T {

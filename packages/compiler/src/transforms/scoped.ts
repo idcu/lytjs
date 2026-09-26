@@ -45,7 +45,13 @@ export const transformScoped: NodeTransform = (node, context) => {
 
   // Add scopeId as an attribute to the element
   // e.g., data-v-abc123=""
-  const scopeAttr = createAttribute(scopeId, createText(''));
+  //
+  // ⚠️ 属性名**必须**带 `data-v-` 前缀：
+  // `scopeCSS()`（sfc/compile.ts）为 style 块生成的选择器是 `[data-v-${scopeId}]`，
+  // 而这里此前直接把 `scopeId`（裸 hash）当属性名 ⇒
+  // 产物是 `abc123=""` 而 CSS 找的是 `[data-v-abc123]` —— 两侧永远匹配不上。
+  // 约定统一为：scopeId 一律是**裸 hash**，拼前缀由消费方负责。
+  const scopeAttr = createAttribute(`data-v-${scopeId}`, createText(''));
   element.props.push(scopeAttr);
 
   // Mark the scopeId on the element node itself (for codegen reference)
@@ -85,7 +91,8 @@ function processVDeep(element: ElementNode, scopeId: string, _context: Transform
 
         // Add the v-deep marker attribute
         // The CSS scoping system will use this to generate deep selectors
-        const deepAttr = createAttribute(`${scopeId}-deep`, createText(''));
+        // （前缀与 scopeAttr 保持一致，避免两套命名）
+        const deepAttr = createAttribute(`data-v-${scopeId}-deep`, createText(''));
         childElement.props.push(deepAttr);
       }
 

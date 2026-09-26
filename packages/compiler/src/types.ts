@@ -390,6 +390,16 @@ export interface TransformContext {
   cached: number;
   identifiers: Set<string>;
   scopes: { vFor: number; vOnce: number }[];
+  /**
+   * scoped CSS 的 scope id（**裸 hash**，如 `abc123`，不含 `data-v-` 前缀）。
+   *
+   * ⚠️ 2026-09-26 补：本字段此前**只存在于 `TransformOptions`**，
+   * 而 `createTransformContext` 是逐字段显式构造的、漏了它 ⇒
+   * `transformScoped` 里的 `if (!scopeId) return` 永远提前返回 ⇒
+   * `<style scoped>` 编译出的 `[data-v-xxx]` 选择器**永远匹配不到 DOM**。
+   * 约定：写入 attr 时由消费方拼成 `data-v-${scopeId}`。
+   */
+  scopeId?: string;
   filters?: Set<string>;
   childIndex: number;
   // FIX: P2-27 添加 __counters 字段，用于存储转换器内部计数器（如解构计数器）

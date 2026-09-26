@@ -21,10 +21,21 @@ function createScopedContext(scopeId?: string | null): TransformContext {
   return context;
 }
 
+/**
+ * ⚠️ scopeId 命名约定（2026-09-26 统一）：
+ *
+ * `scopeId` 一律是**裸 hash**（如 `abc123`），**不含** `data-v-` 前缀。
+ * 需要写进 DOM 属性时由消费方拼成 `data-v-${scopeId}`。
+ *
+ * 此前本文件用的是 `'data-v-abc123'`（自带前缀），而 `scopeCSS()`
+ * （sfc/compile.ts）生成的是 `[data-v-${scopeId}]` ⇒ 两者会得到
+ * `data-v-data-v-abc123`，**永远不会匹配**。三处约定（本测试 / transform /
+ * scopeCSS）各写各的，是 scoped CSS 端到端失效的成因之一。
+ */
 describe('transformScoped', () => {
   describe('scopeId attribute injection', () => {
     it('should add scopeId attribute to element when scopeId is provided', () => {
-      const scopeId = 'data-v-abc123';
+      const scopeId = 'abc123';
       const context = createScopedContext(scopeId);
       const node = createElement('div');
 
@@ -32,15 +43,15 @@ describe('transformScoped', () => {
 
       // Should have added a scopeId attribute
       const scopeAttr = node.props.find(
-        (p) => p.type === NodeTypes.ATTRIBUTE && p.name === scopeId,
+        (p) => p.type === NodeTypes.ATTRIBUTE && p.name === `data-v-${scopeId}`,
       );
       expect(scopeAttr).toBeDefined();
       expect(scopeAttr!.type).toBe(NodeTypes.ATTRIBUTE);
-      expect(scopeAttr!.name).toBe(scopeId);
+      expect(scopeAttr!.name).toBe(`data-v-${scopeId}`);
     });
 
     it('should set scopeId on the element node', () => {
-      const scopeId = 'data-v-test';
+      const scopeId = 'test';
       const context = createScopedContext(scopeId);
       const node = createElement('span');
 
@@ -73,7 +84,7 @@ describe('transformScoped', () => {
 
   describe('multiple elements', () => {
     it('should add scopeId to each element independently', () => {
-      const scopeId = 'data-v-multi';
+      const scopeId = 'multi';
       const context = createScopedContext(scopeId);
 
       const div = createElement('div');
@@ -88,19 +99,19 @@ describe('transformScoped', () => {
       expect(span.scopeId).toBe(scopeId);
       expect(p.scopeId).toBe(scopeId);
 
-      expect(div.props.some((p) => p.type === NodeTypes.ATTRIBUTE && p.name === scopeId)).toBe(
+      expect(div.props.some((p) => p.type === NodeTypes.ATTRIBUTE && p.name === `data-v-${scopeId}`)).toBe(
         true,
       );
-      expect(span.props.some((p) => p.type === NodeTypes.ATTRIBUTE && p.name === scopeId)).toBe(
+      expect(span.props.some((p) => p.type === NodeTypes.ATTRIBUTE && p.name === `data-v-${scopeId}`)).toBe(
         true,
       );
-      expect(p.props.some((p) => p.type === NodeTypes.ATTRIBUTE && p.name === scopeId)).toBe(true);
+      expect(p.props.some((p) => p.type === NodeTypes.ATTRIBUTE && p.name === `data-v-${scopeId}`)).toBe(true);
     });
   });
 
   describe('v-deep directive handling', () => {
     it('should process v-deep directive on child elements', () => {
-      const scopeId = 'data-v-deep';
+      const scopeId = 'deep';
       const context = createScopedContext(scopeId);
 
       // Create a child element with v-deep directive
@@ -121,15 +132,15 @@ describe('transformScoped', () => {
 
       // v-deep marker attribute should be added
       const deepAttr = childElement.props.find(
-        (p) => p.type === NodeTypes.ATTRIBUTE && p.name === `${scopeId}-deep`,
+        (p) => p.type === NodeTypes.ATTRIBUTE && p.name === `data-v-${scopeId}-deep`,
       );
       expect(deepAttr).toBeDefined();
       expect(deepAttr!.type).toBe(NodeTypes.ATTRIBUTE);
-      expect(deepAttr!.name).toBe(`${scopeId}-deep`);
+      expect(deepAttr!.name).toBe(`data-v-${scopeId}-deep`);
     });
 
     it('should not affect elements without v-deep', () => {
-      const scopeId = 'data-v-nodeep';
+      const scopeId = 'nodeep';
       const context = createScopedContext(scopeId);
 
       const childElement = createElement('span');
@@ -139,7 +150,7 @@ describe('transformScoped', () => {
 
       // No deep attribute should be added to child
       const deepAttr = childElement.props.find(
-        (p) => p.type === NodeTypes.ATTRIBUTE && p.name === `${scopeId}-deep`,
+        (p) => p.type === NodeTypes.ATTRIBUTE && p.name === `data-v-${scopeId}-deep`,
       );
       expect(deepAttr).toBeUndefined();
     });
@@ -147,7 +158,7 @@ describe('transformScoped', () => {
 
   describe('non-element nodes', () => {
     it('should not process non-element nodes', () => {
-      const scopeId = 'data-v-skip';
+      const scopeId = 'skip';
       const context = createScopedContext(scopeId);
 
       // Create a text-like node (not an element)
@@ -178,7 +189,7 @@ describe('transformScoped', () => {
         transformScoped(node, context);
 
         const scopeAttr = node.props.find(
-          (p) => p.type === NodeTypes.ATTRIBUTE && p.name === scopeId,
+          (p) => p.type === NodeTypes.ATTRIBUTE && p.name === `data-v-${scopeId}`,
         );
         expect(scopeAttr).toBeDefined();
         expect(node.scopeId).toBe(scopeId);
@@ -213,7 +224,7 @@ describe('hasVDeep', () => {
 
 describe('getScopeId', () => {
   it('should return scopeId from context', () => {
-    const scopeId = 'data-v-get';
+    const scopeId = 'get';
     const context = createScopedContext(scopeId);
 
     expect(getScopeId(context)).toBe(scopeId);
