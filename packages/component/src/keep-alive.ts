@@ -6,7 +6,7 @@ import { warn } from '@lytjs/common-error';
 import { watch } from '@lytjs/reactivity';
 import type { ComponentInternalInstance, ComponentOptions, SetupContext } from './types';
 import { createComponentInstance, setupComponent } from './component';
-import { handleError } from './lifecycle';
+import { handleError, onMounted, onUpdated, getCurrentInstance } from './lifecycle';
 // FIX: DTS build error - 统一从 vdom 导入，避免类型不兼容
 import { ShapeFlags, createVNode, createCommentVNode } from '@lytjs/vdom';
 import type { VNode } from '@lytjs/vdom';
@@ -152,100 +152,178 @@ export const KeepAlive: ComponentOptions = {
       },
     );
 
+    const self = getCurrentInstance();
+
+    /**
+     * 把「待入库」的 vnode 对应实例写入缓存。
+     *
+     * 时机：本组件的 `mounted` / `updated` ——
+     * 只有此时 `pending.component`（子组件实例）才存在。
+     * （`render()` 阶段子实例尚未创建，故不能在那里直接落库。）
+     */
+    const commitPendingCache = (): void => {
+      if (!self) return;
+      const state = self.setupState as Record<string, unknown>;
+      const pending = state.__pendingCacheVNode as VNode | undefined;
+      if (!pending) return;
+      // vnode.component 的类型是 vnode 包的轻量 ComponentInternalInstance，
+      // 运行时实为完整实例；此处桥接到 component 包的完整类型（同 async-component 先例）。
+      const child = pending.component as unknown as ComponentInternalInstance | null;
+      if (child) {
+        cacheInstance(self, getCacheKey(self, pending), child);
+        child.isKeepingAlive = true;
+        state.__pendingCacheVNode = null;
+      }
+    };
+
+    onMounted(commitPendingCache);
+    onUpdated(commitPendingCache);
+
+    /**
+     * 隐藏仓库：被停用的组件 DOM 会被移到这里（不从文档树销毁），
+     * 以便再次激活时原样移回。
+     */
+    const storage: { appendChild(node: unknown): void } | null = (() => {
+      const doc = (globalThis as { document?: { createElement(tag: string): unknown } }).document;
+      return doc ? (doc.createElement('div') as { appendChild(node: unknown): void }) : null;
+    })();
+
+    /**
+     * 激活（由渲染器在把既有 DOM 移回容器之后调用）。
+     * vdom 通过 `vnode.component.parent.ctx.activate` 访问到它。
+     */
+    const activate = (vnode: VNode, container: unknown, anchor: unknown): void => {
+      const inst = vnode.component as unknown as ComponentInternalInstance | null;
+      if (!inst) return;
+      const el = (inst.subTree as VNode | null | undefined)?.el ?? null;
+      if (el && container) {
+        (container as { insertBefore(node: unknown, anchor: unknown): void }).insertBefore(
+          el,
+          anchor ?? null,
+        );
+      }
+      if (el) vnode.el = el;
+      activateInstance(inst);
+    };
+
+    /**
+     * 停用（由渲染器在卸载标记了 `COMPONENT_SHOULD_KEEP_ALIVE` 的组件时调用）：
+     * 把 DOM 移入隐藏仓库、触发 deactivated，**但不销毁实例**。
+     */
+    const deactivate = (vnode: VNode): void => {
+      const inst = vnode.component as unknown as ComponentInternalInstance | null;
+      if (!inst) return;
+      const el = (inst.subTree as VNode | null | undefined)?.el ?? null;
+      if (el && storage) storage.appendChild(el);
+      deactivateInstance(inst);
+    };
+
+    /**
+     * 渲染实现（**闭包**持有 raw `self` 与 `cache`）。
+     *
+     * ⚠️ 2026-09-28 修复（第 3 层、也是最深的缺陷）：此前 `render(ctx)` 直接把
+     * **公共实例代理**当作实例使用：
+     *   `const instance = ctx; instance.slots; instance.props; instance.setupState.cache`
+     * 但该代理**只暴露 `$slots` / `$props`**（见 `component-proxy.ts` 的 PUBLIC 字段），
+     * `instance.slots` / `instance.props` / `instance.setupState` **全部解析为 undefined**
+     * ⇒ `defaultSlot` 恒为 undefined ⇒ **KeepAlive 永远只渲染 `<!--keep-alive-->`**
+     * （连"pass-through"都不是 —— 它根本不渲染子组件）。
+     *
+     * 正确做法（与 Vue 一致）：渲染逻辑以**闭包**形式持有 setup 阶段拿到的
+     * **raw instance**（`self`）与 `cache`，`options.render` 仅作委派调用。
+     */
+    const renderImpl = (): VNode => {
+      if (!self) return createCommentVNode('keep-alive');
+
+      const props = (self.props ?? {}) as KeepAliveProps;
+      const slots = self.slots as Record<string, unknown> | undefined;
+      const defaultSlot = slots?.default as (() => VNode[] | VNode) | undefined;
+
+      if (!defaultSlot) return createCommentVNode('keep-alive');
+
+      const slotResult = defaultSlot();
+      const children: VNode[] = Array.isArray(slotResult)
+        ? (slotResult as VNode[])
+        : slotResult == null
+          ? []
+          : [slotResult as VNode];
+      if (children.length === 0) return createCommentVNode('keep-alive');
+
+      // KeepAlive 只处理单个子组件
+      const rawVNode = children[0] as VNode;
+      if (rawVNode == null) return createCommentVNode('keep-alive');
+
+      // 跳过非组件 vnode（元素/文本/注释等）
+      if (typeof rawVNode.type === 'string') return rawVNode;
+
+      // 获取组件名用于匹配
+      const compType = rawVNode.type as Record<string, unknown>;
+      const compName =
+        typeof compType === 'object' && compType !== null && 'name' in compType
+          ? (compType as { name?: string }).name
+          : typeof compType === 'function'
+            ? (compType as { name?: string }).name
+            : undefined;
+
+      // 检查 include / exclude 过滤
+      const isIncluded =
+        props.include === undefined ||
+        matchesPattern(compName as string | undefined, props.include);
+      const isExcluded =
+        props.exclude !== undefined &&
+        matchesPattern(compName as string | undefined, props.exclude);
+      if (!isIncluded || isExcluded) return rawVNode;
+
+      // 计算缓存 key
+      const cacheKey = getCacheKey(self, rawVNode);
+
+      // 检查是否已缓存
+      const cachedInstance = getCachedInstance(self, cacheKey);
+      if (cachedInstance) {
+        // 移动到最近使用位置
+        cacheInstance(self, cacheKey, cachedInstance);
+        // 复用缓存实例：把实例挂到新 vnode 上，并标记 KEPT_ALIVE
+        rawVNode.component = cachedInstance as unknown as NonNullable<typeof rawVNode.component>;
+        rawVNode.shapeFlag |= ShapeFlags.COMPONENT_KEPT_ALIVE;
+        // ⚠️ 不在这里调 `activateInstance()`：它应当在**渲染器**把既有 DOM
+        //    移回容器**之后**触发（见 vdom mountComponent 的激活分支），
+        //    否则 activated 钩子会在 DOM 尚未回到文档树时运行。
+        return rawVNode;
+      }
+
+      // ── 未命中：走"缓存 + 停用"路径 ──────────────────────────────────────
+      //
+      // ⚠️ 缓存写入时机：缓存的 value 是 `ComponentInternalInstance`，而本函数运行在
+      //    **render 阶段** —— 子组件实例要到 patch → mountComponent 才被创建。
+      //    因此这里**只能记录待入库的 vnode**，真正落库交给本组件的
+      //    `mounted` / `updated`（见 setup 的 commitPendingCache）。
+      //    渲染器消费点：vdom 在「挂载」时识别 `COMPONENT_KEPT_ALIVE`（走激活）、
+      //    在「卸载」时识别 `COMPONENT_SHOULD_KEEP_ALIVE`（走停用而非销毁）。
+      rawVNode.shapeFlag |= ShapeFlags.COMPONENT_SHOULD_KEEP_ALIVE;
+      (self.setupState as Record<string, unknown>).__pendingCacheVNode = rawVNode;
+      (self.setupState as Record<string, unknown>)._currentVNode = rawVNode;
+
+      return rawVNode;
+    };
+
     return {
       cache,
       _currentVNode,
+      activate,
+      deactivate,
+      // 供 `options.render` 委派调用（闭包持有 raw `self` / `cache`）
+      __render: renderImpl,
     } as Record<string, unknown>;
   },
 
   render(ctx: unknown): VNode {
-    // FIX: P2-12 使用 ctx 参数替代 this，避免依赖 this 上下文
-    const instance = ctx as unknown as ComponentInternalInstance;
-    const props = instance.props as KeepAliveProps;
-    const defaultSlot = instance.slots?.default;
-
-    if (!defaultSlot) return createCommentVNode('keep-alive');
-
-    const children = defaultSlot();
-    if (!children || children.length === 0) return createCommentVNode('keep-alive');
-
-    // KeepAlive 只处理单个子组件
-    const rawVNode = children[0] as VNode;
-    if (rawVNode == null) return createCommentVNode('keep-alive');
-
-    // 跳过非组件 vnode（文本、注释等）
-    if (
-      typeof rawVNode.type === 'string' ||
-      rawVNode.type === (globalThis as Record<string, unknown>).__LYTJS_FRAGMENT__ ||
-      rawVNode.type === (globalThis as Record<string, unknown>).__LYTJS_TEXT__ ||
-      rawVNode.type === (globalThis as Record<string, unknown>).__LYTJS_COMMENT__
-    ) {
-      return rawVNode;
-    }
-
-    // 获取组件名用于匹配
-    const compType = rawVNode.type as Record<string, unknown>;
-    const compName =
-      typeof compType === 'object' && compType !== null && 'name' in compType
-        ? (compType as { name?: string }).name
-        : typeof compType === 'function'
-          ? (compType as { name?: string }).name
-          : undefined;
-
-    // FIX: P1-18 exclude 逻辑重构提高可读性，将复杂的条件表达式拆分为独立判断
-    // 检查 include 过滤：组件名必须匹配 include 模式（如果提供了 include）
-    const isIncluded =
-      props.include === undefined || matchesPattern(compName as string | undefined, props.include);
-
-    // 检查 exclude 过滤：组件名不能匹配 exclude 模式（如果提供了 exclude）
-    const isExcluded =
-      props.exclude !== undefined && matchesPattern(compName as string | undefined, props.exclude);
-
-    if (!isIncluded || isExcluded) {
-      return rawVNode;
-    }
-
-    // 计算缓存 key
-    const cacheKey = getCacheKey(instance, rawVNode);
-
-    // 检查是否已缓存
-    const cachedInstance = getCachedInstance(instance, cacheKey);
-    if (cachedInstance) {
-      // 移动到最近使用位置
-      cacheInstance(instance, cacheKey, cachedInstance);
-      // 将缓存 vnode 的子节点复制到原始 vnode 上用于 patch
-      // FIX: DTS build error - 类型断言避免 ComponentInternalInstance 冲突
-      rawVNode.component = cachedInstance as unknown as NonNullable<typeof rawVNode.component>;
-      rawVNode.shapeFlag |= ShapeFlags.COMPONENT_KEPT_ALIVE;
-      activateInstance(cachedInstance);
-      return rawVNode;
-    }
-
-    // 存储引用以便在卸载时停用
-    //
-    // ⚠️⚠️ 2026-09-26 诊断：**KeepAlive 目前无法生效，且缺两个必要条件**
-    // （审计已定位，但未在本轮修复 —— 因为「先补消费方，再修实现」，
-    //   否则只改本文件是**白修**：改完依然不生效）。
-    //
-    // 条件 1（本文件）：**缓存写入时机错了**
-    //   缓存的 value 类型是 `ComponentInternalInstance`，而 `render()` 阶段
-    //   子组件实例**还不存在**（它在 patch → mountComponent 时才被创建）。
-    //   因此"未命中就 cacheInstance()"在 render 里根本写不了 ——
-    //   正确做法是 Vue 的模式：render 只记录待缓存 vnode，
-    //   在本组件的 `mounted` / `updated`（此时 `instance.subTree.component` 已就绪）写入。
-    //   现状：未命中分支只赋值 `_currentVNode` 就返回，**从不写缓存**
-    //   ⇒ LRU 恒为空 ⇒ `getCachedInstance` 恒 undefined ⇒ KeepAlive 退化为 pass-through。
-    //
-    // 条件 2（@lytjs/vdom）：**`ShapeFlags.COMPONENT_KEPT_ALIVE` 没有消费方**
-    //   全仓 grep 该 flag，**只有本文件在写**，`@lytjs/vdom` 的 patch 路径**从不读**
-    //   ⇒ 即使缓存命中并打了标记，渲染器也不会走"复用既有 DOM"的激活路径，
-    //   仍会重新 mount 子树（实例状态虽保留，DOM 会重建且旧节点残留）。
-    //   修复需在 `patch-component.ts` 的 `mountComponent` 增加激活分支：
-    //   命中时把 `component.subTree.el` 直接 insert 回容器，并触发 activated 钩子
-    //   （注意 `callLifecycleHook` 的 hookName 联合类型当前不含 `'activated'`，需先扩展）。
-    (instance.setupState as Record<string, unknown>)._currentVNode = rawVNode;
-
-    return rawVNode;
+    // ⚠️ `ctx` 是**公共实例代理**（只暴露 `$slots` / `$props`），不能当作实例读取
+    //    `.slots` / `.setupState`。真正的渲染实现以闭包形式存于 `setupState.__render`
+    //    （闭包持有 raw instance 与 cache），此处仅作委派。
+    const proxy = ctx as Record<string, unknown>;
+    const renderImpl = proxy.__render as (() => VNode) | undefined;
+    if (renderImpl) return renderImpl();
+    return createCommentVNode('keep-alive');
   },
 
   created() {

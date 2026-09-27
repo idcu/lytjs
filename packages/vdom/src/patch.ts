@@ -532,6 +532,24 @@ export function createRenderer<HN, HE extends HN>(
       (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT ||
         vnode.shapeFlag & ShapeFlags.FUNCTIONAL_COMPONENT)
     ) {
+      // ============================================================
+      // KeepAlive 停用分支
+      // ============================================================
+      // 当子 vnode 携带 `COMPONENT_SHOULD_KEEP_ALIVE`（由 KeepAlive 的 render 在
+      // 未命中缓存时打上）时，组件实例应被**保留**（移入隐藏仓库）而非销毁，
+      // 以便再次切回时激活复用、状态不丢。
+      //
+      // ⚠️ 2026-09-27 补齐：此前 vdom **从不消费**这个 flag，KeepAlive 退化为
+      // pass-through（切换时走这里真正销毁组件：触发 unmounted、移除 DOM）。
+      // 访问路径：`component.parent` 必为 KeepAlive 实例，其 `setupState` 暴露了
+      // `deactivate`（见 keep-alive.ts）。
+      if (vnode.shapeFlag & ShapeFlags.COMPONENT_SHOULD_KEEP_ALIVE) {
+        const ka = (component.parent?.setupState ?? {}) as Record<string, unknown>;
+        const deactivate = ka.deactivate as ((v: VNode) => void) | undefined;
+        deactivate?.(vnode);
+        return;
+      }
+
       // 生命周期：beforeUnmount / unmounted 通过**回调注入**执行。
       //
       // ⚠️ 2026-09-26 修复：此前这里读 `component.bum` 并自行逐个调用，

@@ -6,6 +6,7 @@
  */
 
 import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
+import { ShapeFlags } from '@lytjs/common-vnode';
 import { warn, error } from '@lytjs/common-error';
 import { watchEffect } from '@lytjs/reactivity';
 import type { SuspenseBoundary } from './types';
@@ -65,6 +66,25 @@ export function createComponentPatch<HN, HE extends HN>(
     isSVG: boolean,
   ): void {
     let component = vnode.component as ComponentInternalInstance | null | undefined;
+
+    // ============================================================
+    // KeepAlive 激活分支
+    // ============================================================
+    // 当子 vnode 携带 `COMPONENT_KEPT_ALIVE`（由 KeepAlive 的 render 在缓存命中时
+    // 打上）时，组件实例已存在且其 DOM 保存在隐藏仓库里 —— 不应重新 mount，
+    // 而应调用 KeepAlive 暴露的 `activate` 把既有 DOM 移回容器、触发 activated 钩子。
+    //
+    // ⚠️ 2026-09-27 补齐：此前 vdom **从不消费**这个 flag，KeepAlive 退化为
+    // pass-through（切回时重新 mount、状态丢失）。访问路径：`vnode.component.parent`
+    // 必为 KeepAlive 实例（KeepAlive 在 render 中把子 vnode 作为自己的 subTree，
+    // patch 时以自身为 parentComponent 创建子实例），其 `setupState` 暴露了
+    // `activate` / `deactivate`（见 keep-alive.ts）。
+    if (vnode.shapeFlag & ShapeFlags.COMPONENT_KEPT_ALIVE && component) {
+      const ka = (component.parent?.setupState ?? {}) as Record<string, unknown>;
+      const activate = ka.activate as ((v: VNode, c: unknown, a: unknown) => void) | undefined;
+      activate?.(vnode, container, anchor);
+      return;
+    }
 
     if (!component) {
       // 尝试使用提供的回调创建和 setup 组件实例
