@@ -7,12 +7,48 @@
  */
 
 import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
-import { ShapeFlags, isSameVNodeType } from '@lytjs/common-vnode';
+import { ShapeFlags, isSameVNodeType, isVNode } from '@lytjs/common-vnode';
 import { isArray } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
 import type { SuspenseBoundary } from './types';
 import type { RendererContext } from './patch-element';
 import { patchKeyedChildren as listDiffPatchKeyedChildren } from './list-diff';
+import { createTextVNode } from './vnode';
+
+// ============================================================
+// normalizeVNode —— 数组子节点里的「非 VNode 值」规范化
+// ============================================================
+
+/**
+ * 把数组 children 中**非 VNode 的值**（字符串 / 数字）就地转换为文本 VNode。
+ *
+ * ⚠️ 2026-09-28 修复：此前 `mountChildren` 直接对每个元素 `patch(null, child, …)`，
+ * 而 `patch` 对「非 VNode 且非 null」的值**无任何分支命中**（`child.type` /
+ * `child.shapeFlag` 均为 undefined），于是**静默丢弃**——
+ * 实测 `h('div', null, ['hello'])` 渲染出空 div，而 `h('div', null, 'hello')` 正常
+ * （后者走 `normalizeChildren` 的 `TEXT_CHILDREN` 分支）。
+ *
+ * 与 Vue 一致：在挂载 / diff 前对数组元素做规范化，并**写回原数组**，
+ * 使后续 diff / unmount 见到的都是真实 VNode。
+ * `null` / `undefined` / 布尔值保持原样（由各分支按既有语义跳过）。
+ */
+function normalizeVNodeChildren(children: unknown[]): void {
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i];
+    if (child == null || typeof child === 'boolean' || isVNode(child)) continue;
+    if (typeof child === 'string' || typeof child === 'number') {
+      children[i] = createTextVNode(String(child));
+      continue;
+    }
+    if (__DEV__) {
+      warn(
+        `normalizeVNodeChildren: child at index ${i} is of type "${typeof child}", ` +
+          `which is not a valid VNode. Coercing to text via String().`,
+      );
+    }
+    children[i] = createTextVNode(String(child));
+  }
+}
 
 // ============================================================
 // Children patch 工厂
@@ -209,6 +245,9 @@ export function createChildrenPatch<HN, HE extends HN>(
 
       if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
         if (nextShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+          // 新 children 里可能混有裸字符串 / 数字 —— diff 前必须先规范化
+          // （否则与旧 VNode 做 isSameVNodeType 比较会全部不匹配而重建/丢弃）。
+          normalizeVNodeChildren(c2 as unknown[]);
           // 两者都是数组 - diff
           diffChildren(
             c1 as VNode[],
@@ -243,6 +282,10 @@ export function createChildrenPatch<HN, HE extends HN>(
   ): void {
     const children = vnode.children;
     if (!isArray(children)) return;
+
+    // 规范化：数组里可能混有裸字符串 / 数字（如 `h('div', null, ['x'])`），
+    // 不转换的话 `patch` 无分支命中会**静默丢弃**（见 normalizeVNodeChildren 说明）。
+    normalizeVNodeChildren(children as unknown[]);
 
     for (let i = 0; i < children.length; i++) {
       const child = children[i];

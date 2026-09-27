@@ -175,4 +175,119 @@ describe('KeepAlive 端到端（真实渲染链）', () => {
     expect(aSetupCount).toBe(1);
     expect(bSetupCount).toBe(1);
   });
+
+  it('exclude 过滤：被排除的组件不缓存，切走再切回会重新 setup', async () => {
+    let aSetupCount = 0;
+    let bSetupCount = 0;
+
+    const ChildA: AnyComp = {
+      name: 'ChildA',
+      setup() {
+        aSetupCount++;
+        return () => h('div', { id: 'a' }, 'A');
+      },
+    };
+    const ChildB: AnyComp = {
+      name: 'ChildB',
+      setup() {
+        bSetupCount++;
+        return () => h('div', { id: 'b' }, 'B');
+      },
+    };
+
+    const which = ref<'a' | 'b'>('a');
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    hosts.push(host);
+
+    const app = createApp({
+      setup() {
+        return () =>
+          h(
+            KeepAlive as unknown as AnyComp,
+            { exclude: 'ChildB' } as never,
+            {
+              default: () => [which.value === 'a' ? h(ChildA) : h(ChildB)],
+            } as never,
+          ) as VNode;
+      },
+    });
+
+    app.mount(host);
+    await flush();
+    expect(host.innerHTML).toContain('>A<');
+
+    which.value = 'b';
+    await flush();
+    expect(host.innerHTML).toContain('>B<');
+
+    which.value = 'a';
+    await flush();
+    expect(host.innerHTML).toContain('>A<');
+
+    which.value = 'b';
+    await flush();
+    expect(host.innerHTML).toContain('>B<');
+
+    // ChildA 未被排除 ⇒ 缓存命中（setup 仅一次）；
+    // ChildB 命中 exclude ⇒ **不缓存**，每次挂载都重新 setup（挂载两次 ⇒ 2 次）。
+    expect(aSetupCount).toBe(1);
+    expect(bSetupCount).toBe(2);
+  });
+
+  it('max 容量淘汰：被逐出的缓存组件切回时缓存未命中、重新 setup', async () => {
+    let aSetupCount = 0;
+    let bSetupCount = 0;
+
+    const ChildA: AnyComp = {
+      name: 'ChildA',
+      setup() {
+        aSetupCount++;
+        return () => h('div', { id: 'a' }, 'A');
+      },
+    };
+    const ChildB: AnyComp = {
+      name: 'ChildB',
+      setup() {
+        bSetupCount++;
+        return () => h('div', { id: 'b' }, 'B');
+      },
+    };
+
+    const which = ref<'a' | 'b'>('a');
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    hosts.push(host);
+
+    const app = createApp({
+      setup() {
+        return () =>
+          h(
+            KeepAlive as unknown as AnyComp,
+            { max: 1 } as never,
+            {
+              default: () => [which.value === 'a' ? h(ChildA) : h(ChildB)],
+            } as never,
+          ) as VNode;
+      },
+    });
+
+    app.mount(host);
+    await flush();
+    expect(host.innerHTML).toContain('>A<');
+    expect(aSetupCount).toBe(1);
+
+    // 切到 B：缓存容量为 1 ⇒ 写入 B 时逐出最旧的 A
+    which.value = 'b';
+    await flush();
+    expect(host.innerHTML).toContain('>B<');
+    expect(bSetupCount).toBe(1);
+
+    // 切回 A：A 已被逐出 ⇒ 缓存未命中 ⇒ **重新 setup**（区别于容量充足时的复用）
+    which.value = 'a';
+    await flush();
+    expect(host.innerHTML).toContain('>A<');
+    expect(aSetupCount).toBe(2);
+    expect(bSetupCount).toBe(1);
+  });
 });
