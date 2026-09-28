@@ -899,6 +899,9 @@ importers:
       '@lytjs/config':
         specifier: workspace:*
         version: link:../ecosystem/packages/config
+      '@lytjs/dom-runtime':
+        specifier: workspace:*
+        version: link:../dom-runtime
       '@lytjs/plugin':
         specifier: workspace:*
         version: link:../ecosystem/packages/plugin
