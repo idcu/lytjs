@@ -348,4 +348,111 @@ describe('KeepAlive 端到端（真实渲染链）', () => {
     expect(aSetupCount).toBe(2);
     expect(deactivatedEvents.filter((e) => e === 'a:deactivated')).toHaveLength(1);
   });
+
+  it('include 白名单：仅匹配的组件被缓存，其余每次重新 setup', async () => {
+    let aSetupCount = 0;
+    let bSetupCount = 0;
+
+    const ChildA: AnyComp = {
+      name: 'ChildA',
+      setup() {
+        aSetupCount++;
+        return () => h('div', { id: 'a' }, 'A');
+      },
+    };
+    const ChildB: AnyComp = {
+      name: 'ChildB',
+      setup() {
+        bSetupCount++;
+        return () => h('div', { id: 'b' }, 'B');
+      },
+    };
+
+    const which = ref<'a' | 'b'>('a');
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    hosts.push(host);
+
+    const app = createApp({
+      setup() {
+        return () =>
+          h(
+            KeepAlive as unknown as AnyComp,
+            { include: 'ChildA' } as never,
+            {
+              default: () => [which.value === 'a' ? h(ChildA) : h(ChildB)],
+            } as never,
+          ) as VNode;
+      },
+    });
+
+    app.mount(host);
+    await flush();
+    which.value = 'b';
+    await flush();
+    which.value = 'a';
+    await flush();
+    which.value = 'b';
+    await flush();
+
+    expect(host.innerHTML).toContain('>B<');
+    // ChildA 命中白名单 ⇒ 缓存（setup 1 次）；ChildB 不在白名单 ⇒ 每次重新 setup（2 次）
+    expect(aSetupCount).toBe(1);
+    expect(bSetupCount).toBe(2);
+  });
+
+  it('KeepAlive 自身卸载时释放所有缓存组件（unmounted 触发，不泄漏）', async () => {
+    const events: string[] = [];
+
+    const ChildA: AnyComp = {
+      name: 'ChildA',
+      setup() {
+        return () => h('div', { id: 'a' }, 'A');
+      },
+      unmounted() {
+        events.push('a:unmounted');
+      },
+    };
+    const ChildB: AnyComp = {
+      name: 'ChildB',
+      setup() {
+        return () => h('div', { id: 'b' }, 'B');
+      },
+      unmounted() {
+        events.push('b:unmounted');
+      },
+    };
+
+    const which = ref<'a' | 'b'>('a');
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    hosts.push(host);
+
+    const app = createApp({
+      setup() {
+        return () =>
+          h(
+            KeepAlive as unknown as AnyComp,
+            null,
+            {
+              default: () => [which.value === 'a' ? h(ChildA) : h(ChildB)],
+            } as never,
+          ) as VNode;
+      },
+    });
+
+    app.mount(host);
+    await flush();
+    // 切到 B：A 被停用并缓存（尚未 unmount）
+    which.value = 'b';
+    await flush();
+    expect(events).not.toContain('a:unmounted');
+
+    // 卸载整个 App ⇒ KeepAlive 卸载 ⇒ 缓存中的 A 必须被释放（触发 unmounted）
+    app.unmount();
+    await flush();
+
+    expect(events).toContain('a:unmounted');
+    expect(events).toContain('b:unmounted');
+  });
 });

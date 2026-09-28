@@ -6,7 +6,8 @@ import { warn } from '@lytjs/common-error';
 import { watch } from '@lytjs/reactivity';
 import type { ComponentInternalInstance, ComponentOptions, SetupContext } from './types';
 import { createComponentInstance, setupComponent } from './component';
-import { handleError, onMounted, onUpdated, getCurrentInstance } from './lifecycle';
+import { handleError, onMounted, onUpdated, onBeforeUnmount, getCurrentInstance } from './lifecycle';
+import { callBeforeUnmountHook, callUnmountedHook } from './lifecycle';
 // FIX: DTS build error - 统一从 vdom 导入，避免类型不兼容
 import { ShapeFlags, createVNode, createCommentVNode } from '@lytjs/vdom';
 import type { VNode } from '@lytjs/vdom';
@@ -107,33 +108,43 @@ class LRUCache implements KeepAliveCache {
 }
 
 /**
- * 从缓存中淘汰一个实例（LRU 超容 / `max` 缩小时调用）。
+ * 从缓存中淘汰一个实例（LRU 超容 / `max` 缩小 / KeepAlive 自身卸载时调用）。
  *
- * ⚠️ 2026-09-28 修复：原实现对被淘汰实例**无条件**调用 `deactivateInstance()`，
- * 于是「切走时已触发过一次 `deactivated`」的实例在随后被淘汰时**再次触发**同一钩子
- * ⇒ 组件的 `deactivated` 钩子被调用两次（可观测缺陷）。
+ * 语义 = **销毁**该缓存条目（与 Vue 的 `pruneCacheEntry` 一致，等价于卸载）。
  *
- * 现改为按状态区分：
- * - **已停用**（DOM 在隐藏仓库里）⇒ 只清掉其 DOM（否则缓存淘汰后 DOM 永久残留，
- *   内存泄漏），**不再触发** `deactivated`；
- * - **仍活动**（极端时序）⇒ 先 `deactivateInstance` 保证钩子语义。
- * 两种情况都停掉 effects，避免已弃用实例继续响应。
+ * ⚠️ 2026-09-28 两处修复：
+ * ① 原实现对被淘汰实例**无条件** `deactivateInstance()` ⇒ 「切走时已触发过 `deactivated`」
+ *    的实例被淘汰时**再次触发**同一钩子（钩子被调用两次）。
+ * ② 原实现**只停用不卸载** ⇒ 被淘汰实例的 `unmounted` 钩子**永不触发**、DOM 残留在
+ *    隐藏仓库里（泄漏）。
  *
- * 已知限制：component 包拿不到渲染器实例，故**不触发 `unmounted`**（原实现亦如此）。
+ * 现统一走卸载语义：`beforeUnmount` → 移除 DOM → `isUnmounted = true` → 停 effects →
+ * `unmounted`（由 `callBeforeUnmountHook` / `callUnmountedHook` 触发，与渲染器的
+ * unmount 顺序一致）。
+ *
+ * 已知限制：不递归卸载 `subTree` 内的**嵌套组件**（component 包拿不到渲染器实例）。
  */
 function evictInstance(instance: ComponentInternalInstance): void {
-  const subTree = instance.subTree as VNode | null | undefined;
-  if (instance.isDeactivated) {
-    const el = subTree?.el ?? null;
-    if (el && el.parentNode) {
-      el.parentNode.removeChild(el);
-    }
-  } else {
-    deactivateInstance(instance);
+  if (instance.isUnmounted) return;
+
+  // 仅对**真实组件实例**触发生命周期钩子（其 `lifecycle` 袋存在）。
+  // `evictInstance` 也会经由 LRU 被「部分构造的实例」触达
+  // （单测里用过 `{ type: {} }`），此时不应因缺 `lifecycle` 而崩溃。
+  const hasLifecycleBag = !!(instance as { lifecycle?: unknown }).lifecycle;
+  if (hasLifecycleBag) callBeforeUnmountHook(instance);
+
+  const el = ((instance.subTree as VNode | null | undefined)?.el ?? null) as Node | null;
+  if (el && el.parentNode) {
+    el.parentNode.removeChild(el);
   }
+
+  instance.isUnmounted = true;
+  instance.isDeactivated = false;
   instance.effects?.forEach((effect) => {
     effect.stop();
   });
+
+  if (hasLifecycleBag) callUnmountedHook(instance);
 }
 
 // ==================== KeepAlive Component ====================
@@ -201,6 +212,35 @@ export const KeepAlive: ComponentOptions = {
 
     onMounted(commitPendingCache);
     onUpdated(commitPendingCache);
+
+    /**
+     * KeepAlive 自身被卸载时，释放所有缓存实例。
+     *
+     * ⚠️ 2026-09-28 新增：此前被停用的缓存组件 DOM 停在 `storage`（游离节点），
+     * KeepAlive 卸载后它们**永远不会被 unmount** ⇒ `unmounted` 钩子不触发、
+     * DOM / 副作用泄漏。
+     *
+     * 处置：
+     * - **当前活动实例**：清除其 `COMPONENT_SHOULD_KEEP_ALIVE`，交给渲染器随
+     *   KeepAlive 的 subTree 一起正常卸载（若不清，渲染器会把它**停用**而非销毁
+     *   —— 又变回泄漏）；
+     * - 其余缓存实例：直接 `evictInstance`（走卸载语义）。
+     */
+    onBeforeUnmount(() => {
+      if (!self) return;
+      const currentSubTree = self.subTree as VNode | null | undefined;
+      const currentKey = currentSubTree ? getCacheKey(self, currentSubTree) : null;
+      if (currentSubTree) {
+        currentSubTree.shapeFlag &= ~ShapeFlags.COMPONENT_SHOULD_KEEP_ALIVE;
+      }
+      for (const key of Array.from(cache.keys())) {
+        const inst = cache.get(key);
+        cache.delete(key);
+        if (inst && key !== currentKey) {
+          evictInstance(inst);
+        }
+      }
+    });
 
     /**
      * 隐藏仓库：被停用的组件 DOM 会被移到这里（不从文档树销毁），
