@@ -58,11 +58,7 @@ class LRUCache implements KeepAliveCache {
       if (oldestKey !== undefined) {
         const oldestInstance = this.cache.get(oldestKey);
         if (oldestInstance) {
-          // 停用并清理最旧的实例
-          deactivateInstance(oldestInstance);
-          oldestInstance.effects?.forEach((effect) => {
-            effect.stop();
-          });
+          evictInstance(oldestInstance);
         }
         this.cache.delete(oldestKey);
       }
@@ -102,15 +98,42 @@ class LRUCache implements KeepAliveCache {
       if (oldestKey !== undefined) {
         const oldestInstance = this.cache.get(oldestKey);
         if (oldestInstance) {
-          deactivateInstance(oldestInstance);
-          oldestInstance.effects?.forEach((effect) => {
-            effect.stop();
-          });
+          evictInstance(oldestInstance);
         }
         this.cache.delete(oldestKey);
       }
     }
   }
+}
+
+/**
+ * 从缓存中淘汰一个实例（LRU 超容 / `max` 缩小时调用）。
+ *
+ * ⚠️ 2026-09-28 修复：原实现对被淘汰实例**无条件**调用 `deactivateInstance()`，
+ * 于是「切走时已触发过一次 `deactivated`」的实例在随后被淘汰时**再次触发**同一钩子
+ * ⇒ 组件的 `deactivated` 钩子被调用两次（可观测缺陷）。
+ *
+ * 现改为按状态区分：
+ * - **已停用**（DOM 在隐藏仓库里）⇒ 只清掉其 DOM（否则缓存淘汰后 DOM 永久残留，
+ *   内存泄漏），**不再触发** `deactivated`；
+ * - **仍活动**（极端时序）⇒ 先 `deactivateInstance` 保证钩子语义。
+ * 两种情况都停掉 effects，避免已弃用实例继续响应。
+ *
+ * 已知限制：component 包拿不到渲染器实例，故**不触发 `unmounted`**（原实现亦如此）。
+ */
+function evictInstance(instance: ComponentInternalInstance): void {
+  const subTree = instance.subTree as VNode | null | undefined;
+  if (instance.isDeactivated) {
+    const el = subTree?.el ?? null;
+    if (el && el.parentNode) {
+      el.parentNode.removeChild(el);
+    }
+  } else {
+    deactivateInstance(instance);
+  }
+  instance.effects?.forEach((effect) => {
+    effect.stop();
+  });
 }
 
 // ==================== KeepAlive Component ====================

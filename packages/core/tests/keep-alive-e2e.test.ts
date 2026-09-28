@@ -290,4 +290,62 @@ describe('KeepAlive 端到端（真实渲染链）', () => {
     expect(aSetupCount).toBe(2);
     expect(bSetupCount).toBe(1);
   });
+
+  it('缓存淘汰不对「已停用」组件重复触发 deactivated（每次停用仅一次）', async () => {
+    const deactivatedEvents: string[] = [];
+    let aSetupCount = 0;
+
+    const ChildA: AnyComp = {
+      name: 'ChildA',
+      setup() {
+        aSetupCount++;
+        return () => h('div', { id: 'a' }, 'A');
+      },
+      deactivated() {
+        deactivatedEvents.push('a:deactivated');
+      },
+    };
+    const ChildB: AnyComp = {
+      name: 'ChildB',
+      setup() {
+        return () => h('div', { id: 'b' }, 'B');
+      },
+    };
+
+    const which = ref<'a' | 'b'>('a');
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    hosts.push(host);
+
+    const app = createApp({
+      setup() {
+        return () =>
+          h(
+            KeepAlive as unknown as AnyComp,
+            { max: 1 } as never,
+            {
+              default: () => [which.value === 'a' ? h(ChildA) : h(ChildB)],
+            } as never,
+          ) as VNode;
+      },
+    });
+
+    app.mount(host);
+    await flush();
+    expect(host.innerHTML).toContain('>A<');
+
+    // 切到 B：A 先被**停用**（1 次 deactivated），随后因 max=1 被**淘汰**
+    // —— 淘汰**不得**再次触发 A 的 deactivated（原实现会 → 2 次）。
+    which.value = 'b';
+    await flush();
+    expect(host.innerHTML).toContain('>B<');
+
+    // 切回 A：A 已被淘汰 ⇒ 重新 setup
+    which.value = 'a';
+    await flush();
+    expect(host.innerHTML).toContain('>A<');
+
+    expect(aSetupCount).toBe(2);
+    expect(deactivatedEvents.filter((e) => e === 'a:deactivated')).toHaveLength(1);
+  });
 });
