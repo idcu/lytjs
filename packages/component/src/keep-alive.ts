@@ -6,7 +6,13 @@ import { warn } from '@lytjs/common-error';
 import { watch } from '@lytjs/reactivity';
 import type { ComponentInternalInstance, ComponentOptions, SetupContext } from './types';
 import { createComponentInstance, setupComponent } from './component';
-import { handleError, onMounted, onUpdated, onBeforeUnmount, getCurrentInstance } from './lifecycle';
+import {
+  handleError,
+  onMounted,
+  onUpdated,
+  onBeforeUnmount,
+  getCurrentInstance,
+} from './lifecycle';
 import { callBeforeUnmountHook, callUnmountedHook } from './lifecycle';
 // FIX: DTS build error - 统一从 vdom 导入，避免类型不兼容
 import { ShapeFlags, createVNode, createCommentVNode } from '@lytjs/vdom';
@@ -127,9 +133,28 @@ class LRUCache implements KeepAliveCache {
 function evictInstance(instance: ComponentInternalInstance): void {
   if (instance.isUnmounted) return;
 
-  // 仅对**真实组件实例**触发生命周期钩子（其 `lifecycle` 袋存在）。
-  // `evictInstance` 也会经由 LRU 被「部分构造的实例」触达
-  // （单测里用过 `{ type: {} }`），此时不应因缺 `lifecycle` 而崩溃。
+  const vnode = instance.vnode as VNode | null | undefined;
+  // vdom 在挂载组件时会写入 `__rendererUnmount`（见 patch-component.ts）。
+  const rendererUnmount = (instance as { __rendererUnmount?: (v: VNode) => void })
+    .__rendererUnmount;
+
+  if (rendererUnmount && vnode) {
+    // ── 首选路径：交给渲染器**真正卸载** ──
+    // 这会递归处理 subTree 内的**嵌套组件**（它们此前永远不会被 unmount）、
+    // 移除 DOM、并按序触发 beforeUnmount / unmounted。
+    //
+    // ⚠️ 必须先清掉 `COMPONENT_SHOULD_KEEP_ALIVE`：否则渲染器会走我们新增的
+    //    「停用」分支，把该组件移进隐藏仓库而**不是**销毁（= 泄漏照旧）。
+    vnode.shapeFlag &= ~ShapeFlags.COMPONENT_SHOULD_KEEP_ALIVE;
+    rendererUnmount(vnode);
+    instance.effects?.forEach((effect) => {
+      effect.stop();
+    });
+    return;
+  }
+
+  // ── 退化路径：无渲染器（如单测传入部分构造的实例）──
+  // 仅对**真实实例**触发钩子（其 `lifecycle` 袋存在），否则跳过。
   const hasLifecycleBag = !!(instance as { lifecycle?: unknown }).lifecycle;
   if (hasLifecycleBag) callBeforeUnmountHook(instance);
 

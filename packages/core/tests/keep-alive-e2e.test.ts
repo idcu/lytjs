@@ -83,13 +83,9 @@ describe('KeepAlive 端到端（真实渲染链）', () => {
     const app = createApp({
       setup() {
         return () =>
-          h(
-            KeepAlive as unknown as AnyComp,
-            null,
-            {
-              default: () => [which.value === 'a' ? h(ChildA) : h(ChildB)],
-            } as never,
-          ) as VNode;
+          h(KeepAlive as unknown as AnyComp, null, {
+            default: () => [which.value === 'a' ? h(ChildA) : h(ChildB)],
+          } as never) as VNode;
       },
     });
 
@@ -148,13 +144,9 @@ describe('KeepAlive 端到端（真实渲染链）', () => {
     const app = createApp({
       setup() {
         return () =>
-          h(
-            KeepAlive as unknown as AnyComp,
-            null,
-            {
-              default: () => [which.value === 'a' ? h(ChildA) : h(ChildB)],
-            } as never,
-          ) as VNode;
+          h(KeepAlive as unknown as AnyComp, null, {
+            default: () => [which.value === 'a' ? h(ChildA) : h(ChildB)],
+          } as never) as VNode;
       },
     });
 
@@ -431,13 +423,9 @@ describe('KeepAlive 端到端（真实渲染链）', () => {
     const app = createApp({
       setup() {
         return () =>
-          h(
-            KeepAlive as unknown as AnyComp,
-            null,
-            {
-              default: () => [which.value === 'a' ? h(ChildA) : h(ChildB)],
-            } as never,
-          ) as VNode;
+          h(KeepAlive as unknown as AnyComp, null, {
+            default: () => [which.value === 'a' ? h(ChildA) : h(ChildB)],
+          } as never) as VNode;
       },
     });
 
@@ -454,5 +442,63 @@ describe('KeepAlive 端到端（真实渲染链）', () => {
 
     expect(events).toContain('a:unmounted');
     expect(events).toContain('b:unmounted');
+  });
+
+  it('缓存淘汰会**递归**卸载嵌套子组件（嵌套 unmounted 触发）', async () => {
+    const events: string[] = [];
+
+    const GrandChild: AnyComp = {
+      name: 'GrandChild',
+      setup() {
+        return () => h('span', null, 'G');
+      },
+      unmounted() {
+        events.push('grandchild:unmounted');
+      },
+    };
+    const ChildA: AnyComp = {
+      name: 'ChildA',
+      setup() {
+        return () => h('div', { id: 'a' }, [h(GrandChild)]);
+      },
+      unmounted() {
+        events.push('a:unmounted');
+      },
+    };
+    const ChildB: AnyComp = {
+      name: 'ChildB',
+      setup() {
+        return () => h('div', { id: 'b' }, 'B');
+      },
+    };
+
+    const which = ref<'a' | 'b'>('a');
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    hosts.push(host);
+
+    const app = createApp({
+      setup() {
+        return () =>
+          h(
+            KeepAlive as unknown as AnyComp,
+            { max: 1 } as never,
+            {
+              default: () => [which.value === 'a' ? h(ChildA) : h(ChildB)],
+            } as never,
+          ) as VNode;
+      },
+    });
+
+    app.mount(host);
+    await flush();
+    expect(host.innerHTML).toContain('>G<');
+
+    // 切到 B：A 被停用后随即因 max=1 被**淘汰** ⇒ 淘汰须**递归**卸载
+    // ⇒ A 与其 subTree 内的 GrandChild 的 unmounted 都要触发。
+    which.value = 'b';
+    await flush();
+    expect(events).toContain('a:unmounted');
+    expect(events).toContain('grandchild:unmounted');
   });
 });

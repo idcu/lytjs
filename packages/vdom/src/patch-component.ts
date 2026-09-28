@@ -260,6 +260,20 @@ export function createComponentPatch<HN, HE extends HN>(
     // Set up the update function on the component instance
     (component as unknown as { update: () => void }).update = update;
 
+    // ============================================================
+    // 把「渲染器的 unmount」暴露到组件实例上
+    // ============================================================
+    // ⚠️ 2026-09-29 新增：KeepAlive 淘汰缓存条目时需要**真正卸载**该组件
+    // （递归处理其 subTree 内的嵌套组件、移除 DOM、触发 beforeUnmount/unmounted），
+    // 但 `@lytjs/component` **拿不到渲染器实例**（vdom 不能反向依赖 component，
+    // 而 component 依赖 vdom —— 只能由 vdom 主动把能力交出去）。
+    //
+    // 与上方 `component.update` 同款：vdom 在挂载时把渲染器能力写到实例上，
+    // 组件（KeepAlive）按需读取。用 `doRemove = true` 保证 DOM 一并移除。
+    (component as unknown as { __rendererUnmount?: (vnode: VNode) => void }).__rendererUnmount = (
+      v: VNode,
+    ) => ctx.unmount(v, null, null, true);
+
     // 组件首次挂载的调试信息：仅在 DEV 且开启调试开关时输出
     if (__DEV__) {
       debugMount(component);
