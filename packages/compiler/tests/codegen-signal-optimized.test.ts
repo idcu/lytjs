@@ -26,7 +26,12 @@ describe('Signal Codegen Optimized', () => {
         optimizeSignal: true,
       });
 
-      expect(result.code).toMatch(/e as effect/);
+      // ⚠️ 2026-09-30 订正：本用例原先断言 `toMatch(/e as effect/)`，**恰好把错误写法固化成契约** ——
+      //    `import{e as effect}` 的语义是「导入名为 `e` 的导出」，而 `@lytjs/reactivity` 没有 `e`
+      //    这个导出；产物函数体里用的又是**短名** `e` ⇒ 产物**根本无法加载**。
+      //    正确写法是「真实导出 as 短名」。
+      expect(result.code).toMatch(/import\{effect as e\}from'@lytjs\/reactivity';/);
+      expect(result.code).not.toMatch(/\be as effect\b/);
     });
 
     it('should generate signal effects', () => {

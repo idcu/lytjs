@@ -203,22 +203,22 @@ export function generateSignalOptimized(ast: RootNode, _options?: CompilerOption
 function generateOptimizedImports(usedRuntime: Set<string>, useShortNames: boolean): string {
   if (useShortNames) {
     // 短名称模式 - 分开 reactivity 和 dom-runtime 导入
-    const reactivityImports: string[] = ['e as effect'];
+    const reactivityImports: string[] = ['effect as e'];
     const domImports: string[] = [];
 
-    if (usedRuntime.has('createTemplate')) domImports.push('t as createTemplate');
-    if (usedRuntime.has('setText')) domImports.push('x as setText');
-    if (usedRuntime.has('setHTML')) domImports.push('h as setHTML');
-    if (usedRuntime.has('setAttribute')) domImports.push('a as setAttribute');
-    if (usedRuntime.has('setProperty')) domImports.push('p as setProperty');
-    if (usedRuntime.has('setStyle')) domImports.push('s as setStyle');
-    if (usedRuntime.has('setClass')) domImports.push('c as setClass');
-    if (usedRuntime.has('insert')) domImports.push('i as insert');
-    if (usedRuntime.has('remove')) domImports.push('r as remove');
-    if (usedRuntime.has('createEventHandler')) domImports.push('v as createEventHandler');
-    if (usedRuntime.has('onCleanup')) domImports.push('o as onCleanup');
-    if (usedRuntime.has('runCleanups')) domImports.push('g as runCleanups');
-    if (usedRuntime.has('reconcileArray')) domImports.push('n as reconcileArray');
+    if (usedRuntime.has('createTemplate')) domImports.push('createTemplate as t');
+    if (usedRuntime.has('setText')) domImports.push('setText as x');
+    if (usedRuntime.has('setHTML')) domImports.push('setHTML as h');
+    if (usedRuntime.has('setAttribute')) domImports.push('setAttribute as a');
+    if (usedRuntime.has('setProperty')) domImports.push('setProperty as p');
+    if (usedRuntime.has('setStyle')) domImports.push('setStyle as s');
+    if (usedRuntime.has('setClass')) domImports.push('setClass as c');
+    if (usedRuntime.has('insert')) domImports.push('insert as i');
+    if (usedRuntime.has('remove')) domImports.push('remove as r');
+    if (usedRuntime.has('createEventHandler')) domImports.push('createEventHandler as v');
+    if (usedRuntime.has('onCleanup')) domImports.push('onCleanup as o');
+    if (usedRuntime.has('runCleanups')) domImports.push('runCleanups as g');
+    if (usedRuntime.has('reconcileArray')) domImports.push('reconcileArray as n');
 
     let result = `import{${reactivityImports.join(',')}}from'@lytjs/reactivity';`;
     if (domImports.length > 0) {
@@ -226,15 +226,15 @@ function generateOptimizedImports(usedRuntime: Set<string>, useShortNames: boole
     }
     if (usedRuntime.has('mountComponent')) {
       const mc = getShortName('mountComponent', true);
-      result += `\nimport{${mc} as mountComponent}from'@lytjs/renderer';`;
+      result += `\nimport{mountComponent as ${mc}}from'@lytjs/renderer';`;
     }
     if (usedRuntime.has('createVNode') || usedRuntime.has('Text')) {
       const vdomImports: string[] = [];
       if (usedRuntime.has('createVNode')) {
-        vdomImports.push(`${getShortName('createVNode', true)} as createVNode`);
+        vdomImports.push(`createVNode as ${getShortName('createVNode', true)}`);
       }
       if (usedRuntime.has('Text')) {
-        vdomImports.push(`${getShortName('Text', true)} as Text`);
+        vdomImports.push(`Text as ${getShortName('Text', true)}`);
       }
       result += `\nimport{${vdomImports.join(',')}}from'@lytjs/vdom';`;
     }
@@ -673,6 +673,20 @@ function renderExpression(exp: string, locals: ReadonlySet<string> = new Set()):
   return prefixIdentifiers(exp, locals).replace(/\b_ctx\./g, '_c.');
 }
 
+/** member-path 正则：`fn` / `obj.fn` / `a.b.c`（方法引用可直接当作 handler） */
+const MEMBER_PATH_EXPRESSION = /^[a-zA-Z_$][\w$]*(\.[a-zA-Z_$][\w$]*)*$/;
+
+/**
+ * 渲染事件 handler（与 `codegen-signal.ts` **同款语义**，见该处注释）。
+ *
+ * `@click="fn"`（方法引用）⇒ 直接传 `_c.fn`；`@click="fn()"` / `"count++"`（内联语句）
+ * ⇒ 包成 `($event) => { … }`，**点击时才求值**。
+ */
+function renderHandlerExpression(exp: string, locals: ReadonlySet<string> = new Set()): string {
+  if (MEMBER_PATH_EXPRESSION.test(exp)) return renderExpression(exp, locals);
+  return `($event) => { ${renderExpression(exp, new Set([...locals, '$event']))}; }`;
+}
+
 function processDirectiveOptimized(
   dir: DirectiveNode,
   varName: string,
@@ -797,12 +811,12 @@ function processDirectiveOptimized(
           const mods = dir.modifiers.map((m) => `${m}:1`).join(',');
           dynamicBindings.push({
             varName,
-            code: `${oc}(${cev}(${varName},'${argContent}',${renderExpression(expContent)},{${mods}}));`,
+            code: `${oc}(${cev}(${varName},'${argContent}',${renderHandlerExpression(expContent)},{${mods}}));`,
           });
         } else {
           dynamicBindings.push({
             varName,
-            code: `${oc}(${cev}(${varName},'${argContent}',${renderExpression(expContent)}));`,
+            code: `${oc}(${cev}(${varName},'${argContent}',${renderHandlerExpression(expContent)}));`,
           });
         }
       }
