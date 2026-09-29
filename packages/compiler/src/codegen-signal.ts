@@ -658,6 +658,25 @@ function validateIslandDirective(exp: string | undefined, context: string): void
   }
 }
 
+/**
+ * handler 表达式是否为「成员路径」（方法引用）：`fn` / `obj.fn` / `a.b.c`。
+ * 只有这种才可直接当作 handler 传入（点击时才调用）。
+ */
+const MEMBER_PATH_EXPRESSION = /^[a-zA-Z_$][\w$]*(\.[a-zA-Z_$][\w$]*)*$/;
+
+/**
+ * 渲染事件 handler。
+ *
+ * ⚠️ 2026-09-30 修复（预存缺陷）：`@click="fn()"` / `"count++"` 这类**内联语句**此前被
+ * 直接当作 handler 表达式 ⇒ ① 在 **setup 阶段就被求值**；② 传入的是其**返回值**（通常
+ * `undefined`）⇒ 点击时 `handler(e)` 抛 `TypeError`。现按 Vue 语义包成箭头：
+ * 方法引用原样传，内联语句包成 `($event) => { … }`（**点击时才求值**）。
+ */
+function renderHandlerExpression(exp: string, locals: ReadonlySet<string> = new Set()): string {
+  if (MEMBER_PATH_EXPRESSION.test(exp)) return prefixIdentifiers(exp, locals);
+  return `($event) => { ${prefixIdentifiers(exp, new Set([...locals, '$event']))}; }`;
+}
+
 function processDirective(
   dir: DirectiveNode,
   varName: string,
@@ -750,13 +769,13 @@ function processDirective(
           const mods = dir.modifiers.map((m) => `${m}: true`).join(', ');
           dynamicBindings.push({
             varName,
-            code: `onCleanup(createEventHandler(${varName}, '${argContent}', ${prefixIdentifiers(expContent, locals)}, { ${mods} }));`,
+            code: `onCleanup(createEventHandler(${varName}, '${argContent}', ${renderHandlerExpression(expContent, locals)}, { ${mods} }));`,
           });
         } else {
           // FIX: P1-12 使用 createEventHandler 替代未导入的 addEventListener
           dynamicBindings.push({
             varName,
-            code: `onCleanup(createEventHandler(${varName}, '${argContent}', ${prefixIdentifiers(expContent, locals)}));`,
+            code: `onCleanup(createEventHandler(${varName}, '${argContent}', ${renderHandlerExpression(expContent, locals)}));`,
           });
         }
       }
