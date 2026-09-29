@@ -401,17 +401,14 @@ function processElement(
   for (const child of node.children) {
     if (child.type === NodeTypes.INTERPOLATION) {
       const exp = getExpContent((child as InterpolationNode).content as SimpleExpressionNode);
-      // FIX: P1-27 插值表达式安全验证：检查表达式是否为合法的属性访问路径，
-      // 避免注入恶意代码导致 XSS 或运行时错误
-      if (!exp || !/^[a-zA-Z_$][a-zA-Z0-9_$]*(\.[a-zA-Z_$][a-zA-Z0-9_$]*)*$/.test(exp)) {
-        if (__DEV__) {
-          console.warn(
-            `[lytjs/compiler] Invalid interpolation expression: "${exp}". ` +
-              `Only simple property access paths are supported in signal mode.`,
-          );
-        }
+      // ⚠️ 2026-09-30 修复：此前这里用「只允许简单属性路径」的白名单正则，复杂插值
+      //   （`{{ a + b }}` / `{{ ok ? 'A' : 'B' }}`）只打一条 DEV 警告后 **`continue` 静默丢弃**
+      //   ⇒ 产物里整段文本消失（与优化版曾有的缺陷同源）。现与优化版同构：
+      //   黑名单校验（拒绝危险写法）+ `prefixIdentifiers`（下方 setText 已如此）。
+      if (!exp) {
         continue;
       }
+      validateExpression(exp, 'interpolation');
       if (!slotsVar) {
         slotsVar = genVarName(`${node.tag}Slots`, varCounter);
         dynamicBindings.push({

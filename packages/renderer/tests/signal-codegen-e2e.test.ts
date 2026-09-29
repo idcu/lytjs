@@ -32,20 +32,14 @@ function mount(tpl: string, v: Variant, ctx: unknown) {
  * ⚠️ **已知缺陷清单**（真跑才暴露；与「编译通过」无关）。
  * 用 `it.fails` 钉住：它们**修好之后会自动翻红**，提醒把条目挪出本清单。
  *
- * - `base/插值：表达式`、`base/插值：三元`：非优化版**丢弃复杂插值**
- *   （产物里只有文本占位 `<!--lyt-t-->`，没有对应的 setText）。
  * - `v-for 带索引`（`v-for="(i, k) in list"`）：两套 codegen 都**不渲染条目内容**
- *   （`create` 回调里只创建空 `<li>`）。
- * - `opt/v-text`：`v-text` 被**重复发射两次**，其中一次未做前缀化（`setText(el, t)`，
- *   而 `t` 是 `createTemplate` 的短名）。
+ *   （`create` 回调里只创建空 `<li>`）——旧路径的 `extractItemTextExpr` 只支持**单一文本表达式**。
+ *
+ * （**已修好并移出**：`base/插值：表达式`、`base/插值：三元`（base 插值守卫的白名单正则
+ *   把复杂插值静默 `continue` 丢弃）；`opt/v-text`（vnode props 路径的 `textContent`
+ *   用裸表达式、未前缀化 ⇒ `ReferenceError`）。）
  */
-const KNOWN_FAIL = new Set([
-  'base/插值：表达式（含算术）',
-  'base/插值：三元',
-  'base/v-for 带索引',
-  'opt/v-for 带索引',
-  'opt/v-text',
-]);
+const KNOWN_FAIL = new Set(['base/v-for 带索引', 'opt/v-for 带索引']);
 
 describe('signal codegen · 构造集真跑（两套 codegen）', () => {
   for (const v of VARIANTS) {

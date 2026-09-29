@@ -905,7 +905,10 @@ function processVNodeCallPropsOptimized(
       const st = getShortName('setText', options.useShortNames ?? true);
       dynamicBindings.push({
         varName,
-        code: `${e}(()=>${st}(${varName},${value}));`,
+        // ⚠️ 2026-09-30 修复：此处此前直接用**裸** `${value}`（transform 把 `v-text="msg"`
+        // 变成 `textContent: msg`），既未前缀化 ⇒ 产物里是裸标识符 `msg`
+        // ⇒ `ReferenceError: msg is not defined`（若恰好与短名同名还会取错值）。
+        code: `${e}(()=>${st}(${varName},${renderExpression(value)}));`,
       });
     } else if (key === 'innerHTML') {
       usedRuntime.add('effect');
@@ -914,7 +917,8 @@ function processVNodeCallPropsOptimized(
       const sh = getShortName('setHTML', options.useShortNames ?? true);
       dynamicBindings.push({
         varName,
-        code: `${e}(()=>${sh}(${varName},${value}));`,
+        // 同上：`v-html="h"` 的 transform 产物同样是裸表达式，必须前缀化。
+        code: `${e}(()=>${sh}(${varName},${renderExpression(value)}));`,
       });
     }
   }
