@@ -25,7 +25,13 @@ describe('codegen-signal', () => {
 
     it('should destructure child elements', () => {
       const result = compile('<div><h1></h1><p></p></div>', { rendererMode: 'signal' });
-      expect(result.code).toMatch(/const\[_1,_2\]=_0\.children/);
+      // ⚠️ 2026-09-30 订正：原断言 `const[_1,_2]=_0.children` 把「**从直接子节点**解构」
+      // 固化成契约，但元素变量覆盖的是**全部后代元素（先序）**——用 `children` 在嵌套模板
+      // （深度 ≥ 2）下会解构出 undefined，随后 setText/getRealNode 抛
+      // `Cannot use 'in' operator ... in undefined`（**运行期崩溃**）。
+      // 现断言「走 querySelectorAll 拿全部后代，且以 children 为回退」。
+      expect(result.code).toMatch(/const\[_1,_2\]=Array\.from\(_0\.querySelectorAll\?/);
+      expect(result.code).not.toMatch(/_0\.children;?\n/);
     });
 
     it('should generate insert call', () => {

@@ -217,7 +217,12 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
       // createTemplate 返回的是 **TemplateWrapper**：它的 `.children` 只有 1 项（真实根元素），
       // 直接解构会把下标整体错位（表现为后续元素为 undefined → "Cannot set properties of undefined"）。
       // 因此必须先 getRealNode() 取到真实根元素再解构。
-      lines.push(`  const [${childVars.join(', ')}] = getRealNode(${rootVar}).children;`);
+      // 2026-09-30 修复：同优化版 —— 元素变量覆盖全部后代元素（先序），
+      // 用 children 在嵌套模板下会解构出 undefined 并在运行期崩溃。
+      lines.push(
+        `  const _root = getRealNode(${rootVar});` +
+          `\n  const [${childVars.join(', ')}] = Array.from(_root.querySelectorAll ? _root.querySelectorAll('*') : _root.children || []);`,
+      );
     }
 
     lines.push(`  insert(${rootVar}, _container);`);

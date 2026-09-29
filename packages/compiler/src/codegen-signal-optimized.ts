@@ -165,7 +165,12 @@ export function generateSignalOptimized(ast: RootNode, _options?: CompilerOption
     // 解构子元素 - 优化：只有需要时才解构
     if (elementVars.length > 1) {
       const childVars = elementVars.slice(1).map((v) => v.varName);
-      lines.push(`const[${childVars.join(',')}]=${rootVar}.children;`);
+      // 2026-09-30 修复：第 2..N 个元素变量覆盖的是**全部后代元素（先序）**，而不是
+      // 直接子节点 —— 原用 `${rootVar}.children` 在嵌套（深度≥2）时会解构出 undefined，
+      // 随后 setText/getRealNode 抛 `Cannot use 'in' operator ... in undefined`（运行期崩溃）。
+      lines.push(
+        `const[${childVars.join(',')}]=Array.from(${rootVar}.querySelectorAll?${rootVar}.querySelectorAll('*'):${rootVar}.children||[]);`,
+      );
     }
 
     // 使用短别名生成 insert 调用
