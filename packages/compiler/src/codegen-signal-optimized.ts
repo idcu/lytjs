@@ -559,9 +559,13 @@ function processElementOptimized(
   for (const child of node.children) {
     if (child.type === NodeTypes.INTERPOLATION) {
       const exp = getExpContent((child as InterpolationNode).content as SimpleExpressionNode);
-      if (!exp || !/^[a-zA-Z_$][a-zA-Z0-9_$]*(\.[a-zA-Z_$][a-zA-Z0-9_$]*)*$/.test(exp)) {
+      if (!exp) {
         continue;
       }
+      // 修复：此前非「简单属性路径」的插值会被**静默丢弃**（`continue`），
+      // 现统一走 `renderExpression`（黑名单校验 + `prefixIdentifiers`）。
+      validateExpression(exp, 'interpolation');
+      const expCode = renderExpression(exp);
 
       // 优化：检查是否为简单属性访问，可以内联
       if (options.inlineSimpleExpressions && isSimplePropertyAccess(exp)) {
@@ -571,7 +575,7 @@ function processElementOptimized(
         const st = getShortName('setText', options.useShortNames ?? true);
         sink.push({
           varName,
-          code: `${e}(()=>${st}(${varName},_c.${exp}));`,
+          code: `${e}(()=>${st}(${varName},${expCode}));`,
         });
       } else {
         usedRuntime.add('effect');
@@ -580,7 +584,7 @@ function processElementOptimized(
         const st = getShortName('setText', options.useShortNames ?? true);
         sink.push({
           varName,
-          code: `${e}(()=>${st}(${varName},_c.${exp}));`,
+          code: `${e}(()=>${st}(${varName},${expCode}));`,
         });
       }
     } else if (child.type === NodeTypes.ELEMENT) {
@@ -639,18 +643,34 @@ function isSimplePropertyAccess(exp: string): boolean {
 // 优化的指令处理
 // ============================================================
 
-const VALID_EXPRESSION = /^[a-zA-Z_$][a-zA-Z0-9_$]*(\.[a-zA-Z_$][a-zA-Z0-9_$]*)*$/;
+/**
+ * 危险/带副作用的表达式黑名单（与 `codegen-signal.ts` **同款**）。
+ *
+ * ⚠️ 2026-09-30 修复：此前这里用 `VALID_EXPRESSION`（只允许「简单属性路径」）做**白名单**校验，
+ * 导致一大批在**非优化版 / SSR 均可编译**的表达式在**默认路径**下直接报错
+ * （`:class="[a,b]"` / `:style="{color:'red'}"` / `:data-x="a"` / `@click="fn()"` /
+ * `<slot :a="1">` …）。根因是批次 48–50 的「表达式改走 `prefixIdentifiers`」**只落在 base 版**。
+ * 现统一为黑名单：模板表达式默认**信任**（由开发者书写），只拦语句/箭头/声明/赋值等危险写法。
+ */
+const DANGEROUS_EXPRESSION =
+  /;|=>|\bfunction\b|\bnew\s|\bimport\b|\brequire\b|\bdelete\b|\bthrow\b|\bawait\b|(^|[^=!<>])\b[a-zA-Z_$][\w$]*\s*=(?!=)/;
+
 const VALID_ATTRIBUTE_NAME = /^[a-zA-Z][a-zA-Z0-9-:]*$/;
 const VALID_EVENT_NAME = /^[a-zA-Z][a-zA-Z0-9-]*$/;
 
 function validateExpression(exp: string | undefined, context: string): void {
   if (!exp) return;
-  if (!VALID_EXPRESSION.test(exp)) {
+  if (DANGEROUS_EXPRESSION.test(exp)) {
     throw new Error(
-      `[lytjs/compiler] Invalid expression in ${context}: "${exp}"` +
-        `\n  Suggestion: Ensure the expression contains valid JavaScript syntax.`,
+      `[lytjs/compiler] Unsafe expression in ${context}: "${exp}".\n` +
+        `  Statements, arrow functions, declarations and assignments are not allowed in templates.`,
     );
   }
+}
+
+/** 把表达式渲染为 Signal 运行时可直接使用的代码（`_ctx.x` → `_c.x`）。 */
+function renderExpression(exp: string, locals: ReadonlySet<string> = new Set()): string {
+  return prefixIdentifiers(exp, locals).replace(/\b_ctx\./g, '_c.');
 }
 
 function processDirectiveOptimized(
@@ -691,7 +711,7 @@ function processDirectiveOptimized(
         const rm = getShortName('remove', options.useShortNames ?? true);
         dynamicBindings.push({
           varName,
-          code: `let _f=null;${e}(()=>{if(_c.${expContent}){if(!_f){_f=${varName};${ins}(_f, _n);}}else{if(_f){${rm}(_f);_f=null;}}});`,
+          code: `let _f=null;${e}(()=>{if(${renderExpression(expContent)}){if(!_f){_f=${varName};${ins}(_f, _n);}}else{if(_f){${rm}(_f);_f=null;}}});`,
         });
       }
       break;
@@ -703,7 +723,7 @@ function processDirectiveOptimized(
         const e = getShortName('effect', options.useShortNames ?? true);
         dynamicBindings.push({
           varName,
-          code: `${e}(()=>{${varName}.style.display=_c.${expContent}?'':'none';});`,
+          code: `${e}(()=>{${varName}.style.display=${renderExpression(expContent)}?'':'none';});`,
         });
       }
       break;
@@ -717,7 +737,7 @@ function processDirectiveOptimized(
         const st = getShortName('setText', options.useShortNames ?? true);
         dynamicBindings.push({
           varName,
-          code: `${e}(()=>${st}(${varName},_c.${expContent}));`,
+          code: `${e}(()=>${st}(${varName},${renderExpression(expContent)}));`,
         });
       }
       break;
@@ -731,7 +751,7 @@ function processDirectiveOptimized(
         const sh = getShortName('setHTML', options.useShortNames ?? true);
         dynamicBindings.push({
           varName,
-          code: `${e}(()=>${sh}(${varName},_c.${expContent}));`,
+          code: `${e}(()=>${sh}(${varName},${renderExpression(expContent)}));`,
         });
       }
       break;
@@ -748,19 +768,19 @@ function processDirectiveOptimized(
           usedRuntime.add('setClass');
           dynamicBindings.push({
             varName,
-            code: `${e}(()=>${sc}(${varName},_c.${expContent}));`,
+            code: `${e}(()=>${sc}(${varName},${renderExpression(expContent)}));`,
           });
         } else if (argContent === 'style') {
           usedRuntime.add('setStyle');
           dynamicBindings.push({
             varName,
-            code: `${e}(()=>${ss}(${varName},_c.${expContent}));`,
+            code: `${e}(()=>${ss}(${varName},${renderExpression(expContent)}));`,
           });
         } else {
           usedRuntime.add('setAttribute');
           dynamicBindings.push({
             varName,
-            code: `${e}(()=>${sa}(${varName},'${argContent}',_c.${expContent}));`,
+            code: `${e}(()=>${sa}(${varName},'${argContent}',${renderExpression(expContent)}));`,
           });
         }
       }
@@ -777,12 +797,12 @@ function processDirectiveOptimized(
           const mods = dir.modifiers.map((m) => `${m}:1`).join(',');
           dynamicBindings.push({
             varName,
-            code: `${oc}(${cev}(${varName},'${argContent}',_c.${expContent},{${mods}}));`,
+            code: `${oc}(${cev}(${varName},'${argContent}',${renderExpression(expContent)},{${mods}}));`,
           });
         } else {
           dynamicBindings.push({
             varName,
-            code: `${oc}(${cev}(${varName},'${argContent}',_c.${expContent}));`,
+            code: `${oc}(${cev}(${varName},'${argContent}',${renderExpression(expContent)}));`,
           });
         }
       }
@@ -825,11 +845,11 @@ function processDirectiveOptimized(
 
         dynamicBindings.push({
           varName,
-          code: `${e}(()=>{${varName}.value=_c.${expContent};});`,
+          code: `${e}(()=>{${varName}.value=${renderExpression(expContent)};});`,
         });
         dynamicBindings.push({
           varName,
-          code: `${oc}(${cev}(${varName},'${eventName}',($e)=>{_c.${expContent}=${setValueExpr};}));`,
+          code: `${oc}(${cev}(${varName},'${eventName}',($e)=>{${renderExpression(expContent)}=${setValueExpr};}));`,
         });
       }
       break;
@@ -958,7 +978,7 @@ function processConditionalOptimized(
 
     if (i > 0) code += 'else ';
     if (branchInfo.condition !== null) {
-      code += `if(_c.${branchInfo.condition})`;
+      code += `if(${renderExpression(branchInfo.condition)})`;
     }
     code += `{if(${ifVarName}Idx!==${i}){`;
     if (i === 0) {
@@ -1074,7 +1094,7 @@ function processCallExpressionOptimized(
     const updatePart = updateBody ? `,update:(_el,${itemVar})=>{${updateBody}}` : '';
     dynamicBindings.push({
       varName: containerVar,
-      code: `${e}(()=>${ra}(${containerVar},_c.${source},{key:(${itemVar})=>${keyExpr},create:(${itemVar})=>{${createBody}}${updatePart}}));`,
+      code: `${e}(()=>${ra}(${containerVar},${renderExpression(source)},{key:(${itemVar})=>${keyExpr},create:(${itemVar})=>{${createBody}}${updatePart}}));`,
     });
   }
 }

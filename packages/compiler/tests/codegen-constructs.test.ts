@@ -10,13 +10,12 @@
  * - signal（非优化版）：`{ rendererMode: 'signal', optimizeSignal: false }`
  * - SSR：`{ ssrMode: true }`
  *
- * ⚠️ **已知缺陷（本轮仅取证，未修）**：优化版 codegen 仍沿用旧的
- * `validateExpression`（只允许「简单属性路径」正则 `^[a-zA-Z_$][\w$]*(\.[...])*$`），
- * 于是一大批在**非优化版 / SSR 均可用**的表达式（数组/对象/三元、v-bind 带连字符的属性名、
- * v-on 的内联语句 `fn()`、以及 `<slot :a="1">`）在**默认路径下直接编译报错**。
- * 根因：批次 48–50 的「表达式改走 `prefixIdentifiers`」修复**只落在 `codegen-signal.ts`**，
- * 未双写到 `codegen-signal-optimized.ts`（正是「两套 codegen 必须双写」的陷阱）。
- * 下方 `已知缺陷（特征化用例）` 段落把现状钉住；**修复后应把那些用例改为「应可编译」**。
+ * ✅ **2026-09-30 已修复**（本文件曾以「已知缺陷」段落把现状钉住）：
+ * 优化版 codegen 此前仍用旧的 `validateExpression`（白名单，只允许「简单属性路径」），
+ * 导致一批在**非优化版 / SSR 均可编译**的表达式在**默认路径**下直接报错。
+ * 现已与 base 版**同构**：校验改为 `DANGEROUS_EXPRESSION` 黑名单，表达式统一走
+ * `renderExpression()`（= `prefixIdentifiers` + `_ctx.`→`_c.`），
+ * 并顺带修掉「非简单插值被**静默丢弃**」的隐患。原先受限的模板已全部挪回通用表。
  */
 
 import { describe, it, expect } from 'vitest';
@@ -73,9 +72,15 @@ const BINDINGS = [
   `<div :id="a">x</div>`,
   `<div :id>x</div>`,
   `<div :[dyn]="a">x</div>`,
+  `<div :data-x="a">x</div>`,
   `<div :class="cls">x</div>`,
+  `<div :class="[a, b]">x</div>`,
+  `<div :class="{ on: a }">x</div>`,
+  `<div :class="a ? 'x' : 'y'">z</div>`,
   `<div class="s" :class="c">x</div>`,
   `<div :style="st">x</div>`,
+  `<div :style="[a, b]">x</div>`,
+  `<div :style="{ color: 'red' }">x</div>`,
   `<div :disabled="d">x</div>`,
   `<input :value="v" :readonly="r">`,
 ];
@@ -83,6 +88,9 @@ const BINDINGS = [
 /** 事件（方法引用形态） */
 const EVENTS = [
   `<button @click="fn">x</button>`,
+  `<button @click="fn()">x</button>`,
+  `<button @click="count++">x</button>`,
+  `<button @[evt]="fn()">x</button>`,
   `<button @click.stop="fn">x</button>`,
   `<button @click.prevent="fn">x</button>`,
   `<button @click.stop.prevent.self.once="fn">x</button>`,
@@ -114,6 +122,7 @@ const DIRECTIVES = [
 const COMPONENTS_AND_SLOTS = [
   `<div><slot></slot></div>`,
   `<div><slot name="x"></slot></div>`,
+  `<div><slot :a="1"></slot></div>`,
   `<div><template #hdr>h</template><template #ftr>f</template></div>`,
   `<Comp/>`,
   `<Comp :p="1">slot content</Comp>`,
@@ -146,29 +155,6 @@ const GROUPS: Array<[string, string[]]> = [
 /** 三模式通用的模板：断言「不抛错 + 产出非空代码」 */
 const TEMPLATES_OK_IN_ALL_MODES = GROUPS;
 
-/** **仅优化版拒绝**的模板（已知缺陷）：非优化版与 SSR 均可编译 */
-const REJECTED_ONLY_BY_SIGNAL_OPT = [
-  `<div :data-x="a">x</div>`,
-  `<div :class="[a, b]">x</div>`,
-  `<div :class="{ on: a }">x</div>`,
-  `<div :class="a ? 'x' : 'y'">z</div>`,
-  `<div :style="[a, b]">x</div>`,
-  `<div :style="{ color: 'red' }">x</div>`,
-  `<button @click="fn()">x</button>`,
-  `<button @click="count++">x</button>`,
-  `<button @[evt]="fn()">x</button>`,
-  `<div><slot :a="1"></slot></div>`,
-];
-
-function okOrThrow(mode: Mode, template: string): boolean {
-  try {
-    const r = compile(template, mode.options as never);
-    return typeof r.code === 'string' && r.code.length > 0;
-  } catch {
-    return false;
-  }
-}
-
 describe('compiler codegen · 构造全覆盖批次', () => {
   for (const [groupName, templates] of TEMPLATES_OK_IN_ALL_MODES) {
     describe(groupName, () => {
@@ -184,21 +170,6 @@ describe('compiler codegen · 构造全覆盖批次', () => {
     });
   }
 
-  // ==================== 已知缺陷（特征化用例） ====================
-  // ⚠️ 这些表达式在 **非优化版 / SSR 可用**，但在**默认（优化版）**下编译报错。
-  //    根因见文件头的说明。**修复后**请把这里的 `expect(...).toBe(false)`
-  //    改为「应可编译」，并把模板挪回上面的通用表。
-  describe('已知缺陷：优化版对非简单表达式的过度拒绝', () => {
-    for (const template of REJECTED_ONLY_BY_SIGNAL_OPT) {
-      it(`[signal-opt] 目前会拒绝： ${template.replace(/\s+/g, ' ').slice(0, 52)}`, () => {
-        expect(okOrThrow(SIGNAL_OPT, template)).toBe(false);
-        // 对照：非优化版与 SSR 必须**可编译**（证明这是优化版独有的缺口）
-        expect(okOrThrow(SIGNAL_BASE, template)).toBe(true);
-        expect(okOrThrow(SSR, template)).toBe(true);
-      });
-    }
-  });
-
   // ==================== 特征标记断言（非形状断言） ====================
   describe('特征标记', () => {
     it('signal（两版）：插值都应被前缀化为 _ctx./_c.', () => {
@@ -211,7 +182,6 @@ describe('compiler codegen · 构造全覆盖批次', () => {
     it('signal（两版）：v-for 的循环源出现在产物中（标识符被前缀化）', () => {
       for (const mode of [SIGNAL_OPT, SIGNAL_BASE]) {
         const r = compile(`<ul><li v-for="i in list">{{ i }}</li></ul>`, mode.options as never);
-        // 注意：两版的循环辅助函数**别名不同**（优化版取短名），故只断言「循环源被正确前缀化」。
         expect(r.code).toMatch(/_ctx\.list|_c\.list/);
       }
     });
