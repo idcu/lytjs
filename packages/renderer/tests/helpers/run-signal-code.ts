@@ -12,12 +12,16 @@
 
 import * as reactivity from '@lytjs/reactivity';
 import * as domRuntime from '@lytjs/dom-runtime';
+import * as renderer from '../../src/index';
+import * as vdom from '@lytjs/vdom';
 
 type Mod = Record<string, unknown>;
 
 const MODULES: Record<string, Mod> = {
   '@lytjs/reactivity': reactivity as unknown as Mod,
   '@lytjs/dom-runtime': domRuntime as unknown as Mod,
+  '@lytjs/renderer': renderer as unknown as Mod,
+  '@lytjs/vdom': vdom as unknown as Mod,
 };
 
 export type SignalRenderFn = (ctx: unknown, container: unknown) => unknown;

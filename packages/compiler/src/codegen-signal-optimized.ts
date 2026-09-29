@@ -975,6 +975,9 @@ function processConditionalOptimized(
   const e = getShortName('effect', options.useShortNames ?? true);
   const ins = getShortName('insert', options.useShortNames ?? true);
   const rm = getShortName('remove', options.useShortNames ?? true);
+  // ⚠️ 2026-09-30 修复：此处原先硬编码长名 `createTemplate`，而 import 只绑定**短名**（如 `t`）
+  // ⇒ `ReferenceError: createTemplate is not defined`。必须与 import 绑定名保持一致。
+  const ct = getShortName('createTemplate', options.useShortNames ?? true);
 
   const containerVar = parentVar ?? '_n';
   const ifDepth = varCounter.get('_if_depth') ?? 0;
@@ -998,14 +1001,19 @@ function processConditionalOptimized(
     if (i === 0) {
       code += `if(${ifVarName}El){${rm}(${ifVarName}El);${ifVarName}El=null;}`;
     }
-    code += `${ifVarName}El=createTemplate(${JSON.stringify(branchHTML)}).firstElementChild;`;
+    code += `${ifVarName}El=${ct}(${JSON.stringify(branchHTML)}).firstElementChild;`;
     code += `if(!${ifVarName}El)${ifVarName}El=document.createComment('');`;
     code += `${ins}(${ifVarName}El,${containerVar});`;
     code += `${ifVarName}Idx=${i};`;
     code += `}}`;
   }
 
-  code += `else{if(${ifVarName}El){${rm}(${ifVarName}El);${ifVarName}El=null;${ifVarName}Idx=-1;}}`;
+  // ⚠️ 2026-09-30 修复：末支若已是 `v-else`（condition === null），它自己就是兜底分支，
+  // 再补一个 `else{…}` 清理会得到 `if…else…else` ⇒ **SyntaxError: Unexpected token 'else'**。
+  const lastBranch = branches[branches.length - 1];
+  if (!lastBranch || lastBranch.condition !== null) {
+    code += `else{if(${ifVarName}El){${rm}(${ifVarName}El);${ifVarName}El=null;${ifVarName}Idx=-1;}}`;
+  }
   code += '});';
 
   dynamicBindings.push({ varName: containerVar, code });

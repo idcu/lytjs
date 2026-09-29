@@ -991,13 +991,22 @@ function processConditional(
   }
 
   // 如果所有条件都不满足，移除元素
-  code += `    } else {\n`;
-  code += `      if (${ifVarName}El) {\n`;
-  code += `        remove(${ifVarName}El);\n`;
-  code += `        ${ifVarName}El = null;\n`;
-  code += `        ${ifVarName}Active = -1;\n`;
-  code += `      }\n`;
-  code += `    }\n`;
+  //
+  // ⚠️ 2026-09-30 修复：末支若已是 `v-else`（condition === null），它本身就是兜底分支；
+  //   再补一个 `else {…}` 会得到 `if…else…else` ⇒ **SyntaxError: Unexpected token 'else'**。
+  //   注意：无论哪种情况都必须闭合末支的外层 `{`，故此处只保留 `}`。
+  const lastBranch = branches[branches.length - 1];
+  if (!lastBranch || lastBranch.condition !== null) {
+    code += `    } else {\n`;
+    code += `      if (${ifVarName}El) {\n`;
+    code += `        remove(${ifVarName}El);\n`;
+    code += `        ${ifVarName}El = null;\n`;
+    code += `        ${ifVarName}Active = -1;\n`;
+    code += `      }\n`;
+    code += `    }\n`;
+  } else {
+    code += `    }\n`;
+  }
   code += `  });`;
 
   dynamicBindings.push({
