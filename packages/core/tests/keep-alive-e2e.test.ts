@@ -501,4 +501,68 @@ describe('KeepAlive 端到端（真实渲染链）', () => {
     expect(events).toContain('a:unmounted');
     expect(events).toContain('grandchild:unmounted');
   });
+
+  it('运行期修改 max ⇒ 缓存被收缩（原 watch 失效缺陷的回归门禁）', async () => {
+    let aSetupCount = 0;
+    const mk = (name: string, id: string, counter: () => void): AnyComp => ({
+      name,
+      setup() {
+        counter();
+        return () => h('div', { id }, id);
+      },
+    });
+    let bSetupCount = 0;
+    let cSetupCount = 0;
+    const ChildA = mk('ChildA', 'a', () => {
+      aSetupCount++;
+    });
+    const ChildB = mk('ChildB', 'b', () => {
+      bSetupCount++;
+    });
+    const ChildC = mk('ChildC', 'c', () => {
+      cSetupCount++;
+    });
+
+    const which = ref<'a' | 'b' | 'c'>('a');
+    const maxRef = ref(3);
+
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    hosts.push(host);
+
+    const app = createApp({
+      setup() {
+        return () =>
+          h(
+            KeepAlive as unknown as AnyComp,
+            { max: maxRef.value } as never,
+            {
+              default: () => [
+                which.value === 'a' ? h(ChildA) : which.value === 'b' ? h(ChildB) : h(ChildC),
+              ],
+            } as never,
+          ) as VNode;
+      },
+    });
+
+    app.mount(host);
+    await flush();
+
+    // 依次访问 A → B → C，max=3 ⇒ 三者都留在缓存里（各 setup 一次）
+    which.value = 'b';
+    await flush();
+    which.value = 'c';
+    await flush();
+    expect([aSetupCount, bSetupCount, cSetupCount]).toEqual([1, 1, 1]);
+
+    // 运行期把 max 改小到 1（父组件重渲染 ⇒ KeepAlive 重渲染 ⇒ 容量被校正）
+    maxRef.value = 1;
+    await flush();
+
+    // 切回 A：缓存已被收缩 ⇒ A 必被逐出 ⇒ 重新 setup
+    which.value = 'a';
+    await flush();
+    expect(host.innerHTML).toContain('>a<');
+    expect(aSetupCount).toBe(2);
+  });
 });

@@ -3,7 +3,6 @@
 
 import { isString, isArray, isFunction } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
-import { watch } from '@lytjs/reactivity';
 import type { ComponentInternalInstance, ComponentOptions, SetupContext } from './types';
 import { createComponentInstance, setupComponent } from './component';
 import {
@@ -201,15 +200,16 @@ export const KeepAlive: ComponentOptions = {
     // FIX: P2-29 移除冗余的 keys Set，直接使用 cache.keys() 避免数据重复
     const _currentVNode: VNode | null = null;
 
-    // FIX: P2-29 监听 max prop 变化，动态调整 LRU 缓存大小
-    watch(
-      () => (_props as KeepAliveProps).max,
-      (newMax) => {
-        if (newMax !== undefined && typeof newMax === 'number' && newMax > 0) {
-          (cache as LRUCache).setMaxSize(newMax);
-        }
-      },
-    );
+    // ⚠️ 2026-09-29 修复（预存缺陷）：此前这里用
+    //     `watch(() => (_props as KeepAliveProps).max, newMax => cache.setMaxSize(newMax))`
+    //   监听 `max` 变化，但 `initProps`（component-setup.ts）构造的 props 是**普通对象**
+    //   （未 `reactive()`）⇒ 该 getter 不被依赖收集 ⇒ **watcher 永不触发**，
+    //   运行期修改 `max` 完全不收缩缓存（`setMaxSize` 实为死路径）。
+    //
+    //   现改为**在渲染时**同步：KeepAlive 每次（重）渲染都会读到**当前** props
+    //   （`renderImpl` 里经 raw `self.props` 读取），据其校正 LRU 容量。
+    //   父组件更新 `max` 会触发 KeepAlive 重渲染 ⇒ 容量随即被校正，无需 props 响应式。
+    let appliedMaxCacheSize = maxCacheSize;
 
     const self = getCurrentInstance();
 
@@ -324,6 +324,16 @@ export const KeepAlive: ComponentOptions = {
       if (!self) return createCommentVNode('keep-alive');
 
       const props = (self.props ?? {}) as KeepAliveProps;
+
+      // 渲染时按**当前** `props.max` 校正 LRU 容量（替代已失效的 watch，见 setup 中的说明）。
+      // 父组件更新 `max` ⇒ KeepAlive 重渲染 ⇒ 此处即把新容量应用到缓存。
+      const desiredMax =
+        typeof props.max === 'number' && props.max > 0 ? props.max : appliedMaxCacheSize;
+      if (desiredMax !== appliedMaxCacheSize) {
+        (cache as LRUCache).setMaxSize(desiredMax);
+        appliedMaxCacheSize = desiredMax;
+      }
+
       const slots = self.slots as Record<string, unknown> | undefined;
       const defaultSlot = slots?.default as (() => VNode[] | VNode) | undefined;
 
