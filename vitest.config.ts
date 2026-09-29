@@ -19,7 +19,12 @@ export default defineConfig({
       // common 子包
       '@lytjs/common-is': resolve(root, 'packages/common/packages/is/dist/index.mjs'),
       '@lytjs/common-scheduler': resolve(root, 'packages/common/packages/scheduler/dist/index.mjs'),
-      '@lytjs/common-error': resolve(root, 'packages/common/packages/error/dist/index.mjs'),
+      // ⚠️ 指向 **src** 而非 dist：`tsup` 以 `define: { __DEV__: 'false' }` 产出**生产版** dist，
+      // 其中 `warn` / `warnOnce` 被压成空操作（`function warn(){return;}`）。而本仓多处以
+      // 「DEV 下应发出警告」为断言（common-dom / reactivity 等），若走 dist 则**永不触发**
+      // ⇒ 测试必然失败。指向 src 后，裸 `__DEV__` 在运行期解析到 `globalThis.__DEV__`
+      // （`vitest.setup.ts` 置 true、`setDevMode()` 可切换），DEV/生产两种预期都成立。
+      '@lytjs/common-error': resolve(root, 'packages/common/packages/error/src'),
       '@lytjs/common-vnode': resolve(root, 'packages/common/packages/vnode/dist/index.mjs'),
       '@lytjs/common-string': resolve(root, 'packages/common/packages/string/dist/index.mjs'),
       '@lytjs/common-security': resolve(root, 'packages/common/packages/security/dist/index.mjs'),
