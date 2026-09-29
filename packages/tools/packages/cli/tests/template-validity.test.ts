@@ -45,15 +45,13 @@ function offenders(pattern: RegExp): string[] {
 
 describe('脚手架模板真实性（防止再生成不可用产物）', () => {
   it('不得 import 仓外的 @lytjs/plugin-vite', () => {
-    expect(
-      offenders(/from\s+['"]@lytjs\/plugin-vite['"]|['"]@lytjs\/plugin-vite['"]\s*:/),
-    ).toEqual([]);
+    expect(offenders(/from\s+['"]@lytjs\/plugin-vite['"]|['"]@lytjs\/plugin-vite['"]\s*:/)).toEqual(
+      [],
+    );
   });
 
   it('不得依赖不存在的包 @lytjs/server', () => {
-    expect(
-      offenders(/dependencies\['@lytjs\/server'\]|['"]@lytjs\/server['"]\s*:/),
-    ).toEqual([]);
+    expect(offenders(/dependencies\['@lytjs\/server'\]|['"]@lytjs\/server['"]\s*:/)).toEqual([]);
   });
 
   it('不得生成 .lyt 文件（SFC 需构建期插件，仓内无法编译）', () => {

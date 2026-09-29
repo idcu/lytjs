@@ -48,7 +48,14 @@ export function createElementVNode(
   dynamicProps?: string[] | null,
   isBlockNode?: boolean,
 ): VNode {
-  return createVNode(type, props ?? null, children ?? null, patchFlag ?? 0, dynamicProps ?? null, isBlockNode ?? false);
+  return createVNode(
+    type,
+    props ?? null,
+    children ?? null,
+    patchFlag ?? 0,
+    dynamicProps ?? null,
+    isBlockNode ?? false,
+  );
 }
 
 // ============================================================
@@ -234,7 +241,10 @@ export function toHandlerKey(str: string): string {
 export function createSlots(
   slots: Record<string, unknown>,
   dynamicSlots: Array<
-    { name: string; fn: unknown; key?: unknown } | { name: string; fn: unknown }[] | null | undefined
+    | { name: string; fn: unknown; key?: unknown }
+    | { name: string; fn: unknown }[]
+    | null
+    | undefined
   >,
 ): Record<string, unknown> {
   for (let i = 0; i < dynamicSlots.length; i++) {

@@ -99,13 +99,15 @@ describe('transformScoped', () => {
       expect(span.scopeId).toBe(scopeId);
       expect(p.scopeId).toBe(scopeId);
 
-      expect(div.props.some((p) => p.type === NodeTypes.ATTRIBUTE && p.name === `data-v-${scopeId}`)).toBe(
-        true,
-      );
-      expect(span.props.some((p) => p.type === NodeTypes.ATTRIBUTE && p.name === `data-v-${scopeId}`)).toBe(
-        true,
-      );
-      expect(p.props.some((p) => p.type === NodeTypes.ATTRIBUTE && p.name === `data-v-${scopeId}`)).toBe(true);
+      expect(
+        div.props.some((p) => p.type === NodeTypes.ATTRIBUTE && p.name === `data-v-${scopeId}`),
+      ).toBe(true);
+      expect(
+        span.props.some((p) => p.type === NodeTypes.ATTRIBUTE && p.name === `data-v-${scopeId}`),
+      ).toBe(true);
+      expect(
+        p.props.some((p) => p.type === NodeTypes.ATTRIBUTE && p.name === `data-v-${scopeId}`),
+      ).toBe(true);
     });
   });
 

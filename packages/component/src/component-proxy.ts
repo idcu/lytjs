@@ -170,13 +170,12 @@ export function createComponentPublicInstance(
       // ⚠️ 命中时**不写 accessCache**：缓存里 `OTHER` 的语义是「未找到」
       // （见下方 case OTHER → return undefined），一旦写入，第二次 render
       // 就会直接返回 undefined。组件查找本身是 O(1) 的 hasOwn，无需缓存。
-      const localComponents = (instance.type as { components?: Record<string, unknown> }).components;
+      const localComponents = (instance.type as { components?: Record<string, unknown> })
+        .components;
       if (localComponents && hasOwn(localComponents, key)) {
         return localComponents[key as string];
       }
-      const appComponents = instance.appContext?.components as
-        | Record<string, unknown>
-        | undefined;
+      const appComponents = instance.appContext?.components as Record<string, unknown> | undefined;
       if (appComponents && hasOwn(appComponents, key)) {
         return appComponents[key as string];
       }

@@ -47,7 +47,9 @@ const shallowUnwrapHandlers: ProxyHandler<RecordLike> = {
  * @returns 读取时自动 unref 的代理；若入参已是 reactive 对象则原样返回（避免双重代理）
  */
 export function proxyRefs<T extends object>(objectWithRefs: T): T {
-  return (isReactive(objectWithRefs)
-    ? objectWithRefs
-    : new Proxy(objectWithRefs as RecordLike, shallowUnwrapHandlers)) as T;
+  return (
+    isReactive(objectWithRefs)
+      ? objectWithRefs
+      : new Proxy(objectWithRefs as RecordLike, shallowUnwrapHandlers)
+  ) as T;
 }

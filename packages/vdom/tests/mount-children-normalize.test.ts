@@ -36,9 +36,7 @@ function mountAndGetHtml(vnode: VNode): string {
 
 describe('mountChildren - 非 VNode 子节点（裸字符串 / 数字）应渲染为文本', () => {
   it("h('div', null, ['hello']) 应渲染出文本", () => {
-    expect(mountAndGetHtml(createVNode('div', null, ['hello'] as never))).toBe(
-      '<div>hello</div>',
-    );
+    expect(mountAndGetHtml(createVNode('div', null, ['hello'] as never))).toBe('<div>hello</div>');
   });
 
   it('数组含多个裸值（字符串 + 数字）按顺序拼接', () => {
