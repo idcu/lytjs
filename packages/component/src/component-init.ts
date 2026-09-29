@@ -5,7 +5,7 @@
 import { reactive, computed, watch } from '@lytjs/reactivity';
 import { hasOwn } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
-import type { ComponentInternalInstance, ComponentPublicInstance } from './types';
+import type { ComponentInternalInstance, ComponentPublicInstance, RenderFunction } from './types';
 import type { VNode } from '@lytjs/common-vnode';
 import { callCreatedHook, handleError } from './lifecycle';
 import { createComponentPublicInstance } from './component-proxy';
@@ -22,7 +22,8 @@ import { createComponentPublicInstance } from './component-proxy';
  * ⚠️ 若未注入而组件又提供了 `template`，会得到**明确警告 + 空渲染**，
  * 而不是 2026-09-26 之前那种「静默空白、无任何提示」。
  */
-let templateCompiler: ((template: string, options?: { filename?: string }) => unknown) | null = null;
+let templateCompiler: ((template: string, options?: { filename?: string }) => unknown) | null =
+  null;
 
 /** 注册模板编译器（由 `@lytjs/core` 调用；重复调用幂等） */
 export function setTemplateCompiler(
@@ -43,10 +44,7 @@ export function getTemplateCompiler(): typeof templateCompiler {
  * 其第一个参数即组件公共实例代理（`patch-component` 以 `renderFn.call(ctx, ctx)` 调用），
  * 因此**无需 bind this**。
  */
-function resolveTemplateRender(
-  type: Record<string, unknown>,
-  instance: ComponentInternalInstance,
-): typeof instance.render {
+function resolveTemplateRender(type: Record<string, unknown>): RenderFunction {
   const template = type.template as string;
 
   if (!templateCompiler) {
@@ -57,11 +55,11 @@ function resolveTemplateRender(
           `或显式调用 setTemplateCompiler()。`,
       );
     }
-    return (() => null as unknown as VNode) as typeof instance.render;
+    return (() => null as unknown as VNode) as RenderFunction;
   }
 
-  const render = templateCompiler(template) as typeof instance.render & ((...a: unknown[]) => unknown);
-  return render as typeof instance.render;
+  const render = templateCompiler(template) as RenderFunction & ((...a: unknown[]) => unknown);
+  return render as RenderFunction;
 }
 
 // ==================== normalizeWatchHandler ====================
@@ -351,7 +349,7 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
       if (type.render) {
         instance.render = type.render.bind(instance.ctx);
       } else if (typeof type.template === 'string' && type.template.length > 0) {
-        instance.render = resolveTemplateRender(type as unknown as Record<string, unknown>, instance);
+        instance.render = resolveTemplateRender(type as unknown as Record<string, unknown>);
       }
     }
   } catch (err) {
