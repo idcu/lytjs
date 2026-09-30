@@ -215,9 +215,14 @@ function parseImports(code: string): Array<{ source: string; bindings: Finding['
       .map((s) => s.trim())
       .filter(Boolean)
       .map((spec) => {
-        // `external as local` ⇒ 契约名取 local（短别名注入约定）
+        // `import { external as local }` ⇒ **契约名取 external（导出名）**。
+        //
+        // ⚠️ 2026-09-30 订正：此前取 `parts[1]`（local 名），前提是「产物按 `短名 as 真实名` 注入」——
+        //   而那恰恰是被修掉的**错误写法**：`import{t as createTemplate}` 的语义是
+        //   「导入名为 `t` 的导出」，而 `@lytjs/dom-runtime` 并没有 `t` 这个导出，产物**无法加载**。
+        //   取 local 校验等于**在导出面之外校验**，因此该错误写法一路绿灯（门禁掩盖了它）。
         const parts = spec.split(/\s+as\s+/).map((s) => s.trim());
-        return parts.length > 1 ? parts[1] : parts[0];
+        return parts[0];
       });
     out.push({ source, bindings: bindings.filter(Boolean) as string[] });
   }
@@ -331,7 +336,7 @@ if (unresolvedPkgs.size > 0) {
 }
 
 if (missing.length === 0) {
-  console.log(color.green('✅ 通过：所有产物 import 的绑定名都能在所指运行时包中解析到\n'));
+  console.log(color.green('✅ 通过：所有产物 import 的**导出名**都能在所指运行时包中解析到\n'));
   process.exit(0);
 }
 
