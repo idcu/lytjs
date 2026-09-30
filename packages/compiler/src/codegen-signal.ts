@@ -711,6 +711,14 @@ function processDirective(
   validateExpression(argContent, `v-${dir.name} argument`);
   validateArgContent(argContent);
 
+  // 2026-09-30 修复：动态参数/事件（`:[dyn]` / `@[evt]`）的 arg 是**表达式**，不是字面量。
+  const isDynamicArg = !!dir.arg && (dir.arg as { isStatic?: boolean }).isStatic === false;
+  const argCode = argContent
+    ? isDynamicArg
+      ? prefixIdentifiers(argContent, locals)
+      : `'${argContent}'`
+    : "''";
+
   // FIX: P1-S1, P1-S2: 根据指令类型进行特定的名称验证
   if (dir.name === 'bind' && argContent) {
     validateAttributeName(argContent, `v-bind:${argContent}`);
@@ -762,7 +770,7 @@ function processDirective(
 
     case 'bind': {
       if (argContent && expContent) {
-        if (argContent === 'class') {
+        if (argContent === 'class' && !isDynamicArg) {
           // 静态 class 必须并入（setClass 是整体替换），否则模板里的 class 会被抹掉
           const classValue = staticClass
             ? `[${JSON.stringify(staticClass)}, ${prefixIdentifiers(expContent, locals)}]`
@@ -771,7 +779,7 @@ function processDirective(
             varName,
             code: `effect(() => setClass(${varName}, ${classValue}));`,
           });
-        } else if (argContent === 'style') {
+        } else if (argContent === 'style' && !isDynamicArg) {
           dynamicBindings.push({
             varName,
             code: `effect(() => setStyle(${varName}, ${prefixIdentifiers(expContent, locals)}));`,
@@ -779,7 +787,7 @@ function processDirective(
         } else {
           dynamicBindings.push({
             varName,
-            code: `effect(() => setAttribute(${varName}, '${argContent}', ${prefixIdentifiers(expContent, locals)}));`,
+            code: `effect(() => setAttribute(${varName}, ${argCode}, ${prefixIdentifiers(expContent, locals)}));`,
           });
         }
       }
@@ -792,13 +800,13 @@ function processDirective(
           const mods = dir.modifiers.map((m) => `${m}: true`).join(', ');
           dynamicBindings.push({
             varName,
-            code: `onCleanup(createEventHandler(${varName}, '${argContent}', ${renderHandlerExpression(expContent, locals)}, { ${mods} }));`,
+            code: `onCleanup(createEventHandler(${varName}, ${argCode}, ${renderHandlerExpression(expContent, locals)}, { ${mods} }));`,
           });
         } else {
           // FIX: P1-12 使用 createEventHandler 替代未导入的 addEventListener
           dynamicBindings.push({
             varName,
-            code: `onCleanup(createEventHandler(${varName}, '${argContent}', ${renderHandlerExpression(expContent, locals)}));`,
+            code: `onCleanup(createEventHandler(${varName}, ${argCode}, ${renderHandlerExpression(expContent, locals)}));`,
           });
         }
       }

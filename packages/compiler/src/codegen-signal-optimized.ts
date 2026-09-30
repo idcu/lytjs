@@ -731,6 +731,16 @@ function processDirectiveOptimized(
   validateExpression(expContent, `v-${dir.name}`);
   validateExpression(argContent, `v-${dir.name} argument`);
 
+  // ⚠️ 2026-09-30 修复：**动态参数/事件**（`:[dyn]` / `@[evt]`）的 `arg` 是**表达式**
+  // （transform 后 `isStatic === false`），而此前一律按字面量写成 `'dyn'` / `'evt'`
+  // ⇒ 属性/事件名被写死，运行期取不到值（`:[dyn]` 写到名为 dyn 的属性上、`@[evt]` 绑到名为 evt 的事件上）。
+  const isDynamicArg = !!dir.arg && (dir.arg as { isStatic?: boolean }).isStatic === false;
+  const argCode = argContent
+    ? isDynamicArg
+      ? renderExpression(argContent)
+      : `'${argContent}'`
+    : "''";
+
   if (dir.name === 'bind' && argContent && !VALID_ATTRIBUTE_NAME.test(argContent)) {
     throw new Error(
       `[lytjs/compiler] Invalid attribute name: "${argContent}"` +
@@ -808,7 +818,7 @@ function processDirectiveOptimized(
         const sc = getShortName('setClass', options.useShortNames ?? true);
         const ss = getShortName('setStyle', options.useShortNames ?? true);
         const sa = getShortName('setAttribute', options.useShortNames ?? true);
-        if (argContent === 'class') {
+        if (argContent === 'class' && !isDynamicArg) {
           usedRuntime.add('setClass');
           // 静态 class 必须并入（setClass 是整体替换），否则模板里的 class 会被抹掉
           const classValue = staticClass
@@ -818,7 +828,7 @@ function processDirectiveOptimized(
             varName,
             code: `${e}(()=>${sc}(${varName},${classValue}));`,
           });
-        } else if (argContent === 'style') {
+        } else if (argContent === 'style' && !isDynamicArg) {
           usedRuntime.add('setStyle');
           dynamicBindings.push({
             varName,
@@ -828,7 +838,7 @@ function processDirectiveOptimized(
           usedRuntime.add('setAttribute');
           dynamicBindings.push({
             varName,
-            code: `${e}(()=>${sa}(${varName},'${argContent}',${renderExpression(expContent)}));`,
+            code: `${e}(()=>${sa}(${varName},${argCode},${renderExpression(expContent)}));`,
           });
         }
       }
@@ -845,12 +855,12 @@ function processDirectiveOptimized(
           const mods = dir.modifiers.map((m) => `${m}:1`).join(',');
           dynamicBindings.push({
             varName,
-            code: `${oc}(${cev}(${varName},'${argContent}',${renderHandlerExpression(expContent)},{${mods}}));`,
+            code: `${oc}(${cev}(${varName},${argCode},${renderHandlerExpression(expContent)},{${mods}}));`,
           });
         } else {
           dynamicBindings.push({
             varName,
-            code: `${oc}(${cev}(${varName},'${argContent}',${renderHandlerExpression(expContent)}));`,
+            code: `${oc}(${cev}(${varName},${argCode},${renderHandlerExpression(expContent)}));`,
           });
         }
       }
