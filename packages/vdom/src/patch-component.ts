@@ -6,11 +6,12 @@
  */
 
 import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
-import { ShapeFlags } from '@lytjs/common-vnode';
+import { Fragment, ShapeFlags } from '@lytjs/common-vnode';
 import { warn, error } from '@lytjs/common-error';
 import { watchEffect } from '@lytjs/reactivity';
 import type { SuspenseBoundary } from './types';
 import type { RendererContext } from './patch-element';
+import { createVNode } from './vnode';
 
 // ============================================================
 // 组件递归深度限制
@@ -129,7 +130,18 @@ export function createComponentPatch<HN, HE extends HN>(
     const update = () => {
       let subTree: VNode;
       try {
-        subTree = renderFn.call(component!.ctx, component!.ctx);
+        const result = renderFn.call(component!.ctx, component!.ctx) as
+          | VNode
+          | VNode[]
+          | null
+          | undefined;
+        // ⚠️ 2026-10-01 修复：渲染函数返回**数组**（多根组件）时必须**包一层 Fragment**。
+        // 否则 `subTree` 是一个数组，后续 patch / unmount 会按单个 vnode 处理 ⇒ **渲染为空**。
+        // 触发者：`Transition` / `Suspense` 的渲染函数是 `() => slots.default?.()`，
+        // 而插槽契约就是 `{default:()=>[vnode]}` ⇒ 天然返回数组（此前它们一律渲染为空）。
+        subTree = Array.isArray(result)
+          ? (createVNode(Fragment as never, null, result as never) as unknown as VNode)
+          : (result as VNode);
       } catch (err) {
         // 通过父链的 errorCaptured 传播错误
         const renderError = err instanceof Error ? err : new Error(String(err));

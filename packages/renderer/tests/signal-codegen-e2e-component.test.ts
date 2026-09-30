@@ -32,9 +32,16 @@ const mount = (tpl: string, v: Variant, ctx: unknown) => mountSignal(codeOf(tpl,
  * 它们各自有额外契约（Teleport 需移动节点、Transition 需过渡钩子、Suspense 需异步边界），
  * 与「往容器里 mount 一棵 vnode」的当前路径尚未对接。`KeepAlive` 已验证可用。
  */
+/**
+ * ⚠️ **已知缺陷清单**（`it.fails`，修好会自动翻红）。
+ *
+ * 2026-10-01 定位的**根因**（同时解释 `Transition` 为何渲染为空）：
+ * **组件渲染函数返回「vnode 数组」时渲染为空** —— 对照实验三种写法
+ * （解构 `{slots}` / 用完整 context 取 `slots` / **硬编码返回 `[h(...)]`**）**全部为空**；
+ * 返回**单个** vnode 时正常（`KeepAlive` 能工作正因它拿到单个 vnode）。
+ * ⇒ 属**组件渲染结果归一化**层面的缺陷（多根组件整体不可用），与 codegen / slot 取法无关。
+ */
 const KNOWN_FAIL = new Set<string>([
-  'base/内置 Transition：内容照常渲染（直通）',
-  'opt/内置 Transition：内容照常渲染（直通）',
   'base/内置 Suspense：内容照常渲染',
   'opt/内置 Suspense：内容照常渲染',
 ]);
@@ -119,36 +126,21 @@ describe('signal codegen · 组件真跑（两套 codegen）', () => {
         expect(container.querySelector('#named')?.textContent).toBe('NAMED');
       });
 
-      // ---------- 内置组件（无需手动注册，codegen 直接从 @lytjs/component 导入） ----------
-      t('内置 Teleport：内容被搬到目标元素', () => {
-        const target = document.createElement('div');
-        target.id = 'tp-target';
-        document.body.appendChild(target);
-
-        const { container } = mount(
-          '<Teleport to="#tp-target"><b id="tp-inner">TP</b></Teleport>',
-          v,
-          {},
-        );
-        expect(document.querySelector('#tp-target #tp-inner')?.textContent).toBe('TP');
-        // 内容应在目标处，而不是原容器里
-        expect(container.querySelector('#tp-inner')).toBeNull();
-      });
-
-      t('内置 Transition：内容照常渲染（直通）', () => {
-        const { container } = mount('<Transition><div id="tr">TR</div></Transition>', v, {});
-        expect(container.querySelector('#tr')?.textContent).toBe('TR');
-      });
-
-      t('内置 KeepAlive：无需注册即可渲染子内容', () => {
-        const { container } = mount('<KeepAlive><div id="ka">KA</div></KeepAlive>', v, {});
-        expect(container.querySelector('#ka')?.textContent).toBe('KA');
-      });
-
-      t('内置 Suspense：内容照常渲染', () => {
-        const { container } = mount('<Suspense><div id="sp">SP</div></Suspense>', v, {});
-        expect(container.querySelector('#sp')?.textContent).toBe('SP');
-      });
+      // ---------- 多根组件（render 返回 vnode 数组） ----------
+      {
+        const multiName = '组件 render 返回 vnode 数组时应渲染全部根节点';
+        (KNOWN_FAIL.has(`${v.label}/${multiName}`) ? it.fails : it)(multiName, () => {
+          const Multi = defineComponent({
+            name: 'Multi',
+            setup() {
+              return () => [h('i', { id: 'root-a' }, 'A'), h('i', { id: 'root-b' }, 'B')];
+            },
+          });
+          const { container } = mount('<Multi/>', v, { Multi });
+          expect(container.querySelector('#root-a')).not.toBeNull();
+          expect(container.querySelector('#root-b')).not.toBeNull();
+        });
+      }
 
       // ---------- 内置组件（无需手动注册，codegen 直接从 @lytjs/component 导入） ----------
       t('内置 Teleport：内容被搬到目标元素', () => {
