@@ -20,6 +20,7 @@ import type { VNode } from '@lytjs/vdom';
 import { createDOMRenderer } from '@lytjs/adapter-web';
 import { createComponentInstance, setupComponent, initProps } from '@lytjs/component';
 import { effect } from '@lytjs/reactivity';
+import { getRealNode } from '@lytjs/dom-runtime';
 
 /** 组件定义：函数组件、选项对象或异步组件包装 */
 export type VaporComponentLike = unknown;
@@ -177,7 +178,9 @@ export function mountVNode(vnode: unknown, container: unknown): void {
   if (container === null || container === undefined) return;
   if (vnode === null || vnode === undefined) return;
 
-  const host = container as Node;
+  // codegen 传进来的是 `createTemplate()` 的**包装对象**（TemplateWrapper），
+  // 而 vdom 的某些 patch（如 Teleport 需要搬移节点）只认真实 DOM 节点 ⇒ 先解析。
+  const host = getRealNode(container) as Node;
   clearHost(host);
   getRenderer().mount(vnode as never, host);
 }

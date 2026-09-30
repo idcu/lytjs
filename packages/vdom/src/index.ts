@@ -9,6 +9,7 @@ export {
   Fragment,
   Text,
   Comment,
+  Teleport,
   isVNode,
   isSameVNodeType,
   hasPatchFlag,

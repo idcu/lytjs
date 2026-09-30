@@ -11,6 +11,15 @@ export const Fragment = Symbol.for('Fragment');
 export const Text = Symbol.for('Text');
 export const Comment = Symbol.for('Comment');
 
+/**
+ * `<Teleport>` 出口的 vnode 类型。
+ *
+ * 2026-09-30 新增：teleport / suspense 的 **patch 早就存在**（`vdom/src/patch-teleport.ts`，
+ * 分派条件 `shapeFlag & ShapeFlags.TELEPORT`），但**没有任何地方产生带该 flag 的 vnode**
+ * （`getShapeFlag()` 无 Teleport 分支、全仓无 Teleport 符号）⇒ 该能力一直不可达。
+ */
+export const Teleport = Symbol.for('Teleport');
+
 // ============================================================
 // ShapeFlags - VNode 形状标志
 // FIX: 将 const enum 改为普通 enum，解决 verbatimModuleSyntax 问题
