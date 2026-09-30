@@ -1092,6 +1092,8 @@ function processCallExpressionOptimized(
     if (!source) return;
 
     let itemVar = 'item';
+    let itemParams: string[] = ['item'];
+    let itemLocals: ReadonlySet<string> = new Set(['item']);
     let keyExpr = '';
     let createBody = '';
     let updateBody = '';
@@ -1100,18 +1102,35 @@ function processCallExpressionOptimized(
     if (renderFn && typeof renderFn !== 'string' && !Array.isArray(renderFn)) {
       if (renderFn.type === NodeTypes.COMPOUND_EXPRESSION) {
         const compound = renderFn as CompoundExpressionNode;
+        // eslint-disable-next-line no-console
+        console.log(
+          compound.children
+            .map((c) =>
+              typeof c === 'string'
+                ? JSON.stringify(c.slice(0, 18))
+                : String((c as { type?: number }).type),
+            )
+            .join(' | '),
+        );
         for (const child of compound.children) {
-          if (typeof child === 'string') {
-            const match = child.match(/\((\w+)/);
-            if (match) {
-              itemVar = match[1]!;
+          if (typeof child === 'string' && child.includes('=>')) {
+            const headMatch = /^\s*\(?\s*([^)]*?)\s*\)?\s*=>/.exec(child);
+            const parsed = (headMatch?.[1] ?? '')
+              .split(',')
+              .map((x) => x.trim())
+              .filter(Boolean);
+            if (parsed.length > 0) {
+              itemVar = parsed[0]!;
+              itemParams = parsed;
             }
           }
         }
+        itemLocals = new Set(itemParams);
         for (const child of compound.children) {
           if (typeof child !== 'string' && child.type === NodeTypes.VNODE_CALL) {
             const vnode = child as VNodeCall;
             renderItem = vnode;
+
             const tagInfo = extractTagFromVNode(vnode);
             if (tagInfo) {
               createBody = `const ${tagInfo.varName}=document.createElement('${tagInfo.tag}');`;
@@ -1121,7 +1140,8 @@ function processCallExpressionOptimized(
               // JS_CALL_EXPRESSION(TO_DISPLAY_STRING)，于是列表项里的文本被整体丢弃
               // （产物只剩 createElement + return）。同时旧代码把表达式写成
               // `${itemVar}.${content}`，会产出 `item.item.name` 这种错误路径。
-              const itemText = extractItemTextExpr(vnode.children, itemVar);
+              const itemText = extractItemTextExpr(vnode.children, itemLocals);
+
               if (itemText.static !== undefined) {
                 createBody += `${tagInfo.varName}.textContent=${itemText.static};`;
               } else if (itemText.dynamic !== undefined) {
@@ -1131,7 +1151,7 @@ function processCallExpressionOptimized(
               }
 
               // 属性：静态值写死，动态值在 update 里同步（:key 除外）
-              const propResult = buildItemProps(vnode, itemVar, tagInfo.varName);
+              const propResult = buildItemProps(vnode, itemLocals, tagInfo.varName);
               createBody += propResult.create;
               updateBody += propResult.update;
 
@@ -1143,7 +1163,7 @@ function processCallExpressionOptimized(
     }
 
     // :key 优先取用户表达式；缺失时回退 item.id 并提示（与 codegen-signal 非优化版一致）
-    keyExpr = extractItemKeyExpr(renderItem, itemVar);
+    keyExpr = extractItemKeyExpr(renderItem, itemLocals);
     if (!keyExpr) {
       if (__DEV__) {
         console.warn(
@@ -1161,10 +1181,10 @@ function processCallExpressionOptimized(
     const e = getShortName('effect', options.useShortNames ?? true);
     const ra = getShortName('reconcileArray', options.useShortNames ?? true);
 
-    const updatePart = updateBody ? `,update:(_el,${itemVar})=>{${updateBody}}` : '';
+    const updatePart = updateBody ? `,update:(_el,${itemParams.join(',')})=>{${updateBody}}` : '';
     dynamicBindings.push({
       varName: containerVar,
-      code: `${e}(()=>${ra}(${containerVar},${renderExpression(source)},{key:(${itemVar})=>${keyExpr},create:(${itemVar})=>{${createBody}}${updatePart}}));`,
+      code: `${e}(()=>${ra}(${containerVar},${renderExpression(source)},{key:(${itemParams.join(',')})=>${keyExpr},create:(${itemParams.join(',')})=>{${createBody}}${updatePart}}));`,
     });
   }
 }
@@ -1302,8 +1322,8 @@ export { RUNTIME_SHORT_NAMES };
  * 回调参数（如 `item`）是局部变量不能加前缀；其余标识符在本模式下前缀为 `_c.`
  * （render 的上下文形参名是 `_c`，不是 `_ctx`）。
  */
-function toItemExpr(content: string, itemVar: string): string {
-  return prefixIdentifiers(content, new Set([itemVar])).replace(/\b_ctx\./g, '_c.');
+function toItemExpr(content: string, locals: ReadonlySet<string>): string {
+  return prefixIdentifiers(content, locals).replace(/\b_ctx\./g, '_c.');
 }
 
 /**
@@ -1314,7 +1334,7 @@ function toItemExpr(content: string, itemVar: string): string {
  */
 function extractItemTextExpr(
   children: VNodeCall['children'],
-  itemVar: string,
+  locals: ReadonlySet<string>,
 ): { static?: string; dynamic?: string } {
   if (children === undefined || children === null) return {};
 
@@ -1326,7 +1346,7 @@ function extractItemTextExpr(
     const parts: string[] = [];
     let allStatic = true;
     for (const child of children) {
-      const result = extractItemTextExpr(child as VNodeCall['children'], itemVar);
+      const result = extractItemTextExpr(child as VNodeCall['children'], locals);
       if (result.static !== undefined) {
         parts.push(result.static);
       } else if (result.dynamic !== undefined) {
@@ -1355,13 +1375,77 @@ function extractItemTextExpr(
     if (callee === 'TO_DISPLAY_STRING' || callee === 'toDisplayString') {
       const arg = (node.arguments ?? [])[0] as { content?: string } | string | undefined;
       const content = typeof arg === 'string' ? arg : arg?.content;
-      if (content) return { dynamic: toItemExpr(content, itemVar) };
+      if (content) return { dynamic: toItemExpr(content, locals) };
     }
     return {};
   }
 
-  if (node.type === NodeTypes.SIMPLE_EXPRESSION && typeof node.content === 'string') {
-    return { dynamic: toItemExpr(node.content, itemVar) };
+  // COMPOUND_EXPRESSION：`{{ k }}:{{ i }}` 在 transform 后就是这个形态，
+  // 孩子里**字符串是代码片段**（如 `" + "` / `"':' "`），必须**原样拼接**；
+  // 节点孩子则是表达式（INTERPOLATION / SIMPLE_EXPRESSION）。
+  // COMPOUND_EXPRESSION：`{{ k }}:{{ i }}` 在 transform 后就是这个形态，
+  // 孩子里**字符串是代码片段**（如 `" + "` / `"':' "`），必须**原样拼接**；
+  // 节点孩子则是表达式（INTERPOLATION / SIMPLE_EXPRESSION）。
+  if (node.type === NodeTypes.COMPOUND_EXPRESSION) {
+    const kids = (node as { children?: unknown[] }).children;
+    if (!Array.isArray(kids)) return {};
+    const parts: string[] = [];
+    let allStatic = true;
+    for (const kid of kids) {
+      if (typeof kid === 'string') {
+        parts.push(kid);
+        continue;
+      }
+      const r = extractItemTextExpr(kid as VNodeCall['children'], locals);
+      if (r.static !== undefined) {
+        parts.push(r.static);
+      } else if (r.dynamic !== undefined) {
+        parts.push(r.dynamic);
+        allStatic = false;
+      } else {
+        return {};
+      }
+    }
+    if (parts.length === 0) return {};
+    const joined = parts.join('');
+    return allStatic ? { static: joined } : { dynamic: joined };
+  }
+
+  // INTERPOLATION（本仓 NodeTypes.INTERPOLATION = 4）：内容在 `content.content`
+  if (node.type === NodeTypes.INTERPOLATION) {
+    const inner = (node as { content?: { content?: unknown } }).content;
+    const text = typeof inner?.content === 'string' ? inner.content : null;
+    if (text) return { dynamic: toItemExpr(text, locals) };
+    return {};
+  }
+
+  if (node.type === NodeTypes.SIMPLE_EXPRESSION) {
+    // 带索引形参时，子项 SIMPLE_EXPRESSION 的 content **又套一层** SIMPLE_EXPRESSION
+    const raw = (node as { content?: unknown }).content;
+    const text =
+      typeof raw === 'string'
+        ? raw
+        : typeof (raw as { content?: unknown } | undefined)?.content === 'string'
+          ? (raw as { content: string }).content
+          : null;
+    // eslint-disable-next-line no-console
+    console.log(
+      typeof raw,
+      'rawStr=',
+      String(raw),
+      'rawKeys=',
+      raw && typeof raw === 'object' ? JSON.stringify(Object.keys(raw as object)) : '-',
+    );
+    // eslint-disable-next-line no-console
+    console.log(
+      typeof raw,
+      'rawStr=',
+      String(raw),
+      'rawKeys=',
+      raw && typeof raw === 'object' ? JSON.stringify(Object.keys(raw as object)) : '-',
+    );
+    if (text) return { dynamic: toItemExpr(text, locals) };
+    return {};
   }
 
   return {};
@@ -1370,7 +1454,7 @@ function extractItemTextExpr(
 /**
  * 提取列表项的 :key 表达式（用户未写则返回空串）
  */
-function extractItemKeyExpr(vnode: VNodeCall | null, itemVar: string): string {
+function extractItemKeyExpr(vnode: VNodeCall | null, locals: ReadonlySet<string>): string {
   if (!vnode || !vnode.props || vnode.props.type !== NodeTypes.JS_OBJECT_EXPRESSION) return '';
   const objExpr = vnode.props as JSObjectExpression;
   for (const prop of objExpr.properties) {
@@ -1389,7 +1473,7 @@ function extractItemKeyExpr(vnode: VNodeCall | null, itemVar: string): string {
       !Array.isArray(value) &&
       value.type === NodeTypes.SIMPLE_EXPRESSION
     ) {
-      return toItemExpr(value.content, itemVar);
+      return toItemExpr(value.content, locals);
     }
   }
   return '';
@@ -1400,7 +1484,7 @@ function extractItemKeyExpr(vnode: VNodeCall | null, itemVar: string): string {
  */
 function buildItemProps(
   vnode: VNodeCall,
-  itemVar: string,
+  locals: ReadonlySet<string>,
   elVar: string,
 ): { create: string; update: string } {
   let create = '';
@@ -1444,7 +1528,7 @@ function buildItemProps(
       create += `${elVar}.setAttribute(${JSON.stringify(propName)}, ${JSON.stringify(literal)});`;
     } else {
       // 动态绑定：create 用新建元素，update 用 reconcileArray 传入的 _el
-      const expr = toItemExpr(rawValue, itemVar);
+      const expr = toItemExpr(rawValue, locals);
       create += `${elVar}.setAttribute(${JSON.stringify(propName)}, ${expr});`;
       update += `_el.setAttribute(${JSON.stringify(propName)}, ${expr});`;
     }

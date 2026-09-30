@@ -1142,22 +1142,31 @@ function processCallExpression(
 
     // 从箭头函数（COMPOUND_EXPRESSION）中提取 item 变量名与渲染项 VNodeCall
     let itemVar = 'item';
+    let itemParams: string[] = ['item'];
+    let itemLocals: ReadonlySet<string> = new Set(['item']);
     let renderItem: VNodeCall | null = null;
     if (renderFn && typeof renderFn !== 'string' && !Array.isArray(renderFn)) {
       if (renderFn.type === NodeTypes.COMPOUND_EXPRESSION) {
         const compound = renderFn as CompoundExpressionNode;
         for (const child of compound.children) {
-          if (typeof child === 'string') {
-            const match = child.match(/\((\w+)/);
-            if (match) {
-              itemVar = match[1]!;
+          if (typeof child === 'string' && child.includes('=>')) {
+            // 解析箭头头，拿**全部**形参（索引形参此前被整段忽略）
+            const headMatch = /^\s*\(?\s*([^)]*?)\s*\)?\s*=>/.exec(child);
+            const parsed = (headMatch?.[1] ?? '')
+              .split(',')
+              .map((x) => x.trim())
+              .filter(Boolean);
+            if (parsed.length > 0) {
+              itemVar = parsed[0]!;
+              itemParams = parsed;
             }
-          } else if (child.type === NodeTypes.VNODE_CALL) {
+          } else if (typeof child !== 'string' && child.type === NodeTypes.VNODE_CALL) {
             renderItem = child as VNodeCall;
           }
         }
       }
     }
+    itemLocals = new Set(itemParams);
 
     // 由渲染项 VNodeCall 生成通用 create / update 逻辑：
     // 使用 document.createElement + textContent/属性绑定，替代此前硬编码的 benchmark 表格模板
@@ -1172,12 +1181,14 @@ function processCallExpression(
 
       // 插值 {{ item.xxx }} 在 transform 后为 TO_DISPLAY_STRING 调用，
       // 通过 extractChildrenText 提取表达式；静态文本则原样写入
-      const dynamicText = extractChildrenText(renderItem);
+      const dynamicText = extractItemChildrenText(renderItem.children, itemLocals);
       if (dynamicText) {
-        createBody += `${elVar}.textContent = ${dynamicText};`;
+        // 循环变量保持裸名（locals），其余标识符前缀化为 `_ctx.`
+        const textCode = prefixIdentifiers(dynamicText, itemLocals);
+        createBody += `${elVar}.textContent = ${textCode};`;
         // update 回调的参数是已存在元素 _el（由 reconcileArray 传入），
         // 不能引用 create 内的局部变量名
-        updateBody = `_el.textContent = ${dynamicText};`;
+        updateBody = `_el.textContent = ${textCode};`;
       } else if (typeof children === 'string') {
         const escaped = children.replace(/'/g, "\\'").replace(/\\/g, '\\\\');
         createBody += `${elVar}.textContent = '${escaped}';`;
@@ -1265,7 +1276,7 @@ function processCallExpression(
 
     dynamicBindings.push({
       varName: containerVar,
-      code: `effect(() => {\n    reconcileArray(${containerVar}, ${prefixIdentifiers(source, locals)}, {\n      key: (${itemVar}) => ${keyExpr},\n      create: (${itemVar}) => {\n        ${createBody}\n      }${updateBody ? `,\n      update: (_el, ${itemVar}) => {\n        ${updateBody}\n      }` : ''}\n    });\n  });`,
+      code: `effect(() => {\n    reconcileArray(${containerVar}, ${prefixIdentifiers(source, locals)}, {\n      key: (${itemParams.join(', ')}) => ${keyExpr},\n      create: (${itemParams.join(', ')}) => {\n        ${createBody}\n      }${updateBody ? `,\n      update: (_el, ${itemParams.join(', ')}) => {\n        ${updateBody}\n      }` : ''}\n    });\n  });`,
     });
   }
 }
@@ -1315,6 +1326,75 @@ function extractElementFromBranch(
 // ============================================================
 // Helper: 从条件分支中提取插值文本
 // ============================================================
+
+/**
+ * 从列表项的 children 提取文本表达式（支持**复合内容** `{{ a }}:{{ b }}`）。
+ *
+ * ⚠️ 2026-09-30 修复：列表项内容此前只认「children 直接是 TO_DISPLAY_STRING」的形态，
+ * 而 `{{ k }}:{{ i }}` 在 transform 后是 COMPOUND_EXPRESSION，其孩子是
+ * **INTERPOLATION** 节点（本仓 NodeTypes.INTERPOLATION = 4）与**代码片段字符串**
+ * （如 `" + "`）⇒ 整段内容丢失。
+ */
+function extractItemChildrenText(children: unknown, locals: ReadonlySet<string>): string | null {
+  if (children === undefined || children === null) return null;
+  if (typeof children === 'string') return null;
+
+  if (Array.isArray(children)) {
+    const parts: string[] = [];
+    for (const kid of children) {
+      const r = extractItemChildrenText(kid, locals);
+      if (r === null) return null;
+      parts.push(r);
+    }
+    return parts.length ? parts.join('') : null;
+  }
+
+  const node = children as {
+    type?: number;
+    content?: unknown;
+    callee?: unknown;
+    arguments?: unknown[];
+    children?: unknown[];
+  };
+
+  if (node.type === NodeTypes.COMPOUND_EXPRESSION) {
+    // 孩子里**字符串就是代码片段**（如 `" + "` / `"':' "`），原样拼接
+    if (!Array.isArray(node.children)) return null;
+    const parts: string[] = [];
+    for (const kid of node.children) {
+      if (typeof kid === 'string') {
+        parts.push(kid);
+        continue;
+      }
+      const r = extractItemChildrenText(kid, locals);
+      if (r === null) return null;
+      parts.push(r);
+    }
+    return parts.length ? parts.join('') : null;
+  }
+
+  if (node.type === NodeTypes.INTERPOLATION) {
+    const inner = node.content as { content?: unknown } | undefined;
+    return typeof inner?.content === 'string' ? inner.content : null;
+  }
+
+  if (node.type === NodeTypes.SIMPLE_EXPRESSION) {
+    const raw = node.content;
+    if (typeof raw === 'string') return raw;
+    const nested = (raw as { content?: unknown } | undefined)?.content;
+    return typeof nested === 'string' ? nested : null;
+  }
+
+  if (node.type === NodeTypes.JS_CALL_EXPRESSION) {
+    const callee = typeof node.callee === 'string' ? node.callee : String(node.callee);
+    if (callee === 'TO_DISPLAY_STRING' || callee === 'toDisplayString') {
+      return extractItemChildrenText((node.arguments ?? [])[0], locals);
+    }
+    return null;
+  }
+
+  return null;
+}
 
 function extractChildrenText(
   branch: JSChildNode | TemplateChildNode | TemplateChildNode[] | string | undefined,

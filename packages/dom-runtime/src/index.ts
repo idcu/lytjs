@@ -868,8 +868,8 @@ const reconcileKeyMap = new WeakMap<Node, string | number>();
 
 export interface ReconcileOptions<T> {
   key: (item: T) => string | number;
-  create: (item: T) => Node;
-  update?: (node: Node, item: T) => void;
+  create: (item: T, index: number) => Node;
+  update?: (node: Node, item: T, index: number) => void;
   destroy?: (node: Node) => void;
   // FIX: P2-43 移动动画支持：在节点移动时调用该函数
   animateMove?: (node: Node, fromIndex: number, toIndex: number) => void;
@@ -983,7 +983,8 @@ export function reconcileArray<T>(
     if (existing) {
       // key 已存在：更新或移动
       if (options.update) {
-        options.update(existing.node, item);
+        // 2026-09-30 修复：把**索引**传给 update —— 否则 `v-for="(item, index)"` 的 index 恒为 undefined
+        options.update(existing.node, item, i);
       }
       // FIX: P2-43 调用移动动画函数
       if (options.animateMove && nodeIndexMap) {
@@ -1000,7 +1001,8 @@ export function reconcileArray<T>(
       existingMap.delete(key);
     } else {
       // key 不存在：创建新节点
-      const node = options.create(item);
+      // 2026-09-30 修复：同上，create 也要收到索引
+      const node = options.create(item, i);
       reconcileKeyMap.set(node, key);
       fragment.appendChild(node);
     }

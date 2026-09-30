@@ -39,7 +39,7 @@ function mount(tpl: string, v: Variant, ctx: unknown) {
  *   把复杂插值静默 `continue` 丢弃）；`opt/v-text`（vnode props 路径的 `textContent`
  *   用裸表达式、未前缀化 ⇒ `ReferenceError`）。）
  */
-const KNOWN_FAIL = new Set(['base/v-for 带索引', 'opt/v-for 带索引']);
+const KNOWN_FAIL = new Set<string>([]);
 
 describe('signal codegen · 构造集真跑（两套 codegen）', () => {
   for (const v of VARIANTS) {
