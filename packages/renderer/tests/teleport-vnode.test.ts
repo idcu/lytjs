@@ -55,36 +55,10 @@ describe('Teleport vnode（底座）', () => {
     expect(() => mountVNode(vnode, host)).not.toThrow();
   });
 
-  // ⚠️ **已知缺陷（本批定位，最小复现）**：vdom 的 teleport patch 在搬运
-  // **含「数组 + Text vnode」子节点**的内容时抛
-  // `NotFoundError: The child can not be found in the parent`（锚点错位）。
-  // 对照：子节点为**字符串**（`h('b', {}, 'O')`）时正常 —— 见上一条用例。
-  // &#x26; codegen 产出的正是「数组 + `V(T,null,'x')`」形态 ⇒ 这是 `<Teleport>` 在 signal 模式
-  // 无法接线的**真正拦路石**（不是 codegen 问题）。修好后本用例会自动翻红，请移出清单。
-  it.fails('已知缺陷：teleport 搬运含数组子节点（Text vnode）的内容应不抛错', () => {
-    const vnode = createVNode(
-      Teleport as never,
-      { to: '#tp-target' } as never,
-      [
-        createVNode(
-          'b',
-          { id: 'arr-child' } as never,
-          [createVNode(Text as never, null, 'ARR') as never] as never,
-        ),
-      ] as never,
-    );
-
-    mountVNode(vnode, host);
-    expect(target.querySelector('#arr-child')?.textContent).toBe('ARR');
-  });
-
-  // ⚠️ **已知缺陷（本批定位，最小复现）**：vdom 的 teleport patch 在搬运
-  // **含「数组 + Text vnode」子节点**的内容时抛
-  // `NotFoundError: The child can not be found in the parent`（锚点错位）。
-  // 对照：子节点为**字符串**（`h('b', {}, 'O')`）时正常 —— 见上一条用例。
-  // &#x26; codegen 产出的正是「数组 + `V(T,null,'x')`」形态 ⇒ 这是 `<Teleport>` 在 signal 模式
-  // 无法接线的**真正拦路石**（不是 codegen 问题）。修好后本用例会自动翻红，请移出清单。
-  it.fails('已知缺陷：teleport 搬运含数组子节点（Text vnode）的内容应不抛错', () => {
+  // 回归用例（2026-10-01 修复）：teleport 搬运**含数组子节点（Text vnode）**的内容
+  // 曾抛 `NotFoundError`（vdom 的 `mountElement` 把外层 anchor 传进了新建元素 ⇒ 锚点不属于该父节点）。
+  // 对照用例（字符串子节点）见上一条。
+  it('teleport 搬运含数组子节点（Text vnode）的内容不抛错', () => {
     const vnode = createVNode(
       Teleport as never,
       { to: '#tp-target' } as never,

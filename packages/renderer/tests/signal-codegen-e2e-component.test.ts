@@ -33,8 +33,6 @@ const mount = (tpl: string, v: Variant, ctx: unknown) => mountSignal(codeOf(tpl,
  * 与「往容器里 mount 一棵 vnode」的当前路径尚未对接。`KeepAlive` 已验证可用。
  */
 const KNOWN_FAIL = new Set<string>([
-  'base/内置 Teleport：内容被搬到目标元素',
-  'opt/内置 Teleport：内容被搬到目标元素',
   'base/内置 Transition：内容照常渲染（直通）',
   'opt/内置 Transition：内容照常渲染（直通）',
   'base/内置 Suspense：内容照常渲染',

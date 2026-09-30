@@ -209,7 +209,14 @@ export function createElementPatch<HN, HE extends HN>(
 
     // 挂载 children
     if (vnode.shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-      mountChildren(vnode, el, anchor, isSVG, parentComponent, parentSuspense);
+      // ⚠️ 2026-10-01 修复：这里**不能**把外层容器的 `anchor` 传下去 —— 子节点是挂进
+      // **新建元素 `el`** 的，而 `anchor` 属于 `container`（另一个父节点）。传下去会让
+      // `insertBefore(child, anchor)` 拿到「不属于 el 的锚点」，浏览器抛
+      // `NotFoundError: The child can not be found in the parent`。
+      // 触发场景：teleport 把 `targetEnd` 当 anchor 交给每个子 vnode，
+      // 子 vnode 若是**带子节点的元素**（数组 children）就会把锚点带进元素内部 ⇒ 抛错；
+      // 而**纯文本子节点**走 `setElementText` 不用 anchor ⇒ 正常（这解释了形态差异）。
+      mountChildren(vnode, el, null, isSVG, parentComponent, parentSuspense);
     } else if (vnode.shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       setElementText(el, String(vnode.children ?? ''));
     }

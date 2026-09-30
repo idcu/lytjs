@@ -236,6 +236,12 @@ function generateOptimizedImports(usedRuntime: Set<string>, useShortNames: boole
     if (usedRuntime.has('mountSlot')) {
       result += `\nimport{mountSlot}from'@lytjs/renderer';`;
     }
+    if (usedRuntime.has('mountVNode')) {
+      result += `\nimport{mountVNode}from'@lytjs/renderer';`;
+    }
+    if (usedRuntime.has('vdom:Teleport')) {
+      result += `\nimport{Teleport}from'@lytjs/vdom';`;
+    }
     const builtins = [...BUILTIN_COMPONENTS].filter((n) => usedRuntime.has(`builtin:${n}`));
     if (builtins.length > 0) {
       result += `\nimport{${builtins.join(',')}}from'@lytjs/component';`;
@@ -279,6 +285,12 @@ function generateOptimizedImports(usedRuntime: Set<string>, useShortNames: boole
     }
     if (usedRuntime.has('mountSlot')) {
       result += `\nimport{mountSlot}from'@lytjs/renderer';`;
+    }
+    if (usedRuntime.has('mountVNode')) {
+      result += `\nimport{mountVNode}from'@lytjs/renderer';`;
+    }
+    if (usedRuntime.has('vdom:Teleport')) {
+      result += `\nimport{Teleport}from'@lytjs/vdom';`;
     }
     const builtins = [...BUILTIN_COMPONENTS].filter((n) => usedRuntime.has(`builtin:${n}`));
     if (builtins.length > 0) {
@@ -522,6 +534,23 @@ function processElementOptimized(
   const ownBindings: Array<{ varName: string; code: string }> = [];
   const sink = ownMods.once || ownMods.memo ? ownBindings : dynamicBindings;
 
+  // `<Teleport>`：产出 **Teleport vnode** 交给 vdom 的 teleport patch（组件侧是空壳，逻辑在 vdom）
+  if (node.tag === 'Teleport') {
+    const tpIdx = findElementIndex(elementVars, 'lyt-comp', consumedCount);
+    const tpHost = tpIdx !== null ? elementVars[tpIdx]!.varName : `_${elementVars.length}`;
+    usedRuntime.add('mountVNode');
+    usedRuntime.add('createVNode');
+    usedRuntime.add('vdom:Teleport');
+    const mv = getShortName('mountVNode', options.useShortNames ?? true);
+    const cv = getShortName('createVNode', options.useShortNames ?? true);
+    const tpChildren = collectSlotVNodesOptimized(node.children, usedRuntime, options);
+    sink.push({
+      varName: tpHost,
+      code: `${mv}(${cv}(Teleport,${buildComponentPropsObject(node)},[${tpChildren.join(',')}]),${tpHost});`,
+    });
+    return;
+  }
+
   // 组件：生成 mountComponent(_c.Tag, props, 占位元素) 调用
   if (node.tagType === ElementTypes.COMPONENT) {
     const hostIdx = findElementIndex(elementVars, 'lyt-comp', consumedCount);
@@ -749,7 +778,6 @@ function renderHandlerExpression(exp: string, locals: ReadonlySet<string> = new 
  * 2026-09-30 前：一律按 `_c.<Name>` 解析 ⇒ 不注册就渲染为空，属可用性缺口。
  */
 const BUILTIN_COMPONENTS: ReadonlySet<string> = new Set([
-  'Teleport',
   'Transition',
   'TransitionGroup',
   'KeepAlive',
