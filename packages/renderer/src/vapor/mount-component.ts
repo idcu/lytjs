@@ -173,6 +173,15 @@ function clearHost(host: Node): void {
  * @param container 挂载容器（codegen 传插槽出口所在元素）
  * @param props     作用域插槽的 props（可选）
  */
+export function mountVNode(vnode: unknown, container: unknown): void {
+  if (container === null || container === undefined) return;
+  if (vnode === null || vnode === undefined) return;
+
+  const host = container as Node;
+  clearHost(host);
+  getRenderer().mount(vnode as never, host);
+}
+
 export function mountSlot(slotFn: unknown, container: unknown, props?: unknown): void {
   if (container === null || container === undefined) return;
 
@@ -180,8 +189,10 @@ export function mountSlot(slotFn: unknown, container: unknown, props?: unknown):
 
   effect(() => {
     const vnodes = resolveSlotVNodes(slotFn, props);
-    clearHost(host);
-    if (vnodes.length === 0) return;
+    if (vnodes.length === 0) {
+      clearHost(host);
+      return;
+    }
 
     // 多个 vnode ⇒ 用 Fragment 承载（vdom 的 Fragment patch 已支持）
     const vnode =
@@ -189,6 +200,6 @@ export function mountSlot(slotFn: unknown, container: unknown, props?: unknown):
         ? (vnodes[0] as never)
         : (createVNode(Fragment as never, null, vnodes as never) as never);
 
-    getRenderer().mount(vnode, host);
+    mountVNode(vnode, host);
   });
 }

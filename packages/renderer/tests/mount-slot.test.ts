@@ -7,7 +7,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { h, defineComponent } from '@lytjs/core';
-import { mountSlot } from '../src/index';
+import { mountSlot, mountVNode } from '../src/index';
 
 describe('mountSlot()', () => {
   let container: HTMLElement;
@@ -70,5 +70,17 @@ describe('mountSlot()', () => {
     });
     mountSlot(() => h(Child as never, {}, null as never), container);
     expect(container.querySelector('#slot-child')?.textContent).toBe('CHILD');
+  });
+
+  it('mountVNode()：直接挂载一棵 vnode', () => {
+    mountVNode(h('div', { id: 'vn' }, 'VN'), container);
+    expect(container.querySelector('#vn')?.textContent).toBe('VN');
+  });
+
+  it('mountVNode()：重复挂载会先清空容器（单次语义）', () => {
+    mountVNode(h('div', { id: 'x1' }, '1'), container);
+    mountVNode(h('div', { id: 'x2' }, '2'), container);
+    expect(container.querySelector('#x1')).toBeNull();
+    expect(container.querySelector('#x2')).not.toBeNull();
   });
 });
