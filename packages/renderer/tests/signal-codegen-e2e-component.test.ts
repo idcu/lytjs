@@ -25,7 +25,11 @@ const codeOf = (tpl: string, v: Variant) => compile(tpl, v.options as never).cod
 const mount = (tpl: string, v: Variant, ctx: unknown) => mountSignal(codeOf(tpl, v), ctx);
 
 /** ⚠️ 已知缺陷清单（真跑才暴露）；修好后自动翻红 ⇒ 请移出清单 */
-const KNOWN_FAIL = new Set<string>([]);
+const KNOWN_FAIL = new Set<string>([
+  // `<slot/>` 未与 `$slots` 对接（特性级缺口：transform 未产出 renderSlot + codegen 无分支 + 缺 vnode 挂载）
+  'base/组件模板里的 <slot/> 应渲染 $slots.default 的内容',
+  'opt/组件模板里的 <slot/> 应渲染 $slots.default 的内容',
+]);
 
 describe('signal codegen · 组件真跑（两套 codegen）', () => {
   // 组件挂载会按 `data-lyt-comp` 在**文档范围**解析宿主元素：用例间必须清空 body，
@@ -86,6 +90,29 @@ describe('signal codegen · 组件真跑（两套 codegen）', () => {
         const { container } = mount('<Comp>SLOT-TXT</Comp>', v, { Comp: Child });
         expect(container.textContent).toContain('SLOT-TXT');
       });
+
+      // ---------- 插槽出口（<slot/>） ----------
+      // ⚠️ 已知缺口（特性级，见文末说明）：`<slot/>` 目前**不与 `$slots` 对接** ——
+      //    transform 没把它转成 `renderSlot(...)`（产物里是字面量 `<slot>` 元素），
+      //    signal codegen 也没有 `RENDER_SLOT` 分支。下面两条一起钉住：一条断言**现状**（通过），
+      //    一条断言**应有行为**（it.fails，修好后自动翻红提醒移出）。
+      it('现状：<slot/> 被原样留在 HTML 里（未与 $slots 对接）', () => {
+        const { container } = mount('<div><slot></slot></div>', v, {
+          $slots: { default: () => [h('b', { id: 'slotted' }, 'SLOT')] },
+        });
+        expect(container.innerHTML).toContain('<slot');
+        expect(container.querySelector('#slotted')).toBeNull();
+      });
+
+      {
+        const slotName = '组件模板里的 <slot/> 应渲染 $slots.default 的内容';
+        (KNOWN_FAIL.has(`${v.label}/${slotName}`) ? it.fails : it)(slotName, () => {
+          const { container } = mount('<div><slot></slot></div>', v, {
+            $slots: { default: () => [h('b', { id: 'slotted' }, 'SLOT')] },
+          });
+          expect(container.querySelector('#slotted')).not.toBeNull();
+        });
+      }
 
       t('KeepAlive 包裹组件后仍渲染', () => {
         const Child = defineComponent({
