@@ -166,6 +166,8 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
   const usedComponents = containsComponent(ast.children);
   // 是否存在「带子内容的组件」（决定要不要引入 createVNode/Text 做插槽）
   const usedSlots = hasComponentWithChildren(ast.children);
+  // 含 `<slot/>` 出口（决定要不要引入运行期挂载能力）
+  const usedSlotOutlet = containsSlotOutlet(ast.children);
 
   // ---- Phase 1: Generate imports ----
   // FIX: P1-13 添加 runCleanups 到 import 列表
@@ -184,6 +186,10 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
   // 组件带子内容（插槽）时才需要 vnode 构造能力
   if (usedSlots) {
     lines.push(`import { createVNode, Text } from '@lytjs/vdom';`);
+  }
+  // 含 `<slot/>` 出口时才需要运行期挂载能力
+  if (usedSlotOutlet) {
+    lines.push(`import { mountSlot } from '@lytjs/renderer';`);
   }
   lines.push('');
 
@@ -325,6 +331,30 @@ function processChildren(
 // 处理元素节点
 // ============================================================
 
+/**
+ * 取元素上的静态属性值（`name="v"`），没有则返回 null。
+ */
+function getStaticAttr(node: ElementNode, attrName: string): string | null {
+  for (const prop of node.props) {
+    if (prop && prop.type === NodeTypes.ATTRIBUTE && prop.name === attrName && prop.value) {
+      return prop.value.content;
+    }
+  }
+  return null;
+}
+
+/** 模板中是否含 `<slot/>` 出口（决定要不要引入 `mountSlot`）。 */
+function containsSlotOutlet(children: unknown): boolean {
+  if (!Array.isArray(children)) return false;
+  for (const child of children) {
+    const node = child as { type?: number; tag?: string; children?: unknown } | null;
+    if (!node || typeof node !== 'object') continue;
+    if (node.type === NodeTypes.ELEMENT && node.tag === 'slot') return true;
+    if (containsSlotOutlet(node.children)) return true;
+  }
+  return false;
+}
+
 function processElement(
   node: ElementNode,
   varCounter: Map<string, number>,
@@ -353,6 +383,19 @@ function processElement(
     dynamicBindings.push({
       varName: hostVar,
       code: `mountComponent(_ctx.${node.tag},${buildComponentPropsObject(node)},${hostVar}${slotsArg});`,
+    });
+    return;
+  }
+
+  // `<slot/>` 出口：由运行期 `mountSlot` 把传入的插槽内容挂载进该元素
+  // （修复缺口三段的第 ② 段；信号模式下 `$slots` 由公共实例代理提供）
+  if (node.tag === 'slot') {
+    const slotName = getStaticAttr(node, 'name') ?? 'default';
+    const slotVar =
+      findExistingVar(elementVars, 'slot', consumedCount) ?? genVarName('slotEl', varCounter);
+    dynamicBindings.push({
+      varName: slotVar,
+      code: `mountSlot(_ctx.$slots&&_ctx.$slots[${JSON.stringify(slotName)}],${slotVar});`,
     });
     return;
   }

@@ -233,6 +233,9 @@ function generateOptimizedImports(usedRuntime: Set<string>, useShortNames: boole
       const mc = getShortName('mountComponent', true);
       result += `\nimport{mountComponent as ${mc}}from'@lytjs/renderer';`;
     }
+    if (usedRuntime.has('mountSlot')) {
+      result += `\nimport{mountSlot}from'@lytjs/renderer';`;
+    }
     if (usedRuntime.has('createVNode') || usedRuntime.has('Text')) {
       const vdomImports: string[] = [];
       if (usedRuntime.has('createVNode')) {
@@ -269,6 +272,9 @@ function generateOptimizedImports(usedRuntime: Set<string>, useShortNames: boole
     }
     if (usedRuntime.has('mountComponent')) {
       result += `\nimport{mountComponent}from'@lytjs/renderer';`;
+    }
+    if (usedRuntime.has('mountSlot')) {
+      result += `\nimport{mountSlot}from'@lytjs/renderer';`;
     }
     if (usedRuntime.has('createVNode') || usedRuntime.has('Text')) {
       const vdomImports: string[] = [];
@@ -527,6 +533,23 @@ function processElementOptimized(
     return;
   }
 
+  // `<slot/>` 出口：由运行期 `mountSlot` 把传入的插槽内容挂载进该元素。
+  //
+  // 2026-09-30 修复缺口三段中的第 ② 段 —— 此前 `<slot>` 被当普通元素烧进静态 HTML，
+  // 产物里是字面量 `<slot>`（无人消费 ⇒ 组件模板的插槽永不渲染）。
+  // `$slots` 在该模式下由公共实例代理提供（`_c.$slots`），故需判空。
+  if (node.tag === 'slot') {
+    const slotName = getStaticAttr(node, 'name') ?? 'default';
+    const slotIdx = findElementIndex(elementVars, node.tag, consumedCount);
+    const slotVar = slotIdx !== null ? elementVars[slotIdx]!.varName : `_${elementVars.length}`;
+    usedRuntime.add('mountSlot');
+    sink.push({
+      varName: slotVar,
+      code: `mountSlot(_c.$slots&&_c.$slots[${JSON.stringify(slotName)}],${slotVar});`,
+    });
+    return;
+  }
+
   // 使用索引变量名
   const idx = findElementIndex(elementVars, node.tag, consumedCount);
   const varName = idx !== null ? elementVars[idx]!.varName : `_${elementVars.length}`;
@@ -707,6 +730,16 @@ function renderHandlerExpression(exp: string, locals: ReadonlySet<string> = new 
  * 而静态 class 已被烧进 createTemplate 的 HTML 里 ⇒ `:class` 一动就把静态的那部分抹掉。
  * 修法：把静态 class 并入动态取值（`setClass(el, ['a b', _c.cls])`，`setClass` 内部会 normalize）。
  */
+/** 取元素上的静态属性值（`name="v"`），没有则返回 null。 */
+function getStaticAttr(node: ElementNode, attrName: string): string | null {
+  for (const prop of node.props) {
+    if (prop && prop.type === NodeTypes.ATTRIBUTE && prop.name === attrName && prop.value) {
+      return prop.value.content;
+    }
+  }
+  return null;
+}
+
 function getStaticClass(node: ElementNode): string {
   for (const prop of node.props) {
     if (prop && prop.type === NodeTypes.ATTRIBUTE && prop.name === 'class' && prop.value) {

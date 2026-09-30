@@ -15,7 +15,7 @@
 // - 组件实例由 @lytjs/component 的 createComponentInstance / setupComponent 建立，
 //   通过渲染器的 setupChildComponent / normalizeProps 回调接入
 
-import { createVNode } from '@lytjs/vdom';
+import { createVNode, Fragment } from '@lytjs/vdom';
 import type { VNode } from '@lytjs/vdom';
 import { createDOMRenderer } from '@lytjs/adapter-web';
 import { createComponentInstance, setupComponent, initProps } from '@lytjs/component';
@@ -135,4 +135,60 @@ export function mountComponent(
 /** 便于测试：重置渲染器单例 */
 export function resetVaporComponentRenderer(): void {
   renderer = null;
+}
+
+/**
+ * 解析插槽函数返回的 vnode。
+ *
+ * 插槽函数可能返回「单个 vnode」「vnode 数组」「null/undefined」，
+ * 统一归一化为数组（空则返回 `[]`）。
+ */
+function resolveSlotVNodes(slotFn: unknown, props: unknown): unknown[] {
+  if (typeof slotFn !== 'function') return [];
+  const result = (slotFn as (p?: unknown) => unknown)(props);
+  if (result === null || result === undefined) return [];
+  return Array.isArray(result) ? result : [result];
+}
+
+/** 清空宿主元素（整体重渲染策略，与 `mountComponent` 一致） */
+function clearHost(host: Node): void {
+  const maybeElement = host as unknown as { textContent?: unknown };
+  if (typeof maybeElement.textContent === 'string') {
+    (maybeElement as { textContent: string }).textContent = '';
+  } else {
+    while (host.firstChild) host.removeChild(host.firstChild);
+  }
+}
+
+/**
+ * 把**插槽内容**挂载进容器 —— signal/Vapor 模式下 `<slot/>` 出口的运行期能力。
+ *
+ * 背景（2026-09-30）：`<slot/>` 此前在 signal 模式**完全不工作** —— transform 没把它转成
+ * `renderSlot(...)`，codegen 也没有对应分支，产物里是字面量 `<slot>` 元素。
+ * 这是缺口三段中的**第 3 段**：运行期缺「把插槽 vnode 挂载进 DOM 元素」的能力。
+ * 本函数复用 `mountComponent` 同一套 DOM 渲染器（`getRenderer()`），
+ * 因此组件 vnode / Fragment / 文本节点都能正确处理。
+ *
+ * @param slotFn    插槽函数（`_c.$slots.default` / `_c.$slots[name]`），可为空
+ * @param container 挂载容器（codegen 传插槽出口所在元素）
+ * @param props     作用域插槽的 props（可选）
+ */
+export function mountSlot(slotFn: unknown, container: unknown, props?: unknown): void {
+  if (container === null || container === undefined) return;
+
+  const host = container as Node;
+
+  effect(() => {
+    const vnodes = resolveSlotVNodes(slotFn, props);
+    clearHost(host);
+    if (vnodes.length === 0) return;
+
+    // 多个 vnode ⇒ 用 Fragment 承载（vdom 的 Fragment patch 已支持）
+    const vnode =
+      vnodes.length === 1
+        ? (vnodes[0] as never)
+        : (createVNode(Fragment as never, null, vnodes as never) as never);
+
+    getRenderer().mount(vnode, host);
+  });
 }
