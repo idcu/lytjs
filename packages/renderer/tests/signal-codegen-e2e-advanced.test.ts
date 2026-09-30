@@ -30,14 +30,10 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
  * ⚠️ **已知缺陷清单（真跑才暴露）**。修好后自动翻红 ⇒ 请把条目移出并改为正常 `it`。
  */
 const KNOWN_FAIL = new Set<string>([
-  'base/@keyup.enter 按键修饰符：仅 Enter 触发',
-  'opt/@keyup.enter 按键修饰符：仅 Enter 触发',
   'base/动态参数 :[dyn] 写到正确属性名',
   'opt/动态参数 :[dyn] 写到正确属性名',
   'base/动态事件 @[evt] 绑定到指定事件',
   'opt/动态事件 @[evt] 绑定到指定事件',
-  'base/class 静态 + 动态 + 数组 + 对象混合',
-  'opt/class 静态 + 动态 + 数组 + 对象混合',
 ]);
 
 describe('signal codegen · 进阶构造真跑（两套 codegen）', () => {

@@ -388,7 +388,7 @@ function processElement(
           }
         }
       }
-      processDirective(dir, varName, node.tag, dynamicBindings, locals);
+      processDirective(dir, varName, node.tag, dynamicBindings, locals, getStaticClass(node));
     }
   }
 
@@ -679,12 +679,29 @@ function renderHandlerExpression(exp: string, locals: ReadonlySet<string> = new 
   return `($event) => { ${prefixIdentifiers(exp, new Set([...locals, '$event']))}; }`;
 }
 
+/**
+ * 取元素上的**静态** `class` 属性值；没有则返回 `''`。
+ *
+ * ⚠️ 2026-09-30 修复「静态 class 丢失」：`setClass()` 整体替换 class 属性，
+ * 而静态 class 已烧进 createTemplate 的 HTML ⇒ `:class` 一动就把它抹掉。
+ * 修法：静态 class 并入动态取值（`setClass(el, ['a b', _ctx.cls])`）。
+ */
+function getStaticClass(node: ElementNode): string {
+  for (const prop of node.props) {
+    if (prop && prop.type === NodeTypes.ATTRIBUTE && prop.name === 'class' && prop.value) {
+      return prop.value.content;
+    }
+  }
+  return '';
+}
+
 function processDirective(
   dir: DirectiveNode,
   varName: string,
   tag: string,
   dynamicBindings: Array<{ varName: string; code: string }>,
   locals: ReadonlySet<string> = new Set(),
+  staticClass = '',
 ): void {
   const expContent = dir.exp ? getExpContent(dir.exp as SimpleExpressionNode) : undefined;
   const argContent = dir.arg ? getExpContent(dir.arg as SimpleExpressionNode) : undefined;
@@ -746,9 +763,13 @@ function processDirective(
     case 'bind': {
       if (argContent && expContent) {
         if (argContent === 'class') {
+          // 静态 class 必须并入（setClass 是整体替换），否则模板里的 class 会被抹掉
+          const classValue = staticClass
+            ? `[${JSON.stringify(staticClass)}, ${prefixIdentifiers(expContent, locals)}]`
+            : prefixIdentifiers(expContent, locals);
           dynamicBindings.push({
             varName,
-            code: `effect(() => setClass(${varName}, ${prefixIdentifiers(expContent, locals)}));`,
+            code: `effect(() => setClass(${varName}, ${classValue}));`,
           });
         } else if (argContent === 'style') {
           dynamicBindings.push({

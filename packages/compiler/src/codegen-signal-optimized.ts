@@ -550,7 +550,15 @@ function processElementOptimized(
           }
         }
       }
-      processDirectiveOptimized(dir, varName, node.tag, dynamicBindings, usedRuntime, options);
+      processDirectiveOptimized(
+        dir,
+        varName,
+        node.tag,
+        dynamicBindings,
+        usedRuntime,
+        options,
+        getStaticClass(node),
+      );
     }
   }
 
@@ -692,6 +700,22 @@ function renderHandlerExpression(exp: string, locals: ReadonlySet<string> = new 
   return `($event) => { ${renderExpression(exp, new Set([...locals, '$event']))}; }`;
 }
 
+/**
+ * 取元素上的**静态** `class` 属性值（`class="a b"`）；没有则返回 `''`。
+ *
+ * ⚠️ 2026-09-30 修复「静态 class 丢失」：`setClass()` 是**整体替换** class 属性，
+ * 而静态 class 已被烧进 createTemplate 的 HTML 里 ⇒ `:class` 一动就把静态的那部分抹掉。
+ * 修法：把静态 class 并入动态取值（`setClass(el, ['a b', _c.cls])`，`setClass` 内部会 normalize）。
+ */
+function getStaticClass(node: ElementNode): string {
+  for (const prop of node.props) {
+    if (prop && prop.type === NodeTypes.ATTRIBUTE && prop.name === 'class' && prop.value) {
+      return prop.value.content;
+    }
+  }
+  return '';
+}
+
 function processDirectiveOptimized(
   dir: DirectiveNode,
   varName: string,
@@ -699,6 +723,7 @@ function processDirectiveOptimized(
   dynamicBindings: Array<{ varName: string; code: string }>,
   usedRuntime: Set<string>,
   options: SignalCodegenOptions,
+  staticClass = '',
 ): void {
   const expContent = dir.exp ? getExpContent(dir.exp as SimpleExpressionNode) : undefined;
   const argContent = dir.arg ? getExpContent(dir.arg as SimpleExpressionNode) : undefined;
@@ -785,9 +810,13 @@ function processDirectiveOptimized(
         const sa = getShortName('setAttribute', options.useShortNames ?? true);
         if (argContent === 'class') {
           usedRuntime.add('setClass');
+          // 静态 class 必须并入（setClass 是整体替换），否则模板里的 class 会被抹掉
+          const classValue = staticClass
+            ? `[${JSON.stringify(staticClass)},${renderExpression(expContent)}]`
+            : renderExpression(expContent);
           dynamicBindings.push({
             varName,
-            code: `${e}(()=>${sc}(${varName},${renderExpression(expContent)}));`,
+            code: `${e}(()=>${sc}(${varName},${classValue}));`,
           });
         } else if (argContent === 'style') {
           usedRuntime.add('setStyle');

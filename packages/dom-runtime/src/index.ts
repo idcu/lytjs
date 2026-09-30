@@ -749,8 +749,50 @@ export function addEventListener(
  * - `.prevent` - 调用 event.preventDefault()
  * - `.capture` - 在捕获阶段监听
  * - `.once` - 只触发一次
+ * - `.self` - 仅当 `event.target === event.currentTarget` 时触发（2026-09-30 补）
+ * - `.left` / `.middle` / `.right` - 仅对应鼠标键触发（2026-09-30 补）
+ * - **按键修饰符** `.enter` / `.tab` / `.esc` / `.space` / `.up` / `.down` /
+ *   `.left` / `.right` / `.delete`，以及任意 `KeyboardEvent.key` 名（如 `.f1` / `.a`）
+ *   （2026-09-30 补 —— 此前**完全被忽略**，导致 `@keyup.enter` 对任意按键都触发）
+ *
  * FIX: P2-57 使用更具体的事件处理器类型替代宽泛的 Function 类型
  */
+
+/** 已知的**非按键**修饰符；其余修饰符一律按「按键名」解释（与 Vue 一致）。 */
+const NON_KEY_MODIFIERS: ReadonlySet<string> = new Set([
+  'stop',
+  'prevent',
+  'self',
+  'capture',
+  'once',
+  'passive',
+  'native',
+  'exact',
+  'left',
+  'middle',
+  'right',
+  'ctrl',
+  'shift',
+  'alt',
+  'meta',
+]);
+
+/** Vue 风格按键别名 → `KeyboardEvent.key` 取值。注意 `.left/right` 同时是鼠标键，见 MOUSE_BUTTONS。 */
+const KEY_ALIASES: Record<string, string[]> = {
+  enter: ['Enter'],
+  tab: ['Tab'],
+  delete: ['Delete', 'Backspace'],
+  esc: ['Escape'],
+  space: [' ', 'Spacebar'],
+  up: ['ArrowUp'],
+  down: ['ArrowDown'],
+  left: ['ArrowLeft'],
+  right: ['ArrowRight'],
+};
+
+/** 鼠标按键修饰符 → `MouseEvent.button` */
+const MOUSE_BUTTONS: Record<string, number> = { left: 0, middle: 1, right: 2 };
+
 export function createEventHandler(
   el: unknown,
   event: string,
@@ -762,6 +804,10 @@ export function createEventHandler(
   const realNode = getRealNode(el) as Element;
 
   const mods = modifiers ?? {};
+  // 预先算好修饰符分类，避免每次事件都重新遍历（事件回调在热路径上）
+  const mouseMods = Object.keys(mods).filter((k) => k in MOUSE_BUTTONS);
+  const keyMods = Object.keys(mods).filter((k) => !NON_KEY_MODIFIERS.has(k));
+
   const wrappedHandler = (e: Event) => {
     if (mods['prevent']) {
       e.preventDefault();
@@ -769,6 +815,32 @@ export function createEventHandler(
     if (mods['stop']) {
       e.stopPropagation();
     }
+
+    // `.self`：只有事件目标就是绑定元素本身时才触发
+    if (mods['self'] && e.target !== e.currentTarget) {
+      return;
+    }
+
+    // 鼠标按键修饰符：`.left` / `.middle` / `.right`
+    if (mouseMods.length > 0) {
+      const button = (e as MouseEvent).button;
+      if (!mouseMods.some((k) => MOUSE_BUTTONS[k] === button)) {
+        return;
+      }
+    }
+
+    // 按键修饰符：任一命中即放行（`@keyup.enter` 只应响应 Enter）
+    if (keyMods.length > 0) {
+      const key = (e as KeyboardEvent).key;
+      const matched = keyMods.some((m) => {
+        const aliases = KEY_ALIASES[m.toLowerCase()] ?? [m];
+        return aliases.some((a) => a === key);
+      });
+      if (!matched) {
+        return;
+      }
+    }
+
     handler(e);
   };
 
