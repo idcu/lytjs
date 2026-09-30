@@ -25,7 +25,21 @@ const codeOf = (tpl: string, v: Variant) => compile(tpl, v.options as never).cod
 const mount = (tpl: string, v: Variant, ctx: unknown) => mountSignal(codeOf(tpl, v), ctx);
 
 /** ⚠️ 已知缺陷清单（真跑才暴露）；修好后自动翻红 ⇒ 请移出清单 */
-const KNOWN_FAIL = new Set<string>([]);
+/**
+ * ⚠️ **已知缺口**（本批新发现，`it.fails` 钉住，修好会自动翻红）：
+ * `Teleport` / `Transition` / `Suspense` 三个内置组件虽已能**被正确导入**（解析层已对齐 Vue），
+ * 但在 signal 的 `mountComponent` 挂载路径下**渲染为空** —— 属**组件实现层**问题：
+ * 它们各自有额外契约（Teleport 需移动节点、Transition 需过渡钩子、Suspense 需异步边界），
+ * 与「往容器里 mount 一棵 vnode」的当前路径尚未对接。`KeepAlive` 已验证可用。
+ */
+const KNOWN_FAIL = new Set<string>([
+  'base/内置 Teleport：内容被搬到目标元素',
+  'opt/内置 Teleport：内容被搬到目标元素',
+  'base/内置 Transition：内容照常渲染（直通）',
+  'opt/内置 Transition：内容照常渲染（直通）',
+  'base/内置 Suspense：内容照常渲染',
+  'opt/内置 Suspense：内容照常渲染',
+]);
 
 describe('signal codegen · 组件真跑（两套 codegen）', () => {
   // 组件挂载会按 `data-lyt-comp` 在**文档范围**解析宿主元素：用例间必须清空 body，
@@ -107,24 +121,66 @@ describe('signal codegen · 组件真跑（两套 codegen）', () => {
         expect(container.querySelector('#named')?.textContent).toBe('NAMED');
       });
 
-      t('KeepAlive 包裹组件后仍渲染', () => {
-        const Child = defineComponent({
-          name: 'Child',
-          setup() {
-            return () => h('span', { id: 'ka' }, 'KA');
-          },
-        });
-        const KeepAlive = defineComponent({
-          name: 'KeepAlive',
-          setup(_p: unknown, ctx: { slots?: Record<string, () => unknown> }) {
-            return () => h('div', { id: 'ka-wrap' }, (ctx?.slots?.default?.() as never) ?? []);
-          },
-        });
-        const { container } = mount('<KeepAlive><Comp/></KeepAlive>', v, {
-          Comp: Child,
-          KeepAlive,
-        });
-        expect(container.querySelector('#ka-wrap')).not.toBeNull();
+      // ---------- 内置组件（无需手动注册，codegen 直接从 @lytjs/component 导入） ----------
+      t('内置 Teleport：内容被搬到目标元素', () => {
+        const target = document.createElement('div');
+        target.id = 'tp-target';
+        document.body.appendChild(target);
+
+        const { container } = mount(
+          '<Teleport to="#tp-target"><b id="tp-inner">TP</b></Teleport>',
+          v,
+          {},
+        );
+        expect(document.querySelector('#tp-target #tp-inner')?.textContent).toBe('TP');
+        // 内容应在目标处，而不是原容器里
+        expect(container.querySelector('#tp-inner')).toBeNull();
+      });
+
+      t('内置 Transition：内容照常渲染（直通）', () => {
+        const { container } = mount('<Transition><div id="tr">TR</div></Transition>', v, {});
+        expect(container.querySelector('#tr')?.textContent).toBe('TR');
+      });
+
+      t('内置 KeepAlive：无需注册即可渲染子内容', () => {
+        const { container } = mount('<KeepAlive><div id="ka">KA</div></KeepAlive>', v, {});
+        expect(container.querySelector('#ka')?.textContent).toBe('KA');
+      });
+
+      t('内置 Suspense：内容照常渲染', () => {
+        const { container } = mount('<Suspense><div id="sp">SP</div></Suspense>', v, {});
+        expect(container.querySelector('#sp')?.textContent).toBe('SP');
+      });
+
+      // ---------- 内置组件（无需手动注册，codegen 直接从 @lytjs/component 导入） ----------
+      t('内置 Teleport：内容被搬到目标元素', () => {
+        const target = document.createElement('div');
+        target.id = 'tp-target';
+        document.body.appendChild(target);
+
+        const { container } = mount(
+          '<Teleport to="#tp-target"><b id="tp-inner">TP</b></Teleport>',
+          v,
+          {},
+        );
+        expect(document.querySelector('#tp-target #tp-inner')?.textContent).toBe('TP');
+        // 内容应在目标处，而不是原容器里
+        expect(container.querySelector('#tp-inner')).toBeNull();
+      });
+
+      t('内置 Transition：内容照常渲染（直通）', () => {
+        const { container } = mount('<Transition><div id="tr">TR</div></Transition>', v, {});
+        expect(container.querySelector('#tr')?.textContent).toBe('TR');
+      });
+
+      t('内置 KeepAlive：无需注册即可渲染子内容', () => {
+        const { container } = mount('<KeepAlive><div id="ka">KA</div></KeepAlive>', v, {});
+        expect(container.querySelector('#ka')?.textContent).toBe('KA');
+      });
+
+      t('内置 Suspense：内容照常渲染', () => {
+        const { container } = mount('<Suspense><div id="sp">SP</div></Suspense>', v, {});
+        expect(container.querySelector('#sp')?.textContent).toBe('SP');
       });
     });
   }

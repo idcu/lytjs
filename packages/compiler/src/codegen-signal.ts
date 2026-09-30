@@ -168,6 +168,8 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
   const usedSlots = hasComponentWithChildren(ast.children);
   // 含 `<slot/>` 出口（决定要不要引入运行期挂载能力）
   const usedSlotOutlet = containsSlotOutlet(ast.children);
+  // 用到的内置组件（决定要不要从 @lytjs/component 引入）
+  const builtinComponents = collectBuiltinComponents(ast.children);
 
   // ---- Phase 1: Generate imports ----
   // FIX: P1-13 添加 runCleanups 到 import 列表
@@ -190,6 +192,10 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
   // 含 `<slot/>` 出口时才需要运行期挂载能力
   if (usedSlotOutlet) {
     lines.push(`import { mountSlot } from '@lytjs/renderer';`);
+  }
+  // 内置组件从运行时包导入（使用方无需手动注册）
+  if (builtinComponents.size > 0) {
+    lines.push(`import { ${[...builtinComponents].join(', ')} } from '@lytjs/component';`);
   }
   lines.push('');
 
@@ -343,6 +349,32 @@ function getStaticAttr(node: ElementNode, attrName: string): string | null {
   return null;
 }
 
+/**
+ * **内置组件**：由 codegen 直接从 `@lytjs/component` 导入，使用方无需手动注册
+ * （与 Vue 一致）。2026-09-30 前一律按 `_ctx.<Name>` 解析 ⇒ 不注册就渲染为空。
+ */
+const BUILTIN_COMPONENT_NAMES: ReadonlySet<string> = new Set([
+  'Teleport',
+  'Transition',
+  'TransitionGroup',
+  'KeepAlive',
+  'Suspense',
+]);
+
+/** 收集模板中实际用到的内置组件名。 */
+function collectBuiltinComponents(children: unknown, acc = new Set<string>()): Set<string> {
+  if (!Array.isArray(children)) return acc;
+  for (const child of children) {
+    const node = child as { type?: number; tag?: string; children?: unknown } | null;
+    if (!node || typeof node !== 'object') continue;
+    if (node.type === NodeTypes.ELEMENT && node.tag && BUILTIN_COMPONENT_NAMES.has(node.tag)) {
+      acc.add(node.tag);
+    }
+    collectBuiltinComponents(node.children, acc);
+  }
+  return acc;
+}
+
 /** 模板中是否含 `<slot/>` 出口（决定要不要引入 `mountSlot`）。 */
 function containsSlotOutlet(children: unknown): boolean {
   if (!Array.isArray(children)) return false;
@@ -382,7 +414,9 @@ function processElement(
 
     dynamicBindings.push({
       varName: hostVar,
-      code: `mountComponent(_ctx.${node.tag},${buildComponentPropsObject(node)},${hostVar}${slotsArg});`,
+      code: `mountComponent(${
+        BUILTIN_COMPONENT_NAMES.has(node.tag) ? node.tag : `_ctx.${node.tag}`
+      },${buildComponentPropsObject(node)},${hostVar}${slotsArg});`,
     });
     return;
   }

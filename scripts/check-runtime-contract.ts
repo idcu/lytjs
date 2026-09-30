@@ -149,6 +149,16 @@ const SAMPLES: Array<{ label: string; template: string; options: Record<string, 
     options: { rendererMode: 'signal', optimizeSignal: false },
   },
   {
+    label: 'signal/内置组件（Teleport）',
+    template: '<Teleport to="#x"><div>hi</div></Teleport>',
+    options: { rendererMode: 'signal' },
+  },
+  {
+    label: 'signal/内置组件（KeepAlive）',
+    template: '<KeepAlive><div>hi</div></KeepAlive>',
+    options: { rendererMode: 'signal' },
+  },
+  {
     label: 'signal/优化版插值',
     template: '<div>{{ msg }}</div>',
     options: { rendererMode: 'signal' },

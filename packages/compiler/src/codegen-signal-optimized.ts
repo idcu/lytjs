@@ -236,6 +236,10 @@ function generateOptimizedImports(usedRuntime: Set<string>, useShortNames: boole
     if (usedRuntime.has('mountSlot')) {
       result += `\nimport{mountSlot}from'@lytjs/renderer';`;
     }
+    const builtins = [...BUILTIN_COMPONENTS].filter((n) => usedRuntime.has(`builtin:${n}`));
+    if (builtins.length > 0) {
+      result += `\nimport{${builtins.join(',')}}from'@lytjs/component';`;
+    }
     if (usedRuntime.has('createVNode') || usedRuntime.has('Text')) {
       const vdomImports: string[] = [];
       if (usedRuntime.has('createVNode')) {
@@ -275,6 +279,10 @@ function generateOptimizedImports(usedRuntime: Set<string>, useShortNames: boole
     }
     if (usedRuntime.has('mountSlot')) {
       result += `\nimport{mountSlot}from'@lytjs/renderer';`;
+    }
+    const builtins = [...BUILTIN_COMPONENTS].filter((n) => usedRuntime.has(`builtin:${n}`));
+    if (builtins.length > 0) {
+      result += `\nimport{${builtins.join(',')}}from'@lytjs/component';`;
     }
     if (usedRuntime.has('createVNode') || usedRuntime.has('Text')) {
       const vdomImports: string[] = [];
@@ -520,6 +528,10 @@ function processElementOptimized(
     const hostVar = hostIdx !== null ? elementVars[hostIdx]!.varName : `_${elementVars.length}`;
 
     usedRuntime.add('mountComponent');
+    const isBuiltin = BUILTIN_COMPONENTS.has(node.tag);
+    if (isBuiltin) usedRuntime.add(`builtin:${node.tag}`);
+    // 内置组件用**导入的绑定名**，普通组件从 ctx 取（`_c.Tag`）
+    const compRef = isBuiltin ? node.tag : `_c.${node.tag}`;
     const mc = getShortName('mountComponent', options.useShortNames ?? true);
     const propsObj = buildComponentPropsObject(node);
     // 子内容 → 默认插槽（vnode 形态，slot 契约要求返回 vnode）
@@ -528,7 +540,7 @@ function processElementOptimized(
 
     sink.push({
       varName: hostVar,
-      code: `${mc}(_c.${node.tag},${propsObj},${hostVar}${slotsArg});`,
+      code: `${mc}(${compRef},${propsObj},${hostVar}${slotsArg});`,
     });
     return;
   }
@@ -730,6 +742,20 @@ function renderHandlerExpression(exp: string, locals: ReadonlySet<string> = new 
  * 而静态 class 已被烧进 createTemplate 的 HTML 里 ⇒ `:class` 一动就把静态的那部分抹掉。
  * 修法：把静态 class 并入动态取值（`setClass(el, ['a b', _c.cls])`，`setClass` 内部会 normalize）。
  */
+/**
+ * **内置组件**：这些标签不从 ctx 取，而是由 codegen 直接从 `@lytjs/component` 导入
+ * （与 Vue 一致 —— 使用方无需手动注册 `<Teleport/>` / `<KeepAlive/>` 等）。
+ *
+ * 2026-09-30 前：一律按 `_c.<Name>` 解析 ⇒ 不注册就渲染为空，属可用性缺口。
+ */
+const BUILTIN_COMPONENTS: ReadonlySet<string> = new Set([
+  'Teleport',
+  'Transition',
+  'TransitionGroup',
+  'KeepAlive',
+  'Suspense',
+]);
+
 /** 取元素上的静态属性值（`name="v"`），没有则返回 null。 */
 function getStaticAttr(node: ElementNode, attrName: string): string | null {
   for (const prop of node.props) {
