@@ -20,6 +20,13 @@ export const Comment = Symbol.for('Comment');
  */
 export const Teleport = Symbol.for('Teleport');
 
+/**
+ * `<Suspense>` 出口的 vnode 类型（与 Teleport 同型：`@lytjs/component` 导出的 `Suspense`
+ * **组件**的 `setup` 只返回 `{ boundary }`（不是渲染函数）⇒ 组件路径天然渲染为空；
+ * 真正逻辑在 vdom 的 `patch-suspense.ts`，分派条件 `shapeFlag & ShapeFlags.SUSPENSE`）。
+ */
+export const Suspense = Symbol.for('Suspense');
+
 // ============================================================
 // ShapeFlags - VNode 形状标志
 // FIX: 将 const enum 改为普通 enum，解决 verbatimModuleSyntax 问题

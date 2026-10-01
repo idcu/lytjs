@@ -41,10 +41,7 @@ const mount = (tpl: string, v: Variant, ctx: unknown) => mountSignal(codeOf(tpl,
  * 返回**单个** vnode 时正常（`KeepAlive` 能工作正因它拿到单个 vnode）。
  * ⇒ 属**组件渲染结果归一化**层面的缺陷（多根组件整体不可用），与 codegen / slot 取法无关。
  */
-const KNOWN_FAIL = new Set<string>([
-  'base/内置 Suspense：内容照常渲染',
-  'opt/内置 Suspense：内容照常渲染',
-]);
+const KNOWN_FAIL = new Set<string>([]);
 
 describe('signal codegen · 组件真跑（两套 codegen）', () => {
   // 组件挂载会按 `data-lyt-comp` 在**文档范围**解析宿主元素：用例间必须清空 body，

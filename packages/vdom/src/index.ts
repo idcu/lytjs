@@ -10,6 +10,7 @@ export {
   Text,
   Comment,
   Teleport,
+  Suspense,
   isVNode,
   isSameVNodeType,
   hasPatchFlag,

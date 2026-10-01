@@ -239,8 +239,10 @@ function generateOptimizedImports(usedRuntime: Set<string>, useShortNames: boole
     if (usedRuntime.has('mountVNode')) {
       result += `\nimport{mountVNode}from'@lytjs/renderer';`;
     }
-    if (usedRuntime.has('vdom:Teleport')) {
-      result += `\nimport{Teleport}from'@lytjs/vdom';`;
+    for (const sym of ['Teleport', 'Suspense']) {
+      if (usedRuntime.has(`vdom:${sym}`)) {
+        result += `\nimport{${sym}}from'@lytjs/vdom';`;
+      }
     }
     const builtins = [...BUILTIN_COMPONENTS].filter((n) => usedRuntime.has(`builtin:${n}`));
     if (builtins.length > 0) {
@@ -289,8 +291,10 @@ function generateOptimizedImports(usedRuntime: Set<string>, useShortNames: boole
     if (usedRuntime.has('mountVNode')) {
       result += `\nimport{mountVNode}from'@lytjs/renderer';`;
     }
-    if (usedRuntime.has('vdom:Teleport')) {
-      result += `\nimport{Teleport}from'@lytjs/vdom';`;
+    for (const sym of ['Teleport', 'Suspense']) {
+      if (usedRuntime.has(`vdom:${sym}`)) {
+        result += `\nimport{${sym}}from'@lytjs/vdom';`;
+      }
     }
     const builtins = [...BUILTIN_COMPONENTS].filter((n) => usedRuntime.has(`builtin:${n}`));
     if (builtins.length > 0) {
@@ -534,19 +538,22 @@ function processElementOptimized(
   const ownBindings: Array<{ varName: string; code: string }> = [];
   const sink = ownMods.once || ownMods.memo ? ownBindings : dynamicBindings;
 
-  // `<Teleport>`：产出 **Teleport vnode** 交给 vdom 的 teleport patch（组件侧是空壳，逻辑在 vdom）
-  if (node.tag === 'Teleport') {
-    const tpIdx = findElementIndex(elementVars, 'lyt-comp', consumedCount);
-    const tpHost = tpIdx !== null ? elementVars[tpIdx]!.varName : `_${elementVars.length}`;
+  // `<Teleport>` / `<Suspense>`：产出对应 **vnode** 交给 vdom 的 patch
+  // （两者的 `@lytjs/component` 组件都不是有效渲染器 —— Teleport 是空壳、
+  //  Suspense 的 setup 只返回 `{ boundary }` 而非渲染函数；真正逻辑都在 vdom）
+  const vnodePathTag = node.tag === 'Teleport' || node.tag === 'Suspense' ? node.tag : null;
+  if (vnodePathTag) {
+    const vpIdx = findElementIndex(elementVars, 'lyt-comp', consumedCount);
+    const vpHost = vpIdx !== null ? elementVars[vpIdx]!.varName : `_${elementVars.length}`;
     usedRuntime.add('mountVNode');
     usedRuntime.add('createVNode');
-    usedRuntime.add('vdom:Teleport');
+    usedRuntime.add(`vdom:${vnodePathTag}`);
     const mv = getShortName('mountVNode', options.useShortNames ?? true);
     const cv = getShortName('createVNode', options.useShortNames ?? true);
-    const tpChildren = collectSlotVNodesOptimized(node.children, usedRuntime, options);
+    const vpChildren = collectSlotVNodesOptimized(node.children, usedRuntime, options);
     sink.push({
-      varName: tpHost,
-      code: `${mv}(${cv}(Teleport,${buildComponentPropsObject(node)},[${tpChildren.join(',')}]),${tpHost});`,
+      varName: vpHost,
+      code: `${mv}(${cv}(${vnodePathTag},${buildComponentPropsObject(node)},[${vpChildren.join(',')}]),${vpHost});`,
     });
     return;
   }

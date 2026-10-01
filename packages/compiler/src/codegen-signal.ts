@@ -193,11 +193,13 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
   if (usedSlotOutlet) {
     lines.push(`import { mountSlot } from '@lytjs/renderer';`);
   }
-  // Teleport 走 vnode 路径：需运行期挂载原语；vdom 侧只额外引 `Teleport` 符号
-  // （`createVNode` / `Text` 由上面的 usedSlots 分支负责，避免重复声明）
-  if (containsTeleportOutlet(ast.children)) {
+  // `<Teleport>` / `<Suspense>` 走 vnode 路径：需运行期挂载原语 + vdom 侧符号
+  // （`createVNode` / `Text` 由上面的分支负责，避免重复声明）
+  if (containsTag(ast.children, 'Teleport') || containsTag(ast.children, 'Suspense')) {
     lines.push(`import { mountVNode } from '@lytjs/renderer';`);
-    lines.push(`import { Teleport } from '@lytjs/vdom';`);
+    for (const sym of ['Teleport', 'Suspense']) {
+      if (containsTag(ast.children, sym)) lines.push(`import { ${sym} } from '@lytjs/vdom';`);
+    }
   }
   // 内置组件从运行时包导入（使用方无需手动注册）
   if (builtinComponents.size > 0) {
@@ -363,7 +365,6 @@ const BUILTIN_COMPONENT_NAMES: ReadonlySet<string> = new Set([
   'Transition',
   'TransitionGroup',
   'KeepAlive',
-  'Suspense',
 ]);
 
 /** 收集模板中实际用到的内置组件名。 */
@@ -380,13 +381,27 @@ function collectBuiltinComponents(children: unknown, acc = new Set<string>()): S
   return acc;
 }
 
+/** 模板中是否含指定标签（用于按需引符号）。 */
+function containsTag(children: unknown, tag: string): boolean {
+  if (!Array.isArray(children)) return false;
+  for (const child of children) {
+    const node = child as { type?: number; tag?: string; children?: unknown } | null;
+    if (!node || typeof node !== 'object') continue;
+    if (node.type === NodeTypes.ELEMENT && node.tag === tag) return true;
+    if (containsTag(node.children, tag)) return true;
+  }
+  return false;
+}
+
 /** 模板中是否含 `<Teleport>` 出口（决定要不要走 vnode 路径 + 引入相关符号）。 */
 function containsTeleportOutlet(children: unknown): boolean {
   if (!Array.isArray(children)) return false;
   for (const child of children) {
     const node = child as { type?: number; tag?: string; children?: unknown } | null;
     if (!node || typeof node !== 'object') continue;
-    if (node.type === NodeTypes.ELEMENT && node.tag === 'Teleport') return true;
+    if (node.type === NodeTypes.ELEMENT && (node.tag === 'Teleport' || node.tag === 'Suspense')) {
+      return true;
+    }
     if (containsTeleportOutlet(node.children)) return true;
   }
   return false;
@@ -418,16 +433,17 @@ function processElement(
   // 记录本次调用前的长度，末尾统一把"新增绑定"去掉 effect 包裹
   const bindingStart = dynamicBindings.length;
 
-  // `<Teleport>`：产出 **Teleport vnode** 交给 vdom 的 teleport patch（与优化版一致）
-  if (node.tag === 'Teleport') {
-    const tpEntry = findExistingVar(elementVars, 'lyt-comp', consumedCount);
-    const tpHost = tpEntry ?? genVarName('lytComp', varCounter);
-    if (!tpEntry) elementVars.push({ varName: tpHost, tag: 'lyt-comp' });
+  // `<Teleport>` / `<Suspense>`：产出对应 **vnode** 交给 vdom 的 patch（与优化版一致）
+  if (node.tag === 'Teleport' || node.tag === 'Suspense') {
+    const vpTag = node.tag;
+    const vpEntry = findExistingVar(elementVars, 'lyt-comp', consumedCount);
+    const vpHost = vpEntry ?? genVarName('lytComp', varCounter);
+    if (!vpEntry) elementVars.push({ varName: vpHost, tag: 'lyt-comp' });
 
-    const tpChildren = collectSlotVNodes(node.children, '_ctx.');
+    const vpChildren = collectSlotVNodes(node.children, '_ctx.');
     dynamicBindings.push({
-      varName: tpHost,
-      code: `mountVNode(createVNode(Teleport,${buildComponentPropsObject(node)},[${tpChildren.join(',')}]),${tpHost});`,
+      varName: vpHost,
+      code: `mountVNode(createVNode(${vpTag},${buildComponentPropsObject(node)},[${vpChildren.join(',')}]),${vpHost});`,
     });
     return;
   }

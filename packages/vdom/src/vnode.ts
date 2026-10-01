@@ -4,7 +4,15 @@
  * FIX: P2-28 对象创建优化 - 使用对象池减少 GC 压力
  */
 
-import { Fragment, Text, Comment, Teleport, ShapeFlags, isVNode } from '@lytjs/common-vnode';
+import {
+  Fragment,
+  Text,
+  Comment,
+  Teleport,
+  Suspense,
+  ShapeFlags,
+  isVNode,
+} from '@lytjs/common-vnode';
 import type { VNode, VNodeChildren, VNodeTypes } from '@lytjs/common-vnode';
 import { isString, isArray, isFunction, isObject, isNullish, EMPTY_OBJ } from '@lytjs/common-is';
 import { normalizeClass, normalizeStyleObject as normalizeStyle } from '@lytjs/common-string';
@@ -540,6 +548,10 @@ export function getShapeFlag(type: VNodeTypes): number {
   // （用 as unknown 比较：`VNodeTypes` 的联合里未含该 symbol，直接比较会被 TS 判为无交集）
   if ((type as unknown) === Teleport) {
     return ShapeFlags.ARRAY_CHILDREN | ShapeFlags.TELEPORT;
+  }
+  // `<Suspense>`：同 Teleport，供 patch 分派到 mountSuspense / patchSuspense
+  if ((type as unknown) === Suspense) {
+    return ShapeFlags.ARRAY_CHILDREN | ShapeFlags.SUSPENSE;
   }
   // 对象类型 => 组件
   if (isObject(type)) {
