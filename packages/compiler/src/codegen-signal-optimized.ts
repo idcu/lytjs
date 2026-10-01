@@ -1602,7 +1602,7 @@ function extractItemKeyExpr(vnode: VNodeCall | null, locals: ReadonlySet<string>
 /**
  * 生成列表项属性（跳过事件与 :key）
  */
-function buildItemComponentProps(vnode: VNodeCall, locals: ReadonlySet<string>): string {
+export function buildItemComponentProps(vnode: VNodeCall, locals: ReadonlySet<string>): string {
   const props = vnode.props as unknown;
   if (
     !props ||

@@ -65,7 +65,6 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
  * 2) **base 版列表路径未修复** —— 仍按元素处理。
  */
 const KNOWN_FAIL = new Set<string>([
-  'base/v-for 渲染组件列表（每个 item 一个组件实例）',
   'opt/组件列表 + 传入插槽内容',
   'base/组件列表 + 传入插槽内容',
   'base/KeepAlive 包裹的组件在 v-if 切换后仍能渲染',

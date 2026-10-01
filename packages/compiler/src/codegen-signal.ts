@@ -2,6 +2,7 @@
 // Signal 模式代码生成器 - 生成 effect() + DOM 操作代码
 
 import { NodeTypes, ElementTypes } from './constants';
+import { buildItemComponentProps } from './codegen-signal-optimized';
 import { prefixIdentifiers } from './prefix-identifiers';
 import type {
   RootNode,
@@ -164,6 +165,9 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
 
   // 是否含组件（决定要不要引入 mountComponent）
   const usedComponents = containsComponent(ast.children);
+  // 列表项为组件时也要引入 mountComponent：此阶段 v-for 已被 transform 成 JS 调用，
+  // 故用「走 arguments 的预扫」判定（判据与列表分支一致）
+  const usedListComponent = containsComponentVNode(ast.children);
   // 是否存在「带子内容的组件」（决定要不要引入 createVNode/Text 做插槽）
   const usedSlots = hasComponentWithChildren(ast.children);
   // 含 `<slot/>` 出口（决定要不要引入运行期挂载能力）
@@ -182,7 +186,7 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
     `import { createTemplate, getRealNode, setText, setHTML, setAttribute, setProperty, setStyle, setClass, insert, remove, createEventHandler, onCleanup, runCleanups, reconcileArray, claimTextSlots } from '@lytjs/dom-runtime';`,
   );
   // 用到组件挂载时才引入（@lytjs/renderer 提供运行时实现）
-  if (usedComponents) {
+  if (usedComponents || usedListComponent) {
     lines.push(`import { mountComponent } from '@lytjs/renderer';`);
   }
   // 组件带子内容（插槽）或含 Teleport 时才需要 vnode 构造能力
@@ -1296,7 +1300,35 @@ function processCallExpression(
     // 使用 document.createElement + textContent/属性绑定，替代此前硬编码的 benchmark 表格模板
     let createBody = '';
     let updateBody = '';
-    if (renderItem && typeof renderItem.tag === 'string') {
+    // 列表项是**组件**（`tag` 为裸标识符如 `Row`；元素的 `tag` 是带引号字符串 `"li"`）
+    // => 不能按元素处理；改为造容器 + `mountComponent`（与优化版同构）。
+    // 注意：`create` 回调**必须 return 容器节点**，否则 reconcileArray 里
+    // `reconcileKeyMap.set(node, …)` 会收到 undefined。
+    const itemIsComponent =
+      !!renderItem &&
+      typeof renderItem.tag === 'string' &&
+      renderItem.tag !== '' &&
+      !/^["']/.test(renderItem.tag);
+    if (itemIsComponent && renderItem) {
+      const rawTag = String(renderItem.tag);
+      const hostVar = '_' + rawTag;
+      const itemProps = buildItemComponentProps(renderItem, itemLocals);
+      createBody =
+        'const ' +
+        hostVar +
+        " = document.createElement('div');" +
+        'mountComponent(_ctx.' +
+        rawTag +
+        ',' +
+        itemProps +
+        ',' +
+        hostVar +
+        ');' +
+        'return ' +
+        hostVar +
+        ';';
+      updateBody = 'mountComponent(_ctx.' + rawTag + ',' + itemProps + ',_el);';
+    } else if (renderItem && typeof renderItem.tag === 'string') {
       const tag = renderItem.tag.replace(/^"|"$/g, '');
       const elVar = genVarName(tag, _varCounter);
 
@@ -2026,6 +2058,29 @@ function toComponentEventKey(event: string): string {
 /**
  * 判断子树中是否包含组件元素
  */
+/**
+ * 预扫：transformed AST 里是否存在**组件 vnode**。
+ *
+ * 为什么要单独写：此阶段 `v-for` 已被 transform 成 `RENDER_LIST` 的
+ * `JS_CALL_EXPRESSION`（`children` 里不再有元素节点）⇒ 只走 `children` 的
+ * `containsComponent` 找不到列表项里的组件；必须**连 `arguments` 一起走**。
+ * 判据与列表分支一致：`VNODE_CALL` 的 `tag` 是**裸标识符**（元素是带引号字符串）。
+ */
+function containsComponentVNode(node: unknown): boolean {
+  if (!node || typeof node !== 'object') return false;
+  if (Array.isArray(node)) return node.some(containsComponentVNode);
+  const n = node as { type?: number; tag?: string; children?: unknown; arguments?: unknown };
+  if (
+    n.type === NodeTypes.VNODE_CALL &&
+    typeof n.tag === 'string' &&
+    n.tag !== '' &&
+    !/^["']/.test(n.tag)
+  ) {
+    return true;
+  }
+  return containsComponentVNode(n.children) || containsComponentVNode(n.arguments);
+}
+
 function containsComponent(children: TemplateChildNode[]): boolean {
   for (const child of children) {
     if (!child || child.type !== NodeTypes.ELEMENT) continue;
