@@ -189,8 +189,13 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
   if (usedComponents || usedListComponent) {
     lines.push(`import { mountComponent } from '@lytjs/renderer';`);
   }
-  // 组件带子内容（插槽）或含 Teleport 时才需要 vnode 构造能力
-  if (usedSlots || containsTeleportOutlet(ast.children)) {
+  // 组件带子内容（插槽）或含 Teleport 时才需要 vnode 构造能力；
+  // 列表项为组件且带插槽内容时（VNODE_CALL 形态）也需引入
+  if (
+    usedSlots ||
+    containsTeleportOutlet(ast.children) ||
+    hasListComponentVNodeWithChildren(ast.children)
+  ) {
     lines.push(`import { createVNode, Text } from '@lytjs/vdom';`);
   }
   // 含 `<slot/>` 出口时才需要运行期挂载能力
@@ -1313,6 +1318,22 @@ function processCallExpression(
       const rawTag = String(renderItem.tag);
       const hostVar = '_' + rawTag;
       const itemProps = buildItemComponentProps(renderItem, itemLocals);
+      // 列表项的子节点（VNODE_CALL）→ 默认插槽内容。
+      // 列表项 children 是 VNODE_CALL（type 9）且为「单对象」而非数组，先归一化为数组；
+      // 复用既有 serializeVNodeCall（严格模式递归处理 VNODE_CALL → TO_DISPLAY_STRING 叶子）。
+      const rawKids = renderItem.children as unknown;
+      const kidList =
+        rawKids === undefined || rawKids === null
+          ? []
+          : Array.isArray(rawKids)
+            ? rawKids
+            : [rawKids];
+      const kidVNodes: string[] = [];
+      for (const kid of kidList) {
+        const code = serializeVNodeCall(kid, '_ctx.', itemLocals);
+        if (code) kidVNodes.push(code);
+      }
+      const slotsArg = kidVNodes.length ? ',{default:()=>[' + kidVNodes.join(',') + ']}' : '';
       createBody =
         'const ' +
         hostVar +
@@ -1323,11 +1344,12 @@ function processCallExpression(
         itemProps +
         ',' +
         hostVar +
+        slotsArg +
         ');' +
         'return ' +
         hostVar +
         ';';
-      updateBody = 'mountComponent(_ctx.' + rawTag + ',' + itemProps + ',_el);';
+      updateBody = 'mountComponent(_ctx.' + rawTag + ',' + itemProps + ',_el' + slotsArg + ');';
     } else if (renderItem && typeof renderItem.tag === 'string') {
       const tag = renderItem.tag.replace(/^"|"$/g, '');
       const elVar = genVarName(tag, _varCounter);
@@ -2079,6 +2101,31 @@ function containsComponentVNode(node: unknown): boolean {
     return true;
   }
   return containsComponentVNode(n.children) || containsComponentVNode(n.arguments);
+}
+
+/**
+ * 判定子树中是否存在「带子内容的列表项组件」—— 即出现在 RENDER_LIST / 条件表达式里的
+ * 裸标识符 VNODE_CALL（组件）且带有 children（插槽内容）。
+ * 这类构造需要引入 `createVNode` / `Text` 才能把子内容编译成插槽 vnode
+ * （普通「直接 ELEMENT 子组件」由 hasComponentWithChildren 覆盖，而 v-for 项组件
+ * 是 VNODE_CALL 形态，必须单独预扫）。
+ */
+function hasListComponentVNodeWithChildren(node: unknown): boolean {
+  if (!node || typeof node !== 'object') return false;
+  if (Array.isArray(node)) return node.some(hasListComponentVNodeWithChildren);
+  const n = node as { type?: number; tag?: string; children?: unknown; arguments?: unknown };
+  if (
+    n.type === NodeTypes.VNODE_CALL &&
+    typeof n.tag === 'string' &&
+    n.tag !== '' &&
+    !/^["']/.test(n.tag)
+  ) {
+    const c = n.children;
+    if (c !== undefined && c !== null && !(Array.isArray(c) && c.length === 0)) return true;
+  }
+  return (
+    hasListComponentVNodeWithChildren(n.children) || hasListComponentVNodeWithChildren(n.arguments)
+  );
 }
 
 function containsComponent(children: TemplateChildNode[]): boolean {

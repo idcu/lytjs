@@ -1232,6 +1232,25 @@ function processCallExpressionOptimized(
               usedRuntime.add('mountComponent');
               const mc = getShortName('mountComponent', options.useShortNames ?? true);
               const itemProps = buildItemComponentProps(vnode, itemLocals);
+              // 列表项的子节点（VNODE_CALL）→ 默认插槽内容。
+              // 注意：列表项的 children 是 VNODE_CALL（type 9），且为「单对象」而非数组，
+              // 故先归一化为数组再逐项序列化；复用既有的 serializeVNodeCallOptimized
+              // （其严格模式能递归处理 VNODE_CALL → 子节点 → TO_DISPLAY_STRING 叶子）。
+              const rawKids = vnode.children as unknown;
+              const kidList =
+                rawKids === undefined || rawKids === null
+                  ? []
+                  : Array.isArray(rawKids)
+                    ? rawKids
+                    : [rawKids];
+              const kidVNodes: string[] = [];
+              for (const kid of kidList) {
+                const code = serializeVNodeCallOptimized(kid, usedRuntime, options, itemLocals);
+                if (code) kidVNodes.push(code);
+              }
+              const slotsArg = kidVNodes.length
+                ? ',{default:()=>[' + kidVNodes.join(',') + ']}'
+                : '';
               const hostVar = '_' + rawTag;
               createBody =
                 'const ' +
@@ -1244,11 +1263,12 @@ function processCallExpressionOptimized(
                 itemProps +
                 ',' +
                 hostVar +
+                slotsArg +
                 ');' +
                 'return ' +
                 hostVar +
                 ';';
-              updateBody = mc + '(_c.' + rawTag + ',' + itemProps + ',_el);';
+              updateBody = mc + '(_c.' + rawTag + ',' + itemProps + ',_el' + slotsArg + ');';
             }
 
             const tagInfo = isComponentItem ? null : extractTagFromVNode(vnode);
