@@ -1225,7 +1225,33 @@ function processCallExpressionOptimized(
             const vnode = child as VNodeCall;
             renderItem = vnode;
 
-            const tagInfo = extractTagFromVNode(vnode);
+            // 列表项是**组件**（tag 为裸标识符如 Row；元素的 tag 是带引号字符串 "li"）
+            const rawTag = typeof vnode.tag === 'string' ? vnode.tag : '';
+            const isComponentItem = rawTag !== '' && !/^["']/.test(rawTag);
+            if (isComponentItem) {
+              usedRuntime.add('mountComponent');
+              const mc = getShortName('mountComponent', options.useShortNames ?? true);
+              const itemProps = buildItemComponentProps(vnode, itemLocals);
+              const hostVar = '_' + rawTag;
+              createBody =
+                'const ' +
+                hostVar +
+                "=document.createElement('div');" +
+                mc +
+                '(_c.' +
+                rawTag +
+                ',' +
+                itemProps +
+                ',' +
+                hostVar +
+                ');' +
+                'return ' +
+                hostVar +
+                ';';
+              updateBody = mc + '(_c.' + rawTag + ',' + itemProps + ',_el);';
+            }
+
+            const tagInfo = isComponentItem ? null : extractTagFromVNode(vnode);
             if (tagInfo) {
               createBody = `const ${tagInfo.varName}=document.createElement('${tagInfo.tag}');`;
 
@@ -1576,6 +1602,46 @@ function extractItemKeyExpr(vnode: VNodeCall | null, locals: ReadonlySet<string>
 /**
  * 生成列表项属性（跳过事件与 :key）
  */
+function buildItemComponentProps(vnode: VNodeCall, locals: ReadonlySet<string>): string {
+  const props = vnode.props as unknown;
+  if (
+    !props ||
+    Array.isArray(props) ||
+    typeof props !== 'object' ||
+    (props as { type?: number }).type !== NodeTypes.JS_OBJECT_EXPRESSION
+  ) {
+    return '{}';
+  }
+  const parts: string[] = [];
+  for (const prop of (props as JSObjectExpression).properties) {
+    if (prop.type !== NodeTypes.JS_PROPERTY) continue;
+    const key = prop.key as unknown;
+    const keyName =
+      typeof key === 'string'
+        ? key
+        : typeof (key as { content?: unknown } | undefined)?.content === 'string'
+          ? String((key as { content: string }).content)
+          : null;
+    if (!keyName) continue;
+    const cleanKey = keyName.replace(/^["']|["']$/g, '');
+    if (!cleanKey || cleanKey === 'key') continue;
+
+    const value = prop.value as unknown;
+    if (typeof value === 'string') {
+      parts.push(JSON.stringify(cleanKey) + ':' + JSON.stringify(value));
+      continue;
+    }
+    const raw =
+      value &&
+      typeof value === 'object' &&
+      (value as { type?: number }).type === NodeTypes.SIMPLE_EXPRESSION
+        ? String((value as { content?: unknown }).content ?? '')
+        : '';
+    if (raw) parts.push(JSON.stringify(cleanKey) + ':' + toItemExpr(raw, locals));
+  }
+  return '{' + parts.join(',') + '}';
+}
+
 function buildItemProps(
   vnode: VNodeCall,
   locals: ReadonlySet<string>,

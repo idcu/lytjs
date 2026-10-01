@@ -38,11 +38,36 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
  *    疑点：`v-if` 位于**插槽函数内部**，其响应式依赖未与父级 effect 建立关联
  *    （`mountComponent` 已有 `warmupSlots`，但 KeepAlive 内部渲染可能另起 effect）。
  */
+/**
+ * 已知缺陷清单（it.fails，修好会自动翻红 => 请移出）。
+ *
+ * 2026-10-01 进展：**opt（默认 codegen）已修复「v-for 渲染组件列表」**（含 props 传递）：
+ * 产物由 `createElement('Row')`（无意义标签）改为
+ * `create:(it)=>{const _Row=document.createElement('div');m(_c.Row,{...},_Row);return _Row;}`
+ * —— 关键是 **create 回调必须 return 容器**（否则 `reconcileArray` 里
+ * `reconcileKeyMap.set(node,...)` 收到 undefined，抛 `Invalid value used as weak map key`）。
+ *
+ * 仍钉住：
+ * 1) **列表项组件的插槽内容未传递** —— `<Card v-for=..><span>{{i.id}}</span></Card>` 仍为 0 个；
+ * 2) **base 版列表路径未修复** —— 仍按元素处理。
+ */
+/**
+ * 已知缺陷清单（it.fails，修好会自动翻红 => 请移出）。
+ *
+ * 2026-10-01 进展：**opt（默认 codegen）已修复「v-for 渲染组件列表」**（含 props 传递）：
+ * 产物由 `createElement('Row')`（无意义标签）改为
+ * `create:(it)=>{const _Row=document.createElement('div');m(_c.Row,{...},_Row);return _Row;}`
+ * —— 关键是 **create 回调必须 return 容器**（否则 `reconcileArray` 里
+ * `reconcileKeyMap.set(node,...)` 收到 undefined，抛 `Invalid value used as weak map key`）。
+ *
+ * 仍钉住：
+ * 1) **列表项组件的插槽内容未传递** —— `<Card v-for=..><span>{{i.id}}</span></Card>` 仍为 0 个；
+ * 2) **base 版列表路径未修复** —— 仍按元素处理。
+ */
 const KNOWN_FAIL = new Set<string>([
   'base/v-for 渲染组件列表（每个 item 一个组件实例）',
-  'opt/v-for 渲染组件列表（每个 item 一个组件实例）',
-  'base/组件列表 + 传入插槽内容',
   'opt/组件列表 + 传入插槽内容',
+  'base/组件列表 + 传入插槽内容',
   'base/KeepAlive 包裹的组件在 v-if 切换后仍能渲染',
   'opt/KeepAlive 包裹的组件在 v-if 切换后仍能渲染',
 ]);
