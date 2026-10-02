@@ -7,6 +7,8 @@ import type { VNode } from '@lytjs/vdom';
 import { Fragment, Text, ShapeFlags } from '@lytjs/vdom';
 import { isString, isArray } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
+import { isOn } from '@lytjs/common-events';
+import { patchProp } from '@lytjs/adapter-web';
 import { escapeHtml } from '../utils';
 
 // ============================================================
@@ -514,8 +516,34 @@ function hydrateAttributes(el: Element, vnode: VNode): void {
   // 从 vnode props 设置或更新属性
   for (const key in props) {
     if (key === 'key' || key === 'ref') continue;
-    vnodeKeys.add(key);
     const value = props[key];
+
+    // ★ 事件与复合属性必须交给渲染器自身的 prop 语义（`patchProp`）处理，
+    // 不能当普通属性 `setAttribute`。
+    //
+    // 2026-10-02 实测（`packages/renderer/tests/hydration-events.test.ts`）：
+    // ① 事件：此前 `onClick` 被 `setAttribute('onClick', String(fn))` 写成属性，
+    //    随即被下方「移除未声明属性」循环按**小写**名（`onclick`）判定为未声明而删除
+    //    ⇒ 水合后 DOM 上既无属性、也无监听器，**事件永久失效**（实测点击计数恒为 0）。
+    //    走 `patchProp` 才是 invoker（`addEventListener`）语义。**故意不登记 vnodeKeys**：
+    //    事件不落 DOM 属性，且这样 SSR 内联的 `on*` 属性会被下方循环清掉，避免双触发。
+    // ② 复合属性：`class` / `style` 由 `patchClass` / `patchStyle` 处理。它们**会**写 DOM
+    //    属性，故必须登记 vnodeKeys，否则刚写入的 class/style 会被下方循环误删（实测过）。
+    if (isOn(key)) {
+      patchProp(el, key, null, value, false);
+      continue;
+    }
+    if (key === 'class' || key === 'style') {
+      patchProp(el, key, null, value, false);
+      vnodeKeys.add(key);
+      continue;
+    }
+
+    vnodeKeys.add(key);
+    // HTML 文档中 `setAttribute` 会把属性名小写化（实测 `tabIndex` → `tabindex`），
+    // 故同时登记小写形式；否则刚写入的属性会被下方循环当成「未声明」而删掉。
+    vnodeKeys.add(key.toLowerCase());
+
     if (typeof value === 'boolean') {
       if (value) {
         el.setAttribute(key, '');
