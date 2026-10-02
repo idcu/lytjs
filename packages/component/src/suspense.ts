@@ -391,26 +391,43 @@ export function abortSuspense(boundary: SuspenseAsyncState): void {
 let currentSuspenseBoundary: SuspenseAsyncState | null = null;
 
 /**
- * useSuspense —— 把 Promise 注册到最近的 Suspense 边界。
+ * useSuspense —— 把 Promise 注册到最近的 Suspense 边界，**并返回它本身**。
  *
- * ⚠️ 本仓**不支持** React 风格「throw promise」的读取模式：全仓没有任何
- * 「捕获被抛出的 Promise 以挂起渲染」的分支（`vdom` 的 patch / 错误路径无
- * `isPromise`；`component-setup.ts` 只对 **async setup 的返回值**做 `await`）。
- * 因此本函数**只做注册**，语义是「告知最近的边界存在这个异步任务」：
- * 边界据此切到 fallback，并在 resolve / reject 时切回主线内容或错误分支
- * （实现见 `registerAsyncChild`）。
+ * ## 怎么用（推荐写法）
  *
- * 由此推出两条**能力边界**：
- * · **不返回值**，也**不会让当前 setup 挂起** —— 异步数据请在组件内自行
- *   `await` / `.then()`，或通过边界的 `onResolve` / `onError` 回调获取。
- * · 父链上**没有** Suspense 边界时会**临时新建一个随即丢弃的边界**
- *   （保留原行为），此时注册不产生任何可见效果。
+ * ```ts
+ * const User = {
+ *   async setup() {
+ *     const user = await useSuspense(fetchUser());   // ← 挂起本组件的首帧
+ *     return { user };
+ *   },
+ *   render(ctx) { return h('div', null, ctx.user.name); },
+ * };
+ * ```
  *
- * 返回类型由 `T` 改为 `void`：此前声明返回 `T` 却实际 `return undefined as T`，
- * 属类型谎言（README「Suspense」一行的已知缺陷）。同时删除从未被读取的
- * `_key` 形参 —— 它暗示了并不存在的「按 key 去重」语义。
+ * 之所以能这样用：组件包 `async setup` 时，`component-setup.ts` 会 `await`
+ * setup 的返回值、把 `vnode.isAsyncPlaceholder` 置真，并在**兑现后调用
+ * `instance.update?.()` 触发重渲染**（`3995eb8a`）⇒ 数据到达时视图会更新。
+ *
+ * ## 边界注册的实际效果（⚠️ 诚实说明）
+ *
+ * 注册本身仍然会做（找到最近的边界就挂上去，找不到就临时新建一个），
+ * 但**当前 `<Suspense>` 走的是 vdom 的 shapeFlag 分派** ⇒ **组件实例不会被创建**
+ * ⇒ 父链上永远不存在真实的 `Suspense` 实例 ⇒ 注册**不产生可见效果**
+ * （`vdom` 的 `mountSuspense` 里那段 `suspenseLinker` 桥接也因此是死代码）。
+ * ⇒ **本函数目前真正有用的是「返回这个 Promise」**；`onPending` / `onResolve` /
+ * `onError` 回调要等 `<Suspense>` 能作为组件实例挂载后才生效。
+ *
+ * ## 不支持什么
+ *
+ * **不实现** React 风格「throw promise 挂起」：全仓没有任何「捕获被抛出的
+ * Promise 以挂起渲染」的分支。异步请一律用 `await useSuspense(...)`。
+ *
+ * ## 返回类型
+ *
+ * 返回 `Promise<T>`（此前声明 `T` 却 `return undefined as T`，是类型谎言）。
  */
-export function useSuspense(promise: Promise<unknown>): void {
+export function useSuspense<T>(promise: Promise<T>): Promise<T> {
   const instance = getCurrentInstance();
   if (!instance) {
     throw new Error('useSuspense must be called within a component setup function');
@@ -423,8 +440,11 @@ export function useSuspense(promise: Promise<unknown>): void {
     boundary = createSuspenseBoundary();
   }
 
-  // 注册异步子组件：边界据此切到 fallback，并在 settle 后切回
+  // 注册异步子组件（当前无可见效果，见 JSDoc「边界注册的实际效果」）
   registerAsyncChild(boundary, promise);
+
+  // ★ 返回 Promise 本身 —— 调用方 `await` 它即可挂起本组件的首帧
+  return promise;
 }
 
 /**

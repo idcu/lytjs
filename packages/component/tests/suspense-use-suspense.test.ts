@@ -41,19 +41,18 @@ async function flushMicrotasks(): Promise<void> {
 }
 
 describe('useSuspense —— 只注册，不返回、不挂起', () => {
-  it('★ 返回值必须是 void（不再伪装成 T）', () => {
+  it('★ 返回该 Promise 本身（调用方 await 它即可挂起首帧）', async () => {
     const boundary = createSuspenseBoundary();
-    const result = runWithSuspenseParent(boundary, () => useSuspense(Promise.resolve(1)));
+    const promise = Promise.resolve(42);
+    const returned = runWithSuspenseParent(boundary, () => useSuspense(promise));
 
-    // 判别点一（运行期）：`_key` 形参已删除 —— 它暗示了并不存在的「按 key 去重」语义。
-    // 旧实现 arity 为 2。
+    // 判别点一（运行期，**强判别**）：旧实现 `return undefined as T` ⇒ 这里会得到
+    // undefined，断言「返回同一个 Promise」在旧版上必红。
+    expect(returned).toBe(promise);
+    await expect(returned).resolves.toBe(42);
+
+    // 判别点二（arity）：`_key` 死形参已删除 —— 它暗示了并不存在的「按 key 去重」。
     expect(useSuspense.length).toBe(1);
-
-    // 判别点二（声明期）：运行期返回 undefined 是**新旧一致的**（本修复是「收回承诺」，
-    // 不改运行期行为）⇒ 真正的判别在类型层：旧签名 `useSuspense<T>(p: Promise<T>): T`
-    // 会让下面这行 `tsc --noEmit` 报错，新签名 `: void` 通过。
-    const typed: void = result;
-    expect(typed).toBeUndefined();
   });
 
   it('把 promise 注册到最近的边界，并切到 pending', () => {

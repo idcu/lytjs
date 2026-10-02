@@ -12,6 +12,23 @@ export { createApp } from './create-app';
 // 组件本体在 `@lytjs/component`，这里只做**转出**（不复制实现），
 // 避免出现第二个真相源。
 export { Suspense, Teleport, Transition, TransitionGroup, KeepAlive } from '@lytjs/component';
+
+// ── Suspense 相关 API ──────────────────────────────────────────────────
+// ⚠️ 2026-10-03 新增：文档示例写的是 `import { Suspense, useSuspense } from '@lytjs/core'`，
+// 而 `useSuspense` **也不在** core 的转出面里（与内置组件同一类漏转，本轮第三次遇到）。
+// 实测症状：调用方拿到 `undefined` ⇒ `await useSuspense(p)` 抛「not a function」
+// ⇒ async setup 被判失败 ⇒ 视图永远停在首帧 `undefined`，且**不报错**。
+export {
+  useSuspense,
+  startTransition,
+  createSuspenseResource,
+  SuspenseResource,
+  isSuspensePending,
+  getSuspenseError,
+  resolveSuspense,
+  abortSuspense,
+  linkSuspenseBoundary,
+} from '@lytjs/component';
 export { h, h as createElement } from './h';
 export { defineComponent, defineAsyncComponent } from './define-component';
 export { nextTick } from './next-tick';

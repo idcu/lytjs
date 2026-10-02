@@ -36,16 +36,16 @@
 
 ### ⚠️ 实验性 / 不完整
 
-| 能力                                  | 状态                                                                                                                                                                                                |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 模板编译的 AOT                        | 目前为**运行时编译**（`new Function` 注入 helper）；生产建议走 AOT 预编译                                                                                                                           |
-| `activated` / `deactivated` 钩子      | 需先补 vdom 对 `ShapeFlags.COMPONENT_KEPT_ALIVE` 的消费                                                                                                                                             |
-| **KeepAlive**                         | **当前不生效**：缓存写入时机错（render 阶段拿不到子实例）+ vdom 无对应消费方，详见 `packages/component/src/keep-alive.ts` 注释                                                                      |
-| Suspense                              | `useSuspense` 只把 Promise 注册到最近的边界（**不返回数据、不挂起渲染**）—— 本仓**没有**「throw promise」读取模式                                                                                   |
-| Hydration                             | **部分实现**：`createApp(App).mount(el, { hydrate: true })`（vnode 模式）可复用 SSR DOM **并接管响应式更新**；`hydrateApp` / `hydrateVisible` 只做 DOM↔vnode 一致化（前者不建实例、后者仍是属性级） |
-| UI 组件库                             | 约 16/56 组件存在「已声明 prop 未接线」；Carousel / Transition 为壳；无虚拟滚动                                                                                                                     |
-| `@lytjs/ssg` / `@lytjs/html-renderer` | **壳实现**（不生成文件 / head 生成未实现）；真实现在 `@lytjs/ssr`                                                                                                                                   |
-| 路由                                  | `RouterView` 未处理返回 Promise 的懒加载；无数据预取                                                                                                                                                |
+| 能力                                  | 状态                                                                                                                                                                                                       |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 模板编译的 AOT                        | 目前为**运行时编译**（`new Function` 注入 helper）；生产建议走 AOT 预编译                                                                                                                                  |
+| `activated` / `deactivated` 钩子      | 需先补 vdom 对 `ShapeFlags.COMPONENT_KEPT_ALIVE` 的消费                                                                                                                                                    |
+| **KeepAlive**                         | **当前不生效**：缓存写入时机错（render 阶段拿不到子实例）+ vdom 无对应消费方，详见 `packages/component/src/keep-alive.ts` 注释                                                                             |
+| Suspense                              | **部分可用**：`async setup` + `await useSuspense(p)` 可挂起首帧、兑现后视图会更新；但**边界注册无可见效果**（`<Suspense>` 走 vdom 分派 ⇒ 不建组件实例），且 **fallback 从未出现**、只支持数组形态 children |
+| Hydration                             | **部分实现**：`createApp(App).mount(el, { hydrate: true })`（vnode 模式）可复用 SSR DOM **并接管响应式更新**；`hydrateApp` / `hydrateVisible` 只做 DOM↔vnode 一致化（前者不建实例、后者仍是属性级）        |
+| UI 组件库                             | 约 16/56 组件存在「已声明 prop 未接线」；Carousel / Transition 为壳；无虚拟滚动                                                                                                                            |
+| `@lytjs/ssg` / `@lytjs/html-renderer` | **壳实现**（不生成文件 / head 生成未实现）；真实现在 `@lytjs/ssr`                                                                                                                                          |
+| 路由                                  | `RouterView` 未处理返回 Promise 的懒加载；无数据预取                                                                                                                                                       |
 
 ### ❌ 占位 / 未接入（对外暴露但无行为）
 
