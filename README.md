@@ -41,8 +41,8 @@
 | 模板编译的 AOT                        | 目前为**运行时编译**（`new Function` 注入 helper）；生产建议走 AOT 预编译                                                      |
 | `activated` / `deactivated` 钩子      | 需先补 vdom 对 `ShapeFlags.COMPONENT_KEPT_ALIVE` 的消费                                                                        |
 | **KeepAlive**                         | **当前不生效**：缓存写入时机错（render 阶段拿不到子实例）+ vdom 无对应消费方，详见 `packages/component/src/keep-alive.ts` 注释 |
-| Suspense                              | `useSuspense` 恒返回 `undefined`                                                                                               |
-| Hydration                             | 未实现（`enhanced-hydration` 为 DOM 遍历占位）                                                                                 |
+| Suspense                              | `useSuspense` 只把 Promise 注册到最近的边界（**不返回数据、不挂起渲染**）—— 本仓**没有**「throw promise」读取模式              |
+| Hydration                             | **部分实现**：`hydrateIsland` / `hydrateApp` 复用 SSR DOM 做 DOM↔vnode 一致化（含事件绑定）；仍不建组件实例 ⇒ 不接管响应式更新 |
 | UI 组件库                             | 约 16/56 组件存在「已声明 prop 未接线」；Carousel / Transition 为壳；无虚拟滚动                                                |
 | `@lytjs/ssg` / `@lytjs/html-renderer` | **壳实现**（不生成文件 / head 生成未实现）；真实现在 `@lytjs/ssr`                                                              |
 | 路由                                  | `RouterView` 未处理返回 Promise 的懒加载；无数据预取                                                                           |
