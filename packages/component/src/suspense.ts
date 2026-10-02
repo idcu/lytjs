@@ -3,7 +3,7 @@
 
 import type { ComponentInternalInstance, ComponentOptions, SetupContext } from './types';
 import { createComponentInstance, setupComponent } from './component';
-import { ShapeFlags, createBaseVNode } from '@lytjs/common-vnode';
+import { ShapeFlags, createBaseVNode, Suspense as SuspenseVNodeType } from '@lytjs/common-vnode';
 import type { VNode } from '@lytjs/common-vnode';
 import { error, warn } from '@lytjs/common-error';
 import { nextTick } from '@lytjs/common-scheduler';
@@ -89,6 +89,23 @@ export interface SuspenseAsyncState {
 
 export const Suspense: ComponentOptions = {
   name: 'Suspense',
+  // ★ 2026-10-03：与 `Teleport` 同款的分派桥 —— 声明对应的 vnode 符号，
+  // 让 `getShapeFlag` 产出 `ARRAY_CHILDREN | SUSPENSE`，从而走 vdom 的
+  // `mountSuspense` / `patchSuspense`。缺它时组件对象落进 `STATEFUL_COMPONENT`，
+  // 而本组件**没有 render**（`setup` 返回的是 `{ boundary }` 对象）
+  // ⇒ 模板与渲染函数里一律渲染为空。
+  //
+  // ⚠️ **已知缺口（2026-10-03 实测，勿当已修）**：
+  // ① **fallback 从未出现**。`patchSuspense` 在**挂载子组件之前**就检查
+  //    `defaultBranch.isAsyncPlaceholder`，而该标记是子组件 `setupComponent`
+  //    时才设的 ⇒ 检查时恒为 false ⇒ 直接挂 default，**永远走不到 fallback 分支**。
+  //    这是**顺序缺口**，要修需改 vdom 的 `mountSuspense`（先挂载探测、再决定）。
+  // ② **只支持数组形态的 children**。实测 `{ default, fallback }` 这种 slots 对象
+  //    形态经 vdom 的 `resolveSuspenseChildren` 解析不出内容 ⇒ 渲染为空；
+  //    `[defaultChild, fallbackChild]` 数组形态正常。
+  // ③ 组件 `setup`（含 `registerSuspenseLinker` 与 `{ boundary }`）在按 shapeFlag
+  //    分派时**不会执行** ⇒ `useSuspense` 找不到可挂接的边界。
+  __vnodeType: SuspenseVNodeType,
 
   props: {
     timeout: { type: Number, default: undefined },
