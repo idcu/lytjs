@@ -92,6 +92,27 @@ export interface RendererOptions<HN = unknown, HE extends HN = HN> {
   createComment(text: string): HN;
   /** 查询选择器（用于 Teleport 目标） */
   querySelector?(selector: string): HE | null;
+  /**
+   * 取节点类型（对齐 DOM `nodeType`：1=元素 / 3=文本 / 8=注释）。
+   *
+   * ⚠️ **仅水合路径需要**：挂载时用它判断容器里**既有的**节点是否与 vnode 同类，
+   * 从而决定「认领复用」还是「新建」。`@lytjs/host-contract` 的 `RendererHost`
+   * 早已声明同名可选方法（注释即写明「用于 hydration」），`WebRendererHost` 也已实现，
+   * 但此前**从未接进渲染器** ⇒ `createRenderer(...).hydrate()` 无法判断节点类型。
+   */
+  getNodeType?(node: HN): number;
+  /**
+   * 取元素标签名（**小写**），用于水合时匹配同标签的既有元素。
+   * 同上：宿主契约已声明，渲染器此前未接。
+   */
+  getTagName?(el: HE): string;
+  /**
+   * 取子节点列表（宿主契约里 `WebRendererHost` 已有 `getChildNodes`）。
+   *
+   * ⚠️ 宿主只提供 `nextSibling(node)`（**没有 firstChild**），因此水合认领
+   * 必须靠它列出子节点后按序扫描。同样是「契约与宿主都实现了、渲染器此前未接」。
+   */
+  getChildNodes?(node: HN): HN[];
   /** 可选回调：为子组件创建和 setup 组件实例。
    *  当提供时，mountComponent 会在 vnode.component 未设置时调用此回调。
    *  接收 vnode 和父组件实例。

@@ -25,10 +25,28 @@ export type DOMRenderer = Renderer<VNode>;
 
 // PluginInstallFunction 已在下方 Plugin 区域定义
 
+/**
+ * `App.mount()` 的附加选项。
+ *
+ * - `hydrate: true` —— **水合挂载**：复用容器内既有的 SSR DOM（不重建），
+ *   同时照常建立组件实例与响应式 effect ⇒ 挂载后由客户端接管更新。
+ *   仅 vnode 模式支持；signal 模式会忽略该选项。
+ *
+ * ⚠️ 能力边界：认领是**按顺序配对**的（宿主无 `firstChild`、无 keyed 匹配），
+ * 且**不删除**容器里未被认领的多余节点。SSR 与客户端产物顺序/结构不一致时
+ * 会退化（多出的节点新建、缺失的节点认领不到）。
+ */
+export interface AppMountOptions {
+  hydrate?: boolean;
+}
+
 export interface App<HostElement = Element> {
   config: AppConfig;
   use(plugin: Plugin | PluginInstallFunction, ...options: unknown[]): App;
-  mount(rootContainer: HostElement | string): Promise<ComponentPublicInstance | null>;
+  mount(
+    rootContainer: HostElement | string,
+    options?: AppMountOptions,
+  ): Promise<ComponentPublicInstance | null>;
   unmount(): void;
   provide<T = unknown>(key: string | symbol, value: T): App;
   inject<T = unknown>(key: string | symbol): T | undefined;

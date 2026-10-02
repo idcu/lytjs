@@ -50,6 +50,12 @@ interface InternalRendererOptions<HN, HE extends HN> {
   querySelector: ((selector: string) => HE | null) | undefined;
   nextSibling: (node: HN) => HN | null;
   parentNode: (node: HN) => HN | null;
+  /** 水合用：取节点类型（1=元素 / 3=文本 / 8=注释） */
+  getNodeType: ((node: HN) => number) | undefined;
+  /** 水合用：取元素标签名（小写） */
+  getTagName: ((el: HE) => string) | undefined;
+  /** 水合用：取子节点列表（认领时按序扫描） */
+  getChildNodes: ((node: HN) => HN[]) | undefined;
   setupChildComponent:
     | ((vnode: VNode, parent: ComponentInternalInstance | null) => void)
     | undefined;
@@ -84,6 +90,11 @@ function hostToOptions<HN, HE extends HN>(
     querySelector: (selector) => host.querySelector(selector),
     nextSibling: (node) => host.nextSibling(node),
     parentNode: (node) => host.parentNode(node),
+    getNodeType: host.getNodeType ? (node) => host.getNodeType!(node) : undefined,
+    getTagName: host.getTagName ? (el) => host.getTagName!(el) : undefined,
+    getChildNodes: host.getChildNodes
+      ? (node) => host.getChildNodes!(node as unknown as HE)
+      : undefined,
     setupChildComponent: undefined,
     normalizeProps: undefined,
     invokeMountedHook: undefined,
@@ -113,6 +124,9 @@ function optionsToInternal<HN, HE extends HN>(
       : undefined,
     nextSibling: (node) => options.nextSibling(node),
     parentNode: (node) => options.parentNode(node),
+    getNodeType: options.getNodeType ? (node) => options.getNodeType!(node) : undefined,
+    getTagName: options.getTagName ? (el) => options.getTagName!(el) : undefined,
+    getChildNodes: options.getChildNodes ? (node) => options.getChildNodes!(node) : undefined,
     setupChildComponent: options.setupChildComponent,
     normalizeProps: options.normalizeProps,
     invokeMountedHook: options.invokeMountedHook,
@@ -200,6 +214,8 @@ export function createRenderer<HN, HE extends HN>(
     isSVG?: boolean,
   ): void;
   mount(vnode: VNode, container: HN): void;
+  /** 水合挂载：复用容器内既有 DOM，并照常建立组件实例与响应式 effect */
+  hydrate(vnode: VNode, container: HN): void;
   unmount(vnode: VNode): void;
   move(
     vnode: VNode,
@@ -235,6 +251,8 @@ export function createRenderer<HN, HE extends HN>(
     isSVG?: boolean,
   ): void;
   mount(vnode: VNode, container: HN): void;
+  /** 水合挂载：复用容器内既有 DOM，并照常建立组件实例与响应式 effect */
+  hydrate(vnode: VNode, container: HN): void;
   unmount(vnode: VNode): void;
   move(
     vnode: VNode,
@@ -280,6 +298,9 @@ export function createRenderer<HN, HE extends HN>(
     patchProp,
     createComment,
     querySelector,
+    getNodeType,
+    getTagName,
+    getChildNodes,
     setupChildComponent,
     normalizeProps,
     invokeMountedHook,
@@ -317,6 +338,17 @@ export function createRenderer<HN, HE extends HN>(
   ctx.patchProp = patchProp;
   ctx.createComment = createComment;
   ctx.querySelector = querySelector;
+  ctx.getNodeType = getNodeType;
+  ctx.getTagName = getTagName;
+  ctx.getChildNodes = getChildNodes;
+  // ── 水合状态 ────────────────────────────────────────────────────────
+  // `hydrate()` 入口置 true，首屏挂载期间 mountElement / mountTextNode /
+  // mountCommentNode 改为「认领」容器内既有节点而非新建。
+  // ⚠️ 默认 false ⇒ **既有挂载路径行为完全不变**（这是本改动风险可控的关键）。
+  ctx.hydrating = false;
+  // 本次水合中已被某个 vnode 占用的宿主节点（**含因 SSR 缺失而新建的**，
+  // 否则后续兄弟 vnode 会误认它 —— 详见 patch-element 的 claimExisting 注释）
+  ctx.hydrateUsed = new Set<HN>();
   ctx.setupChildComponent = setupChildComponent;
   ctx.normalizeProps = normalizeProps;
   ctx.invokeMountedHook = invokeMountedHook;
@@ -673,6 +705,38 @@ export function createRenderer<HN, HE extends HN>(
     patch(null, vnode, container, null);
   }
 
+  /**
+   * 水合挂载：复用容器内**既有的** DOM（典型来源：SSR 产出的 HTML），
+   * 同时照常建立组件实例与响应式 effect ⇒ 挂载完成后**由客户端接管更新**。
+   *
+   * 与 `mount()` 的差别只有一处：首屏挂载时，元素/文本/注释优先**认领**
+   * 同类型的既有节点（跳过 `create*` 与 `insert`），props 仍照常 apply
+   * （因此事件监听器会在水合时接上）。
+   *
+   * ⚠️ 能力边界（务必知悉后再用）：
+   * · 宿主必须提供 `getNodeType` / `getTagName`（`WebRendererHost` 已有），
+   *   否则无法判断节点类型，只能退化为「全部新建」。
+   * · 认领是**按顺序配对**的，不做 keyed 匹配 ⇒ SSR 与客户端产物顺序不一致时
+   *   会认领到错位的节点（此时 dev 侧告警，不静默）。
+   * · **不删除**容器里未被认领的多余节点（避免误删容器中的其它内容）。
+   */
+  function hydrate(vnode: VNode, container: HN): void {
+    if (!getNodeType || !getTagName || !getChildNodes) {
+      warn(
+        'hydrate() requires the host to provide getNodeType/getTagName/getChildNodes; ' +
+          'falling back to a normal mount (existing DOM will be duplicated).',
+      );
+    }
+    ctx.hydrating = true;
+    ctx.hydrateUsed.clear();
+    try {
+      patch(null, vnode, container, null);
+    } finally {
+      ctx.hydrating = false;
+      ctx.hydrateUsed.clear();
+    }
+  }
+
   // ============================================================
   // diffChildren - 公共 API
   // ============================================================
@@ -711,6 +775,7 @@ export function createRenderer<HN, HE extends HN>(
   return {
     patch,
     mount,
+    hydrate,
     unmount: (vnode: VNode) => unmount(vnode, null, null, true),
     move,
     diffChildren,

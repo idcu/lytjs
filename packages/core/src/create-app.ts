@@ -7,6 +7,7 @@ import { error, warn } from '@lytjs/common-error';
 import type {
   App,
   AppOptions,
+  AppMountOptions,
   Plugin,
   PluginWithCleanup,
   PluginFunctionWithCleanup,
@@ -212,7 +213,7 @@ export function createApp(
       return pluginValidator;
     },
 
-    async mount(rootContainer: string | Element) {
+    async mount(rootContainer: string | Element, mountOptions?: AppMountOptions) {
       if (_isUnmounted) {
         throw new Error(
           `[LytJS] App has been unmounted and cannot be remounted. Create a new app instance instead.`,
@@ -247,11 +248,14 @@ export function createApp(
       try {
         // 根据渲染模式选择不同的渲染路径
         if (effectiveMode === 'signal') {
+          if (mountOptions?.hydrate && __DEV__) {
+            warn('[LytJS] App.mount(): `hydrate` 仅在 vnode 模式生效，signal 模式将忽略该选项。');
+          }
           return mountWithSignalMode(container);
         }
 
         // 默认 VNode 模式
-        return await mountWithVNodeMode(container);
+        return await mountWithVNodeMode(container, mountOptions?.hydrate === true);
       } catch (err) {
         if (app.errorHandler) {
           app.errorHandler(err, null, 'mount');
@@ -435,7 +439,10 @@ export function createApp(
 
   // ==================== VNode 模式挂载 ====================
 
-  async function mountWithVNodeMode(container: Element): Promise<ComponentPublicInstance> {
+  async function mountWithVNodeMode(
+    container: Element,
+    hydrate: boolean = false,
+  ): Promise<ComponentPublicInstance> {
     // 通过组件系统的标准流程创建根 vnode
     const rootVNode = createVNode(rootComponent, rootProps);
 
@@ -512,7 +519,10 @@ export function createApp(
       invokeUnmountedHook(inst: ComponentInternalInstance) {
         callUnmountedHook(inst);
       },
-    }) as { mount: (vnode: VNode, container: Node) => void };
+    }) as {
+      mount: (vnode: VNode, container: Node) => void;
+      hydrate?: (vnode: VNode, container: Node) => void;
+    };
     // FIX: P2-batch2-7 跨包类型断言说明：
     // context.renderer 的类型为 Renderer | null（来自 core 包），
     // 而 DOMRenderer 类型定义在 dom 包中。此处通过 unknown 桥接是安全的，
@@ -521,7 +531,18 @@ export function createApp(
     context._vnode = rootVNode;
 
     // 挂载 vnode
-    renderer.mount(rootVNode, container);
+    if (hydrate && typeof renderer.hydrate === 'function') {
+      // 水合：复用容器内既有的 SSR DOM（不重建），但**照常建立渲染 effect**
+      // ⇒ 挂载完成后由客户端接管响应式更新
+      renderer.hydrate(rootVNode, container);
+    } else {
+      if (hydrate && __DEV__) {
+        warn(
+          '[LytJS] App.mount({ hydrate: true })：当前渲染器未提供 hydrate 能力，已退化为普通挂载。',
+        );
+      }
+      renderer.mount(rootVNode, container);
+    }
 
     // 创建并返回公共实例
     const publicInstance = createComponentPublicInstance(instance);

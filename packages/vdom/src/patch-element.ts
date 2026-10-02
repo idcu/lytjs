@@ -30,6 +30,21 @@ export interface RendererContext<HN, HE extends HN> {
   patchProp: (el: HE, key: string, prevValue: unknown, nextValue: unknown) => void;
   createComment: (text: string) => HN;
   querySelector: ((selector: string) => HE | null) | undefined;
+  /** 取容器的子节点列表（水合认领时按序扫描） */
+  getChildNodes: ((node: HN) => HN[]) | undefined;
+  /** 水合用：取节点类型（1=元素 / 3=文本 / 8=注释） */
+  getNodeType: ((node: HN) => number) | undefined;
+  /** 水合用：取元素标签名（小写） */
+  getTagName: ((el: HE) => string) | undefined;
+  /** 水合模式开关：`hydrate()` 入口置 true，首屏挂载期间复用既有 DOM */
+  hydrating: boolean;
+  /**
+   * 本次水合中**已被某个 vnode 占用**的宿主节点。
+   * 既包含「认领来的既有节点」，也包含「因 SSR 缺失而新建的节点」——
+   * 否则后续兄弟 vnode 会把上一个 vnode 刚新建的节点误认成自己的（实测可致
+   * 两个 vnode 共享同一 DOM 节点）。未占用者一律跳过。
+   */
+  hydrateUsed: Set<HN>;
   setupChildComponent:
     | ((vnode: VNode, parent: ComponentInternalInstance | null) => void)
     | undefined;
@@ -178,6 +193,47 @@ export function createElementPatch<HN, HE extends HN>(
   }
 
   // ============================================================
+  // 水合：认领容器内既有的节点
+  //
+  // 宿主契约（`@lytjs/host-contract` 的 `RendererHost`）**早已声明**
+  // `getNodeType` / `getTagName` 且注释写明「用于 hydration」，`WebRendererHost`
+  // 也已实现 —— 但此前 vdom 从未把它们接进渲染器，也没有 `hydrate()` 入口，
+  // 于是「SSR 产出的 DOM 在客户端复用」这件事在本仓**没有任何实现**。
+  // 本节把那三个已存在的零件接起来；`ctx.hydrating` 默认 false ⇒ 挂载路径不变。
+  // ============================================================
+
+  const NODE_TYPE_ELEMENT = 1;
+  const NODE_TYPE_TEXT = 3;
+  const NODE_TYPE_COMMENT = 8;
+
+  /**
+   * 在容器里找第一个**未被占用**且**类型匹配**（元素还需标签名相同）的既有节点。
+   *
+   * - 命中即登记进 `hydrateUsed` ⇒ 兄弟同标签（`<li>`×3）不会认领到同一个节点；
+   * - 未命中返回 `null`，调用方退回「新建」（客户端比 SSR 多出来的节点）；
+   * - 顺带跳过的节点**不删除**（容器里可能有本组件之外的其它内容，删不得）。
+   *
+   * ⚠️ 宿主没有 `firstChild`（`nextSibling` 只接受一个参数），故按
+   * `getChildNodes` 的快照顺序扫描；水合期间只有「认领」不「插入」，
+   * 已被占用的节点靠 `hydrateUsed` 排除，因此不会错位。
+   */
+  function claimExisting(container: HN, nodeType: number, tag?: string): HN | null {
+    const { getNodeType, getTagName, getChildNodes, hydrateUsed } = ctx;
+    if (!getNodeType || !getTagName || !getChildNodes) return null;
+    const children = getChildNodes(container);
+    for (let i = 0; i < children.length; i++) {
+      const node = children[i] as HN;
+      if (hydrateUsed.has(node)) continue;
+      if (getNodeType(node) !== nodeType) continue;
+      // 元素额外要求标签名一致（宿主返回小写标签名）
+      if (nodeType === NODE_TYPE_ELEMENT && getTagName(node as HE) !== tag) continue;
+      hydrateUsed.add(node);
+      return node;
+    }
+    return null;
+  }
+
+  // ============================================================
   // mountElement
   // ============================================================
 
@@ -197,7 +253,14 @@ export function createElementPatch<HN, HE extends HN>(
       return;
     }
     const tag = vnode.type;
-    const el = createElement(tag);
+    // ★ 水合：优先认领容器内同标签的既有元素，跳过 createElement
+    const claimed = ctx.hydrating
+      ? claimExisting(container, NODE_TYPE_ELEMENT, tag.toLowerCase())
+      : null;
+    const el = (claimed ?? createElement(tag)) as HE;
+    // 无论认领还是新建，都登记为「已占用」—— 否则当客户端比 SSR 多出节点时，
+    // 后续兄弟 vnode 会把这里**新建**的节点误认成自己的（两个 vnode 共享一个 DOM 节点）
+    if (ctx.hydrating) ctx.hydrateUsed.add(el as HN);
     setVNodeEl(vnode, el);
 
     // 应用 props
@@ -222,8 +285,10 @@ export function createElementPatch<HN, HE extends HN>(
     }
     // 其余情况（无子节点 / 注释占位）无需处理
 
-    // 插入到容器中
-    insert(el, container, anchor);
+    // 插入到容器中（已认领的节点本就在原位，无需再插 —— 否则会变成两份）
+    if (!claimed) {
+      insert(el, container, anchor);
+    }
 
     // 处理 ref：在父组件实例上存储元素引用
     const refValue = vnode.ref;
@@ -238,7 +303,17 @@ export function createElementPatch<HN, HE extends HN>(
 
   function mountTextNode(vnode: VNode, container: HN, anchor: HN | null): void {
     const text = isFunction(vnode.children) ? '' : String(vnode.children ?? '');
+    // ★ 水合：认领既有的文本节点并原地改写（不新建、不插入）
+    if (ctx.hydrating) {
+      const claimed = claimExisting(container, NODE_TYPE_TEXT);
+      if (claimed) {
+        ctx.setText(claimed, text);
+        setVNodeEl(vnode, claimed);
+        return;
+      }
+    }
     const node = createText(text);
+    if (ctx.hydrating) ctx.hydrateUsed.add(node);
     setVNodeEl(vnode, node);
     insert(node, container, anchor);
   }
@@ -249,7 +324,17 @@ export function createElementPatch<HN, HE extends HN>(
 
   function mountCommentNode(vnode: VNode, container: HN, anchor: HN | null): void {
     const text = isFunction(vnode.children) ? '' : String(vnode.children ?? '');
+    // ★ 水合：认领既有注释节点（注释无文本要同步，只需接管其位置）
+    if (ctx.hydrating) {
+      const claimed = claimExisting(container, NODE_TYPE_COMMENT);
+      if (claimed) {
+        setVNodeEl(vnode, claimed);
+        vnode.anchor = claimed as unknown as Node | null;
+        return;
+      }
+    }
     const node = createComment(text);
+    if (ctx.hydrating) ctx.hydrateUsed.add(node);
     setVNodeEl(vnode, node);
     // FIX: P2-17 添加 null 检查，避免 node 为 null 时的不安全类型断言
     vnode.anchor = node != null ? (node as unknown as Node | null) : null;

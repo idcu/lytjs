@@ -9,6 +9,14 @@ export interface Renderer<VNode = unknown> {
   unmount(vnode: VNode | null): void;
   patch(oldVNode: VNode | null, newVNode: VNode | null, container: Element): void;
   move(vnode: VNode, container: Element, anchor: Element | null): void;
+  /**
+   * 水合挂载（**可选**能力）：复用容器内既有的 SSR DOM，并照常建立组件实例与
+   * 响应式 effect ⇒ 挂载后由客户端接管更新。
+   *
+   * 声明为可选，是为了不破坏其它 `Renderer` 实现（测试替身等）；
+   * 缺省时 `core` 的 `mount(el, { hydrate: true })` 会退化为普通 `mount`。
+   */
+  hydrate?(vnode: VNode, container: Element): void;
 }
 
 /** 指令钩子接口 */

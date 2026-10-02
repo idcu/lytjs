@@ -246,6 +246,14 @@ export interface DOMRenderer {
   patch(n1: VNode | null, n2: VNode, container: Node, anchor?: Node | null): void;
   unmount(vnode: VNode): void;
   mount(vnode: VNode, container: Node): void;
+  /**
+   * 水合挂载：复用容器内**既有**的 DOM（典型来源：SSR 产出的 HTML），
+   * 同时照常建立组件实例与响应式 effect ⇒ 挂载后**由客户端接管更新**。
+   *
+   * 与 `mount` 的唯一差别是首屏挂载时优先「认领」同类型既有节点；
+   * props 仍照常 apply，因此**事件监听器会在水合时接上**。
+   */
+  hydrate(vnode: VNode, container: Node): void;
   move(
     vnode: VNode,
     container: Node,
@@ -339,6 +347,19 @@ export function createDOMRenderer(
     querySelector(selector: string): Element | null {
       return host.querySelector(selector);
     },
+    // ── 水合所需的宿主内省能力 ────────────────────────────────────────
+    // ⚠️ 这三项 `WebRendererHost` 早已实现（其注释即写明「用于 hydration」），
+    // 但此前**没有接进渲染器** ⇒ `createRenderer(...).hydrate()` 无法判断
+    // 「容器里既有的节点是否与 vnode 同类」。这里把管道接上。
+    getNodeType(node: Node): number {
+      return host.getNodeType(node);
+    },
+    getTagName(el: Element): string {
+      return host.getTagName(el);
+    },
+    getChildNodes(node: Node): Node[] {
+      return host.getChildNodes(node as Element);
+    },
     ...(extraOptions?.setupChildComponent
       ? { setupChildComponent: extraOptions.setupChildComponent }
       : {}),
@@ -425,6 +446,7 @@ export function createDOMRenderer(
       renderer.unmount(vnode);
     },
     mount: renderer.mount,
+    hydrate: renderer.hydrate,
     move(
       vnode: VNode,
       container: Node,

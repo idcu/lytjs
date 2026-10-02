@@ -103,9 +103,10 @@ export interface HydrationStats {
  * （实现见同包 `ssr-island.ts` 的 `hydrateVNode`，与 Island 水合同一套逻辑）。
  *
  * ⚠️ 能力边界（勿把它当"完整客户端接管"）：
- * · 返回的 `app` **未 mount**，因此**不会**接管响应式更新 —— 本函数只做
- *   「DOM ↔ vnode 一致化」。真正的运行时接管需要 `core` 侧的 hydrate 入口
- *   （当前 `createApp(...).mount()` **没有 hydrate 变体**）。
+ * · 返回的 `app` **未 mount**，因此本函数**不会**接管响应式更新 —— 它只做
+ *   「DOM ↔ vnode 一致化」。若要真正的运行时接管，请改用
+ *   `createApp(Comp).mount(container, { hydrate: true })`
+ *   （vnode 模式，2026-10-02 起可用：复用既有 DOM **且**照常建立渲染 effect）。
  * · vnode 属性是**按名写回 DOM**（`setAttribute`），不重建真实事件监听器。
  * · 不支持传入 props（SSR 侧 props 不在容器中，无法反推）。
  *
