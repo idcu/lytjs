@@ -21,6 +21,10 @@
 type App = unknown;
 type Component = unknown;
 import { warn } from '@lytjs/common-error';
+// ⚠️ 2026-10-02：`hydrateApp` 此前是「DOM 遍历占位」——只数节点 + 摘 `on*` 属性，
+// 从不把 vnode 树与既有 DOM 协调。现复用同包 `ssr-island` 已验证的 `hydrateVNode`。
+import { hydrateVNode, resolveComponentRootVNode } from '../ssr/ssr-island';
+import type { ComponentOptions as IslandComponentOptions } from '../ssr/ssr-island';
 
 // ============================================================
 // 类型定义
@@ -94,13 +98,21 @@ export interface HydrationStats {
 /**
  * 全应用 Hydration
  *
+ * 把组件解析为根 vnode 后，与容器中已有的 SSR DOM **逐节点协调**：
+ * 匹配的节点复用、文本不一致则更新、缺失的节点新建、多余的节点移除
+ * （实现见同包 `ssr-island.ts` 的 `hydrateVNode`，与 Island 水合同一套逻辑）。
+ *
+ * ⚠️ 能力边界（勿把它当"完整客户端接管"）：
+ * · 返回的 `app` **未 mount**，因此**不会**接管响应式更新 —— 本函数只做
+ *   「DOM ↔ vnode 一致化」。真正的运行时接管需要 `core` 侧的 hydrate 入口
+ *   （当前 `createApp(...).mount()` **没有 hydrate 变体**）。
+ * · vnode 属性是**按名写回 DOM**（`setAttribute`），不重建真实事件监听器。
+ * · 不支持传入 props（SSR 侧 props 不在容器中，无法反推）。
+ *
  * @example
  * ```ts
- * // 服务端渲染的 HTML
- * const html = '<div id="app">...</div>';
- *
- * // 客户端 Hydration
- * hydrateApp(App, '#app');
+ * // 服务端渲染的 HTML 已在 #app 中
+ * const { stats } = await hydrateApp(App, '#app');
  * ```
  */
 export async function hydrateApp(
@@ -143,7 +155,7 @@ export async function hydrateApp(
 
   // 执行 Hydration
   try {
-    await performHydration(containerEl, app, stats, options);
+    await performHydration(containerEl, component, stats, options);
   } catch (error) {
     stats.errors++;
     options.onError?.({
@@ -163,13 +175,61 @@ export async function hydrateApp(
 }
 
 /**
- * 执行 Hydration
+ * 执行 Hydration。
+ *
+ * ⚠️ 2026-10-02 重写：此前本函数**只遍历 DOM**（`createTreeWalker` 数节点 +
+ * 对每个 Element 摘掉 `on*`/`@*` 属性），**完全不消费 vnode**，形参 `_app`
+ * 全程未使用 ⇒ `hydrateApp` 在"看起来成功"的同时什么也没水合。
+ * 现改为：解析组件根 vnode → 复用 `hydrateVNode` 做真实协调。
+ * 仅在**解析不出 vnode**（组件既无 `setup` 也无 `render`）时，才回退到
+ * 原有的"属性清理"降级路径。
  */
 async function performHydration(
   container: Element,
-  _app: App,
+  component: Component,
   stats: HydrationStats,
-  _options: HydrationOptions,
+  options: HydrationOptions,
+): Promise<void> {
+  // 1) 无实例解析组件根 vnode（解析顺序的单一真相源见 ssr-island.ts）
+  const rootVNode = resolveComponentRootVNode(component as IslandComponentOptions, {});
+
+  if (!rootVNode) {
+    if (__DEV__) {
+      warn(
+        '[LytJS] hydrateApp: 组件既无 setup 也无 render，无法解析根 vnode ⇒ ' +
+          '回退到「仅清理 SSR 属性」的降级路径（DOM 不会与 vnode 协调）。',
+      );
+    }
+    stats.skippedNodes++;
+    await cleanupSsrAttributes(container, stats, options);
+    return;
+  }
+
+  // 2) 真实水合：遍历 vnode 树并与既有 DOM 协调（复用 / 更新 / 新建 / 移除）
+  hydrateVNode(container, rootVNode);
+
+  // 3) 水合后统计
+  const walker = document.createTreeWalker(
+    container,
+    NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
+  );
+  while (walker.nextNode()) {
+    stats.totalNodes++;
+  }
+  stats.hydratedNodes = stats.totalNodes;
+}
+
+/**
+ * 降级路径：只清理 SSR 属性，不做 DOM ↔ vnode 协调。
+ *
+ * 这是 `performHydration` 重写前的行为，保留给"组件无法解析为 vnode"的场合；
+ * 也用于处理「SSR 产出的是原始 HTML（含 `v-model` / `on*` 等未被编译掉的
+ * 指令属性）」这种非 vnode 来源的场景。
+ */
+async function cleanupSsrAttributes(
+  container: Element,
+  stats: HydrationStats,
+  options: HydrationOptions,
 ): Promise<void> {
   // 遍历所有子节点
   const walker = document.createTreeWalker(
@@ -187,7 +247,7 @@ async function performHydration(
   // 处理每个节点
   for (const n of nodes) {
     if (n instanceof Element) {
-      await hydrateElement(n, stats, _options);
+      await hydrateElement(n, stats, options);
       stats.hydratedNodes++;
     }
   }

@@ -137,6 +137,69 @@ export async function hydrateIsland(
 // 内部工具函数
 // ============================================================
 
+// ============================================================
+// 组件 → 根 vnode（无实例解析）
+// ============================================================
+
+/**
+ * 判定一个值是否为 vnode。
+ * 组件 `setup` / `render` 的返回值可能是普通对象（ctx），须先甄别。
+ */
+function isVNodeLike(value: unknown): value is VNode {
+  return !!value && typeof value === 'object' && 'type' in (value as object);
+}
+
+/**
+ * 把组件选项解析为其**根 vnode**（**不创建组件实例**）。
+ *
+ * 解析顺序（本仓的**单一真相源**）：
+ * 1. `setup(props)` 的返回值若本身是 vnode ⇒ 直接使用（不再调 `render`）；
+ * 2. 否则若 `setup` 返回了对象 ⇒ 作为 ctx 传给 `render`；
+ * 3. `setup` 未返回对象（含根本没有 `setup`）⇒ 以 `props` 作 ctx 传给 `render`。
+ *
+ * ⚠️ 2026-10-02：本函数由**三份**同族副本合并而来 —— 分别是
+ * `hydrateIslandElement`、`hydrateVNode` 的组件分支、`hydrateChildVNode` 的组件分支。
+ * 合并前它们语义**不一致**：`hydrateIslandElement` 是「setup 优先、setup 返回值作 render
+ * 的 ctx」，而另外两处是「render 优先、且恒以 props 作 ctx」⇒ **同一文件内同一个问题两种答案**。
+ * 现统一为 setup 优先，与 `ssr-renderer.ts` 的 `renderComponentToString` 及
+ * `adapter-web` 的 `hydrateComponent` 一致。
+ *
+ * ⚠️ 同族实现**仍未合并**的 3 处，修改本函数时必须一并核对：
+ * · `renderer/src/ssr/ssr-renderer.ts` · `renderComponentToString` —— **同语义**（setup 优先）
+ * · `adapter-web/src/web-hydration.ts` · `hydrateComponent` —— **同语义**（该包不依赖本包，保有等价副本）
+ * · `renderer/src/ssr/ssr-stream.ts` · `streamComponentAsync` 与
+ *   `renderer/src/ssr/ssr-stream-optimized.ts` · `streamComponent` —— ⛔ **仍为 render 优先，
+ *   与本函数分歧**。未能合并的原因是它们**额外支持 async setup**
+ *   （`setupResult instanceof Promise ? await setupResult : setupResult`），
+ *   而本函数必须保持**同步**（调用方 `hydrateVNode` / `hydrateChildVNode` 是同步函数）。
+ *   ⇒ 合并它们需要一个 `resolveComponentRootVNodeAsync` 变体，属独立改动；
+ *   在此之前，**含 `setup` + `render` 的组件在流式 SSR 下会拿到错误的 ctx（props 而非 setup 返回值）**。
+ */
+export function resolveComponentRootVNode(
+  component: ComponentOptions,
+  props: Record<string, unknown>,
+): VNode | undefined {
+  let setupResult: unknown;
+  if (typeof component.setup === 'function') {
+    setupResult = component.setup(props);
+  }
+
+  // setup 直接返回 VNode ⇒ 跳过 render
+  if (isVNodeLike(setupResult)) return setupResult;
+
+  if (typeof component.render === 'function') {
+    // setup 返回普通对象 ⇒ 作为 ctx；否则退回 props 作 ctx
+    const ctx =
+      setupResult && typeof setupResult === 'object'
+        ? (setupResult as Record<string, unknown>)
+        : props;
+    const result = component.render(ctx);
+    if (isVNodeLike(result)) return result;
+  }
+
+  return undefined;
+}
+
 /**
  * 使用给定的组件和 props 对单个 Island 元素执行 hydration。
  *
@@ -148,24 +211,7 @@ async function hydrateIslandElement(
   component: ComponentOptions,
   props: Record<string, unknown>,
 ): Promise<void> {
-  // 如果定义了 setup 则调用
-  let setupResult: Record<string, unknown> | VNode | void = undefined;
-  if (typeof component.setup === 'function') {
-    setupResult = component.setup(props);
-  }
-
-  // 如果 setup 直接返回了 VNode，则使用它（跳过 render 调用）
-  let vnode: VNode | undefined;
-  if (setupResult && typeof setupResult === 'object' && 'type' in setupResult) {
-    vnode = setupResult as VNode;
-  } else if (typeof component.render === 'function') {
-    // 仅当 setup 未返回 VNode 时才调用 render
-    const ctx =
-      setupResult && typeof setupResult === 'object'
-        ? (setupResult as Record<string, unknown>)
-        : {};
-    vnode = component.render(ctx);
-  }
+  const vnode = resolveComponentRootVNode(component, props);
 
   if (vnode) {
     // 移除 Island 元素内的占位符注释节点
@@ -196,7 +242,7 @@ async function hydrateIslandElement(
  * - Fragment 节点：对每个子 vnode 与兄弟 DOM 节点进行 hydration
  * - 未匹配的 DOM 节点被移除；未匹配的 vnode 创建新的 DOM 节点
  */
-function hydrateVNode(parent: Element, vnode: VNode): void {
+export function hydrateVNode(parent: Element, vnode: VNode): void {
   const { type, children } = vnode;
 
   // 处理 Fragment：对每个子 vnode 与兄弟 DOM 节点进行 hydration
@@ -267,26 +313,11 @@ function hydrateVNode(parent: Element, vnode: VNode): void {
   }
 
   // 处理组件 VNode（有状态或函数式组件）
+  // ⚠️ 2026-10-02：改用共用的 `resolveComponentRootVNode`。此前本分支是
+  // 「render 优先、且恒以 props 作 ctx」，与顶层 `hydrateIslandElement` 的
+  // 「setup 优先、setup 返回值作 ctx」**同文件内语义分歧**，现统一。
   if (typeof type === 'object' && type !== null) {
-    const component = type as ComponentOptions;
-    let childVNode: VNode | undefined;
-
-    // 优先尝试 render 函数
-    if (typeof component.render === 'function') {
-      const ctx = vnode.props ?? {};
-      const result = component.render(ctx);
-      if (result && typeof result === 'object' && 'type' in result) {
-        childVNode = result as VNode;
-      }
-    }
-
-    // 如果 render 未产生 VNode，尝试 setup 函数
-    if (!childVNode && typeof component.setup === 'function') {
-      const setupResult = component.setup(vnode.props ?? {});
-      if (setupResult && typeof setupResult === 'object' && 'type' in setupResult) {
-        childVNode = setupResult as VNode;
-      }
-    }
+    const childVNode = resolveComponentRootVNode(type as ComponentOptions, vnode.props ?? {});
 
     // 递归 hydrate 解析后的子 VNode
     if (childVNode) {
@@ -401,24 +432,11 @@ function hydrateChildVNode(
   }
 
   // 处理组件 VNode（有状态或函数式组件）
+  // ⚠️ 2026-10-02：本分支是同一个问题的**第三份副本**（另两份在 `hydrateIslandElement`
+  // 与 `hydrateVNode`），且同样停留在「render 优先、恒以 props 作 ctx」的旧语义。
+  // 一并收敛到 `resolveComponentRootVNode`。
   if (typeof type === 'object' && type !== null) {
-    const component = type as ComponentOptions;
-    let childVNode: VNode | undefined;
-
-    if (typeof component.render === 'function') {
-      const ctx = vnode.props ?? {};
-      const result = component.render(ctx);
-      if (result && typeof result === 'object' && 'type' in result) {
-        childVNode = result as VNode;
-      }
-    }
-
-    if (!childVNode && typeof component.setup === 'function') {
-      const setupResult = component.setup(vnode.props ?? {});
-      if (setupResult && typeof setupResult === 'object' && 'type' in setupResult) {
-        childVNode = setupResult as VNode;
-      }
-    }
+    const childVNode = resolveComponentRootVNode(type as ComponentOptions, vnode.props ?? {});
 
     if (childVNode) {
       domIndex = hydrateChildVNode(parent, childVNode, existingChildren, domIndex);
