@@ -489,20 +489,27 @@ describe('serialize battery (opt): serializeConditionalVNodeOptimized 严格模�
     ).toBeNull();
   });
 
-  // ⚠️ 与 base 版的行为分歧（现状记录，非期望行为）：
-  // base 的 getExpContent 有 `node.type !== COMPOUND || !Array.isArray(children)` 守卫
-  // （注释说明该守卫用于避免局部失败放大为整个编译中断）；
-  // opt 版同名助手**没有**该守卫 ⇒ 畸形 test 节点会直接抛 TypeError。
-  // 见 opt 文件 getExpContent()。
-  it('（现状）畸形 test 节点在 opt 版会抛错，而非返回 null', () => {
-    expect(() =>
+  // 两版行为已对齐：畸形 test 节点返回 null，而不是把局部失败放大为抛错
+  // （opt 版此前缺 `node.type !== COMPOUND_EXPRESSION || !Array.isArray(children)`
+  //  守卫，该守卫由 base 版引入；2026-10-02 补齐）。
+  it('畸形 test 节点返回 null（opt 与 base 行为一致）', () => {
+    expect(
       serializeConditionalVNodeOptimized(
         cond({ test: { type: 999 }, consequent: mkVNode() }),
         new Set(),
         OPTS,
         NO_LOCALS,
       ),
-    ).toThrow();
+    ).toBeNull();
+
+    // base 版同一输入
+    expect(
+      serializeConditionalVNode(
+        { type: NT.JS_CONDITIONAL_EXPRESSION, test: { type: 999 }, consequent: mkVNode() },
+        P,
+        NO_LOCALS,
+      ),
+    ).toBeNull();
   });
 
   it('test 为 COMPOUND → 拼接', () => {

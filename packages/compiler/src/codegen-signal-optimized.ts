@@ -1371,6 +1371,13 @@ function findElementIndex(
 function getExpContent(node: SimpleExpressionNode | CompoundExpressionNode | undefined): string {
   if (!node) return '';
   if (node.type === NodeTypes.SIMPLE_EXPRESSION) return node.content;
+  // 形态异常（非 CompoundExpression 且没有 children）时返回空串 ——
+  // 此前会直接走 `node.children.map` 并对**无 type 的对象**抛 TypeError，
+  // 把一次局部失败放大成整个编译中断。
+  // ⚠️ 2026-10-02：本守卫原先只在非优化版（codegen-signal.ts）存在，
+  // 优化版（默认路径）缺失 ⇒ 两版行为不一致。此处对齐。
+  if (node.type !== NodeTypes.COMPOUND_EXPRESSION || !Array.isArray(node.children)) return '';
+  // CompoundExpression: 拼接所有子节点
   return node.children
     .map((c) => {
       if (typeof c === 'string') return c;
