@@ -287,7 +287,7 @@ export function renderToStream(
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
   return new ReadableStream<Uint8Array>({
-    start(controller) {
+    async start(controller) {
       // 设置超时
       timeoutId = setTimeout(() => {
         try {
@@ -320,7 +320,7 @@ export function renderToStream(
 
           // 发送 shell 分块
           for (const chunk of byteChunks) {
-            sendChunk(controller, encoder, chunk);
+            await sendChunk(controller, encoder, chunk);
           }
 
           // 通知 shell 就绪
@@ -332,13 +332,13 @@ export function renderToStream(
           const remainingByteChunks = splitIntoByteChunks(remainingHtml, chunkSize);
 
           for (const chunk of remainingByteChunks) {
-            sendChunk(controller, encoder, chunk);
+            await sendChunk(controller, encoder, chunk);
           }
         } else {
           // 无 Suspense 边界，直接分块发送
           const byteChunks = splitIntoByteChunks(fullHtml, chunkSize);
           for (const chunk of byteChunks) {
-            sendChunk(controller, encoder, chunk);
+            await sendChunk(controller, encoder, chunk);
           }
         }
 
@@ -380,22 +380,25 @@ export function renderToStream(
 
   /**
    * 发送单个分块，应用流速率控制
+   *
+   * ⚠️ 启用流控时必须**返回 Promise 并由调用方 await**：此前是 fire-and-forget
+   * 的 async IIFE，而 `start()` 会在其后同步 `controller.close()` ⇒ 分块入队
+   * 发生在关闭之后，既导致 `maxBytesPerSecond` 输出恒为空，又在 Node 下产生
+   * `ERR_INVALID_STATE` 未处理拒绝（可污染整个进程）。
    */
   function sendChunk(
     controller: ReadableStreamDefaultController<Uint8Array>,
     encoder: TextEncoder,
     chunk: string,
-  ) {
+  ): Promise<void> | void {
     const encoded = encoder.encode(chunk);
     if (flowController) {
-      // 如果启用了流控制，等待速率限制
-      (async () => {
-        await flowController.waitForRateLimit(encoded.length);
+      // 如果启用了流控制，等待速率限制后再入队
+      return flowController.waitForRateLimit(encoded.length).then(() => {
         controller.enqueue(encoded);
-      })();
-    } else {
-      controller.enqueue(encoded);
+      });
     }
+    controller.enqueue(encoded);
   }
 }
 
