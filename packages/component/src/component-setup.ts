@@ -174,6 +174,23 @@ export function setupComponent(instance: ComponentInternalInstance): void {
         if (instance.isUnmounted) return;
         handleSetupResult(instance, resolvedResult as SetupResult);
         vnode.isAsyncPlaceholder = false;
+
+        // ★ FIX（2026-10-02）：async setup 解析后**必须触发一次重渲染**。
+        //
+        // 缺陷（探针实测，`packages/core/tests/e2e-async-suspense.test.ts`）：
+        // `async setup()` 的组件首帧渲染出 `msg=undefined`，Promise 兑现后
+        // **页面永不更新**（等 200ms 仍是 undefined），而 `publicInstance.msg`
+        // 上数据**已经就位** ⇒ 数据到了、视图没重跑。
+        //
+        // 根因：渲染 effect 在 `mountComponent` 里建立，此时 setupState 还是空的；
+        // 解析后 `handleSetupResult` 只是**填数据**，没有任何东西让 effect 重跑
+        // （读的是被整体替换掉的旧对象，依赖没被追踪到）。
+        //
+        // 修法：vdom 的 `mountComponent` 已把渲染 effect 的 `update` 挂到
+        // `instance.update`（见 `patch-component.ts`），这里补上调用。
+        // `update` 尚未建立（还没走到 mount）时 `?.` 静默跳过 —— 那条路径由
+        // 首次挂载时的 `update()` 自然渲染出完整内容。
+        instance.update?.();
       })
       .catch((err: Error) => {
         // FIX: P1-15 清理超时定时器
