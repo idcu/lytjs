@@ -122,4 +122,54 @@ describe('suspense battery: resolve / abort', () => {
     const e = new SuspenseAbortedError(3);
     expect(e).toBeInstanceOf(Error);
   });
+
+  it('swallows a throwing abort() on a custom thenable', () => {
+    const b = createSuspenseBoundary();
+    const thenable = Object.assign(Promise.resolve(1), {
+      abort: () => {
+        throw new Error('abort boom');
+      },
+    });
+    b.pendingPromises.add(thenable);
+    expect(() => abortSuspense(b)).not.toThrow();
+  });
+
+  it('skips resolve/reject side effects after the boundary was aborted', async () => {
+    // resolve 后已中止 ⇒ .then 里 `if (boundary.aborted) return;` 命中
+    const b1 = createSuspenseBoundary();
+    let resolve1: (v: unknown) => void = () => {};
+    const p1 = new Promise((r) => {
+      resolve1 = r;
+    });
+    registerAsyncChild(b1, p1);
+    abortSuspense(b1);
+    resolve1(1);
+    await p1;
+    await Promise.resolve();
+
+    // reject 后已中止 ⇒ .catch 里 `if (boundary.aborted) return;` 命中
+    const b2 = createSuspenseBoundary();
+    let reject2: (e: unknown) => void = () => {};
+    const p2 = new Promise((_r, rej) => {
+      reject2 = rej;
+    });
+    registerAsyncChild(b2, p2);
+    abortSuspense(b2);
+    reject2(new Error('late'));
+    await p2.catch(() => {});
+    await Promise.resolve();
+  });
+
+  it('creates a boundary with (empty) callback queues', () => {
+    const inst = createSuspenseInstance({
+      onResolve: () => {},
+      onPending: () => {},
+      onError: () => {},
+    });
+    const boundary = (inst as unknown as { setupState: { boundary: any } }).setupState?.boundary;
+    expect(boundary).toBeDefined();
+    expect(Array.isArray(boundary.onResolve)).toBe(true);
+    expect(Array.isArray(boundary.onPending)).toBe(true);
+    expect(Array.isArray(boundary.onError)).toBe(true);
+  });
 });

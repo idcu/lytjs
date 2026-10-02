@@ -127,3 +127,32 @@ describe('css-vars battery: observers', () => {
     expect(tm2).toBeInstanceOf(ThemeManager);
   });
 });
+
+describe('css-vars battery: null element / omitted-argument guards', () => {
+  it('returns early when the element resolves to null/undefined', () => {
+    // 对象形态显式传 element: null ⇒ 命中 `if (!element) return`
+    expect(() =>
+      setCSSVar({ element: null as unknown as HTMLElement, name: 'x', value: 1 }),
+    ).not.toThrow();
+    // 非字符串重载 ⇒ element = null
+    expect(getCSSVar(null as unknown as HTMLElement, '--x', 'fb')).toBe('fb');
+    expect(getCSSVar(null as unknown as HTMLElement, '--x')).toBeNull();
+    expect(() => removeCSSVar(null as unknown as HTMLElement, '--x')).not.toThrow();
+    expect(hasCSSVar(null as unknown as HTMLElement, '--x')).toBe(false);
+  });
+
+  it('covers omitted vars/names arrays and all-vars fallbacks', () => {
+    const el = document.createElement('div');
+    setCSSVars(el); // vars 省略 ⇒ `vars ?? {}`
+    setCSSVars(el, {} as never);
+    removeCSSVars(el); // names 省略 ⇒ `names ?? []`
+    expect(getCSSVars(el)).toEqual({}); // names 省略 ⇒ `names ?? []`
+    // getAllCSSVars 省略 element ⇒ `element ?? document.documentElement`
+    expect(typeof getAllCSSVars()).toBe('object');
+    // CSSVarObserver / ThemeManager 省略 element ⇒ documentElement 回退
+    const obs = new CSSVarObserver();
+    expect(obs).toBeInstanceOf(CSSVarObserver);
+    const tm = new ThemeManager();
+    expect(tm).toBeInstanceOf(ThemeManager);
+  });
+});
