@@ -165,7 +165,8 @@ function isVNodeLike(value: unknown): value is VNode {
  * `adapter-web` 的 `hydrateComponent` 一致。
  *
  * ⚠️ 同族实现**仍未合并**的 3 处，修改本函数时必须一并核对：
- * · `renderer/src/ssr/ssr-renderer.ts` · `renderComponentToString` —— **同语义**（setup 优先）
+ * · `renderer/src/ssr/ssr-renderer.ts` · `renderComponentToString` —— ✅ **2026-10-02 已合并**
+ *   （改用下文的 async 版，同时让同步 SSR 首次支持 async setup）
  * · `adapter-web/src/web-hydration.ts` · `hydrateComponent` —— **同语义**（该包不依赖本包，保有等价副本）
  * · `renderer/src/ssr/ssr-stream.ts` · `streamComponentAsync` 与
  *   `renderer/src/ssr/ssr-stream-optimized.ts` · `streamComponent` —— ✅ **2026-10-02 已合并**，
@@ -194,11 +195,11 @@ export function resolveComponentRootVNode(
  * ⚠️ 一致性由测试保证：`packages/renderer/tests/ssr-stream-component.test.ts`
  * 断言同一组件在**同步入口（`renderToString`）与流式入口（`renderToStream`）**产出一致。
  *
- * ⚠️ **已知不对称（本轮未修，属独立改动）**：**同步 SSR 入口 `renderToString`
- * 并不 await async `setup`** —— `ssr-renderer.ts` 的 `renderComponentToString` 没有
- * Promise 分支，会把 Promise 对象直接当成 ctx。⇒ 含 async setup 的组件在
- * 「同步 SSR」与「流式 SSR」下产出**不同**。本轮只把**顺序**统一了，未统一
- * **async setup 的支持面**；上文的"一致性"测试因此**刻意不使用 async setup**。
+ * ⚠️ **2026-10-02 后续已消除的不对称**：同步 SSR 入口 `renderToString` 原本
+ * **不 await async `setup`**（`renderComponentToString` 没有 Promise 分支，会把
+ * Promise 对象直接当成 ctx）。现已把 `ssr-renderer.ts` 的递归改为 async 并复用
+ * 本函数 ⇒ **同步 / 流式 / 优化流式三个入口对 async setup 的支持面已对齐**，
+ * 一致性测试现在**覆盖** async setup（此前该测试刻意回避它）。
  */
 export async function resolveComponentRootVNodeAsync(
   component: ComponentOptions,

@@ -13,6 +13,9 @@
  *    否则缺陷版与修复版产出相同字符串、断言恒绿；
  * ② **一致性**：同一组件经 **同步入口 / 流式入口 / 优化流式入口** 应产出**同一 HTML** ——
  *    这是能同时抓住「任何一处再次分叉」的最强判据。
+ *    ⚠️ 一致性判据**包含 async setup** 的用例 —— 该用例在 2026-10-02 之前**不成立**
+ *    （彼时同步入口不 await async setup），是把 `renderToString` 改为 async 递归、
+ *    三个入口共用同一解析助手之后才成立的。它同时钉住「任何一处再退回同步实现」。
  */
 import { describe, it, expect } from 'vitest';
 import { createVNode } from '@lytjs/vdom';
@@ -70,6 +73,27 @@ describe('流式 SSR：组件解析顺序', () => {
     const stream = await streamToString(renderToStream({ vnode: vnode() }));
     const optimized = await streamToString(createOptimizedStream(vnode()));
 
+    expect(stream).toBe(sync);
+    expect(optimized).toBe(sync);
+  });
+
+  // ---------------------------------------------------------------
+  // 2b. ★ 三入口一致性（**含 async setup**）
+  //     2026-10-02 之前此用例必然失败：同步入口不 await async setup，
+  //     会把 Promise 当 ctx ⇒ 同步产出 `ctx=undefined`，与流式不一致。
+  // ---------------------------------------------------------------
+  it('★ 三入口应对含 async setup 的组件产出一致 HTML', async () => {
+    const AsyncComp = {
+      setup: async () => ({ msg: 'async-from-setup' }),
+      render: (ctx: Record<string, unknown>) => createVNode('div', null, `ctx=${String(ctx.msg)}`),
+    };
+    const vnode = () => createVNode(AsyncComp as never, {});
+
+    const sync = await renderToString({ vnode: vnode() });
+    const stream = await streamToString(renderToStream({ vnode: vnode() }));
+    const optimized = await streamToString(createOptimizedStream(vnode()));
+
+    expect(sync).toContain('ctx=async-from-setup');
     expect(stream).toBe(sync);
     expect(optimized).toBe(sync);
   });
