@@ -7,6 +7,9 @@ import { Fragment, Text, Comment, ShapeFlags } from '@lytjs/vdom';
 import { isArray, isFunction } from '@lytjs/common-is';
 import { escapeHtml, isVoidElement } from '../utils';
 import { isValidHTMLElementTag, renderAttributeToString } from './ssr-utils';
+// ⚠️ 2026-10-02：与 ssr-stream.ts / ssr-island.ts 共用同一份组件解析助手
+import { resolveComponentRootVNodeAsync } from './ssr-island';
+import type { ComponentOptions } from './ssr-island';
 import { warn } from '@lytjs/common-error';
 
 // ============================================================
@@ -382,21 +385,15 @@ export class OptimizedSSRStream {
     const component = vnode.type as Record<string, unknown>;
 
     if (typeof component === 'object' && component !== null) {
-      if (typeof component.render === 'function') {
-        const result = component.render(vnode.props ?? {});
-        if (result && typeof result === 'object' && 'type' in result) {
-          await this.streamVNode(result as VNode);
-          return;
-        }
-      }
-
-      if (typeof component.setup === 'function') {
-        const setupResult = component.setup(vnode.props ?? {});
-        const resolved = setupResult instanceof Promise ? await setupResult : setupResult;
-        if (resolved && typeof resolved === 'object' && 'type' in resolved) {
-          await this.streamVNode(resolved as VNode);
-          return;
-        }
+      // ⚠️ 2026-10-02：同 ssr-stream.ts，改用与同步 SSR / hydration **共用**的
+      // 解析助手（此前本处是「render 优先、恒以 props 作 ctx」）。
+      const resolved = await resolveComponentRootVNodeAsync(
+        component as ComponentOptions,
+        vnode.props ?? {},
+      );
+      if (resolved) {
+        await this.streamVNode(resolved);
+        return;
       }
     }
 

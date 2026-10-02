@@ -10,6 +10,10 @@ import { isArray, isFunction } from '@lytjs/common-is';
 import { escapeHtml, isVoidElement } from '../utils';
 import type { SSRInput } from './ssr-renderer';
 import { isValidHTMLElementTag, renderAttributeToString, NAMED_ENTITIES } from './ssr-utils';
+// ⚠️ 2026-10-02：流式 SSR 与同步 SSR / hydration 共用同一份「组件 → 根 vnode」解析
+// （此前各有一份副本且语义分歧，见 ssr-island.ts 的 resolveComponentRootVNode 注释）
+import { resolveComponentRootVNodeAsync } from './ssr-island';
+import type { ComponentOptions } from './ssr-island';
 import { warn } from '@lytjs/common-error';
 
 // 重新导出 NAMED_ENTITIES 以保持向后兼容
@@ -314,22 +318,16 @@ async function streamComponentAsync(
   // 对于组件 vnode，尝试渲染并流式输出结果
   const component = vnode.type as Record<string, unknown>;
   if (typeof component === 'object' && component !== null) {
-    // 如果组件有 render 函数，调用它
-    if (typeof component.render === 'function') {
-      const result = component.render(vnode.props ?? {});
-      if (result && typeof result === 'object' && 'type' in result) {
-        await streamVNodeAsync(result as VNode, controller, encoder, commentMarkers);
-        return;
-      }
-    }
-    // 如果组件有 setup 且返回 VNode
-    if (typeof component.setup === 'function') {
-      const setupResult = component.setup(vnode.props ?? {});
-      const resolved = setupResult instanceof Promise ? await setupResult : setupResult;
-      if (resolved && typeof resolved === 'object' && 'type' in resolved) {
-        await streamVNodeAsync(resolved as VNode, controller, encoder, commentMarkers);
-        return;
-      }
+    // ⚠️ 2026-10-02：改用与 Island hydration / 同步 SSR 入口**共用**的解析助手。
+    // 此前本处是「render 优先、且恒以 props 作 ctx」⇒ 含 setup + render 的组件
+    // 会拿到错误的 ctx（渲染出 undefined），与同步入口产出一致性被破坏。
+    const resolved = await resolveComponentRootVNodeAsync(
+      component as ComponentOptions,
+      vnode.props ?? {},
+    );
+    if (resolved) {
+      await streamVNodeAsync(resolved, controller, encoder, commentMarkers);
+      return;
     }
   }
   // 回退：渲染为空注释

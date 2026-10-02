@@ -168,12 +168,9 @@ function isVNodeLike(value: unknown): value is VNode {
  * · `renderer/src/ssr/ssr-renderer.ts` · `renderComponentToString` —— **同语义**（setup 优先）
  * · `adapter-web/src/web-hydration.ts` · `hydrateComponent` —— **同语义**（该包不依赖本包，保有等价副本）
  * · `renderer/src/ssr/ssr-stream.ts` · `streamComponentAsync` 与
- *   `renderer/src/ssr/ssr-stream-optimized.ts` · `streamComponent` —— ⛔ **仍为 render 优先，
- *   与本函数分歧**。未能合并的原因是它们**额外支持 async setup**
- *   （`setupResult instanceof Promise ? await setupResult : setupResult`），
- *   而本函数必须保持**同步**（调用方 `hydrateVNode` / `hydrateChildVNode` 是同步函数）。
- *   ⇒ 合并它们需要一个 `resolveComponentRootVNodeAsync` 变体，属独立改动；
- *   在此之前，**含 `setup` + `render` 的组件在流式 SSR 下会拿到错误的 ctx（props 而非 setup 返回值）**。
+ *   `renderer/src/ssr/ssr-stream-optimized.ts` · `streamComponent` —— ✅ **2026-10-02 已合并**，
+ *   改用下文的 `resolveComponentRootVNodeAsync`（它们额外支持 async setup，
+ *   而本同步版无法 `await`）。二者与本节共享同一段「setup 结果 → 根 vnode」逻辑。
  */
 export function resolveComponentRootVNode(
   component: ComponentOptions,
@@ -183,7 +180,50 @@ export function resolveComponentRootVNode(
   if (typeof component.setup === 'function') {
     setupResult = component.setup(props);
   }
+  return resolveFromSetupResult(component, setupResult, props);
+}
 
+/**
+ * `resolveComponentRootVNode` 的 **async 变体**：额外支持 `setup` 返回 Promise。
+ *
+ * ⚠️ 为什么需要两份而不是一份：同步版被 `hydrateVNode` / `hydrateChildVNode` 调用，
+ * 二者是**同步函数**、无法 `await`；而流式 SSR 必须等待 async setup。
+ * 故同步/异步各留一个薄壳，**共享「setup 结果 → 根 vnode」的后半段**
+ * （`resolveFromSetupResult`），避免像本轮之前那样再次分叉成两份实现。
+ *
+ * ⚠️ 一致性由测试保证：`packages/renderer/tests/ssr-stream-component.test.ts`
+ * 断言同一组件在**同步入口（`renderToString`）与流式入口（`renderToStream`）**产出一致。
+ *
+ * ⚠️ **已知不对称（本轮未修，属独立改动）**：**同步 SSR 入口 `renderToString`
+ * 并不 await async `setup`** —— `ssr-renderer.ts` 的 `renderComponentToString` 没有
+ * Promise 分支，会把 Promise 对象直接当成 ctx。⇒ 含 async setup 的组件在
+ * 「同步 SSR」与「流式 SSR」下产出**不同**。本轮只把**顺序**统一了，未统一
+ * **async setup 的支持面**；上文的"一致性"测试因此**刻意不使用 async setup**。
+ */
+export async function resolveComponentRootVNodeAsync(
+  component: ComponentOptions,
+  props: Record<string, unknown>,
+): Promise<VNode | undefined> {
+  let setupResult: unknown;
+  if (typeof component.setup === 'function') {
+    const result = component.setup(props);
+    setupResult = result instanceof Promise ? await result : result;
+  }
+  return resolveFromSetupResult(component, setupResult, props);
+}
+
+/**
+ * 「setup 结果 → 根 vnode」的**共享后半段**（同步版与 async 版共用）。
+ *
+ * 1. `setupResult` 本身是 vnode ⇒ 直接使用（跳过 `render`）；
+ * 2. 否则若它是对象 ⇒ 作为 ctx 传给 `render`；
+ * 3. 否则（含没有 `setup`）⇒ 以 `props` 作 ctx 传给 `render`。
+ */
+function resolveFromSetupResult(
+  component: ComponentOptions,
+  setupResult: unknown,
+  props: Record<string, unknown>,
+): VNode | undefined {
   // setup 直接返回 VNode ⇒ 跳过 render
   if (isVNodeLike(setupResult)) return setupResult;
 
