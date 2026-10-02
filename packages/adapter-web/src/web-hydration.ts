@@ -17,6 +17,25 @@ import { patchProp } from './web-patch-props';
 declare const __DEV__: boolean;
 
 // ============================================================
+// 组件 ShapeFlag 掩码 / vnode 判定
+// ============================================================
+
+/**
+ * 有状态 / 函数式组件的 ShapeFlag 掩码。
+ *
+ * 组件 vnode 的 shapeFlag 由 `@lytjs/vdom` 的 `getShapeFlag()` 给出，恒为
+ * `STATEFUL_COMPONENT`(4) —— 该仓的 `isObject()` 把函数也视为对象，
+ * 故函数式组件的 type 同样落在这一位（`FUNCTIONAL_COMPONENT`(2) 从未被设置）。
+ * 用掩码比较可同时容纳两种语义，避免实现演化后只判断其中一位而漏掉组件。
+ */
+const COMPONENT_MASK = ShapeFlags.STATEFUL_COMPONENT | ShapeFlags.FUNCTIONAL_COMPONENT;
+
+/** 判定一个值是否为 vnode（组件 setup/render 的返回值可能是普通 ctx 对象） */
+function isVNodeLike(value: unknown): boolean {
+  return !!value && typeof value === 'object' && 'type' in (value as object);
+}
+
+// ============================================================
 // 开发模式水合不匹配警告
 // ============================================================
 
@@ -329,6 +348,67 @@ function hydrateElement(
 }
 
 // ============================================================
+// 水合组件
+// FIX: 组件 vnode 此前被静默跳过（详见下方注释）
+// ============================================================
+
+/**
+ * 水合组件 vnode。
+ *
+ * ⚠️ 2026-10-02 修复：此前 `hydrateNode` 在 `shapeFlag & ShapeFlags.ELEMENT`
+ * 之后**没有组件分支** ⇒ 组件 vnode（shapeFlag=4）一律落到
+ * `warn('Hydration: unrecognized node type, skipping.')` 并被跳过：
+ * SSR 出的 DOM 既不复用也不更新、`vnode.el` 恒为 null（已用探针实测确认）。
+ *
+ * 解析顺序与 `@lytjs/renderer` 的 `renderToString`（`renderComponentToString`）
+ * 保持一致：先 `setup(props)`，其返回若本身是 vnode（含 `type`）则直接使用，
+ * 若为普通对象则作为 ctx 传给 `render`；无 setup 时用 `props` 作 ctx。
+ *
+ * 组件不产生属于自己的 DOM 节点 —— 其渲染产物占据组件 vnode 自身的位置，
+ * 故解析出子 vnode 后**以同一 index 递归水合**（Fragment 多根时由
+ * `hydrateFragment` 自行推进 index）。
+ */
+function hydrateComponent(
+  vnode: VNode,
+  parent: HTMLElement,
+  index: number,
+  host: WebRendererHost,
+): number {
+  const component = vnode.type as unknown;
+  let childVNode: VNode | undefined;
+
+  if (component && typeof component === 'object') {
+    const options = component as { setup?: unknown; render?: unknown };
+    let ctx: Record<string, unknown> = (vnode.props ?? {}) as Record<string, unknown>;
+
+    if (isFunction(options.setup)) {
+      const setupResult = (options.setup as (p: unknown) => unknown)(vnode.props ?? {});
+      if (isVNodeLike(setupResult)) {
+        childVNode = setupResult as VNode;
+      } else if (setupResult && typeof setupResult === 'object') {
+        ctx = setupResult as Record<string, unknown>;
+      }
+    }
+
+    if (!childVNode && isFunction(options.render)) {
+      const result = (options.render as (c: unknown) => unknown)(ctx);
+      if (isVNodeLike(result)) childVNode = result as VNode;
+    }
+  }
+
+  if (!childVNode) {
+    if (__DEV__) warn('Hydration: could not resolve component vnode, skipping.');
+    return index + 1;
+  }
+
+  const nextIndex = hydrateNode(childVNode, parent, index, host);
+  // 组件 vnode 的 el 指向其子树根节点，与元素 vnode 的 el 语义保持一致
+  // （元素 vnode 在 hydrateMatchedElement 中同样会回填 el）
+  vnode.el = childVNode.el ?? null;
+  return nextIndex;
+}
+
+// ============================================================
 // hydrateNode - core recursive hydration
 // FIX: P2-61 将 hydrateNode 重构为分发函数，具体逻辑委托给子函数
 // ============================================================
@@ -359,6 +439,12 @@ function hydrateNode(
   // 处理 Element
   if (shapeFlag & ShapeFlags.ELEMENT) {
     return hydrateElement(vnode, parent, index, host);
+  }
+
+  // 处理组件（有状态 / 函数式）
+  // FIX: 2026-10-02 补组件分支，此前组件 vnode 会被下方的 warn 静默跳过
+  if (shapeFlag & COMPONENT_MASK) {
+    return hydrateComponent(vnode, parent, index, host);
   }
 
   if (__DEV__) {
