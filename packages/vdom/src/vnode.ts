@@ -553,6 +553,27 @@ export function getShapeFlag(type: VNodeTypes): number {
   if ((type as unknown) === Suspense) {
     return ShapeFlags.ARRAY_CHILDREN | ShapeFlags.SUSPENSE;
   }
+  // ★ 内置组件的**组件对象**形态（2026-10-02）：`Teleport` / `Suspense` 这两个组件
+  // 自身不参与渲染 —— 它们的 `setup` 注释明写「真正逻辑在 vdom 的
+  // mountTeleport / patchTeleport」。但模板与渲染函数里拿到的都是**组件对象**，
+  // 而上面两个分支比的是 **symbol** ⇒ 对象全部落进 `STATEFUL_COMPONENT`
+  // ⇒ `mountComponent` 找不到 `render` ⇒ **静默渲染为空**（实测三种用法皆空）。
+  //
+  // 修法：组件自己声明对应的 vnode 符号（`__vnodeType`），这里据此产出与
+  // 「直接用符号」完全一致的 shapeFlag，从而复用既有的 mount/patch 分派，
+  // **不**绕过 vdom 的机制。
+  const declared =
+    type !== null && typeof type === 'object'
+      ? (type as { __vnodeType?: unknown }).__vnodeType
+      : undefined;
+  if (declared !== undefined && declared !== null) {
+    if (declared === Teleport) {
+      return ShapeFlags.ARRAY_CHILDREN | ShapeFlags.TELEPORT;
+    }
+    if (declared === Suspense) {
+      return ShapeFlags.ARRAY_CHILDREN | ShapeFlags.SUSPENSE;
+    }
+  }
   // 对象类型 => 组件
   if (isObject(type)) {
     return ShapeFlags.STATEFUL_COMPONENT;

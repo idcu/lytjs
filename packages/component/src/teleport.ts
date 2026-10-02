@@ -1,4 +1,7 @@
 import type { ComponentOptions } from './types';
+// vnode 侧的符号（`Symbol.for('Teleport')`）—— vdom 的 `getShapeFlag` 按它分派。
+// 与本文件导出的 `Teleport`（组件对象）是**两个不同的东西**，勿混。
+import { Teleport as TeleportVNodeType } from '@lytjs/common-vnode';
 
 export interface TeleportProps {
   to: string | Element;
@@ -7,6 +10,11 @@ export interface TeleportProps {
 
 export const Teleport: ComponentOptions = {
   name: 'Teleport',
+  // ★ 2026-10-02：声明对应的 vnode 符号，使 `getShapeFlag` 产出
+  // `ARRAY_CHILDREN | TELEPORT` ⇒ vdom 分派到 mountTeleport / patchTeleport。
+  // 缺它时：组件对象落进 `STATEFUL_COMPONENT` → `mountComponent` 找不到
+  // `render` → 模板与渲染函数里用 `<Teleport>` **静默渲染为空**（实测）。
+  __vnodeType: TeleportVNodeType,
   // FIX: P1-21 定义正确的 props 类型替代 as any
   // FIX: DTS build error - 使用 any 避免 PropConstructor 类型不兼容
   // FIX: DTS build error - props 使用 any 类型

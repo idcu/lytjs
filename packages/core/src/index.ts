@@ -2,6 +2,16 @@
 // @lytjs/core - 核心入口
 
 export { createApp } from './create-app';
+
+// ── 内置组件 ────────────────────────────────────────────────────────────
+// ⚠️ 2026-10-02 新增：此前 core **完全没有**转出内置组件。后果实测：
+//   · 官方文档示例 `import { Suspense, useSuspense } from '@lytjs/core'`
+//     里的 `Suspense` 拿到的是 **undefined**；
+//   · 模板里写 `<Suspense>` / `<Teleport>` / `<Transition>` 会**静默渲染为空**
+//     （组件对象落进 `STATEFUL_COMPONENT`，而 `mountComponent` 找不到 `render`）。
+// 组件本体在 `@lytjs/component`，这里只做**转出**（不复制实现），
+// 避免出现第二个真相源。
+export { Suspense, Teleport, Transition, TransitionGroup, KeepAlive } from '@lytjs/component';
 export { h, h as createElement } from './h';
 export { defineComponent, defineAsyncComponent } from './define-component';
 export { nextTick } from './next-tick';

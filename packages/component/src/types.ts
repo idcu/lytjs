@@ -53,6 +53,17 @@ export interface ComponentOptions<
   C extends Record<string, unknown> = Record<string, unknown>,
 > {
   name?: string;
+  /**
+   * 声明本组件应由 **vdom 内置分派**处理，而不是走普通组件实例路径。
+   *
+   * 值取 `@lytjs/common-vnode` 里的符号（`Teleport` / `Suspense`），
+   * 由 `getShapeFlag` 识别。用于那些**自身不参与渲染、逻辑全在 vdom 的
+   * mount/patch 里**的内置组件（它们的 `setup` 注释即如此声明）。
+   *
+   * ⚠️ 不加这个字段时，这类组件对象会落进 `STATEFUL_COMPONENT` 分支 →
+   * `mountComponent` 找不到 `render` → **静默渲染为空**（2026-10-02 实测）。
+   */
+  __vnodeType?: unknown;
   props?: Record<string, PropOptions<unknown>> & Props;
   emits?: string[] | Record<string, (...args: unknown[]) => void>;
   setup?: (props: Props, ctx: SetupContext) => RawBindings | RenderFunction | void;
