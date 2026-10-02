@@ -29,6 +29,17 @@ export function initSlots(instance: ComponentInternalInstance, children: unknown
   if (isFunction(children)) {
     // 单个函数 => 默认插槽
     slots.default = children as SlotFunction;
+  } else if (isArray(children) || (children as VNode).__v_isVNode === true) {
+    // ★ 2026-10-02 新增：**VNode / VNode[]** —— 这是**模板编译产物最常见的形态**，
+    //   此前完全没有分支（数组落空、单个 vnode 被当成「插槽名字典」逐 key 遍历），
+    //   ⇒ `slots.default` **从未建立** ⇒ 组件里 `slots.default?.()` 得到 undefined
+    //   ⇒ 渲染函数返回 undefined ⇒ vdom `update()` 里 `vnode.el = subTree.el` 抛
+    //   `Cannot read properties of undefined (reading 'el')`。
+    //   实测触发：`<Transition><div/></Transition>`（模板）与
+    //   `h(Transition, null, h('div'))`（单个子 vnode）；而
+    //   `h(Transition, null, { default: () => [...] })`（显式 slots）一直正常。
+    const list = (isArray(children) ? children : [children]) as VNode[];
+    slots.default = (() => list) as unknown as SlotFunction;
   } else if (isObject(children) && !isArray(children)) {
     // 插槽函数对象
     const slotObj = children as Record<string, unknown>;
