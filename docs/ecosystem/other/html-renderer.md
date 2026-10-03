@@ -79,7 +79,7 @@ for await (const chunk of renderHTMLStream(options)) {
 
 ## 主要 API
 
-### `renderHTML(options)`
+### `renderHTML(options)` ⚠️ 未实现
 
 同步渲染 HTML。
 
@@ -98,7 +98,7 @@ const html = renderHTML({
 });
 ```
 
-### `renderHTMLStream(options)`
+### `renderHTMLStream(options)` ⚠️ 未实现
 
 流式渲染 HTML，生成异步迭代器。
 

@@ -113,7 +113,7 @@ meta
 
 ## 主要 API
 
-### `createMetadata()`
+### `createMetadata()` ⚠️ 未实现
 
 创建元数据管理实例。
 

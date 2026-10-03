@@ -30,30 +30,30 @@ import {
 // ⚠️ 下列 API 在 @lytjs/common-is 尚未实现（文档曾承诺）：isError, isNil, isNull, isUndefined, isPrimitive, hasOwnProperty;
 ```
 
-| 函数                       | 说明                                                                   |
-| -------------------------- | ---------------------------------------------------------------------- |
-| `isString(val)`            | 判断是否为字符串                                                       |
-| `isNumber(val)`            | 判断是否为数字                                                         |
-| `isBoolean(val)`           | 判断是否为布尔值                                                       |
-| `isArray(val)`             | 判断是否为数组                                                         |
-| `isObject(val)`            | 判断是否为对象（非 null 的引用类型）                                   |
-| `isFunction(val)`          | 判断是否为函数                                                         |
-| `isPromise(val)`           | 判断是否为 Promise                                                     |
-| `isDate(val)`              | 判断是否为 Date 对象                                                   |
-| `isRegExp(val)`            | 判断是否为正则表达式                                                   |
-| `isError(val)`             | 判断是否为 Error 对象                                                  |
-| `isSymbol(val)`            | 判断是否为 Symbol                                                      |
-| `isMap(val)`               | 判断是否为 Map                                                         |
-| `isSet(val)`               | 判断是否为 Set                                                         |
-| `isWeakMap(val)`           | 判断是否为 WeakMap                                                     |
-| `isWeakSet(val)`           | 判断是否为 WeakSet                                                     |
-| `isPlainObject(val)`       | 判断是否为普通对象（`{}` 或 `new Object()`）                           |
-| `isNil(val)`               | 判断是否为 null 或 undefined                                           |
-| `isNull(val)`              | 判断是否为 null                                                        |
-| `isUndefined(val)`         | 判断是否为 undefined                                                   |
-| `isEmpty(val)`             | 判断是否为空（null, undefined, '', [], {}）                            |
-| `isPrimitive(val)`         | 判断是否为原始值（string/number/boolean/symbol/bigint/null/undefined） |
-| `hasOwnProperty(obj, key)` | 安全获取 hasOwnProperty                                                |
+| 函数                       | 说明                                                                             |
+| -------------------------- | -------------------------------------------------------------------------------- |
+| `isString(val)`            | 判断是否为字符串                                                                 |
+| `isNumber(val)`            | 判断是否为数字                                                                   |
+| `isBoolean(val)`           | 判断是否为布尔值                                                                 |
+| `isArray(val)`             | 判断是否为数组                                                                   |
+| `isObject(val)`            | 判断是否为对象（非 null 的引用类型）                                             |
+| `isFunction(val)`          | 判断是否为函数                                                                   |
+| `isPromise(val)`           | 判断是否为 Promise                                                               |
+| `isDate(val)`              | 判断是否为 Date 对象                                                             |
+| `isRegExp(val)`            | 判断是否为正则表达式                                                             |
+| `isError(val)`             | 判断是否为 Error 对象 ⚠️ 未实现                                                  |
+| `isSymbol(val)`            | 判断是否为 Symbol                                                                |
+| `isMap(val)`               | 判断是否为 Map                                                                   |
+| `isSet(val)`               | 判断是否为 Set                                                                   |
+| `isWeakMap(val)`           | 判断是否为 WeakMap                                                               |
+| `isWeakSet(val)`           | 判断是否为 WeakSet                                                               |
+| `isPlainObject(val)`       | 判断是否为普通对象（`{}` 或 `new Object()`）                                     |
+| `isNil(val)`               | 判断是否为 null 或 undefined ⚠️ 未实现                                           |
+| `isNull(val)`              | 判断是否为 null ⚠️ 未实现                                                        |
+| `isUndefined(val)`         | 判断是否为 undefined ⚠️ 未实现                                                   |
+| `isEmpty(val)`             | 判断是否为空（null, undefined, '', [], {}）                                      |
+| `isPrimitive(val)`         | 判断是否为原始值（string/number/boolean/symbol/bigint/null/undefined） ⚠️ 未实现 |
+| `hasOwnProperty(obj, key)` | 安全获取 hasOwnProperty                                                          |
 
 ---
 
@@ -76,23 +76,23 @@ import {
 // ⚠️ 下列 API 在 @lytjs/common-string 尚未实现（文档曾承诺）：snakeToCamel, upperFirst, lowerFirst, trimStart, trimEnd, unescapeHtml;
 ```
 
-| 函数                              | 说明                                 |
-| --------------------------------- | ------------------------------------ |
-| `camelToKebab(str)`               | 驼峰转连字符（`fooBar` → `foo-bar`） |
-| `kebabToCamel(str)`               | 连字符转驼峰（`foo-bar` → `fooBar`） |
-| `snakeToCamel(str)`               | 下划线转驼峰（`foo_bar` → `fooBar`） |
-| `upperFirst(str)`                 | 首字母大写                           |
-| `lowerFirst(str)`                 | 首字母小写                           |
-| `trim(str)`                       | 去除首尾空白                         |
-| `trimStart(str)`                  | 去除开头空白                         |
-| `trimEnd(str)`                    | 去除末尾空白                         |
-| `truncate(str, length, omission)` | 截断字符串                           |
-| `padStart(str, length, chars)`    | 头部填充                             |
-| `padEnd(str, length, chars)`      | 尾部填充                             |
-| `escapeHtml(str)`                 | HTML 转义（防 XSS）                  |
-| `unescapeHtml(str)`               | HTML 反转义                          |
-| `escapeRegExp(str)`               | 转义正则特殊字符                     |
-| `capitalize(str)`                 | 首字母大写（同 `upperFirst`）        |
+| 函数                              | 说明                                           |
+| --------------------------------- | ---------------------------------------------- |
+| `camelToKebab(str)`               | 驼峰转连字符（`fooBar` → `foo-bar`）           |
+| `kebabToCamel(str)`               | 连字符转驼峰（`foo-bar` → `fooBar`）           |
+| `snakeToCamel(str)`               | 下划线转驼峰（`foo_bar` → `fooBar`） ⚠️ 未实现 |
+| `upperFirst(str)`                 | 首字母大写 ⚠️ 未实现                           |
+| `lowerFirst(str)`                 | 首字母小写 ⚠️ 未实现                           |
+| `trim(str)`                       | 去除首尾空白                                   |
+| `trimStart(str)`                  | 去除开头空白 ⚠️ 未实现                         |
+| `trimEnd(str)`                    | 去除末尾空白 ⚠️ 未实现                         |
+| `truncate(str, length, omission)` | 截断字符串                                     |
+| `padStart(str, length, chars)`    | 头部填充                                       |
+| `padEnd(str, length, chars)`      | 尾部填充                                       |
+| `escapeHtml(str)`                 | HTML 转义（防 XSS）                            |
+| `unescapeHtml(str)`               | HTML 反转义                                    |
+| `escapeRegExp(str)`               | 转义正则特殊字符                               |
+| `capitalize(str)`                 | 首字母大写（同 `upperFirst`） ⚠️ 未实现        |
 
 ---
 
@@ -105,27 +105,27 @@ import { deepClone, shallowClone, merge, pick, omit, get, set } from '@lytjs/com
 // ⚠️ 下列 API 在 @lytjs/common-object 尚未实现（文档曾承诺）：del, has, keys, values, entries, freeze, seal, isFrozen, isSealed, deepFreeze, isEqual, isDeepEqual;
 ```
 
-| 函数                        | 说明                                        |
-| --------------------------- | ------------------------------------------- |
-| `deepClone(obj)`            | 深拷贝                                      |
-| `shallowClone(obj)`         | 浅拷贝                                      |
-| `merge(target, ...sources)` | 深合并对象                                  |
-| `pick(obj, keys)`           | 选取指定键（`pick(user, ['name', 'age'])`） |
-| `omit(obj, keys)`           | 排除指定键                                  |
-| `get(obj, path)`            | 安全获取嵌套属性（`'a.b.c'`）               |
-| `set(obj, path, value)`     | 安全设置嵌套属性                            |
-| `del(obj, path)`            | 安全删除嵌套属性                            |
-| `has(obj, path)`            | 检查嵌套属性是否存在                        |
-| `keys(obj)`                 | 获取对象键（包含 Symbol）                   |
-| `values(obj)`               | 获取对象值                                  |
-| `entries(obj)`              | 获取键值对                                  |
-| `freeze(obj)`               | 冻结对象                                    |
-| `seal(obj)`                 | 密封对象                                    |
-| `isFrozen(obj)`             | 判断是否已冻结                              |
-| `isSealed(obj)`             | 判断是否已密封                              |
-| `deepFreeze(obj)`           | 深度冻结（递归）                            |
-| `isEqual(a, b)`             | 严格相等比较                                |
-| `isDeepEqual(a, b)`         | 深度相等比较                                |
+| 函数                        | 说明                                                  |
+| --------------------------- | ----------------------------------------------------- |
+| `deepClone(obj)`            | 深拷贝                                                |
+| `shallowClone(obj)`         | 浅拷贝                                                |
+| `merge(target, ...sources)` | 深合并对象                                            |
+| `pick(obj, keys)`           | 选取指定键（`pick(user, ['name', 'age'])`） ⚠️ 未实现 |
+| `omit(obj, keys)`           | 排除指定键 ⚠️ 未实现                                  |
+| `get(obj, path)`            | 安全获取嵌套属性（`'a.b.c'`）                         |
+| `set(obj, path, value)`     | 安全设置嵌套属性                                      |
+| `del(obj, path)`            | 安全删除嵌套属性 ⚠️ 未实现                            |
+| `has(obj, path)`            | 检查嵌套属性是否存在 ⚠️ 未实现                        |
+| `keys(obj)`                 | 获取对象键（包含 Symbol） ⚠️ 未实现                   |
+| `values(obj)`               | 获取对象值 ⚠️ 未实现                                  |
+| `entries(obj)`              | 获取键值对 ⚠️ 未实现                                  |
+| `freeze(obj)`               | 冻结对象 ⚠️ 未实现                                    |
+| `seal(obj)`                 | 密封对象 ⚠️ 未实现                                    |
+| `isFrozen(obj)`             | 判断是否已冻结 ⚠️ 未实现                              |
+| `isSealed(obj)`             | 判断是否已密封 ⚠️ 未实现                              |
+| `deepFreeze(obj)`           | 深度冻结（递归） ⚠️ 未实现                            |
+| `isEqual(a, b)`             | 严格相等比较 ⚠️ 未实现                                |
+| `isDeepEqual(a, b)`         | 深度相等比较                                          |
 
 ---
 
@@ -137,25 +137,25 @@ import { deepClone, shallowClone, merge, pick, omit, get, set } from '@lytjs/com
 // ⚠️ @lytjs/common-array 这个包在本仓**不存在**（文档曾承诺）：unique, uniqueBy, flatten, flattenDeep, groupBy, chunk, difference, intersection, union, sortBy, sum, mean, min, max, partition, zip, unzip;
 ```
 
-| 函数                           | 说明           |
-| ------------------------------ | -------------- |
-| `unique(arr)`                  | 去重           |
-| `uniqueBy(arr, key)`           | 按键去重       |
-| `flatten(arr)`                 | 展平一层       |
-| `flattenDeep(arr)`             | 深度展平       |
-| `groupBy(arr, key)`            | 分组           |
-| `chunk(arr, size)`             | 分块           |
-| `difference(arr, ...others)`   | 差集           |
-| `intersection(arr, ...others)` | 交集           |
-| `union(arr, ...others)`        | 并集           |
-| `sortBy(arr, key)`             | 按键排序       |
-| `sum(arr)`                     | 求和           |
-| `mean(arr)`                    | 平均值         |
-| `min(arr)`                     | 最小值         |
-| `max(arr)`                     | 最大值         |
-| `partition(arr, predicate)`    | 分区           |
-| `zip(...arrays)`               | 合并为元组数组 |
-| `unzip(arr)`                   | 解压元组数组   |
+| 函数                           | 说明                     |
+| ------------------------------ | ------------------------ |
+| `unique(arr)`                  | 去重 ⚠️ 未实现           |
+| `uniqueBy(arr, key)`           | 按键去重 ⚠️ 未实现       |
+| `flatten(arr)`                 | 展平一层 ⚠️ 未实现       |
+| `flattenDeep(arr)`             | 深度展平 ⚠️ 未实现       |
+| `groupBy(arr, key)`            | 分组 ⚠️ 未实现           |
+| `chunk(arr, size)`             | 分块 ⚠️ 未实现           |
+| `difference(arr, ...others)`   | 差集 ⚠️ 未实现           |
+| `intersection(arr, ...others)` | 交集 ⚠️ 未实现           |
+| `union(arr, ...others)`        | 并集 ⚠️ 未实现           |
+| `sortBy(arr, key)`             | 按键排序 ⚠️ 未实现       |
+| `sum(arr)`                     | 求和 ⚠️ 未实现           |
+| `mean(arr)`                    | 平均值 ⚠️ 未实现         |
+| `min(arr)`                     | 最小值 ⚠️ 未实现         |
+| `max(arr)`                     | 最大值 ⚠️ 未实现         |
+| `partition(arr, predicate)`    | 分区 ⚠️ 未实现           |
+| `zip(...arrays)`               | 合并为元组数组 ⚠️ 未实现 |
+| `unzip(arr)`                   | 解压元组数组             |
 
 ---
 
@@ -167,18 +167,18 @@ import { deepClone, shallowClone, merge, pick, omit, get, set } from '@lytjs/com
 // ⚠️ @lytjs/common-function 这个包在本仓**不存在**（文档曾承诺）：debounce, throttle, memoize, curry, compose, pipe, once, before, after, wrap;
 ```
 
-| 函数                     | 说明             |
-| ------------------------ | ---------------- |
-| `debounce(fn, ms)`       | 防抖             |
-| `throttle(fn, ms)`       | 节流             |
-| `memoize(fn, resolver?)` | 记忆化           |
-| `curry(fn)`              | 柯里化           |
-| `compose(...fns)`        | 组合（从右到左） |
-| `pipe(...fns)`           | 管道（从左到右） |
-| `once(fn)`               | 只执行一次       |
-| `before(n, fn)`          | 执行前 n 次      |
-| `after(n, fn)`           | 第 n 次后执行    |
-| `wrap(fn, wrapper)`      | 包装函数         |
+| 函数                     | 说明                       |
+| ------------------------ | -------------------------- |
+| `debounce(fn, ms)`       | 防抖 ⚠️ 未实现             |
+| `throttle(fn, ms)`       | 节流 ⚠️ 未实现             |
+| `memoize(fn, resolver?)` | 记忆化 ⚠️ 未实现           |
+| `curry(fn)`              | 柯里化 ⚠️ 未实现           |
+| `compose(...fns)`        | 组合（从右到左） ⚠️ 未实现 |
+| `pipe(...fns)`           | 管道（从左到右） ⚠️ 未实现 |
+| `once(fn)`               | 只执行一次 ⚠️ 未实现       |
+| `before(n, fn)`          | 执行前 n 次 ⚠️ 未实现      |
+| `after(n, fn)`           | 第 n 次后执行 ⚠️ 未实现    |
+| `wrap(fn, wrapper)`      | 包装函数                   |
 
 ---
 
@@ -191,15 +191,15 @@ import { warn, error } from '@lytjs/common-error';
 // ⚠️ 下列 API 在 @lytjs/common-error 尚未实现（文档曾承诺）：assert, assertCondition, createError, formatComponentTrace, formatTrace;
 ```
 
-| 函数                              | 说明            |
-| --------------------------------- | --------------- |
-| `warn(msg, ...args)`              | 输出警告        |
-| `error(msg, ...args)`             | 输出错误        |
-| `assert(condition, msg)`          | 断言            |
-| `assertCondition(condition, msg)` | 条件断言        |
-| `createError(msg, opts)`          | 创建 Error 对象 |
-| `formatComponentTrace(instance)`  | 格式化组件堆栈  |
-| `formatTrace(trace)`              | 格式化堆栈      |
+| 函数                              | 说明                      |
+| --------------------------------- | ------------------------- |
+| `warn(msg, ...args)`              | 输出警告                  |
+| `error(msg, ...args)`             | 输出错误                  |
+| `assert(condition, msg)`          | 断言 ⚠️ 未实现            |
+| `assertCondition(condition, msg)` | 条件断言 ⚠️ 未实现        |
+| `createError(msg, opts)`          | 创建 Error 对象 ⚠️ 未实现 |
+| `formatComponentTrace(instance)`  | 格式化组件堆栈 ⚠️ 未实现  |
+| `formatTrace(trace)`              | 格式化堆栈                |
 
 ---
 
@@ -251,8 +251,8 @@ import { queueJob, queuePostFlushCb, queuePreFlushCb, nextTick } from '@lytjs/co
 | `queueJob(job)`        | 添加任务到队列（异步执行，去重）               |
 | `queuePostFlushCb(cb)` | 添加到微任务队列末尾                           |
 | `queuePreFlushCb(cb)`  | 添加到微任务队列开头                           |
-| `queueFlush()`         | 触发队列刷新                                   |
-| `flushAll()`           | 刷新所有队列                                   |
+| `queueFlush()`         | 触发队列刷新 ⚠️ 未实现                         |
+| `flushAll()`           | 刷新所有队列 ⚠️ 未实现                         |
 | `nextTick(fn)`         | 下一微任务执行（`Promise.resolve().then(fn)`） |
 | `isInsideFlush()`      | 判断是否在 flush 中                            |
 
@@ -271,8 +271,8 @@ import { raf, caf, nextFrame } from '@lytjs/common-raf';
 | -------------- | ------------------------------------- |
 | `raf(fn)`      | 下一帧执行（`requestAnimationFrame`） |
 | `caf(id)`      | 取消动画帧                            |
-| `rafList(fns)` | 批量 RAF                              |
-| `rafLoop(fn)`  | RAF 循环                              |
+| `rafList(fns)` | 批量 RAF ⚠️ 未实现                    |
+| `rafLoop(fn)`  | RAF 循环 ⚠️ 未实现                    |
 | `nextFrame()`  | Promise 化的下一帧                    |
 
 ---
@@ -310,15 +310,15 @@ import { createStorage, isStorageAvailable } from '@lytjs/common-storage';
 // ⚠️ 下列 API 在 @lytjs/common-storage 尚未实现（文档曾承诺）：getStorage, setStorage, removeStorage, clearStorage;
 ```
 
-| 函数                           | 说明                 |
-| ------------------------------ | -------------------- |
-| `getStorage(type)`             | 获取存储实例         |
-| `setStorage(type, key, value)` | 设置值               |
-| `getStorage(type, key)`        | 获取值               |
-| `removeStorage(type, key)`     | 移除值               |
-| `clearStorage(type)`           | 清空存储             |
-| `createStorage(type, options)` | 创建带过期时间的存储 |
-| `isStorageAvailable()`         | 检测存储是否可用     |
+| 函数                           | 说明                   |
+| ------------------------------ | ---------------------- |
+| `getStorage(type)`             | 获取存储实例 ⚠️ 未实现 |
+| `setStorage(type, key, value)` | 设置值 ⚠️ 未实现       |
+| `getStorage(type, key)`        | 获取值 ⚠️ 未实现       |
+| `removeStorage(type, key)`     | 移除值 ⚠️ 未实现       |
+| `clearStorage(type)`           | 清空存储               |
+| `createStorage(type, options)` | 创建带过期时间的存储   |
+| `isStorageAvailable()`         | 检测存储是否可用       |
 
 ---
 
@@ -402,21 +402,21 @@ import { validate } from '@lytjs/common-validate';
 // ⚠️ 下列 API 在 @lytjs/common-validate 尚未实现（文档曾承诺）：isEmail, isUrl, isPhone, isIdCard, isIP, isNumber, isInteger, isLength, isIn, isRequired, isPattern, isRange;
 ```
 
-| 函数                      | 说明             |
-| ------------------------- | ---------------- |
-| `isEmail(val)`            | 验证邮箱         |
-| `isUrl(val)`              | 验证 URL         |
-| `isPhone(val)`            | 验证手机号       |
-| `isIdCard(val)`           | 验证身份证       |
-| `isIP(val)`               | 验证 IP 地址     |
-| `isNumber(val, options?)` | 验证数字         |
-| `isInteger(val)`          | 验证整数         |
-| `isLength(val, min, max)` | 验证长度         |
-| `isIn(val, array)`        | 验证是否在数组中 |
-| `isRequired(val)`         | 验证非空         |
-| `isPattern(val, regex)`   | 验证正则         |
-| `isRange(val, min, max)`  | 验证范围         |
-| `validate(rules, data)`   | 批量验证         |
+| 函数                      | 说明                       |
+| ------------------------- | -------------------------- |
+| `isEmail(val)`            | 验证邮箱 ⚠️ 未实现         |
+| `isUrl(val)`              | 验证 URL ⚠️ 未实现         |
+| `isPhone(val)`            | 验证手机号 ⚠️ 未实现       |
+| `isIdCard(val)`           | 验证身份证 ⚠️ 未实现       |
+| `isIP(val)`               | 验证 IP 地址 ⚠️ 未实现     |
+| `isNumber(val, options?)` | 验证数字 ⚠️ 未实现         |
+| `isInteger(val)`          | 验证整数 ⚠️ 未实现         |
+| `isLength(val, min, max)` | 验证长度 ⚠️ 未实现         |
+| `isIn(val, array)`        | 验证是否在数组中 ⚠️ 未实现 |
+| `isRequired(val)`         | 验证非空 ⚠️ 未实现         |
+| `isPattern(val, regex)`   | 验证正则 ⚠️ 未实现         |
+| `isRange(val, min, max)`  | 验证范围                   |
+| `validate(rules, data)`   | 批量验证                   |
 
 ---
 
@@ -428,14 +428,14 @@ import { validate } from '@lytjs/common-validate';
 // ⚠️ 下列 API 在 @lytjs/common-security 尚未实现（文档曾承诺）：escapeHtml, escapeAttribute, escapeUrl, sanitizeHtml, generateNonce, hashPassword;
 ```
 
-| 函数                         | 说明                |
-| ---------------------------- | ------------------- |
-| `escapeHtml(str)`            | HTML 转义           |
-| `escapeAttribute(str)`       | 属性值转义          |
-| `escapeUrl(str)`             | URL 转义            |
-| `sanitizeHtml(html, config)` | HTML 净化（白名单） |
-| `generateNonce()`            | 生成 CSP nonce      |
-| `hashPassword(password)`     | 密码哈希            |
+| 函数                         | 说明                          |
+| ---------------------------- | ----------------------------- |
+| `escapeHtml(str)`            | HTML 转义 ⚠️ 未实现           |
+| `escapeAttribute(str)`       | 属性值转义 ⚠️ 未实现          |
+| `escapeUrl(str)`             | URL 转义 ⚠️ 未实现            |
+| `sanitizeHtml(html, config)` | HTML 净化（白名单） ⚠️ 未实现 |
+| `generateNonce()`            | 生成 CSP nonce ⚠️ 未实现      |
+| `hashPassword(password)`     | 密码哈希                      |
 
 ---
 
@@ -448,17 +448,17 @@ import { isBrowser, isNode } from '@lytjs/common-env';
 // ⚠️ 下列 API 在 @lytjs/common-env 尚未实现（文档曾承诺）：isWeex, isWebKit, isIOS, isAndroid, isWindows, isMac, isLinux;
 ```
 
-| 函数        | 说明              |
-| ----------- | ----------------- |
-| `isBrowser` | 是否浏览器环境    |
-| `isNode`    | 是否 Node.js 环境 |
-| `isWeex`    | 是否 Weex 环境    |
-| `isWebKit`  | 是否 WebKit 内核  |
-| `isIOS`     | 是否 iOS          |
-| `isAndroid` | 是否 Android      |
-| `isWindows` | 是否 Windows      |
-| `isMac`     | 是否 macOS        |
-| `isLinux`   | 是否 Linux        |
+| 函数        | 说明                       |
+| ----------- | -------------------------- |
+| `isBrowser` | 是否浏览器环境             |
+| `isNode`    | 是否 Node.js 环境          |
+| `isWeex`    | 是否 Weex 环境 ⚠️ 未实现   |
+| `isWebKit`  | 是否 WebKit 内核 ⚠️ 未实现 |
+| `isIOS`     | 是否 iOS ⚠️ 未实现         |
+| `isAndroid` | 是否 Android ⚠️ 未实现     |
+| `isWindows` | 是否 Windows ⚠️ 未实现     |
+| `isMac`     | 是否 macOS ⚠️ 未实现       |
+| `isLinux`   | 是否 Linux                 |
 
 ---
 
@@ -473,9 +473,9 @@ import { parseQueryStringWithArrays, stringifyQueryString } from '@lytjs/common-
 
 | 函数                                   | 说明                                             |
 | -------------------------------------- | ------------------------------------------------ |
-| `parseQuery(query)`                    | 解析查询字符串为对象                             |
-| `stringifyQuery(query)`                | 对象序列化为查询字符串                           |
-| `parseUrl(url)`                        | 解析 URL                                         |
+| `parseQuery(query)`                    | 解析查询字符串为对象 ⚠️ 未实现                   |
+| `stringifyQuery(query)`                | 对象序列化为查询字符串 ⚠️ 未实现                 |
+| `parseUrl(url)`                        | 解析 URL ⚠️ 未实现                               |
 | `buildUrl(url, params)`                | 构建 URL                                         |
 | `parseQueryStringWithArrays(query)`    | 解析查询字符串，支持数组参数                     |
 | `stringifyQueryString(query, options)` | 对象序列化为查询字符串，支持数组、布尔值、数字等 |
@@ -507,16 +507,16 @@ import { dirname, basename, extname, isAbsolute } from '@lytjs/common-path';
 // ⚠️ 下列 API 在 @lytjs/common-path 尚未实现（文档曾承诺）：join, resolve, normalize, relative;
 ```
 
-| 函数                   | 说明           |
-| ---------------------- | -------------- |
-| `join(...paths)`       | 拼接路径       |
-| `resolve(...paths)`    | 解析为绝对路径 |
-| `normalize(path)`      | 规范化路径     |
-| `relative(from, to)`   | 计算相对路径   |
-| `dirname(path)`        | 获取目录名     |
-| `basename(path, ext?)` | 获取文件名     |
-| `extname(path)`        | 获取扩展名     |
-| `isAbsolute(path)`     | 是否绝对路径   |
+| 函数                   | 说明                     |
+| ---------------------- | ------------------------ |
+| `join(...paths)`       | 拼接路径 ⚠️ 未实现       |
+| `resolve(...paths)`    | 解析为绝对路径 ⚠️ 未实现 |
+| `normalize(path)`      | 规范化路径 ⚠️ 未实现     |
+| `relative(from, to)`   | 计算相对路径             |
+| `dirname(path)`        | 获取目录名               |
+| `basename(path, ext?)` | 获取文件名               |
+| `extname(path)`        | 获取扩展名               |
+| `isAbsolute(path)`     | 是否绝对路径             |
 
 ---
 
@@ -528,12 +528,12 @@ import { dirname, basename, extname, isAbsolute } from '@lytjs/common-path';
 // ⚠️ 下列 API 在 @lytjs/common-keyboard 尚未实现（文档曾承诺）：isModifierKey, getKeyName, isHotkey, parseHotkey
 ```
 
-| 函数                      | 说明                              |
-| ------------------------- | --------------------------------- |
-| `isModifierKey(event)`    | 是否修饰键（Ctrl/Shift/Alt/Meta） |
-| `getKeyName(event)`       | 获取按键名（`Ctrl+A`）            |
-| `isHotkey(hotkey, event)` | 判断是否匹配快捷键                |
-| `parseHotkey(hotkey)`     | 解析快捷键字符串                  |
+| 函数                      | 说明                                        |
+| ------------------------- | ------------------------------------------- |
+| `isModifierKey(event)`    | 是否修饰键（Ctrl/Shift/Alt/Meta） ⚠️ 未实现 |
+| `getKeyName(event)`       | 获取按键名（`Ctrl+A`） ⚠️ 未实现            |
+| `isHotkey(hotkey, event)` | 判断是否匹配快捷键 ⚠️ 未实现                |
+| `parseHotkey(hotkey)`     | 解析快捷键字符串 ⚠️ 未实现                  |
 
 ---
 
@@ -546,14 +546,14 @@ import { isFocusable } from '@lytjs/common-a11y';
 // ⚠️ 下列 API 在 @lytjs/common-a11y 尚未实现（文档曾承诺）：announce, getRole, getLabel, trapFocus, restoreFocus;
 ```
 
-| 函数                            | 说明           |
-| ------------------------------- | -------------- |
-| `announce(message, politeness)` | 通知屏幕阅读器 |
-| `getRole(element)`              | 获取 ARIA role |
-| `getLabel(element)`             | 获取无障碍标签 |
-| `isFocusable(element)`          | 是否可聚焦     |
-| `trapFocus(container)`          | 焦点陷阱       |
-| `restoreFocus()`                | 恢复焦点       |
+| 函数                            | 说明                     |
+| ------------------------------- | ------------------------ |
+| `announce(message, politeness)` | 通知屏幕阅读器 ⚠️ 未实现 |
+| `getRole(element)`              | 获取 ARIA role ⚠️ 未实现 |
+| `getLabel(element)`             | 获取无障碍标签 ⚠️ 未实现 |
+| `isFocusable(element)`          | 是否可聚焦               |
+| `trapFocus(container)`          | 焦点陷阱 ⚠️ 未实现       |
+| `restoreFocus()`                | 恢复焦点                 |
 
 ---
 
@@ -575,14 +575,14 @@ import { isFocusable } from '@lytjs/common-a11y';
 // ⚠️ 下列 API 在 @lytjs/common-timing 尚未实现（文档曾承诺）：now, sleep, formatDate, formatDuration, getTimestamp, parseDate;
 ```
 
-| 函数                       | 说明                                |
-| -------------------------- | ----------------------------------- |
-| `now()`                    | 高精度时间戳（`performance.now()`） |
-| `sleep(ms)`                | 延迟 Promise                        |
-| `formatDate(date, format)` | 格式化日期                          |
-| `formatDuration(ms)`       | 格式化时长                          |
-| `getTimestamp()`           | 获取 Unix 时间戳                    |
-| `parseDate(str)`           | 解析日期字符串                      |
+| 函数                       | 说明                                          |
+| -------------------------- | --------------------------------------------- |
+| `now()`                    | 高精度时间戳（`performance.now()`） ⚠️ 未实现 |
+| `sleep(ms)`                | 延迟 Promise ⚠️ 未实现                        |
+| `formatDate(date, format)` | 格式化日期 ⚠️ 未实现                          |
+| `formatDuration(ms)`       | 格式化时长 ⚠️ 未实现                          |
+| `getTimestamp()`           | 获取 Unix 时间戳 ⚠️ 未实现                    |
+| `parseDate(str)`           | 解析日期字符串                                |
 
 ---
 

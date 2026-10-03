@@ -112,7 +112,7 @@ const auth = createAuthMiddleware({
 });
 ```
 
-### `requireRole(role | roles)`
+### `requireRole(role | roles)` ⚠️ 未实现
 
 创建角色验证中间件。
 

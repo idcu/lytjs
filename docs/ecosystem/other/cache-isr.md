@@ -91,7 +91,7 @@ await cache.set('page-id', {
 
 ## 主要 API
 
-### `createISRCache(options)`
+### `createISRCache(options)` ⚠️ 未实现
 
 创建 ISR 缓存实例。
 

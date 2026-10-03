@@ -33,7 +33,7 @@ const text = createVNode(Text, null, 'text content');
 const comment = createVNode(Comment, null, 'comment');
 ```
 
-### createVNodePooled
+### createVNodePooled ⚠️ 未实现
 
 创建 VNode（使用对象池优化版本），减少 GC 压力
 

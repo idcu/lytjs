@@ -56,7 +56,7 @@ await incrementalGenerate(config, changedRoutes);
 
 ## 主要 API
 
-### `generateStaticSite(options)`
+### `generateStaticSite(options)` ⚠️ 未实现
 
 生成完整的静态站点。
 
@@ -74,7 +74,7 @@ await generateStaticSite({
 });
 ```
 
-### `incrementalGenerate(options, changedRoutes)`
+### `incrementalGenerate(options, changedRoutes)` ⚠️ 未实现
 
 增量生成静态站点。
 
@@ -87,7 +87,7 @@ await incrementalGenerate(
 );
 ```
 
-### `getRouteManifest()`
+### `getRouteManifest()` ⚠️ 未实现
 
 获取路由清单。
 
