@@ -13,8 +13,21 @@ export const ShallowRefSymbol: unique symbol = Symbol(DEV ? 'shallow_ref' : unde
 export const ComputedRefSymbol: unique symbol = Symbol(DEV ? 'computed_ref' : undefined);
 export const ReactiveSymbol: unique symbol = Symbol(DEV ? 'reactive' : undefined);
 export const ReadonlySymbol: unique symbol = Symbol(DEV ? 'readonly' : undefined);
-export const SignalSymbol: unique symbol = Symbol(DEV ? 'signal' : undefined);
-export const ComputedSignalSymbol: unique symbol = Symbol(DEV ? 'computed_signal' : undefined);
+// ★ 2026-10-03：`SignalSymbol` / `ComputedSignalSymbol` 改为**全局注册**符号。
+//
+// 为什么要改：模板插值（`{{ count }}`）走 vdom 的 `toDisplayString`，而
+// `signal()` 返回的是**可调用**对象 ⇒ 原先被当普通值 stringify，页面上出现
+// 一整坨函数源码，且插值处没「读」它 ⇒ 未建立依赖 ⇒ 更新也不触发。
+//
+// 而 vdom **明确不依赖 `@lytjs/reactivity`**（保持渲染层零交叉依赖），
+// 所以它无法 import 本文件的品牌标记。解法沿用**本仓已有的先例**：
+// `@lytjs/common-vnode` 就是用 `Symbol.for('Teleport')` 让 vdom 与 component
+// 在**没有直接依赖**的前提下识别同一个内置物（见 Teleport 的分派桥）。
+// 这里同理 —— 全局注册让「品牌」可跨包识别，而不引入依赖边。
+export const SignalSymbol: unique symbol = Symbol.for('lytjs:signal') as typeof SignalSymbol;
+export const ComputedSignalSymbol: unique symbol = Symbol.for(
+  'lytjs:computed_signal',
+) as typeof ComputedSignalSymbol;
 
 // ReactiveFlags - 用于 Proxy handler 内部标记
 export const ReactiveFlags = {

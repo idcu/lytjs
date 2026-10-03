@@ -152,9 +152,41 @@ function stringifyReplacer(_key: string, value: unknown): unknown {
  * 字符串原样，对象 JSON 化（带 symbol / bigint / Map / Set 兜底），
  * 其余 `String(x)`。
  */
+/**
+ * Signal 品牌标记（**跨包识别用**）。
+ *
+ * ⚠️ 这是与 `@lytjs/reactivity` 的**约定**（字符串键），不是 import ——
+ * 因为本包**明确不依赖 reactivity**（保持渲染层零交叉依赖）。
+ * 两处字面量必须一致：`packages/reactivity/src/constants.ts` 里
+ * `Symbol.for('lytjs:signal')` / `Symbol.for('lytjs:computed_signal')`。
+ *
+ * 改这两个字符串时，**必须同步改 reactivity 那一边**（同 `@lytjs/common-vnode`
+ * 的 `Symbol.for('Teleport')` 约定同构）。
+ */
+const LYTJ_SIGNAL: symbol = Symbol.for('lytjs:signal');
+const LYTJ_COMPUTED_SIGNAL: symbol = Symbol.for('lytjs:computed_signal');
+
 export function toDisplayString(val: unknown): string {
   if (val === null || val === undefined) return '';
   if (typeof val === 'string') return val;
+  // ★ 2026-10-03：Signal（`signal()` / `computedSignal()` 的产物）在插值位置
+  // 直接取值。它们是**可调用对象**，此前走到下面的 `String(val)` 分支
+  // ⇒ 模板里渲染出整个函数源码，且因为没有「读」它而**未建立依赖** ⇒ 更新也不触发。
+  //
+  // 判定用**全局注册的品牌标记**（`Symbol.for('lytjs:signal')`），
+  // 因此本文件**无需 import `@lytjs/reactivity`** —— 保持「渲染层零交叉依赖」
+  // 这一既有约束（同 `@lytjs/common-vnode` 的 `Symbol.for('Teleport')` 做法）。
+  // 调用它同时完成两件事：取到值 + 在当前渲染 effect 内**建立依赖**。
+  if (typeof val === 'function') {
+    const brand = val as unknown as Record<symbol, unknown>;
+    if (brand[LYTJ_SIGNAL] === true || brand[LYTJ_COMPUTED_SIGNAL] === true) {
+      try {
+        return String((val as unknown as () => unknown)());
+      } catch {
+        return '';
+      }
+    }
+  }
   if (typeof val === 'object') {
     const tag = Object.prototype.toString.call(val);
     if (OBJECT_STRINGIFY.test(tag) || isArray(val)) {
