@@ -68,7 +68,7 @@ import { isArray, isString } from '@lytjs/common-is';
 import { EMPTY_OBJ, NOOP } from '@lytjs/common-constants';
 
 // ✅ 推荐：使用 common-string
-import { camelize, toPascalCase } from '@lytjs/common-string';
+// ⚠️ 下列 API 在 @lytjs/common-string 尚未实现（文档曾承诺）：camelize, toPascalCase
 
 // ❌ 避免：重复造轮子
 // const isArray = Array.isArray;

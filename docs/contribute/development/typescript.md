@@ -269,7 +269,8 @@ const Button = defineComponent({
 
 ```typescript
 // VNode 类型安全
-import { h, Text, Comment, Fragment } from '@lytjs/vdom';
+import { Text, Comment, Fragment } from '@lytjs/vdom';
+// ⚠️ 下列 API 在 @lytjs/vdom 尚未实现（文档曾承诺）：h
 import type { VNode, VNodeChildren } from '@lytjs/vdom';
 
 const vnode: VNode = h('div', { class: 'container' }, [h('h1', 'Hello'), h(Text, 'World')]);

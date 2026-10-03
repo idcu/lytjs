@@ -31,7 +31,7 @@ pnpm add @lytjs/http-server
 ### 基础用法
 
 ```typescript
-import { createHttpServer } from '@lytjs/http-server';
+// ⚠️ 下列 API 在 @lytjs/http-server 尚未实现（文档曾承诺）：createHttpServer
 
 const server = createHttpServer({
   port: 3000,
@@ -45,7 +45,7 @@ console.log('Server running on http://localhost:3000');
 ### 添加路由
 
 ```typescript
-import { createHttpServer } from '@lytjs/http-server';
+// ⚠️ 下列 API 在 @lytjs/http-server 尚未实现（文档曾承诺）：createHttpServer
 
 const server = createHttpServer({ port: 3000 });
 
@@ -73,7 +73,7 @@ await server.listen();
 ### 使用中间件
 
 ```typescript
-import { createHttpServer } from '@lytjs/http-server';
+// ⚠️ 下列 API 在 @lytjs/http-server 尚未实现（文档曾承诺）：createHttpServer
 import { createCorsMiddleware } from '@lytjs/middleware-cors';
 
 const server = createHttpServer({ port: 3000 });
@@ -97,7 +97,7 @@ await server.listen();
 创建 HTTP 服务器实例。
 
 ```typescript
-import { createHttpServer } from '@lytjs/http-server';
+// ⚠️ 下列 API 在 @lytjs/http-server 尚未实现（文档曾承诺）：createHttpServer
 
 const server = createHttpServer({
   port: 3000,

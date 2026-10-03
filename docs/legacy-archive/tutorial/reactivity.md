@@ -136,7 +136,7 @@ stop();
 Effect 返回一个停止函数，用于清理副作用：
 
 ```typescript
-import { onCleanup } from '@lytjs/core';
+// ⚠️ 下列 API 在 @lytjs/core 尚未实现（文档曾承诺）：onCleanup
 
 effect(() => {
   const timer = setInterval(() => {

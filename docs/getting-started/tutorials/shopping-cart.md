@@ -29,7 +29,7 @@
 
 ```typescript
 import { createApp, defineComponent, ref, computed, effect } from '@lytjs/core';
-import { h } from '@lytjs/vdom';
+// ⚠️ 下列 API 在 @lytjs/vdom 尚未实现（文档曾承诺）：h
 import { ThemePlugin } from '@lytjs/plugin-theme';
 import { StoragePlugin } from '@lytjs/plugin-storage';
 

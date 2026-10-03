@@ -90,7 +90,8 @@ function Counter() {
 **LytJS:**
 
 ```typescript
-import { defineComponent, signal } from '@lytjs/component';
+import { defineComponent } from '@lytjs/component';
+// ⚠️ 下列 API 在 @lytjs/component 尚未实现（文档曾承诺）：signal
 
 const Counter = defineComponent({
   name: 'Counter',
@@ -162,7 +163,8 @@ function UserProfile() {
 **LytJS:**
 
 ```typescript
-import { defineComponent, signal, reactive } from '@lytjs/component';
+import { defineComponent } from '@lytjs/component';
+// ⚠️ 下列 API 在 @lytjs/component 尚未实现（文档曾承诺）：signal, reactive
 
 const UserProfile = defineComponent({
   name: 'UserProfile',
@@ -265,7 +267,8 @@ function UserList() {
 **LytJS:**
 
 ```typescript
-import { defineComponent, signal } from '@lytjs/component';
+import { defineComponent } from '@lytjs/component';
+// ⚠️ 下列 API 在 @lytjs/component 尚未实现（文档曾承诺）：signal
 import { watchEffect } from '@lytjs/reactivity';
 
 const UserList = defineComponent({

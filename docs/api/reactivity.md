@@ -1090,7 +1090,7 @@ interface AsyncComputedRef<T = unknown> extends Ref<T | undefined> {
 #### 示例
 
 ```ts
-import { asyncComputed } from '@lytjs/reactivity';
+// ⚠️ 下列 API 在 @lytjs/reactivity 尚未实现（文档曾承诺）：asyncComputed
 
 const user = asyncComputed(async () => {
   const res = await fetch('/api/user');

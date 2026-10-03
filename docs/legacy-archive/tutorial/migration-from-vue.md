@@ -173,7 +173,8 @@ export default defineComponent({
 **LytJS:**
 
 ```typescript
-import { defineComponent, signal } from '@lytjs/component';
+import { defineComponent } from '@lytjs/component';
+// ⚠️ 下列 API 在 @lytjs/component 尚未实现（文档曾承诺）：signal
 
 export default defineComponent({
   name: 'MyComponent',

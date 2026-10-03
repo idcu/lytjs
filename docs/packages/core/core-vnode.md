@@ -142,15 +142,8 @@ import {
 ## 组合式 API
 
 ```typescript
-import {
-  useSlots,
-  useAttrs,
-  useModel,
-  useTemplateRef,
-  useId,
-  useCssModule,
-  useCssVars,
-} from '@lytjs/core-vnode';
+import { useSlots, useAttrs, useModel } from '@lytjs/core-vnode';
+// ⚠️ 下列 API 在 @lytjs/core-vnode 尚未实现（文档曾承诺）：useTemplateRef, useId, useCssModule, useCssVars;
 // ⚠️ 以下四个实现位于 core 的 ./composition，core-vnode 不依赖 core ⇒ 只能从 core 导入
 import { useTemplateRef, useId, useCssModule, useCssVars } from '@lytjs/core';
 ```

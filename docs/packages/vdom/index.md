@@ -38,7 +38,8 @@ const comment = createVNode(Comment, null, 'comment');
 创建 VNode（使用对象池优化版本），减少 GC 压力
 
 ```typescript
-import { createVNodePooled, releaseVNode, getVNodePoolStats } from '@lytjs/vdom';
+import { releaseVNode, getVNodePoolStats } from '@lytjs/vdom';
+// ⚠️ 下列 API 在 @lytjs/vdom 尚未实现（文档曾承诺）：createVNodePooled
 
 // 使用对象池创建 VNode
 const vnode = createVNodePooled('div', { class: 'item' }, 'Content');
@@ -56,12 +57,8 @@ console.log(`Hit: ${stats.hit}, Miss: ${stats.miss}, Pool Size: ${stats.size}`);
 为减少高频 VNode 创建带来的 GC 压力，提供对象池机制：
 
 ```typescript
-import {
-  createVNodePooled,
-  releaseVNode,
-  getVNodePoolStats,
-  resetVNodePoolStats,
-} from '@lytjs/vdom';
+import { releaseVNode, getVNodePoolStats, resetVNodePoolStats } from '@lytjs/vdom';
+// ⚠️ 下列 API 在 @lytjs/vdom 尚未实现（文档曾承诺）：createVNodePooled;
 
 // 高频创建场景使用池化版本
 function renderList(items: string[]) {

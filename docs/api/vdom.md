@@ -33,7 +33,8 @@ function createVNode(
 **示例：**
 
 ```ts
-import { createVNode, h } from '@lytjs/vdom';
+import { createVNode } from '@lytjs/vdom';
+// ⚠️ 下列 API 在 @lytjs/vdom 尚未实现（文档曾承诺）：h
 
 // 元素节点
 const divVNode = createVNode('div', { class: 'container' }, 'Hello');
@@ -116,7 +117,8 @@ function cloneVNode(
 **示例：**
 
 ```ts
-import { cloneVNode, h } from '@lytjs/vdom';
+import { cloneVNode } from '@lytjs/vdom';
+// ⚠️ 下列 API 在 @lytjs/vdom 尚未实现（文档曾承诺）：h
 
 const original = h('button', { class: 'btn', disabled: false }, 'Click');
 const cloned = cloneVNode(original, { disabled: true });
@@ -461,7 +463,7 @@ function createRenderer<HN, HE>(options: RendererOptions<HN, HE>): Renderer<HN, 
 
 ```ts
 import { createRenderer } from '@lytjs/vdom';
-import { webHost } from '@lytjs/adapter-web';
+// ⚠️ 下列 API 在 @lytjs/adapter-web 尚未实现（文档曾承诺）：webHost
 
 const renderer = createRenderer(webHost);
 renderer.render(vnode, container);

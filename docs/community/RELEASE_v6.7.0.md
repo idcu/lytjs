@@ -119,10 +119,11 @@ LytJS v6.7.0 是一个核心能力大幅提升的重要版本，引入了完整�
 ### 使用中间件系统
 
 ```typescript
-import { createMiddlewareChain, compose } from '@lytjs/middleware';
-import { authMiddleware } from '@lytjs/middleware-auth';
+import { createMiddlewareChain } from '@lytjs/middleware';
+// ⚠️ 下列 API 在 @lytjs/middleware 尚未实现（文档曾承诺）：compose
+// ⚠️ 下列 API 在 @lytjs/middleware-auth 尚未实现（文档曾承诺）：authMiddleware
 import { corsMiddleware } from '@lytjs/middleware-cors';
-import { rateLimitMiddleware } from '@lytjs/middleware-rate-limit';
+// ⚠️ 下列 API 在 @lytjs/middleware-rate-limit 尚未实现（文档曾承诺）：rateLimitMiddleware
 
 // 组合中间件
 const chain = compose([corsMiddleware(), authMiddleware(), rateLimitMiddleware()]);

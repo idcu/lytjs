@@ -19,20 +19,15 @@ import {
   isPromise,
   isDate,
   isRegExp,
-  isError,
   isSymbol,
   isMap,
   isSet,
   isWeakMap,
   isWeakSet,
   isPlainObject,
-  isNil,
-  isNull,
-  isUndefined,
   isEmpty,
-  isPrimitive,
-  hasOwnProperty,
 } from '@lytjs/common-is';
+// ⚠️ 下列 API 在 @lytjs/common-is 尚未实现（文档曾承诺）：isError, isNil, isNull, isUndefined, isPrimitive, hasOwnProperty;
 ```
 
 | 函数                       | 说明                                                                   |
@@ -70,20 +65,15 @@ import {
 import {
   camelToKebab,
   kebabToCamel,
-  snakeToCamel,
-  upperFirst,
-  lowerFirst,
   trim,
-  trimStart,
-  trimEnd,
   truncate,
   padStart,
   padEnd,
   escapeHtml,
-  unescapeHtml,
   escapeRegExp,
   capitalize,
 } from '@lytjs/common-string';
+// ⚠️ 下列 API 在 @lytjs/common-string 尚未实现（文档曾承诺）：snakeToCamel, upperFirst, lowerFirst, trimStart, trimEnd, unescapeHtml;
 ```
 
 | 函数                              | 说明                                 |
@@ -111,27 +101,8 @@ import {
 对象操作工具集。
 
 ```ts
-import {
-  deepClone,
-  shallowClone,
-  merge,
-  pick,
-  omit,
-  get,
-  set,
-  del,
-  has,
-  keys,
-  values,
-  entries,
-  freeze,
-  seal,
-  isFrozen,
-  isSealed,
-  deepFreeze,
-  isEqual,
-  isDeepEqual,
-} from '@lytjs/common-object';
+import { deepClone, shallowClone, merge, pick, omit, get, set } from '@lytjs/common-object';
+// ⚠️ 下列 API 在 @lytjs/common-object 尚未实现（文档曾承诺）：del, has, keys, values, entries, freeze, seal, isFrozen, isSealed, deepFreeze, isEqual, isDeepEqual;
 ```
 
 | 函数                        | 说明                                        |
@@ -245,15 +216,8 @@ import {
 错误处理工具集。
 
 ```ts
-import {
-  warn,
-  error,
-  assert,
-  assertCondition,
-  createError,
-  formatComponentTrace,
-  formatTrace,
-} from '@lytjs/common-error';
+import { warn, error } from '@lytjs/common-error';
+// ⚠️ 下列 API 在 @lytjs/common-error 尚未实现（文档曾承诺）：assert, assertCondition, createError, formatComponentTrace, formatTrace;
 ```
 
 | 函数                              | 说明            |
@@ -273,7 +237,8 @@ import {
 事件系统工具集。
 
 ```ts
-import { EventEmitter, EventBus, createEventBus } from '@lytjs/common-events';
+import { EventEmitter } from '@lytjs/common-events';
+// ⚠️ 下列 API 在 @lytjs/common-events 尚未实现（文档曾承诺）：EventBus, createEventBus
 ```
 
 **EventEmitter：**
@@ -306,15 +271,8 @@ class EventBus {
 任务调度器，控制异步任务执行顺序。
 
 ```ts
-import {
-  queueJob,
-  queuePostFlushCb,
-  queuePreFlushCb,
-  queueFlush,
-  flushAll,
-  nextTick,
-  isInsideFlush,
-} from '@lytjs/common-scheduler';
+import { queueJob, queuePostFlushCb, queuePreFlushCb, nextTick } from '@lytjs/common-scheduler';
+// ⚠️ 下列 API 在 @lytjs/common-scheduler 尚未实现（文档曾承诺）：queueFlush, flushAll, isInsideFlush;
 ```
 
 | 函数                   | 说明                                           |
@@ -334,7 +292,8 @@ import {
 requestAnimationFrame 封装。
 
 ```ts
-import { raf, caf, rafList, rafLoop, nextFrame } from '@lytjs/common-raf';
+import { raf, caf, nextFrame } from '@lytjs/common-raf';
+// ⚠️ 下列 API 在 @lytjs/common-raf 尚未实现（文档曾承诺）：rafList, rafLoop
 ```
 
 | 函数           | 说明                                  |
@@ -352,7 +311,8 @@ import { raf, caf, rafList, rafLoop, nextFrame } from '@lytjs/common-raf';
 缓存工具集。
 
 ```ts
-import { createCache, memoize } from '@lytjs/common-cache';
+import { memoize } from '@lytjs/common-cache';
+// ⚠️ 下列 API 在 @lytjs/common-cache 尚未实现（文档曾承诺）：createCache
 ```
 
 **createCache：**
@@ -375,14 +335,8 @@ cache.get('key');
 存储封装（localStorage / sessionStorage）。
 
 ```ts
-import {
-  getStorage,
-  setStorage,
-  removeStorage,
-  clearStorage,
-  createStorage,
-  isStorageAvailable,
-} from '@lytjs/common-storage';
+import { createStorage, isStorageAvailable } from '@lytjs/common-storage';
+// ⚠️ 下列 API 在 @lytjs/common-storage 尚未实现（文档曾承诺）：getStorage, setStorage, removeStorage, clearStorage;
 ```
 
 | 函数                           | 说明                 |
@@ -404,7 +358,6 @@ HTTP 客户端封装。
 ```ts
 import {
   createHttpClient,
-  createFetchAdapter,
   http,
   get,
   post,
@@ -418,6 +371,7 @@ import {
   deleteJson,
   requestJson,
 } from '@lytjs/common-http';
+// ⚠️ 下列 API 在 @lytjs/common-http 尚未实现（文档曾承诺）：createFetchAdapter;
 ```
 
 **基础便捷方法：**
@@ -473,21 +427,8 @@ const response = await http.get('/api/users', {
 数据验证工具集。
 
 ```ts
-import {
-  isEmail,
-  isUrl,
-  isPhone,
-  isIdCard,
-  isIP,
-  isNumber,
-  isInteger,
-  isLength,
-  isIn,
-  isRequired,
-  isPattern,
-  isRange,
-  validate,
-} from '@lytjs/common-validate';
+import { validate } from '@lytjs/common-validate';
+// ⚠️ 下列 API 在 @lytjs/common-validate 尚未实现（文档曾承诺）：isEmail, isUrl, isPhone, isIdCard, isIP, isNumber, isInteger, isLength, isIn, isRequired, isPattern, isRange;
 ```
 
 | 函数                      | 说明             |
@@ -513,14 +454,7 @@ import {
 安全工具集。
 
 ```ts
-import {
-  escapeHtml,
-  escapeAttribute,
-  escapeUrl,
-  sanitizeHtml,
-  generateNonce,
-  hashPassword,
-} from '@lytjs/common-security';
+// ⚠️ 下列 API 在 @lytjs/common-security 尚未实现（文档曾承诺）：escapeHtml, escapeAttribute, escapeUrl, sanitizeHtml, generateNonce, hashPassword;
 ```
 
 | 函数                         | 说明                |
@@ -539,17 +473,8 @@ import {
 环境检测工具集。
 
 ```ts
-import {
-  isBrowser,
-  isNode,
-  isWeex,
-  isWebKit,
-  isIOS,
-  isAndroid,
-  isWindows,
-  isMac,
-  isLinux,
-} from '@lytjs/common-env';
+import { isBrowser, isNode } from '@lytjs/common-env';
+// ⚠️ 下列 API 在 @lytjs/common-env 尚未实现（文档曾承诺）：isWeex, isWebKit, isIOS, isAndroid, isWindows, isMac, isLinux;
 ```
 
 | 函数        | 说明              |
@@ -571,14 +496,8 @@ import {
 URL 查询字符串解析。
 
 ```ts
-import {
-  parseQuery,
-  stringifyQuery,
-  parseUrl,
-  buildUrl,
-  parseQueryStringWithArrays,
-  stringifyQueryString,
-} from '@lytjs/common-query';
+import { parseQueryStringWithArrays, stringifyQueryString } from '@lytjs/common-query';
+// ⚠️ 下列 API 在 @lytjs/common-query 尚未实现（文档曾承诺）：parseQuery, stringifyQuery, parseUrl, buildUrl;
 ```
 
 | 函数                                   | 说明                                             |
@@ -613,16 +532,8 @@ const url = stringifyQueryString({
 路径操作工具。
 
 ```ts
-import {
-  join,
-  resolve,
-  normalize,
-  relative,
-  dirname,
-  basename,
-  extname,
-  isAbsolute,
-} from '@lytjs/common-path';
+import { dirname, basename, extname, isAbsolute } from '@lytjs/common-path';
+// ⚠️ 下列 API 在 @lytjs/common-path 尚未实现（文档曾承诺）：join, resolve, normalize, relative;
 ```
 
 | 函数                   | 说明           |
@@ -643,7 +554,7 @@ import {
 键盘事件工具。
 
 ```ts
-import { isModifierKey, getKeyName, isHotkey, parseHotkey } from '@lytjs/common-keyboard';
+// ⚠️ 下列 API 在 @lytjs/common-keyboard 尚未实现（文档曾承诺）：isModifierKey, getKeyName, isHotkey, parseHotkey
 ```
 
 | 函数                      | 说明                              |
@@ -660,14 +571,8 @@ import { isModifierKey, getKeyName, isHotkey, parseHotkey } from '@lytjs/common-
 无障碍（Accessibility）工具。
 
 ```ts
-import {
-  announce,
-  getRole,
-  getLabel,
-  isFocusable,
-  trapFocus,
-  restoreFocus,
-} from '@lytjs/common-a11y';
+import { isFocusable } from '@lytjs/common-a11y';
+// ⚠️ 下列 API 在 @lytjs/common-a11y 尚未实现（文档曾承诺）：announce, getRole, getLabel, trapFocus, restoreFocus;
 ```
 
 | 函数                            | 说明           |
@@ -686,15 +591,7 @@ import {
 常用算法实现。
 
 ```ts
-import {
-  binarySearch,
-  bubbleSort,
-  quickSort,
-  mergeSort,
-  deepEqual,
-  levenshtein,
-  fibonacci,
-} from '@lytjs/common-algorithm';
+// ⚠️ 下列 API 在 @lytjs/common-algorithm 尚未实现（文档曾承诺）：binarySearch, bubbleSort, quickSort, mergeSort, deepEqual, levenshtein, fibonacci;
 ```
 
 ---
@@ -704,14 +601,7 @@ import {
 时间相关工具。
 
 ```ts
-import {
-  now,
-  sleep,
-  formatDate,
-  formatDuration,
-  getTimestamp,
-  parseDate,
-} from '@lytjs/common-timing';
+// ⚠️ 下列 API 在 @lytjs/common-timing 尚未实现（文档曾承诺）：now, sleep, formatDate, formatDuration, getTimestamp, parseDate;
 ```
 
 | 函数                       | 说明                                |
@@ -795,18 +685,8 @@ class PerformanceMonitor {
 DOM 操作辅助函数。
 
 ```ts
-import {
-  addClass,
-  removeClass,
-  toggleClass,
-  hasClass,
-  setStyle,
-  getStyle,
-  removeStyle,
-  getOffset,
-  getScrollPosition,
-  scrollTo,
-} from '@lytjs/common-dom-helpers';
+import { addClass, removeClass, hasClass, setStyle } from '@lytjs/common-dom-helpers';
+// ⚠️ 下列 API 在 @lytjs/common-dom-helpers 尚未实现（文档曾承诺）：toggleClass, getStyle, removeStyle, getOffset, getScrollPosition, scrollTo;
 ```
 
 ---
@@ -816,7 +696,8 @@ import {
 渲染队列管理。
 
 ```ts
-import { RenderQueue, createRenderQueue } from '@lytjs/common-render-queue';
+import { RenderQueue } from '@lytjs/common-render-queue';
+// ⚠️ 下列 API 在 @lytjs/common-render-queue 尚未实现（文档曾承诺）：createRenderQueue
 ```
 
 ---
@@ -826,11 +707,8 @@ import { RenderQueue, createRenderQueue } from '@lytjs/common-render-queue';
 过渡动画引擎。
 
 ```ts
-import {
-  TransitionEngine,
-  createTransitionEngine,
-  FLIPAnimator,
-} from '@lytjs/common-transition-engine';
+import { TransitionEngine } from '@lytjs/common-transition-engine';
+// ⚠️ 下列 API 在 @lytjs/common-transition-engine 尚未实现（文档曾承诺）：createTransitionEngine, FLIPAnimator;
 ```
 
 ---
@@ -840,12 +718,8 @@ import {
 事件归一化处理。
 
 ```ts
-import {
-  EventNormalizer,
-  normalizeEvent,
-  shouldDelegate,
-  getEventDelegationHandler,
-} from '@lytjs/common-event-normalizer';
+import { EventNormalizer } from '@lytjs/common-event-normalizer';
+// ⚠️ 下列 API 在 @lytjs/common-event-normalizer 尚未实现（文档曾承诺）：normalizeEvent, shouldDelegate, getEventDelegationHandler;
 ```
 
 ---
@@ -855,14 +729,8 @@ import {
 VNode 基础类型和常量（内部使用）。
 
 ```ts
-import {
-  VNode,
-  VNodeData,
-  VNodeChildren,
-  VNodeTypes,
-  PatchFlags,
-  ShapeFlags,
-} from '@lytjs/common-vnode';
+import { PatchFlags, ShapeFlags } from '@lytjs/common-vnode';
+// ⚠️ 下列 API 在 @lytjs/common-vnode 尚未实现（文档曾承诺）：VNode, VNodeData, VNodeChildren, VNodeTypes;
 ```
 
 ---

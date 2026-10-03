@@ -30,9 +30,10 @@
 
 ```typescript
 import { createApp, defineComponent, ref, computed } from '@lytjs/core';
-import { h } from '@lytjs/vdom';
+// ⚠️ 下列 API 在 @lytjs/vdom 尚未实现（文档曾承诺）：h
 import { ThemePlugin } from '@lytjs/plugin-theme';
-import { Router, createRouter, useRouter, useRoute } from '@lytjs/router';
+import { createRouter, useRouter, useRoute } from '@lytjs/router';
+// ⚠️ 下列 API 在 @lytjs/router 尚未实现（文档曾承诺）：Router
 
 // 文章类型定义
 interface Article {

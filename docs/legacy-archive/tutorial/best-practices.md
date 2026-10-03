@@ -53,7 +53,7 @@ const fullName = computed(() => `${firstName()} ${lastName()}`);
 ### 正确清理 effect
 
 ```typescript
-import { onCleanup } from '@lytjs/core'
+// ⚠️ 下列 API 在 @lytjs/core 尚未实现（文档曾承诺）：onCleanup
 
 // ✅ 好的做法：清理副作用
 setup() {

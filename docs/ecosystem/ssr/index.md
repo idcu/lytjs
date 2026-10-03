@@ -558,7 +558,7 @@ const strategy = getHydrationStrategy(app, {
 ### 如何处理客户端专有 API？
 
 ```typescript
-import { isClient } from '@lytjs/common-env';
+// ⚠️ 下列 API 在 @lytjs/common-env 尚未实现（文档曾承诺）：isClient
 
 if (isClient) {
   localStorage.setItem('key', 'value');
@@ -568,7 +568,7 @@ if (isClient) {
 ### 如何在 SSR 中使用 window 对象？
 
 ```typescript
-import { isServer } from '@lytjs/common-env';
+// ⚠️ 下列 API 在 @lytjs/common-env 尚未实现（文档曾承诺）：isServer
 
 if (!isServer) {
   window.addEventListener('resize', handleResize);

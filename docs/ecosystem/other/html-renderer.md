@@ -30,7 +30,7 @@ pnpm add @lytjs/html-renderer
 ### 基本渲染
 
 ```typescript
-import { renderHTML } from '@lytjs/html-renderer';
+// ⚠️ 下列 API 在 @lytjs/html-renderer 尚未实现（文档曾承诺）：renderHTML
 
 const html = renderHTML({
   title: 'My Page',
@@ -44,7 +44,7 @@ const html = renderHTML({
 ### 自定义模板
 
 ```typescript
-import { renderHTML } from '@lytjs/html-renderer';
+// ⚠️ 下列 API 在 @lytjs/html-renderer 尚未实现（文档曾承诺）：renderHTML
 
 const html = renderHTML({
   template: ({ title, content, head }) => `
@@ -69,7 +69,7 @@ const html = renderHTML({
 ### 流式渲染
 
 ```typescript
-import { renderHTMLStream } from '@lytjs/html-renderer';
+// ⚠️ 下列 API 在 @lytjs/html-renderer 尚未实现（文档曾承诺）：renderHTMLStream
 
 // 流式输出
 for await (const chunk of renderHTMLStream(options)) {
@@ -84,7 +84,7 @@ for await (const chunk of renderHTMLStream(options)) {
 同步渲染 HTML。
 
 ```typescript
-import { renderHTML } from '@lytjs/html-renderer';
+// ⚠️ 下列 API 在 @lytjs/html-renderer 尚未实现（文档曾承诺）：renderHTML
 
 const html = renderHTML({
   title: 'Page Title',
@@ -103,7 +103,7 @@ const html = renderHTML({
 流式渲染 HTML，生成异步迭代器。
 
 ```typescript
-import { renderHTMLStream } from '@lytjs/html-renderer';
+// ⚠️ 下列 API 在 @lytjs/html-renderer 尚未实现（文档曾承诺）：renderHTMLStream
 
 // 在服务端使用
 app.get('/page', async (req, res) => {

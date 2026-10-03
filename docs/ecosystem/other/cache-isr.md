@@ -30,7 +30,7 @@ pnpm add @lytjs/cache-isr
 ### 基本使用
 
 ```typescript
-import { createISRCache } from '@lytjs/cache-isr';
+// ⚠️ 下列 API 在 @lytjs/cache-isr 尚未实现（文档曾承诺）：createISRCache
 
 const cache = createISRCache({
   revalidate: 60, // 60 秒后重新验证
@@ -52,7 +52,7 @@ if (cached) {
 ### 自定义存储
 
 ```typescript
-import { createISRCache, type ISRStorage } from '@lytjs/cache-isr';
+// ⚠️ 下列 API 在 @lytjs/cache-isr 尚未实现（文档曾承诺）：createISRCache
 
 // 自定义 Redis 存储
 const redisStorage: ISRStorage = {
@@ -75,7 +75,7 @@ const cache = createISRCache({
 ### ETag 支持
 
 ```typescript
-import { createISRCache, generateETag } from '@lytjs/cache-isr';
+// ⚠️ 下列 API 在 @lytjs/cache-isr 尚未实现（文档曾承诺）：createISRCache, generateETag
 
 const cache = createISRCache();
 
@@ -96,7 +96,7 @@ await cache.set('page-id', {
 创建 ISR 缓存实例。
 
 ```typescript
-import { createISRCache } from '@lytjs/cache-isr';
+// ⚠️ 下列 API 在 @lytjs/cache-isr 尚未实现（文档曾承诺）：createISRCache
 
 const cache = createISRCache({
   revalidate: 300, // 重新验证时间（秒）

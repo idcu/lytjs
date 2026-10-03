@@ -198,7 +198,7 @@ export default defineConfig({
 ```typescript
 import express from 'express';
 import { createRequestHandler } from '@lytjs/core/ssr';
-import { renderToString } from '@lytjs/vdom';
+// ⚠️ 下列 API 在 @lytjs/vdom 尚未实现（文档曾承诺）：renderToString
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -635,7 +635,7 @@ export default defineConfig({
 ### 错误监控
 
 ```typescript
-import { initErrorTracking } from '@lytjs/common-error';
+// ⚠️ 下列 API 在 @lytjs/common-error 尚未实现（文档曾承诺）：initErrorTracking
 
 initErrorTracking({
   endpoint: 'https://monitor.example.com/errors',
@@ -646,7 +646,7 @@ initErrorTracking({
 ### 性能监控
 
 ```typescript
-import { recordMetric } from '@lytjs/common-performance';
+// ⚠️ 下列 API 在 @lytjs/common-performance 尚未实现（文档曾承诺）：recordMetric
 
 // 记录关键指标
 recordMetric('page_load', performance.now());

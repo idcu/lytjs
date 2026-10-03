@@ -166,13 +166,14 @@ escapeHTML('<script>'); // '&lt;script&gt;'
 ### 路径处理
 
 ```typescript
-import { normalizePath, joinPath, resolvePath, isAbsolutePath } from '@lytjs/common-path';
+import { normalizePath, joinPath, resolvePath } from '@lytjs/common-path';
+// ⚠️ 下列 API 在 @lytjs/common-path 尚未实现（文档曾承诺）：isAbsolutePath
 ```
 
 ### 对象操作
 
 ```typescript
-import { extend, hasOwn, def, toRawType, makeMap } from '@lytjs/common-object';
+// ⚠️ 下列 API 在 @lytjs/common-object 尚未实现（文档曾承诺）：extend, hasOwn, def, toRawType, makeMap
 ```
 
 ### 事件发射器
@@ -188,7 +189,8 @@ emitter.emit('event', { message: 'Hello' });
 ### 缓存策略
 
 ```typescript
-import { LRUCache, MemoizeCache, ExpiringCache } from '@lytjs/common-cache';
+import { LRUCache, ExpiringCache } from '@lytjs/common-cache';
+// ⚠️ 下列 API 在 @lytjs/common-cache 尚未实现（文档曾承诺）：MemoizeCache
 
 // LRU 缓存
 const lru = new LRUCache<string, any>({ max: 100 });
@@ -202,7 +204,8 @@ const expiring = new ExpiringCache({ ttl: 60000 });
 ### 定时工具
 
 ```typescript
-import { debounce, throttle, delay, sleep, timeout } from '@lytjs/common-timing';
+import { debounce, throttle, delay, timeout } from '@lytjs/common-timing';
+// ⚠️ 下列 API 在 @lytjs/common-timing 尚未实现（文档曾承诺）：sleep
 
 // 防抖
 const debounced = debounce(fn, 300);
@@ -217,7 +220,8 @@ await sleep(1000);
 ### 算法
 
 ```typescript
-import { getSequence, longestIncreasingSubsequence } from '@lytjs/common-algorithm';
+import { getSequence } from '@lytjs/common-algorithm';
+// ⚠️ 下列 API 在 @lytjs/common-algorithm 尚未实现（文档曾承诺）：longestIncreasingSubsequence
 
 // 最长递增子序列（用于 diff 算法）
 const indices = getSequence([2, 3, 1, 5, 6, 4]);
@@ -241,7 +245,8 @@ import {
 ### 错误处理
 
 ```typescript
-import { warn, error, handleError, ErrorCode, errorMessages } from '@lytjs/common-error';
+import { warn, error } from '@lytjs/common-error';
+// ⚠️ 下列 API 在 @lytjs/common-error 尚未实现（文档曾承诺）：handleError, ErrorCode, errorMessages
 
 if (__DEV__) {
   warn('This is a warning');
@@ -261,18 +266,15 @@ queueJob(() => {
 ### 常量包
 
 ```typescript
-import {
-  SLOT_DEFAULT_NAME,
-  ON_SHOW,
-  ON_HIDE,
-  // ...更多常量
-} from '@lytjs/common-constants';
+import {} from // ...更多常量,
+'@lytjs/common-constants';
+// ⚠️ 下列 API 在 @lytjs/common-constants 尚未实现（文档曾承诺）：SLOT_DEFAULT_NAME, ON_SHOW, ON_HIDE;
 ```
 
 ### 性能监控
 
 ```typescript
-import { measureStart, measureEnd, getPerformanceMetrics } from '@lytjs/common-performance';
+// ⚠️ 下列 API 在 @lytjs/common-performance 尚未实现（文档曾承诺）：measureStart, measureEnd, getPerformanceMetrics
 
 measureStart('render');
 // ...渲染操作
@@ -282,19 +284,15 @@ const duration = measureEnd('render');
 ### 安全工具
 
 ```typescript
-import { sanitizeHTML, escapeRegExp, isValidURL } from '@lytjs/common-security';
+import { sanitizeHTML } from '@lytjs/common-security';
+// ⚠️ 下列 API 在 @lytjs/common-security 尚未实现（文档曾承诺）：escapeRegExp, isValidURL
 ```
 
 ### 数据验证
 
 ```typescript
-import {
-  validateProps,
-  createValidator,
-  required,
-  minLength,
-  maxLength,
-} from '@lytjs/common-validate';
+import { createValidator, required, minLength, maxLength } from '@lytjs/common-validate';
+// ⚠️ 下列 API 在 @lytjs/common-validate 尚未实现（文档曾承诺）：validateProps;
 ```
 
 ## 相关包

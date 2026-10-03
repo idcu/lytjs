@@ -156,19 +156,7 @@ LytJS v6.8.0 是一个类型系统大幅增强和开发体验大幅提升的重�
 ### 使用新的类型工具
 
 ```typescript
-import {
-  Parameters,
-  ReturnType,
-  Partial,
-  Required,
-  Pick,
-  Omit,
-  IsString,
-  IsNumber,
-  Join,
-  Split,
-  CamelToSnake,
-} from '@lytjs/shared-types';
+// ⚠️ 下列 API 在 @lytjs/shared-types 尚未实现（文档曾承诺）：Parameters, ReturnType, Partial, Required, Pick, Omit, IsString, IsNumber, Join, Split, CamelToSnake;
 
 // 使用 Parameters
 function greet(name: string, age: number): string {

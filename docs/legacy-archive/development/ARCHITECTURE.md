@@ -360,7 +360,7 @@ import { isArray } from '@lytjs/common-is';
 import { EMPTY_OBJ } from '@lytjs/common-constants';
 
 // ✅ 正确：上层依赖紧邻的下层
-import { render } from '@lytjs/renderer';
+// ⚠️ 下列 API 在 @lytjs/renderer 尚未实现（文档曾承诺）：render
 
 // ✅ 允许：必要时可跨层依赖核心层
 import { ref, computed } from '@lytjs/reactivity';

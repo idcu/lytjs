@@ -603,7 +603,7 @@ export const TodoApp = defineVaporComponent({
 
 ```typescript
 // 批量更新多个待办
-import { batch } from '@lytjs/dom-runtime';
+// ⚠️ 下列 API 在 @lytjs/dom-runtime 尚未实现（文档曾承诺）：batch
 
 batch(() => {
   todos.forEach((todo) => {
@@ -616,7 +616,7 @@ batch(() => {
 
 ```typescript
 // 使用事件委托处理列表事件
-import { delegateEvent } from '@lytjs/dom-runtime';
+// ⚠️ 下列 API 在 @lytjs/dom-runtime 尚未实现（文档曾承诺）：delegateEvent
 
 const list = document.querySelector('.vapor-todo__list');
 delegateEvent(list, 'click', '.vapor-todo__delete', (event, target) => {
@@ -628,7 +628,7 @@ delegateEvent(list, 'click', '.vapor-todo__delete', (event, target) => {
 ### 3. 防抖高频输入
 
 ```typescript
-import { createRenderScheduler } from '@lytjs/dom-runtime';
+// ⚠️ 下列 API 在 @lytjs/dom-runtime 尚未实现（文档曾承诺）：createRenderScheduler
 
 const scheduleUpdate = createRenderScheduler(() => {
   // 渲染更新

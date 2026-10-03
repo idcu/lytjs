@@ -54,15 +54,7 @@ renderer.unmount(vnode);
 ### DOM 操作工具
 
 ```typescript
-import {
-  createElement,
-  createTextNode,
-  createComment,
-  setText,
-  setStyle,
-  addClass,
-  removeClass,
-} from '@lytjs/adapter-web';
+// ⚠️ 下列 API 在 @lytjs/adapter-web 尚未实现（文档曾承诺）：createElement, createTextNode, createComment, setText, setStyle, addClass, removeClass;
 
 // 创建元素
 const el = createElement('div');
@@ -78,7 +70,8 @@ removeClass(el, 'old-class');
 ### 事件处理
 
 ```typescript
-import { addEventListener, removeEventListener, removeAllEventListeners } from '@lytjs/adapter-web';
+import { removeAllEventListeners } from '@lytjs/adapter-web';
+// ⚠️ 下列 API 在 @lytjs/adapter-web 尚未实现（文档曾承诺）：addEventListener, removeEventListener
 
 // 添加事件监听
 const cleanup = addEventListener(el, 'click', (e) => {

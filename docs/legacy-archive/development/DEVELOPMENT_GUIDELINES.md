@@ -99,7 +99,7 @@ class Service {
 ```typescript
 // 1. 外部依赖
 import { ref, computed } from '@lytjs/reactivity';
-import { h } from '@lytjs/vdom';
+// ⚠️ 下列 API 在 @lytjs/vdom 尚未实现（文档曾承诺）：h
 
 // 2. 内部模块（按字母顺序）
 import { isArray } from '@lytjs/common-is';
@@ -214,7 +214,8 @@ batchScope(() => {
 
 ```typescript
 // ✅ 推荐：使用 h 函数创建 VNode
-import { h, Text, Comment, Fragment } from '@lytjs/vdom';
+import { Text, Comment, Fragment } from '@lytjs/vdom';
+// ⚠️ 下列 API 在 @lytjs/vdom 尚未实现（文档曾承诺）：h
 
 const vnode = h('div', { class: 'container' }, [
   h('h1', { key: 'title' }, 'Hello LytJS'),
@@ -223,7 +224,7 @@ const vnode = h('div', { class: 'container' }, [
 ]);
 
 // ✅ 推荐：使用 PatchFlags 优化动态内容
-import { PatchFlags } from '@lytjs/common-constants';
+// ⚠️ 下列 API 在 @lytjs/common-constants 尚未实现（文档曾承诺）：PatchFlags
 
 h(
   'span',
@@ -242,7 +243,7 @@ h(
 const list = items.map((item) => h('li', { key: item.id }, item.name));
 
 // ✅ 推荐：使用 @lytjs/common-algorithm 中的 LIS
-import { lis } from '@lytjs/common-algorithm';
+// ⚠️ 下列 API 在 @lytjs/common-algorithm 尚未实现（文档曾承诺）：lis
 
 // ❌ 避免：使用索引作为 key（当列表会变化时）
 // items.map((item, index) => h('li', { key: index }, ...));
@@ -301,7 +302,7 @@ onUnmounted(() => {
 
 ```typescript
 // ✅ 推荐：遵循 Host Contract 接口
-import { HostContract } from '@lytjs/host-contract';
+// ⚠️ 下列 API 在 @lytjs/host-contract 尚未实现（文档曾承诺）：HostContract
 
 const host: HostContract = {
   createElement: (tag) => document.createElement(tag),
@@ -314,13 +315,13 @@ const host: HostContract = {
 
 ```typescript
 // ✅ 推荐：使用 web adapter
-import { webAdapter } from '@lytjs/adapter-web';
+// ⚠️ 下列 API 在 @lytjs/adapter-web 尚未实现（文档曾承诺）：webAdapter
 
 // ✅ 推荐：使用 @lytjs/web 工具
 import { cssVars, resizeObserver } from '@lytjs/web';
 
 // ✅ 推荐：使用事件正规化
-import { normalizeEvent } from '@lytjs/common-event-normalizer';
+// ⚠️ 下列 API 在 @lytjs/common-event-normalizer 尚未实现（文档曾承诺）：normalizeEvent
 ```
 
 ### 错误处理规范
@@ -415,10 +416,10 @@ import { EMPTY_OBJ, EMPTY_ARR, NOOP } from '@lytjs/common-constants';
 import { isSameVNodeType } from '@lytjs/common-vnode';
 
 // 字符串处理
-import { camelize, toPascalCase } from '@lytjs/common-string';
+// ⚠️ 下列 API 在 @lytjs/common-string 尚未实现（文档曾承诺）：camelize, toPascalCase
 
 // DOM 操作
-import { querySelector, addEventListener } from '@lytjs/common-dom-helpers';
+// ⚠️ 下列 API 在 @lytjs/common-dom-helpers 尚未实现（文档曾承诺）：querySelector, addEventListener
 
 // 警告和错误
 import { warn, error } from '@lytjs/common-warn';
@@ -428,10 +429,10 @@ import { warn, error } from '@lytjs/common-warn';
 
 ```typescript
 // ✅ 推荐：复用已有的工具函数
-import { toPascalCase, camelize } from '@lytjs/common-string';
+// ⚠️ 下列 API 在 @lytjs/common-string 尚未实现（文档曾承诺）：toPascalCase, camelize
 
 // ✅ 推荐：使用 common-dom-helpers
-import { querySelector, addEventListener, removeEventListener } from '@lytjs/common-dom-helpers';
+// ⚠️ 下列 API 在 @lytjs/common-dom-helpers 尚未实现（文档曾承诺）：querySelector, addEventListener, removeEventListener
 ```
 
 ---

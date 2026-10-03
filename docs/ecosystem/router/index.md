@@ -79,7 +79,7 @@ export default router;
 ### 在应用中使用
 
 ```typescript
-import { mount } from '@lytjs/vdom';
+// ⚠️ 下列 API 在 @lytjs/vdom 尚未实现（文档曾承诺）：mount
 import App from './App';
 import router from './router';
 

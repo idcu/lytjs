@@ -73,7 +73,8 @@ const auth = createAuthMiddleware({
 ### 权限验证
 
 ```typescript
-import { createAuthMiddleware, requireRole } from '@lytjs/middleware-auth';
+import { createAuthMiddleware } from '@lytjs/middleware-auth';
+// ⚠️ 下列 API 在 @lytjs/middleware-auth 尚未实现（文档曾承诺）：requireRole
 
 const chain = createMiddlewareChain();
 
@@ -116,7 +117,7 @@ const auth = createAuthMiddleware({
 创建角色验证中间件。
 
 ```typescript
-import { requireRole } from '@lytjs/middleware-auth';
+// ⚠️ 下列 API 在 @lytjs/middleware-auth 尚未实现（文档曾承诺）：requireRole
 
 const requireAdmin = requireRole('admin');
 const requireEditorOrAdmin = requireRole(['editor', 'admin']);

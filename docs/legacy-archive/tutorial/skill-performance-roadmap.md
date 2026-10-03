@@ -87,7 +87,7 @@ const fullName = computed(() => {
 及时清理不再需要的 effect，避免内存泄漏和性能浪费：
 
 ```typescript
-import { onCleanup } from '@lytjs/core';
+// ⚠️ 下列 API 在 @lytjs/core 尚未实现（文档曾承诺）：onCleanup
 
 setup() {
   const data = signal('');
@@ -147,7 +147,7 @@ const router = createRouter({
 大数据量列表使用虚拟列表，只渲染可见区域：
 
 ```typescript
-import { VirtualList } from '@lytjs/ui';
+// ⚠️ 下列 API 在 @lytjs/ui 尚未实现（文档曾承诺）：VirtualList
 
 const largeData = Array.from({ length: 10000 }, (_, i) => ({
   id: i,
@@ -172,7 +172,7 @@ const largeData = Array.from({ length: 10000 }, (_, i) => ({
 只订阅需要的状态片段：
 
 ```typescript
-import { useStore } from '@lytjs/store';
+// ⚠️ 下列 API 在 @lytjs/store 尚未实现（文档曾承诺）：useStore
 
 // ✅ 好的做法：只订阅需要的状态
 const userName = useStore('user', (state) => state.profile.name);
@@ -208,7 +208,7 @@ const HeavyChart = () => import('./HeavyChart.vue');
 使用缓存避免重复请求：
 
 ```typescript
-import { createCache } from '@lytjs/common-cache';
+// ⚠️ 下列 API 在 @lytjs/common-cache 尚未实现（文档曾承诺）：createCache
 
 const userCache = createCache({
   max: 100,

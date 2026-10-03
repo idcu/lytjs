@@ -31,7 +31,7 @@ pnpm add @lytjs/metadata
 ### 基本用法
 
 ```typescript
-import { createMetadata } from '@lytjs/metadata';
+// ⚠️ 下列 API 在 @lytjs/metadata 尚未实现（文档曾承诺）：createMetadata
 
 const meta = createMetadata();
 
@@ -55,7 +55,7 @@ const html = meta.toString();
 ### OpenGraph 配置
 
 ```typescript
-import { createMetadata } from '@lytjs/metadata';
+// ⚠️ 下列 API 在 @lytjs/metadata 尚未实现（文档曾承诺）：createMetadata
 
 const meta = createMetadata();
 
@@ -82,7 +82,7 @@ meta.openGraph({
 ### Twitter Cards
 
 ```typescript
-import { createMetadata } from '@lytjs/metadata';
+// ⚠️ 下列 API 在 @lytjs/metadata 尚未实现（文档曾承诺）：createMetadata
 
 const meta = createMetadata();
 
@@ -99,7 +99,7 @@ meta.twitter({
 ### 自定义元标签
 
 ```typescript
-import { createMetadata } from '@lytjs/metadata';
+// ⚠️ 下列 API 在 @lytjs/metadata 尚未实现（文档曾承诺）：createMetadata
 
 const meta = createMetadata();
 
@@ -118,7 +118,7 @@ meta
 创建元数据管理实例。
 
 ```typescript
-import { createMetadata } from '@lytjs/metadata';
+// ⚠️ 下列 API 在 @lytjs/metadata 尚未实现（文档曾承诺）：createMetadata
 
 const meta = createMetadata();
 ```

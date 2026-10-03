@@ -29,7 +29,7 @@ pnpm add @lytjs/ssg
 ### 基本使用
 
 ```typescript
-import { generateStaticSite } from '@lytjs/ssg';
+// ⚠️ 下列 API 在 @lytjs/ssg 尚未实现（文档曾承诺）：generateStaticSite
 
 // 生成静态站点
 await generateStaticSite({
@@ -45,7 +45,7 @@ await generateStaticSite({
 ### 增量生成
 
 ```typescript
-import { generateStaticSite, incrementalGenerate } from '@lytjs/ssg';
+// ⚠️ 下列 API 在 @lytjs/ssg 尚未实现（文档曾承诺）：generateStaticSite, incrementalGenerate
 
 // 全量生成
 await generateStaticSite(config);
@@ -61,7 +61,7 @@ await incrementalGenerate(config, changedRoutes);
 生成完整的静态站点。
 
 ```typescript
-import { generateStaticSite } from '@lytjs/ssg';
+// ⚠️ 下列 API 在 @lytjs/ssg 尚未实现（文档曾承诺）：generateStaticSite
 
 await generateStaticSite({
   routes: ['/', '/about'],
@@ -79,7 +79,7 @@ await generateStaticSite({
 增量生成静态站点。
 
 ```typescript
-import { incrementalGenerate } from '@lytjs/ssg';
+// ⚠️ 下列 API 在 @lytjs/ssg 尚未实现（文档曾承诺）：incrementalGenerate
 
 await incrementalGenerate(
   options,
@@ -92,7 +92,7 @@ await incrementalGenerate(
 获取路由清单。
 
 ```typescript
-import { getRouteManifest } from '@lytjs/ssg';
+// ⚠️ 下列 API 在 @lytjs/ssg 尚未实现（文档曾承诺）：getRouteManifest
 
 const manifest = getRouteManifest();
 ```

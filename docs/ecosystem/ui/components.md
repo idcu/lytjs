@@ -289,7 +289,7 @@ const treeData = [
 ### 主题配置
 
 ```typescript
-import { theme } from '@lytjs/ui';
+// ⚠️ 下列 API 在 @lytjs/ui 尚未实现（文档曾承诺）：theme
 
 // 切换主题
 theme.set('dark'); // 深色主题

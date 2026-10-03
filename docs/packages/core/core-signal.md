@@ -50,7 +50,8 @@ createApp(App).mount('#app');
 ### Signal API
 
 ```typescript
-import { signal, computed, writableComputedSignal } from '@lytjs/core-signal';
+import { signal, computed } from '@lytjs/core-signal';
+// ⚠️ 下列 API 在 @lytjs/core-signal 尚未实现（文档曾承诺）：writableComputedSignal
 
 // 创建 Signal
 const count = signal(0);
@@ -100,12 +101,11 @@ const value = signalUntrack(() => a());
 import {
   onMounted,
   onUnmounted,
-  onUpdated,
   onBeforeMount,
   onBeforeUnmount,
-  onBeforeUpdate,
   onErrorCaptured,
 } from '@lytjs/core-signal';
+// ⚠️ 下列 API 在 @lytjs/core-signal 尚未实现（文档曾承诺）：onUpdated, onBeforeUpdate;
 
 const App = defineComponent({
   setup() {
@@ -130,23 +130,21 @@ const App = defineComponent({
 
 ```typescript
 import {
-  // Signal
-  signal,
+  // Signal signal,
   computed,
-  writableComputedSignal,
   readonlySignal,
   set,
   update,
   valueOf,
   signalBatch,
   signalUntrack,
-  // Ref（与 Signal 互操作）
-  ref,
+  // Ref（与 Signal 互操作） ref,
   reactive,
   computed as computedRef,
   watch,
   watchEffect,
 } from '@lytjs/core-signal';
+// ⚠️ 下列 API 在 @lytjs/core-signal 尚未实现（文档曾承诺）：writableComputedSignal;
 ```
 
 ## Signal vs Ref

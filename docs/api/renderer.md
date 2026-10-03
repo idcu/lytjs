@@ -30,7 +30,8 @@ interface DOMRenderer {
 ### 示例
 
 ```ts
-import { createDOMRenderer, createVNode } from '@lytjs/renderer';
+import { createDOMRenderer } from '@lytjs/renderer';
+// ⚠️ 下列 API 在 @lytjs/renderer 尚未实现（文档曾承诺）：createVNode
 
 const renderer = createDOMRenderer();
 const vnode = createVNode('div', { class: 'app' }, 'Hello LytJS');
@@ -113,7 +114,8 @@ interface SSRInput {
 ### 示例
 
 ```ts
-import { renderToString, createVNode } from '@lytjs/renderer';
+import { renderToString } from '@lytjs/renderer';
+// ⚠️ 下列 API 在 @lytjs/renderer 尚未实现（文档曾承诺）：createVNode
 
 const vnode = createVNode('div', { class: 'app' }, [
   createVNode('h1', {}, 'Hello SSR'),
@@ -149,7 +151,8 @@ interface SSRStreamOptions {
 ### 示例
 
 ```ts
-import { renderToStream, createVNode } from '@lytjs/renderer';
+import { renderToStream } from '@lytjs/renderer';
+// ⚠️ 下列 API 在 @lytjs/renderer 尚未实现（文档曾承诺）：createVNode
 
 const vnode = createVNode('div', {}, 'Streaming content');
 const stream = renderToStream({ vnode });
@@ -185,7 +188,8 @@ interface HydrationRenderer {
 ### 示例
 
 ```ts
-import { createHydrationFunctions, createVNode } from '@lytjs/renderer';
+import { createHydrationFunctions } from '@lytjs/renderer';
+// ⚠️ 下列 API 在 @lytjs/renderer 尚未实现（文档曾承诺）：createVNode
 
 const { hydrate } = createHydrationFunctions();
 const vnode = createVNode(App);
@@ -261,7 +265,8 @@ function hydrateIslandOnVisible(
 ### 示例
 
 ```ts
-import { hydrateIslandOnVisible, registerIslandComponent } from '@lytjs/renderer';
+import { registerIslandComponent } from '@lytjs/renderer';
+// ⚠️ 下列 API 在 @lytjs/renderer 尚未实现（文档曾承诺）：hydrateIslandOnVisible
 
 registerIslandComponent('HeavyWidget', HeavyWidgetComponent);
 
@@ -306,7 +311,8 @@ function hydrateIslandOnIdle(
 ### 示例
 
 ```ts
-import { hydrateIslandOnIdle, registerIslandComponent } from '@lytjs/renderer';
+import { registerIslandComponent } from '@lytjs/renderer';
+// ⚠️ 下列 API 在 @lytjs/renderer 尚未实现（文档曾承诺）：hydrateIslandOnIdle
 
 registerIslandComponent('Analytics', AnalyticsComponent);
 
@@ -343,7 +349,8 @@ function hydrateIslandOnInteraction(
 ### 示例
 
 ```ts
-import { hydrateIslandOnInteraction, registerIslandComponent } from '@lytjs/renderer';
+import { registerIslandComponent } from '@lytjs/renderer';
+// ⚠️ 下列 API 在 @lytjs/renderer 尚未实现（文档曾承诺）：hydrateIslandOnInteraction
 
 registerIslandComponent('DatePicker', DatePickerComponent);
 
@@ -548,7 +555,7 @@ interface LazyComponentOptions {
 #### 示例
 
 ```ts
-import { defineLazyComponent } from '@lytjs/renderer';
+// ⚠️ 下列 API 在 @lytjs/renderer 尚未实现（文档曾承诺）：defineLazyComponent
 
 // 基本用法
 const LazyDashboard = defineLazyComponent(() => import('./Dashboard.vue'));
@@ -581,7 +588,7 @@ function preloadComponent(component: LazyComponent): Promise<Component>;
 #### 示例
 
 ```ts
-import { defineLazyComponent, preloadComponent } from '@lytjs/renderer';
+// ⚠️ 下列 API 在 @lytjs/renderer 尚未实现（文档曾承诺）：defineLazyComponent, preloadComponent
 
 const LazyDashboard = defineLazyComponent(() => import('./Dashboard.vue'));
 

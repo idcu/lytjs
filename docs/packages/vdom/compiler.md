@@ -35,7 +35,8 @@ const ast = parse('<div class="container">{{ message }}</div>');
 对 AST 应用转换管道（v-if、v-for、v-model 等指令处理）
 
 ```typescript
-import { parse, transform, builtInTransforms } from '@lytjs/compiler';
+import { parse, transform } from '@lytjs/compiler';
+// ⚠️ 下列 API 在 @lytjs/compiler 尚未实现（文档曾承诺）：builtInTransforms
 
 const ast = parse(template);
 transform(ast, {

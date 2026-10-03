@@ -61,7 +61,8 @@ export { UserService } from './services';
 
 ```typescript
 // 使用 Vapor 模式获得最佳性能
-import { defineComponent, useVapor } from '@lytjs/core';
+import { defineComponent } from '@lytjs/core';
+// ⚠️ 下列 API 在 @lytjs/core 尚未实现（文档曾承诺）：useVapor
 
 export default defineComponent({
   useVapor: true, // 启用 Vapor 模式
@@ -74,7 +75,8 @@ export default defineComponent({
 #### 避免不必要的渲染
 
 ```typescript
-import { memo, computed } from '@lytjs/core';
+import { computed } from '@lytjs/core';
+// ⚠️ 下列 API 在 @lytjs/core 尚未实现（文档曾承诺）：memo
 
 // 只在依赖变化时重新渲染
 const ExpensiveComponent = memo((props) => {
@@ -107,7 +109,7 @@ const router = createRouter({
 ### 3. 虚拟列表
 
 ```typescript
-import { useVirtualList } from '@lytjs/ui';
+// ⚠️ 下列 API 在 @lytjs/ui 尚未实现（文档曾承诺）：useVirtualList
 
 const { listRef, visibleItems, onScroll } = useVirtualList({
   items: bigDataset,
@@ -123,7 +125,7 @@ const { listRef, visibleItems, onScroll } = useVirtualList({
 
 ```typescript
 // src/store/index.ts
-import { createStore } from '@lytjs/store';
+// ⚠️ 下列 API 在 @lytjs/store 尚未实现（文档曾承诺）：createStore
 import { userModule } from './user';
 import { themeModule } from './theme';
 
@@ -137,7 +139,7 @@ export const store = createStore({
 
 ```typescript
 // src/store/user/index.ts
-import { createModule } from '@lytjs/store';
+// ⚠️ 下列 API 在 @lytjs/store 尚未实现（文档曾承诺）：createModule
 
 export const userModule = createModule({
   state: {
@@ -296,7 +298,7 @@ export default defineConfig({
 
 ```typescript
 // src/main.ts
-import { devtools } from '@lytjs/devtools';
+// ⚠️ 下列 API 在 @lytjs/devtools 尚未实现（文档曾承诺）：devtools
 
 if (import.meta.env.DEV) {
   app.use(devtools);
@@ -316,7 +318,7 @@ reportPerformance('lcp', 2500); // Largest Contentful Paint
 ### 3. 错误追踪
 
 ```typescript
-import { errorBoundary } from '@lytjs/core'
+// ⚠️ 下列 API 在 @lytjs/core 尚未实现（文档曾承诺）：errorBoundary
 
 const SafeComponent = errorBoundary(MyComponent, {
   onError: (error) => {
