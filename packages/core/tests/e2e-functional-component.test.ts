@@ -60,7 +60,7 @@ describe('端到端：函数式组件', () => {
     expect(host.querySelector('#f')?.textContent).toBe('msg=hello');
   });
 
-  it('已知缺口：未传 prop 时 default **未生效**（修好时此用例会红）', async () => {
+  it('未传 prop 时应填默认值（2026-10-04 修复：initProps 早退导致默认值不生效）', async () => {
     const host = newHost();
     const Func = defineFunctionalComponent(
       (props: Record<string, unknown>) => h('span', { id: 'd' }, 'msg=' + String(props.msg)),
@@ -73,9 +73,24 @@ describe('端到端：函数式组件', () => {
     } as never).mount(host);
     await flush();
 
-    // ⚠️ 实测：`defineFunctionalComponent` 声明的 `default` **不会被应用**
-    //   （stateful 包装路径直接返回渲染函数，未走 props 解析/默认值填充）
-    //   ⇒ 这是「声明了但没生效」的 API，属待消减缺口。
-    expect(host.querySelector('#d')?.textContent).toBe('msg=undefined');
+    expect(host.querySelector('#d')?.textContent).toBe('msg=fallback');
+  });
+
+  it('★ 同一缺陷也命中 stateful 组件（影响面不止函数式组件）', async () => {
+    const host = newHost();
+    const Stateful = {
+      props: { label: { type: String, default: 'D' } },
+      setup(props: Record<string, unknown>) {
+        return () => h('span', { id: 's' }, 'v=' + String(props.label));
+      },
+    };
+
+    await createApp({
+      components: { Stateful },
+      template: '<div><Stateful /></div>',
+    } as never).mount(host);
+    await flush();
+
+    expect(host.querySelector('#s')?.textContent).toBe('v=D');
   });
 });

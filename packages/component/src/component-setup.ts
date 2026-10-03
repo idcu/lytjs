@@ -262,24 +262,26 @@ export function initProps(
 ): void {
   const propsOptions = instance.propsOptions;
   const props: Record<string, unknown> = {};
-  if (!rawProps) {
-    instance.props = props;
-    return;
-  }
+  // ★ 2026-10-04 修正：此前 `if (!rawProps) { …; return; }` 会在**没有传任何 prop**
+  //   时提前返回 ⇒ **声明的默认值一个都不填**（实测函数式组件渲染出 `msg=undefined`
+  //   而非声明的 `fallback`）。⚠️ 这**不只影响函数式组件** —— 任何
+  //   「声明了 props 默认值、实例化时没传 props」的组件都受影响。
+  //   修法：把 `null` 视作 `{}` 继续走下面的循环，让 `resolvePropValue` 填默认值。
+  const raw: Record<string, unknown> = rawProps ?? {};
 
   // 处理声明的 props
   for (const key in propsOptions) {
     if (hasOwn(propsOptions, key)) {
-      const value = rawProps[key];
+      const value = raw[key];
       props[key] = resolvePropValue(propsOptions[key]!, value, instance, key);
     }
   }
 
   // 收集 attrs（未声明的 props）
   const attrs: Record<string, unknown> = {};
-  for (const key in rawProps) {
-    if (hasOwn(rawProps, key) && !hasOwn(propsOptions, key)) {
-      attrs[key] = rawProps[key];
+  for (const key in raw) {
+    if (hasOwn(raw, key) && !hasOwn(propsOptions, key)) {
+      attrs[key] = raw[key];
     }
   }
 
