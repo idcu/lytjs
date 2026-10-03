@@ -142,6 +142,44 @@ export { ref, reactive, computed, watch, watchEffect, effect } from '@lytjs/reac
 export { signal, computedSignal, isSignal } from '@lytjs/reactivity';
 export type { Signal, WritableSignal, ComputedSignal } from '@lytjs/reactivity';
 
+// ── 响应式标准 API 补齐 ────────────────────────────────────────────────
+// ⚠️ 2026-10-03：`docs/packages/core/core.md` 一次性 import 了 20 多个
+// Vue 标准响应式 API。经查证它们**本体全部已实现在 `@lytjs/reactivity`**
+// （该包运行时导出面共 70 个名字），缺的只是 **core 的转出**。
+// 用户从 `@lytjs/core` 拿 `shallowRef` / `toRef` / `unref` / `customRef` /
+// `toRaw` / `markRaw` 这类是合理预期 ⇒ 纯转出，不新造实现。
+export {
+  shallowRef,
+  shallowReactive,
+  readonly,
+  shallowReadonly,
+  isShallowRef,
+  isReadonly,
+  isReactive,
+  isRef,
+  isProxy,
+  isComputedRef,
+  toRef,
+  toRefs,
+  toValue,
+  toRaw,
+  markRaw,
+  triggerRef,
+  customRef,
+  unref,
+  stop,
+  batch,
+  untrack,
+  signalBatch,
+  signalUntrack,
+  writableComputedSignal,
+  readonlySignal,
+  set,
+  update,
+  valueOf,
+  proxyRefs,
+} from '@lytjs/reactivity';
+
 // ── 依赖注入 / 侦听家族补齐 ────────────────────────────────────────────
 // ⚠️ 2026-10-03：`scripts/check-doc-imports.ts` 门禁发现 —— `docs/guide/*` 与
 // `docs/examples/*`（用户会直接复制的那批）里的 `import { provide, inject } from '@lytjs/core'`

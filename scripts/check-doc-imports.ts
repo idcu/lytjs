@@ -37,6 +37,12 @@ const ROOT = join(__dirname, '..');
 const PACKAGES_DIR = join(ROOT, 'packages');
 const REPORT_ONLY = process.argv.includes('--report');
 
+/** `--pkg @lytjs/xxx` ⇒ 只看某一个包的明细（消减某一批时用） */
+function pkgFilter(): string | null {
+  const i = process.argv.indexOf('--pkg');
+  return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : null;
+}
+
 const SKIP_DIRS = new Set(['node_modules', 'dist', '.turbo', 'coverage', '_templates']);
 
 // ============================================================
@@ -314,6 +320,18 @@ if (reported.length > 0) {
         .map(([k, v]) => `${k}(${v})`)
         .join(', '),
   );
+  // `--report` 下**逐条列出**：否则「301 项」只是一个无法逐项处理的数量。
+  // 配合 `--pkg <name>` 可只看某一个包（消减某一批时用）。
+  const only = pkgFilter();
+  if (only) {
+    const subset = reported.filter((m) => m.item.pkg === only);
+    console.log(`\n   —— 明细：${only}（${subset.length} 项）——`);
+    for (const { item, name } of subset) {
+      console.log(`   ${item.file}:${item.line}  ${name}`);
+    }
+  } else {
+    console.log('   （加 `--pkg @lytjs/xxx` 可只看某一个包的明细）');
+  }
 }
 
 process.exit(enforced.length === 0 || REPORT_ONLY ? 0 : 1);

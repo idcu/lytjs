@@ -157,7 +157,7 @@ import {
 从 @lytjs/compiler 重导出
 
 ```typescript
-import { compile, parse, transform, generate } from '@lytjs/core';
+import { compile, parse, transform, generate } from '@lytjs/compiler';
 
 const { code, ast } = compile('<div>{{ message }}</div>');
 ```
@@ -263,7 +263,7 @@ import {
   createVaporRenderer,
   createVaporApp,
   defineVaporComponent,
-} from '@lytjs/core';
+} from '@lytjs/renderer';
 ```
 
 ## 工具函数
