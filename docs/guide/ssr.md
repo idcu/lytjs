@@ -32,19 +32,21 @@ import App from './App';
 const html = await renderToString({ vnode: App });
 ```
 
-在组件中通过 `useSSRContext` 访问上下文：
+### ⚠️ 组件内读取上下文：**当前不支持**（2026-10-03 实测）
+
+本仓**没有** SSR 上下文机制：`renderToString` 的入参只有 `{ vnode }`，
+全仓也**没有任何** `ssrContext` / `useSSRContext` 实现（`grep` 零命中）。
+此前此处的 `useSSRContext` 示例会让读者拿到 `undefined`，已删除。
+
+目前想在服务端向组件传数据，只能走**模块级单例**（进程内共享，注意请求间隔离）：
 
 ```typescript
-import { useSSRContext } from '@lytjs/core';
-
-const UserProfile = {
-  setup() {
-    const ctx = useSSRContext();
-    // ctx.url => '/home'
-    // ctx.user => { name: '张三' }
-  },
-};
+// server-state.ts —— 进程内共享（多用户部署需自行加隔离）
+export const serverState = { url: '/home', user: { name: '张三' } };
 ```
+
+要真正支持「按请求隔离的上下文」，需要给 `renderToString` 增加上下文入参
+（改动公开 API 签名）并提供读取入口 —— 属**待决策的新能力**，尚未实现。
 
 ### Express 服务器示例
 

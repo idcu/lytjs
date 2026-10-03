@@ -311,17 +311,17 @@ pnpm build
 ### @lytjs/devtools - 开发工具
 
 ```typescript
-import { enable, getComponentTree, getSignals } from '@lytjs/devtools';
+import { installDevTools, getComponentTree, getSignalNodes } from '@lytjs/devtools';
 
-// 启用 DevTools
-enable();
+// 启用 DevTools（⚠️ 真实 API 是 installDevTools，此前文档写的 `enable` 并不存在）
+const devtools = installDevTools();
 
 // 获取组件树
 const tree = getComponentTree();
 console.log('Component tree:', tree);
 
-// 获取所有 Signal
-const signals = getSignals();
+// 获取已登记的 Signal 节点（⚠️ 真实 API 是 getSignalNodes，此前写的 `getSignals` 并不存在）
+const signals = getSignalNodes();
 console.log('Signals:', signals);
 ```
 

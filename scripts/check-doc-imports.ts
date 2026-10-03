@@ -158,32 +158,24 @@ const ARCHIVED_PREFIXES = ['docs/legacy-archive/'];
  * ⚠️ 登记 ≠ 合理。以下每一条都是**文档承诺了未实现的能力**（claims-vs-reality），
  * 属待消减欠账，清理时应回到本文件删除对应行。
  */
-const DEBT_ALLOWLIST: Array<{ pkg: string; name: string; reason: string }> = [
-  {
-    pkg: '@lytjs/devtools',
-    name: 'enable',
-    reason:
-      '`docs/guide/local-usage.md` 演示开启 devtools，但 `@lytjs/devtools` 未实现/未转出 enable。' +
-      '待决：补实现 or 改文档口径。',
-  },
-  {
-    pkg: '@lytjs/devtools',
-    name: 'getSignals',
-    reason: '同上，devtools 侧的 signal 读取入口不存在。',
-  },
-  {
-    pkg: '@lytjs/core',
-    name: 'useSSRContext',
-    reason:
-      '`docs/guide/ssr.md` 承诺 `useSSRContext`，但 SSR 上下文尚未对外暴露为该 API。' +
-      '待决：补实现 or 改文档口径。',
-  },
-  // ── 已消减（保留记录以说明棘轮只许下不许增）──────────────────────────
-  // · `signal` / `computedSignal` / `isSignal`（@lytjs/core 与 @lytjs/reactivity）：
-  //   2026-10-03 消减 —— 本体早已实现在 reactivity，只是没转出；`isSignal` 借
-  //   `signalFn` 上的 `SignalSymbol` 品牌标记实现（纯接线）。接触面 8+2 处转绿。
-];
-
+/**
+ * 已知欠账白名单（**棘轮**：允许已登记的缺失，**禁止新增**）。
+ *
+ * ✅ **当前为空** —— 2026-10-03 把原 14 项全部消减完毕：
+ * · `signal` / `computedSignal` / `isSignal`（@lytjs/core 与 @lytjs/reactivity）：
+ *   本体早已实现在 reactivity，只是没转出；`isSignal` 借 `signalFn` 上的
+ *   `SignalSymbol` 品牌标记实现（纯接线）。
+ * · `enable` / `getSignals`（@lytjs/devtools）：真实 API 叫 `installDevTools` /
+ *   `getSignalNodes`（后者本就已转出）⇒ 文档改为指向真实名字，**不加别名**
+ *   —— `enable` 过泛且会与既有命名重复。
+ * · `useSSRContext`（@lytjs/core）：全仓无 SSR 上下文实现，且补它要改
+ *   `renderToString` 的公开签名 ⇒ 属新能力，本次**改文档口径**（`docs/guide/ssr.md`
+ *   已改为说明「当前不支持」并给出模块级单例的替代做法）。
+ *
+ * ⚠️ 保持为空是刻意的：门禁一旦长期挂账就会被忽略。将来若真要新增条目，
+ * 必须同时写清「为什么不能用现有能力替代」。
+ */
+const DEBT_ALLOWLIST: Array<{ pkg: string; name: string; reason: string }> = [];
 function enforcementOf(file: string): 'enforce' | 'report' | 'skip' {
   if (ARCHIVED_PREFIXES.some((p) => file.startsWith(p))) return 'skip';
   if (file === 'README.md') return 'enforce';
