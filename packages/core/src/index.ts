@@ -31,6 +31,10 @@ export {
 } from '@lytjs/component';
 export { h, h as createElement } from './h';
 export { defineComponent, defineAsyncComponent } from './define-component';
+// ★ 2026-10-04：`defineFunctionalComponent` 的本体在 `@lytjs/component`，
+//   但 core 未转出 ⇒ 从 `@lytjs/core` 导入得到 `undefined`
+//   （实测报「defineFunctionalComponent is not a function」）。
+export { defineFunctionalComponent } from '@lytjs/component';
 export { nextTick } from './next-tick';
 export { resolveComponent, resolveDirective, resolveDynamicComponent } from './resolve';
 export { withDirectives, withMemo } from './directives';
