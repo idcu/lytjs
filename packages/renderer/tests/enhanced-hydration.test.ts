@@ -190,6 +190,25 @@ describe('hydrateApp：DOM ↔ vnode 真实协调', () => {
   });
 
   // ---------------------------------------------------------------
+  // 12. ★ 标记属性判别（2026-10-03）：真实标记 `data-hydrate` 的元素必须被**处理**，
+  //     而无标记的才计入 skipped。
+  //
+  //     这条在修复前会红：旧实现读的是 `data-ssr-id`，而**全仓没有任何地方写它**
+  //     （SSR 实际写 `data-hydrate`）⇒ 带 `data-hydrate` 的元素也会被跳过。
+  // ---------------------------------------------------------------
+  it('带 data-hydrate 的元素应被处理（而非像无标记那样被跳过）', async () => {
+    container.innerHTML = '<div data-hydrate="lyt-hydrate-1" onclick="doBad()">x</div><div>y</div>';
+    // 组件解析不出根 vnode ⇒ 走降级清理，但**标记判定**仍应区分二者
+    const { stats } = await hydrateApp({} as never, container);
+
+    // ★ 判别点：带真实标记的元素被**处理** ⇒ 它的内联事件属性被摘掉。
+    //   旧实现读 `data-ssr-id`（没人写）⇒ 该元素也会被跳过 ⇒ 这行会红。
+    expect(container.querySelector('[data-hydrate]')!.hasAttribute('onclick')).toBe(false);
+    // skippedNodes = 1（容器级：组件解析不出根 vnode）+ 1（无标记的那个元素）
+    expect(stats.skippedNodes).toBe(2);
+  });
+
+  // ---------------------------------------------------------------
   // 11. 降级路径（回归对照）：带 data-ssr-id 的元素被计数、无者计入 skipped
   // ---------------------------------------------------------------
   it('降级路径应仍按 data-ssr-id 区分处理，并摘掉 SSR 内联事件属性', async () => {

@@ -18,6 +18,25 @@
  *     导出的签名 ⇒ renderer 的 .d.ts 依赖 core ⇒ core 构建时**循环失败**（实测）。
  *   - 不能移除本声明：动态 import 会重新触发 TS7016。
  */
+// ============================================================
+// 水合标记属性（**唯一真相源**）
+// ============================================================
+
+/**
+ * ★ 2026-10-03 修正：选择性水合的标记属性此前**读的是 `data-ssr-id`，
+ * 而全仓没有任何地方写它** —— SSR 侧真正写出的是
+ * `data-hydrate="lyt-hydrate-N"`（见 `ssr-kit` 的 `HYDRATE_ATTR`）。
+ * ⇒ 两个属性对不上，`hydrateVisible` 在**真实 SSR 产物**上会把每个元素
+ *   计入 `skippedNodes` 并直接返回，**一个都不会被水合**。
+ *   而覆盖它的测试自己手写了 `data-ssr-id` ⇒ 自证式假绿。
+ *
+ * 现在统一读 `data-hydrate`；`data-ssr-id` 仅作**旧名兼容**（外部产出的 HTML
+ * 可能带它），本仓不再写它。
+ */
+const HYDRATE_ATTR = 'data-hydrate';
+/** @deprecated 旧标记名，仅为兼容外部 HTML；本仓 SSR 写的是 {@link HYDRATE_ATTR} */
+const LEGACY_HYDRATE_ATTR = 'data-ssr-id';
+
 type App = unknown;
 type Component = unknown;
 import { warn } from '@lytjs/common-error';
@@ -263,8 +282,10 @@ async function hydrateElement(
   _options: HydrationOptions,
 ): Promise<void> {
   // 检查 SSR 标记
-  const ssrId = element.getAttribute('data-ssr-id');
-  if (!ssrId) {
+  // ⚠️ 标记属性名的修正见文件头 HYDRATE_ATTR 的注释（此前读的是没人写的
+  // `data-ssr-id` ⇒ 真实 SSR 产物上这里恒为「跳过」）。
+  const marker = element.getAttribute(HYDRATE_ATTR) ?? element.getAttribute(LEGACY_HYDRATE_ATTR);
+  if (!marker) {
     stats.skippedNodes++;
     return;
   }
@@ -388,7 +409,7 @@ export async function hydrateVisible(
   }
 
   // 查找所有需要 Hydration 的元素
-  const hydrateElements = containerEl.querySelectorAll('[data-hydrate]');
+  const hydrateElements = containerEl.querySelectorAll(`[${HYDRATE_ATTR}]`);
 
   const stats: HydrationStats = {
     totalNodes: hydrateElements.length,
