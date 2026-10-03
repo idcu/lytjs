@@ -7,7 +7,7 @@ LytJS 使用虚拟 DOM 渲染函数（`h` 函数）来描述 UI 结构，同时�
 `h(tag, props, children)` 用于创建虚拟节点（VNode）。
 
 ```typescript
-import { h } from '@lytjs/vdom';
+import { h } from '@lytjs/core';
 
 // 创建一个 div 元素
 const vnode = h('div', { id: 'app' }, 'Hello LytJS');

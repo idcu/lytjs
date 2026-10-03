@@ -131,6 +131,17 @@ export type {
 
 // Re-export from sub-packages
 export { ref, reactive, computed, watch, watchEffect, effect } from '@lytjs/reactivity';
+
+// ── 依赖注入 / 侦听家族补齐 ────────────────────────────────────────────
+// ⚠️ 2026-10-03：`scripts/check-doc-imports.ts` 门禁发现 —— `docs/guide/*` 与
+// `docs/examples/*`（用户会直接复制的那批）里的 `import { provide, inject } from '@lytjs/core'`
+// 与 `watchPostEffect` / `watchSyncEffect` **在 core 的导出面里不存在**，
+// 而**本体早已实现**：
+//   · `provide` / `inject`      → `packages/component/src/component-inject.ts`
+//   · `watchPostEffect` / `watchSyncEffect` → `packages/reactivity/src/watch.ts`
+// 前者是 Vue 的核心 API、文档里到处在用；缺了它用户照抄文档即得 `undefined`。
+export { provide, inject } from '@lytjs/component';
+export { watchPostEffect, watchSyncEffect } from '@lytjs/reactivity';
 export { compile } from '@lytjs/compiler';
 
 // ---------------------------------------------------------------------------

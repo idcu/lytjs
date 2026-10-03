@@ -66,6 +66,7 @@
     "check-deps": "tsx scripts/check-deps.ts",
     "check-build-order": "tsx scripts/check-build-order.ts",
     "check-runtime-contract": "tsx scripts/check-runtime-contract.ts",
+    "check-doc-imports": "tsx scripts/check-doc-imports.ts",
     "check-zero-deps": "tsx scripts/check-zero-deps.ts",
     "check-circular": "tsx scripts/check-circular.ts",
     "check-circular:src": "tsx scripts/check-circular.ts --src",
