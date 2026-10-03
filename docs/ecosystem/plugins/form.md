@@ -23,7 +23,7 @@ pnpm add @lytjs/plugin-form
 ### 创建表单管理器
 
 ```typescript
-import { createFormManager } from '@lytjs/plugin-form';
+// ⚠️ @lytjs/plugin-form 这个包在本仓**不存在**（文档曾承诺）：createFormManager;
 
 // 创建表单实例
 const form = createFormManager({
@@ -416,7 +416,7 @@ effect(() => {
 ### 与 UI 组件集成
 
 ```typescript
-import { createFormManager } from '@lytjs/plugin-form';
+// ⚠️ @lytjs/plugin-form 这个包在本仓**不存在**（文档曾承诺）：createFormManager;
 
 const form = createFormManager({
   fields: {

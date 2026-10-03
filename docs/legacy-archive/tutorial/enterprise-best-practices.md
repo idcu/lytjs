@@ -165,7 +165,7 @@ export const userModule = createModule({
 
 ```typescript
 // 使用安全的内容渲染
-import { sanitize } from '@lytjs/common-utils';
+// ⚠️ @lytjs/common-utils 这个包在本仓**不存在**（文档曾承诺）：sanitize;
 
 // 自动转义用户输入
 export function renderUserContent(content: string) {
@@ -177,7 +177,7 @@ export function renderUserContent(content: string) {
 
 ```typescript
 // 在 API 请求中添加 CSRF token
-import { useCsrfToken } from '@lytjs/plugin-auth';
+// ⚠️ @lytjs/plugin-auth 这个包在本仓**不存在**（文档曾承诺）：useCsrfToken;
 
 const csrfToken = useCsrfToken();
 
@@ -190,7 +190,7 @@ const fetchData = async () => {
 
 ```typescript
 // 使用装饰器或指令
-import { hasPermission } from '@lytjs/plugin-auth';
+// ⚠️ @lytjs/plugin-auth 这个包在本仓**不存在**（文档曾承诺）：hasPermission;
 
 const AdminButton = hasPermission('admin')(Button);
 ```
@@ -308,7 +308,7 @@ if (import.meta.env.DEV) {
 ### 2. 性能监控
 
 ```typescript
-import { reportPerformance } from '@lytjs/plugin-logger';
+// ⚠️ @lytjs/plugin-logger 这个包在本仓**不存在**（文档曾承诺）：reportPerformance;
 
 // 监听 Core Web Vitals
 reportPerformance('fcp', 1500); // First Contentful Paint

@@ -128,8 +128,27 @@ async function rewriteBlock(
   if (!m || m[2]) return null;
   const indent = m[1] ?? '';
   const pkg = m[5];
+
+  // ★ 2026-10-03 新增：**包根本不存在**（文档承诺了一个本仓没有的包）
+  //   ⇒ 同样摘除整条 import，并留注释说明「这个包不存在」。
+  //   ⚠️ 必须与「包存在但产物未构建」区分：后者 `exportsOf` 也返回 null，
+  //   但那是**环境问题**不是文档问题 ⇒ 此时**不动**（否则就是假阳性）。
+  if (!packages.some((x) => x.name === pkg)) {
+    const specsAll = (m[3] ?? '')
+      .split(',')
+      .map((x) => x.replace(/\s+/g, ' ').trim())
+      .filter(Boolean)
+      .map((x) => x.split(/\s+as\s+/)[0].trim());
+    return {
+      text:
+        indent + '// ⚠️ ' + pkg + ' 这个包在本仓**不存在**（文档曾承诺）：' + specsAll.join(', '),
+      removed: specsAll,
+      pkg,
+    };
+  }
+
   const exports = await exportsOf(pkg);
-  if (exports === null) return null;
+  if (exports === null) return null; // 存在但未构建 ⇒ 环境问题，跳过
 
   // 保留原始 specifier（可能带 `as` 别名或换行注释）
   const specs = m[3]

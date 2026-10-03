@@ -23,7 +23,7 @@ pnpm add @lytjs/plugin-animation
 ### 创建简单动画
 
 ```typescript
-import { createAnimation } from '@lytjs/plugin-animation';
+// ⚠️ @lytjs/plugin-animation 这个包在本仓**不存在**（文档曾承诺）：createAnimation;
 
 // 创建一个淡入动画
 const animation = createAnimation(
@@ -82,7 +82,7 @@ const animation = createAnimation(
 ### 内置缓动函数
 
 ```typescript
-import { createAnimation } from '@lytjs/plugin-animation';
+// ⚠️ @lytjs/plugin-animation 这个包在本仓**不存在**（文档曾承诺）：createAnimation;
 
 // 线性动画
 const anim1 = createAnimation(callback, { easing: 'linear' });
@@ -156,7 +156,7 @@ const animation = createAnimation(callback, {
 ### 创建关键帧动画
 
 ```typescript
-import { createKeyframeAnimation } from '@lytjs/plugin-animation';
+// ⚠️ @lytjs/plugin-animation 这个包在本仓**不存在**（文档曾承诺）：createKeyframeAnimation;
 
 const element = document.getElementById('box');
 
@@ -199,7 +199,7 @@ const animation = createKeyframeAnimation(element, keyframes, {
 ### 淡入淡出
 
 ```typescript
-import { PRESETS, createKeyframeAnimation } from '@lytjs/plugin-animation';
+// ⚠️ @lytjs/plugin-animation 这个包在本仓**不存在**（文档曾承诺）：PRESETS, createKeyframeAnimation;
 
 const element = document.getElementById('box');
 
@@ -391,7 +391,7 @@ const animation = createAnimation(callback, {
 ### 元素过渡
 
 ```typescript
-import { transitionElement } from '@lytjs/plugin-animation';
+// ⚠️ @lytjs/plugin-animation 这个包在本仓**不存在**（文档曾承诺）：transitionElement;
 
 const element = document.getElementById('modal');
 
@@ -436,7 +436,7 @@ transitionElement(element, true, {
 ### 创建管理器
 
 ```typescript
-import { createAnimationManager } from '@lytjs/plugin-animation';
+// ⚠️ @lytjs/plugin-animation 这个包在本仓**不存在**（文档曾承诺）：createAnimationManager;
 
 const manager = createAnimationManager({
   defaultDuration: 300,

@@ -49,7 +49,7 @@
 **使用示例：**
 
 ```typescript
-import { pluginTheme } from '@lytjs/plugin-theme';
+// ⚠️ @lytjs/plugin-theme 这个包在本仓**不存在**（文档曾承诺）：pluginTheme;
 
 // 在应用中安装插件
 app.use(pluginTheme, {
@@ -69,7 +69,7 @@ app.config.globalProperties.$theme.toggleTheme();
 **使用示例：**
 
 ```typescript
-import { pluginLogger } from '@lytjs/plugin-logger';
+// ⚠️ @lytjs/plugin-logger 这个包在本仓**不存在**（文档曾承诺）：pluginLogger;
 
 app.use(pluginLogger, {
   level: 'debug',
@@ -87,7 +87,7 @@ app.config.globalProperties.$logger.startMeasure('api-call');
 **使用示例：**
 
 ```typescript
-import { pluginAuth } from '@lytjs/plugin-auth';
+// ⚠️ @lytjs/plugin-auth 这个包在本仓**不存在**（文档曾承诺）：pluginAuth;
 
 app.use(pluginAuth, {
   enablePersistence: true,
@@ -110,7 +110,7 @@ app.config.globalProperties.$auth.hasRole('admin');
 **使用示例：**
 
 ```typescript
-import { pluginStorage } from '@lytjs/plugin-storage';
+// ⚠️ @lytjs/plugin-storage 这个包在本仓**不存在**（文档曾承诺）：pluginStorage;
 
 app.use(pluginStorage, {
   defaultType: 'local',
@@ -128,7 +128,7 @@ const value = app.config.globalProperties.$storage.get('key');
 **使用示例：**
 
 ```typescript
-import { createI18n, pluginI18n } from '@lytjs/plugin-i18n';
+// ⚠️ @lytjs/plugin-i18n 这个包在本仓**不存在**（文档曾承诺）：createI18n, pluginI18n;
 
 // 创建 i18n 实例
 const i18n = createI18n({
@@ -201,14 +201,7 @@ app.mount('#app');
 你也可以通过统一入口导入所有插件：
 
 ```typescript
-import {
-  pluginTheme,
-  pluginLogger,
-  pluginAuth,
-  pluginStorage,
-  pluginI18n,
-  pluginVite,
-} from '@lytjs/plugins';
+// ⚠️ @lytjs/plugins 这个包在本仓**不存在**（文档曾承诺）：pluginTheme, pluginLogger, pluginAuth, pluginStorage, pluginI18n, pluginVite;
 ```
 
 ## 开发说明

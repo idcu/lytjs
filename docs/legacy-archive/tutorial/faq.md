@@ -115,7 +115,7 @@ LytJS 提供多种方式：
 
 ```typescript
 import { signal, effect } from '@lytjs/reactivity';
-import { useDataFetch } from '@lytjs/plugin-data-fetch';
+// ⚠️ @lytjs/plugin-data-fetch 这个包在本仓**不存在**（文档曾承诺）：useDataFetch;
 
 // 方式 1: 基础异步
 const data = signal(null);

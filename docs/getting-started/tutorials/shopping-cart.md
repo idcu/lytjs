@@ -30,8 +30,8 @@
 ```typescript
 import { createApp, defineComponent, ref, computed, effect } from '@lytjs/core';
 // ⚠️ 下列 API 在 @lytjs/vdom 尚未实现（文档曾承诺）：h
-import { ThemePlugin } from '@lytjs/plugin-theme';
-import { StoragePlugin } from '@lytjs/plugin-storage';
+// ⚠️ @lytjs/plugin-theme 这个包在本仓**不存在**（文档曾承诺）：ThemePlugin;
+// ⚠️ @lytjs/plugin-storage 这个包在本仓**不存在**（文档曾承诺）：StoragePlugin;
 
 // 产品类型定义
 interface Product {

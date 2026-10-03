@@ -31,7 +31,7 @@
 ```typescript
 import { createApp, defineComponent, ref, computed } from '@lytjs/core';
 // ⚠️ 下列 API 在 @lytjs/vdom 尚未实现（文档曾承诺）：h
-import { ThemePlugin } from '@lytjs/plugin-theme';
+// ⚠️ @lytjs/plugin-theme 这个包在本仓**不存在**（文档曾承诺）：ThemePlugin;
 import { createRouter, useRouter, useRoute } from '@lytjs/router';
 // ⚠️ 下列 API 在 @lytjs/router 尚未实现（文档曾承诺）：Router
 

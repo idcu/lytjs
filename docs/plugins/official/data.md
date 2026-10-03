@@ -23,7 +23,7 @@ app.use(pluginData);
 ### 独立使用
 
 ```typescript
-import { createData } from '@lytjs/plugin-data';
+// ⚠️ @lytjs/plugin-data 这个包在本仓**不存在**（文档曾承诺）：createData;
 
 // 创建数据实例
 const data = createData('/api/users');
@@ -53,7 +53,7 @@ await data.refresh();
 创建数据获取实例。
 
 ```typescript
-import { createData } from '@lytjs/plugin-data';
+// ⚠️ @lytjs/plugin-data 这个包在本仓**不存在**（文档曾承诺）：createData;
 
 const data = createData('/api/users', {
   method: 'GET',
@@ -67,7 +67,7 @@ const data = createData('/api/users', {
 创建全局数据管理器。
 
 ```typescript
-import { createDataManager } from '@lytjs/plugin-data';
+// ⚠️ @lytjs/plugin-data 这个包在本仓**不存在**（文档曾承诺）：createDataManager;
 
 const manager = createDataManager({
   defaultCache: 'ttl',

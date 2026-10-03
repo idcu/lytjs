@@ -150,7 +150,7 @@ pnpm add @lytjs/plugin-data @lytjs/router-fs @lytjs/api
 #### 使用 @lytjs/plugin-data
 
 ```typescript
-import { createData } from '@lytjs/plugin-data';
+// ⚠️ @lytjs/plugin-data 这个包在本仓**不存在**（文档曾承诺）：createData;
 
 const data = createData('/api/users');
 ```

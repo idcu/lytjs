@@ -134,25 +134,7 @@ import { deepClone, shallowClone, merge, pick, omit, get, set } from '@lytjs/com
 数组操作工具集。
 
 ```ts
-import {
-  unique,
-  uniqueBy,
-  flatten,
-  flattenDeep,
-  groupBy,
-  chunk,
-  difference,
-  intersection,
-  union,
-  sortBy,
-  sum,
-  mean,
-  min,
-  max,
-  partition,
-  zip,
-  unzip,
-} from '@lytjs/common-array';
+// ⚠️ @lytjs/common-array 这个包在本仓**不存在**（文档曾承诺）：unique, uniqueBy, flatten, flattenDeep, groupBy, chunk, difference, intersection, union, sortBy, sum, mean, min, max, partition, zip, unzip;
 ```
 
 | 函数                           | 说明           |
@@ -182,18 +164,7 @@ import {
 函数工具集。
 
 ```ts
-import {
-  debounce,
-  throttle,
-  memoize,
-  curry,
-  compose,
-  pipe,
-  once,
-  before,
-  after,
-  wrap,
-} from '@lytjs/common-function';
+// ⚠️ @lytjs/common-function 这个包在本仓**不存在**（文档曾承诺）：debounce, throttle, memoize, curry, compose, pipe, once, before, after, wrap;
 ```
 
 | 函数                     | 说明             |

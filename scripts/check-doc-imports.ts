@@ -238,7 +238,8 @@ for (const file of docFiles) {
 // ============================================================
 
 const missing: Array<{ item: DocImport; name: string }> = [];
-const unknownPkgs = new Set<string>();
+/** ★ 文档引用了**本仓根本不存在**的包（2026-10-03 起计入失败，不再跳过） */
+const ghostPkgs: Array<{ item: DocImport; pkg: string }> = [];
 const noArtifact = new Set<string>();
 let archivedImports = 0;
 
@@ -248,10 +249,15 @@ for (const item of found) {
     archivedImports++;
     continue;
   }
+  // ⚠️ 必须先判「包是否存在」再看产物：**不存在**是文档缺陷（计入失败），
+  // **存在但未构建**是环境问题（跳过，否则沙箱里会误报一片）。
+  if (!packages.some((p) => p.name === item.pkg)) {
+    ghostPkgs.push({ item, pkg: item.pkg });
+    continue;
+  }
   const exports = await exportsOf(item.pkg);
   if (exports === null) {
-    if (!packages.some((p) => p.name === item.pkg)) unknownPkgs.add(item.pkg);
-    else noArtifact.add(item.pkg);
+    noArtifact.add(item.pkg);
     continue;
   }
   for (const name of item.names) {
@@ -279,10 +285,13 @@ console.log(
     `（其中 ${archivedImports} 处位于 legacy-archive，已按历史归档跳过）`,
 );
 
-if (unknownPkgs.size > 0) {
-  console.log(
-    `\n⚠️  文档引用了本仓不存在的包（跳过，未计入失败）：\n   ${[...unknownPkgs].sort().join(', ')}`,
-  );
+if (ghostPkgs.length > 0) {
+  const uniq = [...new Set(ghostPkgs.map((g) => g.pkg))].sort();
+  console.log(`\n❌ 文档引用了本仓**根本不存在**的包（${uniq.length} 个）：`);
+  for (const g of ghostPkgs) {
+    console.log(`  ${g.item.file}:${g.item.line}  ${g.pkg}  ← ${g.item.names.join(', ')}`);
+  }
+  console.log('   ⇒ 这些包从未实现。要么实现它们，要么把文档改成与现状一致。');
 }
 if (noArtifact.size > 0) {
   console.log(`\n⚠️  这些包没有可用的 ESM 产物（未构建？），已跳过：${[...noArtifact].join(', ')}`);
@@ -334,4 +343,6 @@ if (reported.length > 0) {
   }
 }
 
-process.exit(enforced.length === 0 || REPORT_ONLY ? 0 : 1);
+// 门禁成败：接触面缺失 或 引用了不存在的包 ⇒ 失败（`--report` 只报告不失败）
+const failed = enforced.length > 0 || ghostPkgs.length > 0;
+process.exit(!failed || REPORT_ONLY ? 0 : 1);
