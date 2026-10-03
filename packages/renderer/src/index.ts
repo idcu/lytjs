@@ -272,7 +272,11 @@ export { WebRendererHost, createWebHost, wrapDOMEvent } from '@lytjs/adapter-web
 // FIX: P2-26 懒加载优化 - SSR 相关函数使用动态导入
 // SSR 渲染器
 /** 将组件渲染为字符串（SSR） */
-export async function renderToString(input: { vnode: VNodeType }): Promise<string> {
+export async function renderToString(input: {
+  vnode: VNodeType;
+  /** ★ 2026-10-04：是否输出 `data-hydrate` 标记（**默认 false**）。要用水合 API 必须打开。 */
+  hydrateMarkers?: boolean;
+}): Promise<string> {
   const { renderToString: _renderToString } = await import('./ssr/ssr-renderer');
   return _renderToString(input);
 }

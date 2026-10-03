@@ -21,6 +21,26 @@ import type { ComponentOptions } from './ssr-island';
 
 export interface SSRInput {
   vnode: VNode;
+  /**
+   * ★ 2026-10-04 新增（**默认 false ⇒ 对现有输出零影响**）：
+   * 是否给每个元素写 `data-hydrate="lyt-hydrate-N"` 标记。
+   *
+   * 为什么需要：选择性水合（`hydrateVisible` / `hydrateOnIdle` 等）靠这个标记
+   * 挑选元素，而**本函数此前从不写它** ⇒ 走主 SSR 产物时那些 API 连元素都
+   * **选不出来**。此前只有 `ssr-kit` 会写，而它不在主链路上。
+   *
+   * 为什么默认关：标记会改变所有人的 HTML 输出（含体积），
+   * 不应作为 breaking change。**要用水合就得显式打开。**
+   */
+  hydrateMarkers?: boolean;
+}
+
+/** 渲染过程内部传递的选项（计数器随渲染调用创建，避免跨调用串号） */
+interface RenderOptions {
+  /** 是否输出水合标记 */
+  markers: boolean;
+  /** 标记序号（每个元素 +1） */
+  seq: { n: number };
 }
 
 /**
@@ -31,7 +51,10 @@ export interface SSRInput {
  * Promise 对象直接当成 ctx，静默渲染出 undefined）。
  */
 export function renderToString(input: SSRInput): Promise<string> {
-  return renderVNodeToString(input.vnode);
+  return renderVNodeToString(input.vnode, {
+    markers: input.hydrateMarkers === true,
+    seq: { n: 0 },
+  });
 }
 
 // ============================================================
@@ -41,12 +64,12 @@ export function renderToString(input: SSRInput): Promise<string> {
 /** 有状态/函数式组件的 ShapeFlag（第 2-3 位） */
 const COMPONENT_MASK = ShapeFlags.STATEFUL_COMPONENT | ShapeFlags.FUNCTIONAL_COMPONENT;
 
-async function renderVNodeToString(vnode: VNode): Promise<string> {
+async function renderVNodeToString(vnode: VNode, opts: RenderOptions): Promise<string> {
   const { type, shapeFlag, children } = vnode;
 
   // 处理 Fragment
   if (type === Fragment) {
-    return renderFragmentToString(vnode);
+    return renderFragmentToString(vnode, opts);
   }
 
   // 处理 Text
@@ -67,13 +90,13 @@ async function renderVNodeToString(vnode: VNode): Promise<string> {
 
   // 处理 Element
   if (shapeFlag & ShapeFlags.ELEMENT) {
-    return renderElementToString(vnode);
+    return renderElementToString(vnode, opts);
   }
 
   // ⚠️ 2026-10-02 修复：此前**没有**组件分支 ⇒ 组件 vnode 一律落到 `return ''`，
   // 静默输出空串（与同包 `ssr-stream.ts` 的 `COMPONENT_MASK` 分支不对称）。
   if (shapeFlag & COMPONENT_MASK) {
-    return renderComponentToString(vnode);
+    return renderComponentToString(vnode, opts);
   }
 
   return '';
@@ -96,13 +119,13 @@ async function renderVNodeToString(vnode: VNode): Promise<string> {
  * （含客户端 `mountComponent`，它要求 `vnode.component` 实例）都不被支持**，
  * 属独立缺口，另行处理。
  */
-async function renderComponentToString(vnode: VNode): Promise<string> {
+async function renderComponentToString(vnode: VNode, opts: RenderOptions): Promise<string> {
   const resolved = await resolveComponentRootVNodeAsync(
     vnode.type as unknown as ComponentOptions,
     (vnode.props ?? {}) as Record<string, unknown>,
   );
 
-  if (resolved) return renderVNodeToString(resolved);
+  if (resolved) return renderVNodeToString(resolved, opts);
 
   if (__DEV__) {
     warn('SSR renderToString: could not render component vnode');
@@ -114,7 +137,7 @@ async function renderComponentToString(vnode: VNode): Promise<string> {
 // renderFragmentToString
 // ============================================================
 
-async function renderFragmentToString(vnode: VNode): Promise<string> {
+async function renderFragmentToString(vnode: VNode, opts: RenderOptions): Promise<string> {
   const children = vnode.children;
   if (isArray(children)) {
     // ⚠️ 刻意**顺序** await（而非 Promise.all）：保持与同步实现一致的求值顺序，
@@ -123,7 +146,7 @@ async function renderFragmentToString(vnode: VNode): Promise<string> {
     for (let i = 0; i < children.length; i++) {
       const child = children[i];
       if (child != null) {
-        html += await renderVNodeToString(child);
+        html += await renderVNodeToString(child, opts);
       }
     }
     return html;
@@ -135,7 +158,7 @@ async function renderFragmentToString(vnode: VNode): Promise<string> {
 // renderElementToString
 // ============================================================
 
-async function renderElementToString(vnode: VNode): Promise<string> {
+async function renderElementToString(vnode: VNode, opts: RenderOptions): Promise<string> {
   const tag = vnode.type as string;
 
   if (!isValidHTMLElementTag(tag)) {
@@ -157,6 +180,13 @@ async function renderElementToString(vnode: VNode): Promise<string> {
     html += renderAttributeToString(key, props[key]);
   }
 
+  // ★ 水合标记（仅当调用方显式开启）：格式与 `ssr-kit` 的 HYDRATE_ATTR 一致，
+  //   取值 `lyt-hydrate-N`（N 为**本次渲染内**的序号）。
+  if (opts.markers) {
+    opts.seq.n += 1;
+    html += ` data-hydrate="lyt-hydrate-${opts.seq.n}"`;
+  }
+
   // 自闭合元素
   if (isVoidElement(tag)) {
     html += ' />';
@@ -173,7 +203,7 @@ async function renderElementToString(vnode: VNode): Promise<string> {
     for (let i = 0; i < children.length; i++) {
       const child = children[i];
       if (child != null) {
-        html += await renderVNodeToString(child);
+        html += await renderVNodeToString(child, opts);
       }
     }
   }

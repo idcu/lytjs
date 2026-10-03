@@ -4,6 +4,34 @@ import { h } from '@lytjs/core';
 import { renderToString } from '../src/ssr/ssr-renderer';
 
 describe('SSR Renderer', () => {
+  // 0. ★ 水合标记（2026-10-04）：默认关（对现有输出零影响），显式开启才写
+  it('★ 默认不写 data-hydrate（保证既有输出零变化）', async () => {
+    const vnode = createVNode('div', { id: 'app' }, 'hello');
+    const html = await renderToString({ vnode });
+    expect(html).not.toContain('data-hydrate');
+  });
+
+  it('★ hydrateMarkers: true 时按序写 lyt-hydrate-N', async () => {
+    const vnode = createVNode('div', { id: 'app' }, [
+      createVNode('span', null, 'child'),
+      createVNode('em', null, 'x'),
+    ]);
+    const html = await renderToString({ vnode, hydrateMarkers: true });
+    // 序号按**本次渲染内**的元素顺序递增
+    expect(html).toContain('data-hydrate="lyt-hydrate-1"');
+    expect(html).toContain('data-hydrate="lyt-hydrate-2"');
+    expect(html).toContain('data-hydrate="lyt-hydrate-3"');
+    expect(html).not.toContain('lyt-hydrate-4');
+  });
+
+  it('★ 两次渲染的序号互不串号（计数器按调用创建）', async () => {
+    const vnode = createVNode('div', null, 'x');
+    const a = await renderToString({ vnode, hydrateMarkers: true });
+    const b = await renderToString({ vnode, hydrateMarkers: true });
+    expect(a).toBe(b);
+    expect(a).toContain('lyt-hydrate-1');
+  });
+
   // 1. Simple element
   it('should render a simple element to string', async () => {
     const vnode = createVNode('div', { id: 'app' }, 'hello');
