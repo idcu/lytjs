@@ -252,7 +252,8 @@ interface ButtonProps {
 }
 
 // ✅ 使用 PropType
-import { PropType } from '@lytjs/component';
+// ⚠️ 本仓**没有** Vue 的 `PropType`。props 的类型请直接用
+//    `ComponentOptions['props']`（其元素类型是 `PropOptions`，见 component/src/types.ts）。
 
 const Button = defineComponent({
   props: {

@@ -282,7 +282,8 @@ export function useForm(options: UseFormOptions): FormState {
 ```typescript
 // components/FormInput.ts
 
-import { defineComponent, computed } from '@lytjs/component';
+import { defineComponent } from '@lytjs/component';
+import { computed } from '@lytjs/core';
 import type { FormField } from '../types/form';
 
 export interface FormInputProps {
@@ -352,7 +353,8 @@ export const FormInput = defineComponent({
 ```typescript
 // components/ValidationMessage.ts
 
-import { defineComponent, computed } from '@lytjs/component';
+import { defineComponent } from '@lytjs/component';
+import { computed } from '@lytjs/core';
 
 export interface ValidationMessageProps {
   error: string;
@@ -398,7 +400,8 @@ export const ValidationMessage = defineComponent({
 ```typescript
 // components/FormButton.ts
 
-import { defineComponent, computed } from '@lytjs/component';
+import { defineComponent } from '@lytjs/component';
+import { computed } from '@lytjs/core';
 
 export interface FormButtonProps {
   type?: 'primary' | 'secondary' | 'danger';

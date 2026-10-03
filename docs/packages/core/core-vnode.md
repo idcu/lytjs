@@ -151,6 +151,8 @@ import {
   useCssModule,
   useCssVars,
 } from '@lytjs/core-vnode';
+// ⚠️ 以下四个实现位于 core 的 ./composition，core-vnode 不依赖 core ⇒ 只能从 core 导入
+import { useTemplateRef, useId, useCssModule, useCssVars } from '@lytjs/core';
 ```
 
 ## 类型定义

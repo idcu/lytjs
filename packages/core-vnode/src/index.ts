@@ -60,6 +60,32 @@ export {
 // 响应式 API（不含 Signal 相关 API）
 export { ref, reactive, computed, watch, watchEffect, effect } from '@lytjs/reactivity';
 
+// ── 2026-10-03 补齐（文档 import 门禁发现）─────────────────────────────
+// `docs/packages/core/core-vnode.md` 一次性 import 了下面这些名字，而本包没转出：
+// · 响应式工具与类型守卫（本体在 `@lytjs/reactivity`，本包**已**转出
+//   `ref` / `reactive` / `computed` / `watch` / `watchEffect` / `effect`，
+//   这里补齐同族）——沿用既有转出模式，不新造实现。
+export {
+  toRef,
+  toRefs,
+  unref,
+  toValue,
+  isRef,
+  isReactive,
+  isReadonly,
+  isProxy,
+} from '@lytjs/reactivity';
+
+// · 内置组件（本体在 `@lytjs/component`，本包**已**依赖它）——同上。
+export {
+  KeepAlive,
+  Suspense,
+  Transition,
+  TransitionGroup,
+  Teleport,
+  ErrorBoundary,
+} from '@lytjs/component';
+
 // VNode API
 export { createVNode, Fragment, Text, Comment, cloneVNode, mergeProps } from '@lytjs/vdom';
 

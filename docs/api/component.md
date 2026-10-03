@@ -123,7 +123,8 @@ function defineComponent(options: ComponentOptions): ComponentOptions;
 ### 示例
 
 ```ts
-import { defineComponent, ref, computed } from '@lytjs/component';
+import { defineComponent } from '@lytjs/component';
+import { ref, computed } from '@lytjs/core';
 
 const Counter = defineComponent({
   name: 'Counter',
@@ -168,7 +169,8 @@ function defineFunctionalComponent(props: Record<string, unknown>, ctx: SetupCon
 ### 示例
 
 ```ts
-import { defineFunctionalComponent, h } from '@lytjs/component';
+import { defineFunctionalComponent } from '@lytjs/component';
+import { h } from '@lytjs/core';
 
 const Heading = (props: { level: number }, { slots }) => {
   return h(`h${props.level}`, {}, slots.default?.());
@@ -428,7 +430,8 @@ interface KeepAliveProps {
 #### 示例
 
 ```ts
-import { KeepAlive, h } from '@lytjs/component';
+import { KeepAlive } from '@lytjs/component';
+import { h } from '@lytjs/core';
 
 // 在渲染函数中使用
 h(KeepAlive, { max: 10 }, () => h(currentComponent));
@@ -481,7 +484,8 @@ interface SuspenseAsyncState {
 #### 示例
 
 ```ts
-import { Suspense, h } from '@lytjs/component';
+import { Suspense } from '@lytjs/component';
+import { h } from '@lytjs/core';
 
 h(
   Suspense,
@@ -550,7 +554,8 @@ interface TransitionComponentProps {
 #### 示例
 
 ```ts
-import { Transition, h } from '@lytjs/component';
+import { Transition } from '@lytjs/component';
+import { h } from '@lytjs/core';
 
 h(Transition, { name: 'fade', mode: 'out-in' }, () => h(show ? ComponentA : ComponentB));
 ```
@@ -586,7 +591,8 @@ interface TransitionGroupComponentProps extends TransitionComponentProps {
 #### 示例
 
 ```ts
-import { TransitionGroup, h } from '@lytjs/component';
+import { TransitionGroup } from '@lytjs/component';
+import { h } from '@lytjs/core';
 
 h(TransitionGroup, { name: 'list', tag: 'ul' }, () =>
   items.value.map((item) => h('li', { key: item.id }, item.text)),
@@ -613,7 +619,8 @@ interface TeleportProps {
 #### 示例
 
 ```ts
-import { Teleport, h } from '@lytjs/component';
+import { Teleport } from '@lytjs/component';
+import { h } from '@lytjs/core';
 
 h(Teleport, { to: 'body' }, () => h(ModalComponent));
 ```
@@ -640,7 +647,8 @@ interface ErrorBoundaryProps {
 #### 示例
 
 ```ts
-import { ErrorBoundary, h } from '@lytjs/component';
+import { ErrorBoundary } from '@lytjs/component';
+import { h } from '@lytjs/core';
 
 h(
   ErrorBoundary,
