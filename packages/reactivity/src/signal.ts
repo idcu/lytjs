@@ -102,6 +102,28 @@ const pendingTriggerOps = new Map<
 let isNotifying = false;
 
 // ============================================================
+// isSignal — 类型守卫
+// ============================================================
+
+/**
+ * 判断一个值是否为 Signal（含 WritableSignal）。
+ *
+ * ★ 2026-10-03 新增：`docs/guide/reactivity.md` 承诺了 `isSignal` 但本仓没有实现，
+ * 照抄文档即得 `undefined`。而**零件早已存在** —— `signal()` 产出的函数身上
+ * 带品牌标记 `SignalSymbol`（见下方 `Object.defineProperty(signalFn, SignalSymbol, …)`），
+ * `computedSignal()` 则是 `ComputedSignalSymbol` ⇒ 本函数是**纯接线**，不是新机制。
+ *
+ * ⚠️ 用**品牌标记**判定而不是 `typeof === 'function'`：后者会把任意函数误判为 Signal。
+ */
+export function isSignal(value: unknown): value is Signal<unknown> {
+  if (value === null || (typeof value !== 'function' && typeof value !== 'object')) {
+    return false;
+  }
+  const marked = value as Record<symbol, unknown>;
+  return marked[SignalSymbol] === true || marked[ComputedSignalSymbol] === true;
+}
+
+// ============================================================
 // signal — 核心 Signal 原语
 // ============================================================
 

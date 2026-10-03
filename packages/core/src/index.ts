@@ -132,6 +132,16 @@ export type {
 // Re-export from sub-packages
 export { ref, reactive, computed, watch, watchEffect, effect } from '@lytjs/reactivity';
 
+// ── Signal 原语转出 ────────────────────────────────────────────────────
+// ⚠️ 2026-10-03：`docs/guide/*` 与 `docs/examples/counter.md`（用户直接复制的接触面）
+// 8 处 `import { signal } from '@lytjs/core'`，而 core **没有转出**它 ——
+// 而本体 `@lytjs/reactivity` 的 `signal()` **早已实现**，且语义与文档一致
+// （返回**可调用**对象：读 `count()`、写 `count(1)`，另带 `.set/.update/.dispose`）。
+// 本仓的 `component/src/signal-state.ts` 也正是从 reactivity 导入它。
+// ⇒ 纯转出，零新功能。
+export { signal, computedSignal, isSignal } from '@lytjs/reactivity';
+export type { Signal, WritableSignal, ComputedSignal } from '@lytjs/reactivity';
+
 // ── 依赖注入 / 侦听家族补齐 ────────────────────────────────────────────
 // ⚠️ 2026-10-03：`scripts/check-doc-imports.ts` 门禁发现 —— `docs/guide/*` 与
 // `docs/examples/*`（用户会直接复制的那批）里的 `import { provide, inject } from '@lytjs/core'`

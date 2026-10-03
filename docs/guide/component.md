@@ -18,7 +18,7 @@ export default defineComponent({
 
   setup() {
     const count = signal(0);
-    const increment = () => count(count() + 1);
+    const increment = () => count.set(count() + 1);
 
     return { count, increment };
   },
@@ -41,7 +41,7 @@ export default defineComponent({
 import { signal } from '@lytjs/core';
 
 const count = signal(0);
-const increment = () => count(count() + 1);
+const increment = () => count.set(count() + 1);
 </script>
 
 <template>

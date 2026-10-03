@@ -100,6 +100,8 @@ export {
   // signal batch/untrack
   signalBatch,
   signalUntrack,
+  // ★ 2026-10-03 新增：类型守卫（`docs/guide/reactivity.md` 承诺过，本仓此前没实现）
+  isSignal,
   // internal: 测试间全局状态重置（供根测试 setup 调用）
   _resetSignalGlobalState,
 } from './signal';

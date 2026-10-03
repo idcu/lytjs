@@ -160,33 +160,28 @@ const ARCHIVED_PREFIXES = ['docs/legacy-archive/'];
  */
 const DEBT_ALLOWLIST: Array<{ pkg: string; name: string; reason: string }> = [
   {
-    pkg: '@lytjs/core',
-    name: 'signal',
-    reason:
-      '文档（counter/component/getting-started/local-usage）推荐 `signal()`，' +
-      '但本仓只有 `createSignalState`（component/src/signal-state.ts），没有 signal。' +
-      '待决：补实现还是改文档口径。',
-  },
-  {
     pkg: '@lytjs/devtools',
     name: 'enable',
-    reason: 'devtools 的 enable 未实现/未转出；待决同上。',
+    reason:
+      '`docs/guide/local-usage.md` 演示开启 devtools，但 `@lytjs/devtools` 未实现/未转出 enable。' +
+      '待决：补实现 or 改文档口径。',
   },
   {
     pkg: '@lytjs/devtools',
     name: 'getSignals',
-    reason: 'devtools 的 getSignals 未实现/未转出；待决同上。',
-  },
-  {
-    pkg: '@lytjs/reactivity',
-    name: 'isSignal',
-    reason: 'reactivity 未导出 isSignal（signal 相关能力只在 component 的 signal-state）。',
+    reason: '同上，devtools 侧的 signal 读取入口不存在。',
   },
   {
     pkg: '@lytjs/core',
     name: 'useSSRContext',
-    reason: 'core 未转出 useSSRContext；本仓 SSR 上下文能力尚未对外暴露。',
+    reason:
+      '`docs/guide/ssr.md` 承诺 `useSSRContext`，但 SSR 上下文尚未对外暴露为该 API。' +
+      '待决：补实现 or 改文档口径。',
   },
+  // ── 已消减（保留记录以说明棘轮只许下不许增）──────────────────────────
+  // · `signal` / `computedSignal` / `isSignal`（@lytjs/core 与 @lytjs/reactivity）：
+  //   2026-10-03 消减 —— 本体早已实现在 reactivity，只是没转出；`isSignal` 借
+  //   `signalFn` 上的 `SignalSymbol` 品牌标记实现（纯接线）。接触面 8+2 处转绿。
 ];
 
 function enforcementOf(file: string): 'enforce' | 'report' | 'skip' {

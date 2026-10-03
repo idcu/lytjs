@@ -17,12 +17,12 @@ function setup() {
 
   // 方法
   const increment = () => {
-    count(count() + 1);
+    count.set(count() + 1);
   };
 
   const decrement = () => {
     if (count() > 0) {
-      count(count() - 1);
+      count.set(count() - 1);
     }
   };
 

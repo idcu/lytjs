@@ -74,8 +74,8 @@ import { createApp, signal } from '@lytjs/core';
 const App = {
   setup() {
     const count = signal(0);
-    const increment = () => count(count() + 1);
-    const decrement = () => count(count() - 1);
+    const increment = () => count.set(count() + 1);
+    const decrement = () => count.set(count() - 1);
 
     return { count, increment, decrement };
   },
@@ -148,7 +148,7 @@ import { createApp, signal, h } from '@lytjs/core';
 const App = {
   setup() {
     const count = signal(0);
-    const increment = () => count(count() + 1);
+    const increment = () => count.set(count() + 1);
 
     return () =>
       h('div', { class: 'counter' }, [
