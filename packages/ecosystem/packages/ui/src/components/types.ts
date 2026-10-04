@@ -8,7 +8,9 @@ import type { VNode, Component } from '@lytjs/vdom';
 
 // ===== 通用类型 =====
 
-export type ComponentSize = 'small' | 'medium' | 'large';
+// ★ 2026-10-04：补上 'default' —— 多个组件的 size 运行时默认值就是 'default'
+//   （如 `size: { type: String, default: 'default' }`）⇒ 原类型与运行时不一致。
+export type ComponentSize = 'small' | 'medium' | 'large' | 'default';
 export type ComponentStatus = 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info';
 export type Placement = 'top' | 'bottom' | 'left' | 'right';
 export type Align = 'left' | 'center' | 'right';
