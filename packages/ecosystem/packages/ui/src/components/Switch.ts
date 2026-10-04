@@ -149,6 +149,16 @@ export const Switch = defineComponent({
               slotContent as VNode[],
             ),
           );
+        } else if (slotContent) {
+          coreChildren.push(
+            createVNode(
+              'span',
+              {
+                class: 'lyt-switch__label lyt-switch__label--left',
+              },
+              [slotContent as VNode],
+            ),
+          );
         }
       } else if (slots.inactive && !isChecked.value) {
         const slotContent = slots.inactive();
@@ -160,6 +170,16 @@ export const Switch = defineComponent({
                 class: 'lyt-switch__label lyt-switch__label--left',
               },
               slotContent as VNode[],
+            ),
+          );
+        } else if (slotContent) {
+          coreChildren.push(
+            createVNode(
+              'span',
+              {
+                class: 'lyt-switch__label lyt-switch__label--left',
+              },
+              [slotContent as VNode],
             ),
           );
         }

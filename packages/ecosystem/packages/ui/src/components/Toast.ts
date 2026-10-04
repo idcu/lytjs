@@ -113,6 +113,16 @@ export const Toast = defineComponent({
               slotIcon as VNode[],
             ),
           );
+        } else if (slotIcon) {
+          children.push(
+            createVNode(
+              'span',
+              {
+                class: 'lyt-toast__icon',
+              },
+              [slotIcon as VNode],
+            ),
+          );
         }
       }
 
@@ -137,6 +147,16 @@ export const Toast = defineComponent({
                 class: 'lyt-toast__message',
               },
               slotContent as VNode[],
+            ),
+          );
+        } else if (slotContent) {
+          children.push(
+            createVNode(
+              'span',
+              {
+                class: 'lyt-toast__message',
+              },
+              [slotContent as VNode],
             ),
           );
         }

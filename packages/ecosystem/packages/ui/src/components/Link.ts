@@ -74,6 +74,8 @@ export const Link = defineComponent({
         const slotContent = slots.default();
         if (Array.isArray(slotContent)) {
           children.push(...(slotContent as VNode[]));
+        } else if (slotContent) {
+          children.push(...[slotContent as VNode]);
         }
       }
 

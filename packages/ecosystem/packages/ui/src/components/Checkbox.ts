@@ -180,6 +180,16 @@ export const Checkbox = defineComponent({
               slotContent as VNode[],
             ),
           );
+        } else if (slotContent) {
+          children.push(
+            createVNode(
+              'span',
+              {
+                class: 'lyt-checkbox__label',
+              },
+              [slotContent as VNode],
+            ),
+          );
         }
       }
 

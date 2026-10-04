@@ -68,6 +68,8 @@ export const Alert = defineComponent({
           const slotContent = slots.title();
           if (Array.isArray(slotContent)) {
             titleChildren.push(...(slotContent as VNode[]));
+          } else if (slotContent) {
+            titleChildren.push(...[slotContent as VNode]);
           }
         } else if (_props.title) {
           titleChildren.push(createVNode('span', {}, _props.title));
@@ -92,6 +94,10 @@ export const Alert = defineComponent({
         if (Array.isArray(slotContent)) {
           contentChildren.push(
             createVNode('div', { class: 'lyt-alert__message' }, slotContent as VNode[]),
+          );
+        } else if (slotContent) {
+          contentChildren.push(
+            createVNode('div', { class: 'lyt-alert__message' }, [slotContent as VNode]),
           );
         }
       }

@@ -145,6 +145,16 @@ export const Radio = defineComponent({
               slotContent as VNode[],
             ),
           );
+        } else if (slotContent) {
+          children.push(
+            createVNode(
+              'span',
+              {
+                class: 'lyt-radio__label',
+              },
+              [slotContent as VNode],
+            ),
+          );
         }
       }
 
