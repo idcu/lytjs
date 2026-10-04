@@ -30,7 +30,7 @@ export const Alert = defineComponent({
     const _props = props as AlertSetupProps;
     const handleClose = () => {
       emit('close');
-      _props.onClose?.();
+      // ★ 2026-10-04：`emit` 本身就会去 props 里找 `onClose` 并调用（见 component/src/emit.ts）⇒ 紧随其后的直接调用是**重复触发**，已删。
     };
 
     const getIconMap = (): Record<AlertType, string> => ({

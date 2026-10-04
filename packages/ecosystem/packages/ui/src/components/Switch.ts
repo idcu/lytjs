@@ -59,7 +59,7 @@ export const Switch = defineComponent({
       const newValue = isChecked.value ? _props.inactiveValue : _props.activeValue;
       emit('update:modelValue', newValue);
       emit('change', newValue);
-      _props.onChange?.(newValue as boolean);
+      // ★ 2026-10-04：`emit` 本身就会去 props 里找 `onChange` 并调用（见 component/src/emit.ts）⇒ 紧随其后的直接调用是**重复触发**，已删。
     };
 
     const handleKeydown = (event: KeyboardEvent) => {
@@ -70,7 +70,7 @@ export const Switch = defineComponent({
         const newValue = isChecked.value ? _props.inactiveValue : _props.activeValue;
         emit('update:modelValue', newValue);
         emit('change', newValue);
-        _props.onChange?.(newValue as boolean);
+        // ★ 2026-10-04：`emit` 本身就会去 props 里找 `onChange` 并调用（见 component/src/emit.ts）⇒ 紧随其后的直接调用是**重复触发**，已删。
       }
 
       _props.onKeydown?.(event);

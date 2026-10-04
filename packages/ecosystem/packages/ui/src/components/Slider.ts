@@ -150,7 +150,7 @@ export const Slider = defineComponent({
         if (!_props.range) {
           emit('update:modelValue', state.firstValue);
           emit('input', state.firstValue);
-          _props.onInput?.(state.firstValue);
+          // ★ 2026-10-04：`emit` 本身就会去 props 里找 `onInput` 并调用（见 component/src/emit.ts）⇒ 紧随其后的直接调用是**重复触发**，已删。
         }
 
         setTimeout(() => {

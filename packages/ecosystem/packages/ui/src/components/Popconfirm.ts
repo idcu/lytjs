@@ -80,13 +80,13 @@ export const Popconfirm = defineComponent({
     const handleConfirm = () => {
       visible.set(false);
       emit('confirm');
-      _props.onConfirm?.();
+      // ★ 2026-10-04：`emit` 本身就会去 props 里找 `onConfirm` 并调用（见 component/src/emit.ts）⇒ 紧随其后的直接调用是**重复触发**，已删。
     };
 
     const handleCancel = () => {
       visible.set(false);
       emit('cancel');
-      _props.onCancel?.();
+      // ★ 2026-10-04：`emit` 本身就会去 props 里找 `onCancel` 并调用（见 component/src/emit.ts）⇒ 紧随其后的直接调用是**重复触发**，已删。
     };
 
     return () => {

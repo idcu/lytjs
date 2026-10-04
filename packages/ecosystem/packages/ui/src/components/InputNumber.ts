@@ -97,7 +97,7 @@ export const InputNumber = defineComponent({
         state.inputValue = undefined;
         emit('update:modelValue', undefined);
         emit('change', undefined);
-        _props.onChange?.(undefined);
+        // ★ 2026-10-04：`emit` 本身就会去 props 里找 `onChange` 并调用（见 component/src/emit.ts）⇒ 紧随其后的直接调用是**重复触发**，已删。
         return;
       }
 
@@ -105,7 +105,7 @@ export const InputNumber = defineComponent({
       state.inputValue = newValue;
       emit('update:modelValue', newValue);
       emit('change', newValue);
-      _props.onChange?.(newValue);
+      // ★ 2026-10-04：`emit` 本身就会去 props 里找 `onChange` 并调用（见 component/src/emit.ts）⇒ 紧随其后的直接调用是**重复触发**，已删。
     };
 
     const handleIncrement = () => {
@@ -128,7 +128,7 @@ export const InputNumber = defineComponent({
         state.inputValue = undefined;
         emit('update:modelValue', undefined);
         emit('input', undefined);
-        _props.onInput?.(undefined);
+        // ★ 2026-10-04：`emit` 本身就会去 props 里找 `onInput` 并调用（见 component/src/emit.ts）⇒ 紧随其后的直接调用是**重复触发**，已删。
         return;
       }
 
@@ -136,7 +136,7 @@ export const InputNumber = defineComponent({
       if (!isNaN(numValue)) {
         state.inputValue = numValue;
         emit('input', numValue);
-        _props.onInput?.(numValue);
+        // ★ 2026-10-04：`emit` 本身就会去 props 里找 `onInput` 并调用（见 component/src/emit.ts）⇒ 紧随其后的直接调用是**重复触发**，已删。
       }
     };
 
