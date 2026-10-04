@@ -4,7 +4,7 @@
  * 抽屉组件，支持上下左右弹出、遮罩控制、宽度自适应、嵌套弹窗功能
  */
 
-import { defineComponent } from '@lytjs/component';
+import { defineComponent, Teleport } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal, watch } from '@lytjs/reactivity';
 import { getDialogA11yProps, getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
@@ -229,7 +229,15 @@ export const Drawer = defineComponent({
         modal: p.ariaModal,
       });
 
-      return createVNode('div', mergeA11yProps(a11yProps, { class: getDrawerClass() }), children);
+      const root = createVNode(
+        'div',
+        mergeA11yProps(a11yProps, { class: getDrawerClass() }),
+        children,
+      );
+      // ★ 2026-10-04：`appendToBody` 声明了却从未使用 ⇒ 弹层无法挂到 `body` 下，
+      //   会被父级容器的 `overflow` / `transform` 裁剪。
+      //   未传时行为与原先**完全一致**（不套 Teleport）。
+      return p.appendToBody ? createVNode(Teleport, { to: 'body' }, [root]) : root;
     };
   },
 });

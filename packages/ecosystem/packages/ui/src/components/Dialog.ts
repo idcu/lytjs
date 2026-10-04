@@ -7,7 +7,7 @@
  * - ESC 键关闭支持
  */
 
-import { defineComponent } from '@lytjs/component';
+import { defineComponent, Teleport } from '@lytjs/component';
 import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
 import { signal, watch, effect } from '@lytjs/reactivity';
 import { getDialogA11yProps, getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
@@ -268,37 +268,45 @@ export const Dialog = defineComponent({
         modal: p.ariaModal,
       });
 
-      return createVNode(
-        'div',
-        {
-          class: 'lyt-dialog__wrapper',
-          onKeydown: (e: KeyboardEvent) => {
-            if (e.key === 'Tab') {
-              handleTabKey(e);
-            }
-            handleKeydown(e);
+      // ★ 2026-10-04：`appendToBody` 声明了却从未使用 ⇒ 弹层无法挂到 `body` 下，
+      //   会被父级容器的 `overflow` / `transform` 裁剪。
+      //   未传时**原样返回**，行为与原先完全一致。
+      const withTeleport = (node: VNode): VNode =>
+        p.appendToBody ? createVNode(Teleport, { to: 'body' }, [node]) : node;
+
+      return withTeleport(
+        createVNode(
+          'div',
+          {
+            class: 'lyt-dialog__wrapper',
+            onKeydown: (e: KeyboardEvent) => {
+              if (e.key === 'Tab') {
+                handleTabKey(e);
+              }
+              handleKeydown(e);
+            },
+            ref: (el: HTMLElement | null) => {
+              dialogRef.set(el);
+            },
           },
-          ref: (el: HTMLElement | null) => {
-            dialogRef.set(el);
-          },
-        },
-        [
-          createVNode('div', {
-            class: 'lyt-dialog__overlay',
-            'aria-hidden': true,
-            onClick: p.closeOnClickModal ? handleClose : undefined,
-          }),
-          createVNode(
-            'div',
-            mergeA11yProps(dialogA11yProps, {
-              class: dialogClass,
-              style: dialogStyle,
-              role: 'dialog',
-              'aria-modal': p.ariaModal,
+          [
+            createVNode('div', {
+              class: 'lyt-dialog__overlay',
+              'aria-hidden': true,
+              onClick: p.closeOnClickModal ? handleClose : undefined,
             }),
-            children,
-          ),
-        ],
+            createVNode(
+              'div',
+              mergeA11yProps(dialogA11yProps, {
+                class: dialogClass,
+                style: dialogStyle,
+                role: 'dialog',
+                'aria-modal': p.ariaModal,
+              }),
+              children,
+            ),
+          ],
+        ),
       );
     };
   },

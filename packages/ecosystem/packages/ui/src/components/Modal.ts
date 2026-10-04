@@ -4,7 +4,7 @@
  * 对话框组件，支持拖拽移动、全屏显示、自定义页脚、层级管理、动画优化
  */
 
-import { defineComponent } from '@lytjs/component';
+import { defineComponent, Teleport } from '@lytjs/component';
 import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
 import { signal, watch } from '@lytjs/reactivity';
 import { getDialogA11yProps, getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
@@ -233,35 +233,43 @@ export const Modal = defineComponent({
         modal: p.ariaModal,
       });
 
-      return createVNode(
-        'div',
-        {
-          class: 'lyt-modal__overlay',
-          'aria-hidden': true,
-          onClick: handleModalClick,
-        },
-        [
-          createVNode(
-            'div',
-            mergeA11yProps(modalA11yProps, {
-              class: modalClass,
-              style: modalStyle,
-              onKeydown: handleKeydown,
-            }),
-            [
-              ...headerChildren,
-              createVNode(
-                'div',
-                {
-                  class: 'lyt-modal__body',
-                  id: p.id ? `${p.id}-body` : undefined,
-                },
-                bodyChildren,
-              ),
-              ...(Array.isArray(footerChildren) ? footerChildren : [footerChildren]),
-            ],
-          ),
-        ],
+      // ★ 2026-10-04：`appendToBody` 声明了却从未使用 ⇒ 弹层无法挂到 `body` 下，
+      //   会被父级容器的 `overflow` / `transform` 裁剪。
+      //   未传时**原样返回**，行为与原先完全一致。
+      const withTeleport = (node: VNode): VNode =>
+        p.appendToBody ? createVNode(Teleport, { to: 'body' }, [node]) : node;
+
+      return withTeleport(
+        createVNode(
+          'div',
+          {
+            class: 'lyt-modal__overlay',
+            'aria-hidden': true,
+            onClick: handleModalClick,
+          },
+          [
+            createVNode(
+              'div',
+              mergeA11yProps(modalA11yProps, {
+                class: modalClass,
+                style: modalStyle,
+                onKeydown: handleKeydown,
+              }),
+              [
+                ...headerChildren,
+                createVNode(
+                  'div',
+                  {
+                    class: 'lyt-modal__body',
+                    id: p.id ? `${p.id}-body` : undefined,
+                  },
+                  bodyChildren,
+                ),
+                ...(Array.isArray(footerChildren) ? footerChildren : [footerChildren]),
+              ],
+            ),
+          ],
+        ),
       );
     };
   },
