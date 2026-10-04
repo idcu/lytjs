@@ -119,9 +119,19 @@ export const Rate = defineComponent({
               onClick: (e: MouseEvent) => handleClick(e, i),
             },
             [
-              createVNode('span', { class: 'lyt-rate-star-first' }, [
-                createVNode('span', {}, String(p.voidIcon)),
-              ]),
+              createVNode(
+                'span',
+                {
+                  class: 'lyt-rate-star-first',
+                  // ★ 2026-10-04：`voidColor` / `disabledVoidColor` 此前声明了却
+                  //   从未使用 ⇒ 未选中星的配色无法定制（静默失效）。
+                  //   `disabled` 时优先用 `disabledVoidColor`。
+                  style: {
+                    color: p.disabled ? p.disabledVoidColor || p.voidColor : p.voidColor,
+                  },
+                },
+                [createVNode('span', {}, String(p.voidIcon))],
+              ),
               createVNode('span', { class: 'lyt-rate-star-second' }, [
                 createVNode('span', {}, '★'),
               ]),

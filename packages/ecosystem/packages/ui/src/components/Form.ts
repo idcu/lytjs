@@ -260,7 +260,10 @@ export const FormItem = defineComponent({
         .filter(Boolean)
         .join(' ');
 
-      const labelStyle = p.label ? { width: '100px' } : {};
+      // ★ 2026-10-04：`labelWidth` 此前声明了却从未使用 —— 这里**硬编码 '100px'**，
+      //   传了 `labelWidth` 也毫无效果（静默失效）。现改为由 prop 驱动，
+      //   未传时保持原来的 100px 默认值（零行为变化）。
+      const labelStyle = p.label ? { width: p.labelWidth || '100px' } : {};
 
       const children: VNode[] = [];
 
