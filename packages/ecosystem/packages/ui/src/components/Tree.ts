@@ -24,6 +24,8 @@ export const Tree = defineComponent({
   name: 'LytTree',
 
   props: {
+    // ⚠️ 2026-10-04 移除 `onDrop` —— 本组件**没有拖拽投放能力**
+    //   （无 `dragover` / `drop` 事件处理），该回调永远不会被调用。
     data: { type: Array, default: (): TreeNode[] => [] },
     showLine: { type: Boolean, default: false },
     showCheckbox: { type: Boolean, default: false },
@@ -43,12 +45,23 @@ export const Tree = defineComponent({
     onNodeClick: { type: Function, default: undefined },
     onDragStart: { type: Function, default: undefined },
     onDragEnd: { type: Function, default: undefined },
-    onDrop: { type: Function, default: undefined },
   },
 
   setup(props: Record<string, unknown>) {
     const p = props as TreeSetupProps;
-    const expandedKeys = signal(new Set<string | number>(p.defaultExpandedKeys));
+    // ★ 2026-10-04：`defaultExpandAll` 声明了却从未使用 ⇒ 无法「默认展开全部」。
+    //   收集全部节点 id 作为初始展开集合（`nodeKey` 默认为 `id`，与展开判定一致）。
+    const collectAllKeys = (nodes: TreeNode[], acc: Set<string | number>): Set<string | number> => {
+      for (const node of nodes ?? []) {
+        if (node && node.id !== undefined && node.id !== null) acc.add(node.id);
+        if (node && Array.isArray(node.children)) collectAllKeys(node.children, acc);
+      }
+      return acc;
+    };
+    const initialExpanded: Set<string | number> = p.defaultExpandAll
+      ? collectAllKeys((p.data as TreeNode[]) ?? [], new Set<string | number>())
+      : new Set<string | number>(p.defaultExpandedKeys);
+    const expandedKeys = signal(initialExpanded);
     const checkedKeys = signal(new Set<string | number>(p.defaultCheckedKeys));
     const selectedKey = signal<string | number | null>(null);
 
@@ -139,7 +152,9 @@ export const Tree = defineComponent({
         );
       }
 
-      if (p.showCheckbox) {
+      // ★ 2026-10-04：`checkable` 声明了却从未使用，而实际控制 checkbox 渲染的是
+      //   `showCheckbox` ⇒ 两者本是同义，取任一为真即显示（`checkable` 作别名）。
+      if (p.showCheckbox || p.checkable) {
         const checkboxProps = getInputControlA11yProps({
           checked: node.isChecked,
           disabled: node.disabled,

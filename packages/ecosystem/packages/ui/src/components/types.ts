@@ -421,7 +421,6 @@ export interface CascaderSetupProps extends Record<string, unknown> {
   ariaDescribedBy: string;
   load?: (node: CascaderOption, resolve: (children: CascaderOption[]) => void) => void;
   onChange?: (value: (string | number)[] | Array<(string | number)[]>) => void;
-  onExpandChange?: (value: (string | number)[]) => void;
   onVisibleChange?: (visible: boolean) => void;
   onRemoveTag?: (value: Array<(string | number)[]>) => void;
   onClear?: () => void;
@@ -435,7 +434,6 @@ export interface CascaderProps {
   clearable?: boolean;
   multiple?: boolean;
   filterable?: boolean;
-  checkStrictly?: boolean;
   showAllLevels?: boolean;
   collapseTags?: boolean;
   separator?: string;
@@ -446,7 +444,6 @@ export interface CascaderProps {
   ariaDescribedBy?: string;
   load?: (node: CascaderOption, resolve: (children: CascaderOption[]) => void) => void;
   onChange?: (value: (string | number)[] | Array<(string | number)[]>) => void;
-  onExpandChange?: (value: (string | number)[]) => void;
   onVisibleChange?: (visible: boolean) => void;
   onRemoveTag?: (value: (string | number)[]) => void;
   onClear?: () => void;
@@ -1312,12 +1309,6 @@ export interface TreeProps {
   onNodeClick?: (data: TreeNode) => void;
   onDragStart?: (data: TreeNode, event: DragEvent) => void;
   onDragEnd?: (data: TreeNode, event: DragEvent) => void;
-  onDrop?: (
-    data: TreeNode,
-    target: TreeNode,
-    position: 'before' | 'after' | 'inner',
-    event: DragEvent,
-  ) => void;
 }
 
 export interface TreeSetupProps extends Record<string, unknown> {
@@ -1341,12 +1332,6 @@ export interface TreeSetupProps extends Record<string, unknown> {
   onNodeClick?: (data: TreeNode) => void;
   onDragStart?: (data: TreeNode, event: DragEvent) => void;
   onDragEnd?: (data: TreeNode, event: DragEvent) => void;
-  onDrop?: (
-    data: TreeNode,
-    target: TreeNode,
-    position: 'before' | 'after' | 'inner',
-    event: DragEvent,
-  ) => void;
 }
 
 export interface TreeSlots {
@@ -1371,7 +1356,6 @@ export interface TreeSelectProps {
   disabled?: boolean;
   clearable?: boolean;
   multiple?: boolean;
-  checkStrictly?: boolean;
   filterable?: boolean;
   showCheckbox?: boolean;
   class?: string;

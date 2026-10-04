@@ -19,6 +19,10 @@ export const Cascader = defineComponent({
   name: 'LytCascader',
 
   props: {
+    // ⚠️ 2026-10-04 移除 `checkStrictly` / `onExpandChange` ——
+    //   本组件是**扁平下拉列表**（`isDropdownOpen` / `searchText` / `isFiltering`
+    //   三个状态），既没有父子级联勾选、也没有逐级展开 ⇒ 这两个 prop 描述的是
+    //   **不存在的功能**，传了毫无反应。待真正实现级联多选时再加回。
     options: { type: Array, default: (): CascaderOption[] => [] },
     modelValue: { type: Array, default: (): (string | number)[] => [] },
     placeholder: { type: String, default: '请选择' },
@@ -26,7 +30,6 @@ export const Cascader = defineComponent({
     clearable: { type: Boolean, default: true },
     multiple: { type: Boolean, default: false },
     filterable: { type: Boolean, default: false },
-    checkStrictly: { type: Boolean, default: false },
     showAllLevels: { type: Boolean, default: true },
     collapseTags: { type: Boolean, default: false },
     separator: { type: String, default: ' / ' },
@@ -36,7 +39,6 @@ export const Cascader = defineComponent({
     ariaDescribedBy: { type: String, default: '' },
     load: { type: Function, default: undefined },
     onChange: { type: Function, default: undefined },
-    onExpandChange: { type: Function, default: undefined },
     onVisibleChange: { type: Function, default: undefined },
     onRemoveTag: { type: Function, default: undefined },
     onClear: { type: Function, default: undefined },
