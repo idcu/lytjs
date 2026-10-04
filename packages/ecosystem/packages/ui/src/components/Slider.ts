@@ -417,6 +417,8 @@ export const Slider = defineComponent({
               createVNode('input', {
                 type: 'number',
                 class: `lyt-input lyt-input--${_props.inputSize}`,
+                // ★ 2026-10-04：`label` 声明了却从未使用 ⇒ 数字输入框没有可访问名称。
+                'aria-label': (_props.label as string | undefined) || undefined,
                 value: state.firstValue,
                 min: _props.min,
                 max: _props.max,

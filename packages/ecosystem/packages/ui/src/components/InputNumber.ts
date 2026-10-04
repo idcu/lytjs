@@ -197,6 +197,11 @@ export const InputNumber = defineComponent({
     const getInputNumberClass = () => {
       const classes = ['lyt-input-number'];
       if (_props.size !== 'default') classes.push(`lyt-input-number--${_props.size}`);
+      // ★ 2026-10-04：`controlsPosition` 声明了却从未使用 ⇒ 加减号位置不可定制。
+      //   语义沿用 Element-Plus 的 `controls-position`（`left` / `right`）。
+      if (_props.controlsPosition) {
+        classes.push(`lyt-input-number--controls-${_props.controlsPosition}`);
+      }
       if (_props.disabled) classes.push('lyt-input-number--disabled');
       if (state.focus) classes.push('lyt-input-number--focus');
       if (_props.class) classes.push(_props.class);
@@ -274,6 +279,8 @@ export const InputNumber = defineComponent({
           mergeA11yProps(spinbuttonProps, {
             type: 'text',
             class: 'lyt-input-number__input',
+            // ★ 2026-10-04：`label` 声明了却从未使用 ⇒ 输入框没有可访问名称。
+            'aria-label': (_props.label as string | undefined) || undefined,
             value: displayValue.value,
             disabled: _props.disabled,
             placeholder: _props.placeholder,
