@@ -14,9 +14,10 @@
  * 「defineFunctionalComponent is not a function」。
  * 而用户从「门面包」导入组件 API 是最自然的用法。
  *
- * 另注：`defineFunctionalComponent` 返回的对象上带一个 `__isFunctional: true` 标记，
- * 目前**没有任何代码读它** ⇒ 与本仓其它「孤儿品牌标记」同构，属可清理项，
- * 但不影响功能（判据里不断言它的存在）。
+ * 另注：`defineFunctionalComponent` 曾返回一个 `__isFunctional: true` 标记，
+ * 但**全仓没有任何代码读它**（孤儿品牌标记，与本仓其它同类同构）
+ * ⇒ 已于 2026-10-04 移除。函数式组件**不靠标记识别**，靠的是上面那个
+ * stateful 包装（`setup` 返回渲染函数 ⇒ `handleSetupResult` 赋给 `instance.render`）。
  */
 
 import { describe, it, expect, afterEach } from 'vitest';

@@ -38,8 +38,14 @@ export function defineFunctionalComponent(
       // 将其赋值给 instance.render，让函数式组件正常工作。
       return render as unknown as () => VNode;
     },
-    // 标记为函数式组件
-    __isFunctional: true,
+    // ★ 2026-10-04 移除 `__isFunctional: true` ——
+    //   它是**孤儿品牌标记**：全仓只有这里写、**没有任何代码读它**
+    //   （`ComponentOptions` 类型里也没声明它），而且 `as ComponentOptions`
+    //   那一处断言本来就在掩盖「多了一个不存在的字段」。
+    //   函数式组件**不靠标记识别**，而是靠上面这个 stateful 包装
+    //   （`setup` 返回渲染函数 ⇒ `handleSetupResult` 赋给 `instance.render`）
+    //   —— 实测 props 正确传入、功能正常。
+    //   ⇒ 留着它只会误导后来人以为「有个运行期分支会读它」。
   } as ComponentOptions;
 }
 
