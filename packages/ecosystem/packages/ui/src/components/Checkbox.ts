@@ -150,14 +150,22 @@ export const Checkbox = defineComponent({
         ),
       );
 
-      if (_props.label) {
+      // ★ 2026-10-04：`falseLabel` 此前声明了却从未使用。
+      //   语义沿用 Element-Plus 的 `el-checkbox`：**未选中时显示 `falseLabel`**，
+      //   选中时显示 `label` ⇒ 二者可表达「选中/未选中两种文案」。
+      const shownLabel =
+        isChecked.value && _props.label
+          ? _props.label
+          : ((_props.falseLabel as string | undefined) ?? (_props.label as string | undefined));
+
+      if (shownLabel) {
         children.push(
           createVNode(
             'span',
             {
               class: 'lyt-checkbox__label',
             },
-            [createVNode('span', {}, _props.label)],
+            [createVNode('span', {}, shownLabel)],
           ),
         );
       } else if (slots.default) {

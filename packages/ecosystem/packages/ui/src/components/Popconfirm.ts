@@ -99,7 +99,17 @@ export const Popconfirm = defineComponent({
             iconChildren.push(...(iconContent as VNode[]));
           }
         }
-        contentChildren.push(createVNode('span', { class: 'lyt-popconfirm__icon' }, iconChildren));
+        contentChildren.push(
+          createVNode(
+            'span',
+            {
+              class: 'lyt-popconfirm__icon',
+              // ★ 2026-10-04：`iconColor` 声明了却从未使用 ⇒ 图标颜色不可定制。
+              style: _props.iconColor ? { color: _props.iconColor as string } : undefined,
+            },
+            iconChildren,
+          ),
+        );
       }
 
       const titleId = _props.id ? `${_props.id}-title` : undefined;
