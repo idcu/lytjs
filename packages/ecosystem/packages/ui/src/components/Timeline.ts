@@ -58,8 +58,12 @@ export const Timeline = defineComponent({
 
       if (slots.default) {
         const slotContent = slots.default();
+        // ★ 2026-10-04：此前**只有数组形态**才渲染 —— slot 返回**单个 VNode**
+        //   （最常见写法）时内容被**整个丢弃**。现在两种形态都处理。
         if (Array.isArray(slotContent)) {
           children.push(...(slotContent as VNode[]));
+        } else if (slotContent) {
+          children.push(slotContent as VNode);
         }
       }
 
