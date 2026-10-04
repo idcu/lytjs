@@ -3,7 +3,7 @@
 
 import { isFunction, isObject, hasOwn, NOOP, EMPTY_OBJ, isPromise } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
-import { proxyRefs } from '@lytjs/reactivity';
+import { proxyRefs, signal } from '@lytjs/reactivity';
 import type {
   ComponentOptions,
   ComponentInternalInstance,
@@ -233,6 +233,28 @@ export function setupComponent(instance: ComponentInternalInstance): void {
  * ⇒ 组件里的 `p.x`、`p.x = v`、`'x' in p`、`Object.keys(p)`、`{...p}`
  * 都能看到最新值。
  */
+/**
+ * 每个实例一个**响应式版本号**：props 每次被替换就自增。
+ *
+ * 作用：让 `getStableProps` 的读取**建立响应式依赖** ⇒ 组件里
+ * `computed(() => p.x)`（或 render 中读 `p.x`）能在 props 更新后重算。
+ * 没有它：props 是一份**普通对象**，`computed` 无依赖可追踪 ⇒ 只算一次并永久缓存。
+ */
+const propsVersionCache = new WeakMap<ComponentInternalInstance, { value: number }>();
+
+function getPropsVersion(instance: ComponentInternalInstance): { value: number } {
+  const cached = propsVersionCache.get(instance);
+  if (cached) return cached;
+  const created = signal(0) as unknown as { value: number };
+  propsVersionCache.set(instance, created);
+  return created;
+}
+
+/** props 被替换后调用：让所有依赖 props 的 computed / effect 失效 */
+function bumpPropsVersion(instance: ComponentInternalInstance): void {
+  getPropsVersion(instance).value += 1;
+}
+
 const stablePropsCache = new WeakMap<ComponentInternalInstance, Record<string, unknown>>();
 
 function getStableProps(instance: ComponentInternalInstance): Record<string, unknown> {
@@ -241,6 +263,10 @@ function getStableProps(instance: ComponentInternalInstance): Record<string, unk
 
   const proxy = new Proxy({} as Record<string, unknown>, {
     get(_t, key) {
+      // ★ 先读**响应式版本号**：这一步建立响应式依赖 ⇒ 组件里
+      //   `computed(() => p.x)` 会在 props 更新时**失效重算**
+      //   （props 本身是普通对象，不读版本号则 computed 无依赖可追踪、只算一次）。
+      void getPropsVersion(instance).value;
       return (instance.props as Record<string, unknown> | null | undefined)?.[key as string];
     },
     set(_t, key, value) {
@@ -346,6 +372,8 @@ export function initProps(
 
   instance.props = props;
   instance.attrs = attrs;
+  // ★ 让依赖 props 的 computed / effect 失效（配合 getStableProps 的版本号读取）
+  bumpPropsVersion(instance);
 }
 
 // ==================== createSetupContext ====================
