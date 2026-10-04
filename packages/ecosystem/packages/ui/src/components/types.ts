@@ -2207,22 +2207,19 @@ export interface StepSetupProps extends Record<string, unknown> {
 
 // ===== Carousel 走马灯组件 =====
 export interface CarouselProps {
-  initialIndex?: number;
+  // ⚠️ 2026-10-04 移除 `initialIndex` / `trigger` / `autoplay` / `interval` /
+  //   `arrow` / `loop` / `onChange` —— 它们描述的是**尚未实现**的轮播功能
+  //   （当前索引、切换、自动播放、指示器）；留着等于类型面对使用者说谎。
+  //   待真正实现轮播时再加回，并配套行为级判据。
   height?: string;
-  trigger?: 'click' | 'hover';
-  autoplay?: boolean;
-  interval?: number;
   indicatorPosition?: 'outside' | 'none';
-  arrow?: 'always' | 'hover' | 'never';
   type?: '' | 'card';
-  loop?: boolean;
   direction?: 'horizontal' | 'vertical';
   class?: string;
   style?: string | Record<string, string>;
   id?: string;
   ariaLabel?: string;
   ariaDescribedBy?: string;
-  onChange?: (index: number, prevIndex: number) => void;
 }
 
 export interface CarouselSlots {
@@ -2230,15 +2227,12 @@ export interface CarouselSlots {
 }
 
 export interface CarouselSetupProps extends Record<string, unknown> {
-  initialIndex: number;
+  // ⚠️ 2026-10-04：随运行时 prop 一并移除 `initialIndex` / `trigger` / `autoplay` /
+  //   `interval` / `arrow` / `loop` / `onChange` —— 它们描述的是**尚未实现**的
+  //   轮播功能（详见 `Carousel.ts` props 块内的说明）。
   height: string;
-  trigger: 'click' | 'hover';
-  autoplay: boolean;
-  interval: number;
   indicatorPosition: 'outside' | 'none';
-  arrow: 'always' | 'hover' | 'never';
   type: '' | 'card';
-  loop: boolean;
   direction: 'horizontal' | 'vertical';
   class: string;
   id: string;

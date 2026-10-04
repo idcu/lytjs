@@ -14,15 +14,15 @@ export const Carousel = defineComponent({
   name: 'LytCarousel',
 
   props: {
-    initialIndex: { type: Number, default: 0 },
+    // ⚠️ 2026-10-04 移除**一批「配置了不存在功能」的 prop**：
+    //   `initialIndex` / `trigger` / `autoplay` / `interval` / `arrow` / `loop` /
+    //   `onChange` 描述的是**轮播功能**（当前索引、切换、自动播放、指示器），
+    //   而本组件的 `setup` 里**响应式原语 = 0、事件处理器 = 0** ⇒
+    //   这些 prop 一直是**静默无效**的（传了毫无反应）。
+    //   与其留着让类型面说谎，不如删掉；待真正实现轮播时再加回（附行为判据）。
     height: { type: String, default: '300px' },
-    trigger: { type: String as () => 'click' | 'hover', default: 'hover' },
-    autoplay: { type: Boolean, default: true },
-    interval: { type: Number, default: 3000 },
     indicatorPosition: { type: String as () => 'outside' | 'none', default: '' },
-    arrow: { type: String as () => 'always' | 'hover' | 'never', default: 'hover' },
     type: { type: String as () => '' | 'card', default: '' },
-    loop: { type: Boolean, default: true },
     direction: { type: String as () => 'horizontal' | 'vertical', default: 'horizontal' },
     class: { type: String, default: '' },
     style: {
@@ -32,7 +32,6 @@ export const Carousel = defineComponent({
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
-    onChange: { type: Function, default: undefined },
   },
 
   setup(props: Record<string, unknown>, { slots }) {

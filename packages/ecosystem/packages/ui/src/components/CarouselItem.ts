@@ -17,7 +17,11 @@ export const CarouselItem = defineComponent({
   name: 'LytCarouselItem',
 
   props: {
-    name: { type: [String, Number] as unknown as PropType<string | number>, default: '' },
+    //   `name` / `trigger` / `autoplay` / `interval` / `arrow` / `loop` /
+    //   `onChange` 描述的是**轮播功能**（当前索引、切换、自动播放、指示器），
+    //   而本组件的 `setup` 里**响应式原语 = 0、事件处理器 = 0** ⇒
+    //   这些 prop 一直是**静默无效**的（传了毫无反应）。
+    //   与其留着让类型面说谎，不如删掉；待真正实现轮播时再加回（附行为判据）。
     label: { type: String, default: '' },
     class: { type: String, default: '' },
     style: {
