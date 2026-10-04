@@ -226,7 +226,9 @@ export const Cascader = defineComponent({
     return () => {
       const cascaderClass = [
         'lyt-cascader',
+        // ★ 2026-10-04：`collapseTags` 声明了却从未使用 ⇒ 多选标签的折叠形态不可定制。
         isDropdownOpen() ? 'lyt-cascader--open' : '',
+        p.collapseTags ? 'lyt-cascader--collapse-tags' : '',
         p.disabled ? 'lyt-cascader--disabled' : '',
         p.class,
       ]

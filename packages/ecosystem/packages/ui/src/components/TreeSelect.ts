@@ -170,6 +170,9 @@ export const TreeSelect = defineComponent({
 
     const getTreeSelectClass = () => {
       const classes = ['lyt-tree-select'];
+      // ★ 2026-10-04：`multiple` 声明了却从未使用 ⇒ 多选态在外观上无从体现。
+      //   `is-multiple` 供样式区分多选（单选是一行文本，多选是标签列表）。
+      if (_props.multiple) classes.push('is-multiple');
       if (visible()) classes.push('is-visible');
       if (_props.class) classes.push(_props.class);
       return classes.join(' ');
