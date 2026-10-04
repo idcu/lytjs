@@ -126,6 +126,10 @@ run() {
 echo "lytjs 基线验证 —— 开始于 $(date '+%F %T')"
 
 run "check-build-order" "${PNPM[@]}" run check-build-order
+# UI 源码级守卫：只读源码、不需要 dist ⇒ 放在 build 之前（早失败、省时间）
+run "check-ui-slot-single-node" "${PNPM[@]}" run check-ui-slot-single-node
+# props 接线检测器是**报告型**（25 个组件修法各异）⇒ 只报告不阻断
+run "check-ui-props-wiring (报告型)" "${PNPM[@]}" run check-ui-props-wiring
 run "build (76 包)"     "${PNPM[@]}" run build
 # 契约守卫必须在 build **之后**跑：它要自省各包 dist 的导出面
 run "check-runtime-contract" "${PNPM[@]}" run check-runtime-contract
