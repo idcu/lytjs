@@ -432,6 +432,12 @@ export const Menu = defineComponent({
               role: 'menubar',
               id: p.id || menuListId,
               'aria-label': p.ariaLabel || '主菜单',
+              // ★ 2026-10-04 修复：`ariaDescribedBy` 一直在 props 声明里
+              //   （`ariaDescribedBy: { type: String, default: '' }`），
+              //   但组件体从未引用 ⇒ **屏幕阅读器拿不到菜单的描述**
+              //   （`scripts/check-ui-props-wiring.ts` 报出「部分未接线」）。
+              //   与已有的 `aria-label` 一起转发到根 `ul`（menubar 角色）。
+              'aria-describedby': p.ariaDescribedBy || undefined,
             },
             menuItems,
           ),
