@@ -94,7 +94,16 @@ export const Popconfirm = defineComponent({
 
       if (slots.reference) {
         const refContent = slots.reference();
-        if (Array.isArray(refContent)) {
+        // ★ 2026-10-04 修正：此前**只有数组形态**才渲染 reference ——
+        //   slot 返回**单个 VNode**（最常见写法）时被**整个丢弃**，
+        //   表现为「触发元素不见了、气泡也开不了」。
+        //   现在两种形态都处理（与本包其它组件如 CheckboxGroup 的写法一致）。
+        const refNodes: VNode[] = Array.isArray(refContent)
+          ? (refContent as VNode[])
+          : refContent
+            ? [refContent as VNode]
+            : [];
+        if (refNodes.length > 0) {
           children.push(
             createVNode(
               'div',
@@ -103,7 +112,7 @@ export const Popconfirm = defineComponent({
                 onMouseenter: show,
                 onMouseleave: hide,
               },
-              refContent as VNode[],
+              refNodes,
             ),
           );
         }
