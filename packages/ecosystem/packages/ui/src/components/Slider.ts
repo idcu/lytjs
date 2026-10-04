@@ -406,7 +406,9 @@ export const Slider = defineComponent({
         ),
       );
 
-      if (_props.showInput && !_props.range) {
+      // ★ 2026-10-04：`showInputControls` 声明了却从未使用 ⇒ 无法关闭数字输入框。
+      //   语义沿用 Element-Plus 的 `show-input-controls`（是否显示数字输入框）。
+      if (_props.showInput && _props.showInputControls && !_props.range) {
         children.push(
           createVNode(
             'div',

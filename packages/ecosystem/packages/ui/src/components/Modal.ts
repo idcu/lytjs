@@ -221,7 +221,9 @@ export const Modal = defineComponent({
         .join(' ');
 
       const modalWidth = typeof p.width === 'number' ? `${p.width}px` : (p.width as string);
-      const modalStyle = isFullscreen() ? '' : `width: ${modalWidth};`;
+      // ★ 2026-10-04：`top` 声明了却从未使用 ⇒ 弹层顶部偏移不可定制。
+      const topOffset = p.top ? `top: ${String(p.top)}px;` : '';
+      const modalStyle = isFullscreen() ? topOffset : `width: ${modalWidth};${topOffset}`;
 
       const modalA11yProps = getDialogA11yProps({
         id: p.id,
