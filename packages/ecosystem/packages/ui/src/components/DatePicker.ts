@@ -66,8 +66,25 @@ export const DatePicker = defineComponent({
     const currentYear = signal(new Date().getFullYear());
     const currentMonth = signal(new Date().getMonth());
     const selectDate = signal<Date | null>(null);
-    const rangeStart = signal<Date | null>(null);
-    const rangeEnd = signal<Date | null>(null);
+    // ★ 2026-10-04：`modelValue` 此前**声明了但从未使用**（检测器报「部分未接线」）
+    //   ⇒ 外部传入的选中值被**完全忽略**，受控用法静默失效。
+    //   现在至少作为**初始值**生效（`Date` / `Date[]` / `string` 三种形态）。
+    //   ⚠️ 语义边界：这是「初始值」而非「完全受控」—— 之后父组件再改 `modelValue`
+    //   不会回灌（那需要额外的 watcher + controlled 判定，属另一步）。
+    const initial = p.modelValue as Date | Date[] | string | null | undefined;
+    const toDate = (v: unknown): Date | null => {
+      if (v instanceof Date) return v;
+      if (typeof v === 'string' || typeof v === 'number') {
+        const d = new Date(v);
+        return Number.isNaN(d.getTime()) ? null : d;
+      }
+      return null;
+    };
+    const initialDates: Date[] = Array.isArray(initial)
+      ? initial.map(toDate).filter((d): d is Date => d !== null)
+      : [toDate(initial)].filter((d): d is Date => d !== null);
+    const rangeStart = signal<Date | null>(initialDates[0] ?? null);
+    const rangeEnd = signal<Date | null>(initialDates[1] ?? null);
     const showTime = signal(false);
     const currentHours = signal(0);
     const currentMinutes = signal(0);
