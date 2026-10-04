@@ -74,7 +74,18 @@ for (const f of files) {
     continue;
   }
   const body = src.slice(block.end);
-  const names = [...block.text.matchAll(/^\s{2,}(\w+)\s*[?:]/gm)].map((m) => m[1] as string);
+  // ★ 2026-10-04 修正**假阳性**：多行 prop 定义里的**选项键**会被误当 prop 名。
+  //   例：`color: {\n      type: [...],\n      default: ''\n    }` ——
+  //   `default:` 独占一行且缩进更深，但它不是 prop 名。
+  //   ⇒ 规则：**只接受与首个 prop 名行缩进完全相同**的行
+  //     （props 块自身的层级），并额外排除保留的选项键。
+  const RESERVED = new Set(['type', 'default', 'required', 'validator']);
+  const all = [...block.text.matchAll(/^([ \t]+)(\w+)\s*[?:]/gm)];
+  const baseIndent = all.length > 0 ? all[0][1]!.length : 0;
+  const names = all
+    .filter((m) => m[1]!.length === baseIndent)
+    .map((m) => m[2] as string)
+    .filter((n) => !RESERVED.has(n));
   if (names.length === 0) {
     noProps++;
     continue;
