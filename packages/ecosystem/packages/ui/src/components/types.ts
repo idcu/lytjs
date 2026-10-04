@@ -218,7 +218,6 @@ export interface ModalProps {
   closeOnClickModal?: boolean;
   closeOnPressEscape?: boolean;
   lockScroll?: boolean;
-  draggable?: boolean;
   fullscreen?: boolean;
   appendToBody?: boolean;
   customClass?: string;
@@ -251,7 +250,6 @@ export interface ModalSetupProps extends Record<string, unknown> {
   closeOnClickModal: boolean;
   closeOnPressEscape: boolean;
   lockScroll: boolean;
-  draggable: boolean;
   fullscreen: boolean;
   appendToBody: boolean;
   customClass: string;
@@ -1142,7 +1140,6 @@ export interface SwitchSetupProps extends Record<string, unknown> {
   inactiveColor: string;
   activeValue: boolean | string | number;
   inactiveValue: boolean | string | number;
-  name: string;
   id: string;
   class: string;
   style?: string | Record<string, string>;

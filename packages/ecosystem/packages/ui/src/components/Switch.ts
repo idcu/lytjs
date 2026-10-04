@@ -18,6 +18,9 @@ export const Switch = defineComponent({
   name: 'LytSwitch',
 
   props: {
+    // ⚠️ 2026-10-04 移除 `name` —— 本组件渲染的是 `<div>` 根节点、**没有内部原生
+    //   `<input>`** ⇒ 把 `name` 转发到 div 上对表单提交毫无意义。若将来要支持
+    //   原生表单提交（渲染真正的 `<input>`），再把 `name` 加回来。
     modelValue: { type: Boolean, default: false },
     disabled: { type: Boolean, default: false },
     loading: { type: Boolean, default: false },
@@ -28,7 +31,6 @@ export const Switch = defineComponent({
     inactiveColor: { type: String, default: '' },
     activeValue: { type: Boolean, default: true },
     inactiveValue: { type: Boolean, default: false },
-    name: { type: String, default: '' },
     id: { type: String, default: '' },
     class: { type: String, default: '' },
     style: { type: String, default: '' },

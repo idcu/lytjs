@@ -75,6 +75,23 @@ export const CheckboxGroup = defineComponent({
       _props.onChange?.(v as GroupValue);
     };
 
+    // ★ 2026-10-04：`min` / `max` 声明了却从未使用 ⇒ 选中数量无上下限。
+    //   语义（沿用 Element-Plus 的 `el-checkbox-group` 的 `min` / `max`）：
+    //   · 达到 `max` ⇒ **未选中**的项禁用（不能再加，但可以取消）；
+    //   · 达到 `min` ⇒ **已选中**的项禁用（不能再减）。
+    //   自身 `disabled` 的子项一律保持禁用。
+    const childDisabled = (childProps: Record<string, unknown>): boolean => {
+      if (childProps.disabled === true) return true;
+      const selected = groupValue();
+      const value = (childProps.label ?? childProps.trueLabel) as GroupValue[number];
+      const isChecked = selected.includes(value);
+      const max = typeof _props.max === 'number' ? _props.max : undefined;
+      const min = typeof _props.min === 'number' ? _props.min : undefined;
+      if (max !== undefined && selected.length >= max && !isChecked) return true;
+      if (min !== undefined && selected.length <= min && isChecked) return true;
+      return false;
+    };
+
     return () => {
       const children: VNode[] = [];
 
@@ -97,6 +114,8 @@ export const CheckboxGroup = defineComponent({
               props: {
                 ...childProps,
                 modelValue: groupValue(),
+                // ★ min / max：按当前选中数决定该项是否禁用
+                disabled: childDisabled(childProps),
                 onChange: (v: unknown) => {
                   (childProps.onChange as ((x: unknown) => void) | undefined)?.(v);
                   handleGroupChange(v);

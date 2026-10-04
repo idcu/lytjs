@@ -14,6 +14,9 @@ export const Modal = defineComponent({
   name: 'LytModal',
 
   props: {
+    // ⚠️ 2026-10-04 移除 `draggable` —— 本组件**没有任何拖拽实现**
+    //   （无 mousedown / mousemove / 位置状态）⇒ 该开关毫无作用。
+    //   待真正实现「按住标题栏拖动」时再加回。
     modelValue: { type: Boolean, default: false },
     title: { type: String, default: '' },
     width: { type: [String, Number] as unknown as StringConstructor, default: '50%' },
@@ -22,7 +25,6 @@ export const Modal = defineComponent({
     closeOnClickModal: { type: Boolean, default: true },
     closeOnPressEscape: { type: Boolean, default: true },
     lockScroll: { type: Boolean, default: true },
-    draggable: { type: Boolean, default: false },
     fullscreen: { type: Boolean, default: false },
     appendToBody: { type: Boolean, default: false },
     customClass: { type: String, default: '' },

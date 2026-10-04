@@ -139,3 +139,47 @@ describe('行为：多选组 v-model', () => {
     );
   });
 });
+
+describe('行为：多选组的 min / max 约束', () => {
+  async function renderGroup(props: Record<string, unknown>): Promise<HTMLElement> {
+    const host = mount();
+    await createApp({
+      setup() {
+        return () =>
+          h(
+            CheckboxGroup as never,
+            { modelValue: ['x'], ...props },
+            {
+              default: () => [
+                h(Checkbox as never, { label: 'x' }),
+                h(Checkbox as never, { label: 'y' }),
+              ],
+            },
+          );
+      },
+    } as never).mount(host);
+    await tick();
+    return host;
+  }
+
+  function disabledFlags(host: HTMLElement): boolean[] {
+    return [...host.querySelectorAll('.lyt-checkbox input')].map(
+      (i) => (i as HTMLInputElement).disabled,
+    );
+  }
+
+  it('★ 未传 min/max 时子项都可操作', async () => {
+    const host = await renderGroup({});
+    expect(disabledFlags(host)).toEqual([false, false]);
+  });
+
+  it('★ max=1 时未选中项被禁用（已选中项仍可取消）', async () => {
+    const host = await renderGroup({ max: 1 });
+    expect(disabledFlags(host)).toEqual([false, true]);
+  });
+
+  it('★ min=1 时已选中项被禁用（不能再减）', async () => {
+    const host = await renderGroup({ min: 1 });
+    expect(disabledFlags(host)).toEqual([true, false]);
+  });
+});

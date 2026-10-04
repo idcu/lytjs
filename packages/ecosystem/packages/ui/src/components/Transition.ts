@@ -23,9 +23,11 @@ export const Transition = defineComponent({
   name: 'LytTransition',
 
   props: {
+    // ⚠️ 2026-10-04 移除 `appear` / `mode` —— 本组件是**纯 CSS class 包装**
+    //   （只输出 `${name}-transition` / `${name}-item`，无响应式状态、无
+    //   transitionend / getComputedStyle 等过渡逻辑）⇒ 这两个 prop 描述的是
+    //   **尚未实现的过渡能力**。待真正实现进入/离开时序时再加回。
     name: { type: String, default: 'fade' },
-    appear: { type: Boolean, default: false },
-    mode: { type: String, default: '' },
     duration: { type: Number, default: 300 },
     class: { type: String, default: '' },
   },
