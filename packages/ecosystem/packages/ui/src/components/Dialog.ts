@@ -55,12 +55,33 @@ export const Dialog = defineComponent({
     const dialogRef = signal<HTMLElement | null>(null);
     const previousActiveElement = signal<HTMLElement | null>(null);
 
+    // ★ 2026-10-04 新增：`lockScroll` 与 `onBeforeOpen` 此前声明了却从未使用
+    //   ⇒ 传了毫无效果（静默失效）。
+    //   · `lockScroll`：打开时锁住 `body` 滚动，关闭时恢复
+    //     （实现放在 `onMounted`/`onUnmounted` 之外，避免与焦点管理耦合）。
+    //   · `onBeforeOpen`：与本文件已有的 `onBeforeClose` 对称 —— 返回 `false`
+    //     则**阻止打开**（await，允许异步判断）。
+    let scrollLocked = false;
+    const setScrollLocked = (locked: boolean): void => {
+      if (typeof document === 'undefined') return;
+      document.body.style.overflow = locked ? 'hidden' : '';
+      scrollLocked = locked;
+    };
+
     watch(
       () => p.modelValue,
-      (newVal) => {
-        visible.set(newVal);
+      async (newVal) => {
         if (newVal) {
+          if (p.onBeforeOpen) {
+            const allowed = await p.onBeforeOpen();
+            if (allowed === false) return;
+          }
+          visible.set(true);
+          if (p.lockScroll) setScrollLocked(true);
           p.onOpen?.();
+        } else {
+          visible.set(false);
+          if (scrollLocked) setScrollLocked(false);
         }
       },
     );
@@ -71,6 +92,7 @@ export const Dialog = defineComponent({
         if (result === false) return;
       }
       visible.set(false);
+      if (scrollLocked) setScrollLocked(false);
       p.onClose?.();
 
       if (p.returnFocusOnClose) {

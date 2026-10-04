@@ -6,7 +6,7 @@
 
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
-import { signal } from '@lytjs/reactivity';
+import { signal, watch } from '@lytjs/reactivity';
 import { getDialogA11yProps, getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 import type { DrawerSetupProps, DrawerSlots } from './types';
 
@@ -40,6 +40,33 @@ export const Drawer = defineComponent({
     const p = props as DrawerSetupProps;
     const isClosing = signal(false);
 
+    // ★ 2026-10-04 新增：`lockScroll` / `onBeforeOpen` / `onOpen` / `onClose`
+    //   此前声明了却从未使用 ⇒ 传了毫无效果（静默失效）。
+    //   语义与同包的 `Dialog` 对齐：`onBeforeOpen` 返回 `false` 则**阻止打开**
+    //   （await，允许异步判断）；`lockScroll` 打开时锁 `body` 滚动、关闭时恢复。
+    let scrollLocked = false;
+    const setScrollLocked = (locked: boolean): void => {
+      if (typeof document === 'undefined') return;
+      document.body.style.overflow = locked ? 'hidden' : '';
+      scrollLocked = locked;
+    };
+
+    watch(
+      () => p.modelValue,
+      async (newVal) => {
+        if (newVal) {
+          if (p.onBeforeOpen) {
+            const allowed = await p.onBeforeOpen();
+            if (allowed === false) return;
+          }
+          if (p.lockScroll) setScrollLocked(true);
+          p.onOpen?.();
+        } else if (scrollLocked) {
+          setScrollLocked(false);
+        }
+      },
+    );
+
     const close = async () => {
       if (isClosing()) return;
       if (p.onBeforeClose) {
@@ -50,6 +77,8 @@ export const Drawer = defineComponent({
       setTimeout(() => {
         isClosing.set(false);
       }, 300);
+      p.onClose?.();
+      if (scrollLocked) setScrollLocked(false);
     };
 
     const handleModalClick = () => {
