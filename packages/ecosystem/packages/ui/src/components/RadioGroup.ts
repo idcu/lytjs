@@ -8,6 +8,7 @@ import type { RadioGroupProps, RadioGroupSlots, RadioGroupSetupProps } from './t
 import { defineComponent, type PropType } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
+import { signal, watch } from '@lytjs/reactivity';
 import { getGroupA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 
 export const RadioGroup = defineComponent({
@@ -58,16 +59,49 @@ export const RadioGroup = defineComponent({
       return style;
     };
 
+    // ★ 2026-10-04 实现 group 的 v-model（此前 `modelValue` / `onChange` 声明了却从未使用
+    //   ⇒ 本文件里 `emit(` 与 `onChange?.(` 出现 0 次，契约完全失效）。
+    const groupValue = signal(_props.modelValue);
+    watch(
+      () => _props.modelValue,
+      (v) => groupValue.set(v),
+    );
+    const handleGroupChange = (v: unknown): void => {
+      const next = v as string | number | boolean;
+      groupValue.set(next);
+      _props.onChange?.(next);
+    };
+
     return () => {
       const children: VNode[] = [];
 
       if (slots.default) {
         const slotContent = slots.default();
-        if (Array.isArray(slotContent)) {
-          children.push(...(slotContent as VNode[]));
-        } else if (slotContent) {
-          children.push(slotContent as VNode);
-        }
+        const raw = Array.isArray(slotContent)
+          ? (slotContent as VNode[])
+          : slotContent
+            ? [slotContent as VNode]
+            : [];
+        // ★ 把 group 的当前值与变更处理注入每个子节点 ⇒ v-model 真正生效
+        //   （2026-10-04：此前 `modelValue` / `onChange` 声明了却从未使用）。
+        //   依赖两处框架级修复：① setup 传稳定 props 代理（值不再陈旧）
+        //   ② props 读取建立响应式依赖（computed 会重算）。
+        children.push(
+          ...raw.map((child) => {
+            const childProps = (child.props ?? {}) as Record<string, unknown>;
+            return {
+              ...child,
+              props: {
+                ...childProps,
+                modelValue: groupValue(),
+                onChange: (v: unknown) => {
+                  (childProps.onChange as ((x: unknown) => void) | undefined)?.(v);
+                  handleGroupChange(v);
+                },
+              },
+            } as VNode;
+          }),
+        );
       }
 
       const a11yProps = getGroupA11yProps({

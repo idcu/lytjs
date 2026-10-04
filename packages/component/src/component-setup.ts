@@ -3,7 +3,7 @@
 
 import { isFunction, isObject, hasOwn, NOOP, EMPTY_OBJ, isPromise } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
-import { proxyRefs } from '@lytjs/reactivity';
+import { proxyRefs, signal } from '@lytjs/reactivity';
 import type {
   ComponentOptions,
   ComponentInternalInstance,
@@ -233,6 +233,52 @@ export function setupComponent(instance: ComponentInternalInstance): void {
  * ⇒ 组件里的 `p.x`、`p.x = v`、`'x' in p`、`Object.keys(p)`、`{...p}`
  * 都能看到最新值。
  */
+/**
+ * props 的**浅比较**（只比顶层键值，值按 `Object.is`）——
+ * 用于「内容是否真的变了」的判定，避免无谓的替换与失效通知。
+ */
+function shallowEqualProps(
+  a: Record<string, unknown> | null | undefined,
+  b: Record<string, unknown> | null | undefined,
+): boolean {
+  const av = a ?? {};
+  const bv = b ?? {};
+  const ak = Object.keys(av);
+  const bk = Object.keys(bv);
+  if (ak.length !== bk.length) return false;
+  for (const k of ak) {
+    if (!Object.is(av[k], bv[k])) return false;
+  }
+  return true;
+}
+
+/**
+ * 每实例一个**响应式版本号**（`signal()` 返回**可调用对象**：`sig()` 读、`sig.set()` 写）。
+ *
+ * 作用：让 `getStableProps` 的读取**建立响应式依赖** ⇒ 组件里
+ * `computed(() => p.x)` 能在 props 更新后重算。
+ *
+ * ⚠️ 两处踩坑（都记在审计文档 §四十六）：
+ * ① `signal()` **没有 `.value`**（曾写成 `sig.value += 1` ⇒ NaN ⇒ 从未 set）；
+ * ② **无条件 bump 会与 patch 共振成环** ⇒ 必须配合上面的浅比较。
+ */
+type VersionSignal = (() => number) & { set: (v: number) => void };
+const propsVersionCache = new WeakMap<ComponentInternalInstance, VersionSignal>();
+
+function getPropsVersion(instance: ComponentInternalInstance): VersionSignal {
+  const cached = propsVersionCache.get(instance);
+  if (cached) return cached;
+  const created = signal(0) as unknown as VersionSignal;
+  propsVersionCache.set(instance, created);
+  return created;
+}
+
+/** props **内容真的变了**时调用：让依赖 props 的 computed / effect 失效 */
+function bumpPropsVersion(instance: ComponentInternalInstance): void {
+  const v = getPropsVersion(instance);
+  v.set(v() + 1);
+}
+
 const stablePropsCache = new WeakMap<ComponentInternalInstance, Record<string, unknown>>();
 
 function getStableProps(instance: ComponentInternalInstance): Record<string, unknown> {
@@ -241,6 +287,9 @@ function getStableProps(instance: ComponentInternalInstance): Record<string, unk
 
   const proxy = new Proxy({} as Record<string, unknown>, {
     get(_t, key) {
+      // ★ 读一次响应式版本号：这一步**建立依赖** ⇒ 依赖 props 的 computed 会重算
+      //   （配合 initProps 里的「内容变了才 bump」避免更新循环）。
+      void getPropsVersion(instance)();
       return (instance.props as Record<string, unknown> | null | undefined)?.[key as string];
     },
     set(_t, key, value) {
@@ -344,8 +393,18 @@ export function initProps(
     }
   }
 
+  // ★★ 防环关键（2026-10-04）：**内容没变就整体不替换**。
+  //   上一版「每次都 bump 版本号」会让读 props 的 effect 失效 → 重渲染 →
+  //   patch 再 initProps → 再 bump ⇒ **更新循环**（core 整套被 SIGTERM）。
+  //   改成「浅比较内容，变了才替换 + bump」后，同样的循环会在第二趟
+  //   （内容已相同 ⇒ 不 bump）自然终止。
+  if (shallowEqualProps(instance.props, props) && shallowEqualProps(instance.attrs, attrs)) {
+    return;
+  }
+
   instance.props = props;
   instance.attrs = attrs;
+  bumpPropsVersion(instance);
 }
 
 // ==================== createSetupContext ====================

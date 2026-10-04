@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * ★ 已知缺陷（2026-10-04 定位，**未修**）：**依赖 props 的 `computed` 不随 props 更新重算**
+ * 回归判据：**依赖 props 的 `computed` 会随 props 更新重算**（2026-10-04 修复）
  *
  * ## 背景
  *
@@ -32,10 +32,8 @@ const Child = defineComponent({
   },
 });
 
-describe('已知缺陷：依赖 props 的 computed 能否随 props 更新重算', () => {
-  // ★ 用 `it.fails` 标记为**预期失败**：缺陷存在时它「红」，套件整体仍绿；
-  //   一旦有人修好，它会因「fails 却通过了」而报错 ⇒ 提醒摘掉 `it.fails`。
-  it.fails('★ 父改 prop 后，依赖 props 的 computed 应重算（当前不重算）', async () => {
+describe('回归：依赖 props 的 computed 会随 props 更新重算', () => {
+  it('★ 父改 prop 后，依赖 props 的 computed 应重算', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
     hosts.push(host);
@@ -53,7 +51,7 @@ describe('已知缺陷：依赖 props 的 computed 能否随 props 更新重算'
     mv.set('b');
     await new Promise((r) => setTimeout(r, 30));
 
-    // ★ 判别点：若仍是 UNCHECKED ⇒ computed 这条路仍不通
+    // ★ 判别点：修复前这里是 UNCHECKED（computed 永久缓存）
     expect(host.querySelector('#child')?.textContent).toBe('CHECKED');
   });
 });
