@@ -209,6 +209,64 @@ export function setupComponent(instance: ComponentInternalInstance): void {
 /**
  * 运行 setup 函数（如果已定义）。
  */
+/**
+ * 每个实例一个**稳定**的 props 代理（方案 B，2026-10-04）
+ *
+ * ## 为什么需要
+ *
+ * `initProps` 每次更新都会**新建**一个 props 对象并 `instance.props = props`（整体替换）。
+ * 而子组件 `setup(props, …)` 的**形参捕获的是首次那个对象** ⇒ 组件里
+ * `const p = props` 这种写法（本仓几乎所有组件都是）**永远读到陈旧值**。
+ *
+ * 实测最小复现：父用 `signal` 驱动 `<Child label="a" />`，改成 `'b'` 后
+ * 子组件仍渲染 `a`。
+ *
+ * ## 为什么用「代理」而不是「就地更新」
+ *
+ * 试过就地更新 ⇒ 报 `object is not extensible` ⇒ props 对象被**冻结**（刻意为之）。
+ * ⇒ 改为给 setup 传一个**稳定代理**：读操作转发到 `instance.props`，
+ * 组件捕获的引用**始终有效**，而 `instance.props` 仍可整体替换。
+ *
+ * ## 覆盖的读取方式
+ *
+ * `get` / `set` / `has` / `ownKeys` / `getOwnPropertyDescriptor` 全部转发
+ * ⇒ 组件里的 `p.x`、`p.x = v`、`'x' in p`、`Object.keys(p)`、`{...p}`
+ * 都能看到最新值。
+ */
+const stablePropsCache = new WeakMap<ComponentInternalInstance, Record<string, unknown>>();
+
+function getStableProps(instance: ComponentInternalInstance): Record<string, unknown> {
+  const cached = stablePropsCache.get(instance);
+  if (cached) return cached;
+
+  const proxy = new Proxy({} as Record<string, unknown>, {
+    get(_t, key) {
+      return (instance.props as Record<string, unknown> | null | undefined)?.[key as string];
+    },
+    set(_t, key, value) {
+      const target = instance.props as Record<string, unknown> | null | undefined;
+      if (target) (target as Record<string, unknown>)[key as string] = value;
+      return true;
+    },
+    has(_t, key) {
+      const target = instance.props as Record<string, unknown> | null | undefined;
+      return target ? key in target : false;
+    },
+    ownKeys() {
+      const target = instance.props as Record<string, unknown> | null | undefined;
+      return target ? Reflect.ownKeys(target) : [];
+    },
+    getOwnPropertyDescriptor(_t, key) {
+      const target = instance.props as Record<string, unknown> | null | undefined;
+      if (!target) return undefined;
+      return Reflect.getOwnPropertyDescriptor(target, key);
+    },
+  });
+
+  stablePropsCache.set(instance, proxy);
+  return proxy;
+}
+
 function runSetup(instance: ComponentInternalInstance): SetupResult {
   const { setup } = instance.type;
 
@@ -218,7 +276,8 @@ function runSetup(instance: ComponentInternalInstance): SetupResult {
 
   try {
     const setupContext = createSetupContext(instance);
-    const result = setup(instance.props, setupContext);
+    // ★ 传**稳定代理**而非 instance.props 本体（见 getStableProps 的说明）
+    const result = setup(getStableProps(instance), setupContext);
     return result;
   } catch (err) {
     handleError(err as Error, instance, 'setup function');

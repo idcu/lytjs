@@ -1,13 +1,11 @@
 // @vitest-environment jsdom
 /**
- * ★ 已知缺陷（2026-10-04 定位，当前**未修**）：**子组件的 `setup` 闭包看不到
- * 父组件更新后的 props**
+ * 回归判据：子组件的 `setup` 闭包**能看到**父组件更新后的 props
  *
- * ## 症状
+ * ## 曾经的症状（2026-10-04 已修）
  *
- * 父组件更新传给子组件的 prop 后，子组件**仍渲染旧值**。
- * 最小复现：父用 `signal` 驱动 `<Child label="a" />`，改成 `'b'` 后
- * 子组件的 `<span>` 仍是 `a`。
+ * 父组件更新传给子组件的 prop 后，子组件**仍渲染旧值**：
+ * 父用 `signal` 驱动 `<Child label="a" />`，改成 `'b'` 后子组件的 `<span>` 仍是 `a`。
  *
  * ## 根因（已定位到具体一行）
  *
@@ -76,10 +74,10 @@ async function tick(ms = 30): Promise<void> {
   await new Promise((r) => setTimeout(r, ms));
 }
 
-describe('已知缺陷：子组件能否看到父组件更新后的 props', () => {
+describe('回归：子组件能看到父组件更新后的 props', () => {
   // ★ 用 `it.fails` 标记为**预期失败**：这条判据现在是红的（缺陷存在）。
   //   一旦有人修好它，这条会因「fails 但通过了」而报错 ⇒ 提醒把 `it.fails` 去掉。
-  it.fails('★ 父组件改 prop 后，子组件渲染应随之更新（当前渲染的是陈旧值）', async () => {
+  it('★ 父组件改 prop 后，子组件渲染应随之更新', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
     hosts.push(host);
@@ -97,7 +95,7 @@ describe('已知缺陷：子组件能否看到父组件更新后的 props', () =
     label.set('b');
     await tick();
 
-    // ★ 判别点：当前实际渲染 'a' ⇒ 闭包捕获的 props 陈旧（框架级缺陷）
+    // ★ 判别点：修复前这里是 'a'（陈旧）⇒ 本条即该缺陷的回归判据
     expect(host.querySelector('#child')?.textContent).toBe('b');
   });
 });
