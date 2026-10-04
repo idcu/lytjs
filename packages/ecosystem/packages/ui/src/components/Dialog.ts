@@ -86,6 +86,16 @@ export const Dialog = defineComponent({
       },
     );
 
+    // ★ 2026-10-04 新增：内置 footer 按钮的处理函数（仅当传入 onConfirm/onCancel 时渲染）
+    const handleCancel = (): void => {
+      p.onCancel?.();
+      void handleClose();
+    };
+    const handleConfirm = (): void => {
+      p.onConfirm?.();
+      void handleClose();
+    };
+
     const handleClose = async () => {
       if (p.onBeforeClose) {
         const result = await p.onBeforeClose();
@@ -243,7 +253,35 @@ export const Dialog = defineComponent({
         );
       }
 
-      if (slots.footer) {
+      // ★ 2026-10-04：`onConfirm` / `onCancel` 此前**声明了却永远不会被调用** ——
+      //   `Dialog` 原本只有 header 的关闭按钮，底部是 `footer` **插槽**
+      //   （确认按钮由使用者自己放）⇒ 组件无从调用这两个回调。
+      //   处置（与同包 `Modal` 保持一致）：**传了才渲染内置按钮**，
+      //   不传时 DOM 与之前**完全一致**（零回归风险）。
+      const hasBuiltinFooter = Boolean(p.onConfirm || p.onCancel);
+      if (slots.footer || hasBuiltinFooter) {
+        const footerChildren: VNode[] = [];
+        if (slots.footer) {
+          const fc = slots.footer();
+          if (Array.isArray(fc)) footerChildren.push(...(fc as VNode[]));
+          else if (fc) footerChildren.push(fc as VNode);
+        }
+        if (hasBuiltinFooter) {
+          if (p.onCancel) {
+            footerChildren.push(
+              createVNode('button', { class: 'lyt-dialog__cancel-btn', onClick: handleCancel }, [
+                createTextVNode('取消'),
+              ]),
+            );
+          }
+          if (p.onConfirm) {
+            footerChildren.push(
+              createVNode('button', { class: 'lyt-dialog__confirm-btn', onClick: handleConfirm }, [
+                createTextVNode('确定'),
+              ]),
+            );
+          }
+        }
         children.push(
           createVNode(
             'div',
@@ -251,7 +289,7 @@ export const Dialog = defineComponent({
               class: 'lyt-dialog__footer',
               id: p.id ? `${p.id}-footer` : undefined,
             },
-            slots.footer(),
+            footerChildren,
           ),
         );
       }

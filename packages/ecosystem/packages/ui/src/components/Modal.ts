@@ -193,7 +193,12 @@ export const Modal = defineComponent({
                 'button',
                 mergeA11yProps(cancelBtnProps, {
                   class: 'lyt-modal__cancel-btn',
-                  onClick: close,
+                  // ★ 2026-10-04：`onCancel` 声明了却从未被调用 ⇒
+                  //   「取消」按钮只关闭弹层、不通知使用者。
+                  onClick: () => {
+                    p.onCancel?.();
+                    close();
+                  },
                 }),
                 [createTextVNode('取消')],
               ),
