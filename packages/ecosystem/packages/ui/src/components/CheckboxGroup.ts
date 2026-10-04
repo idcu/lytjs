@@ -39,6 +39,11 @@ export const CheckboxGroup = defineComponent({
 
     const getCheckboxGroupClass = () => {
       const classes = ['lyt-checkbox-group'];
+      // ★ 2026-10-04：`size` 声明了却从未使用 ⇒ 尺寸不可定制。
+      //   写法与本包其它组件（InputNumber / Slider 等）一致。
+      if (_props.size && _props.size !== 'default') {
+        classes.push(`lyt-checkbox-group--${_props.size}`);
+      }
       if (_props.class) classes.push(_props.class as string);
       return classes.join(' ');
     };

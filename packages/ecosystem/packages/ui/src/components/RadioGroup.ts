@@ -37,6 +37,10 @@ export const RadioGroup = defineComponent({
 
     const getRadioGroupClass = () => {
       const classes = ['lyt-radio-group'];
+      // ★ 2026-10-04：`size` 声明了却从未使用 ⇒ 尺寸不可定制（写法同 CheckboxGroup）。
+      if (_props.size && _props.size !== 'default') {
+        classes.push(`lyt-radio-group--${_props.size}`);
+      }
       if (_props.class) classes.push(_props.class as string);
       return classes.join(' ');
     };
