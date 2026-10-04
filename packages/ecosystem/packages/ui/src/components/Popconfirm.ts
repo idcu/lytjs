@@ -63,6 +63,20 @@ export const Popconfirm = defineComponent({
       return style;
     };
 
+    // ★ 2026-10-04 修复**组件根本无法开合**：
+    //   `visible` signal 此前**从未被设为 true、也从未被读取** ——
+    //   渲染时**无条件** push `lyt-popconfirm__popup` ⇒ 气泡**永久可见**。
+    //   现补：reference 上的 hover 触发 + 按 `visible()` 决定是否渲染气泡。
+    //   `disabled` 为真时不响应触发（此前 `disabled` 声明了却从未使用）。
+    const canOpen = (): boolean => !_props.disabled;
+
+    const show = (): void => {
+      if (canOpen()) visible.set(true);
+    };
+    const hide = (): void => {
+      if (visible()) visible.set(false);
+    };
+
     const handleConfirm = () => {
       visible.set(false);
       emit('confirm');
@@ -82,7 +96,15 @@ export const Popconfirm = defineComponent({
         const refContent = slots.reference();
         if (Array.isArray(refContent)) {
           children.push(
-            createVNode('div', { class: 'lyt-popconfirm__reference' }, refContent as VNode[]),
+            createVNode(
+              'div',
+              {
+                class: 'lyt-popconfirm__reference',
+                onMouseenter: show,
+                onMouseleave: hide,
+              },
+              refContent as VNode[],
+            ),
           );
         }
       }
@@ -143,7 +165,10 @@ export const Popconfirm = defineComponent({
         createVNode(
           'button',
           mergeA11yProps(cancelBtnProps, {
-            class: 'lyt-button lyt-button--small',
+            // ★ 2026-10-04：`cancelButtonType` 声明了却从未使用 ⇒ 取消按钮类型不可定制。
+            class:
+              'lyt-button lyt-button--small' +
+              (_props.cancelButtonType ? ` lyt-button--${_props.cancelButtonType}` : ''),
             onClick: handleCancel,
           }),
           [createVNode('span', {}, _props.cancelButtonText as string)],
@@ -171,13 +196,16 @@ export const Popconfirm = defineComponent({
         modal: true,
       });
 
-      children.push(
-        createVNode(
-          'div',
-          mergeA11yProps(a11yProps, { class: 'lyt-popconfirm__popup' }),
-          popupChildren,
-        ),
-      );
+      // ★ 关键修复点：此前**无条件**渲染气泡（等于永久可见）；现在按状态渲染。
+      if (visible()) {
+        children.push(
+          createVNode(
+            'div',
+            mergeA11yProps(a11yProps, { class: 'lyt-popconfirm__popup' }),
+            popupChildren,
+          ),
+        );
+      }
 
       return createVNode(
         'div',
