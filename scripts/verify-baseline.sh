@@ -1,4 +1,31 @@
 #!/usr/bin/env bash
+# ─────────────────────────────────────────────────────────────────
+# 门禁分档（2026-10-05 实测后划分）
+#
+# 快档（秒级｜只读源码、不需要 dist）—— 日常改动 / 提交前用这一档：
+#   check-build-order        ~1.2s
+#   check-ui-slot-single-node ~0.1s
+#   check-ui-props-wiring    ~0.1s（报告型）
+#
+# 慢档（分钟级｜与日常反馈无关）—— 发布前 / CI 跑这一档：
+#   eslint  全仓             ~27s
+#   prettier 全仓 format     ~89s
+#   check-circular (dist)    ~14s（src 模式 ~29s）
+#   build (76 包)            数分钟（需先有 dist）
+#   check-runtime-contract   ~1.5s（依赖 dist）
+#   check-doc-imports        ~4.7s（依赖 dist）
+#   type-check / test:coverage  数分钟
+#
+# 用法：
+#   bash scripts/verify-baseline.sh            # 完整（慢档 + 测试）
+#   bash scripts/verify-baseline.sh --fast     # 只跑快档（秒级反馈）
+#   bash scripts/verify-baseline.sh --no-cov   # 完整但跳过覆盖率
+#
+# 为什么这样分：**慢的四项（全仓 lint / 全仓 format / 循环依赖 / 全量构建）
+# 都是「全仓级」检查**，它们的结论不随单次改动快速变化，
+# 却会把秒级反馈拖成分钟级 ⇒ 日常内循环不该等它们；
+# 但它们**必须**在发布/CI 前跑一次，所以完整档一次都不少。
+# ─────────────────────────────────────────────────────────────────
 #
 # 基线验证 —— 在系统终端（不经 agent 沙箱）跑完整门禁（8 项），输出 PASS / FAIL 摘要。
 #
@@ -78,8 +105,11 @@ fi
 echo "pnpm：$(pnpm -v 2>/dev/null || "${PNPM[@]}" -v 2>/dev/null)"
 
 SKIP_COV=0
+FAST=0
 for arg in "$@"; do
   [ "$arg" = "--no-cov" ] && SKIP_COV=1
+  # ★ 2026-10-05：--fast 只跑「快档」门禁（见文件头分档表）
+  [ "$arg" = "--fast" ] && FAST=1
 done
 
 pass=0
@@ -125,21 +155,38 @@ run() {
 
 echo "lytjs 基线验证 —— 开始于 $(date '+%F %T')"
 
+# ── 快档（秒级：只读源码、不需要 dist）────────────────────────────
 run "check-build-order" "${PNPM[@]}" run check-build-order
-# UI 源码级守卫：只读源码、不需要 dist ⇒ 放在 build 之前（早失败、省时间）
+# UI 源码级守卫：只读源码、不需要 dist ⇒ 放在最前（早失败、省时间）
 run "check-ui-slot-single-node" "${PNPM[@]}" run check-ui-slot-single-node
-# props 接线检测器是**报告型**（25 个组件修法各异）⇒ 只报告不阻断
+# props 接线检测器是**报告型** ⇒ 只报告不阻断
 run "check-ui-props-wiring (报告型)" "${PNPM[@]}" run check-ui-props-wiring
-run "build (76 包)"     "${PNPM[@]}" run build
-# 契约守卫必须在 build **之后**跑：它要自省各包 dist 的导出面
-run "check-runtime-contract" "${PNPM[@]}" run check-runtime-contract
-# 文档 import 守卫同样要自省 dist 的导出面 ⇒ 也必须在 build 之后
-run "check-doc-imports"     "${PNPM[@]}" run check-doc-imports
-run "type-check"        "${PNPM[@]}" -r run type-check
-run "lint:check"        "${PNPM[@]}" run lint:check
-run "format:check"      "${PNPM[@]}" run format:check
 
-if [ "$SKIP_COV" -eq 1 ]; then
+# ── 以下为慢档（合计数分钟）—— `--fast` 时跳过 ────────────────────
+# 分档依据见文件头：慢的四项是「全仓 lint / 全仓 format / 循环依赖扫描 /
+# 全量 build+覆盖率」，它们的产物**与日常改动的反馈无关**，不该挡住快反馈。
+if [ "$FAST" -eq 0 ]; then
+  run "build (76 包)"     "${PNPM[@]}" run build
+  # 契约守卫必须在 build **之后**跑：它要自省各包 dist 的导出面
+  run "check-runtime-contract" "${PNPM[@]}" run check-runtime-contract
+  # 文档 import 守卫同样要自省 dist 的导出面 ⇒ 也必须在 build 之后
+  run "check-doc-imports"     "${PNPM[@]}" run check-doc-imports
+  run "type-check"        "${PNPM[@]}" -r run type-check
+  run "lint:check"        "${PNPM[@]}" run lint:check
+  run "format:check"      "${PNPM[@]}" run format:check
+  # 循环依赖：**默认只扫 dist**（源码模式慢 2 倍且检出 41 条既有欠账，
+  #   是否纳入门禁待定 —— 详见 AUDIT_REMEDIATION_PROGRESS.md §五十七）
+  run "check-circular (dist)" "${PNPM[@]}" run check-circular
+else
+  echo ""
+  echo "⏭  已跳过慢档（--fast）：build / 契约守卫 / 文档 import / type-check /"
+  echo "    lint / format / 循环依赖。提交前请至少跑过一次完整基线。"
+fi
+
+if [ "$FAST" -eq 1 ]; then
+  echo ""
+  echo "⏭  已跳过测试（--fast）"
+elif [ "$SKIP_COV" -eq 1 ]; then
   run "test (不含覆盖率)" "${PNPM[@]}" run test
 else
   run "test:coverage"     "${PNPM[@]}" run test:coverage

@@ -69,6 +69,7 @@
     "check-doc-imports": "tsx scripts/check-doc-imports.ts",
     "check-ui-props-wiring": "tsx scripts/check-ui-props-wiring.ts",
     "check-ui-slot-single-node": "tsx scripts/check-ui-slot-single-node.ts",
+    "check:fast": "tsx scripts/check-build-order.ts && tsx scripts/check-ui-slot-single-node.ts && tsx scripts/check-ui-props-wiring.ts",
     "check-zero-deps": "tsx scripts/check-zero-deps.ts",
     "check-circular": "tsx scripts/check-circular.ts",
     "check-circular:src": "tsx scripts/check-circular.ts --src",
