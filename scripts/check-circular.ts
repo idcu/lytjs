@@ -3,8 +3,15 @@
  *
  * 使用 madge 检测所有包的循环依赖。
  *
- * 用法: pnpm run check-circular
- *       pnpm run check-circular:src  (扫描源码)
+ * ⚠️ **默认模式扫的是 `dist`（构建产物），不是源码**（2026-10-05 实测）：
+ *   - `check-circular`（默认 / dist）：检出 **0** 条；
+ *   - `check-circular:src`（源码）：检出 **198** 条（归一化去重后 41 条唯一）。
+ *   也就是说：**源码里的循环依赖从来没被这个门禁发现过** ——
+ *   构建产物的依赖图与源码不同（打包/重排后循环可能消失）。
+ *   需要真正查源码循环请用 `pnpm check-circular:src`（较慢：约 29s）。
+ *
+ * 用法: pnpm run check-circular        (扫构建产物，快)
+ *       pnpm run check-circular:src    (扫源码，慢但才有意义)
  */
 
 import madge from 'madge';
@@ -72,6 +79,16 @@ function collectPackages(): PackageEntry[] {
 
 async function main(): Promise<void> {
   console.log(`🔍 检查循环依赖 (${isSrc ? '源码模式' : '构建模式'})...\n`);
+
+  if (!isSrc) {
+    // ★ 2026-10-05：默认模式扫的是 dist，**源码里的循环它一个都查不到**
+    //   （实测默认 0 条 vs 源码 198 条）⇒ 必须把这件事说在前面，
+    //   否则「✅ 未发现循环依赖」会被误读成「源码没有循环依赖」。
+    console.log('⚠️  注意：当前是**构建产物（dist）**模式。');
+    console.log('   实测（2026-10-05）：该模式检出 0 条，而源码模式检出 198 条');
+    console.log('   ⇒ 源码里**确实存在**循环依赖，默认模式查不到。');
+    console.log('   要真查源码请跑：pnpm check-circular:src\n');
+  }
 
   const packages = collectPackages();
 
