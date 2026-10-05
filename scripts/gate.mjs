@@ -111,6 +111,15 @@ const GATES = [
     desc: '循环依赖。⚠️ 默认只扫 dist ⇒ 源码里的循环它查不到（详见审计文档 §五十七）',
   },
   {
+    name: 'check-circular:src',
+    tier: 'slow',
+    cmd: ['tsx', 'scripts/check-circular.ts', '--src'],
+    approx: '~29s',
+    desc:
+      '★ 源码循环依赖 + **棘轮基线**（scripts/circular-baseline.txt）：' +
+      '只对**基线之外的新循环**报错；默认的 dist 模式查不到源码里的循环（务必跑这个）',
+  },
+  {
     name: 'type-check',
     tier: 'slow',
     cmd: ['pnpm', '-r', 'run', 'type-check'],

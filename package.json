@@ -70,6 +70,7 @@
     "check-ui-props-wiring": "tsx scripts/check-ui-props-wiring.ts",
     "check-ui-slot-single-node": "tsx scripts/check-ui-slot-single-node.ts",
     "check-vitest-alias-dist": "tsx scripts/check-vitest-alias-dist.ts",
+    "check:circular-src": "tsx scripts/check-circular.ts --src",
     "check:fast": "tsx scripts/check-build-order.ts && tsx scripts/check-ui-slot-single-node.ts && tsx scripts/check-ui-props-wiring.ts && tsx scripts/check-vitest-alias-dist.ts",
     "gate": "node scripts/gate.mjs",
     "gate:list": "node scripts/gate.mjs --list",

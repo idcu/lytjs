@@ -10,19 +10,60 @@
  *   构建产物的依赖图与源码不同（打包/重排后循环可能消失）。
  *   需要真正查源码循环请用 `pnpm check-circular:src`（较慢：约 29s）。
  *
- * 用法: pnpm run check-circular        (扫构建产物，快)
- *       pnpm run check-circular:src    (扫源码，慢但才有意义)
+ * ★ 源码模式带**棘轮基线**（2026-10-05）：源码里确实存在一批循环依赖（既有欠账），
+ *   直接判红会让门禁失去意义 ⇒ `scripts/circular-baseline.txt` 记录当前快照，
+ *   `--src` **只对「基线之外的新循环」报错**。基线的每一条都必须是
+ *   **仓库相对路径**（由本脚本用「入口目录 + madge 的相对路径」算出，
+ *   不做任何字符串截断 ⇒ 稳定可比）。
+ *
+ *   重新生成基线（**只在确认过这些循环确实是既有问题后**才做）：
+ *     node scripts/check-circular.ts --src --write-baseline
+ *
+ * 用法: pnpm run check-circular                     (扫构建产物，快)
+ *       pnpm run check-circular:src                 (扫源码 + 棘轮，慢但有意义)
+ *       node scripts/check-circular.ts --src --write-baseline
  */
 
 import madge from 'madge';
-import { join, dirname } from 'node:path';
+import { join, dirname, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 
 const isSrc = process.argv.includes('--src');
+const writeBaseline = process.argv.includes('--write-baseline');
+
+/** 基线文件（仅 --src 模式使用） */
+const BASELINE = join(ROOT, 'scripts/circular-baseline.txt');
+
+/**
+ * 把 madge 报出的一条循环**归一化成仓库相对路径**。
+ *
+ * ★ 关键：madge 返回的每个节点都是**相对于被分析入口所在目录**的路径
+ *   （例：入口 `packages/reactivity/src/index.ts` ⇒ 节点 `effect.ts`、
+ *   `../common/x.ts`）。因此只要拿**入口目录**去 `resolve`，就能得到
+ *   确定的仓库相对路径 —— 不需要任何「取末 N 段」之类的脆弱截断。
+ */
+function normalizeCycle(cycle: string[], entryDir: string): string {
+  return cycle
+    .map((node) => {
+      const abs = resolve(ROOT, entryDir, node);
+      return relative(ROOT, abs).split(/[\\/]/).join('/');
+    })
+    .join(' → ');
+}
+
+function readBaseline(): Set<string> {
+  if (!existsSync(BASELINE)) return new Set();
+  return new Set(
+    readFileSync(BASELINE, 'utf-8')
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l && !l.startsWith('#')),
+  );
+}
 
 interface PackageEntry {
   name: string;
@@ -116,10 +157,12 @@ async function main(): Promise<void> {
 
       const circular = result.circular();
       if (circular.length > 0) {
-        console.log(`   ❌ 发现 ${circular.length} 个循环依赖`);
+        // ★ 归一化：madge 的节点是**相对入口目录**的 ⇒ 用入口目录还原成仓库相对路径
+        const entryDir = dirname(pkg.path);
         for (const cycle of circular) {
-          allCircular.push(cycle);
+          allCircular.push(normalizeCycle(cycle, entryDir));
         }
+        console.log(`   ❌ 发现 ${circular.length} 个循环依赖`);
       } else {
         console.log(`   ✅ 无循环依赖`);
       }
@@ -137,8 +180,60 @@ async function main(): Promise<void> {
 
   console.log(`❌ 发现 ${allCircular.length} 个循环依赖：\n`);
 
+  // 去重（同一循环可能被多个包入口检出）
+  const unique = [...new Set(allCircular)];
+
+  // ★ 源码模式：与基线比对，**只对新增的循环报错**（棘轮）
+  if (isSrc) {
+    if (writeBaseline) {
+      writeFileSync(
+        BASELINE,
+        [
+          '# 源码级循环依赖基线（棘轮）—— 由 `node scripts/check-circular.ts --src --write-baseline` 生成',
+          '#',
+          '# 语义：这些是**已确认的既有欠账**，门禁只对**新增**循环报错。',
+          '# 格式：每行一条，仓库相对路径（`/` 分隔），节点用 ` → ` 连接。',
+          '#',
+          `# 共 ${unique.length} 条 · 生成于 ${new Date().toISOString().slice(0, 10)}`,
+          ...unique.sort(),
+          '',
+        ].join('\n'),
+        'utf-8',
+      );
+      console.log(`\n✅ 已写入基线：${unique.length} 条 → scripts/circular-baseline.txt\n`);
+      process.exit(0);
+    }
+
+    const known = readBaseline();
+    const fresh = unique.filter((c) => !known.has(c));
+    const fixed = [...known].filter((c) => !new Set(unique).has(c));
+
+    if (fixed.length > 0) {
+      console.log(`\n🎉 已消除的循环（基线里有、现在没有）：${fixed.length} 条`);
+      for (const c of fixed.slice(0, 10)) console.log(`   ✔ ${c}`);
+      if (fixed.length > 10) console.log(`   …（其余 ${fixed.length - 10} 条略）`);
+      console.log('   ⇒ 建议**同步删掉基线里的对应行**，让基线只反映当前真实欠账。\n');
+    }
+
+    if (fresh.length === 0) {
+      console.log(
+        `✅ 源码循环依赖：${unique.length} 条，与基线一致（无新增）。\n` +
+          `   （基线 ${known.size} 条 · 门禁只拦新增；彻底解决请分批重构并删基线行）`,
+      );
+      process.exit(0);
+    }
+
+    console.log(`❌ 新增 ${fresh.length} 条源码循环依赖（不在基线内）：\n`);
+    for (const c of fresh) console.log(`  🔄 ${c}`);
+    console.log('\n这���是**新引入**的循环依赖，请重构消除。');
+    console.log(
+      '若确认是既有问题而本次只是暴露，请把它写进 scripts/circular-baseline.txt 并注明原因。',
+    );
+    process.exit(1);
+  }
+
   for (const cycle of allCircular) {
-    console.log(`  🔄 ${cycle.join(' → ')}`);
+    console.log(`  🔄 ${cycle}`);
   }
 
   console.log('\n请重构以上模块以消除循环依赖。');
