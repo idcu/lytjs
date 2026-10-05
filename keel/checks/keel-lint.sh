@@ -358,39 +358,51 @@ while IFS= read -r f; do
 done < "$HOTLINES"
 
 echo "── 3. 值域与格式（status / severity / keywords / last-verified / triggers）"
-while IFS= read -r f; do
-  base_set "$f"; base=$BASE
-  case "$base" in _template*) continue ;; esac
-  rel_set "$f"; rel=$REL
-  fmhas "$f" status || continue
-  fmq_set "$f" status; st=$REPLY
-  case "${st:-}" in
+# v3.4.8：流式扫描——FMQ 表按文件分组且与 HOTLINES 同序，**单趟扫完**，
+# 在文件边界结算该文件。原实现对每个文件 fmq_set 5 次（每次重扫全表），
+# 复杂度 O(文件数 × 表行数)；现在 O(表行数)。判据与报错文案逐字不变。
+s3_f() {   # $1 = 文件路径；用本趟已累积的 _s3_* 变量结算
+  base_set "$1"; case "$BASE" in _template*) return ;; esac
+  [ "$_s3_has" = 1 ] || return
+  rel_set "$1"; rel=$REL
+  case "${_s3_st:-}" in
     active|distilled|archived|"") ;;
-    *) fail_msg "status 值域非法（${st}）: $rel" ;;
+    *) fail_msg "status 值域非法（${_s3_st}）: $rel" ;;
   esac
-  fmq_set "$f" last-verified; lv=$REPLY
-  if [ -n "${lv:-}" ]; then
-    case "$lv" in
+  if [ -n "${_s3_lv:-}" ]; then
+    case "$_s3_lv" in
       [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) ;;
-      *) fail_msg "last-verified 非 YYYY-MM-DD（${lv}）: $rel" ;;
+      *) fail_msg "last-verified 非 YYYY-MM-DD（${_s3_lv}）: $rel" ;;
     esac
   fi
-  fmq_set "$f" keywords; kw=$REPLY
-  case "${kw:-}" in ""|"[]"|"[ ]") fail_msg "keywords 为空: $rel" ;; esac
+  case "${_s3_kw:-}" in ""|"[]"|"[ ]") fail_msg "keywords 为空: $rel" ;; esac
   case "$rel" in
     pitfalls/*)
-      fmq_set "$f" severity; sv=$REPLY
-      case "${sv:-}" in
+      case "${_s3_sv:-}" in
         P0|P1|P2|P3|"") ;;
-        *) fail_msg "severity 值域非法（${sv}）: $rel" ;;
+        *) fail_msg "severity 值域非法（${_s3_sv}）: $rel" ;;
       esac
-      fmq_set "$f" triggers; tg=$REPLY
-      case "${tg:-}" in
-        ''|*[!0-9]*) [ -n "${tg:-}" ] && fail_msg "triggers 非数字（${tg}）: $rel" ;;
+      case "${_s3_tg:-}" in
+        ''|*[!0-9]*) [ -n "${_s3_tg:-}" ] && fail_msg "triggers 非数字（${_s3_tg}）: $rel" ;;
       esac
       ;;
   esac
-done < <(hot_files)
+}
+_s3_cur=""; _s3_st=""; _s3_lv=""; _s3_kw=""; _s3_sv=""; _s3_tg=""; _s3_has=0
+while IFS=$'\t' read -r _s3_p _s3_k _s3_v || [ -n "$_s3_p" ]; do
+  if [ "$_s3_p" != "$_s3_cur" ]; then
+    [ -n "$_s3_cur" ] && s3_f "$_s3_cur"
+    _s3_cur="$_s3_p"; _s3_st=""; _s3_lv=""; _s3_kw=""; _s3_sv=""; _s3_tg=""; _s3_has=0
+  fi
+  case "$_s3_k" in
+    status) _s3_st="$_s3_v"; _s3_has=1 ;;
+    last-verified) _s3_lv="$_s3_v" ;;
+    keywords) _s3_kw="$_s3_v" ;;
+    severity) _s3_sv="$_s3_v" ;;
+    triggers) _s3_tg="$_s3_v" ;;
+  esac
+done < "$FMQ"
+[ -n "$_s3_cur" ] && s3_f "$_s3_cur"
 
 echo "── 4. 命名（kebab-case / 热区禁日期）"
 while IFS= read -r f; do
@@ -558,13 +570,13 @@ done < "$HOTLINES"
 
 echo "── 10. 陈旧（last-verified / NOW updated；豁免类目见 §9.4）"
 today=$(date +%s)
-while IFS= read -r f; do
-  rel_set "$f"; rel=$REL
-  base_set "$f"; case "$BASE" in _template*) continue ;; esac
-  case "$rel" in decisions/*) continue ;; esac            # ADR 定稿即不可变，见 §9.4
-  fmq_set "$f" stale-check
-  [ "$REPLY" = "off" ] && continue     # 逃生口，需在 decisions/ 留理由
-  fmq_set "$f" last-verified; d=$REPLY
+# v3.4.8：同段 3，改流式扫描（单趟 O(表行数)）；判据与文案逐字不变。
+s10_f() {
+  base_set "$1"; case "$BASE" in _template*) return ;; esac
+  rel_set "$1"; rel=$REL
+  case "$rel" in decisions/*) return ;; esac              # ADR 定稿即不可变，见 §9.4
+  [ "${_s10_sc:-}" = "off" ] && return   # 逃生口，需在 decisions/ 留理由
+  d="${_s10_lv:-}"
   if [ -n "$d" ]; then
     if to_epoch "$d"; then e=$REPLY
     else e=""; fi
@@ -576,14 +588,27 @@ while IFS= read -r f; do
     fi
   fi
   case "$rel" in NOW*.md|*/NOW*.md)
-    fmq_set "$f" updated; u=$REPLY
+    u="${_s10_upd:-}"
     if [ -z "$u" ]; then fail_msg "NOW 缺 updated: $rel"
     else
       to_epoch "$u" && { e=$REPLY
         [ -n "$e" ] && { age=$(( (today - e) / 86400 )); [ "$age" -gt "$NOW_STALE_DAYS" ] && warn_msg "NOW 已 ${age}d 未更新: $rel"; } }
     fi ;;
   esac
-done < <(hot_files)
+}
+_s10_cur=""; _s10_sc=""; _s10_lv=""; _s10_upd=""
+while IFS=$'\t' read -r _s10_p _s10_k _s10_v || [ -n "$_s10_p" ]; do
+  if [ "$_s10_p" != "$_s10_cur" ]; then
+    [ -n "$_s10_cur" ] && s10_f "$_s10_cur"
+    _s10_cur="$_s10_p"; _s10_sc=""; _s10_lv=""; _s10_upd=""
+  fi
+  case "$_s10_k" in
+    stale-check) _s10_sc="$_s10_v" ;;
+    last-verified) _s10_lv="$_s10_v" ;;
+    updated) _s10_upd="$_s10_v" ;;
+  esac
+done < "$FMQ"
+[ -n "$_s10_cur" ] && s10_f "$_s10_cur"
 
 echo "── 11. 坑条目（三段式 + 蒸馏阈值）"
 # 三段式批量化（v3.4.1）：原为每条坑 3 次 grep（12 坑 = 36 次 fork，~3.6s）。
@@ -614,26 +639,36 @@ if [ -s "$pitmisslist" ]; then
   if [ -s "$pitmiss" ]; then sed -n '1,10p' "$pitmiss"; fail=1; fi
 fi
 
-while IFS= read -r f; do
-  rel_set "$f"; rel=$REL
-  case "$rel" in pitfalls/*) ;; *) continue ;; esac
-  base_set "$f"; case "$BASE" in INDEX.md|_template*) continue ;; esac
-  fmq_set "$f" triggers; t=$REPLY
-  # 已蒸馏的不再提醒（v3.4.4）：`status: distilled` 就是"这条已被提炼进宪法"的标记，
-  # 它的存在意义就是让这条告警停下来——实测它已上提为宪法硬约束第 6 条，
-  # 却因为判据只看 triggers 而一直报，是**误报**。
-  # §7.4 的流程是「triggers ≥ 3 → 提醒 → 提炼 + 置 distilled」，
-  # 所以"是否已蒸馏"必须参与判断，否则流程走不到终点。
-  fmq_set "$f" status; st=$REPLY
-  case "${t:-0}" in
-    ''|*[!0-9]*) [ -n "${t:-}" ] && warn_msg "triggers 非数字: $rel" ;;
+# v3.4.8：同段 3，改流式扫描（只关心 pitfalls/ 的 triggers 与 status）——
+# 已蒸馏的不再提醒（v3.4.4）：`status: distilled` 就是"这条已被提炼进宪法"的标记，
+# 它的存在意义就是让这条告警停下来；§7.4 的流程是
+# 「triggers ≥ 3 → 提醒 → 提炼 + 置 distilled」，故蒸馏状态必须参与判断。
+s11_f() {
+  base_set "$1"; case "$BASE" in INDEX.md|_template*) return ;; esac
+  rel_set "$1"; rel=$REL
+  case "$rel" in pitfalls/*) ;; *) return ;; esac
+  t="${_s11_tg:-0}"
+  case "$t" in
+    ''|*[!0-9]*) [ -n "${_s11_tg:-}" ] && warn_msg "triggers 非数字: $rel" ;;
     *)
-      if [ "${t:-0}" -ge "$DISTILL_AT" ] && [ "$st" != "distilled" ]; then
+      if [ "$t" -ge "$DISTILL_AT" ] && [ "${_s11_st:-}" != "distilled" ]; then
         warn_msg "待蒸馏（triggers=${t} ≥ ${DISTILL_AT}）: $rel"
       fi
       ;;
   esac
-done < <(hot_files)
+}
+_s11_cur=""; _s11_tg=""; _s11_st=""
+while IFS=$'\t' read -r _s11_p _s11_k _s11_v || [ -n "$_s11_p" ]; do
+  if [ "$_s11_p" != "$_s11_cur" ]; then
+    [ -n "$_s11_cur" ] && s11_f "$_s11_cur"
+    _s11_cur="$_s11_p"; _s11_tg=""; _s11_st=""
+  fi
+  case "$_s11_k" in
+    triggers) _s11_tg="$_s11_v" ;;
+    status) _s11_st="$_s11_v" ;;
+  esac
+done < "$FMQ"
+[ -n "$_s11_cur" ] && s11_f "$_s11_cur"
 
 
 echo "── 12. 状态机（frozen 契约冻结 / 例外计数）"
