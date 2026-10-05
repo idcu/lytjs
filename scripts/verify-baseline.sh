@@ -155,41 +155,43 @@ run() {
 
 echo "lytjs 基线验证 —— 开始于 $(date '+%F %T')"
 
-# ── 快档（秒级：只读源码、不需要 dist）────────────────────────────
-run "check-build-order" "${PNPM[@]}" run check-build-order
-# UI 源码级守卫：只读源码、不需要 dist ⇒ 放在最前（早失败、省时间）
-run "check-ui-slot-single-node" "${PNPM[@]}" run check-ui-slot-single-node
-# props 接线检测器是**报告型** ⇒ 只报告不阻断
-run "check-ui-props-wiring (报告型)" "${PNPM[@]}" run check-ui-props-wiring
-
-# ── 以下为慢档（合计数分钟）—— `--fast` 时跳过 ────────────────────
-# 分档依据见文件头：慢的四项是「全仓 lint / 全仓 format / 循环依赖扫描 /
-# 全量 build+覆盖率」，它们的产物**与日常改动的反馈无关**，不该挡住快反馈。
-if [ "$FAST" -eq 0 ]; then
-  run "build (76 包)"     "${PNPM[@]}" run build
-  # 契约守卫必须在 build **之后**跑：它要自省各包 dist 的导出面
-  run "check-runtime-contract" "${PNPM[@]}" run check-runtime-contract
-  # 文档 import 守卫同样要自省 dist 的导出面 ⇒ 也必须在 build 之后
-  run "check-doc-imports"     "${PNPM[@]}" run check-doc-imports
-  run "type-check"        "${PNPM[@]}" -r run type-check
-  run "lint:check"        "${PNPM[@]}" run lint:check
-  run "format:check"      "${PNPM[@]}" run format:check
-  # 循环依赖：**默认只扫 dist**（源码模式慢 2 倍且检出 41 条既有欠账，
-  #   是否纳入门禁待定 —— 详见 AUDIT_REMEDIATION_PROGRESS.md §五十七）
-  run "check-circular (dist)" "${PNPM[@]}" run check-circular
-else
-  echo ""
-  echo "⏭  已跳过慢档（--fast）：build / 契约守卫 / 文档 import / type-check /"
-  echo "    lint / format / 循环依赖。提交前请至少跑过一次完整基线。"
-fi
-
+# ── 门禁执行：委托给 scripts/gate.mjs（单一真相源）────────────────
+# 之所以委托：门禁清单（名字 / 档位 / 耗时 / 说明）只写在 gate.mjs 一处，
+# 本脚本与 `node scripts/gate.mjs` 不会各跑一套、也不会漏项。
 if [ "$FAST" -eq 1 ]; then
   echo ""
-  echo "⏭  已跳过测试（--fast）"
-elif [ "$SKIP_COV" -eq 1 ]; then
-  run "test (不含覆盖率)" "${PNPM[@]}" run test
+  echo "▶ 快档门禁（--fast）"
+  node scripts/gate.mjs --tier fast
+  fast_status=$?
+  echo ""
+  echo "⏭  已跳过慢档（--fast）：build / 契约守卫 / 文档 import / type-check /"
+  echo "    lint / format / 循环依赖 / 测试。"
+  echo "    它们没有消失 —— 用下面任一方式跑："
+  echo "      node scripts/gate.mjs --tier slow        # 慢档全跑（发布前 / 定时任务）"
+  echo "      node scripts/gate.mjs build format:check # 只跑指定几项"
+  if [ "$fast_status" -ne 0 ]; then fail=$((fail + 1)); failed_names+=("快档门禁"); fi
+  pass=$((pass + 3))
+  echo ""
+  echo "════════════════════════════════════════════════════════"
+  echo "快档结果：3 项门禁 · 耗时 $((SECONDS / 60))m$((SECONDS % 60))s"
+  echo "════════════════════════════════════════════════════════"
+  exit "$fast_status"
+fi
+
+echo ""
+echo "▶ 完整档门禁"
+node scripts/gate.mjs --tier slow
+slow_status=$?
+if [ "$slow_status" -ne 0 ]; then
+  fail=$((fail + 1)); failed_names+=("慢档门禁")
 else
-  run "test:coverage"     "${PNPM[@]}" run test:coverage
+  pass=$((pass + 1))
+fi
+
+# 说明：测试已并入 gate.mjs 的慢档清单（test / test:coverage 两项），
+# 由上面的「完整档门禁」统一执行，此处不再重复调用。
+if [ "$SKIP_COV" -eq 1 ]; then
+  echo "ℹ️  --no-cov：完整档仍会跑 test（覆盖率项请用 node scripts/gate.mjs 显式指定）"
 fi
 
 echo ""
