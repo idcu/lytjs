@@ -153,6 +153,14 @@ async function main(): Promise<void> {
         alias: {
           '@lytjs/*': join(ROOT, 'packages/*').replace(/\\/g, '/'),
         },
+        // ★★ 只看**运行时**的循环（2026-10-05）。
+        // TS 的 `import type` 在编译期被**完全擦除** ⇒ 由它形成的环
+        // 在运行时**不存在**，因此不是真问题。
+        // 实测：`reactivity` 的 7 条循环里有 6 条是纯类型环
+        //（`effect-scope ↔ effect-scope-registrar` 两个方向**全是** `import type`），
+        // 跳过类型导入后只剩 **1 条**真运行时环（`effect.ts → signal.ts`）。
+        // ⚠️ 若将来要连类型环一起查，去掉这个选项即可（但基线要重新生成）。
+        detectiveOptions: { ts: { skipTypeImports: true } },
       });
 
       const circular = result.circular();

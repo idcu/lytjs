@@ -3,7 +3,7 @@
 # 语义：这些是**已确认的既有欠账**，门禁只对**新增**循环报错。
 # 格式：每行一条，仓库相对路径（`/` 分隔），节点用 ` → ` 连接。
 #
-# 共 21 条 · 生成于 2026-10-05
+# 共 13 条 · 生成于 2026-10-05
 packages/compiler/src/index.ts → packages/compiler/src/optimizations/index.ts
 packages/compiler/src/index.ts → packages/compiler/src/optimizations/index.ts → packages/compiler/src/optimizations/incremental-compile.ts
 packages/compiler/src/parser-attribute.ts → packages/compiler/src/parser-base.ts → packages/compiler/src/parser-children.ts → packages/compiler/src/parser-element.ts
@@ -14,14 +14,6 @@ packages/compiler/src/parser-base.ts → packages/compiler/src/parser-children.t
 packages/compiler/src/parser-children.ts → packages/compiler/src/parser-element.ts
 packages/core/src/create-app.ts → packages/renderer/src/index.ts → packages/renderer/src/hydration/enhanced-hydration.ts → packages/core/src/index.ts
 packages/core/src/index.ts → packages/core/src/plugin-sdk.ts
-packages/ecosystem/packages/di/src/types.ts → packages/ecosystem/packages/di/src/token.ts
-packages/reactivity/src/effect-scope.ts → packages/reactivity/src/effect-scope-registrar.ts
-packages/reactivity/src/effect.ts → packages/reactivity/src/effect-scope.ts → packages/reactivity/src/effect-scope-registrar.ts
 packages/reactivity/src/effect.ts → packages/reactivity/src/signal.ts
-packages/reactivity/src/effect.ts → packages/reactivity/src/types.ts
-packages/reactivity/src/effect.ts → packages/reactivity/src/types.ts → packages/reactivity/src/ref.ts
-packages/reactivity/src/effect.ts → packages/reactivity/src/types.ts → packages/reactivity/src/ref.ts → packages/reactivity/src/reactive.ts
-packages/reactivity/src/types.ts → packages/reactivity/src/ref.ts → packages/reactivity/src/reactive.ts
 packages/renderer/src/hydration/enhanced-hydration.ts → packages/core/src/index.ts → packages/core/src/create-app.ts → packages/renderer/src/index.ts
 packages/renderer/src/index.ts → packages/renderer/src/hydration/enhanced-hydration.ts → packages/core/src/index.ts → packages/core/src/web-component.ts
-packages/renderer/src/vapor/vapor-app.ts → packages/renderer/src/vapor/vapor-hmr.ts
