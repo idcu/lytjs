@@ -1,0 +1,21 @@
+name: keel
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  keel:
+    name: 上下文基座（keel/）
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      # 基座自身的一致性校验：预算 / frontmatter / 登记 / 死链 / 孤儿 / 循环 / 闭环钩子
+      - name: 内核校验（0 fail 才放行）
+        run: bash keel/checks/keel-lint.sh keel
+
+      # 钩子"验谎"：CI 里的新 clone 天然没装 core.hooksPath，只验本体存在 + 可执行
+      - name: 闭环钩子本体
+        run: bash keel/checks/verify-hooks.sh --allow-unset

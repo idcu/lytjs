@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/<name>.schema.json",
+  "title": "<契约名，一句话>",
+  "description": "<这个契约约束什么。契约是 API / 类型 / 事件的唯一真源；语义只允许写在这里或下面的 description，其他位置一律引用、不得复制>",
+  "x-keel-version": "<版本号——契约变更必须升版本>",
+  "x-keel-how-to-copy": [
+    "1) 复制本文件为 <name>.schema.json（kebab-case，文件名不带日期）",
+    "2) 在 contracts/INDEX.md 加一行登记（域索引只允许表格行，说明写在模板里）",
+    "3) 契约变更走人审关卡：owner + 契约 owner，留痕 decisions/，时限 24h",
+    "4) frozen 期不得新增契约文件，lint 会直接判死",
+    "5) 用 OpenAPI / Protobuf / IDL 等其他格式也行，上面 1–4 条不变"
+  ],
+  "x-keel-drift-check": "契约与实现是否漂移，不由 keel-lint 判定——它不懂你的技术栈。在 checks/rules.md 里声明项目自己的命令，由 CI 串联执行",
+  "type": "object",
+  "properties": {
+    "<field>": {
+      "type": "string",
+      "description": "<字段含义。别省这一行：这是 AI 读契约时唯一能拿到语义的地方>"
+    }
+  },
+  "required": ["<field>"],
+  "additionalProperties": false
+}

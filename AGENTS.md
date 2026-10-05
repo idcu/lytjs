@@ -8,6 +8,8 @@
 
 > ⚠️ **关于 `.trae/skills`**：本仓库将 `.trae/`（技能链/skill 工具链）列为本地可选环境、已加入 `.gitignore`，**不作为仓库内提交内容**。若当前环境缺少 `.trae/skills/*`，请直接以 [docs/contribute/development/workflow.md](docs/contribute/development/workflow.md) 内联的开发流程与命令为准，勿因找不到 skill 文件而中断。所有技能链链接均为对上述流程文档的引用映射。
 
+**点火锚点（keel，规范原文，禁止改写）：** 任何任务开始前，先读 keel/INDEX.md 与其中指向的 NOW.md，并遵守 INDEX.md 里的检索协议。
+
 ## 项目速览
 
 - **名称**：LytJS - 现代 JavaScript 响应式框架
@@ -164,4 +166,5 @@ pnpm test    # 运行测试
 ⚠️ 此文件由 .trae/tools/generate-agents.ts 自动生成
    从 .trae/meta/agents-meta.json 生成，最后更新于 2026-06-06
    请不要直接编辑此文件，而是编辑元数据文件！
+   ⚠️ keel 点火锚点（2026-10-05 加入）为手工维护——生成脚本与元数据当前不在仓内。
 -->

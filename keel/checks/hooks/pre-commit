@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Keel pre-commit（《Keel 设计稿》§10.4 之二）
+# 由 install-hooks.sh 挂载（core.hooksPath），本文件是规则的一部分：请走 PR 修改。
+set -uo pipefail
+
+KEEL_DIR="keel"
+[ -d "$KEEL_DIR/checks" ] || exit 0
+
+# ── 记录：覆盖**所有**提交（v3.3.2 修正）────────────────────────────────
+# 为什么要全量记：v3.3.1 之前的守卫是 `grep -E "^keel/.*\.md$"`，
+# 于是"改了代码没改 md"的提交**完全不进分母**——而"改 contracts 却没同步 INDEX"
+# 这类违规恰恰最容易发生在纯代码提交里，于是它成了指标的盲区。
+# 实测（/tmp 干净仓）：提交一次只改 .py 的改动 → 记录 0 条。
+#
+# 但**不要给每个提交都跑 lint**：单次 lint 约 100 秒，每个提交都跑不可接受。
+# 所以拆成两件事：
+#   记录 = 所有提交都记（廉价，git diff 而已）
+#   校验 = 只有 keel/ 下的 md 变了才跑（昂贵，且只在此时才有意义）
+# 分母完整了，"这轮没被检查"与"这轮检查了且通过"就能区分开。
+all_changed=$(git diff --cached --name-only || true)
+n_all=$(printf '%s\n' "$all_changed" | grep -c . || true)
+
+md_changed=$(printf '%s\n' "$all_changed" | grep -E "^${KEEL_DIR}/.*\.md$" || true)
+n_md=$(printf '%s\n' "$md_changed" | grep -c . || true)
+
+if [ "$n_all" -gt 0 ] && [ -f "$KEEL_DIR/checks/compliance.sh" ]; then
+  if [ "$n_md" -gt 0 ]; then
+    echo "keel: keel/ 下有 $n_md 个 md 变更，跑一致性校验…"
+    lintout=$(bash "$KEEL_DIR/checks/keel-lint.sh" "$KEEL_DIR" 2>&1)
+    rc=$?
+    nfails=$(printf '%s\n' "$lintout" | grep -c '❌' || true)
+    nwarns=$(printf '%s\n' "$lintout" | grep -c '⚠️' || true)
+    bash "$KEEL_DIR/checks/compliance.sh" record \
+      --checked 1 --fails "$nfails" --warns "$nwarns" --files "$n_all" --md "$n_md" 2>/dev/null || true
+
+    if [ "$rc" -ne 0 ]; then
+      printf '%s\n' "$lintout" | grep -E '❌|⚠️' | head -20
+      echo
+      echo "❌ keel-lint 未通过，提交已拦下。"
+      echo "   修完再提交；确实要绕过用 git commit --no-verify，并在 NOW.md 的阻塞表记一笔原因。"
+      echo "   （本次已记入遵守率：fails=$nfails warns=$nwarns —— 绕过不会让它消失）"
+      exit 1
+    fi
+    printf '%s\n' "$lintout" | grep -E '⚠️' | head -5 || true
+  else
+    # 没改 md → 不跑 lint（省时间），但**照样记一轮 checked=0**
+    # 分母里有它、分子里没有它，于是"没被检查"不会伪装成"检查通过"。
+    bash "$KEEL_DIR/checks/compliance.sh" record \
+      --checked 0 --fails 0 --warns 0 --files "$n_all" --md 0 2>/dev/null || true
+  fi
+fi
+exit 0

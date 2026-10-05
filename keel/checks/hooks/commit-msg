@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Keel commit-msg（《Keel 设计稿》§10.4 之三）—— triggers 自动计数
+# 约定：commit message 里写「pitfall: <文件名>」，本钩子把该条坑的 triggers +1。
+#
+# 为什么必须自动化：triggers 若靠人或 AI 自觉计数就不可信（§7.4），
+# 而"蒸馏"整条链路（triggers ≥ 3 → 提醒 → 上提宪法一行）都挂在它上面。
+# 注意：本钩子永不阻断提交（退件由 pre-commit 负责），失败只告警。
+#
+# 机械后果（实测 git 2.39.5）：git 在本钩子执行前就已定树，所以钩子里改文件
+# 只能进入**下一次**提交——工作区与索引已更新（git status 可见 M），历史里晚一步。
+# 对"≥3 提醒蒸馏"这种粗粒度信号没有影响，故不做额外机制去绕它。
+set -uo pipefail
+
+KEEL_DIR="keel"
+MSG="${1:-}"
+[ -n "$MSG" ] && [ -f "$MSG" ] || exit 0
+[ -d "$KEEL_DIR/pitfalls" ] || exit 0
+
+# 只接受裸文件名（不允许路径），与 §3.4 的 kebab-case 命名一致
+names=$(grep -oE 'pitfall:[[:space:]]*[A-Za-z0-9][A-Za-z0-9._-]*\.md' "$MSG" \
+        | sed -E 's/^pitfall:[[:space:]]*//' | sort -u)
+[ -z "$names" ] && exit 0
+
+bumped=0
+for n in $names; do
+  case "$n" in
+    *[A-Z]*|*..*|.*) echo "⚠️  keel: 跳过非 kebab-case 的坑文件名: $n"; continue ;;
+  esac
+  f=$(find "$KEEL_DIR/pitfalls" -name "$n" -print -quit 2>/dev/null)
+  if [ -z "$f" ]; then
+    echo "⚠️  keel: 找不到坑条目，triggers 未 +1: $n"
+    continue
+  fi
+  cur=$(grep -m1 '^triggers:' "$f" | sed -E 's/^triggers:[[:space:]]*([0-9]+).*/\1/')
+  case "${cur:-}" in
+    ''|*[!0-9]*) echo "⚠️  keel: triggers 不是数字，跳过: $f"; continue ;;
+  esac
+  next=$((cur + 1))
+  tmp="${f}.keeltmp"
+  if awk -v n="$next" '/^triggers:/ && !d { sub(/^triggers:[[:space:]]*[0-9]+/, "triggers: " n); d=1 } { print }' "$f" > "$tmp"; then
+    mv "$tmp" "$f"
+    git add -- "$f" 2>/dev/null || echo "⚠️  keel: git add 失败，请手工 stage: $f"
+    echo "   keel: triggers ${cur} → ${next}  ($n)"
+    bumped=$((bumped + 1))
+  else
+    rm -f "$tmp"
+    echo "⚠️  keel: 写入失败，triggers 未变: $f"
+  fi
+done
+
+[ "$bumped" -gt 0 ] && echo "   keel: ${bumped} 条 triggers 已更新并 stage —— git 在本钩子前已定树，它们会随【下一次提交】进入历史"
+exit 0

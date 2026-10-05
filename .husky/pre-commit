@@ -5,3 +5,6 @@
 export NODE_OPTIONS="--max-old-space-size=4096"
 
 pnpm exec lint-staged
+
+# keel 闭环（ADR 0017 链式挂载）：keel/ 下 md 有变更时跑一致性校验，0 fail 才放行
+bash keel/checks/hooks/pre-commit

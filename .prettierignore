@@ -6,3 +6,5 @@ pnpm-lock.yaml
 CHANGELOG.md
 .size-limit.json.tmp
 examples/*/bundle.js
+# keel 上下文基座：排版与字节预算由 keel-lint 管（ADR 0017 链式挂载），禁止 prettier 重排
+keel/
