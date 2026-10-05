@@ -27,9 +27,17 @@
  * 慢档 = 全仓级 / 需要 dist ⇒ 结论不随单次改动变化，适合发布前与定时任务。
  */
 
+import { spawnSync } from 'node:child_process';
+import { resolve } from 'node:path';
+
 /** @typedef {'fast'|'slow'} Tier */
 
 const ROOT = new URL('..', import.meta.url).pathname;
+// ★ 子进程必须能拿到 node_modules/.bin —— 否则 spawnSync 找不到 `tsx` / `pnpm`，
+//   退出码会是 **null**（不是 1！）⇒ 表现为「所有门禁瞬间失败」。
+//   这条是被实测抓到的：直接 `node scripts/gate.mjs --tier fast` 全部瞬间失败。
+const BIN = resolve(ROOT, 'node_modules/.bin');
+const ENV = { ...process.env, PATH: `${BIN}:${process.env.PATH ?? ''}` };
 
 /**
  * 门禁登记表（单一真相源）
@@ -63,6 +71,15 @@ const GATES = [
   },
 
   // ── 慢档：全仓级 / 需要 dist ────────────────────────────────
+  {
+    name: 'check-vitest-alias-dist',
+    tier: 'fast',
+    cmd: ['tsx', 'scripts/check-vitest-alias-dist.ts'],
+    approx: '~2s',
+    desc:
+      '★ vitest alias 指向的文件必须存在 —— 否则对应包的测试在**收集阶段**就失败、' +
+      '用例一个都不跑（但「Tests N passed」看起来仍像通过）',
+  },
   {
     name: 'build',
     tier: 'slow',
@@ -191,8 +208,7 @@ for (const g of selected) {
     continue;
   }
   const t0 = Date.now();
-  const { spawnSync } = await import('node:child_process');
-  const r = spawnSync(g.cmd[0], g.cmd.slice(1), { cwd: ROOT, stdio: 'inherit' });
+  const r = spawnSync(g.cmd[0], g.cmd.slice(1), { cwd: ROOT, stdio: 'inherit', env: ENV });
   const dt = ((Date.now() - t0) / 1000).toFixed(1);
   if (r.status === 0) {
     pass += 1;

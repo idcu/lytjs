@@ -1,0 +1,14 @@
+# vitest alias 已知问题登记（棘轮白名单）
+#
+# 格式：<alias 名称> <相对路径>   —— 一行一条，# 开头为注释
+# 语义：这些条目**已知**不成立，守卫不再报错；但**新增**问题仍会失败。
+#
+# 登记原因：包在本仓**根本不存在**（无 package.json），但仍有源码 import 它
+#   ⇒ 不是「忘了构建」，也不是「配置写错路径」，而是「包欠着」。
+# 解除条件：① 该包被建出来（补 package.json + src + build）
+#           ② 或删除所有对它的 import 并从 alias 里移除。
+# 登记于：2026-10-05
+
+# @lytjs/plugin-vite 被 packages/ecosystem/packages/bundler/src/index.ts
+#   与 tools/packages/cli 的两处测试 import ⇒ 不能简单删 alias。
+@lytjs/plugin-vite packages/plugins/packages/plugin-vite/dist/index.mjs
