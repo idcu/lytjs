@@ -411,6 +411,10 @@ def c39(d):
 
 @case("40", "CHANGELOG 缺当期版本小节（声明了却没写变更）", "§9.1-17", ["CHANGELOG.md 缺"])
 def c40(d):
+    # ADR 0016：副本检查的触发条件是"写了 keel 徽章"（发行仓声明），
+    # 故这里必须先补徽章，否则 CHANGELOG 检查不会启动。
+    write(os.path.join(d, "README.md"),
+          "# 项目\n\n[![keel-version](https://img.shields.io/badge/keel--version-2.1.0-000000)](keel/INDEX.md)\n")
     write(os.path.join(d, "CHANGELOG.md"),
           "# CHANGELOG\n\n## 1.0.0 — 2026-01-01\n\n旧的远期版本。\n")
 
@@ -419,6 +423,14 @@ def c40(d):
 def c41(d):
     write(os.path.join(d, "README.md"),
           "# 项目\n\n[![keel-version](https://img.shields.io/badge/keel--version-9.9.9-000000)](keel/INDEX.md)\n")
+
+
+@case("42", "自带 CHANGELOG 但无 keel 徽章（用户项目）→ 跳过不误判", "§9.1-17", [], rc=0)
+def c42(d):
+    # 回归护栏（ADR 0016）：旧触发条件只看"CHANGELOG 是否存在"，
+    # 会在这里报"缺当期小节"——实测误伤了首个真实采用方 lytjs。
+    write(os.path.join(d, "CHANGELOG.md"),
+          "# CHANGELOG\n\n## 0.1.0\n\n用户项目自己的变更记录。\n")
 
 
 # ---------------- 告警（warn，不应导致失败） ----------------

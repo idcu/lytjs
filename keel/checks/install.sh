@@ -90,15 +90,25 @@ if [ "$EXISTING" -eq 1 ]; then
   # compliance.sh 也在列——漏了它，老用户升级后就没有基线记录能力
   for f in checks/budget.env checks/keel-lint.sh checks/load-estimate.sh \
            checks/keel-lite.sh checks/verify-hooks.sh checks/install-hooks.sh \
-           checks/compliance.sh checks/check-mcp-config.sh \
+           checks/compliance.sh checks/check-mcp-config.sh checks/keel-doctor.sh \
+           checks/perf-findings.txt \
            checks/mcp/keel-mcp-server.py \
            checks/hooks/pre-commit checks/hooks/commit-msg; do
     if [ -e "$tmp/starter/keel/$f" ]; then
-      if [ -e "$TARGET/keel/$f" ]; then
-        echo "   · 保留 $f（你的版本）"
-      else
-        cp -R "$tmp/starter/keel/$f" "$TARGET/keel/$f" && echo "   + 补上 $f"
-      fi
+      # keel-doctor.sh 例外：**总是覆盖**。它是纯诊断脚本（只读不改），
+      # 没有"用户改过"这种语义——留在旧版等于让新用户拿不到能用的诊断入口。
+      # 漏一个文件的代价实测过：老用户升级后 doctor 脚本不存在，
+      # 而白名单不补它**没有任何检查会报**（工具链缺失不在判据覆盖内）。
+      case "$f" in
+        checks/keel-doctor.sh|checks/perf-findings.txt)
+          cp -R "$tmp/starter/keel/$f" "$TARGET/keel/$f" && echo "   ↑ 更新 $f（诊断/记录类总是最新）" ;;
+        *)
+          if [ -e "$TARGET/keel/$f" ]; then
+            echo "   · 保留 $f（你的版本）"
+          else
+            cp -R "$tmp/starter/keel/$f" "$TARGET/keel/$f" && echo "   + 补上 $f"
+          fi ;;
+      esac
     fi
   done
   # 新增层（目录不存在才复制）
@@ -197,9 +207,12 @@ if anchor_present; then
        bash keel/checks/keel-lite.sh keel            # dry-run，看要删什么
        bash keel/checks/keel-lite.sh keel --apply    # 确认后执行
 
+先跑这个（3 分钟看到你这套 Keel 现在什么样，只读不改）：
+  bash keel/checks/keel-doctor.sh         # 闭环 / lint / 预算 / 自检 / 还差你做什么
+
 日常三个命令：
   bash keel/checks/keel-lint.sh keel    # 一致性校验：0 fail 才放行
-  bash keel/checks/test-lint.sh         # lint 自测：38 用例 + 1 元检查
+  bash keel/checks/test-lint.sh         # lint 自测：41 用例 + 1 元检查
   bash keel/checks/load-estimate.sh 关键词  # 本轮要读多少字节？超预算即非零退出
 EOF
 else
@@ -220,9 +233,12 @@ else
        bash keel/checks/keel-lite.sh keel            # dry-run，看要删什么
        bash keel/checks/keel-lite.sh keel --apply    # 确认后执行
 
+先跑这个（3 分钟看到你这套 Keel 现在什么样，只读不改）：
+  bash keel/checks/keel-doctor.sh         # 闭环 / lint / 预算 / 自检 / 还差你做什么
+
 日常三个命令：
   bash keel/checks/keel-lint.sh keel    # 一致性校验：0 fail 才放行
-  bash keel/checks/test-lint.sh         # lint 自测：38 用例 + 1 元检查
+  bash keel/checks/test-lint.sh         # lint 自测：41 用例 + 1 元检查
   bash keel/checks/load-estimate.sh 关键词  # 本轮要读多少字节？超预算即非零退出
 EOF
 fi

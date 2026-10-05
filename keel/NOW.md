@@ -21,6 +21,7 @@ keel 试点接入收尾。Phase 1–4 完成：入口 / 记忆蒸馏 / husky 链
 - [x] 上游回植 3 修复 + 2 ADR（0016 判据收窄 / 0017 链式挂载）；keel 全量自测 42/42
 - [x] `.prettierignore` 排除 `keel/`（排版与预算由 lint 管，禁止 prettier 重排）
 - [x] `.github/workflows/keel.yml`：基座自身 lint + 钩子本体（零依赖，bash 直跑）
+- [x] keel 工具副本与上游逐字同步（install.sh / test-lint.py；含 ADR 0016 用例）
 
 ## 下一步
 
