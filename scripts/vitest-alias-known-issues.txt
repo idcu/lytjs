@@ -11,4 +11,3 @@
 
 # @lytjs/plugin-vite 被 packages/ecosystem/packages/bundler/src/index.ts
 #   与 tools/packages/cli 的两处测试 import ⇒ 不能简单删 alias。
-@lytjs/plugin-vite packages/plugins/packages/plugin-vite/dist/index.mjs

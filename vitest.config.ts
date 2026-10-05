@@ -102,7 +102,10 @@ export default defineConfig({
         root,
         'packages/plugins/packages/plugin-storage/dist/index.mjs',
       ),
-      '@lytjs/plugin-vite': resolve(root, 'packages/plugins/packages/plugin-vite/dist/index.mjs'),
+      // ⚠️ 2026-10-05 移除 `@lytjs/plugin-vite` 的 alias：该包**已迁出本仓**
+      //   （`packages/plugins/` 整个目录树都不存在），且全仓**没有任何真实 import**
+      //   —— 此前那 10 处「引用」全是**注释与提示字符串**（错误文案 / 注释 /
+      //   甚至一条「不得 import 它」的守卫测试）。留着只会让 alias 指向空气。
     },
     conditions: ['import', 'node', 'default'],
   },
