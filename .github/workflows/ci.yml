@@ -49,6 +49,37 @@ jobs:
       - name: Check build order
         run: pnpm run check-build-order
 
+  # keel 扩展检查（源码级，无需 dist）：登记见 keel/checks/rules.md
+  keel-gates:
+    name: Keel Gates (source-only)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: UI slot 单节点（红门禁）
+        run: pnpm run check-ui-slot-single-node
+
+      - name: UI props 接线（报告型棘轮）
+        run: pnpm run check-ui-props-wiring
+
+      - name: 运行时循环依赖（棘轮）
+        run: pnpm run check-circular:src
+
   # 依赖安全审计
   audit:
     name: Security Audit
@@ -224,6 +255,16 @@ jobs:
 
       - name: Build all packages
         run: pnpm run build
+
+      # keel 扩展检查（需 dist）：登记见 keel/checks/rules.md
+      - name: 契约漂移（绑定名须在导出面）
+        run: pnpm run check-runtime-contract
+
+      - name: 文档 import 欠账（棘轮）
+        run: pnpm run check-doc-imports
+
+      - name: vitest alias 目标存在（防用例静默少跑）
+        run: pnpm run check-vitest-alias-dist
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v5

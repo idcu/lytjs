@@ -62,7 +62,7 @@ else
         fail_msg "本地未挂载钩子——闭环此刻是静默失效的：跑一次 bash ${WANT%/hooks}/install-hooks.sh"
       fi
     elif [ "$cur" != "$WANT" ]; then
-      # v3.4.6（ADR 0017）：链式挂载——core.hooksPath 归既有钩子框架所有
+      # v3.4.7（ADR 0017）：链式挂载——core.hooksPath 归既有钩子框架所有
       # （典型：husky 的 .husky/_），但 git 实际执行的钩子文件、或其**父目录的同名文件**
       # 里调用了 keel 钩子本体（husky 的委托形态正是 .husky/_ → .husky/<钩子>）。
       case "$cur" in
