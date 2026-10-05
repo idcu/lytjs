@@ -166,6 +166,31 @@ const GATES = [
   },
 ];
 
+/**
+ * 解析真正要执行的命令。
+ *
+ * ★ 本机**没有全局 pnpm**（`which pnpm` = not found），而 `corepack` 随 node 自带
+ *   ⇒ 凡是用到 `pnpm` 的门禁都会以「退出码 null」失败（进程没起来）。
+ *   这里把 `pnpm` 映射成 `corepack pnpm@<版本>`，与仓库既有做法一致。
+ */
+const PNPM_VERSION = '11.3.0';
+function resolveCmd(cmd) {
+  if (cmd === 'pnpm') return 'corepack';
+  return cmd;
+}
+function pnpmArgs(cmd) {
+  return cmd === 'pnpm' ? [`pnpm@${PNPM_VERSION}`] : [];
+}
+
+function diagnoseSpawnFailure(cmd, r) {
+  if (r.error && r.error.code === 'ENOENT') {
+    const via = cmd === 'pnpm' ? `（已自动改用 corepack pnpm@${PNPM_VERSION}，仍找不到）` : '';
+    return `**命令找不到**：${cmd} ${via}`;
+  }
+  if (r.signal) return `被信号 ${r.signal} 终止`;
+  return '进程未启动（无退出码）';
+}
+
 const argv = process.argv.slice(2);
 const has = (f) => argv.includes(f);
 const dry = has('--dry');
@@ -227,14 +252,21 @@ for (const g of selected) {
     continue;
   }
   const t0 = Date.now();
-  const r = spawnSync(g.cmd[0], g.cmd.slice(1), { cwd: ROOT, stdio: 'inherit', env: ENV });
+  const r = spawnSync(resolveCmd(g.cmd[0]), [...pnpmArgs(g.cmd[0]), ...g.cmd.slice(1)], {
+    cwd: ROOT,
+    stdio: 'inherit',
+    env: ENV,
+  });
   const dt = ((Date.now() - t0) / 1000).toFixed(1);
   if (r.status === 0) {
     pass += 1;
     console.log(`\n✅ ${g.name} 通过（${dt}s）\n`);
   } else {
     failed.push(g.name);
-    console.log(`\n❌ ${g.name} 失败（${dt}s，退出码 ${r.status}）\n`);
+    // ★ 退出码 null = **进程根本没起来**（命令找不到 / 被信号杀死），
+    //   绝大多数情况是「该命令不在 PATH」—— 直接说清楚，别只丢一个 null。
+    const why = r.status === null ? diagnoseSpawnFailure(g.cmd[0], r) : `退出码 ${r.status}`;
+    console.log(`\n❌ ${g.name} 失败（${dt}s，${why}）\n`);
   }
 }
 
