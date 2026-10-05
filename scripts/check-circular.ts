@@ -5,9 +5,11 @@
  *
  * ⚠️ **默认模式扫的是 `dist`（构建产物），不是源码**（2026-10-05 实测）：
  *   - `check-circular`（默认 / dist）：检出 **0** 条；
- *   - `check-circular:src`（源码）：检出 198 条 ⇒ 归一化去重后 21 条 ⇒ 其中 **8 条是纯类型环**
- *     （`import type`，运行时被擦除）⇒ **真正的运行时循环是 13 条**（本脚本只报这 13 条，
- *     见下方 `detectiveOptions.skipTypeImports`）。
+ *   - `check-circular:src`（源码）：检出 198 条 ⇒ 逐层过滤后只剩 **8 条**：
+ *     归一化去重 21 条 ⇒ 去掉 8 条纯类型环（`import type`）⇒ 去掉 5 条懒加载环
+ *     （`await import()`，调用时才解析 ⇒ 无初始化风险）⇒ **8 条真运行时静态环**，
+ *     全部在 `compiler`（`parser-base ↔ parser-children ↔ parser-element`、`optimizations`）。
+ *     过滤规则见下方 `detectiveOptions`。
  *   也就是说：**源码里的循环依赖从来没被这个门禁发现过** ——
  *   构建产物的依赖图与源码不同（打包/重排后循环可能消失）。
  *   需要真正查源码循环请用 `pnpm check:circular-src`（较慢：约 29s）。
@@ -162,7 +164,16 @@ async function main(): Promise<void> {
         //（`effect-scope ↔ effect-scope-registrar` 两个方向**全是** `import type`），
         // 跳过类型导入后只剩 **1 条**真运行时环（`effect.ts → signal.ts`）。
         // ⚠️ 若将来要连类型环一起查，去掉这个选项即可（但基线要重新生成）。
-        detectiveOptions: { ts: { skipTypeImports: true } },
+        //   ⚠️ `skipAsyncImports`：**动态 `import()` 不算依赖边**。
+        //     理由：静态 `import` 在模块**初始化**时就绑定 ⇒ 环会导致 TDZ /
+        //     「拿到 undefined」；而 `await import()` 是**调用时**才解析，
+        //     执行时双方模块早已初始化完毕 ⇒ 不构成初始化环。
+        //     本仓的 `core ↔ renderer` 4 条环**全部**是这种懒加载环
+        //     （`core/create-app.ts` 里 `await import('@lytjs/renderer')`，
+        //      `renderer/hydration/enhanced-hydration.ts` 里 `await import('@lytjs/core')`，
+        //      且后者文件头明确写了「这么写是踩过坑之后的刻意选择」）。
+        //     ⚠️ 若要连懒加载环一起查，去掉该选项即可（基线要重新生成）。
+        detectiveOptions: { ts: { skipTypeImports: true, skipAsyncImports: true } },
       });
 
       const circular = result.circular();

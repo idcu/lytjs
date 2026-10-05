@@ -3,7 +3,7 @@
 # 语义：这些是**已确认的既有欠账**，门禁只对**新增**循环报错。
 # 格式：每行一条，仓库相对路径（`/` 分隔），节点用 ` → ` 连接。
 #
-# 共 12 条 · 生成于 2026-10-05
+# 共 8 条 · 生成于 2026-10-05
 packages/compiler/src/index.ts → packages/compiler/src/optimizations/index.ts
 packages/compiler/src/index.ts → packages/compiler/src/optimizations/index.ts → packages/compiler/src/optimizations/incremental-compile.ts
 packages/compiler/src/parser-attribute.ts → packages/compiler/src/parser-base.ts → packages/compiler/src/parser-children.ts → packages/compiler/src/parser-element.ts
@@ -12,7 +12,3 @@ packages/compiler/src/parser-base.ts → packages/compiler/src/parser-children.t
 packages/compiler/src/parser-base.ts → packages/compiler/src/parser-children.ts → packages/compiler/src/parser-element.ts
 packages/compiler/src/parser-base.ts → packages/compiler/src/parser-children.ts → packages/compiler/src/parser-text.ts
 packages/compiler/src/parser-children.ts → packages/compiler/src/parser-element.ts
-packages/core/src/create-app.ts → packages/renderer/src/index.ts → packages/renderer/src/hydration/enhanced-hydration.ts → packages/core/src/index.ts
-packages/core/src/index.ts → packages/core/src/plugin-sdk.ts
-packages/renderer/src/hydration/enhanced-hydration.ts → packages/core/src/index.ts → packages/core/src/create-app.ts → packages/renderer/src/index.ts
-packages/renderer/src/index.ts → packages/renderer/src/hydration/enhanced-hydration.ts → packages/core/src/index.ts → packages/core/src/web-component.ts
