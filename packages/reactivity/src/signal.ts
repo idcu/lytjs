@@ -7,6 +7,7 @@
 import { SignalSymbol, ComputedSignalSymbol, TrackOpTypes, TriggerOpTypes } from './constants';
 import { track, trigger, beginTriggerBatch, endTriggerBatch } from './effect';
 import { REACTIVITY_MAX_TRIGGER_DEPTH } from '@lytjs/common-constants';
+import { isSignalUntracked, withSignalUntracked, resetSignalUntracked } from './shared/untracked';
 import type { Subscriber } from './shared/types';
 
 // ============================================================
@@ -67,7 +68,6 @@ export interface ReadonlySignal<T = unknown> {
 let activeSubscriber: Subscriber | null = null;
 
 /** 是否处于 untrack 模式 */
-let isUntracked = false;
 
 /** 依赖追踪回调：computed 使用此回调记录 signal 依赖关系 */
 let trackDependency: ((signal: WritableSignal<unknown>, unsubscribe: () => void) => void) | null =
@@ -146,7 +146,7 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
     // FIX: P0-01 闭包捕获过期 activeSubscriber — 立即捕获当前订阅者引用，
     // 避免闭包中的 activeSubscriber 在异步回调中被修改后指向错误的订阅者
     const currentSubscriber = activeSubscriber;
-    if (currentSubscriber && !isUntracked && !disposed) {
+    if (currentSubscriber && !isSignalUntracked() && !disposed) {
       if (!subscribers.has(currentSubscriber)) {
         subscribers.add(currentSubscriber);
         if (trackDependency) {
@@ -253,7 +253,7 @@ function createComputedSignalInternal<T>(
     track(store, TrackOpTypes.GET, COMPUTED_SIGNAL_KEY);
 
     // 追踪：如果有活跃订阅者，注册自身
-    if (activeSubscriber && !isUntracked) {
+    if (activeSubscriber && !isSignalUntracked()) {
       subscribers.add(activeSubscriber);
     }
 
@@ -386,18 +386,18 @@ export function signalBatch(fn: () => void): void {
  * 函数内读取 signal 不会建立依赖关系。
  */
 export function signalUntrack<T>(fn: () => T): T {
-  const prevIsUntracked = isUntracked;
-  isUntracked = true;
-  try {
-    return fn();
-  } finally {
-    isUntracked = prevIsUntracked;
-  }
+  return withSignalUntracked(fn);
 }
 
-/** @internal 检查当前是否处于 untrack 模式（供 effect 系统桥接使用） */
+/**
+ * @internal 检查当前是否处于 untrack 模式
+ *
+ * ★ 2026-10-05：这个「桥接」曾是 `effect.ts → signal.ts` 运行时循环的**唯一成因**。
+ *   现在标志由 `shared/untracked.ts` 持有，`effect.ts` 直接从那里读
+ *   ⇒ **环已打断**。本函数保留仅为兼容既有调用方。
+ */
 export function _isSignalUntracked(): boolean {
-  return isUntracked;
+  return isSignalUntracked();
 }
 
 // ============================================================
@@ -545,7 +545,7 @@ export function _getPendingNotificationsCount(): number {
 /** @internal 重置全局状态（仅用于测试） */
 export function _resetSignalGlobalState(): void {
   activeSubscriber = null;
-  isUntracked = false;
+  resetSignalUntracked();
   batchDepth = 0;
   pendingNotifications.clear();
   isNotifying = false;

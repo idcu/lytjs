@@ -4,7 +4,7 @@
 import { ITERATE_KEY } from './constants';
 import type { ReactiveEffectRunner } from './types';
 import { warn } from '@lytjs/common-error';
-import { _isSignalUntracked } from './signal';
+import { isSignalUntracked } from './shared/untracked';
 import { getActiveEffectScope } from './effect-scope';
 import { REACTIVITY_MAX_TRIGGER_DEPTH } from '@lytjs/common-constants';
 
@@ -153,7 +153,7 @@ export function endTriggerBatch(): void {
 export function track(target: object, _type: string, key: string | symbol) {
   if (!shouldTrack || activeEffect === undefined) return;
   // signal untrack 桥接：signalUntrack 期间跳过 effect 系统的依赖收集
-  if (_isSignalUntracked()) return;
+  if (isSignalUntracked()) return;
 
   let depsMap = targetMap.get(target);
   if (!depsMap) {
