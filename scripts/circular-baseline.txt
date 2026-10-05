@@ -3,7 +3,29 @@
 # 语义：这些是**已确认的既有欠账**，门禁只对**新增**循环报错。
 # 格式：每行一条，仓库相对路径（`/` 分隔），节点用 ` → ` 连接。
 #
-# 共 8 条 · 生成于 2026-10-05
+#
+# ── 这 8 条的性质（2026-10-05 逐条核实）──────────────────────────────
+# 全部属于「**延迟访问**型静态环」：互相 import 的值都**只在函数体内**被调用，
+# 不在模块初始化期求值 ⇒ **运行时不触发 TDZ / undefined**。逐条：
+#
+# 1) optimizations 组（2 条）`index.ts ⇄ optimizations/index.ts`
+#    `optimizations/index.ts` 只需 `compile`，而它只在
+#    `precompileTemplate()`（函数体，第 431 行起）里调用 ⇒ 延迟访问。
+#    ⚠️ 若将来有人在**模块顶层**调用 `precompileTemplate()`，这条环会立刻变成真 bug。
+#
+# 2) parser 组（6 条）`parser-base ⇄ parser-children ⇄ parser-element`
+#    `parseChildren` / `advanceBy` / `RE_DOCTYPE` 互相引用，
+#    但同样**只在解析函数体内调用**。
+#
+# ── 为什么记录而不重构 ───────────────────────────────────────────────
+# `compile()` 是 compiler 的**核心**（约 200 行，含编译缓存 + 自定义 transforms），
+# parser 三件套也彼此 tightly coupled。**为了让数字变绿去动它们，
+# 风险高、收益为零**（目前没有任何可观测的故障）。
+# ⇒ 处置：**登记为已知债**，不重构。
+# ⇒ 重新评估的触发条件（任一即可）：
+#     · 出现与「循环依赖」相关的实际故障（TDZ / 拿到 undefined / 初始化顺序）；
+#     · 需要让 `compile` 可被单独引入（而不带整包副作用）。
+# 共 8 条 · 生成于 2026-10-05（2026-10-05 补注：8 条全为延迟访问型）
 packages/compiler/src/index.ts → packages/compiler/src/optimizations/index.ts
 packages/compiler/src/index.ts → packages/compiler/src/optimizations/index.ts → packages/compiler/src/optimizations/incremental-compile.ts
 packages/compiler/src/parser-attribute.ts → packages/compiler/src/parser-base.ts → packages/compiler/src/parser-children.ts → packages/compiler/src/parser-element.ts
