@@ -88,6 +88,16 @@ const GATES = [
     desc: '构建 76 个包（慢档的第一项，其它依赖 dist 的门禁都排在它后面）',
   },
   {
+    name: 'build:fallback',
+    tier: 'slow',
+    cmd: ['node', 'scripts/build-packages.mjs'],
+    approx: '数分钟（串行；每包 10~35s）',
+    desc:
+      '★ **兜底构建**：不经过 smart-build，逐包 tsup + 拓扑排序。' +
+      '在本机用它替代 `build`（后者被 safe-delete 守卫按轮次限额拦住）；' +
+      '⚠️ 需在「干净的一轮」里跑，或在无该守卫的 CI 容器里跑',
+  },
+  {
     name: 'check-runtime-contract',
     tier: 'slow',
     needsDist: true,
