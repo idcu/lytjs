@@ -150,29 +150,48 @@ HOTN=$(wc -l < "$HOTLINES" | tr -d '[:space:]')
 # 之后 fmq 直接查表（零 fork）。行为等价，判据与报错文案不变。
 FMQ="$tmp/fmq"      # 查询表：<路径>\t<key>\t<value>
 FMHAS="$tmp/fmhas"  # 每个文件的 fm 原始行（供"字段是否存在"判断）
+LINKS="$tmp/links"      # 链接表：<来源文件>\t<目标>（段 6/8/9 共用）
+LINKSR="$tmp/links.raw" # 链接表原始产物（未排序去重），v3.4.11 起由合并趟写出
 if [ "$HOTN" -gt 0 ]; then
   # 一次 awk 扫全部文件，把每个文件的 fm 字段算完落成查询表（v3.4.9：附三个
   # 合成字段 _fmopen / _fmend / _fmbytes，段 2 流式结算由此零 fork）。
   # 收尾 flush 用 END，**不用 gawk 专有 ENDFILE**——BWK awk（macOS）把它当未定义
   # 变量、末文件字段静默丢失（坑 awk-gawk-gaps）；产物为空仍回落逐文件版。
   # LC_ALL=C：保证 length() 按字节计（与旧版 wc -c 同口径）。
-  : > "$FMQ"
-  XLIST="$HOTLIST"; LC_ALL=C xrun awk -v OFS='\t' '
+  # v3.4.11：链接提取并入这一趟——同一遍读文件同时产出 FMQ 与 LINKS，
+  # 省掉原先独立的 xargs+awk 一遍（进程数与读盘各少一次）。
+  : > "$FMQ"; : > "$LINKSR"
+  XLIST="$HOTLIST"; LC_ALL=C xrun awk -v OFS='\t' -v FQ="$FMQ" -v LK="$LINKSR" '
     function trim(v) { sub(/^[[:space:]]+/, "", v); sub(/[[:space:]]+$/, "", v); return v }
     function yval(v) { if (v ~ /^#/) return ""; sub(/[[:space:]]+#.*$/, "", v); return trim(v) }
     function flush(   kk) {
-      for (kk in seen) print pf, kk, val[kk]
-      if (open_ != "") print pf, "_fmopen", open_
-      if (end_ != "")  print pf, "_fmend", end_
-      if (nb_   != "") print pf, "_fmbytes", nb_
+      for (kk in seen) print pf, kk, val[kk] > FQ
+      if (open_ != "") print pf, "_fmopen", open_ > FQ
+      if (end_ != "")  print pf, "_fmend", end_ > FQ
+      if (nb_   != "") print pf, "_fmbytes", nb_ > FQ
       delete seen; delete val; open_ = ""; end_ = ""; nb_ = ""
+    }
+    # 链接提取（原段 6/8/9 共用的一趟，v3.4.11 合并到本趟）：markdown 链接 + @路径
+    function links(line,   seg, p) {
+      while (match(line, /\]\([^)]+\)/)) {
+        seg = substr(line, RSTART + 2, RLENGTH - 3)
+        p = seg; sub(/[ \t].*$/, "", p)
+        if (p != "") print FILENAME "\t" p > LK
+        line = substr(line, RSTART + RLENGTH)
+      }
+      while (match(line, /@[A-Za-z0-9_.\/-]+\.md/)) {
+        print FILENAME "\t" substr(line, RSTART + 1, RLENGTH - 1) > LK
+        line = substr(line, RSTART + RLENGTH)
+      }
     }
     FNR==1 {
       if (NR > 1) flush()
       infm = ($0 == "---"); pf = FILENAME
-      open_ = (infm ? 1 : 0); end_ = ""; nb_ = length($0) + 1; next
+      open_ = (infm ? 1 : 0); end_ = ""; nb_ = length($0) + 1
+      links($0); next
     }
     {
+      links($0)
       if (infm) {
         nb_ += length($0) + 1
         if ($0 == "---") { end_ = FNR; infm = 0; next }
@@ -182,7 +201,27 @@ if [ "$HOTN" -gt 0 ]; then
       }
     }
     END { flush() }
-  ' > "$FMQ" 2>/dev/null
+  ' 2>/dev/null
+  sort -u "$LINKSR" > "$LINKS" 2>/dev/null
+  if [ ! -s "$LINKS" ] && [ "$HOTN" -gt 0 ]; then
+    # 兜底：合并趟若整体失败（awk 报错等），LINKS 会为空 —— 那会让段 9 把所有
+    # 文档误报成孤儿（历史坑）。此时单独重跑一趟链接提取，保住该判据。
+    XLIST="$HOTLIST"; xrun awk '
+      { line = $0
+        while (match(line, /\]\([^)]+\)/)) {
+          seg = substr(line, RSTART + 2, RLENGTH - 3)
+          p = seg; sub(/[ \t].*$/, "", p)
+          if (p != "") print FILENAME "\t" p
+          line = substr(line, RSTART + RLENGTH)
+        }
+        line = $0
+        while (match(line, /@[A-Za-z0-9_.\/-]+\.md/)) {
+          print FILENAME "\t" substr(line, RSTART + 1, RLENGTH - 1)
+          line = substr(line, RSTART + RLENGTH)
+        }
+      }
+    ' 2>/dev/null | sort -u > "$LINKS"
+  fi
   if [ ! -s "$FMQ" ]; then
     : > "$FMQ"
     while IFS= read -r f; do
@@ -269,33 +308,15 @@ fmhas() {
 # 段 6（引用环）、段 8（死链）、段 9（孤儿）原本各自对每个文件跑
 # `grep -oE + sed + tr`；段 9 还要为**每条链接** fork 2 次 cd + dirname/basename。
 # 实测：24 文件的段 9 单独跑要 49 秒（占整体 325 秒的大头）。
-# 这里改成一次 awk 抽出所有链接落表，三段各自消费——把 N×M 次进程降到 1 次。
+# v3.4.11：这一趟**并入 FMQ 构建**（同一遍读文件同时产出两张表），不再单独扫。
 #
 # 关键写法说明：awk 的脚本用单引号包住，**不能**把文件清单直接接在脚本后面
 # （那是给 awk 当输入文件名，bash 会先执行它 —— 实测踩过，报了一屏
 # "scope:: command not found"）。正确做法是用 `xargs ... | awk` 或
-# `awk -f 脚本文件`，这里统一走 xargs 管道。
-LINKS="$tmp/links"
-if [ "$HOTN" -gt 0 ]; then
-  # 注意喂的是 $HOTLIST（NUL 分隔），不是 $HOTLINES —— xargs -0 只认 NUL。
-  # 喂错的话 xargs 会把整份换行清单当成**一个文件名**，awk 读不到文件、
-  # LINKS 变空，于是段 9 把所有文档误报成孤儿（实测踩过）。
-  XLIST="$HOTLIST"; xrun awk '
-    { line = $0
-      while (match(line, /\]\([^)]+\)/)) {
-        seg = substr(line, RSTART + 2, RLENGTH - 3)
-        p = seg; sub(/[ \t].*$/, "", p)
-        if (p != "") print FILENAME "\t" p
-        line = substr(line, RSTART + RLENGTH)
-      }
-      line = $0
-      while (match(line, /@[A-Za-z0-9_.\/-]+\.md/)) {
-        print FILENAME "\t" substr(line, RSTART + 1, RLENGTH - 1)
-        line = substr(line, RSTART + RLENGTH)
-      }
-    }
-  ' 2>/dev/null | sort -u > "$LINKS"
-fi
+# `awk -f 脚本文件`，本趟统一走 xargs 管道。
+# 另一考古：喂给 xargs 的必须是 $HOTLIST（NUL 分隔），不是 $HOTLINES——喂错
+# 会让 xargs 把整份换行清单当成一个文件名，awk 读不到文件、LINKS 变空，
+# 于是段 9 把所有文档误报成孤儿（实测踩过）。
 
 
 _t0=$(date +%s 2>/dev/null || echo 0)
