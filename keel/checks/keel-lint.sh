@@ -747,29 +747,38 @@ if [ -f "$IDX" ]; then
     *)  fail_msg "project-state 值域非法（${ps}）: INDEX.md" ;;
   esac
 fi
-# decisions 清单一次生成，两个子检查共用（v3.2：原来两个独立的 find）
-DECL="$tmp/decl"
-find "$KEEL_DIR/decisions" -name '*.md' 2>/dev/null | sort > "$DECL"
-if [ -s "$DECL" ]; then
-  mon=$(date '+%Y-%m'); exc=0
-  while IFS= read -r d; do
-    case "${d##*/}" in _template*) continue ;; esac   # 模板不是真实记录（§3.4 豁免）
-    fmq_set "$d" type
-    [ "$REPLY" = "exception" ] || continue
-    fmq_set "$d" created; made=$REPLY
-    if [ -z "${made:-}" ]; then fail_msg "例外决策缺 created 字段: ${d#"$KEEL_DIR"/}"; continue; fi
-    case "$made" in "$mon"*) exc=$((exc + 1)) ;; esac
-  done < "$DECL"
-  [ "$exc" -gt 2 ] && fail_msg "本月例外决策 ${exc}>2，强制退回 building（§5.2）"
+# v3.4.10：流式结算——单趟扫 FMQ 取 decisions 文件的 type/created/superseded-by，
+# 不调用 fmq_set（热点＝查表调用数 × 表行数，见 perf-findings #2/#4/#5）。
+mon=$(date '+%Y-%m'); exc=0
+S12_CUR=""; S12_type=""; S12_made=""; S12_sb=""
+s12_finish() {
+  [ -n "$S12_CUR" ] || return 0
+  case "${S12_CUR##*/}" in _template*) return 0 ;; esac   # 模板不是真实记录（§3.4 豁免）
+  if [ "$S12_type" = "exception" ]; then
+    if [ -z "$S12_made" ]; then fail_msg "例外决策缺 created 字段: ${S12_CUR#"$KEEL_DIR"/}"
+    else case "$S12_made" in "$mon"*) exc=$((exc + 1)) ;; esac; fi
+  fi
   # 取代关系：superseded-by 必须指向存在的文件（ADR 靠"被谁取代"表达时效，而非 last-verified）
-  while IFS= read -r d; do
-    case "${d##*/}" in _template*) continue ;; esac     # 模板里的占位值不算数
-    fmq_set "$d" superseded-by; sb=$REPLY
-    [ -n "${sb:-}" ] || continue
-    case "$d" in */*) sbdir=${d%/*} ;; *) sbdir="." ;; esac
-    [ -e "$sbdir/$sb" ] || fail_msg "superseded-by 指向不存在的文件（${sb}）: ${d#"$KEEL_DIR"/}"
-  done < "$DECL"
-fi
+  if [ -n "$S12_sb" ]; then
+    case "$S12_CUR" in */*) sbdir=${S12_CUR%/*} ;; *) sbdir="." ;; esac
+    [ -e "$sbdir/$S12_sb" ] || fail_msg "superseded-by 指向不存在的文件（${S12_sb}）: ${S12_CUR#"$KEEL_DIR"/}"
+  fi
+  return 0
+}
+while IFS=$'\t' read -r s12f s12k s12v; do
+  case "$s12f" in "$KEEL_DIR"/decisions/*.md) ;; *) continue ;; esac
+  if [ "$s12f" != "$S12_CUR" ]; then
+    s12_finish
+    S12_CUR="$s12f"; S12_type=""; S12_made=""; S12_sb=""
+  fi
+  case "$s12k" in
+    type) S12_type="$s12v" ;;
+    created) S12_made="$s12v" ;;
+    superseded-by) S12_sb="$s12v" ;;
+  esac
+done <<< "$FMQ_RAW"
+s12_finish
+[ "$exc" -gt 2 ] && fail_msg "本月例外决策 ${exc}>2，强制退回 building（§5.2）"
 
 echo "── 13. 闭环钩子（本体存在且可执行；§10.4 铁律：缺一，闭环不成立）"
 for h in pre-commit commit-msg; do
