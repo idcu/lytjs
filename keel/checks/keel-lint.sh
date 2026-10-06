@@ -151,37 +151,58 @@ HOTN=$(wc -l < "$HOTLINES" | tr -d '[:space:]')
 FMQ="$tmp/fmq"      # 查询表：<路径>\t<key>\t<value>
 FMHAS="$tmp/fmhas"  # 每个文件的 fm 原始行（供"字段是否存在"判断）
 if [ "$HOTN" -gt 0 ]; then
-  # 一次 awk 扫全部文件，把每个文件的 fm 字段算完落成查询表。
+  # 一次 awk 扫全部文件，把每个文件的 fm 字段算完落成查询表（v3.4.9：附三个
+  # 合成字段 _fmopen / _fmend / _fmbytes，段 2 流式结算由此零 fork）。
   # 收尾 flush 用 END，**不用 gawk 专有 ENDFILE**——BWK awk（macOS）把它当未定义
   # 变量、末文件字段静默丢失（坑 awk-gawk-gaps）；产物为空仍回落逐文件版。
+  # LC_ALL=C：保证 length() 按字节计（与旧版 wc -c 同口径）。
   : > "$FMQ"
-  XLIST="$HOTLIST"; xrun awk -v OFS='\t' '
+  XLIST="$HOTLIST"; LC_ALL=C xrun awk -v OFS='\t' '
     function trim(v) { sub(/^[[:space:]]+/, "", v); sub(/[[:space:]]+$/, "", v); return v }
     function yval(v) { if (v ~ /^#/) return ""; sub(/[[:space:]]+#.*$/, "", v); return trim(v) }
+    function flush(   kk) {
+      for (kk in seen) print pf, kk, val[kk]
+      if (open_ != "") print pf, "_fmopen", open_
+      if (end_ != "")  print pf, "_fmend", end_
+      if (nb_   != "") print pf, "_fmbytes", nb_
+      delete seen; delete val; open_ = ""; end_ = ""; nb_ = ""
+    }
     FNR==1 {
-      if (NR > 1) { for (kk in seen) print pf, kk, val[kk]; delete seen; delete val }
-      infm = ($0 == "---"); pf = FILENAME; next
+      if (NR > 1) flush()
+      infm = ($0 == "---"); pf = FILENAME
+      open_ = (infm ? 1 : 0); end_ = ""; nb_ = length($0) + 1; next
     }
-    infm && $0 == "---" { infm = 0; next }
-    infm {
-      ci = index($0, ":")
-      if (ci > 0) { k = substr($0, 1, ci - 1)
-        if (k ~ /^[A-Za-z0-9_-]+$/ && !(k in val)) { seen[k] = 1; val[k] = yval(trim(substr($0, ci + 1))) } }
-      next
+    {
+      if (infm) {
+        nb_ += length($0) + 1
+        if ($0 == "---") { end_ = FNR; infm = 0; next }
+        ci = index($0, ":")
+        if (ci > 0) { k = substr($0, 1, ci - 1)
+          if (k ~ /^[A-Za-z0-9_-]+$/ && !(k in val)) { seen[k] = 1; val[k] = yval(trim(substr($0, ci + 1))) } }
+      }
     }
-    END     { for (kk in seen) print pf, kk, val[kk] }
+    END { flush() }
   ' > "$FMQ" 2>/dev/null
   if [ ! -s "$FMQ" ]; then
     : > "$FMQ"
     while IFS= read -r f; do
-      awk -v OFS='\t' -v P="$f" '
+      LC_ALL=C awk -v OFS='\t' -v P="$f" '
         function trim(v) { sub(/^[[:space:]]+/, "", v); sub(/[[:space:]]+$/, "", v); return v }
         function yval(v) { if (v ~ /^#/) return ""; sub(/[[:space:]]+#.*$/, "", v); return trim(v) }
-        NR==1 { infm = ($0 == "---"); next }
-        infm && $0 == "---" { infm = 0; next }
-        infm { ci = index($0, ":"); if (ci > 0) { k = substr($0, 1, ci-1)
-                 if (k ~ /^[A-Za-z0-9_-]+$/ && !(k in val)) { val[k] = yval(trim(substr($0, ci+1))) } } }
-        END { for (kk in val) print P, kk, val[kk] }
+        NR==1 { infm = ($0 == "---"); open_ = (infm ? 1 : 0); end_ = ""; nb_ = length($0) + 1; next }
+        {
+          if (infm) {
+            nb_ += length($0) + 1
+            if ($0 == "---") { end_ = NR; infm = 0; next }
+            ci = index($0, ":")
+            if (ci > 0) { k = substr($0, 1, ci-1)
+              if (k ~ /^[A-Za-z0-9_-]+$/ && !(k in val)) { val[k] = yval(trim(substr($0, ci+1))) } }
+          }
+        }
+        END { for (kk in val) print P, kk, val[kk]
+              if (open_ != "") print P, "_fmopen", open_
+              if (end_ != "")  print P, "_fmend", end_
+              if (nb_   != "") print P, "_fmbytes", nb_ }
       ' "$f" >> "$FMQ" 2>/dev/null
     done < "$HOTLINES"
   fi
@@ -330,32 +351,72 @@ if [ -s "$tmp/dirs" ]; then
 fi
 
 echo "── 2. frontmatter：存在性 / 字段 / 行数 / 字节"
-while IFS= read -r f; do
-  base_set "$f"; base=$BASE
-  case "$base" in _template*) continue ;; esac
-  rel_set "$f"; rel=$REL
-  # 存在性与闭合：仍需读首行与 fm 结束行，各 1 次 awk（可与字段查表合并，此处保持独立以免耦合）
-  if [ "$(head -1 "$f")" != "---" ]; then fail_msg "缺 frontmatter: $rel"; continue; fi
-  end=$(awk 'NR==1{next} /^---$/{print NR; exit}' "$f" 2>/dev/null)
-  if [ -z "$end" ]; then fail_msg "frontmatter 未闭合: $rel"; continue; fi
-  nl=$((end - 2))
-  [ "$nl" -gt 10 ] && fail_msg "frontmatter 超行数 ${nl}>10: $rel"
-  nb=$(sed -n "1,${end}p" "$f" | wc -c | tr -d '[:space:]')
-  [ "$nb" -gt "$BYTES_FM" ] && fail_msg "frontmatter 超字节 ${nb}>${BYTES_FM}: $rel"
-  for k in scope status last-verified keywords; do
-    fmhas "$f" "$k" || fail_msg "frontmatter 缺 $k: $rel"
-  done
-  case "$rel" in
+# v3.4.9：改流式结算——单趟扫 FMQ（含合成字段 _fmopen/_fmend/_fmbytes），
+# 全程不调用 fmq_set/head/awk/sed/wc。教训：热点＝查表调用数 × 表行数
+# （perf-findings #2/#4 两次失败同源）。判定语义与旧版逐字同源：
+# 字段存在性＝表中出现该键的行（值可空，与 fmhas 注释一致）。
+S2_CUR=""; S2_SEEN=""
+S2_open=""; S2_end=""; S2_nb=""; S2_hs=""; S2_hst=""; S2_hlv=""; S2_hkw=""
+S2_htr=""; S2_hsev=""; S2_htrs=""; S2_hkv=""; S2_hps=""
+s2_finish() {
+  [ -n "$S2_CUR" ] || return 0
+  base_set "$S2_CUR"
+  case "$BASE" in _template*) return 0 ;; esac
+  rel_set "$S2_CUR"
+  if [ "$S2_open" != "1" ]; then fail_msg "缺 frontmatter: $REL"; return 0; fi
+  if [ -z "$S2_end" ]; then fail_msg "frontmatter 未闭合: $REL"; return 0; fi
+  nl=$((S2_end - 2))
+  [ "$nl" -gt 10 ] && fail_msg "frontmatter 超行数 ${nl}>10: $REL"
+  [ "${S2_nb:-0}" -gt "$BYTES_FM" ] && fail_msg "frontmatter 超字节 ${S2_nb}>${BYTES_FM}: $REL"
+  [ -n "$S2_hs" ]  || fail_msg "frontmatter 缺 scope: $REL"
+  [ -n "$S2_hst" ] || fail_msg "frontmatter 缺 status: $REL"
+  [ -n "$S2_hlv" ] || fail_msg "frontmatter 缺 last-verified: $REL"
+  [ -n "$S2_hkw" ] || fail_msg "frontmatter 缺 keywords: $REL"
+  case "$REL" in
     */INDEX.md) ;;   # 域索引只查基础字段
-    skills/*)   fmhas "$f" trigger  || fail_msg "skill 缺 trigger: $rel" ;;
-    pitfalls/*) fmhas "$f" severity || fail_msg "坑条目缺 severity: $rel"
-                fmhas "$f" triggers || fail_msg "坑条目缺 triggers: $rel" ;;
+    skills/*)   [ -n "$S2_htr" ]  || fail_msg "skill 缺 trigger: $REL" ;;
+    pitfalls/*) [ -n "$S2_hsev" ] || fail_msg "坑条目缺 severity: $REL"
+                [ -n "$S2_htrs" ] || fail_msg "坑条目缺 triggers: $REL" ;;
   esac
-  case "$rel" in
-    INDEX.md)   fmhas "$f" keel-version  || fail_msg "根 INDEX 缺 keel-version: $rel"
-                fmhas "$f" project-state || fail_msg "根 INDEX 缺 project-state: $rel" ;;
+  case "$REL" in
+    INDEX.md)   [ -n "$S2_hkv" ] || fail_msg "根 INDEX 缺 keel-version: $REL"
+                [ -n "$S2_hps" ] || fail_msg "根 INDEX 缺 project-state: $REL" ;;
   esac
-done < "$HOTLINES"
+  return 0
+}
+while IFS=$'\t' read -r s2f s2k s2v; do
+  if [ "$s2f" != "$S2_CUR" ]; then
+    s2_finish
+    S2_SEEN="${S2_SEEN}${s2f}|"
+    S2_CUR="$s2f"
+    S2_open=""; S2_end=""; S2_nb=""; S2_hs=""; S2_hst=""; S2_hlv=""; S2_hkw=""
+    S2_htr=""; S2_hsev=""; S2_htrs=""; S2_hkv=""; S2_hps=""
+  fi
+  case "$s2k" in
+    _fmopen)  S2_open="$s2v" ;;
+    _fmend)   S2_end="$s2v" ;;
+    _fmbytes) S2_nb="$s2v" ;;
+    scope)    S2_hs=1 ;;
+    status)   S2_hst=1 ;;
+    last-verified) S2_hlv=1 ;;
+    keywords) S2_hkw=1 ;;
+    trigger)  S2_htr=1 ;;
+    severity) S2_hsev=1 ;;
+    triggers) S2_htrs=1 ;;
+    keel-version)  S2_hkv=1 ;;
+    project-state) S2_hps=1 ;;
+  esac
+done <<< "$FMQ_RAW"
+s2_finish
+# 表中未出现的文件（空文件不触发 FNR==1）——旧版头行判定会报"缺 frontmatter"；
+# 表整体为空（降级）时不报，避免把构建降级误判成内容违规。
+if [ -n "$FMQ_RAW" ]; then
+  while IFS= read -r f; do
+    base_set "$f"
+    case "$BASE" in _template*) continue ;; esac
+    case "$S2_SEEN" in *"$f|"*) ;; *) rel_set "$f"; fail_msg "缺 frontmatter: $REL" ;; esac
+  done < "$HOTLINES"
+fi
 
 echo "── 3. 值域与格式（status / severity / keywords / last-verified / triggers）"
 # v3.4.8：流式扫描——FMQ 表按文件分组且与 HOTLINES 同序，**单趟扫完**，
