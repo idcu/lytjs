@@ -198,6 +198,12 @@ interface CompilerOptions extends ParserOptions, TransformOptions, CodegenOption
    * 生成 renderToString 格式代码
    */
   ssrMode?: boolean;
+
+  /**
+   * Signal 模式代码优化（默认 true）：使用更紧凑的 codegen
+   * （短导入别名、合并 effect、更短变量名）
+   */
+  optimizeSignal?: boolean;
 }
 ```
 
@@ -259,6 +265,8 @@ interface TransformOptions {
   onError?: (error: Error) => void;
   /** 警告回调 */
   onWarn?: (warning: string) => void;
+  /** 渲染模式（transform 阶段也用于分支决策）：'vnode' | 'signal' | 'vapor' */
+  rendererMode?: 'vnode' | 'signal' | 'vapor';
 }
 ```
 

@@ -296,61 +296,42 @@ const SearchBar = defineComponent({
 
 ### XSS 防护
 
-LytJS 默认对模板中的插值表达式进行 HTML 转义，防止 XSS 攻击：
+LytJS 默认对模板插值表达式与 vnode 的文本子节点进行 HTML 转义，SSR 侧同样如此：
 
 ```typescript
-// 安全：自动转义
+import { h } from '@lytjs/core';
+import { renderToString } from '@lytjs/renderer';
+
 const userInput = '<script>alert("xss")</script>';
-// 渲染结果：&lt;script&gt;alert("xss")&lt;/script&gt;
+const html = await renderToString({ vnode: h('div', {}, userInput) });
+// 渲染结果：<div>&lt;script&gt;alert("xss")&lt;/script&gt;</div>
 ```
 
 #### 危险操作
 
-以下操作可能导致 XSS 漏洞，请谨慎使用：
+以下写法会绕过框架的自动转义，请避免：
 
 ```typescript
-// 危险：直接拼接用户输入到模板字符串
-const html = await renderToString({
-  template: `<div>${userInput}</div>`, // 不安全！
-});
+// 危险：手工拼接 HTML 字符串，绕过框架的自动转义
+const html = `<div>${userInput}</div>`; // 未经转义，直接输出
 
-// 危险：使用 v-html 渲染用户输入
-const UserContent = {
-  template: `<div v-html="userContent"></div>`, // 不安全！
-  setup() {
-    const userContent = ref(unsafeUserInput);
-    return { userContent };
-  },
-};
-
-// 危险：在 SSR 上下文中注入未转义的数据
-const context = {
-  html: userInput, // 不安全！
-};
+// 危险：把未消毒的内容交给会直接写入 DOM 的通道（第三方库 / element.innerHTML）
+element.innerHTML = userInput; // 绕过 LytJS 的转义与消毒
 ```
 
 #### 安全操作
 
 ```typescript
-// 安全：使用响应式数据，自动转义
-const userInput = ref('');
-const html = await renderToString({
-  setup() {
-    return { userInput };
-  },
-  template: `<div>{{ userInput }}</div>`, // 自动转义
-});
+import { h } from '@lytjs/core';
+import { renderToString } from '@lytjs/renderer';
 
-// 安全：仅对可信内容使用 v-html
-const TrustedContent = {
-  template: `<div v-html="trustedHtml"></div>`,
-  setup() {
-    // 仅用于经过验证的、可信的 HTML 内容
-    const trustedHtml = ref('<strong>安全内容</strong>');
-    return { trustedHtml };
-  },
-};
+// 安全：交给 renderToString 渲染，文本子节点自动转义
+const html = await renderToString({ vnode: h('div', {}, userInput) });
 ```
+
+::: tip 关于 v-html 的安全性
+`v-html` 并非“直接渲染即不安全”：`@lytjs/compiler` 的 `handleVHtml` 会在**编译期**把取值包裹为 `SANITIZE_HTML(...)`，运行时消毒，开发模式下还会输出 `[LytJS] v-html directive can lead to XSS attack...` 警告。即便如此，仍建议仅用于可信内容。详见 [模板语法](./template-syntax)。
+:::
 
 ### 数据注入安全
 
