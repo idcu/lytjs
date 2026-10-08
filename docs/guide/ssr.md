@@ -20,6 +20,12 @@ console.log(html);
 // <div id="app" data-server-rendered="true"><h1>Hello LytJS</h1></div>
 ```
 
+::: warning `vnode` 需为 VNode / 已编译组件
+`renderToString` 的 `vnode` 必须是 **VNode 或已编译组件**（例如经 `@lytjs/plugin-vite` 处理过的 SFC）。
+`createApp(App)` 返回的应用实例**不参与**本次渲染，这里只是与应用配置保持一致；真正被渲染的是 `App` 本身。
+若 `App` 只是带 `template` 字符串的组件，SSR 会渲染为空 —— `template` 仅在客户端运行时编译。
+:::
+
 ### 传递上下文
 
 可以通过上下文对象在服务端和组件之间共享数据：
@@ -248,6 +254,13 @@ const SearchBar = defineComponent({
   `,
 });
 ```
+
+::: warning `template` 组件在 SSR 下不渲染
+上面的 `SearchBar` 用 `template` 字符串定义：它在**客户端**由运行时编译（`@lytjs/component` 的 `resolveTemplateRender`），
+但 **SSR 的 `renderToString` 不编译 `template`** —— 交给 SSR 会渲染为空字符串且无报错。
+岛屿的静态外壳应由 SSR 输出的已编译组件 / `render()` 函数提供，`template` 岛屿只负责浏览器水合；
+若需该组件也参与 SSR，请改用 `render()` 函数，或使用 `compileSFC` / `@lytjs/plugin-vite` 的编译产物。
+:::
 
 ### 使用 Island 组件
 
