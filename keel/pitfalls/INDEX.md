@@ -23,3 +23,4 @@ keywords: [坑库, 索引, 转发链, dist, 假绿, 门禁]
 | hydration 判据：新旧 DOM 相同 ⇒ 恒绿 | verify | P2 | [verify/hydration-needs-difference.md](verify/hydration-needs-difference.md) |
 | commitlint 三规则拦提交（scope/subject/100 列） | process | P2 | [process/commitlint-rules.md](process/commitlint-rules.md) |
 | 批量改写"成功"但代码坏（缩进/花括号） | process | P1 | [process/bulk-edit-must-compile.md](process/bulk-edit-must-compile.md) |
+| Node ≥26 内置 localStorage 抢占 jsdom → 存储用例假失败（本机红/CI 绿） | verify | P1 | [verify/node26-localstorage-hijacks-jsdom.md](verify/node26-localstorage-hijacks-jsdom.md) |
