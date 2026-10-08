@@ -11,3 +11,4 @@ keywords: [决策, ADR, 索引]
 | 0002 | `<Suspense>` fallback 暂缓：4 处耦合改动属设计项目，维持 `it.fails` 判据 | active | [0002-suspense-fallback-deferred.md](0002-suspense-fallback-deferred.md) |
 | 0003 | 主 SSR 水合标记默认关：`hydrateMarkers` 可选开启，不改变既有输出 | active | [0003-ssr-hydrate-markers-default-off.md](0003-ssr-hydrate-markers-default-off.md) |
 | 0004 | group v-model 剩余项暂缓：`min/max` 需子组件上报，机制走 provide/inject 注册表 | active | [0004-group-vmodel-collaboration-deferred.md](0004-group-vmodel-collaboration-deferred.md) |
+| 0005 | lytx 版本对齐 npm 已发布稳定版（现 6.9.6），不追主仓 `v7.0.0-dev` 分支 | active | [0005-lytx-version-alignment.md](0005-lytx-version-alignment.md) |
