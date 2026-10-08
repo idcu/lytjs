@@ -4,6 +4,7 @@
 
 import type { StoreStateInfo } from './types';
 import { isObject, isFunction } from '@lytjs/common-is';
+import { deepClone } from '@lytjs/common-object';
 
 interface StoreInstance {
   $state?: Record<string, unknown>;
@@ -150,33 +151,6 @@ export function dispatchStoreAction(
  */
 export function serializeStoreStates(states: StoreStateInfo[]): string {
   return JSON.stringify(states, null, 2);
-}
-
-/**
- * 深度克隆（简化版）
- */
-function deepClone<T>(obj: T): T {
-  if (obj === null || typeof obj !== 'object') {
-    return obj;
-  }
-
-  if (obj instanceof Date) {
-    return new Date(obj.getTime()) as unknown as T;
-  }
-
-  if (Array.isArray(obj)) {
-    return obj.map((item) => deepClone(item)) as unknown as T;
-  }
-
-  if (isObject(obj)) {
-    const cloned: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(obj)) {
-      cloned[key] = deepClone(value);
-    }
-    return cloned as unknown as T;
-  }
-
-  return obj;
 }
 
 /**

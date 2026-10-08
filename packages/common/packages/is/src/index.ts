@@ -1,27 +1,11 @@
 /**
  * @lytjs/common-is
  * 类型检查工具函数集合
+ *
+ * 空值常量统一由 @lytjs/common-constants 定义，此处仅重导出以保持向后兼容
+ * （见 docs/contribute/other/code-analysis-report.md §3.1）。
  */
-
-/**
- * 空函数，用于占位
- */
-export const NOOP = (): void => {};
-
-/**
- * 空函数别名（兼容性）
- */
-export const EMPTY_FN = NOOP;
-
-/**
- * 冻结的空对象，用于避免重复创建
- */
-export const EMPTY_OBJ: Readonly<Record<string, never>> = Object.freeze({});
-
-/**
- * 空数组常量（冻结）
- */
-export const EMPTY_ARR: readonly unknown[] = Object.freeze([]);
+export { NOOP, EMPTY_FN, EMPTY_OBJ, EMPTY_ARR } from '@lytjs/common-constants';
 
 /**
  * 检查值是否为字符串

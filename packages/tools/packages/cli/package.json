@@ -2,7 +2,7 @@
   "name": "@lytjs/cli",
   "version": "6.9.6",
   "description": "LytJS project scaffolding and development CLI tool",
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "bin": {

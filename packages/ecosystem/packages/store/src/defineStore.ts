@@ -16,7 +16,7 @@ import type {
   ActionCallback,
   Pinia,
 } from './types';
-import { signal, computedSignal as computed, batch } from '@lytjs/reactivity';
+import { signal, computedSignal as computed, batch, reactive } from '@lytjs/reactivity';
 import { getActivePinia } from './pinia';
 
 const storeCache = new Map<string, Store>();
@@ -147,7 +147,10 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
         }
       }
 
-      const store = wrappedStore as unknown as SS &
+      // 用 reactive 包裹，使 setup 返回的 ref 在外部访问时自动解包
+      // （store.count 得到值而非 Ref、store.items.map(...) 可直接调用），
+      // 与 Pinia 语义及本包 README 用法一致。功能由 reactive 的 ref 解包 + 写穿透提供。
+      const store = reactive(wrappedStore) as unknown as SS &
         Store<Id, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>;
 
       (store as any).$id = id;

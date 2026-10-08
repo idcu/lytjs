@@ -5,6 +5,7 @@
     "baseUrl": ".",
     "paths": {
       "@lytjs/common-is": ["../../../common/packages/is/dist/index.d.ts"],
+      "@lytjs/common-object": ["../../../common/packages/object/dist/index.d.ts"],
       "@lytjs/vdom": ["../../../vdom/dist/index.d.ts"]
     }
   },

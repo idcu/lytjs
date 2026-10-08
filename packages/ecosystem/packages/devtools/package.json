@@ -12,15 +12,12 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
-    "./style.css": "./dist/style.css",
     "./package.json": "./package.json"
   },
   "files": [
     "dist"
   ],
-  "sideEffects": [
-    "**/*.css"
-  ],
+  "sideEffects": false,
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -31,6 +28,7 @@
   },
   "dependencies": {
     "@lytjs/common-is": "workspace:*",
+    "@lytjs/common-object": "workspace:*",
     "@lytjs/vdom": "workspace:*"
   },
   "devDependencies": {

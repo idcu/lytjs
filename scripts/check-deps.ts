@@ -109,6 +109,7 @@ const ALLOWED_CROSS_LAYER: Record<string, Set<string>> = {
     '@lytjs/compiler',
     '@lytjs/component',
     '@lytjs/renderer',
+    '@lytjs/dom-runtime',
   ]),
   '@lytjs/core-vnode': new Set([
     '@lytjs/common-*',

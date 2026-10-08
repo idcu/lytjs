@@ -6,6 +6,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { defineStore, clearStoreCache } from '../src/defineStore';
 import { createPinia, getActivePinia, setActivePinia } from '../src/pinia';
 import { storeToRefs } from '../src/storeToRefs';
+import { ref, computed, isRef } from '@lytjs/reactivity';
 
 describe('@lytjs/store', () => {
   // Clear store cache before each test
@@ -294,6 +295,34 @@ describe('@lytjs/store', () => {
       expect(store.count.value).toBe(0);
       store.increment();
       expect(store.count.value).toBe(1);
+    });
+
+    it('setup store 应自动解包 ref/computed（Pinia 语义）', () => {
+      const useCounter = defineStore('unwrap', () => {
+        const count = ref(0);
+        const items = ref([1, 2, 3]);
+        const double = computed(() => count.value * 2);
+        function inc() {
+          count.value++;
+        }
+        return { count, items, double, inc };
+      });
+      const store = useCounter();
+      // 外部访问得到值而非 ref
+      expect(isRef(store.count)).toBe(false);
+      expect(store.count).toBe(0);
+      expect(isRef(store.double)).toBe(false);
+      expect(store.double).toBe(0);
+      // 解包后可直接调用数组方法
+      expect(store.items.map((x: number) => x)).toEqual([1, 2, 3]);
+      // 直接赋值写穿透到 ref
+      store.count = 10;
+      expect(store.count).toBe(10);
+      expect(store.double).toBe(20);
+      // action 内 .value++ 仍驱动响应式
+      store.inc();
+      expect(store.count).toBe(11);
+      expect(store.double).toBe(22);
     });
 
     it('should support $subscribe in setup store', () => {
