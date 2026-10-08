@@ -714,8 +714,6 @@ import { PatchFlags, ShapeFlags } from '@lytjs/common-vnode';
      ├── @lytjs/common-is (无依赖)
      ├── @lytjs/common-string (依赖 common-is)
      ├── @lytjs/common-object (依赖 common-is)
-     ├── @lytjs/common-array (依赖 common-is)
-     ├── @lytjs/common-function (依赖 common-is)
      ├── @lytjs/common-error (依赖 common-string)
      ├── @lytjs/common-events (依赖 common-is)
      ├── @lytjs/common-scheduler (依赖 common-is)
@@ -754,8 +752,6 @@ import { PatchFlags, ShapeFlags } from '@lytjs/common-vnode';
 | `@lytjs/common-is`        | ~1 KB      | 类型判断   |
 | `@lytjs/common-string`    | ~2 KB      | 字符串处理 |
 | `@lytjs/common-object`    | ~3 KB      | 对象操作   |
-| `@lytjs/common-array`     | ~2 KB      | 数组操作   |
-| `@lytjs/common-function`  | ~2 KB      | 函数工具   |
 | `@lytjs/common-error`     | ~1 KB      | 错误处理   |
 | `@lytjs/common-scheduler` | ~2 KB      | 调度器     |
 | `@lytjs/common-validate`  | ~3 KB      | 数据验证   |

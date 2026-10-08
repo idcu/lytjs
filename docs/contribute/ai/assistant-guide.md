@@ -28,7 +28,7 @@ L6: 生态系统 (@lytjs/ui, @lytjs/store, @lytjs/router)
 
 ### 场景 1：开发新功能
 
-**用户需求** → [AI 快速入门](../../../.ai/QUICKSTART.md) → [技能链](../.trae/skills/skill-chains/SKILL.md) → 编码
+**用户需求** → [AI 快速入门](../../../.ai/QUICKSTART.md) → [keel 入口](../../../keel/INDEX.md) → 编码
 
 ### 场景 2：修复问题
 
@@ -42,16 +42,16 @@ L6: 生态系统 (@lytjs/ui, @lytjs/store, @lytjs/router)
 
 ## 📦 如何找到正确的文件
 
-| 需求       | 查找位置                                  |
-| ---------- | ----------------------------------------- |
-| 核心 API   | `packages/core/src/`                      |
-| 响应式系统 | `packages/reactivity/src/`                |
-| UI 组件    | `packages/ecosystem/packages/ui/src/`     |
-| 状态管理   | `packages/ecosystem/packages/store/src/`  |
-| 路由       | `packages/ecosystem/packages/router/src/` |
-| 类型定义   | `packages/shared-types/src/`              |
-| 示例代码   | `examples/`                               |
-| 完整文档   | `docs/`                                   |
+| 需求       | 查找位置                                                         |
+| ---------- | ---------------------------------------------------------------- |
+| 核心 API   | `packages/core/src/`                                             |
+| 响应式系统 | `packages/reactivity/src/`                                       |
+| UI 组件    | `packages/ecosystem/packages/ui/src/`                            |
+| 状态管理   | `packages/ecosystem/packages/store/src/`                         |
+| 路由       | `packages/ecosystem/packages/web-framework/packages/router/src/` |
+| 类型定义   | `packages/shared-types/src/`                                     |
+| 示例代码   | `examples/`                                                      |
+| 完整文档   | `docs/`                                                          |
 
 ---
 
@@ -66,9 +66,9 @@ L6: 生态系统 (@lytjs/ui, @lytjs/store, @lytjs/router)
 
 ### 2. 使用正确的上下文
 
-- 简单任务：直接使用技能链
-- 中等任务：技能链 + /plan
-- 复杂任务：技能链 + /spec
+- 简单任务：直接开发（按需按 keel 检索协议查资料）
+- 中等任务：Plan + 开发
+- 复杂任务：Spec + 分阶段开发
 
 ### 3. 有针对性地阅读
 
@@ -79,5 +79,6 @@ L6: 生态系统 (@lytjs/ui, @lytjs/store, @lytjs/router)
 ## 📚 更多资源
 
 - [完整文档目录](../../SUMMARY.md)
-- [开发规范](../.trae/skills/skill-chains/SKILL.md)
+- [开发流程指南](../development/workflow.md)
+- [keel 入口](../../../keel/INDEX.md)
 - [AGENTS.md](../../../AGENTS.md) - AI 规则

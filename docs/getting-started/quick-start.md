@@ -123,19 +123,19 @@ const count = signal(0);
 const message = signal('欢迎使用 LytJS!');
 
 // 计算属性
-const doubleCount = computed(() => count.value * 2);
+const doubleCount = computed(() => count() * 2);
 
 // 方法
 const increment = () => {
-  count.value++;
+  count.update((n) => n + 1);
 };
 
 const decrement = () => {
-  count.value--;
+  count.update((n) => n - 1);
 };
 
 const reset = () => {
-  count.value = 0;
+  count.set(0);
 };
 </script>
 
@@ -207,16 +207,16 @@ import { signal } from '@lytjs/reactivity';
 const count = signal(0);
 const user = signal({ name: '张三', age: 25 });
 
-// 读取值
-console.log(count.value); // 0
-console.log(user.value); // { name: '张三', age: 25 }
+// 读取值（Signal 是函数，调用即读取）
+console.log(count()); // 0
+console.log(user()); // { name: '张三', age: 25 }
 
 // 更新值
-count.value = 100;
-user.value.name = '李四';
+count.set(100);
+count.update((n) => n + 1);
 
-// 批量更新 (避免多次渲染)
-user.value = { ...user.value, name: '王五', age: 30 };
+// 整对象替换
+user.set({ ...user(), name: '王五', age: 30 });
 ```
 
 ### 计算属性 (Computed)
@@ -227,15 +227,15 @@ import { signal, computed } from '@lytjs/reactivity';
 const firstName = signal('张');
 const lastName = signal('三');
 
-// 计算属性会自动追踪依赖
+// 计算属性会自动追踪依赖（computed 返回带 .value 的只读对象）
 const fullName = computed(() => {
-  return `${firstName.value}${lastName.value}`;
+  return `${firstName()}${lastName()}`;
 });
 
 console.log(fullName.value); // '张三'
 
 // 更新依赖会自动更新计算值
-lastName.value = '四';
+lastName.set('四');
 console.log(fullName.value); // '张四'
 ```
 
@@ -248,12 +248,12 @@ const count = signal(0);
 
 // 创建效应 - 会在依赖变化时自动运行
 effect(() => {
-  console.log(`计数变为: ${count.value}`);
+  console.log(`计数变为: ${count()}`);
 });
 
 // 更新值会触发效应
-count.value = 1; // 输出: 计数变为: 1
-count.value = 2; // 输出: 计数变为: 2
+count.set(1); // 输出: 计数变为: 1
+count.set(2); // 输出: 计数变为: 2
 ```
 
 ---
@@ -328,33 +328,35 @@ const todos = signal<Todo[]>([
 
 const newTodo = signal('');
 
-const doneCount = computed(() => todos.value.filter((todo) => todo.done).length);
+const doneCount = computed(() => todos().filter((todo) => todo.done).length);
 
 const handleInput = (e: Event) => {
   const target = e.target as HTMLInputElement;
-  newTodo.value = target.value;
+  newTodo.set(target.value);
 };
 
 const addTodo = () => {
-  if (!newTodo.value.trim()) return;
+  if (!newTodo().trim()) return;
 
-  todos.value = [
-    ...todos.value,
+  todos.update((list) => [
+    ...list,
     {
       id: Date.now(),
-      text: newTodo.value,
+      text: newTodo(),
       done: false,
     },
-  ];
-  newTodo.value = '';
+  ]);
+  newTodo.set('');
 };
 
 const toggleTodo = (id: number) => {
-  todos.value = todos.value.map((todo) => (todo.id === id ? { ...todo, done: !todo.done } : todo));
+  todos.update((list) =>
+    list.map((todo) => (todo.id === id ? { ...todo, done: !todo.done } : todo)),
+  );
 };
 
 const removeTodo = (id: number) => {
-  todos.value = todos.value.filter((todo) => todo.id !== id);
+  todos.update((list) => list.filter((todo) => todo.id !== id));
 };
 </script>
 

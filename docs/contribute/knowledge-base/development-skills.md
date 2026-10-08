@@ -149,9 +149,8 @@ describe('{feature}', () => {
 4. 添加配置验证 schema
 5. 基于 common-is、common-constants 等工具实现，零第三方依赖
 6. 编写完整测试（使用 require() 导入构建后文件）
-7. 在 packages/plugins/packages/index.ts 中统一导出
-8. 更新根 package.json 的 build:plugins 脚本
-9. 更新插件文档 README.md
+7. 在生态外迁仓 `../plugins/packages/index.ts` 中统一导出（主仓自 2026-09 起不再承载插件）
+8. 在该仓更新构建脚本，并同步插件文档 README.md
 
 **测试技巧**:
 

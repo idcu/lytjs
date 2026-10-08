@@ -71,7 +71,7 @@ LytJS 项目已经有非常完善的公共模块体系：
 
 ### 2.2 @lytjs/shared-types 包
 
-`@lytjs/shared-types` ([packages/shared-types/](file:///e:/lytjs/packages/shared-types/)) 是集中的类型定义包，包含：
+`@lytjs/shared-types`（`packages/shared-types/`）是集中的类型定义包，包含：
 
 | 类型文件         | 功能                                            |
 | ---------------- | ----------------------------------------------- |
@@ -89,7 +89,7 @@ LytJS 项目已经有非常完善的公共模块体系：
 
 ### 3.1 问题 1: 重复的常量定义
 
-**位置**: `@lytjs/common-is` ([packages/common/packages/is/src/index.ts](file:///e:/lytjs/packages/common/packages/is/src/index.ts))
+**位置**: `@lytjs/common-is` ([packages/common/packages/is/src/index.ts](../../../packages/common/packages/is/src/index.ts))
 
 ```typescript
 // 第 9 行
@@ -113,7 +113,7 @@ export const EMPTY_FN = (): void => {};
 
 ### 3.2 问题 2: DebuggerEvent 类型重复定义
 
-**重复位置 1**: `@lytjs/reactivity` ([packages/reactivity/src/types.ts#L39-L44](file:///e:/lytjs/packages/reactivity/src/types.ts#L39-L44))
+**重复位置 1**: `@lytjs/reactivity` ([packages/reactivity/src/types.ts#L39-L44](../../../packages/reactivity/src/types.ts#L39-L44))
 
 ```typescript
 export interface DebuggerEvent {
@@ -124,7 +124,7 @@ export interface DebuggerEvent {
 }
 ```
 
-**重复位置 2**: `@lytjs/shared-types` ([packages/shared-types/src/debug.ts#L13-L22](file:///e:/lytjs/packages/shared-types/src/debug.ts#L13-L22))
+**重复位置 2**: `@lytjs/shared-types` ([packages/shared-types/src/debug.ts#L13-L22](../../../packages/shared-types/src/debug.ts#L13-L22))
 
 ```typescript
 export interface DebuggerEvent {
@@ -308,6 +308,18 @@ export const timeout = <T>(promise: Promise<T>, ms: number) => {
 
 ## 7. 实施优先级
 
+> **复核（2026-10-08）**：逐条比对源码后发现下表部分「已完成」标注与实际不符，已补齐：
+>
+> - **§3.1**：`@lytjs/common-is` 此前**仍本地重复定义** `NOOP/EMPTY_FN/EMPTY_OBJ/EMPTY_ARR`。
+>   已改为从 `@lytjs/common-constants` 重导出（`is/package.json` 增加依赖、`is/tsconfig.json`
+>   增加 paths 指向 constants 产物），消除重复。
+> - **§3.3**：`@lytjs/devtools` 的 `storeInspector.ts` 存在本地简化版 `deepClone`，
+>   已改用 `@lytjs/common-object` 的 `deepClone`（支持循环引用/RegExp/深度上限），并移除本地实现。
+> - **§3.2** `DebuggerEvent`：两处定义（reactivity 生产者视角 / shared-types 消费者视角）
+>   为**有意保留**并有注释说明，字段已对齐，维持现状。
+>
+> 验证：`@lytjs/common-is` 50/50、`@lytjs/devtools` 68/68 测试通过；`check-build-order`、`check-circular` 通过。
+
 ### 🔴 P0 - 立即修复 (高优先级) ✅ 已完成
 
 | 任务                                            | 状态    | 备注                                      |
@@ -385,6 +397,6 @@ export const timeout = <T>(promise: Promise<T>, ms: number) => {
 ---
 
 **报告生成时间**: 2026-05-17
-**最后更新时间**: 2026-05-17
+**最后更新时间**: 2026-10-08（复核并补齐 §3.1、§3.3 的落地）
 **分析范围**: 所有核心包和生态系统包
 **总体评估**: ✅ **完美！** 所有优化任务已完成，代码组织优秀

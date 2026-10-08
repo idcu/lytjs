@@ -84,9 +84,15 @@ export const useUserStore = defineStore('user', {
   }),
 
   getters: {
-    displayName: (state) => state.name || state.email || '匿名用户',
-    isAdmin: (state) => state.permissions.includes('admin'),
-    hasPermission: (state) => (permission: string) => state.permissions.includes(permission),
+    displayName() {
+      return this.name || this.email || '匿名用户';
+    },
+    isAdmin() {
+      return this.permissions.includes('admin');
+    },
+    hasPermission() {
+      return (permission: string) => this.permissions.includes(permission);
+    },
   },
 
   actions: {

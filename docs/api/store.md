@@ -16,7 +16,9 @@ import { defineStore } from '@lytjs/store';
 const useCounterStore = defineStore('counter', {
   state: () => ({ count: 0 }),
   getters: {
-    doubleCount: (state) => state.count * 2,
+    doubleCount() {
+      return this.count * 2;
+    },
   },
   actions: {
     increment() {
@@ -30,10 +32,10 @@ const useCounterStore = defineStore('counter', {
 
 ```typescript
 import { defineStore } from '@lytjs/store';
-import { signal, computed } from '@lytjs/reactivity';
+import { ref, computed } from '@lytjs/reactivity';
 
 const useCounterStore = defineStore('counter', () => {
-  const count = signal(0);
+  const count = ref(0);
   const doubleCount = computed(() => count.value * 2);
 
   function increment() {

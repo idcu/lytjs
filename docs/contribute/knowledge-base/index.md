@@ -30,9 +30,9 @@ size: { type: [Number, String] as unknown as PropType<number | string>, default:
 
 **适用文件**:
 
-- [Avatar.ts](file:///e:/lytjs/packages/ecosystem/packages/ui/src/components/Avatar.ts)
-- [Card.ts](file:///e:/lytjs/packages/ecosystem/packages/ui/src/components/Card.ts)
-- [Carousel.ts](file:///e:/lytjs/packages/ecosystem/packages/ui/src/components/Carousel.ts)
+- [Avatar.ts](../../../packages/ecosystem/packages/ui/src/components/Avatar.ts)
+- [Card.ts](../../../packages/ecosystem/packages/ui/src/components/Card.ts)
+- [Carousel.ts](../../../packages/ecosystem/packages/ui/src/components/Carousel.ts)
 
 ### 1.2 类型导出与导入问题
 
@@ -111,7 +111,7 @@ test: {
 
 **测试框架**: LytJS 内置 SSR 压力测试框架
 
-**测试文件**: [stress-test.ts](file:///e:/lytjs/packages/ecosystem/packages/ssr/tests/stress-test.ts)
+**测试文件**: [stress-test.ts](../../../packages/ecosystem/packages/ssr-kit/packages/ssr/tests/stress-test.ts)
 
 **测试场景**:
 
@@ -130,11 +130,11 @@ test: {
 **运行方式**:
 
 ```bash
-cd packages/ecosystem/packages/ssr
+cd packages/ecosystem/packages/ssr-kit/packages/ssr
 npx tsx tests/stress-test.ts
 ```
 
-**结果报告**: [ssr-stress-test-2026-05-16.md](file:///e:/lytjs/benchmarks/results/ssr-stress-test-2026-05-16.md)
+**结果报告**: `benchmarks/results/archive/ssr-stress-test-2026-05-16.md`
 
 ### 2.3 测试覆盖率目标
 
@@ -152,7 +152,7 @@ npx tsx tests/stress-test.ts
 
 **问题描述**: parseQuery 对空查询参数未正确处理为 null
 
-**修复位置**: [matcher.ts](file:///e:/lytjs/packages/ecosystem/packages/router/src/matcher.ts#L261-L295)
+**修复位置**: [matcher.ts](../../../packages/ecosystem/packages/web-framework/packages/router/src/matcher.ts#L261-L295)
 
 **修复代码**:
 
@@ -281,21 +281,22 @@ lytjs/
 │           ├── store/
 │           └── ssr/
 ├── docs/
-│   └── development/
-│       └── PENDING_TASKS.md
+│   └── contribute/
+│       └── other/
+│           └── pending-tasks.md
 └── benchmarks/
     └── results/
 ```
 
 ### 6.2 关键文件位置
 
-| 功能        | 文件路径                              |
-| ----------- | ------------------------------------- |
-| 类型检查    | `pnpm type-check`                     |
-| 测试运行    | `pnpm test`                           |
-| 包入口      | `packages/[package]/src/index.ts`     |
-| Vitest 配置 | `packages/[package]/vitest.config.ts` |
-| 任务清单    | `docs/development/PENDING_TASKS.md`   |
+| 功能        | 文件路径                                 |
+| ----------- | ---------------------------------------- |
+| 类型检查    | `pnpm type-check`                        |
+| 测试运行    | `pnpm test`                              |
+| 包入口      | `packages/[package]/src/index.ts`        |
+| Vitest 配置 | `packages/[package]/vitest.config.ts`    |
+| 任务清单    | `docs/contribute/other/pending-tasks.md` |
 
 ---
 
@@ -462,12 +463,12 @@ ls packages/[package]/dist/
 
 **适用场景**: SSR 性能验证、版本发布前测试
 
-**测试文件**: [packages/ecosystem/packages/ssr/tests/stress-test.ts](file:///e:/lytjs/packages/ecosystem/packages/ssr/tests/stress-test.ts)
+**测试文件**: [packages/ecosystem/packages/ssr-kit/packages/ssr/tests/stress-test.ts](../../../packages/ecosystem/packages/ssr-kit/packages/ssr/tests/stress-test.ts)
 
 **操作步骤**:
 
 1. 定位测试文件
-2. 运行压力测试：`cd packages/ecosystem/packages/ssr && npx tsx tests/stress-test.ts`
+2. 运行压力测试：`cd packages/ecosystem/packages/ssr-kit/packages/ssr && npx tsx tests/stress-test.ts`
 3. 分析测试结果（总请求数、成功率、QPS、平均响应时间等）
 4. 提取关键性能指标
 5. 生成测试报告到 `benchmarks/results/`
@@ -495,7 +496,7 @@ ls packages/[package]/dist/
 
 **适用场景**: 解决测试运行时内存溢出问题
 
-**问题测试文件示例**: [packages/reactivity/tests/edge-cases.test.ts](file:///e:/lytjs/packages/reactivity/tests/edge-cases.test.ts)
+**问题测试文件示例**: [packages/reactivity/tests/edge-cases.test.ts](../../../packages/reactivity/tests/edge-cases.test.ts)
 
 **解决方案**:
 
@@ -560,7 +561,7 @@ export default defineConfig({
 
 ### 12.5 创建官方插件
 
-**适用场景**: 在 packages/plugins/packages/ 下创建新官方插件
+**适用场景**: 在生态外迁仓 `../plugins` 下创建新官方插件（主仓自 2026-09 起不再保留插件副本）
 
 ### 12.6 包迁移与重构
 

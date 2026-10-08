@@ -184,7 +184,9 @@ export const useUserStore = defineStore('user', {
     isLoggedIn: false,
   }),
   getters: {
-    username: (state) => state.userInfo?.name || '',
+    username() {
+      return this.userInfo?.name || '';
+    },
   },
   actions: {
     login(userData) {
@@ -303,8 +305,12 @@ const useCounterStore = defineStore('counter', {
     history: [],
   }),
   getters: {
-    double: (state) => state.count * 2,
-    historyLength: (state) => state.history.length,
+    double() {
+      return this.count * 2;
+    },
+    historyLength() {
+      return this.history.length;
+    },
   },
   actions: {
     increment() {

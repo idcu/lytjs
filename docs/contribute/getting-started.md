@@ -14,7 +14,7 @@
 
 ### 2. 选择贡献类型
 
-- 🐛 **修复 Bug** - 查看 [待办任务](./other/pending-tasks.md)
+- 🐛 **修复 Bug** - 查看 [常见问题排查](./other/troubleshooting.md)
 - ✨ **新功能** - 查看 [路线图](./roadmap/current.md)
 - 📝 **文档** - 帮助完善文档
 - 🧪 **测试** - 补充测试用例

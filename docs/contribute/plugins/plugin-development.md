@@ -438,7 +438,7 @@ pnpm run build:plugins
 
 #### 更新插件统一入口
 
-在 `packages/plugins/packages/index.ts` 中添加导出：
+在生态外迁仓 `../plugins/packages/index.ts` 中添加导出（主仓自 2026-09 起不再承载插件）：
 
 ```typescript
 export { default as pluginXxx } from '@lytjs/plugin-xxx';
@@ -454,7 +454,7 @@ export { createXxx } from '@lytjs/plugin-xxx';
 resolve: {
   alias: {
     // ... 其他别名
-    '@lytjs/plugin-xxx': resolve(root, 'packages/plugins/packages/plugin-xxx/dist/index.mjs'),
+    '@lytjs/plugin-xxx': resolve(root, '../plugins/packages/plugin-xxx/dist/index.mjs'),
   },
 },
 ```
@@ -499,9 +499,9 @@ npm publish --access public
 
 ## 示例插件参考
 
-- [plugin-theme](file:///e:/lytjs/packages/plugins/packages/plugin-theme/src/index.ts) - 主题插件
-- [plugin-logger](file:///e:/lytjs/packages/plugins/packages/plugin-logger/src/index.ts) - 日志插件
-- [plugin-i18n](file:///e:/lytjs/packages/plugins/packages/plugin-i18n/src/index.ts) - 国际化插件
+- [plugin-theme](../../../../plugins/packages/plugin-theme/src/index.ts) - 主题插件
+- [plugin-logger](../../../../plugins/packages/plugin-logger/src/index.ts) - 日志插件
+- [plugin-i18n](../../../../plugins/packages/plugin-i18n/src/index.ts) - 国际化插件
 
 ---
 

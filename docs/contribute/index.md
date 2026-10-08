@@ -43,7 +43,6 @@ description: 面向 LytJS 框架贡献者的全部文档
 项目规划和进度追踪：
 
 - [路线图与后续计划](./roadmap/current.md) - 长期发展规划（v6.1-v7.0）
-- [待办任务汇总](./other/pending-tasks.md) - 当前未完成任务
 - [常见问题排查](./other/troubleshooting.md) - 常见问题解决指南
 
 ---
@@ -64,7 +63,7 @@ description: 面向 LytJS 框架贡献者的全部文档
 AI 相关文档：
 
 - [AI 开发规则](./ai/ide-rules.md) - AI 辅助开发的规范
-- [AI 智能体优化指南](./ai/agents-optimization.md) - Agent 优化指南
+- [AI 助手开发指南](./ai/assistant-guide.md) - 面向 AI 助手的省 Token 使用指南
 
 ---
 

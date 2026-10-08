@@ -395,11 +395,11 @@ import { ref, computed } from '@lytjs/reactivity';
 
 ### 创建新插件（L4）
 
-1. 在 `packages/plugins/packages/` 创建目录
+1. 在生态外迁仓 `../plugins/packages/` 创建目录（主仓自 2026-09 起不再承载插件）
 2. 使用 `definePlugin` API
 3. 遵循零第三方依赖原则
 4. 添加完整的测试和文档
-5. 在 `packages/plugins/packages/index.ts` 中导出
+5. 在 `../plugins/packages/index.ts` 中导出
 
 ### 创建新生态系统包（L6）
 

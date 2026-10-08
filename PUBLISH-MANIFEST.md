@@ -13,14 +13,14 @@
 
 ## 包分组统计
 
-| 分组               | 数量   | 说明                                     |
-| ------------------ | ------ | ---------------------------------------- |
-| 核心与运行时       | 14     | 响应式、虚拟 DOM、编译器、渲染、核心 API |
-| 工具层 (tools)     | 3      | CLI、DevTools、测试工具                  |
-| 插件层 (plugins)   | 0      | 已迁出至独立仓库 lytjs-plugins           |
-| 生态层 (ecosystem) | 22     | Router、SSR、Store、Web 框架、缓存等     |
-| Common 工具包      | 34     | 零依赖通用工具函数                       |
-| **总计**           | **86** |                                          |
+| 分组               | 数量   | 说明                                         |
+| ------------------ | ------ | -------------------------------------------- |
+| 核心与运行时       | 14     | 响应式、虚拟 DOM、编译器、渲染、核心 API     |
+| 工具层 (tools)     | 3      | CLI、DevTools、测试工具                      |
+| 插件层 (plugins)   | 0      | 已迁出至独立仓库 lytjs-plugins               |
+| 生态层 (ecosystem) | 25     | Router、SSR、Store、Web 框架、缓存、通用库等 |
+| Common 工具包      | 34     | 零依赖通用工具函数                           |
+| **总计**           | **76** |                                              |
 
 ---
 
@@ -41,12 +41,12 @@
 > 使用方式不变（`pnpm add @lytjs/plugin-xxx`），但发布流程与版本节奏归该仓管理。
 > 详见文末「已迁出的包」一节。
 
-## 4. 生态层 ecosystem（22 个）
+## 4. 生态层 ecosystem（25 个）
 
 ### ecosystem 直接子包
 
 @lytjs/ui · @lytjs/store · @lytjs/devtools · @lytjs/bundler · @lytjs/compat
-· @lytjs/runtime-edge · @lytjs/platform-adapter
+· @lytjs/runtime-edge · @lytjs/platform-adapter · @lytjs/config · @lytjs/di · @lytjs/plugin
 
 ### ssr-kit（`ecosystem/packages/ssr-kit/packages/`）
 

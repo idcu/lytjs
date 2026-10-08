@@ -37,11 +37,10 @@ lytjs/
 │   ├── core/                   # L3 完整核心（推荐使用）
 │   ├── core-signal/            # L3 仅Vapor模式
 │   ├── core-vnode/             # L3 仅VDOM模式
-│   ├── ecosystem/packages/     # L6 生态包 (ui/store/router/ssr等)
-│   └── plugins/packages/       # L4 官方插件
-├── docs/                       # 文档（如果需要详细信息）
+│   └── ecosystem/packages/     # L6 生态包 (ui/store/router/ssr 等)
+├── docs/                       # 文档（VitePress 站点，导航见 .vitepress/config.ts）
 │   ├── getting-started/quick-reference.md  # 开发者快速参考
-│   └── SUMMARY.md              # 文档导航
+│   └── SUMMARY.md              # 文档索引（简版）
 ├── examples/                   # 示例项目
 └── AGENTS.md                   # 👈 AI助手必读规则
 ```

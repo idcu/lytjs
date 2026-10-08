@@ -1,8 +1,8 @@
 # 语义化版本开发流程
 
-&gt; **文档版本**: v1.0  
-&gt; **最后更新**: 2026-05-25  
-&gt; **基于版本号**: MAJOR.MINOR.PATCH
+> **文档版本**: v1.1  
+> **最后更新**: 2026-10-08  
+> **基于版本号**: MAJOR.MINOR.PATCH
 
 ---
 
@@ -49,9 +49,9 @@ MAJOR.MINOR.PATCH
 - 文档修复
 - 类型定义修复
 
-### 推荐使用 Skill Chain
+### 开发要点
 
-使用 [patch-version](../../.trae/skills/skill-chains/SKILL.md#patch-version---patch-版本开发) 技能链
+最小化变更、补回归测试；通用流程与验证命令见 [workflow.md](./workflow.md)。
 
 ### 流程概览
 
@@ -213,9 +213,9 @@ git push origin develop
 - 新增 API（向后兼容）
 - 文档新增
 
-### 推荐使用 Skill Chain
+### 开发要点
 
-使用 [minor-version](../../.trae/skills/skill-chains/SKILL.md#minor-version---minor-版本开发) 技能链
+模块化开发、逐模块测试；通用流程见 [workflow.md](./workflow.md)。
 
 ### 流程概览
 
@@ -399,9 +399,9 @@ feat({scope}): 描述新增功能
 - 大规模性能优化
 - 移除废弃 API
 
-### 推荐使用 Skill Chain
+### 开发要点
 
-使用 [major-version](../../.trae/skills/skill-chains/SKILL.md#major-version---major-版本开发) 技能链
+分阶段（Alpha/Beta/RC）发布；通用流程见 [workflow.md](./workflow.md)。
 
 ### 流程概览
 
@@ -591,13 +591,9 @@ git checkout -b next
 
 无论哪种版本类型，发布阶段都遵循相同的流程。
 
-### 推荐使用 Skill Chain
+### 发布流程
 
-使用 [version-release](../../.trae/skills/skill-chains/SKILL.md#version-release---版本发布阶段发布流程) 技能链
-
-### 技能链
-
-使用 `version-release` 技能链
+按下方检查清单与步骤执行。
 
 ### 发布前检查清单
 
@@ -730,6 +726,5 @@ A:
 ## 相关文档
 
 - [开发流程指南](./workflow.md)
-- [技能链](../../.trae/skills/skill-chains/SKILL.md)
-- [完整发布流程](../../.trae/skills/full-release-workflow/SKILL.md)
+- [keel 入口](../../../keel/INDEX.md)
 - [Roadmap 管理](../roadmap/index.md)

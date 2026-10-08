@@ -1,8 +1,11 @@
 # LytJS 开发流程指南
 
-> 本文档详细说明了 LytJS 项目的完整开发工作流程，包括 Skill Chain 和 Skill 的使用方法
+> 本文档详细说明 LytJS 项目的完整开发工作流程。
 
-> ⚠️ **关于 `.trae/skills`**：下列步骤中引用的 `.trae/skills/**/SKILL.md` 属于本地可选工具链，已被 `.gitignore` 排除、不作为仓库内提交内容。若当前环境不存在这些文件，本文档**内联的流程、命令与规范即为权威依据**，直接按其执行即可。
+> ⚠️ **关于 `.trae/skills`**：历史上本文引用的 `.trae/skills/**/SKILL.md` 工具链**已废弃**
+> （`.trae/` 列在 `.gitignore`、不入库）。当前 AI 工具链的真源为 **keel**——任何任务开始前
+> 先读 [keel/INDEX.md](../../../keel/INDEX.md) 与其指向的 [keel/NOW.md](../../../keel/NOW.md)，
+> 并遵守 INDEX 中的检索协议。**本文档内联的流程、命令与规范即为权威依据**，不依赖任何 `.trae` 文件。
 
 ---
 
@@ -14,10 +17,9 @@
 - [阶段 3: 任务执行](#阶段-3-任务执行)
 - [阶段 4: 验证与提交](#阶段-4-验证与提交)
 - [阶段 5: 任务复盘](#阶段-5-任务复盘)
-- [Skill Chain 场景映射表](#skill-chain-场景映射表)
-- [Skill 原子技能索引](#skill-原子技能索引)
+- [场景映射表](#场景映射表)
 - [实战流程示例](#实战流程示例)
-- [记忆口诀](#记忆口诀)
+- [关键文档导航](#关键文档导航)
 
 ---
 
@@ -25,41 +27,48 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
+│  0. 点火（keel 锚点）                                                     │
+│  └─ 读 keel/INDEX.md → keel/NOW.md → 遵守检索协议（grep 定位→只读命中文件）│
+└────────────────────────────────┬────────────────────────────────────────┘
+                                 │
+                                 ↓
+┌─────────────────────────────────────────────────────────────────────────┐
 │  1. 任务接收与分析                                                        │
-│  └─ 阅读 AGENTS.md → 理解需求 → 调用 analyze-task 分析复杂度             │
+│  └─ 阅读 AGENTS.md → 理解需求 → 判定复杂度                               │
 └────────────────────────────────┬────────────────────────────────────────┘
                                  │
                                  ↓
 ┌─────────────────────────────────────────────────────────────────────────┐
 │  2. 选择入口路径                                                        │
-│  ├─ 简单任务：直接开发 → 匹配 skill-chains 中的简单链                      │
-│  ├─ 中等任务：/plan → 生成 plan.md → 按中等 skill chain 执行            │
-│  └─ 复杂任务：/spec → 生成 spec.md + tasks.md + checklist.md → 按复杂链执行  │
+│  ├─ 简单任务：直接开发                                                  │
+│  ├─ 中等任务：/plan → 生成 plan.md → 按步骤执行                          │
+│  └─ 复杂任务：/spec → 生成 spec.md + tasks.md + checklist.md → 分阶段执行 │
 └────────────────────────────────┬────────────────────────────────────────┘
                                  │
                                  ↓
 ┌─────────────────────────────────────────────────────────────────────────┐
 │  3. 任务执行                                                            │
-│  ├─ 创建分支（git-workflow）                                            │
-│  ├─ 调用对应 Skill（按 skill-usage 原则，原子级、按需、链式）            │
-│  ├─ 编写代码（遵循 code-style、function-standards 等规范）               │
-│  └─ 本地验证                                                            │
+│  ├─ 创建分支                                                           │
+│  ├─ 按需检索 keel（skills/ 操作手册、pitfalls/ 坑库、rules.md 门禁）      │
+│  ├─ 编写代码（遵循代码规范与零依赖原则）                                  │
+│  └─ 本地验证                                                           │
 └────────────────────────────────┬────────────────────────────────────────┘
                                  │
                                  ↓
 ┌─────────────────────────────────────────────────────────────────────────┐
 │  4. 验证与提交                                                          │
+│  ├─ pnpm check-build-order（新增/删除包后必跑）                          │
 │  ├─ pnpm type-check（类型检查）                                          │
 │  ├─ pnpm lint:check / pnpm lint:batch（代码检查）                       │
 │  ├─ pnpm test（运行测试）                                               │
-│  ├─ Git 提交（遵循 git-workflow 规范）                                  │
+│  ├─ Git 提交                                                            │
 │  └─ 推送                                                                │
 └────────────────────────────────┬────────────────────────────────────────┘
                                  │
                                  ↓
 ┌─────────────────────────────────────────────────────────────────────────┐
-│  5. 任务复盘（必做！）                                                  │
-│  └─ 调用 retrospective → 回顾结果 → 提取经验 → 评估 Skill 变更          │
+│  5. 任务复盘（必做！）                                                   │
+│  └─ 写回 keel/NOW.md → 提取经验 → 新坑登记 keel/pitfalls/INDEX.md         │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -67,9 +76,7 @@
 
 ## 阶段 1: 任务分析
 
-**核心 Skill**: [analyze-task](../.trae/skills/workflow/analyze-task/SKILL.md)
-
-**分析要点**:
+**要点**:
 
 1. **任务复杂度判断**:
 
@@ -82,13 +89,13 @@
 2. **需求理解**:
 
 - 阅读用户需求，明确目标
-- 理解项目背景和上下文
+- 理解项目背景和上下文（先按 keel 检索协议定位相关文件）
 - 确定任务边界和范围
 
 3. **复杂度判定**:
 
-- 使用 `analyze-task` Skill 分析
-- 根据任务类型匹配相应入口
+- 根据任务类型匹配下方[场景映射表](#场景映射表)
+- 依据复杂度选择对应入口（直接开发 / Plan / Spec）
 
 ---
 
@@ -96,12 +103,10 @@
 
 ### 简单任务: 跳过规划，直接开发
 
-- 直接匹配对应的 Skill Chain
-- 调用相关 Skill 执行
+- 直接按场景映射表执行
+- 边做边验证
 
 ### 中等任务: 创建 Plan
-
-**核心 Skill**: [create-plan](../.trae/skills/create-plan/SKILL.md)
 
 **Plan 文档应包含**:
 
@@ -109,11 +114,8 @@
 - 实现步骤
 - 涉及文件
 - 验证标准
-- 时间估算
 
 ### 复杂任务: 创建 Spec
-
-**核心 Skill**: [create-spec](../.trae/skills/create-spec/SKILL.md)
 
 **Spec 文档应包含**:
 
@@ -128,17 +130,17 @@
 
 ## 阶段 3: 任务执行
 
-### Skill 调用原则（来自 skill-usage）
+### 执行原则
 
-1. **原子性调用**: 每个 Skill 只解决一个具体问题
-2. **按需调用**: 完成一步，调用下一步
-3. **链式组合**: Skill 输出作为下一个 Skill 输入
+1. **单一职责**: 每个步骤只解决一个具体问题
+2. **按需检索**: 完成一步，按 keel 检索协议取下一步所需资料
+3. **链式衔接**: 上一步输出作为下一步输入
 
 ### 执行步骤
 
-1. **创建分支**: 使用 `git-workflow` Skill
-2. **调用对应 Skill**: 按 Skill Chain 顺序
-3. **编写代码**: 遵循 `code-style`、`function-standards` 等
+1. **创建分支**: 见下方[分支命名](#git-提交规范)
+2. **按需检索 keel**: 操作手册见 [keel/skills/INDEX.md](../../../keel/skills/INDEX.md)，坑库见 [keel/pitfalls/INDEX.md](../../../keel/pitfalls/INDEX.md)
+3. **编写代码**: 遵循代码规范与零依赖原则（见 [guidelines.md](./guidelines.md)）
 4. **本地验证**: 边开发边检查
 
 ---
@@ -173,9 +175,10 @@ pnpm test
 > 不要在 `packages/common` 或 `packages/ecosystem/packages/ssr-kit` 目录下直接跑 pnpm ——
 > 那两处原有的嵌套 `pnpm-workspace.yaml` 会让 pnpm 误认工作区（已于 2026-09 移除）。
 
-### Git 提交规范
+> 门禁真源见 [keel/checks/rules.md](../../../keel/checks/rules.md)；需 dist 的检查项在
+> `pnpm build` 之后运行，其余源码级检查可先行。
 
-**核心 Skill**: [git-workflow](../.trae/skills/git-workflow/SKILL.md)
+### Git 提交规范
 
 **提交格式**:
 
@@ -183,7 +186,7 @@ pnpm test
 type(scope): 中文描述
 
 type 可选值: feat, fix, docs, style, refactor, perf, test, chore
-scope 可选值: reactivity, vdom, compiler, core, renderer, common-*, web, tools, plugins, ecosystem
+scope 可选值: reactivity, vdom, compiler, core, renderer, common-*, web, tools, ecosystem
 ```
 
 **分支命名**:
@@ -195,101 +198,42 @@ scope 可选值: reactivity, vdom, compiler, core, renderer, common-*, web, tool
 
 ---
 
-## 阶段 5: 任务复盘（必做！）
-
-**核心 Skill**: [retrospective](../.trae/skills/retrospective/SKILL.md)
+## 阶段 5: 任务复盘
 
 **复盘内容**:
 
 1. **回顾目标与结果差距**: 任务是否完成？目标是否达成？
-2. **分析效率**: 时间是否合理？是否有可优化的地方？
-3. **质量检查**: 代码质量如何？是否有潜在问题？
+2. **分析效率**: 是否有可优化的地方？
+3. **质量检查**: 是否有潜在问题？
 4. **提取可复用经验**: 有哪些经验可以复用？
-5. **评估 Skill 变更**: 是否需要新建或完善 Skill？
+5. **写回 keel**（keel 协议要求，否则本轮不算完成）:
+   - 更新 [keel/NOW.md](../../../keel/NOW.md) 的本轮完成 / 下一步
+   - 新坑登记进 [keel/pitfalls/INDEX.md](../../../keel/pitfalls/INDEX.md) 并维护 triggers
 
 ---
 
-## Skill Chain 场景映射表
+## 场景映射表
 
-| 用户需求关键词            | 匹配 Skill Chain                                                                                                                                                                    | 复杂度   | 主要 Skill 组合                                                                |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------ |
-| 类型错误、type-check 失败 | [fix-type-error](../.trae/skills/skill-chains/SKILL.md#fix-type-error-修复类型错误)                                                                                                 | 简单     | type-check-issues → type-fix → testing                                         |
-| 测试失败、test 报错       | [fix-test-failure](../.trae/skills/skill-chains/SKILL.md#fix-test-failure-修复测试失败)                                                                                             | 简单     | test-issues → fix-test-failures → testing                                      |
-| 构建失败、build 报错      | [fix-build-error](../.trae/skills/skill-chains/SKILL.md#fix-build-error-修复构建失败)                                                                                               | 简单     | build-issues → lint-guide → testing                                            |
-| 运行报错、功能异常        | [fix-runtime-error](../.trae/skills/skill-chains/SKILL.md#fix-runtime-error-修复运行时报错)                                                                                         | 简单     | troubleshooting → debug-console → [具体修复 Skill]                             |
-| 添加功能、实现需求        | [new-feature](../.trae/skills/skill-chains/SKILL.md#new-feature-新功能开发)                                                                                                         | 中等     | create-plan → architecture-overview → code-style → test-template               |
-| 重构代码、改写            | [refactor-code](../.trae/skills/skill-chains/SKILL.md#refactor-code-代码重构)                                                                                                       | 中等     | create-plan → code-smells → refactoring-patterns                               |
-| 优化性能（单模块）        | [perf-optimize-local](../.trae/skills/skill-chains/SKILL.md#perf-optimize-local-局部性能优化)                                                                                       | 中等     | create-plan → perf-bottlenecks → perf-best-practices                           |
-| 优化性能（全面）          | [perf-optimize-system](../.trae/skills/skill-chains/SKILL.md#perf-optimize-system-系统级性能优化)                                                                                   | 复杂     | create-spec → perf-bottlenecks → vnode-pool-optimization / signal-optimization |
-| 创建生态包、新建模块      | [create-package](../.trae/skills/skill-chains/SKILL.md#create-package-创建生态包)                                                                                                   | 复杂     | create-spec → architecture-overview → create-ecosystem-package                 |
-| 创建插件                  | [create-plugin](../.trae/skills/skill-chains/SKILL.md#create-plugin-创建插件)                                                                                                       | 复杂     | create-spec → create-plugin                                                    |
-| 写文档、更新文档          | [write-docs](../.trae/skills/skill-chains/SKILL.md#write-docs-编写文档)                                                                                                             | 中等     | create-plan → chinese-writing-standards → documentation                        |
-| **修复 Bug、PATCH 版本**  | **[patch-version](../.trae/skills/skill-chains/SKILL.md#patch-version---patch-版本开发)**                                                                                           | **简单** | **smart-task-analysis → debug-code → 修复 → 测试 → 提交**                      |
-| **新增功能、MINOR 版本**  | **[minor-version](../.trae/skills/skill-chains/SKILL.md#minor-version---minor-版本开发)**                                                                                           | **中等** | **create-plan → 模块化开发 → 文档 → 发布**                                     |
-| **架构重构、MAJOR 版本**  | **[major-version](../.trae/skills/skill-chains/SKILL.md#major-version---major-版本开发)**                                                                                           | **复杂** | **create-spec → 分阶段开发 → Alpha/Beta/RC → 发布**                            |
-| 发布 npm、版本更新        | [publish-release](../.trae/skills/skill-chains/SKILL.md#publish-release-发布版本) / [version-release](../.trae/skills/skill-chains/SKILL.md#version-release---版本发布阶段发布流程) | 中等     | manage-version → generate-changelog → publish-package                          |
+> 下表给出「需求关键词 → 复杂度 → 执行要点」。历史上的 skill-chain 文件已废弃，
+> 现按内联阶段执行；需要操作细节时按 keel 检索协议查 `keel/skills/` 与 `keel/pitfalls/`。
 
----
-
-## Skill 原子技能索引
-
-### 1. 开发类核心 Skill
-
-| 类别 | Skill                 | 作用           | 文件                                                       |
-| ---- | --------------------- | -------------- | ---------------------------------------------------------- |
-| 架构 | architecture-overview | 理解 8 层架构  | [SKILL.md](../.trae/skills/architecture-overview/SKILL.md) |
-| 架构 | dependency-rules      | 依赖单向规则   | [SKILL.md](../.trae/skills/dependency-rules/SKILL.md)      |
-| 架构 | project-mapping       | 目录结构映射   | [SKILL.md](../.trae/skills/project-mapping/SKILL.md)       |
-| 开发 | dev-guide             | 开发指南       | [SKILL.md](../.trae/skills/dev-guide/SKILL.md)             |
-| 风格 | code-style            | 代码风格导航   | [SKILL.md](../.trae/skills/code-style/SKILL.md)            |
-| 风格 | code-formatting       | 格式化规则     | [SKILL.md](../.trae/skills/code-formatting/SKILL.md)       |
-| 风格 | naming-conventions    | 命名规范       | [SKILL.md](../.trae/skills/naming-conventions/SKILL.md)    |
-| 风格 | function-standards    | 函数规范       | [SKILL.md](../.trae/skills/function-standards/SKILL.md)    |
-| 风格 | comment-standards     | 注释规范       | [SKILL.md](../.trae/skills/comment-standards/SKILL.md)     |
-| 规范 | zero-dependency-rules | 零依赖检查清单 | [SKILL.md](../.trae/skills/zero-dependency-rules/SKILL.md) |
-| 规范 | native-api-guide      | 原生 API 使用  | [SKILL.md](../.trae/skills/native-api-guide/SKILL.md)      |
-
-### 2. 测试与验证类 Skill
-
-| 类别     | Skill                    | 作用         | 文件                                                          |
-| -------- | ------------------------ | ------------ | ------------------------------------------------------------- |
-| 测试     | testing                  | 测试命令指南 | [SKILL.md](../.trae/skills/testing/SKILL.md)                  |
-| 测试     | test-template            | 测试代码模板 | [SKILL.md](../.trae/skills/test-template/SKILL.md)            |
-| 测试     | fix-test-failures        | 修复测试失败 | [SKILL.md](../.trae/skills/fix-test-failures/SKILL.md)        |
-| 测试     | test-memory-optimization | 测试内存优化 | [SKILL.md](../.trae/skills/test-memory-optimization/SKILL.md) |
-| 类型     | type-fix                 | 类型修复     | [SKILL.md](../.trae/skills/type-fix/SKILL.md)                 |
-| 类型     | type-check-issues        | 类型问题排查 | [SKILL.md](../.trae/skills/type-check-issues/SKILL.md)        |
-| 代码审查 | code-review-checklist    | 审查清单     | [SKILL.md](../.trae/skills/code-review-checklist/SKILL.md)    |
-| 代码审查 | code-review-process      | 审查流程     | [SKILL.md](../.trae/skills/code-review-process/SKILL.md)      |
-
-### 3. 创建与发布类 Skill
-
-| 类别 | Skill                    | 作用           | 文件                                                          |
-| ---- | ------------------------ | -------------- | ------------------------------------------------------------- |
-| 创建 | create-ecosystem-package | 创建生态包     | [SKILL.md](../.trae/skills/create-ecosystem-package/SKILL.md) |
-| 创建 | create-plugin            | 创建插件       | [SKILL.md](../.trae/skills/create-plugin/SKILL.md)            |
-| 创建 | create-tool-script       | 创建脚本       | [SKILL.md](../.trae/skills/create-tool-script/SKILL.md)       |
-| 创建 | create-spec              | 创建 Spec 规范 | [SKILL.md](../.trae/skills/create-spec/SKILL.md)              |
-| 创建 | create-plan              | 创建 Plan 规划 | [SKILL.md](../.trae/skills/create-plan/SKILL.md)              |
-| 发布 | publish-package          | 发布 npm 包    | [SKILL.md](../.trae/skills/publish-package/SKILL.md)          |
-| 发布 | generate-changelog       | 生成变更日志   | [SKILL.md](../.trae/skills/generate-changelog/SKILL.md)       |
-| 发布 | manage-version           | 版本管理       | [SKILL.md](../.trae/skills/manage-version/SKILL.md)           |
-| 迁移 | migrate-package          | 迁移包         | [SKILL.md](../.trae/skills/migrate-package/SKILL.md)          |
-
-### 4. 性能与安全类 Skill
-
-| 类别 | Skill                   | 作用         | 文件                                                         |
-| ---- | ----------------------- | ------------ | ------------------------------------------------------------ |
-| 性能 | perf-analysis-methods   | 性能分析方法 | [SKILL.md](../.trae/skills/perf-analysis-methods/SKILL.md)   |
-| 性能 | perf-bottlenecks        | 性能瓶颈识别 | [SKILL.md](../.trae/skills/perf-bottlenecks/SKILL.md)        |
-| 性能 | perf-best-practices     | 性能优化建议 | [SKILL.md](../.trae/skills/perf-best-practices/SKILL.md)     |
-| 性能 | vnode-pool-optimization | VNode 对象池 | [SKILL.md](../.trae/skills/vnode-pool-optimization/SKILL.md) |
-| 性能 | signal-optimization     | Signal 优化  | [SKILL.md](../.trae/skills/signal-optimization/SKILL.md)     |
-| 性能 | ssr-stress-test         | SSR 压测     | [SKILL.md](../.trae/skills/ssr-stress-test/SKILL.md)         |
-| 安全 | security-checklist      | 安全检查清单 | [SKILL.md](../.trae/skills/security-checklist/SKILL.md)      |
-| 安全 | xss-check               | XSS 风险检查 | [SKILL.md](../.trae/skills/xss-check/SKILL.md)               |
-
-**完整 Skill 索引**: [SKILL_INDEX.md](../.trae/skills/SKILL_INDEX.md)
+| 用户需求关键词            | 复杂度   | 执行要点                                                        |
+| ------------------------- | -------- | --------------------------------------------------------------- |
+| 类型错误、type-check 失败 | 简单     | 定位报错点 → 修复类型 → `pnpm type-check` 复验                  |
+| 测试失败、test 报错       | 简单     | 复现失败 → 修复（参考 pitfalls/verify）→ `pnpm test` 复验       |
+| 构建失败、build 报错      | 简单     | `pnpm check-build-order` → 修依赖/顺序 → 重建                   |
+| 运行报错、功能异常        | 简单     | 最小复现 → 定位根因 → 修复 → 回归测试                           |
+| 添加功能、实现需求        | 中等     | Plan → 确认架构层级 → 编码 → 测试 → 文档                        |
+| 重构代码、改写            | 中等     | Plan → 保持行为不变 → 全量测试                                  |
+| 优化性能（单模块）        | 中等     | Plan → 基准测量 → 优化 → 对比验证                               |
+| 优化性能（全面）          | 复杂     | Spec → 基准基线 → 分阶段优化 → 回归对比                         |
+| 创建生态包、新建模块      | 复杂     | Spec → 登记 build-order → 建包 → 测试 → 文档                    |
+| 创建插件                  | 复杂     | 在生态外迁仓 `../plugins` 建包 → 测试 → 文档                    |
+| 写文档、更新文档          | 中等     | Plan → 遵循[中文文档规范](../principles/chinese-docs.md) → 校验 |
+| **修复 Bug、PATCH 版本**  | **简单** | **定位 → 最小修复 → 测试 → 提交**                               |
+| **新增功能、MINOR 版本**  | **中等** | **Plan → 模块化开发 → 文档 → 发布**                             |
+| **架构重构、MAJOR 版本**  | **复杂** | **Spec → 分阶段（Alpha/Beta/RC）→ 发布**                        |
+| 发布 npm、版本更新        | 中等     | 版本升级见 [version-workflow.md](./version-workflow.md)         |
 
 ---
 
@@ -300,19 +244,15 @@ scope 可选值: reactivity, vdom, compiler, core, renderer, common-*, web, tool
 ```
 1. 用户："修复 type-check 错误"
    ↓
-2. 匹配 skill-chain：fix-type-error
+2. 定位报错点（按需检索 keel）
    ↓
-3. 调用 type-check-issues 排查问题
+3. 修复类型
    ↓
-4. 调用 type-fix 修复
+4. pnpm type-check 通过
    ↓
-5. 调用 testing 验证
+5. Git 提交
    ↓
-6. pnpm type-check 通过
-   ↓
-7. Git 提交
-   ↓
-8. 调用 retrospective 复盘
+6. 写回 keel/NOW.md 复盘
 ```
 
 ### 示例 2: 创建新功能（中等任务）
@@ -320,23 +260,19 @@ scope 可选值: reactivity, vdom, compiler, core, renderer, common-*, web, tool
 ```
 1. 用户："实现一个新组件"
    ↓
-2. 匹配 skill-chain：new-feature
+2. 生成 plan.md
    ↓
-3. 调用 create-plan → 生成 plan.md
+3. 确认架构层级（keel/ARCHITECTURE.md）
    ↓
-4. 调用 architecture-overview → 确定放置层级
+4. 遵循代码规范开发
    ↓
-5. 调用 code-style → 遵循规范
+5. 编写测试
    ↓
-6. 调用 test-template → 编写测试
+6. 验证（type-check + lint + test）
    ↓
-7. 开发功能
+7. Git 提交
    ↓
-8. 验证（type-check + lint + test）
-   ↓
-9. Git 提交
-   ↓
-10. 调用 retrospective 复盘
+8. 写回 keel/NOW.md 复盘
 ```
 
 ### 示例 3: 创建生态包（复杂任务）
@@ -344,58 +280,39 @@ scope 可选值: reactivity, vdom, compiler, core, renderer, common-*, web, tool
 ```
 1. 用户："创建一个新的 UI 组件包"
    ↓
-2. 匹配 skill-chain：create-package
+2. 生成 spec.md + tasks.md + checklist.md
    ↓
-3. 调用 create-spec → 生成 spec.md + tasks.md + checklist.md
+3. 理解架构（keel/ARCHITECTURE.md）
    ↓
-4. 调用 architecture-overview → 理解架构
+4. 创建包并在 scripts/build-order.ts 登记
    ↓
-5. 调用 create-ecosystem-package → 创建包
+5. 按 tasks.md 执行开发
    ↓
-6. 按 tasks.md 执行开发
+6. 验证
    ↓
-7. 验证
+7. Git 提交
    ↓
-8. Git 提交
-   ↓
-9. 调用 retrospective 复盘
+8. 写回 keel/NOW.md 复盘
 ```
-
----
-
-## 记忆口诀
-
-### 开发五步走
-
-1. **分析**（analyze-task）→ 定复杂度
-2. **规划**（Plan/Spec）→ 选路径
-3. **执行**（按 Skill Chain）→ 原子级开发
-4. **验证**（type-check + lint + test）→ 确保质量
-5. **复盘**（retrospective）→ 沉淀经验
-
-### Skill 调用三原则
-
-1. 原子性，一个 Skill 一件事
-2. 按需调用，一步步来
-3. 链式组合，前后衔接
 
 ---
 
 ## 关键文档导航
 
-| 文档        | 作用                | 链接                                                            |
-| ----------- | ------------------- | --------------------------------------------------------------- |
-| 入口规则    | 项目入口，必看      | [AGENTS.md](../../../AGENTS.md)                                 |
-| 技能链      | 预定义 Skill 组合   | [skill-chains](../.trae/skills/skill-chains/SKILL.md)           |
-| 任务类型    | 任务与 Skill 映射   | [task-types](../.trae/skills/task-types/SKILL.md)               |
-| 完整索引    | 所有 Skill 列表     | [SKILL_INDEX.md](../.trae/skills/SKILL_INDEX.md)                |
-| 命令参考    | 常用命令速查        | [command-reference](../.trae/skills/command-reference/SKILL.md) |
-| 开发规范    | 详细开发规范        | [DEVELOPMENT_GUIDELINES.md](./guidelines.md)                    |
-| 架构设计    | 8 层架构详解        | [ARCHITECTURE.md](../architecture/8-layer-architecture.md)      |
-| AI IDE 规则 | AI IDE 开发核心规则 | [AI_IDE_RULES.md](../ai/ide-rules.md)                           |
+| 文档                 | 作用                       | 链接                                                               |
+| -------------------- | -------------------------- | ------------------------------------------------------------------ |
+| 入口规则             | 项目入口，必看             | [AGENTS.md](../../../AGENTS.md)                                    |
+| keel 入口 / 检索协议 | AI 工具链真源              | [keel/INDEX.md](../../../keel/INDEX.md)                            |
+| keel 操作手册        | shim / 构建顺序 / 反向验证 | [keel/skills/INDEX.md](../../../keel/skills/INDEX.md)              |
+| keel 坑库            | 症状 → 文件                | [keel/pitfalls/INDEX.md](../../../keel/pitfalls/INDEX.md)          |
+| keel 门禁真源        | 快慢档 / 棘轮              | [keel/checks/rules.md](../../../keel/checks/rules.md)              |
+| 版本开发流程         | PATCH/MINOR/MAJOR          | [version-workflow.md](./version-workflow.md)                       |
+| 开发规范             | 详细开发规范               | [guidelines.md](./guidelines.md)                                   |
+| 架构设计             | 8 层架构详解               | [8-layer-architecture.md](../architecture/8-layer-architecture.md) |
+| AI IDE 规则          | AI IDE 开发核心规则        | [ide-rules.md](../ai/ide-rules.md)                                 |
 
 ---
 
-**文档版本**: v1.0
-**最后更新**: 2026-05-18
+**文档版本**: v2.0（去除废弃 `.trae/skills` 引用，改锚 keel）
+**最后更新**: 2026-10-08
 **维护者**: LytJS Team

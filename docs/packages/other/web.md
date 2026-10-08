@@ -1,6 +1,6 @@
 # @lytjs/web
 
-> Web 平台工具包，提供 CSS 变量管理、ResizeObserver、Web Components 等 Web 特定功能
+> Web 平台工具包，提供 CSS 变量管理与 ResizeObserver 支持。
 
 ## 安装
 
@@ -8,169 +8,100 @@
 npm install @lytjs/web
 ```
 
-## 核心功能
+## CSS 变量管理
 
-### CSS 变量管理
+`@lytjs/web` 导出的核心函数：`setCSSVar`、`getCSSVar`、`setCSSVars`、`getCSSVars`、
+`removeCSSVar`、`removeCSSVars`、`hasCSSVar`、`getAllCSSVars`、`toggleCSSVar`、
+`normalizeVarName`、`stripVarPrefix`，以及类 `CSSVarObserver`、`ThemeManager`。
+类型：`CSSVarValue`、`CSSVarChangeCallback`、`CSSVarOptions`、`ThemeConfig`。
 
 ```typescript
-import { setCssVar, getCssVar, removeCssVar, setCssVars, watchCssVar } from '@lytjs/web';
+import { setCSSVar, getCSSVar, setCSSVars, removeCSSVar, toggleCSSVar } from '@lytjs/web';
 
-// 设置 CSS 变量
-setCssVar('--primary-color', '#1890ff');
-setCssVar('--font-size', '14px', document.documentElement);
+// 设置全局 CSS 变量（元素为 document.documentElement）
+setCSSVar({ name: '--primary-color', value: '#1890ff' });
+setCSSVar({ element: document.body, name: '--font-size', value: 16, options: { unit: 'px' } });
 
-// 获取 CSS 变量
-const color = getCssVar('--primary-color');
-
-// 移除 CSS 变量
-removeCssVar('--primary-color');
+// 读取
+const color = getCSSVar('--primary-color');
 
 // 批量设置
-setCssVars({
-  '--primary-color': '#1890ff',
-  '--secondary-color': '#52c41a',
-  '--font-size': '14px',
-});
+setCSSVars({ '--primary-color': '#1890ff', '--secondary-color': '#52c41a' });
 
-// 监听 CSS 变量变化
-const unwatch = watchCssVar('--primary-color', (newVal, oldVal) => {
-  console.log('CSS 变量变化:', oldVal, '->', newVal);
-});
+// 移除（value 传 null 亦可移除）
+removeCSSVar('--primary-color');
+
+// 在两组取值间切换
+const next = toggleCSSVar('--theme', 'light', 'dark');
 ```
 
-### ResizeObserver
+> 兼容说明：`setCSSVar(element, name, value, options)` 位置参数形式**仍可用但已标记 `@deprecated`**，
+> 推荐改用对象参数形式 `setCSSVar({ element, name, value, options })`。
+
+### CSSVarObserver
+
+`CSSVarObserver` 用于监听元素上 CSS 变量的变化（内部基于 `MutationObserver`）。
+参数/回调类型见 `CSSVarOptions` 与 `CSSVarChangeCallback`。
 
 ```typescript
-import { useResizeObserver, createResizeObserver, type ResizeObserverEntry } from '@lytjs/web';
+import { CSSVarObserver } from '@lytjs/web';
 
-// 使用 ResizeObserver
-const cleanup = useResizeObserver(
-  document.getElementById('container'),
-  (entries: ResizeObserverEntry[]) => {
-    for (const entry of entries) {
-      console.log('尺寸变化:', entry.contentRect);
-    }
-  },
-);
-
-// 停止监听
-cleanup();
-
-// 创建可复用的 ResizeObserver
-const observer = createResizeObserver((entries) => {
-  // 处理尺寸变化
+const observer = new CSSVarObserver((changes) => {
+  for (const c of changes) console.log(c.name, c.oldValue, '->', c.newValue);
 });
-
-observer.observe(element1);
-observer.observe(element2);
+observer.observe(document.documentElement, ['--primary-color']);
+// 不需要时：
 observer.disconnect();
 ```
 
-### Web Components
+### ThemeManager
+
+`ThemeManager` 基于 CSS 变量管理主题（构造参数为 `ThemeConfig`）。
 
 ```typescript
-import {
-  defineLytElement,
-  useShadowRoot,
-  useHost,
-  useWebComponentSlots,
-  injectChildStyles,
-} from '@lytjs/web';
+import { ThemeManager } from '@lytjs/web';
 
-// 定义 Web Component
-const MyElement = defineLytElement({
-  name: 'my-element',
-  props: {
-    title: String,
-    count: Number,
-  },
-  setup(props) {
-    const shadowRoot = useShadowRoot();
-    const host = useHost();
-    const slots = useWebComponentSlots();
-
-    return () => h('div', [h('h1', props.title), h('p', `Count: ${props.count}`), h('slot')]);
-  },
+const themes = new ThemeManager({
+  /* ThemeConfig */
 });
-
-// 注册自定义元素
-customElements.define('my-element', MyElement);
 ```
 
-### 媒体查询
+## ResizeObserver
+
+导出的函数/类：`useResizeObserver`、`supportsResizeObserver`、`ResizeObserverManager`；
+类型：`ResizeObserverCallback`、`ResizeObserverOptions`、`ResizeObserverStats`。
 
 ```typescript
-import { useMediaQuery, usePreferredColorScheme, usePreferredReducedMotion } from '@lytjs/web';
+import { useResizeObserver, supportsResizeObserver, ResizeObserverManager } from '@lytjs/web';
 
-// 响应式断点
-const isMobile = useMediaQuery('(max-width: 768px)');
-const isTablet = useMediaQuery('(min-width: 769px) and (max-width: 1024px)');
-const isDesktop = useMediaQuery('(min-width: 1025px)');
+// 一次性监听：返回清理函数
+const cleanup = useResizeObserver(document.getElementById('container')!, (entries) => {
+  for (const entry of entries) console.log('尺寸变化:', entry.contentRect);
+});
+cleanup();
 
-// 系统主题偏好
-const colorScheme = usePreferredColorScheme(); // 'light' | 'dark'
-const reducedMotion = usePreferredReducedMotion(); // boolean
-```
-
-### 网络状态
-
-```typescript
-import { useOnline, useNetworkStatus } from '@lytjs/web';
-
-// 在线状态
-const isOnline = useOnline();
-
-// 详细网络状态
-const network = useNetworkStatus();
-// {
-//   online: boolean,
-//   type: 'wifi' | '4g' | '3g' | '2g' | 'slow-2g',
-//   downlink: number,
-//   rtt: number,
-// }
-```
-
-### 页面可见性
-
-```typescript
-import { usePageVisibility } from '@lytjs/web';
-
-const isVisible = usePageVisibility();
-
-// 页面可见性变化时
-if (isVisible) {
-  // 恢复动画、轮询等
-} else {
-  // 暂停动画、轮询等
+// 可复用管理器（可 observe 多个元素）
+if (supportsResizeObserver()) {
+  const manager = new ResizeObserverManager((entries) => {
+    /* 处理尺寸变化 */
+  });
+  manager.observe(element1);
+  manager.observe(element2);
+  manager.disconnect();
 }
 ```
 
-### 鼠标/触摸位置
+> 注意：`ResizeObserverEntry` 是 **DOM 原生类型**，并非 `@lytjs/web` 的导出。
 
-```typescript
-import { useMousePosition, useMouseInElement, useWindowScroll } from '@lytjs/web';
+## 未实现 / 规划中
 
-// 鼠标位置
-const { x, y } = useMousePosition();
+以下 API 在本仓**不存在**（历史文档曾承诺，勿直接使用）：
 
-// 元素内相对位置
-const { x: elX, y: elY, isOutside } = useMouseInElement(elementRef);
-
-// 窗口滚动
-const { x: scrollX, y: scrollY } = useWindowScroll();
-```
-
-## 类型定义
-
-```typescript
-import type {
-  ResizeObserverEntry,
-  ResizeObserverCallback,
-  LytElementOptions,
-  LytElementConstructor,
-  NetworkStatus,
-} from '@lytjs/web';
-```
+- Web Components 辅助：`defineLytElement`、`useShadowRoot`、`useHost`、`useWebComponentSlots`、`injectChildStyles`
+- 媒体查询/系统偏好：`useMediaQuery`、`usePreferredColorScheme`、`usePreferredReducedMotion`
+- 网络与可见性：`useOnline`、`useNetworkStatus`、`usePageVisibility`
+- 指针/滚动：`useMousePosition`、`useMouseInElement`、`useWindowScroll`
+- 低层工厂：`createResizeObserver`、`watchCssVar`（请改用 `ResizeObserverManager` 与 `CSSVarObserver`）
 
 ## 相关包
 
@@ -180,4 +111,4 @@ import type {
 
 ## 依赖版本
 
-本包为纯工具包，无外部 @lytjs 依赖
+本包为纯工具包，无外部 @lytjs 依赖。

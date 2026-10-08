@@ -34,26 +34,25 @@ function createVNode(
 
 ```ts
 import { createVNode } from '@lytjs/vdom';
-// ⚠️ 下列 API 在 @lytjs/vdom 尚未实现（文档曾承诺）：h
 
 // 元素节点
 const divVNode = createVNode('div', { class: 'container' }, 'Hello');
 
 // 组件节点
 const CompVNode = createVNode(MyComponent, { msg: 'hi' });
-
-// 使用 h 函数更简洁
-const button = h('button', { onClick: handleClick }, 'Click me');
 ```
 
 ---
 
 ### h() / createElement()
 
-`h` 是 `createVNode` 的别名，提供更简洁的调用方式。
+> `h` **不属于 `@lytjs/vdom`**——它是 VNode 模式的语法糖，由 `@lytjs/core` 与 `@lytjs/core-vnode` 导出
+> （见 `packages/core/src/index.ts`）。
 
 ```ts
-// 与 createVNode 完全等价
+import { h } from '@lytjs/core'; // 或 '@lytjs/core-vnode'
+
+// 与 createVNode 等价
 const vnode = h('div', { id: 'app' }, 'Content');
 
 // 支持 children 数组
@@ -118,7 +117,7 @@ function cloneVNode(
 
 ```ts
 import { cloneVNode } from '@lytjs/vdom';
-// ⚠️ 下列 API 在 @lytjs/vdom 尚未实现（文档曾承诺）：h
+import { h } from '@lytjs/core'; // h 由 core / core-vnode 提供
 
 const original = h('button', { class: 'btn', disabled: false }, 'Click');
 const cloned = cloneVNode(original, { disabled: true });

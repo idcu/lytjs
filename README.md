@@ -17,7 +17,7 @@
 ## 能力状态
 
 > 本表以**磁盘实测**为准（2026-09-26 全维度审计 + 同日整改）。
-> 详见 [审计报告](../LYTJS_FULL_AUDIT_2026-09-26.md) 与 [整改进展](../AUDIT_REMEDIATION_PROGRESS.md)。
+> 详见 [审计报告](../archive/LYTJS_FULL_AUDIT_2026-09-26.md) 与 [整改进展](../archive/AUDIT_REMEDIATION_PROGRESS.md)。
 > 门禁：`pnpm check-runtime-contract`（产物 ↔ 运行时契约）与
 > `packages/core/tests/e2e-template-render.test.ts`（端到端真实 DOM 断言）。
 

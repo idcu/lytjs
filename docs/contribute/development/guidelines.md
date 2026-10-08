@@ -167,10 +167,10 @@ function assertUser(value: unknown): asserts value is User {
 
 ```typescript
 // ✅ 推荐：优先使用 signal 模式（新代码）
-import { signal, computed } from '@lytjs/reactivity';
+import { signal, computed, ref, reactive } from '@lytjs/reactivity';
 
 const count = signal(0);
-const doubled = computed(() => count.value * 2);
+const doubled = computed(() => count() * 2);
 
 // ✅ 推荐：ref 用于需要响应式的基础类型
 const name = ref('LytJS');
@@ -181,8 +181,8 @@ const state = reactive({
   name: 'LytJS',
 });
 
-// ❌ 避免：在 signal.set 的回调中做太多事情
-// count.set(c => {
+// ❌ 避免：在 signal.update 的回调中做太多事情
+// count.update((c) => {
 //   // 避免复杂逻辑
 //   return c + 1;
 // });
@@ -318,7 +318,7 @@ const host: HostContract = {
 // ⚠️ 下列 API 在 @lytjs/adapter-web 尚未实现（文档曾承诺）：webAdapter
 
 // ✅ 推荐：使用 @lytjs/web 工具
-import { cssVars, resizeObserver } from '@lytjs/web';
+import { setCSSVar, useResizeObserver } from '@lytjs/web';
 
 // ✅ 推荐：使用事件正规化
 // ⚠️ 下列 API 在 @lytjs/common-event-normalizer 尚未实现（文档曾承诺）：normalizeEvent

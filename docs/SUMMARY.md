@@ -168,15 +168,21 @@
 - [AI 助手](./contribute/ai/index.md)
   - [助手开发指南](./contribute/ai/assistant-guide.md)
   - [IDE 规则](./contribute/ai/ide-rules.md)
-  - [Agents 优化](./contribute/ai/agents-optimization.md)
 - [其他](./contribute/other/index.md)
   - [代码分析报告](./contribute/other/code-analysis-report.md)
   - [社区行为准则](./contribute/other/code-of-conduct.md)
   - [社区激励计划](./contribute/other/incentive-program.md)
-  - [待办任务](./contribute/other/pending-tasks.md)
   - [第三方生态](./contribute/other/third-party-ecosystem.md)
   - [故障排除](./contribute/other/troubleshooting.md)
-  - [v6.4 到 v6.5 过渡](./contribute/other/v64-v65-transition.md)
+
+## 📐 设计笔记
+
+- [设计笔记概览](./design/index.md)
+- [组件占位与 hydration](./design/component-placeholder-and-hydration.md)
+- [Signal 多插值缺陷登记](./design/known-issue-multi-interpolation.md)
+- [Signal 模板表达式支持](./design/signal-expression-support.md)
+- [SSR 组件 / 插槽渲染](./design/ssr-component-slots.md)
+- [会话交付清单 2026-09](./design/session-delivery-2026-09.md)
 
 ## 👥 社区
 

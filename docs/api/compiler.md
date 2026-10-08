@@ -629,6 +629,8 @@ function createConditionalExpression(
 
 ### createCacheExpression()
 
+> ⚠️ **本仓未实现**：`@lytjs/compiler` 未导出 `createCacheExpression`（文档曾承诺）。
+
 创建缓存表达式节点（用于 `v-memo` 优化）。
 
 ```ts
@@ -642,6 +644,8 @@ function createCacheExpression(
 ---
 
 ### createSSRCallExpression()
+
+> ⚠️ **本仓未实现**：`@lytjs/compiler` 未导出 `createSSRCallExpression`（文档曾承诺）。
 
 创建 SSR 调用表达式。
 
@@ -663,19 +667,29 @@ Source Map 生成器类。
 
 ```ts
 class SourceMapGenerator {
-  constructor(options?: { file?: string; sourceRoot?: string });
+  constructor(file?: string, sourceRoot?: string);
 
-  /** 添加源映射 */
-  addMapping(source: string, line: number, column: number): void;
+  /** 添加从原始源码到生成代码的位置映射（行/列均为 0-based） */
+  addMapping(
+    originalLine: number,
+    originalColumn: number,
+    generatedLine: number,
+    generatedColumn: number,
+    name?: string,
+    originalColumnExact?: number,
+  ): void;
 
-  /** 添加原始映射 */
-  addRawMapping(mapping: RawSourceMap): void;
+  /** 添加源文件（可多次调用以合并同一源） */
+  addSource(source: string, content?: string): number;
 
-  /** 生成 Source Map 字符串 */
-  toString(): string;
-
-  /** 生成 JSON 对象 */
+  /** 生成 RawSourceMap 对象 */
   toJSON(): RawSourceMap;
+
+  /** 生成 base64 data URI（data:application/json;base64,...） */
+  toBase64(): string;
+
+  /** 生成 //# sourceMappingURL 注释 */
+  toComment(): string;
 }
 ```
 
@@ -686,33 +700,29 @@ class SourceMapGenerator {
 创建 Source Map 生成器。
 
 ```ts
-function createSourceMapGenerator(options?: {
-  file?: string;
+interface SourceMapBuildOptions {
+  filename?: string;
+  sourceContent?: string;
   sourceRoot?: string;
-}): SourceMapGenerator;
+}
+function createSourceMapGenerator(options?: SourceMapBuildOptions): SourceMapGenerator;
 ```
 
 **示例：**
 
 ```ts
-import { compile, createSourceMapGenerator } from '@lytjs/compiler';
-
-const result = compile(template, {
-  sourceMap: true,
-  filename: 'MyComponent.vue',
-});
+import { createSourceMapGenerator } from '@lytjs/compiler';
 
 const map = createSourceMapGenerator({
-  file: 'MyComponent.vue',
+  filename: 'MyComponent.vue',
   sourceRoot: '/src',
 });
 
-// 添加映射
-result.map!.mappings.split(',').forEach((encoded) => {
-  map.addRawMapping(/* decoded mapping */);
-});
+// 添加映射（原始行/列 → 生成行/列，均为 0-based）
+map.addMapping(0, 0, 0, 0, 'div');
 
-const sourceMap = map.toString();
+const sourceMap = map.toJSON(); // RawSourceMap 对象
+const dataUri = map.toBase64(); // data:application/json;base64,...
 ```
 
 ---

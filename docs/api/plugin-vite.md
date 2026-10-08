@@ -1,5 +1,8 @@
 # @lytjs/plugin-vite API 参考
 
+> ℹ️ `@lytjs/plugin-vite` 已于 2026-09 迁出至独立仓库（npm 包名不变）。
+> 本仓不再承载其源码；下方 API 参考保持与发布版本一致，源码位置见仓根 `PUBLISH-MANIFEST.md`「已迁出的包」。
+
 ## 安装
 
 ```bash

@@ -8,6 +8,7 @@ export default defineConfig({
     // 仓库内部工具链 / 文档引用（非 VitePress 站点页面）
     /\.trae\//,
     /\.ai\//,
+    /keel\//,
     /AGENTS/,
     /CHANGELOG/,
     /README$/,
@@ -40,6 +41,7 @@ export default defineConfig({
       { text: 'API 参考', link: '/api/', activeMatch: '/api/' },
       { text: '示例', link: '/examples/', activeMatch: '/examples/' },
       { text: '贡献指南', link: '/contribute/', activeMatch: '/contribute/' },
+      { text: '设计笔记', link: '/design/', activeMatch: '/design/' },
       { text: '社区', link: '/community/', activeMatch: '/community/' },
     ],
 
@@ -264,7 +266,6 @@ export default defineConfig({
             { text: 'AI 助手', link: '/contribute/ai/' },
             { text: '助手开发指南', link: '/contribute/ai/assistant-guide' },
             { text: 'IDE 规则', link: '/contribute/ai/ide-rules' },
-            { text: 'Agents 优化', link: '/contribute/ai/agents-optimization' },
           ],
         },
         {
@@ -274,10 +275,8 @@ export default defineConfig({
             { text: '代码分析', link: '/contribute/other/code-analysis-report' },
             { text: '社区行为准则', link: '/contribute/other/code-of-conduct' },
             { text: '社区激励计划', link: '/contribute/other/incentive-program' },
-            { text: '待办任务', link: '/contribute/other/pending-tasks' },
             { text: '第三方生态', link: '/contribute/other/third-party-ecosystem' },
             { text: '故障排除', link: '/contribute/other/troubleshooting' },
-            { text: 'v6.4 到 v6.5', link: '/contribute/other/v64-v65-transition' },
           ],
         },
       ],
@@ -312,6 +311,19 @@ export default defineConfig({
         {
           text: '参考资料',
           items: [{ text: '参考资料', link: '/reference/' }],
+        },
+      ],
+      '/design/': [
+        {
+          text: '设计笔记',
+          items: [
+            { text: '概览', link: '/design/' },
+            { text: '组件占位与 hydration', link: '/design/component-placeholder-and-hydration' },
+            { text: 'Signal 多插值缺陷', link: '/design/known-issue-multi-interpolation' },
+            { text: 'Signal 模板表达式', link: '/design/signal-expression-support' },
+            { text: 'SSR 组件 / 插槽', link: '/design/ssr-component-slots' },
+            { text: '会话交付清单 2026-09', link: '/design/session-delivery-2026-09' },
+          ],
         },
       ],
     },

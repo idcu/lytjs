@@ -96,6 +96,10 @@ LytJS 框架的 API 参考文档，按包分类组织。
 | `preloadComponent`           | 预加载组件         | [renderer.md](./renderer#preloadcomponent)           |
 | `prefetchComponent`          | 预取组件           | [renderer.md](./renderer#prefetchcomponent)          |
 
+> ⚠️ 上表中 `hydrateIslandOnVisible` / `hydrateIslandOnIdle` / `hydrateIslandOnInteraction` /
+> `defineLazyComponent` / `preloadComponent` / `prefetchComponent` **尚未实现**（文档曾承诺），
+> 对应章节已标注；请勿在生产代码中使用。
+
 ### 核心 API
 
 | API                    | 说明                | 文档                                   |

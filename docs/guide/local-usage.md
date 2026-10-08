@@ -244,26 +244,28 @@ app.mount('#app');
 
 ```typescript
 import { defineStore, storeToRefs } from '@lytjs/store';
-import { signal, computed } from '@lytjs/reactivity';
+import { ref, computed } from '@lytjs/reactivity';
 
 // Option Store 风格
 export const useCounterStore = defineStore('counter', {
   state: () => ({
-    count: signal(0),
+    count: 0,
   }),
   getters: {
-    double: (state) => computed(() => state.count.value * 2),
+    double() {
+      return this.count * 2;
+    },
   },
   actions: {
     increment() {
-      this.count.value++;
+      this.count++;
     },
   },
 });
 
 // Setup Store 风格
 export const useUserStore = defineStore('user', () => {
-  const name = signal('');
+  const name = ref('');
   const isLoggedIn = computed(() => name.value !== '');
 
   function login(userName: string) {

@@ -93,15 +93,15 @@ import { signal, computed, effect } from '@lytjs/reactivity';
 const count = signal(0);
 
 // 计算属性
-const double = computed(() => count.value * 2);
+const double = computed(() => count() * 2);
 
 // 副作用
 effect(() => {
-  console.log('Count changed:', count.value);
+  console.log('Count changed:', count());
 });
 
 // 更新值
-count.value++;
+count.update((n) => n + 1);
 ```
 
 #### Ref & Reactive
@@ -257,7 +257,9 @@ import { defineStore, createPinia } from '@lytjs/store';
 const useCounterStore = defineStore('counter', {
   state: () => ({ count: 0 }),
   getters: {
-    double: (state) => state.count * 2,
+    double() {
+      return this.count * 2;
+    },
   },
   actions: {
     increment() {

@@ -153,19 +153,22 @@ count.dispose();
 
 ### computed (Signal 版本)
 
-创建计算 Signal，惰性求值、自动依赖追踪
+创建可调用的计算 Signal（惰性求值、自动依赖追踪）
 
 ```typescript
-import { signal, computed } from '@lytjs/reactivity';
+import { signal, computedSignal } from '@lytjs/reactivity';
 
 const count = signal(1);
-const doubled = computed(() => count() * 2);
+const doubled = computedSignal(() => count() * 2);
 
 console.log(doubled()); // 2
 
 // 停止计算信号的依赖追踪
 doubled.dispose();
 ```
+
+> 注：`computed()` 返回的是 Vue 风格、带 `.value` 的只读计算对象；
+> 需要**可调用**（`doubled()`）的计算 Signal 请用 `computedSignal()`。
 
 ### writableComputedSignal
 
