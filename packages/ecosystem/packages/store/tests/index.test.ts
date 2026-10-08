@@ -488,4 +488,126 @@ describe('@lytjs/store', () => {
       expect(store.data).toBe('fetched');
     });
   });
+
+  // 补测定义在 defineStore 里但此前无用例触达的真实分支（2026-10-09 分支覆盖率补口）
+  describe('defineStore · 分支补测', () => {
+    it('options：action 应能经 this 读 getter 并调用其他 action', () => {
+      const useStore = defineStore('this-ctx', {
+        state: () => ({ count: 2 }),
+        getters: {
+          double() {
+            return this.count * 2;
+          },
+        },
+        actions: {
+          bump(n: number) {
+            this.count += n;
+            return this.double;
+          },
+          bumpTwice() {
+            return this.bump(3) + this.double;
+          },
+        },
+      });
+      const store = useStore();
+      expect(store.bump(1)).toBe(6); // count=3 ⇒ double=6（经 this 读 getter）
+      expect(store.bumpTwice()).toBe(24); // count=6 ⇒ 12+12（经 this 调另一 action）
+      expect(store.count).toBe(6);
+    });
+
+    it('options：$patch(function) 应通知订阅者', () => {
+      const useStore = defineStore('patch-fn', { state: () => ({ a: 1 }) });
+      const store = useStore();
+      const sub = vi.fn();
+      store.$subscribe(sub);
+      store.$patch((s) => {
+        s.a = 100;
+      });
+      expect(store.a).toBe(100);
+      expect(sub).toHaveBeenCalledTimes(1);
+      expect(sub.mock.calls[0][0].type).toBe('patch function');
+    });
+
+    it('options：$patch(object) 应通知订阅者且忽略未知键', () => {
+      const useStore = defineStore('patch-obj', { state: () => ({ a: 1 }) });
+      const store = useStore();
+      const sub = vi.fn();
+      store.$subscribe(sub);
+      store.$patch({ a: 10, unknownKey: 1 } as never);
+      expect(store.a).toBe(10);
+      expect((store.$state as Record<string, unknown>).unknownKey).toBeUndefined();
+      expect(sub).toHaveBeenCalledTimes(1);
+      expect(sub.mock.calls[0][0].type).toBe('patch object');
+    });
+
+    it('options：未提供 state 的 store 应可用（空初始状态）', () => {
+      const useActions = defineStore('no-state', {
+        actions: {
+          ping() {
+            return 'pong';
+          },
+        },
+      });
+      const store = useActions();
+      expect(store.$state).toEqual({});
+      expect(store.ping()).toBe('pong');
+      store.$patch({ anything: 1 } as never); // 键不在 state ⇒ 跳过且不抛
+      expect(store.$state).toEqual({});
+    });
+
+    it('setup：action 同步抛错应触发 $onAction 的 onError 并继续向外抛', () => {
+      const useStore = defineStore('setup-throw', () => {
+        const boom = () => {
+          throw new Error('setup boom');
+        };
+        return { boom };
+      });
+      const store = useStore();
+      let caught: Error | undefined;
+      store.$onAction((ctx) => {
+        ctx.onError = (e) => {
+          caught = e as Error;
+        };
+      });
+      expect(() => store.boom()).toThrow('setup boom');
+      expect(caught?.message).toBe('setup boom');
+    });
+
+    it('setup：显式传入 pinia 应把 store 注册进 pinia.state', () => {
+      const pinia = createPinia();
+      const useStore = defineStore('setup-pinia', () => {
+        const n = ref(1);
+        return { n };
+      });
+      const store = useStore(pinia);
+      expect(pinia.state.value['setup-pinia']).toBeDefined();
+      expect(store.n).toBe(1);
+    });
+
+    it('setup：$patch(function) 应写穿透到 store（与 options 语义一致）', () => {
+      const useStore = defineStore('setup-patch-fn', () => {
+        const a = ref(1);
+        return { a };
+      });
+      const store = useStore();
+      store.$patch((s) => {
+        (s as Record<string, unknown>).a = 99;
+      });
+      expect(store.a).toBe(99);
+    });
+
+    it('setup：$patch(object) 应写穿透并通知订阅者（单事件）', () => {
+      const useStore = defineStore('setup-patch-obj', () => {
+        const a = ref(1);
+        return { a };
+      });
+      const store = useStore();
+      const sub = vi.fn();
+      store.$subscribe(sub);
+      store.$patch({ a: 5 } as never);
+      expect(store.a).toBe(5);
+      expect(sub).toHaveBeenCalledTimes(1);
+      expect(sub.mock.calls[0][0].type).toBe('patch object');
+    });
+  });
 });

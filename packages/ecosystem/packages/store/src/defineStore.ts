@@ -237,6 +237,10 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
       const subs = subscriptions.get(id)!;
       const actions = actionCallbacks.get(id)!;
 
+      // $patch 期间抑制「逐键 direct 通知」：一次 $patch 只发一条 patch 事件
+      // （Pinia 语义；否则订阅者按事件持久化时会被重复写入，mutation.type 也失真）
+      let patching = false;
+
       const initialState = options.state ? options.state() : ({} as S);
       const stateSignals = new Map<string, ReturnType<typeof signal>>();
       const state: Record<string, unknown> = {};
@@ -249,7 +253,7 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
           set: (val: unknown) => {
             const oldValue = sig();
             sig.set(val as Parameters<typeof sig.set>[0]);
-            if (!Object.is(oldValue, val)) {
+            if (!patching && !Object.is(oldValue, val)) {
               for (const sub of subs) {
                 sub(
                   { storeId: id, type: 'direct', payload: { key, oldValue, newValue: val } },
@@ -366,8 +370,23 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
       Object.defineProperty(store, '$patch', {
         value: function (partialOrMutator: Partial<S> | ((state: S) => void) | any) {
           batch(() => {
-            if (typeof partialOrMutator === 'function') {
-              partialOrMutator(state as any);
+            const isFn = typeof partialOrMutator === 'function';
+            patching = true;
+            try {
+              if (isFn) {
+                partialOrMutator(state as any);
+              } else {
+                for (const [key, value] of Object.entries(partialOrMutator)) {
+                  if (key in state) {
+                    (state as Record<string, unknown>)[key] = value;
+                  }
+                }
+              }
+            } finally {
+              patching = false;
+            }
+            // 变更落定后再通知订阅者：一次 $patch 恰好一条 patch 事件
+            if (isFn) {
               for (const sub of subs) {
                 sub(
                   { storeId: id, type: 'patch function', payload: partialOrMutator },
@@ -375,11 +394,6 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
                 );
               }
             } else {
-              for (const [key, value] of Object.entries(partialOrMutator)) {
-                if (key in state) {
-                  (state as Record<string, unknown>)[key] = value;
-                }
-              }
               for (const sub of subs) {
                 sub({ storeId: id, type: 'patch object', payload: partialOrMutator }, state as any);
               }
