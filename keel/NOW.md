@@ -1,43 +1,38 @@
 ---
 scope: now
 status: active
-last-verified: 2026-10-05
-updated: 2026-10-05
-keywords: [焦点, 交接, keel试点, 记忆迁移]
+last-verified: 2026-10-09
+updated: 2026-10-09
+keywords: [焦点, 交接, keel试点, 观察基线]
 ---
 
 # NOW · main
 
 ## 当前焦点
 
-keel 试点接入收尾。Phase 1–4 完成 + 跟进项清空（husky v9 迁移、扩展检查进 CI、例外解除）。
-下一步 = 演练一轮完整 keel 循环 + 等 keel v3.4.7 发布后核对 `--ref` 可取。
+keel 试点转入**稳定运行 + 观察**：工具随上游逐版同步至 v3.4.11、文档完成全量核查，
+首次拿到可测的遵守率数字。下一步 = 系统终端复跑权威基线 + 覆盖率专批。
 
 ## 本轮完成
 
-- [x] keel v3.4.6 装入；锚点 / INDEX / CONSTITUTION / NOW 填毕（lint 归零）
-- [x] 记忆蒸馏：`.workbuddy/MEMORY.md` → 16 条坑（core/build/verify/process）+ 4 决策 + 4 技能
-- [x] husky 链式闭环（ADR 0017）：`.husky/{pre-commit,commit-msg}` 调用 keel 本体；verify-hooks 判"链式成立"
-- [x] 上游回植 5 修复 + 2 ADR（0016 判据收窄 / 0017 链式挂载）；keel 全量自测 43/43
-- [x] `.prettierignore` 排除 `keel/`（排版与预算由 lint 管，禁止 prettier 重排）
-- [x] `.github/workflows/keel.yml`：基座自身 lint + 钩子本体（零依赖，bash 直跑）
-- [x] keel 工具副本与上游逐字同步（install.sh / test-lint.py；含 ADR 0016 用例）
-- [x] husky v9 迁移：去掉弃用两行（`.husky/pre-commit` 的 shebang + `_/husky.sh`）
-- [x] 扩展检查接入 CI：源码级 3 项 → `ci.yml` 的 `keel-gates` job；需 dist 的 3 项 → `build` job 后置
-- [x] **macOS awk 补丁例外解除**（工具已与上游逐字一致）
+- [x] keel 工具副本逐版同步：3.4.7 → 3.4.8 → 3.4.9 → 3.4.10 → 3.4.11（INDEX 声明同版）
+- [x] 演练抽测：「循环依赖」12.3KB ✅ /「提交」10.3KB ✅；宽泛词「门禁」22.9KB 超限
+- [x] 文档全量核查：失效路径 / 错误示例 / 包入口扩展名 / store setup 解包（4 提交）
+- [x] 遵守率首测：100%（17 轮，lint 覆盖 8/17=47%）· 加载均值 12.2KB · 峰值 22.9KB
 
 ## 下一步
 
-1. **演练**：新会话按 INDEX → NOW → 按需检索跑一轮（本轮抽测：「循环依赖」12.3KB ✅、
-   「提交」10.3KB ✅；宽泛词「门禁」22.9KB 超限 ⇒ 检索先收窄关键词再开读）
-2. keel **v3.4.7** 发布后核对 `install.sh --ref v3.4.7` 可取（本仓工具已一致）
-3. `.workbuddy` 归档说明补全；确认无任何路径再写它
+1. 系统终端跑 `verify-baseline.sh`（8 项）留权威基线（沙箱构建受 safe-delete 配额限）
+2. 覆盖率专批：compiler codegen 为主战场（10-01 实测 53.2% stmts / 81.7% branches）
+3. 遵守率观察第二周：覆盖 47% 偏低 ⇒ 重点看「未检查提交」占比是否下降
 
 ## 阻塞
 
 | 卡在 | 解锁条件 | 绕行 |
 |---|---|---|
+| 遵守率无长期基线 | 提交累积数周 | 先看趋势不看单点（须与覆盖率同看） |
 | 钩子本地生效依赖各人挂载 | 各 clone 跑一次 install-hooks | `.husky` 已版本化；链式判定不依赖本地配置 |
+| 全量构建 / 覆盖率跑不动（仅沙箱） | 系统终端或 CI 容器 | 每轮 ≤8 包分批；`nightly-gates.sh` |
 
 ## 例外表（临时补丁）
 
