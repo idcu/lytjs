@@ -19,7 +19,7 @@ keywords: [坑库, 索引, 转发链, dist, 假绿, 门禁]
 | 测试绿缺导出 | build | P1 | [dist-src-split-brain](build/dist-src-split-brain.md) |
 | dist 中文 0 | build | P2 | [dist-nonascii-escaped](build/dist-nonascii-escaped.md) |
 | failed 但 Tests绿 | build | P1 | [alias-missing-tests-never-run](build/alias-missing-tests-never-run.md) |
-| build/coverage 跑不了 | build | P2 | [sandbox-safe-delete-block](build/sandbox-safe-delete-block.md) |
+| 沙箱跑门禁/提交 | build | P2 | [sandbox-safe-delete-block](build/sandbox-safe-delete-block.md) |
 | 手写非生产输入 | verify | P1 | [self-fulfilling-green](verify/self-fulfilling-green.md) |
 | 恒绿：断布尔 | verify | P1 | [always-true-assertion](verify/always-true-assertion.md) |
 | 检测器假阳性 | verify | P1 | [detector-false-positive](verify/detector-false-positive.md) |
