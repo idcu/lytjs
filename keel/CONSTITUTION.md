@@ -57,8 +57,13 @@ keywords: [宪法, 红线, 人审, 状态机, 验证纪律, 构建顺序]
 |---|---|---|---|
 | 改本文件硬约束 / 状态机 | owner | decisions/ | 24h |
 | 放宽或删除任一门禁（`gate.mjs` 中 fail 级） | owner | decisions/ + NOW | 24h |
+| 为"让本机跑通"而改仓库代码 / 放宽门禁（**含环境类失败**） | owner | decisions/ + NOW | 24h |
 | 新增生成物（`.gitignore` / `.prettierignore` / eslint `ignores` 三处同加） | owner | decisions/ | 24h |
 | 发布 / tag / 版本号变更 | owner | CHANGELOG + 显式授权 | 24h |
+
+> 第 3 行即「**环境失败 ≠ 代码缺陷**」：沙箱守卫 / broker / 工具链自检造成的失败，
+> 不得作为改仓库代码的理由；绕行只落在本机命令（长任务前台跑、按 `packageManager` 版本建 shim），
+> 并登记进坑 `sandbox-safe-delete-block`。依据见 `decisions/0008-env-failure-not-code-defect.md`。
 
 > 审计轨迹 = git 历史 + `keel/decisions/`；不另建审计系统。
 
