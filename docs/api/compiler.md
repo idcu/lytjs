@@ -157,12 +157,23 @@ function optimize(root: RootNode, options: TransformOptions): void;
 
 ### 已从包入口导出（可用，有契约测试）
 
-| API                                     | 作用                                                     |
-| --------------------------------------- | -------------------------------------------------------- |
-| `analyzeMemoNeeds(ast)`                 | 判断模板是否需要 memo 边界，返回动态绑定与静态子树       |
-| `analyzeDeadCode(source)`               | 识别未使用变量 / 导入、不可达代码、常量折叠机会          |
-| `eliminateDeadCode(source, analysis)`   | 按分析结果做**文本级**死代码消除（需传入 analysis）      |
-| `precompileTemplate(template, options)` | AOT 预编译：**返回编译后的渲染函数代码**，再做文本级优化 |
+| API                                   | 作用                                                                                                                                                                          |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `analyzeMemoNeeds(ast)`               | 判断模板是否需要 memo 边界，返回动态绑定与静态子树                                                                                                                            |
+| `analyzeDeadCode(source)`             | 识别未使用变量 / 导入、不可达代码、常量折叠机会                                                                                                                               |
+| `eliminateDeadCode(source, analysis)` | 按分析结果做**文本级**死代码消除（需传入 analysis）                                                                                                                           |
+| `precompileTemplate(template)`        | AOT 预编译：**构建期**把模板编译为渲染函数代码（`{ code, size }`）。它的价值在于「AOT」本身 —— 产物里只有渲染函数，运行时不必再走 `new Function`，因而不必把编译器打进 bundle |
+
+> **`precompileTemplate` 的口径订正（2026-10-10，P2-3）**
+>
+> 该函数此前接受 `options`（`inlineStatic` / `precomputeConstants` / `generateTypes` / `target`）
+> 并在 `compile()` 之后追加三个**文本级优化** pass。探针实测**四个开关全部不成立**：
+> `inlineStatic` 的正则永不命中（`staticAssets` 恒为空）、`generateTypes` 恒返回空串、
+> `target` 的改写永不命中且若命中即产生未定义引用，而 `precomputeConstants` 会
+> **静默改坏用户代码**（`x1 + 2` → `x3`、`1.5 + 2` → `1.7`、`"1+2"` → `"3"`），
+> `stats.reduction` 的**唯一非 0 来源正是这些误伤**。
+> 故整组删除，签名收敛为 `precompileTemplate(template)`，返回 `{ code, size }`。
+> 新门禁 `scripts/check-src-hygiene.ts` 盯住 `eval(` 不得复发。
 
 ### 未从包入口导出、无调用方（预留 / 未完成功能）
 

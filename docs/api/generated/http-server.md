@@ -14,6 +14,10 @@ HTTP 服务器
 - [matchPath](#matchpath)
 - [Router](#router)
 - [createRouter](#createrouter)
+- [DEFAULT_BODY_LIMIT](#default-body-limit)
+- [HttpError](#httperror)
+- [ServerOptions](#serveroptions)
+- [readRequestBody](#readrequestbody)
 - [Server](#server)
 - [createServer](#createserver)
 - [HttpMethod](#httpmethod)
@@ -186,6 +190,57 @@ createRouter: Router;
 
 路由实例
 
+## DEFAULT_BODY_LIMIT
+
+**Variable**
+
+默认请求体上限：1 MiB
+
+## HttpError
+
+**Class**
+
+可预期的 HTTP 错误（会被按其状态码返回给客户端）
+
+### 成员
+
+| 名称   | 类型     | 描述 | 可选 |
+| ------ | -------- | ---- | ---- |
+| status | `number` |      | 否   |
+
+## ServerOptions
+
+**Interface**
+
+### 成员
+
+| 名称      | 类型     | 描述                                         | 可选 |
+| --------- | -------- | -------------------------------------------- | ---- |
+| bodyLimit | `number` | 请求体上限（字节），默认 1 MiB。超限返回 413 | 是   |
+
+## readRequestBody
+
+**Function**
+
+读取请求体（带上限），并按 content-type 解析
+
+### 签名
+
+```typescript
+readRequestBody: Promise<{ raw: string; parsed: unknown } | undefined>;
+```
+
+### 参数
+
+| 参数  | 类型              | 描述 | 可选 | 默认值 |
+| ----- | ----------------- | ---- | ---- | ------ |
+| req   | `IncomingMessage` |      | 否   | -      |
+| limit | `number`          |      | 否   | -      |
+
+### 返回值
+
+**类型:** `Promise<{ raw: string; parsed: unknown } | undefined>`
+
 ## Server
 
 **Class**
@@ -194,22 +249,25 @@ HTTP 服务器类
 
 ### 成员
 
-| 名称          | 类型                                                                | 描述               | 可选 |
-| ------------- | ------------------------------------------------------------------- | ------------------ | ---- |
-| router        | `Router`                                                            | 路由实例           | 否   |
-| middlewares   | `Array<(ctx: Context, next: () => Promise<void>) => Promise<void>>` | 中间件列表         | 否   |
-| server        | `NodeServer`                                                        | Node.js 服务器实例 | 是   |
-| use           | -                                                                   | 添加中间件         | 否   |
-| on            | -                                                                   | 添加路由           | 否   |
-| get           | -                                                                   | 添加 GET 路由      | 否   |
-| post          | -                                                                   | 添加 POST 路由     | 否   |
-| put           | -                                                                   | 添加 PUT 路由      | 否   |
-| patch         | -                                                                   | 添加 PATCH 路由    | 否   |
-| delete        | -                                                                   | 添加 DELETE 路由   | 否   |
-| listen        | -                                                                   | 启动服务器监听     | 否   |
-| close         | -                                                                   | 关闭服务器         | 否   |
-| handleRequest | -                                                                   | 处理请求           | 否   |
-| sendResponse  | -                                                                   | 发送响应           | 否   |
+| 名称          | 类型                                                                | 描述                                                                       | 可选 |
+| ------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------- | ---- |
+| router        | `Router`                                                            | 路由实例                                                                   | 否   |
+| middlewares   | `Array<(ctx: Context, next: () => Promise<void>) => Promise<void>>` | 中间件列表（**按注册顺序执行**）                                           | 否   |
+| server        | `NodeServer`                                                        | Node.js 服务器实例                                                         | 是   |
+| bodyLimit     | `number`                                                            | 请求体上限                                                                 | 否   |
+| use           | -                                                                   | 添加中间件 ⚠️ 执行顺序 = **注册顺序**（与 Koa / Express / Fastify 一致）。 | 否   |
+| on            | -                                                                   | 添加路由                                                                   | 否   |
+| get           | -                                                                   | 添加 GET 路由                                                              | 否   |
+| post          | -                                                                   | 添加 POST 路由                                                             | 否   |
+| put           | -                                                                   | 添加 PUT 路由                                                              | 否   |
+| patch         | -                                                                   | 添加 PATCH 路由                                                            | 否   |
+| delete        | -                                                                   | 添加 DELETE 路由                                                           | 否   |
+| listen        | -                                                                   | 启动服务器监听                                                             | 否   |
+| close         | -                                                                   | 关闭服务器                                                                 | 否   |
+| handleRequest | -                                                                   | 处理请求（统一错误兜底）                                                   | 否   |
+| dispatch      | -                                                                   | 实际分发逻辑                                                               | 否   |
+| sendError     | -                                                                   | 统一错误响应：`HttpError` 按状态码返回；其余记 500 且不泄漏内部信息        | 否   |
+| sendResponse  | -                                                                   | 发送响应                                                                   | 否   |
 
 ## createServer
 
@@ -222,6 +280,12 @@ HTTP 服务器类
 ```typescript
 createServer: Server;
 ```
+
+### 参数
+
+| 参数    | 类型            | 描述 | 可选 | 默认值 |
+| ------- | --------------- | ---- | ---- | ------ |
+| options | `ServerOptions` |      | 是   | `{}`   |
 
 ### 返回值
 
@@ -256,15 +320,17 @@ HttpMethod: SharedHttpMethod;
 
 ### 成员
 
-| 名称    | 类型                                              | 描述 | 可选 |
-| ------- | ------------------------------------------------- | ---- | ---- |
-| method  | `HttpMethod`                                      |      | 否   |
-| url     | `string`                                          |      | 否   |
-| path    | `string`                                          |      | 否   |
-| headers | `Record<string, string \| string[] \| undefined>` |      | 否   |
-| query   | `Record<string, string \| string[]>`              |      | 否   |
-| params  | `Record<string, string>`                          |      | 否   |
-| ip      | `string`                                          |      | 是   |
+| 名称    | 类型                                              | 描述                                                                                                                                                                                                              | 可选 |
+| ------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| method  | `HttpMethod`                                      |                                                                                                                                                                                                                   | 否   |
+| url     | `string`                                          |                                                                                                                                                                                                                   | 否   |
+| path    | `string`                                          |                                                                                                                                                                                                                   | 否   |
+| headers | `Record<string, string \| string[] \| undefined>` |                                                                                                                                                                                                                   | 否   |
+| query   | `Record<string, string \| string[]>`              |                                                                                                                                                                                                                   | 否   |
+| params  | `Record<string, string>`                          |                                                                                                                                                                                                                   | 否   |
+| ip      | `string`                                          |                                                                                                                                                                                                                   | 是   |
+| body    | `unknown`                                         | 解析后的请求体（按 `content-type` 决定形态）： - `application/json` ⇒ 解析后的对象 - `application/x-www-form-urlencoded` ⇒ 键值对象 - 其它（含 `text/*`）⇒ 原始字符串 - GET / HEAD / OPTIONS 或空体 ⇒ `undefined` | 是   |
+| rawBody | `string`                                          | 未解析的原始请求体字符串                                                                                                                                                                                          | 是   |
 
 ## Response
 

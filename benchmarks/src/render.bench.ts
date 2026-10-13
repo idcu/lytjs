@@ -4,8 +4,10 @@
  * Tests the performance of initial rendering operations.
  */
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+// ⚠️ 修复（2026-10-11）：此前 `import { h } from '@lytjs/vdom'` —— **vdom 不导出 `h`**
+// （`h` 在 `@lytjs/core`）⇒ 每个 bench 调用 `h(...)` 即抛错 ⇒ 全部产出 NaN。
 import { describe, bench } from 'vitest';
-import { h } from '@lytjs/vdom';
+import { h } from '@lytjs/core';
 import { signal } from '@lytjs/reactivity';
 
 describe('render benchmark', () => {

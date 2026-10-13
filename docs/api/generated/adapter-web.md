@@ -38,6 +38,8 @@ Web 平台适配器（DOM RendererHost）
 - [isReflowScheduled](#isreflowscheduled)
 - [scheduleForcedReflow](#scheduleforcedreflow)
 - [WebRendererHost](#webrendererhost)
+- [COMPONENT_MASK](#component-mask)
+- [isVNodeLike](#isvnodelike)
 - [warnHydrationMismatch](#warnhydrationmismatch)
 - [HydrationRenderer](#hydrationrenderer)
 - [hydrateFragment](#hydratefragment)
@@ -46,6 +48,7 @@ Web 平台适配器（DOM RendererHost）
 - [hydrateMatchedElement](#hydratematchedelement)
 - [hydrateMismatchedElement](#hydratemismatchedelement)
 - [hydrateElement](#hydrateelement)
+- [hydrateComponent](#hydratecomponent)
 - [hydrateNode](#hydratenode)
 - [createHydrationFunctions](#createhydrationfunctions)
 - [ParsedEvent](#parsedevent)
@@ -63,6 +66,7 @@ Web 平台适配器（DOM RendererHost）
 - [patchEvent](#patchevent)
 - [removeAllEventListeners](#removealleventlisteners)
 - [extractHandler](#extracthandler)
+- [extractEventOptions](#extracteventoptions)
 - [buildEventListenerOptions](#buildeventlisteneroptions)
 - [patchProp](#patchprop)
 
@@ -338,13 +342,14 @@ getRegisteredCustomElements: string[]
 
 ### 成员
 
-| 名称    | 类型 | 描述 | 可选 |
-| ------- | ---- | ---- | ---- |
-| render  | -    |      | 否   |
-| patch   | -    |      | 否   |
-| unmount | -    |      | 否   |
-| mount   | -    |      | 否   |
-| move    | -    |      | 否   |
+| 名称    | 类型 | 描述                                                                                                                                                                                                                                                      | 可选 |
+| ------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| render  | -    |                                                                                                                                                                                                                                                           | 否   |
+| patch   | -    |                                                                                                                                                                                                                                                           | 否   |
+| unmount | -    |                                                                                                                                                                                                                                                           | 否   |
+| mount   | -    |                                                                                                                                                                                                                                                           | 否   |
+| hydrate | -    | 水合挂载：复用容器内**既有**的 DOM（典型来源：SSR 产出的 HTML）， 同时照常建立组件实例与响应式 effect ⇒ 挂载后**由客户端接管更新**。 与 `mount` 的唯一差别是首屏挂载时优先「认领」同类型既有节点； props 仍照常 apply，因此**事件监听器会在水合时接上**。 | 否   |
+| move    | -    |                                                                                                                                                                                                                                                           | 否   |
 
 ## createDOMRenderer
 
@@ -363,9 +368,9 @@ createDOMRenderer: DOMRenderer;
 
 ### 参数
 
-| 参数         | 类型                                                                                         | 描述 | 可选 | 默认值 |
-| ------------ | -------------------------------------------------------------------------------------------- | ---- | ---- | ------ |
-| extraOptions | `Partial< Pick<RendererOptions<Node, Element>, 'setupChildComponent' \| 'normalizeProps'> >` |      | 是   | -      |
+| 参数         | 类型                                                                                                                                                                                                  | 描述 | 可选 | 默认值 |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- | ---- | ------ |
+| extraOptions | `Partial< Pick< RendererOptions<Node, Element>, \| 'setupChildComponent' \| 'normalizeProps' \| 'invokeMountedHook' \| 'invokeUpdatedHook' \| 'invokeBeforeUnmountHook' \| 'invokeUnmountedHook' > >` |      | 是   | -      |
 
 ### 返回值
 
@@ -683,6 +688,39 @@ Web 平台渲染宿主实现。
 | getNodeType           | -    | 获取节点类型（用于 hydration 判断）。                                                                                                                                                                        | 否   |
 | getTagName            | -    | 获取元素标签名（用于 hydration 匹配）。 返回小写标签名。                                                                                                                                                     | 否   |
 
+## COMPONENT_MASK
+
+**Variable**
+
+有状态 / 函数式组件的 ShapeFlag 掩码。
+
+组件 vnode 的 shapeFlag 由 `@lytjs/vdom` 的 `getShapeFlag()` 给出，恒为
+`STATEFUL_COMPONENT`(4) —— 该仓的 `isObject()` 把函数也视为对象，
+故函数式组件的 type 同样落在这一位（`FUNCTIONAL_COMPONENT`(2) 从未被设置）。
+用掩码比较可同时容纳两种语义，避免实现演化后只判断其中一位而漏掉组件。
+
+## isVNodeLike
+
+**Function**
+
+判定一个值是否为 vnode（组件 setup/render 的返回值可能是普通 ctx 对象）
+
+### 签名
+
+```typescript
+isVNodeLike: boolean;
+```
+
+### 参数
+
+| 参数  | 类型      | 描述 | 可选 | 默认值 |
+| ----- | --------- | ---- | ---- | ------ |
+| value | `unknown` |      | 否   | -      |
+
+### 返回值
+
+**类型:** `boolean`
+
 ## warnHydrationMismatch
 
 **Function**
@@ -837,6 +875,44 @@ hydrateMismatchedElement: void
 
 ```typescript
 hydrateElement: number;
+```
+
+### 参数
+
+| 参数   | 类型              | 描述 | 可选 | 默认值 |
+| ------ | ----------------- | ---- | ---- | ------ |
+| vnode  | `VNode`           |      | 否   | -      |
+| parent | `HTMLElement`     |      | 否   | -      |
+| index  | `number`          |      | 否   | -      |
+| host   | `WebRendererHost` |      | 否   | -      |
+
+### 返回值
+
+**类型:** `number`
+
+## hydrateComponent
+
+**Function**
+
+水合组件 vnode。
+
+⚠️ 2026-10-02 修复：此前 `hydrateNode` 在 `shapeFlag & ShapeFlags.ELEMENT`
+之后**没有组件分支** ⇒ 组件 vnode（shapeFlag=4）一律落到
+`warn('Hydration: unrecognized node type, skipping.')` 并被跳过：
+SSR 出的 DOM 既不复用也不更新、`vnode.el` 恒为 null（已用探针实测确认）。
+
+解析顺序与 `@lytjs/renderer` 的 `renderToString`（`renderComponentToString`）
+保持一致：先 `setup(props)`，其返回若本身是 vnode（含 `type`）则直接使用，
+若为普通对象则作为 ctx 传给 `render`；无 setup 时用 `props` 作 ctx。
+
+组件不产生属于自己的 DOM 节点 —— 其渲染产物占据组件 vnode 自身的位置，
+故解析出子 vnode 后**以同一 index 递归水合**（Fragment 多根时由
+`hydrateFragment` 自行推进 index）。
+
+### 签名
+
+```typescript
+hydrateComponent: number;
 ```
 
 ### 参数
@@ -1147,11 +1223,50 @@ extractHandler: ((...args: unknown[]) => void) | null
 
 **类型:** `((...args: unknown[]) => void) | null`
 
+## extractEventOptions
+
+**Function**
+
+从值中提取「监听器选项」。
+
+编译器对 `.capture` / `.once` / `.passive` 产出的形态是**值对象**
+（`{ handler, once: true }`，见 `compiler/src/transforms/transform-element.ts`），
+而这三个不是「守卫」（不能放进 `withModifiers`），只能作为 `addEventListener` 的选项。
+
+⚠️ 2026-10-10 修复：此前 `patchEvent` **只从 prop 名**解析选项，
+从不读值对象里的 `once/capture/passive` ⇒ 这三个修饰符被**静默丢弃**
+（`@click.once` 会重复触发，且不报错）。
+
+### 签名
+
+```typescript
+extractEventOptions: {
+  capture: boolean;
+  once: boolean;
+  passive: boolean;
+}
+```
+
+### 参数
+
+| 参数  | 类型      | 描述 | 可选 | 默认值 |
+| ----- | --------- | ---- | ---- | ------ |
+| value | `unknown` |      | 否   | -      |
+
+### 返回值
+
+**类型:** `{ capture: boolean; once: boolean; passive: boolean }`
+
 ## buildEventListenerOptions
 
 **Function**
 
 根据 ParsedEvent 构建 AddEventListenerOptions。
+
+选项来源有两处，取**并集**：
+
+- `parsed`：从 prop 名解析出的修饰符（历史路径）；
+- `fromValue`：编译器产出的值对象 `{ handler, once: true }`（VNode 路径主形态）。
 
 ### 签名
 
@@ -1161,9 +1276,10 @@ buildEventListenerOptions: AddEventListenerOptions | undefined;
 
 ### 参数
 
-| 参数   | 类型          | 描述 | 可选 | 默认值 |
-| ------ | ------------- | ---- | ---- | ------ |
-| parsed | `ParsedEvent` |      | 否   | -      |
+| 参数      | 类型                                                    | 描述 | 可选 | 默认值 |
+| --------- | ------------------------------------------------------- | ---- | ---- | ------ |
+| parsed    | `ParsedEvent`                                           |      | 否   | -      |
+| fromValue | `{ capture: boolean; once: boolean; passive: boolean }` |      | 是   | -      |
 
 ### 返回值
 

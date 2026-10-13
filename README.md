@@ -36,16 +36,16 @@
 
 ### ⚠️ 实验性 / 不完整
 
-| 能力                                  | 状态                                                                                                                                                                                                       |
-| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 模板编译的 AOT                        | 目前为**运行时编译**（`new Function` 注入 helper）；生产建议走 AOT 预编译                                                                                                                                  |
-| `activated` / `deactivated` 钩子      | 需先补 vdom 对 `ShapeFlags.COMPONENT_KEPT_ALIVE` 的消费                                                                                                                                                    |
-| **KeepAlive**                         | **当前不生效**：缓存写入时机错（render 阶段拿不到子实例）+ vdom 无对应消费方，详见 `packages/component/src/keep-alive.ts` 注释                                                                             |
-| Suspense                              | **部分可用**：`async setup` + `await useSuspense(p)` 可挂起首帧、兑现后视图会更新；但**边界注册无可见效果**（`<Suspense>` 走 vdom 分派 ⇒ 不建组件实例），且 **fallback 从未出现**、只支持数组形态 children |
-| Hydration                             | **部分实现**：`createApp(App).mount(el, { hydrate: true })`（vnode 模式）可复用 SSR DOM **并接管响应式更新**；`hydrateApp` / `hydrateVisible` 只做 DOM↔vnode 一致化（前者不建实例、后者仍是属性级）        |
-| UI 组件库                             | 约 16/56 组件存在「已声明 prop 未接线」；Carousel / Transition 为壳；无虚拟滚动                                                                                                                            |
-| `@lytjs/ssg` / `@lytjs/html-renderer` | **壳实现**（不生成文件 / head 生成未实现）；真实现在 `@lytjs/ssr`                                                                                                                                          |
-| 路由                                  | `RouterView` 未处理返回 Promise 的懒加载；无数据预取                                                                                                                                                       |
+| 能力                                  | 状态                                                                                                                                                                                                                                                                                                                                                          |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 模板编译的 AOT                        | 目前为**运行时编译**（`new Function` 注入 helper）；生产建议走 AOT 预编译                                                                                                                                                                                                                                                                                     |
+| `activated` / `deactivated` 钩子      | 需先补 vdom 对 `ShapeFlags.COMPONENT_KEPT_ALIVE` 的消费                                                                                                                                                                                                                                                                                                       |
+| **KeepAlive**                         | **当前不生效**：缓存写入时机错（render 阶段拿不到子实例）+ vdom 无对应消费方，详见 `packages/component/src/keep-alive.ts` 注释                                                                                                                                                                                                                                |
+| Suspense                              | **部分可用**：`async setup` + `await useSuspense(p)` 可挂起首帧、兑现后视图会更新；但**边界注册无可见效果**（`<Suspense>` 走 vdom 分派 ⇒ 不建组件实例），且 **fallback 从未出现**、只支持数组形态 children                                                                                                                                                    |
+| Hydration                             | **部分实现**：`createApp(App).mount(el, { hydrate: true })`（vnode 模式）可复用 SSR DOM **并接管响应式更新**；`hydrateApp` / `hydrateVisible` 只做 DOM↔vnode 一致化（前者不建实例、后者仍是属性级）                                                                                                                                                           |
+| UI 组件库                             | **56 个组件，全部已从 `src/index.ts` 导出**，均为 **VNode 单模式**；Carousel / Transition 为壳；无虚拟滚动。**「已声明 prop 未接线」欠账已清零**（`check-ui-props-wiring` 文本级判据实测 0，见 `keel/checks/rules.md` #5）。原 `components/vapor/` 下 8 个「Vapor 组件」**已于 2026-10-10 删除**（实测 8 个中 6 个不可用且整批不可达，理由见下方 §UI 组件库） |
+| `@lytjs/ssg` / `@lytjs/html-renderer` | **壳实现**（不生成文件 / head 生成未实现）；真实现在 `@lytjs/ssr`                                                                                                                                                                                                                                                                                             |
+| 路由                                  | `RouterView` 未处理返回 Promise 的懒加载；无数据预取                                                                                                                                                                                                                                                                                                          |
 
 ### ❌ 占位 / 未接入（对外暴露但无行为）
 
@@ -141,7 +141,20 @@ Lyt.js 提供两种渲染模式，可根据场景选择：
 
 ## UI 组件库
 
-Lyt.js 提供零依赖 UI 组件库（56 个组件，其中 4 个尚未从 index 导出），所有组件均支持 Vapor 和 VNode 双模式：
+Lyt.js 提供零依赖 UI 组件库（**56 个组件，全部已从 `src/index.ts` 导出**）。
+
+> ⚠️ **关于「双模式」**（2026-10-10 实测订正）：下面这 56 个组件是 **VNode 模式**实现
+> —— 逐个核查后，**没有任何一个**引用 `@lytjs/core-signal` / `createSignal`。
+> 因此当前对外实际只提供 **VNode 模式**。此前本文写的「所有组件均支持 Vapor 和 VNode 双模式」与事实不符。
+>
+> ⚠️ **原 `components/vapor/` 的 8 个「Vapor 组件」已于 2026-10-10 删除**。删除依据（实测，非推断）：
+> ① 整批**不可达** —— 不在 `src/index.ts`、不在 `dist`、`package.json#exports` 无子路径；
+> ② 名为 Vapor，实则全部用 `createVNode` 渲染（属 VNode 模式），命名与实现不符；
+> ③ 用 Vapor 运行时逐个挂载实测，**8 个里 6 个不可用**：
+> `VaporButton` 丢插槽（渲染出空按钮）、`VaporBadge` / `VaporTag` 残留**字面量 `<slot>` 元素**、
+> `VaporList` 抛 `TypeError: p.renderItem is not a function`、`VaporTabs` / `VaporMenu` 为无插槽消费的空壳；
+> 仅 `VaporInput` 可用、`VaporSelect` 半可用。
+> 若要提供真正的 Vapor 组件集，应基于已修复的 `mountComponent`（见 `renderer/src/vapor/mount-component.ts`）重写。
 
 | 类别     | 组件                                                                                           |
 | -------- | ---------------------------------------------------------------------------------------------- |

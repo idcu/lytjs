@@ -1,149 +1,555 @@
 {
-  "version": "6.0.0",
-  "date": "2026-05-15",
+  "version": "2026-10-11",
+  "date": "2026-10-11",
+  "note": "实测数据（替换 2026-05-15 历史口径）。Node + jsdom + vitest bench（tinybench）。DOM 挂载型重负载场景（fair-three-modes / memory / 官方 1000·10000 行）在 jsdom 下不可靠，须走真浏览器 harness，未在此伪造。",
   "environment": {
-    "node": "22.0.0",
-    "vitest": "3.0.0",
-    "os": "Windows"
+    "node": "22.22.2",
+    "vitest": "3.2.4",
+    "environment": "jsdom"
   },
   "results": {
-    "reactivity": {
-      "signal_read": {
-        "name": "Signal Read",
-        "ops_per_second": 12000000,
-        "variance": "±0.8%",
-        "runs": 100
+    "modes-comparison": [
+      {
+        "name": "VDOM 模式 - 初始渲染 1000 项",
+        "hz": 101.57,
+        "mean_ms": 9.8453,
+        "min_ms": 7.6937,
+        "max_ms": 14.3096,
+        "rme": "±4.23%",
+        "samples": 51
       },
-      "signal_write": {
-        "name": "Signal Write",
-        "ops_per_second": 8000000,
-        "variance": "±1.2%",
-        "runs": 100
+      {
+        "name": "Vapor 模式 - 直接 DOM 操作 1000 项",
+        "hz": 78.1986,
+        "mean_ms": 12.788,
+        "min_ms": 11.8769,
+        "max_ms": 14.589,
+        "rme": "±1.65%",
+        "samples": 40
       },
-      "computed": {
-        "name": "Computed Calculation",
-        "ops_per_second": 5000000,
-        "variance": "±0.9%",
-        "runs": 100
+      {
+        "name": "Signal 模式 - 数据创建 1000 项",
+        "hz": 4731.7,
+        "mean_ms": 0.2113,
+        "min_ms": 0.0854,
+        "max_ms": 9.5985,
+        "rme": "±14.05%",
+        "samples": 2367
       },
-      "effect": {
-        "name": "Effect Trigger",
-        "ops_per_second": 3000000,
-        "variance": "±1.5%",
-        "runs": 100
+      {
+        "name": "VDOM 模式 - 初始渲染 10000 项",
+        "hz": 6.8235,
+        "mean_ms": 146.55,
+        "min_ms": 134.27,
+        "max_ms": 166.14,
+        "rme": "±5.07%",
+        "samples": 10
+      },
+      {
+        "name": "Vapor 模式 - 直接 DOM 操作 10000 项",
+        "hz": 6.1267,
+        "mean_ms": 163.22,
+        "min_ms": 155.91,
+        "max_ms": 186.1,
+        "rme": "±4.13%",
+        "samples": 10
+      },
+      {
+        "name": "Signal 模式 - 数据创建 10000 项",
+        "hz": 595.68,
+        "mean_ms": 1.6788,
+        "min_ms": 0.8267,
+        "max_ms": 9.8164,
+        "rme": "±10.67%",
+        "samples": 298
+      },
+      {
+        "name": "VDOM 模式 - 更新 10% 数据（1000 项中更新 100 项）",
+        "hz": 4.8731,
+        "mean_ms": 205.21,
+        "min_ms": 200.42,
+        "max_ms": 209.48,
+        "rme": "±1.15%",
+        "samples": 10
+      },
+      {
+        "name": "Vapor 模式 - 直接更新 10% 数据",
+        "hz": 71.1379,
+        "mean_ms": 14.0572,
+        "min_ms": 12.6969,
+        "max_ms": 20.6772,
+        "rme": "±3.64%",
+        "samples": 36
+      },
+      {
+        "name": "Signal 模式 - 响应式数据更新",
+        "hz": 579.32,
+        "mean_ms": 1.7262,
+        "min_ms": 0.8161,
+        "max_ms": 48.6885,
+        "rme": "±28.91%",
+        "samples": 291
+      },
+      {
+        "name": "VDOM 模式 - 完整生命周期（渲染-更新-清理）",
+        "hz": 36.7317,
+        "mean_ms": 27.2245,
+        "min_ms": 25.4588,
+        "max_ms": 32.168,
+        "rme": "±3.21%",
+        "samples": 19
+      },
+      {
+        "name": "Vapor 模式 - 完整生命周期（渲染-更新-清理）",
+        "hz": 32.972,
+        "mean_ms": 30.3287,
+        "min_ms": 26.7554,
+        "max_ms": 43.0194,
+        "rme": "±6.42%",
+        "samples": 17
+      },
+      {
+        "name": "Signal 模式 - 完整响应式生命周期",
+        "hz": 578.13,
+        "mean_ms": 1.7297,
+        "min_ms": 1.2132,
+        "max_ms": 12.0671,
+        "rme": "±13.59%",
+        "samples": 290
       }
-    },
-    "render": {
-      "create_1000_rows": {
-        "vapor": {
-          "mean": 12,
-          "variance": "±2.1%"
-        },
-        "vdom": {
-          "mean": 18,
-          "variance": "±2.5%"
-        },
-        "vue3": {
-          "mean": 21,
-          "variance": "±2.3%"
-        },
-        "react18": {
-          "mean": 25,
-          "variance": "±2.8%"
-        },
-        "solid": {
-          "mean": 11,
-          "variance": "±2.0%"
-        }
+    ],
+    "vapor-list": [
+      {
+        "name": "createVaporListRenderer - 初始渲染 1000 项",
+        "hz": 59.7605,
+        "mean_ms": 16.7335,
+        "min_ms": 15.0517,
+        "max_ms": 23.7401,
+        "rme": "±3.73%",
+        "samples": 30
       },
-      "update_every_10_rows": {
-        "vapor": {
-          "mean": 3,
-          "variance": "±1.8%"
-        },
-        "vdom": {
-          "mean": 6,
-          "variance": "±2.0%"
-        },
-        "vue3": {
-          "mean": 8,
-          "variance": "±2.2%"
-        },
-        "react18": {
-          "mean": 10,
-          "variance": "±2.5%"
-        },
-        "solid": {
-          "mean": 3,
-          "variance": "±1.9%"
-        }
+      {
+        "name": "createVaporListRenderer - 增量更新（10%变化）",
+        "hz": 42.1953,
+        "mean_ms": 23.6993,
+        "min_ms": 21.2572,
+        "max_ms": 36.3104,
+        "rme": "±5.68%",
+        "samples": 22
       },
-      "delete_50_percent": {
-        "vapor": {
-          "mean": 2,
-          "variance": "±1.5%"
-        },
-        "vdom": {
-          "mean": 4,
-          "variance": "±1.8%"
-        },
-        "vue3": {
-          "mean": 5,
-          "variance": "±2.0%"
-        },
-        "react18": {
-          "mean": 7,
-          "variance": "±2.2%"
-        },
-        "solid": {
-          "mean": 2,
-          "variance": "±1.6%"
-        }
+      {
+        "name": "createVaporListRenderer - 列表重排序",
+        "hz": 27.3467,
+        "mean_ms": 36.5675,
+        "min_ms": 33.2712,
+        "max_ms": 40.0501,
+        "rme": "±3.67%",
+        "samples": 14
+      },
+      {
+        "name": "createVaporListRenderer - 高频小量更新",
+        "hz": 15.6109,
+        "mean_ms": 64.0579,
+        "min_ms": 61.6308,
+        "max_ms": 73.4168,
+        "rme": "±3.89%",
+        "samples": 10
+      },
+      {
+        "name": "diffLists - 1000 个元素（10%更新）",
+        "hz": 4321.34,
+        "mean_ms": 0.2314,
+        "min_ms": 0.1946,
+        "max_ms": 5.4132,
+        "rme": "±2.54%",
+        "samples": 2161
+      },
+      {
+        "name": "diffLists - 1000 个元素（50%删除，50%新增）",
+        "hz": 4265.93,
+        "mean_ms": 0.2344,
+        "min_ms": 0.2082,
+        "max_ms": 0.8649,
+        "rme": "±1.42%",
+        "samples": 2133
+      },
+      {
+        "name": "Vapor 列表 - 初始渲染 5000 项",
+        "hz": 10.8145,
+        "mean_ms": 92.4683,
+        "min_ms": 87.7732,
+        "max_ms": 107.82,
+        "rme": "±5.07%",
+        "samples": 10
+      },
+      {
+        "name": "DocumentFragment 批量插入 - 5000 项",
+        "hz": 12.9722,
+        "mean_ms": 77.0881,
+        "min_ms": 71.984,
+        "max_ms": 87.9244,
+        "rme": "±5.31%",
+        "samples": 10
+      },
+      {
+        "name": "diffLists - 1000 个元素（10%变化）",
+        "hz": 4667.54,
+        "mean_ms": 0.2142,
+        "min_ms": 0.1857,
+        "max_ms": 0.8977,
+        "rme": "±1.48%",
+        "samples": 2334
+      },
+      {
+        "name": "diffLists - 1000 个元素（50%变化）",
+        "hz": 4582.95,
+        "mean_ms": 0.2182,
+        "min_ms": 0.1966,
+        "max_ms": 0.8061,
+        "rme": "±1.16%",
+        "samples": 2293
+      },
+      {
+        "name": "diffLists - 100 个元素（完全替换）",
+        "hz": 34552.75,
+        "mean_ms": 0.0289,
+        "min_ms": 0.0254,
+        "max_ms": 0.4573,
+        "rme": "±0.90%",
+        "samples": 17277
+      },
+      {
+        "name": "DocumentFragment 批量插入 - 100 个节点",
+        "hz": 1618.22,
+        "mean_ms": 0.618,
+        "min_ms": 0.5465,
+        "max_ms": 1.7014,
+        "rme": "±1.64%",
+        "samples": 810
       }
-    },
-    "bundle_size": {
-      "vapor": {
-        "core": 8,
-        "full": 25
+    ],
+    "batch-optimization": [
+      {
+        "name": "diffLists - 1000 个元素（10%更新）",
+        "hz": 4321.34,
+        "mean_ms": 0.2314,
+        "min_ms": 0.1946,
+        "max_ms": 5.4132,
+        "rme": "±2.54%",
+        "samples": 2161
       },
-      "vdom": {
-        "core": 12,
-        "full": 35
+      {
+        "name": "diffLists - 1000 个元素（50%删除，50%新增）",
+        "hz": 4265.93,
+        "mean_ms": 0.2344,
+        "min_ms": 0.2082,
+        "max_ms": 0.8649,
+        "rme": "±1.42%",
+        "samples": 2133
       },
-      "vue3": {
-        "core": 32,
-        "full": 70
+      {
+        "name": "insertBatch - 1000 个节点",
+        "hz": 163.86,
+        "mean_ms": 6.1028,
+        "min_ms": 5.4169,
+        "max_ms": 7.6196,
+        "rme": "±1.65%",
+        "samples": 82
       },
-      "react18": {
-        "core": 42,
-        "full": 80
+      {
+        "name": "insertBatch - 100 个节点",
+        "hz": 1786.76,
+        "mean_ms": 0.5597,
+        "min_ms": 0.5055,
+        "max_ms": 1.3537,
+        "rme": "±1.26%",
+        "samples": 894
       },
-      "solid": {
-        "core": 18,
-        "full": 45
+      {
+        "name": "removeBatch - 1000 个节点",
+        "hz": 26.0702,
+        "mean_ms": 38.358,
+        "min_ms": 35.316,
+        "max_ms": 40.3002,
+        "rme": "±2.24%",
+        "samples": 14
+      },
+      {
+        "name": "diffLists - 1000 个元素（10%变化）",
+        "hz": 4667.54,
+        "mean_ms": 0.2142,
+        "min_ms": 0.1857,
+        "max_ms": 0.8977,
+        "rme": "±1.48%",
+        "samples": 2334
+      },
+      {
+        "name": "diffLists - 1000 个元素（50%变化）",
+        "hz": 4582.95,
+        "mean_ms": 0.2182,
+        "min_ms": 0.1966,
+        "max_ms": 0.8061,
+        "rme": "±1.16%",
+        "samples": 2293
+      },
+      {
+        "name": "diffLists - 100 个元素（完全替换）",
+        "hz": 34552.75,
+        "mean_ms": 0.0289,
+        "min_ms": 0.0254,
+        "max_ms": 0.4573,
+        "rme": "±0.90%",
+        "samples": 17277
+      },
+      {
+        "name": "createRenderScheduler - 高频触发（100次）",
+        "hz": 1060591.16,
+        "mean_ms": 0.0009,
+        "min_ms": 0.0004,
+        "max_ms": 39.9486,
+        "rme": "±23.49%",
+        "samples": 530296
+      },
+      {
+        "name": "createRenderScheduler - 中频触发（10次）",
+        "hz": 1165952.01,
+        "mean_ms": 0.0009,
+        "min_ms": 0.0002,
+        "max_ms": 89.2972,
+        "rme": "±39.90%",
+        "samples": 591917
+      },
+      {
+        "name": "delegateEvent - 1000 个元素",
+        "hz": 99.249,
+        "mean_ms": 10.0757,
+        "min_ms": 7.512,
+        "max_ms": 13.3962,
+        "rme": "±3.38%",
+        "samples": 50
+      },
+      {
+        "name": "delegateEventBatch - 100 个事件处理器",
+        "hz": 23923.13,
+        "mean_ms": 0.0418,
+        "min_ms": 0.0378,
+        "max_ms": 0.5129,
+        "rme": "±0.94%",
+        "samples": 11962
+      },
+      {
+        "name": "逐个插入 - 100 个节点",
+        "hz": 2232.09,
+        "mean_ms": 0.448,
+        "min_ms": 0.3981,
+        "max_ms": 1.0909,
+        "rme": "±1.03%",
+        "samples": 1117
+      },
+      {
+        "name": "DocumentFragment 批量插入 - 100 个节点",
+        "hz": 1618.22,
+        "mean_ms": 0.618,
+        "min_ms": 0.5465,
+        "max_ms": 1.7014,
+        "rme": "±1.64%",
+        "samples": 810
       }
-    },
-    "memory": {
-      "empty_app": {
-        "vapor": 2,
-        "vdom": 2.5,
-        "vue3": 4
+    ],
+    "update": [
+      {
+        "name": "update single node",
+        "hz": 82027.42,
+        "mean_ms": 0.0122,
+        "min_ms": 0.0105,
+        "max_ms": 0.3312,
+        "rme": "±0.61%",
+        "samples": 41014
       },
-      "1000_components": {
-        "vapor": 8,
-        "vdom": 10,
-        "vue3": 15
+      {
+        "name": "update 1000 nodes (text content)",
+        "hz": 613.55,
+        "mean_ms": 1.6298,
+        "min_ms": 1.4059,
+        "max_ms": 3.1525,
+        "rme": "±1.63%",
+        "samples": 307
       },
-      "10000_components": {
-        "vapor": 45,
-        "vdom": 60,
-        "vue3": 90
+      {
+        "name": "swap two rows",
+        "hz": 15415.23,
+        "mean_ms": 0.0649,
+        "min_ms": 0.0551,
+        "max_ms": 0.606,
+        "rme": "±0.75%",
+        "samples": 7708
+      },
+      {
+        "name": "select row (highlight)",
+        "hz": 3189.04,
+        "mean_ms": 0.3136,
+        "min_ms": 0.2112,
+        "max_ms": 5.051,
+        "rme": "±3.38%",
+        "samples": 1595
+      },
+      {
+        "name": "remove row from middle",
+        "hz": 15880.97,
+        "mean_ms": 0.063,
+        "min_ms": 0.0561,
+        "max_ms": 0.4104,
+        "rme": "±0.65%",
+        "samples": 7941
+      },
+      {
+        "name": "append 1000 rows",
+        "hz": 6739.04,
+        "mean_ms": 0.1484,
+        "min_ms": 0.1282,
+        "max_ms": 0.7838,
+        "rme": "±1.20%",
+        "samples": 3370
+      },
+      {
+        "name": "prepend 1000 rows",
+        "hz": 6910.93,
+        "mean_ms": 0.1447,
+        "min_ms": 0.1252,
+        "max_ms": 0.5938,
+        "rme": "±1.11%",
+        "samples": 3456
+      },
+      {
+        "name": "reverse list",
+        "hz": 15035.34,
+        "mean_ms": 0.0665,
+        "min_ms": 0.0564,
+        "max_ms": 0.7636,
+        "rme": "±0.84%",
+        "samples": 7518
+      },
+      {
+        "name": "filter list (half)",
+        "hz": 14185.8,
+        "mean_ms": 0.0705,
+        "min_ms": 0.0577,
+        "max_ms": 0.6343,
+        "rme": "±0.94%",
+        "samples": 7093
+      },
+      {
+        "name": "sort list",
+        "hz": 3396.18,
+        "mean_ms": 0.2944,
+        "min_ms": 0.2625,
+        "max_ms": 0.8776,
+        "rme": "±1.00%",
+        "samples": 1699
       }
-    }
-  },
-  "notes": [
-    "所有测试结果均为理论基准值，实际性能取决于具体应用场景",
-    "Vapor 模式在高频更新和内存受限场景中优势明显",
-    "包体积测试基于 gzip 压缩后的大小"
-  ]
+    ],
+    "render": [
+      {
+        "name": "create 1000 nodes (divs)",
+        "hz": 6443.21,
+        "mean_ms": 0.1552,
+        "min_ms": 0.1386,
+        "max_ms": 0.6131,
+        "rme": "±1.01%",
+        "samples": 3222
+      },
+      {
+        "name": "create 10000 nodes (divs)",
+        "hz": 597.66,
+        "mean_ms": 1.6732,
+        "min_ms": 1.5015,
+        "max_ms": 2.5239,
+        "rme": "±1.70%",
+        "samples": 299
+      },
+      {
+        "name": "create 1000 signals (simple)",
+        "hz": 1138.0,
+        "mean_ms": 0.8787,
+        "min_ms": 0.7638,
+        "max_ms": 2.2785,
+        "rme": "±2.81%",
+        "samples": 570
+      },
+      {
+        "name": "create 1000 rows (table)",
+        "hz": 1238.25,
+        "mean_ms": 0.8076,
+        "min_ms": 0.7015,
+        "max_ms": 1.6404,
+        "rme": "±1.56%",
+        "samples": 620
+      },
+      {
+        "name": "create nested structure (10 levels deep)",
+        "hz": 495455.38,
+        "mean_ms": 0.002,
+        "min_ms": 0.0018,
+        "max_ms": 0.3233,
+        "rme": "±0.57%",
+        "samples": 247728
+      },
+      {
+        "name": "create wide tree (100 siblings)",
+        "hz": 58131.17,
+        "mean_ms": 0.0172,
+        "min_ms": 0.0154,
+        "max_ms": 0.4707,
+        "rme": "±0.65%",
+        "samples": 29066
+      },
+      {
+        "name": "create complex component tree",
+        "hz": 30970.89,
+        "mean_ms": 0.0323,
+        "min_ms": 0.0289,
+        "max_ms": 0.4554,
+        "rme": "±0.75%",
+        "samples": 15486
+      }
+    ],
+    "js-framework-benchmark": [
+      {
+        "name": "signal updates - 1000",
+        "hz": 405611.81,
+        "mean_ms": 0.0025,
+        "min_ms": 0.0019,
+        "max_ms": 1.081,
+        "rme": "±1.21%",
+        "samples": 202806
+      },
+      {
+        "name": "computed updates - 1000",
+        "hz": 100069.17,
+        "mean_ms": 0.01,
+        "min_ms": 0.0087,
+        "max_ms": 1.2124,
+        "rme": "±0.99%",
+        "samples": 50035
+      },
+      {
+        "name": "effect runs - 1000",
+        "hz": 357812.74,
+        "mean_ms": 0.0028,
+        "min_ms": 0.0023,
+        "max_ms": 1.0361,
+        "rme": "±1.47%",
+        "samples": 178907
+      },
+      {
+        "name": "create and destroy 1000 components",
+        "hz": 343.87,
+        "mean_ms": 2.9081,
+        "min_ms": 1.1165,
+        "max_ms": 15.8771,
+        "rme": "±11.65%",
+        "samples": 172
+      }
+    ]
+  }
 }
