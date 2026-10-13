@@ -175,14 +175,16 @@ export default defineConfig({
       //   statements 61.56% / lines 61.56% / functions 70.33% / branches 85.64%
       // 2026-10-14 四测（264 文件 / 6249 用例全绿；+ Menu 行为电池 17 用例 + 2 处缺陷修复）：
       //   statements 62.12% / lines 62.12% / functions 70.47% / branches 85.65%
-      // 阈值随棘轮上调至 lines/statements 62.1、functions 70.4、branches 85.6
+      // 2026-10-14 五测（265 文件 / 6273 用例全绿；+ ColorPicker 行为电池 24 用例 + 3 处缺陷修复）：
+      //   statements 62.76% / lines 62.76% / functions 70.63% / branches 85.66%
+      // 阈值随棘轮上调至 lines/statements 62.7、functions 70.6、branches 85.6
       //（小数口径：整数 59/69/85 已是实测值的下界，收紧到小数才真正锁住当前水平、防回退）。
       // 规则：只允许上调，不允许为了让 CI 变绿而下调。
       thresholds: {
-        lines: 62.1,
-        functions: 70.4,
+        lines: 62.7,
+        functions: 70.6,
         branches: 85.6,
-        statements: 62.1,
+        statements: 62.7,
       },
     },
   },
