@@ -123,7 +123,17 @@ for (const f of files) {
     noProps++;
     continue;
   }
-  const unused = names.filter((n) => !new RegExp('\\b' + n + '\\b').test(body));
+  // ★ 2026-10-14 修正**假阳性**：`emit('clear')` 是**惯用接线** —— `component/src/emit.ts`
+  //   会拿 `onClear` 去 props 里找并调用。但文本判据只认标识符**字面出现** ⇒ 用 emit 接线
+  //   的 prop 会被误报为「未接线」。实测：`ColorPicker.onClear` 由 `p.onClear?.()` 改为
+  //   `emit('clear')` 后被误报。
+  //   ⇒ 把 `emit('x')` 按 `toHandlerKey` 的规则映射成 `onX`，一并计入「已接线」。
+  const emitted = new Set<string>();
+  for (const m of body.matchAll(/\bemit\s*\(\s*['"`]([^'"`]+)['"`]/g)) {
+    const camel = (m[1] as string).replace(/-([a-z])/g, (_: string, c: string) => c.toUpperCase());
+    emitted.add('on' + camel.charAt(0).toUpperCase() + camel.slice(1));
+  }
+  const unused = names.filter((n) => !emitted.has(n) && !new RegExp('\\b' + n + '\\b').test(body));
   if (unused.length === names.length) suspicious.push({ file: f, unused, all: true });
   else if (unused.length > 0) suspicious.push({ file: f, unused, all: false });
   else fullyWired++;

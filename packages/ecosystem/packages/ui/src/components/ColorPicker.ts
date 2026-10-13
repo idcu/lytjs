@@ -44,7 +44,7 @@ export const ColorPicker = defineComponent({
     onClear: { type: Function, default: undefined },
   },
 
-  setup(props: Record<string, unknown>) {
+  setup(props: Record<string, unknown>, { emit }: { emit: (e: string, ...a: unknown[]) => void }) {
     const p = props as ColorPickerSetupProps;
     const isDropdownVisible = signal(false);
     const currentHue = signal(200);
@@ -154,6 +154,11 @@ export const ColorPicker = defineComponent({
       isDropdownVisible.set(false);
       colorInputValue.set(color);
       addToHistory(color);
+      // ★ 2026-10-14：此前 `onChange` 声明了却**从未被调用**（颜色选定后父组件收不到通知、
+      //   `modelValue` 也永不更新 ⇒ 组件实际是不可控的）。`emit` 会去 props 里找 `onChange`
+      //   并调用（见 `component/src/emit.ts`）⇒ **不要**再直接调一次 `p.onChange`（会双触发）。
+      emit('update:modelValue', color);
+      emit('change', color);
     };
 
     const handlePresetClick = (color: string) => {
@@ -161,15 +166,21 @@ export const ColorPicker = defineComponent({
       handleColorClick(color);
     };
 
-    const clearColor = () => {
+    const clearColor = (event: Event) => {
+      // ★ 2026-10-14：清除按钮在 trigger 内部 ⇒ 点击会**冒泡到 trigger 的 onClick**。
+      //   此前靠 `toggleDropdown` 里 `!p.showClear` 的守卫"顺带"挡住重开，
+      //   代价是 **`showClear=true`（默认值）时下拉永远打不开**（实测确认）。
+      //   正确做法：清除处自行 stopPropagation，toggle 恢复为无条件的开合。
+      event.stopPropagation();
       isDropdownVisible.set(false);
-      if (p.onClear) p.onClear();
+      // 与 `Select` 的清除语义对齐：既发 `clear`，也把「值变空」告知父组件。
+      emit('update:modelValue', '');
+      emit('change', '');
+      emit('clear');
     };
 
     const toggleDropdown = () => {
-      if (!p.showClear || isDropdownVisible()) {
-        isDropdownVisible.set(!isDropdownVisible());
-      }
+      isDropdownVisible.set(!isDropdownVisible());
     };
 
     const handleColorInput = (event: Event) => {
