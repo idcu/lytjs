@@ -52,15 +52,21 @@ queue.dispose();
 
 `RenderOperation` 为联合类型，支持的取值为：
 
-| 类型     | 说明                                                                      |
-| -------- | ------------------------------------------------------------------------- |
-| `insert` | 插入操作（`{ type, vnode, container, anchor?, priority? }`）              |
-| `remove` | 移除操作（`{ type, vnode, priority? }`）                                  |
-| `move`   | 移动操作（`{ type, vnode, container, anchor?, priority? }`）              |
-| `patch`  | 更新操作（`{ type, oldVNode, newVNode, container, anchor?, priority? }`） |
-| `custom` | 自定义操作（`{ type, fn, priority? }`），实际执行通过回调 `fn` 完成       |
+| 类型     | 说明                                                                         |
+| -------- | ---------------------------------------------------------------------------- |
+| `insert` | 插入操作（`{ type, vnode, container, anchor?, priority? }`），**会真正执行** |
+| `remove` | 移除操作（`{ type, vnode, priority? }`），**会真正执行**                     |
+| `move`   | 移动操作（`{ type, vnode, container, anchor?, priority? }`），**会真正执行** |
+| `custom` | 自定义操作（`{ type, fn, priority? }`），执行回调 `fn`                       |
 
-> 注意：`insert` / `remove` / `move` / `patch` 在 `RenderQueue` 中仅用于合并与排序调度，**不会**直接执行 DOM 操作，需由上层 renderer 通过 `custom` 类型包装后传入实际执行逻辑。
+> `insert` / `remove` / `move` 通过 `RendererHost` 的 `insert` / `remove` 执行宿主节点操作，
+> 要求对应 VNode 的 `el` 已赋值（未挂载会**抛错**，不会静默跳过）。
+
+> **2026-10-10 变更（P1-2）**：原先还有 `patch` 类型，但它在 `RenderQueue` 里是 **no-op**
+> （只合并、不执行）—— 调用方按类型入队却什么都不发生。
+> `patch` 需要完整的 VNode diff，而本包是零依赖的 common 层（不能依赖 `@lytjs/vdom`），
+> 故已**从类型中移除**：现在传 `patch` 会得到**编译期错误**。
+> 需要 patch 请用 `custom` 包装（`{ type: 'custom', fn: () => patch(oldVNode, newVNode) }`）。
 
 `RenderQueueOptions` 配置：
 
@@ -76,7 +82,6 @@ queue.dispose();
 启用 `enableMerge` 时，`enqueue` 会尝试合并同一元素的重复操作：
 
 - 同一元素的 `remove` 操作只保留最后一个
-- 同一元素的 `patch` 操作只保留最新的 patch
 - `custom` 操作不做去重合并
 
 ## 相关包

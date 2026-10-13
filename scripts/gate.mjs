@@ -67,7 +67,14 @@ const GATES = [
     tier: 'fast',
     cmd: ['tsx', 'scripts/check-ui-props-wiring.ts'],
     approx: '~2.3s',
-    desc: '报告型：声明了却从未被引用的 props（清单已清零，保持棘轮）',
+    desc: '棘轮红门禁：声明了却从未被引用的 props（基线 scripts/ui-props-wiring-baseline.txt，只拦新增；2026-10-10 由报告型升级）',
+  },
+  {
+    name: 'check-keel-wiring',
+    tier: 'fast',
+    cmd: ['tsx', 'scripts/check-keel-wiring.ts'],
+    approx: '~0.3s',
+    desc: '治理接线：keel CI 三关卡（keel-lint / test-lint / verify-hooks）必须在 .github/workflows/keel.yml 里 —— 防判据自测被静默移除（2026-10-11）',
   },
 
   // ── 慢档：全仓级 / 需要 dist ────────────────────────────────

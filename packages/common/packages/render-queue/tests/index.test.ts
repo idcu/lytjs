@@ -74,6 +74,11 @@ function createMockVNode(type: string = 'div') {
   return { type, props: null, children: null };
 }
 
+/** 已挂载的 VNode（带 el）——用于验证 insert / remove / move 的真实执行 */
+function createMountedVNode(type: string = 'div') {
+  return { type, props: null, children: null, el: { tagName: type } };
+}
+
 // ============================================================
 // RenderQueue
 // ============================================================
@@ -118,25 +123,26 @@ describe('RenderQueue', () => {
 
   it('should merge duplicate remove operations for the same element', () => {
     const queue = new RenderQueue(host, { enableMerge: true });
-    const vnode = createMockVNode('div');
+    // 用已挂载的 vnode：本用例只验证合并，但异步 flush 会真正执行 remove，
+    // 未挂载的 vnode 会触发（正确的）报错日志，干扰测试输出。
+    const vnode = createMountedVNode('div');
     queue.enqueue({ type: 'remove', vnode });
     queue.enqueue({ type: 'remove', vnode });
     expect(queue.size).toBe(1);
   });
 
-  it('should merge duplicate patch operations for the same element type', () => {
+  it('should merge duplicate insert operations for the same element type', () => {
     const queue = new RenderQueue(host, { enableMerge: true });
-    const oldVNode = createMockVNode('div');
-    const newVNode1 = createMockVNode('div');
-    const newVNode2 = createMockVNode('div');
-    queue.enqueue({ type: 'patch', oldVNode, newVNode: newVNode1, container: null });
-    queue.enqueue({ type: 'patch', oldVNode, newVNode: newVNode2, container: null });
-    expect(queue.size).toBe(1);
+    const vnode1 = createMountedVNode('div');
+    const vnode2 = createMountedVNode('div');
+    queue.enqueue({ type: 'insert', vnode: vnode1, container: null });
+    queue.enqueue({ type: 'insert', vnode: vnode2, container: null });
+    expect(queue.size).toBe(2); // insert 不合并（只有 remove 合并）
   });
 
   it('should not merge when enableMerge is false', () => {
     const queue = new RenderQueue(host, { enableMerge: false });
-    const vnode = createMockVNode('div');
+    const vnode = createMountedVNode('div');
     queue.enqueue({ type: 'remove', vnode });
     queue.enqueue({ type: 'remove', vnode });
     expect(queue.size).toBe(2);
@@ -156,5 +162,74 @@ describe('RenderQueue', () => {
     queue.enqueue({ type: 'custom', fn: vi.fn() });
     queue.dispose();
     expect(queue.size).toBe(0);
+  });
+});
+
+// ============================================================
+// P1-2 回归（2026-10-10）
+//
+// 此前 insert / remove / move / patch 在 executeOperation 里全是 no-op
+// （只在 __DEV__ 下 warn）—— 调用方按类型入队，运行时什么都不发生。
+// 下面以「宿主方法是否被真正调用」为判据。
+// ============================================================
+
+describe('RenderQueue P1-2：insert / remove / move 必须真正执行', () => {
+  let host: RendererHost<object, object>;
+
+  beforeEach(() => {
+    host = createMockHost();
+  });
+
+  it('insert 应调用 host.insert(child, container, anchor)', () => {
+    const queue = new RenderQueue(host);
+    const vnode = createMountedVNode('div');
+    const container = { tagName: 'body' };
+
+    queue.enqueue({ type: 'insert', vnode, container, anchor: null });
+    queue.flushSync();
+
+    expect(host.insert).toHaveBeenCalledTimes(1);
+    expect(host.insert).toHaveBeenCalledWith(vnode.el, container, null);
+  });
+
+  it('remove 应调用 host.remove(child)', () => {
+    const queue = new RenderQueue(host);
+    const vnode = createMountedVNode('div');
+
+    queue.enqueue({ type: 'remove', vnode });
+    queue.flushSync();
+
+    expect(host.remove).toHaveBeenCalledTimes(1);
+    expect(host.remove).toHaveBeenCalledWith(vnode.el);
+  });
+
+  it('move 应调用 host.insert 把节点搬到新位置', () => {
+    const queue = new RenderQueue(host);
+    const vnode = createMountedVNode('span');
+    const container = { tagName: 'body' };
+    const anchor = { tagName: 'p' };
+
+    queue.enqueue({ type: 'move', vnode, container, anchor });
+    queue.flushSync();
+
+    expect(host.insert).toHaveBeenCalledTimes(1);
+    expect(host.insert).toHaveBeenCalledWith(vnode.el, container, anchor);
+  });
+
+  it('vnode.el 为空时应抛错（而不是静默跳过），且不吞掉后续操作', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const queue = new RenderQueue(host, { enableMerge: false });
+    const notMounted = createMockVNode('div'); // 没有 el
+    const fn = vi.fn();
+
+    queue.enqueue({ type: 'insert', vnode: notMounted, container: null });
+    queue.enqueue({ type: 'custom', fn });
+    queue.flushSync();
+
+    // 坏操作被兜底记录
+    expect(errorSpy).toHaveBeenCalled();
+    // 但后续操作照常执行（此前无兜底，一处抛错会丢掉整批）
+    expect(fn).toHaveBeenCalledTimes(1);
+    errorSpy.mockRestore();
   });
 });

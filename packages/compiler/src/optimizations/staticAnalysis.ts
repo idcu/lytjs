@@ -279,10 +279,14 @@ function checkEventNaming(node: ElementNode, context: AnalysisContext): void {
   ) as DirectiveNode[];
 
   for (const event of events) {
-    const eventName = event.arg?.toString().toLowerCase();
+    const arg = event.arg;
+    // ⚠️ arg 是 SimpleExpressionNode，含 `.content`；**绝不能**用 `arg.toString()`
+    // （默认返回 `[object Object]`，会让本检查永远不触发 —— 死分支）。
+    const eventName =
+      arg && 'content' in arg ? String((arg as { content: string }).content).toLowerCase() : '';
 
     // 检查是否使用了保留的原生事件
-    if (eventName && eventName.startsWith('on')) {
+    if (eventName.startsWith('on')) {
       context.result.suggestions.push({
         type: 'event-naming',
         message: `事件名称 ${eventName} 不需要前缀 "on"`,

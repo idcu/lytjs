@@ -246,3 +246,134 @@ describe('组件生命周期钩子（端到端）', () => {
     expect(host.innerHTML).toBe('');
   });
 });
+
+/**
+ * v-on 修饰符端到端门禁（2026-10-10 新增）
+ *
+ * ## 为什么需要
+ *
+ * v-on 修饰符此前有**两个各自为政**的实现：
+ *   · `transform-element.ts` 的 `handleVOn`（实际生效路径）：只认 `stop`/`prevent`/`self`，
+ *     **其余修饰符（`.enter`/`.ctrl`/`.exact`/鼠标键）被静默丢弃** ——
+ *     `@keyup.enter` 对**任意按键**都会触发，且不报错；
+ *   · `transforms/on.ts` 的 `transformOn`（**死代码**，但它的 NOTE 自称是主路径）：
+ *     产 `withModifiers(fn, [...])`，而该名字**在运行时根本不存在** ⇒ 若被接上即 ReferenceError。
+ *
+ * 现统一为「编译器产 `withModifiers(...)` + 运行时单一实现」。
+ * 本组用例断言的是**真实 DOM 上的行为**（是否冒泡、是否触发、defaultPrevented），
+ * 而不是产物字符串形状 —— 后者正是这类缺陷能长期潜伏的原因。
+ */
+describe('v-on 修饰符（端到端，断言真实 DOM 行为）', () => {
+  /** 等一轮宏任务，让 patchEvent 的监听器就位 */
+  const settle = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 10));
+
+  async function mountWithTemplate(template: string, setup: () => Record<string, unknown>) {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    hosts.push(host);
+    const app = createApp({ setup, template });
+    await app.mount(host);
+    await settle();
+    return host;
+  }
+
+  it('.stop：子元素点击不冒泡到父处理器', async () => {
+    const hits: string[] = [];
+    const host = await mountWithTemplate(
+      '<div id="p" @click="onParent"><button id="c" @click.stop="onChild">x</button></div>',
+      () => ({ onParent: () => hits.push('parent'), onChild: () => hits.push('child') }),
+    );
+
+    (host.querySelector('#c') as HTMLElement).dispatchEvent(
+      new MouseEvent('click', { bubbles: true }),
+    );
+    await settle();
+
+    // 修复前：修饰符被内联展开（有效）；但若走到 on.ts 死路径则 ReferenceError。
+    // 关键断言：子处理器**恰好一次**，父处理器**零次**。
+    expect(hits).toEqual(['child']);
+  });
+
+  it('.prevent：阻止默认行为（defaultPrevented 为 true）', async () => {
+    const host = await mountWithTemplate(
+      '<a id="a" href="#x" @click.prevent="noop">link</a>',
+      () => ({ noop: () => {} }),
+    );
+
+    const ev = new MouseEvent('click', { bubbles: true, cancelable: true });
+    (host.querySelector('#a') as HTMLElement).dispatchEvent(ev);
+    await settle();
+
+    expect(ev.defaultPrevented).toBe(true);
+  });
+
+  it('.self：只有点在自己身上才触发', async () => {
+    const hits: string[] = [];
+    const host = await mountWithTemplate(
+      '<div id="p" @click.self="onSelf"><button id="c">x</button></div>',
+      () => ({ onSelf: () => hits.push('self') }),
+    );
+
+    // 点在子按钮上（冒泡到 #p，但 target !== currentTarget）⇒ 应被拦截
+    (host.querySelector('#c') as HTMLElement).dispatchEvent(
+      new MouseEvent('click', { bubbles: true }),
+    );
+    await settle();
+    expect(hits).toEqual([]);
+
+    // 直接点在 #p 上 ⇒ 应放行
+    (host.querySelector('#p') as HTMLElement).dispatchEvent(
+      new MouseEvent('click', { bubbles: true }),
+    );
+    await settle();
+    expect(hits).toEqual(['self']);
+  });
+
+  it('.enter：非 Enter 键不触发（此前静默忽略修饰符 ⇒ 任意键都触发）', async () => {
+    const hits: string[] = [];
+    const host = await mountWithTemplate('<input id="i" @keyup.enter="onKey" />', () => ({
+      onKey: () => hits.push('key'),
+    }));
+    const input = host.querySelector('#i') as HTMLElement;
+
+    input.dispatchEvent(new KeyboardEvent('keyup', { key: 'Escape', bubbles: true }));
+    await settle();
+    expect(hits).toEqual([]);
+
+    input.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
+    await settle();
+    expect(hits).toEqual(['key']);
+  });
+
+  it('.ctrl：未按下修饰键时不触发', async () => {
+    const hits: string[] = [];
+    const host = await mountWithTemplate('<button id="b" @click.ctrl="onClick">x</button>', () => ({
+      onClick: () => hits.push('ctrl-click'),
+    }));
+    const btn = host.querySelector('#b') as HTMLElement;
+
+    btn.dispatchEvent(new MouseEvent('click', { bubbles: true, ctrlKey: false }));
+    await settle();
+    expect(hits).toEqual([]);
+
+    btn.dispatchEvent(new MouseEvent('click', { bubbles: true, ctrlKey: true }));
+    await settle();
+    expect(hits).toEqual(['ctrl-click']);
+  });
+
+  it('.once 仍以监听器选项形态工作（不被守卫逻辑吞掉）', async () => {
+    const hits: string[] = [];
+    const host = await mountWithTemplate('<button id="b" @click.once="onClick">x</button>', () => ({
+      onClick: () => hits.push('once'),
+    }));
+    const btn = host.querySelector('#b') as HTMLElement;
+
+    btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await settle();
+    btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await settle();
+
+    // `once` 是 addEventListener 选项，只应触发一次
+    expect(hits).toEqual(['once']);
+  });
+});

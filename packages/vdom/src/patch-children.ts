@@ -33,11 +33,26 @@ import { createTextVNode } from './vnode';
  * `null` / `undefined` / 布尔值保持原样（由各分支按既有语义跳过）。
  */
 function normalizeVNodeChildren(children: unknown[]): void {
+  // 写指针：把「有效子节点」就地前移，末尾截断 —— 即**真正移除**无效项。
+  //
+  // ⚠️ 2026-10-10（P0-3 修复的连带缺陷）：此前对 `null` / `undefined` / 布尔只是
+  // `continue`（**跳过但保留在数组里**），于是数组仍带着空洞进入 keyed diff，
+  // `patchKeyedChildren` 读 `c2[j].key` 直接抛 `TypeError: Cannot read properties of
+  // null (reading 'key')`。
+  // 触发者：`<b v-if="ok">` 为假时插槽产物是 `[null]`（v-if 无 v-else 的正常形态）。
+  // 该缺陷此前被 Vapor 路径「每次清空 + 重新 mount」掩盖（mount 会跳过 null，
+  // 永不进入 diff）；改为 patch 复用后立刻暴露。
+  let write = 0;
   for (let i = 0; i < children.length; i++) {
     const child = children[i];
-    if (child == null || typeof child === 'boolean' || isVNode(child)) continue;
+    // null / undefined / 布尔（v-if 为假时的产物）不产生任何节点 ⇒ 从数组中剔除
+    if (child == null || typeof child === 'boolean') continue;
+    if (isVNode(child)) {
+      children[write++] = child;
+      continue;
+    }
     if (typeof child === 'string' || typeof child === 'number') {
-      children[i] = createTextVNode(String(child));
+      children[write++] = createTextVNode(String(child));
       continue;
     }
     if (__DEV__) {
@@ -46,8 +61,9 @@ function normalizeVNodeChildren(children: unknown[]): void {
           `which is not a valid VNode. Coercing to text via String().`,
       );
     }
-    children[i] = createTextVNode(String(child));
+    children[write++] = createTextVNode(String(child));
   }
+  children.length = write;
 }
 
 // ============================================================
@@ -305,7 +321,12 @@ export function createChildrenPatch<HN, HE extends HN>(
     parentSuspense: SuspenseBoundary | null,
   ): void {
     for (let i = 0; i < children.length; i++) {
-      unmount(children[i]!, parentComponent, parentSuspense, true);
+      // 防御：数组里理论上已由 normalizeVNodeChildren 剔除 null/undefined，
+      // 但卸载路径可能收到未经过该函数的历史数组，此处再兜一次底。
+      const child = children[i];
+      if (child != null) {
+        unmount(child, parentComponent, parentSuspense, true);
+      }
     }
   }
 

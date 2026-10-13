@@ -249,6 +249,62 @@ describe('createApp', () => {
   });
 });
 
+describe('组件生命周期钩子（P0-2 回归：断言真实行为）', () => {
+  /**
+   * 为什么需要这条
+   *
+   * `core-vnode` 与 `core` 是两条**平行**的 createApp 实现。core 在 2026-09-26
+   * 修好了"向 vdom 注入钩子回调"，core-vnode **没有跟着改** ⇒
+   * `onMounted` / `onUpdated` / `onBeforeUnmount` / `onUnmounted` 在这条路径上
+   * **全部不触发**，且不报错、不警告。
+   *
+   * 本包此前的测试**一条生命周期断言都没有**（只有"导出面存在"式检查），
+   * 所以缺陷隐身。这条测试按硬约束 2 断言**真实 DOM 文本** + **钩子恰好各一次**。
+   */
+  it('mounted / updated / beforeUnmount / unmounted 各恰好触发一次且顺序正确', async () => {
+    const { createApp, h, ref, nextTick, onMounted, onUpdated, onBeforeUnmount, onUnmounted } =
+      coreVnode;
+
+    const log: string[] = [];
+    const count = ref(0);
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    const app = createApp({
+      setup() {
+        onMounted(() => log.push('mounted'));
+        onUpdated(() => log.push('updated'));
+        onBeforeUnmount(() => log.push('beforeUnmount'));
+        onUnmounted(() => log.push('unmounted'));
+      },
+      render() {
+        return h('div', null, `count=${count.value}`);
+      },
+    } as never);
+
+    app.mount(host);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    // 硬约束 2：判"能跑"必须断言真实 DOM 文本
+    expect(host.textContent).toBe('count=0');
+    expect(log).toEqual(['mounted']);
+
+    count.value = 1;
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(host.textContent).toBe('count=1');
+    expect(log).toEqual(['mounted', 'updated']);
+
+    app.unmount();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    // 关键：每个钩子**恰好一次**。
+    // 修复前：四个全部不触发。若同时保留 unmount() 里的手动调用，则卸载两个钩子会各触发两次。
+    expect(log).toEqual(['mounted', 'updated', 'beforeUnmount', 'unmounted']);
+    expect(host.innerHTML).toBe('');
+  });
+});
+
 describe('h() function', () => {
   it('should create a VNode with tag', () => {
     const { h } = coreVnode;

@@ -1,7 +1,7 @@
 {
   "name": "@lytjs/compat",
   "version": "6.9.6",
-  "description": "LytJS Vue 2/3 compatibility layer for migration support",
+  "description": "LytJS Vue 2/3 migration helpers - Vue 2 lifecycle hook name mapping",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

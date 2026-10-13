@@ -1,7 +1,7 @@
 {
   "name": "@lytjs/bundler",
   "version": "6.9.6",
-  "description": "LytJS bundler integration for Vite",
+  "description": "LytJS bundler integration - compile .lyt/.vue SFCs in Vite",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -26,7 +26,9 @@
     "lint": "eslint \"src/**/*.ts\"",
     "clean": "rm -rf dist"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@lytjs/compiler": "workspace:*"
+  },
   "devDependencies": {
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",

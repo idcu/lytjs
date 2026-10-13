@@ -6,7 +6,7 @@
  * 否则分支永远无法通过编译模板的路径覆盖。
  */
 import { describe, it, expect } from 'vitest';
-import { parse } from '../src/index';
+import { parse, compile } from '../src/index';
 import {
   analyzeMemoNeeds,
   analyzeDeadCode,
@@ -94,34 +94,36 @@ describe('optimizations battery: analyzeDeadCode / eliminateDeadCode', () => {
 });
 
 describe('optimizations battery: precompileTemplate', () => {
-  it('default (browser) target', () => {
+  it('返回构建期渲染函数代码，size 可度量', () => {
     const r = precompileTemplate('<div class="a">{{ msg }}</div>');
     expect(typeof r.code).toBe('string');
-    expect(r.stats.originalSize).toBeGreaterThan(0);
-    expect(r.types).toBeUndefined();
+    expect(r.code).toContain('function render');
+    expect(r.size).toBe(r.code.length);
+    expect(r.size).toBeGreaterThan(0);
   });
 
-  it('node / edge targets and generated types', () => {
-    const tpl = '<div class="a">{{ msg }}</div>';
-    expect(typeof precompileTemplate(tpl, { target: 'node' }).code).toBe('string');
-    expect(typeof precompileTemplate(tpl, { target: 'edge' }).code).toBe('string');
-    const withTypes = precompileTemplate(tpl, { generateTypes: true });
-    expect(typeof withTypes.types).toBe('string');
+  // ⚠️ P2-3 回归：历史实现在**生成代码文本**上跑正则算术折叠（且用 eval），
+  // 实测会把下面四类代码**静默改坏**。
+  // 现在 AOT 产物 = helper import + 渲染函数代码主体 + `export { render }`；
+  // 其中**代码主体**必须与 `compile()` **逐字节一致**（AOT 只补前后缀，不改写代码）。
+  it('不再对生成代码做文本级改写（P2-3 回归）', () => {
+    const templates = [
+      '<div>{{ x1 + 2 }}</div>', // 历史：x1 + 2 → x3（标识符被吞）
+      '<div>{{ 1.5 + 2 }}</div>', // 历史：1.5 + 2 → 1.7（小数被拆）
+      '<div>{{ "1+2" }}</div>', // 历史："1+2" → "3"（字符串内容被改）
+      '<div>{{ 1 + 2 }}</div>', // 历史：靠这处"折叠"伪造出 reduction > 0
+    ];
+    for (const tpl of templates) {
+      // AOT 产物必须**包含**未改写的代码主体（前后仅补 import / export）
+      expect(precompileTemplate(tpl).code).toContain(compile(tpl).code);
+    }
   });
 
-  it('disables inlineStatic / precomputeConstants', () => {
-    const r = precompileTemplate('<div>1 + 2</div>', {
-      inlineStatic: false,
-      precomputeConstants: false,
-    });
-    expect(typeof r.code).toBe('string');
-  });
-
-  it('extracts <template static> blocks into staticAssets', () => {
-    // 编译产物要真正包含 `<template static>...</template>` 文本，正则循环才会进入；
-    // v-pre 会让内部 HTML 原样进入静态串。
-    const r = precompileTemplate('<div v-pre><template static>hello</template></div>');
-    expect(r.staticAssets instanceof Map).toBe(true);
-    void r;
+  it('产物不含历史 pass 引入的未定义引用', () => {
+    const r = precompileTemplate('<div class="a">{{ msg }}</div>');
+    // optimizeForTarget 曾把 document. → _document.（未定义）、createElement( → document.createElement(
+    expect(r.code).not.toContain('_document.');
+    // extractAndInlineStatic 曾产出 __getStatic(...)（运行时无定义）
+    expect(r.code).not.toContain('__getStatic');
   });
 });

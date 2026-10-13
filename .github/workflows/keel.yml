@@ -16,6 +16,16 @@ jobs:
       - name: 内核校验（0 fail 才放行）
         run: bash keel/checks/keel-lint.sh keel
 
+      # 判据自测（"守卫的守卫"）：注入 42 类故障，断言 keel-lint **真的会判死**它声称能判死的问题。
+      #
+      # 为什么必须进 CI：`keel-lint.sh` 是规则本体，它自己也会腐烂 —— 改了检查项却忘了改
+      # 用例、或用例随判据漂移而失效，lint 就会**静默变成摆设**（"全绿"却什么都没拦住）。
+      # 此前本步骤**只在 install.sh 安装时跑一次**（doctor 只打印"怎么跑"、不真跑）⇒
+      # 日常 push/PR 无任何关卡保证判据仍能判死。这是治理层自身的监管缺口：
+      # 守卫的守卫未被守卫。CI 是它唯一能自动、且对所有人一致的执行点。
+      - name: 判据自测（守卫的守卫 · test-lint）
+        run: bash keel/checks/test-lint.sh
+
       # 钩子"验谎"：CI 里的新 clone 天然没装 core.hooksPath，只验本体存在 + 可执行
       - name: 闭环钩子本体
         run: bash keel/checks/verify-hooks.sh --allow-unset

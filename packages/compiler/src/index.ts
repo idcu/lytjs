@@ -4,12 +4,12 @@
 
 // Compile function
 import { parse } from './parser';
-import { transform, builtInTransforms, builtInDirectiveTransforms, optimize } from './transform';
+import { transform, builtInTransforms, optimize } from './transform';
 import { generate } from './codegen';
 import { generateSignal } from './codegen-signal';
 import { generateSignalOptimized } from './codegen-signal-optimized';
 import { generateSSR } from './codegen-ssr';
-import type { CompilerOptions, CodegenResult, DirectiveTransform, RootNode } from './types';
+import type { CompilerOptions, CodegenResult, RootNode } from './types';
 
 // Server Components (Phase 1.4)
 export {
@@ -58,7 +58,6 @@ export type {
   DeadCodeAnalysis,
   UnreachableCode,
   ConstantFoldingOpportunity,
-  AOTOptions,
   AOTResult,
 } from './optimizations';
 
@@ -291,31 +290,26 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
     ...restOptions
   } = options;
 
-  // In SSR mode, filter out client-only directive transforms (v-on, v-model, v-show)
-  let directiveTransforms: Record<string, DirectiveTransform>;
-  if (ssrMode) {
-    const {
-      on: _on,
-      model: _model,
-      show: _show,
-      ...ssrDirectiveTransforms
-    } = builtInDirectiveTransforms;
-    directiveTransforms = {
-      ...ssrDirectiveTransforms,
-      ...(userDirectiveTransforms ?? {}),
-    };
-  } else {
-    directiveTransforms = {
-      ...builtInDirectiveTransforms,
-      ...(userDirectiveTransforms ?? {}),
-    };
-  }
-
+  // ⚠️ 2026-10-10：这里**只透传用户自定义的** directiveTransforms。
+  //
+  // 背景（实证）：`builtInDirectiveTransforms`（bind/on/model/show）此前被合并进
+  // `options.directiveTransforms` 并交给 `transform()`，但 `createTransformContext`
+  // 逐字段构造 context、从未消费该字段 ⇒ 整张内建注册表是**死代码**，
+  // 且 `compile({ directiveTransforms })` 这个公开选项**静默失效**
+  // （探针：自定义 on/bind/custom 三个 transform 调用计数全为 0）。
+  //
+  // 内建指令由 `transformElement` 的 `handleDirective` 内联处理 —— 它产出的是
+  // **AST 节点**（`JSProperty`），而内建注册表里的实现产出的是 `{key, value}`
+  // **纯字符串对**，两者形状不兼容；故内建不走注册表。
+  // 用户自定义项经 `handleDirective` 的 registry-first 分支生效（含形状归一化）。
+  //
+  // SSR 分支原先要"过滤掉 on/model/show"，但既然注册表从未生效，该过滤是空操作，
+  // 随本次修复一并移除（内联路径对 SSR 与 CSR 一致）。
   const transformOptions = {
     ...restOptions,
     ssr: ssrMode ?? false,
     nodeTransforms: [...builtInTransforms, ...(userNodeTransforms ?? [])],
-    directiveTransforms,
+    directiveTransforms: userDirectiveTransforms ?? {},
   };
   transform(ast, transformOptions);
 

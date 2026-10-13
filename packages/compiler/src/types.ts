@@ -400,6 +400,20 @@ export interface TransformContext {
    * 约定：写入 attr 时由消费方拼成 `data-v-${scopeId}`。
    */
   scopeId?: string;
+  /**
+   * 指令转换注册表 —— **用户自定义指令的扩展点**。
+   *
+   * ⚠️ 与上面 `scopeId` **同族**的坑（2026-10-10 修复）：本字段此前只存在于
+   * `TransformOptions`，而 `createTransformContext` 是逐字段显式构造 context、
+   * 又漏了它 ⇒ `compile({ directiveTransforms: {...} })` 这个**公开选项静默失效**
+   * （实证：探针里自定义 on/bind/custom 三个 transform 的调用计数全为 0，
+   * 对照组 `nodeTransforms` 为 1）。透传后 `handleDirective` 会优先消费它。
+   *
+   * 约定：**只承载用户自定义项**。内建指令（bind/on/model/show）仍走
+   * `transformElement` 内联路径（它产出 AST 节点，而 `builtInDirectiveTransforms`
+   * 里的实现产出的是 `{key,value}` 字符串对，两者形状不兼容）。
+   */
+  directiveTransforms?: Record<string, DirectiveTransform>;
   filters?: Set<string>;
   childIndex: number;
   // FIX: P2-27 添加 __counters 字段，用于存储转换器内部计数器（如解构计数器）

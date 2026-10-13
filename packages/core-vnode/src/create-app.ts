@@ -21,8 +21,10 @@ import {
   createComponentInstance,
   setupComponent,
   createComponentPublicInstance,
-  callUnmountedHook,
+  callMountedHook,
+  callUpdatedHook,
   callBeforeUnmountHook,
+  callUnmountedHook,
   initProps,
 } from '@lytjs/component';
 import type {
@@ -148,6 +150,31 @@ export function createApp(
           normalizeProps(instance: unknown, rawProps: Record<string, unknown> | null) {
             initProps(instance as ComponentInternalInstance, rawProps);
           },
+          // ── 组件生命周期钩子的实现注入 ──────────────────────────────────────
+          // vdom 不能反向依赖 @lytjs/component（会循环），因此钩子的**实现**由本包注入，
+          // 与上面的 setupChildComponent / normalizeProps 同模式。
+          //
+          // ⚠️ 2026-10-10 修复（P0-2）：此前这里**完全没有**注入这 4 个回调，
+          // 而 vdom 侧只在 `ctx.invokeXxxHook?.()` 处消费它们（可选调用 ⇒ 静默跳过）⇒
+          // `onMounted` / `onUpdated` / `onBeforeUnmount` / `onUnmounted`
+          // 在 **core-vnode 这条 VNode 生产路径上永不执行**，且不报错、不警告。
+          //
+          // 判据（硬约束 8：打到被验证对象）：`packages/vdom/src/patch-component.ts:262`
+          // 与 `packages/vdom/src/patch.ts:592,601` 是仅有的消费点；全仓对
+          // `invokeMountedHook` 的**写入点**此前只有 `core/src/create-app.ts`。
+          // 本包与 core 是两条平行的 createApp 实现，core 修了、core-vnode 漏了。
+          invokeMountedHook(inst: unknown) {
+            callMountedHook(inst as ComponentInternalInstance);
+          },
+          invokeUpdatedHook(inst: unknown) {
+            callUpdatedHook(inst as ComponentInternalInstance);
+          },
+          invokeBeforeUnmountHook(inst: unknown) {
+            callBeforeUnmountHook(inst as ComponentInternalInstance);
+          },
+          invokeUnmountedHook(inst: unknown) {
+            callUnmountedHook(inst as ComponentInternalInstance);
+          },
         } as unknown as RendererOptionsArg;
 
         const renderer = createDOMRenderer(rendererOptions) as unknown as {
@@ -178,14 +205,12 @@ export function createApp(
     unmount() {
       if (!context.renderer || !context._vnode) return;
 
-      const instance = context._instance;
-      if (instance) {
-        // ⚠️ 2026-09-26：`callUnmountedHook` 现在只负责 unmounted，
-        // beforeUnmount 需显式先调（本包未向 vdom 注入钩子回调，故自行调用，不会重复）。
-        callBeforeUnmountHook(instance);
-        callUnmountedHook(instance);
-      }
-
+      // ⚠️ 2026-10-10（P0-2 修复的连带改动）：**不要**在这里再手动调
+      // `callBeforeUnmountHook` / `callUnmountedHook`。
+      // 本包现已向 vdom 注入 `invokeBeforeUnmountHook` / `invokeUnmountedHook`
+      // （见 mount() 里的 rendererOptions），vdom 的 `unmount()` 会自行触发它们
+      // （顺序：beforeUnmount → 移除 DOM → unmounted）。
+      // 两处都调会**重复触发** —— core 包 2026-09-26 实测过：beforeUnmount ×3、unmounted ×2。
       context.renderer.unmount(context._vnode);
       context._vnode = null;
 

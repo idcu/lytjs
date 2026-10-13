@@ -1024,6 +1024,9 @@ importers:
 
   packages/dom-runtime:
     dependencies:
+      '@lytjs/common-security':
+        specifier: workspace:*
+        version: link:../common/packages/security
       '@lytjs/reactivity':
         specifier: workspace:*
         version: link:../reactivity
@@ -1042,6 +1045,10 @@ importers:
         version: 3.2.4(@types/node@22.19.19)(@vitest/ui@3.2.4)(jsdom@29.1.1)
 
   packages/ecosystem/packages/bundler:
+    dependencies:
+      '@lytjs/compiler':
+        specifier: workspace:*
+        version: link:../../../compiler
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1280,6 +1287,9 @@ importers:
       '@lytjs/common-is':
         specifier: workspace:*
         version: link:../../../../../common/packages/is
+      '@lytjs/common-string':
+        specifier: workspace:*
+        version: link:../../../../../common/packages/string
       '@lytjs/component':
         specifier: workspace:*
         version: link:../../../../../component
@@ -1333,6 +1343,9 @@ importers:
       '@lytjs/common-is':
         specifier: workspace:*
         version: link:../../../common/packages/is
+      '@lytjs/common-string':
+        specifier: workspace:*
+        version: link:../../../common/packages/string
       '@lytjs/component':
         specifier: workspace:*
         version: link:../../../component

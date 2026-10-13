@@ -7,7 +7,7 @@
  */
 
 import { createApp, defineComponent, nextTick, type ComponentOptions } from '@lytjs/core';
-import { signal, watch } from '@lytjs/reactivity';
+import { signal, watch, isReactive as isReactiveImpl, isRef, isSignal } from '@lytjs/reactivity';
 
 // ============================================
 // Types
@@ -477,10 +477,17 @@ export async function assertEmits(
 }
 
 /**
- * Check if a value is reactive
+ * 判断一个值是否具备响应性（signal / ref / computed / reactive 代理）。
+ *
+ * ⚠️ 2026-10-10 修复（P2）：此前实现是 `return false;`（附注释「LytJS v6 uses Signals
+ * instead of Reactive Objects」）—— 那是**用一句借口掩盖未实现**：
+ * ① 它恒返回 false，任何断言「某值是响应式」的测试都会静默失败/永真（取决于断言方向）；
+ * ② 本框架**确实**同时有 signal 与 Proxy reactive 两套（`@lytjs/reactivity` 两者都导出），
+ *    所以「不用 reactive」的理由本身也不成立。
+ * 现在改为委托给 `@lytjs/reactivity` 的**真判定器**（硬约束 8：判据必须打到被验证对象）。
  */
-export function isReactive(_value: unknown): boolean {
-  return false; // LytJS v6 uses Signals instead of Reactive Objects
+export function isReactive(value: unknown): boolean {
+  return isReactiveImpl(value) || isRef(value) || isSignal(value);
 }
 
 // ============================================

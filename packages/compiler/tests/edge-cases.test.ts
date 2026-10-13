@@ -838,18 +838,33 @@ describe('Compile 函数边界条件', () => {
   });
 
   describe('自定义 directiveTransforms', () => {
-    it('自定义指令 transform 应被调用', () => {
-      let customCalled = false;
-      compile('<div v-custom="arg">hello</div>', {
+    it('自定义指令 transform 应被调用，且其产出必须进入产物', () => {
+      // ⚠️ 2026-10-10 订正：此处原断言是 `expect(customCalled).toBeDefined()`。
+      // 布尔 `false` 也是 "defined" ⇒ 该断言**恒过**，无论 transform 是否被调用，
+      // 是一道纸门禁。实测：修复前 `options.directiveTransforms` 完全未被消费
+      // （`createTransformContext` 逐字段构造时漏了该字段），这条测试却一直是绿的。
+      // 现在改为真实断言：① 调用计数 > 0；② 产出必须出现在编译产物里。
+      let customCalled = 0;
+      const result = compile('<div v-custom:arg="x">hello</div>', {
         directiveTransforms: {
-          custom: (dir, node, ctx) => {
-            customCalled = true;
-            return { props: [] };
+          custom: () => {
+            customCalled++;
+            // 故意用 `{key, value}` 字符串对形态 —— 顺带验证
+            // `normalizeDirectiveProp` 会把注册表产出归一化成 JSProperty。
+            return { props: [{ key: 'data-custom', value: '"yes"' }] };
           },
         },
       });
-      // 自定义 directiveTransforms 应该被调用
-      expect(customCalled).toBeDefined();
+      expect(customCalled).toBeGreaterThan(0);
+      expect(result.code).toContain('"data-custom"');
+      expect(result.code).toContain('"yes"');
+    });
+
+    it('未传 directiveTransforms 时，内建指令仍走内联路径（不被注册表劫持）', () => {
+      // 反向守卫：registry-first 分支不得影响内建指令的默认行为
+      const result = compile('<button @click.stop="foo">x</button>');
+      expect(result.code).toContain('withModifiers(');
+      expect(result.code).toContain('"onClick"');
     });
   });
 

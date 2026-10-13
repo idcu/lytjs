@@ -18,6 +18,16 @@ export interface Request {
   query: Record<string, string | string[]>;
   params: Record<string, string>;
   ip?: string;
+  /**
+   * 解析后的请求体（按 `content-type` 决定形态）：
+   * - `application/json` ⇒ 解析后的对象
+   * - `application/x-www-form-urlencoded` ⇒ 键值对象
+   * - 其它（含 `text/*`）⇒ 原始字符串
+   * - GET / HEAD / OPTIONS 或空体 ⇒ `undefined`
+   */
+  body?: unknown;
+  /** 未解析的原始请求体字符串 */
+  rawBody?: string;
   [key: string]: unknown;
 }
 export interface Response {

@@ -44,16 +44,26 @@ console.log(stats.hitRate);
 ## 多层缓存
 
 ```typescript
-import { createCache } from '@lytjs/cache';
+import { createCache, type Cache } from '@lytjs/cache';
+
+// 自定义远程层：只要实现 Cache 接口即可（Redis / 文件 / 分布式缓存……）
+class MyRedisCache implements Cache {
+  // get / set / delete / has / clear / invalidateTag / invalidateTags / getStats
+}
 
 const cache = createCache({
   type: 'multi',
   config: {
     memory: { ttl: 300000 }, // 5 分钟
-    redis: { host: 'localhost', port: 6379 },
+    extraLayers: [new MyRedisCache()],
   },
 });
 ```
+
+> **2026-10-10 订正（P1-7）**：此前这里写的是 `redis: { host, port }`，
+> 但 `MultiLayerCache` 里的 redis 分支是**空实现** —— 配了也只会得到纯内存缓存，
+> 且没有任何提示。现已改为 `extraLayers`：本包不内置 Redis 客户端，
+> 而是让你把**自己封装的层**插进来（多层读写与回写逻辑是真实生效的）。
 
 ## API
 

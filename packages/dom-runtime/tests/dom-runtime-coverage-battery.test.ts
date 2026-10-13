@@ -149,7 +149,9 @@ describe('dom-runtime battery: sanitizeHTML', () => {
   });
 
   it('strips dangerous tags and attributes', () => {
-    expect(sanitizeHTML('<script>alert(1)</script>')).toBe('');
+    // P2-4 收敛后走 @lytjs/common-security（单一真相源）：剥离 <script> 标签但保留无害文本
+    // （`alert(1)` 作为纯文本不执行，属安全行为；与 security / string 包锁定行为一致）。
+    expect(sanitizeHTML('<script>alert(1)</script>')).toBe('alert(1)');
     expect(sanitizeHTML('<style>body{}</style>')).toBe('');
     expect(sanitizeHTML('<base href="/">')).toBe('');
     expect(sanitizeHTML('<div onclick="evil()">x</div>')).not.toContain('onclick');

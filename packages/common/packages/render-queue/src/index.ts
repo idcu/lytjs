@@ -39,6 +39,19 @@ export const RENDER_PRIORITY_WEIGHT: Record<RenderPriority, number> = {
 
 /**
  * 渲染操作类型。
+ *
+ * ## 2026-10-10 修复（P1-2）
+ *
+ * 此前 `insert` / `remove` / `move` / `patch` 四种操作在 `executeOperation` 里
+ * 全是 **no-op**（仅 `__DEV__` 下 warn），而类型上却带着完整的 `vnode` / `container` /
+ * `anchor` 载荷 —— 调用方按类型把操作入队，运行时**什么都不发生**。
+ *
+ * 现在：
+ * - `insert` / `remove` / `move` **真正执行**（`RendererHost` 已提供 `insert` / `remove`，
+ *   载荷也齐全）；
+ * - `patch` **从类型中移除** —— 它需要完整的 VNode diff，而本包是零依赖的 common 层
+ *   （不能反向依赖 `@lytjs/vdom`）。删除后调用方会得到**编译期错误**，
+ *   而不是运行期静默失效。需要 patch 请用 `custom` 包装。
  */
 export type RenderOperation =
   | {
@@ -50,14 +63,6 @@ export type RenderOperation =
     }
   | { type: 'remove'; vnode: VNode; priority?: RenderPriority }
   | { type: 'move'; vnode: VNode; container: unknown; anchor?: unknown; priority?: RenderPriority }
-  | {
-      type: 'patch';
-      oldVNode: VNode;
-      newVNode: VNode;
-      container: unknown;
-      anchor?: unknown;
-      priority?: RenderPriority;
-    }
   | { type: 'custom'; fn: () => void; priority?: RenderPriority };
 
 /**
@@ -91,6 +96,9 @@ const DEFAULT_OPTIONS: Required<RenderQueueOptions> = {
  * 通过 host.setTimeout 调度批量执行，支持同步插队刷新（flushSync）。
  *
  * 支持优先级排序：sync > high > normal > low
+ *
+ * `insert` / `remove` / `move` 会通过 `RendererHost` **真正执行**宿主节点操作；
+ * `custom` 执行调用方回调（VNode diff 等本层无法完成的动作走这里）。
  *
  * @template HN - 宿主节点类型
  * @template HE - 宿主元素类型
@@ -233,7 +241,12 @@ export class RenderQueue<HN = unknown, HE extends HN = HN> {
     this.queue = [];
 
     for (const op of ops) {
-      this.executeOperation(op);
+      // 单个操作失败不应吞掉后续操作：此前 flush 无兜底，一处抛错会让整批操作丢失。
+      try {
+        this.executeOperation(op);
+      } catch (err) {
+        console.error('[lytjs/render-queue] 执行渲染操作失败:', op.type, err);
+      }
     }
 
     this.flushing = false;
@@ -246,36 +259,44 @@ export class RenderQueue<HN = unknown, HE extends HN = HN> {
 
   /**
    * 执行单个渲染操作。
-   * FIX: P2-50 添加注释说明：insert / remove / move / patch 操作由上层 renderer 处理，
-   * 此处仅作为调度容器，实际执行通过 custom 类型传入
+   *
+   * `insert` / `remove` / `move` 通过 `RendererHost` **真正执行**宿主节点操作；
+   * `custom` 执行调用方回调。
    */
   private executeOperation(op: RenderOperation): void {
     switch (op.type) {
       case 'custom':
         op.fn();
         break;
-      // insert / remove / move / patch 操作由上层 renderer 处理，
-      // 此处仅作为调度容器，实际执行通过 custom 类型传入
-      // 这些操作在 RenderQueue 中主要用于合并和排序，实际 DOM 操作在 renderer 层执行
       case 'insert':
-      case 'remove':
       case 'move':
-      case 'patch':
-        // 这些操作类型在 RenderQueue 中仅用于队列管理（合并、排序），
-        // 实际的 DOM 操作由上层 renderer 通过 custom 类型包装后传入
-        // 设计意图：RenderQueue 专注于调度，不直接操作 DOM
-        // FIX: P2-v11-22 在 DEV 模式下添加警告，提醒开发者这些操作类型不应直接执行
-        if (__DEV__) {
-          console.warn(
-            `[lytjs/render-queue] Operation type "${op.type}" should be wrapped in a "custom" operation. ` +
-              `Direct ${op.type} operations in RenderQueue are no-ops.`,
-          );
-        }
+        this.host.insert(
+          this.requireElement(op.vnode, op.type),
+          op.container as HN,
+          (op.anchor ?? null) as HN | null,
+        );
         break;
-      default:
-        // 未知操作类型，静默忽略（防御性编程）
+      case 'remove':
+        this.host.remove(this.requireElement(op.vnode, 'remove'));
         break;
     }
+  }
+
+  /**
+   * 取出 VNode 对应的宿主节点。
+   *
+   * ⚠️ 为空时**抛错而不是静默跳过** —— 这类情况几乎总是「VNode 还没挂载」或
+   * 「调用方用错了 API」，静默跳过会让渲染结果少一块且毫无线索。
+   */
+  private requireElement(vnode: VNode, opType: string): HN {
+    const el = vnode.el;
+    if (el == null) {
+      throw new Error(
+        `[lytjs/render-queue] "${opType}" 操作的 vnode.el 为空，无法执行宿主节点操作。` +
+          '请确认该 VNode 已挂载（el 已赋值），或改用 "custom" 操作自行处理。',
+      );
+    }
+    return el as HN;
   }
 
   /**
@@ -302,11 +323,6 @@ export class RenderQueue<HN = unknown, HE extends HN = HN> {
           this.queue[i] = newOp;
           return;
         }
-        // patch 操作：替换为最新的
-        if (newOp.type === 'patch' && existing.type === 'patch') {
-          this.queue[i] = newOp;
-          return;
-        }
         // custom 操作：合并（保留两者，custom 不做去重）
       }
     }
@@ -329,8 +345,6 @@ export class RenderQueue<HN = unknown, HE extends HN = HN> {
         return `remove:${this.getVNodeTypeKey(op.vnode)}`;
       case 'move':
         return `move:${this.getVNodeTypeKey(op.vnode)}`;
-      case 'patch':
-        return `patch:${this.getVNodeTypeKey(op.newVNode)}`;
       case 'custom':
         return null;
     }

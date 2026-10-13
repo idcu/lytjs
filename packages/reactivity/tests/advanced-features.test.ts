@@ -386,8 +386,10 @@ describe('批量操作', () => {
       state.name = 'updated';
     });
 
-    // 根据现有测试，batch 不会减少 effect 调用次数
-    expect(fn).toHaveBeenCalledTimes(3);
+    // ✅ 2026-10-10（P1-1）：batch 现在**合并通知** —— 函数内两次赋值只触发一次 effect。
+    // 此前这里断言的是 3 次，即把「batch 不合并触发」这个缺陷写成了预期。
+    expect(fn).toHaveBeenCalledTimes(2);
+    expect(fn).toHaveBeenLastCalledWith('1updated');
   });
 
   it('应该处理嵌套 batch', () => {
@@ -410,8 +412,10 @@ describe('批量操作', () => {
       });
     });
 
-    // 根据现有测试，batch 不会减少 effect 调用次数
-    expect(fn).toHaveBeenCalledTimes(4);
+    // ✅ 2026-10-10（P1-1）：嵌套 batch 只在**最外层**结束时 flush 一次。
+    // 此前断言 4 次（缺陷行为）；引用计数修好后应为 2 次。
+    expect(fn).toHaveBeenCalledTimes(2);
+    expect(fn).toHaveBeenLastCalledWith(9);
   });
 });
 

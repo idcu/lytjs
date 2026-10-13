@@ -1,5 +1,5 @@
 /**
- * 检测「声明了 props 却从未在组件体里引用」的组件
+ * UI props 接线门禁（**棘轮**）—— 检测「声明了 props 却从未在组件体里引用」的组件
  * （`@lytjs/ui` 的一次性核查已固化为脚本）
  *
  * ## 为什么需要它
@@ -18,24 +18,42 @@
  *
  * ⚠️ 这是**文本级**判据：它能可靠发现「完全没被引用」，
  * 但「被引用了」**不等于**行为正确（可能是写在死分支里）。
- * 正向验证仍需真跑一次。
+ * 正向验证仍需真跑一次（见 `tests/e2e-breadcrumb.test.ts` 的写法）。
+ *
+ * ## 棘轮（2026-10-10 从「报告型」升级为「红门禁」）
+ *
+ * 升级前本脚本**恒 exit 0** —— 它只是一份报告，不是门禁：既拦不住新增欠账，
+ * 也没有任何豁免机制，连 `keel/checks/rules.md`「一条规则的准入标准」第 2 条
+ * （"误报可接受，且有显式豁免方式"）都不满足。
+ *
+ * 现按与 `check-circular.ts` **相同**的棘轮模式改造：
+ *   - 既有欠账写在 `scripts/ui-props-wiring-baseline.txt`（每行一条，需注明原因）；
+ *   - 门禁**只对新增**报错（exit 1）；
+ *   - 基线里的条目已消失时会提示同步删行，让基线只反映当前真实欠账。
+ *
+ * 2026-10-10 升级当口，实际欠账为 **0**（`存在未引用 prop 的组件: 0`），
+ * 故基线初始为空 —— 门禁从第一天起就是**严格**的，无需容忍任何既有欠账。
  *
  * ## 用法
- *   tsx scripts/check-ui-props-wiring.ts           # 列出可疑组件
- *   tsx scripts/check-ui-props-wiring.ts --count   # 只报数字
+ *   tsx scripts/check-ui-props-wiring.ts                  # 门禁（新增即红）
+ *   tsx scripts/check-ui-props-wiring.ts --count          # 只报数字
+ *   tsx scripts/check-ui-props-wiring.ts --write-baseline # 重建棘轮基线
  *
- * 退出码：始终 0（这是**报告型**工具，不是红门禁 ——
- * 25 个组件的修法各不相同：有的该实现、有的该从声明里删，
- * 需要逐个判断，不适合用一条命令替我做决定）。
+ * ⚠️ `--write-baseline` 会**整体覆盖**基线文件 —— 文件里若有人工补的
+ * "为什么这条可以欠着"的注释，会被抹掉。改动前请先看 diff。
+ *
+ * 退出码：0 = 无新增；1 = 有新增欠账。
  */
-import { readdirSync, readFileSync, existsSync } from 'node:fs';
+import { readdirSync, readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const UI_DIR = join(ROOT, 'packages/ecosystem/packages/ui/src/components');
+const BASELINE = join(ROOT, 'scripts/ui-props-wiring-baseline.txt');
 const COUNT_ONLY = process.argv.includes('--count');
+const WRITE_BASELINE = process.argv.includes('--write-baseline');
 
 if (!existsSync(UI_DIR)) {
   console.error('未找到 UI 组件目录：' + UI_DIR);
@@ -59,6 +77,21 @@ function extractPropsBlock(src: string): { end: number; text: string } | null {
     }
   }
   return null;
+}
+
+function readBaseline(): Set<string> {
+  if (!existsSync(BASELINE)) return new Set();
+  return new Set(
+    readFileSync(BASELINE, 'utf-8')
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l && !l.startsWith('#')),
+  );
+}
+
+/** 一条欠账的稳定文本表示：`<文件> → <prop1>, <prop2>` */
+function entryOf(s: { file: string; unused: string[] }): string {
+  return `${s.file} → ${s.unused.join(', ')}`;
 }
 
 const files = readdirSync(UI_DIR).filter((f) => f.endsWith('.ts'));
@@ -96,6 +129,24 @@ for (const f of files) {
   else fullyWired++;
 }
 
+// ── 写基线模式 ────────────────────────────────────────────────
+if (WRITE_BASELINE) {
+  const entries = suspicious.map(entryOf);
+  const header = [
+    '# UI props 接线基线（棘轮）—— 由 `tsx scripts/check-ui-props-wiring.ts --write-baseline` 生成',
+    '#',
+    '# 语义：这些是**已确认的既有欠账**，门禁只对**新增**报错。',
+    '# 格式：每行一条，`<组件文件> → <未被引用的 prop 名, …>`。',
+    '#',
+    '# 加一行前请先想清楚：这个 prop 是**该实现**还是**该从声明里删**？',
+    '# 两条都不做而只是加进基线，等于把「静默失效」正式固化为契约。',
+    '#',
+  ].join('\n');
+  writeFileSync(BASELINE, `${header}${entries.length > 0 ? entries.join('\n') + '\n' : ''}`);
+  console.log(`\n✅ 已写入基线：${entries.length} 条 → scripts/ui-props-wiring-baseline.txt\n`);
+  process.exit(0);
+}
+
 console.log('组件总数: ' + files.length);
 console.log('props 全部被引用: ' + fullyWired);
 console.log('未声明 props: ' + noProps);
@@ -113,6 +164,33 @@ if (!COUNT_ONLY) {
     );
   }
   console.log('\n⚠️ 文本级判据：能可靠发现「完全没被引用」；「被引用」≠ 行为正确。');
-  console.log('⚠️ 这是**报告型**工具，不作为红门禁 —— 每个组件的修法不同');
-  console.log('   （有的该实现、有的该从声明里删），需要逐个判断。');
 }
+
+// ── 棘轮比对 ──────────────────────────────────────────────────
+const known = readBaseline();
+const current = new Set(suspicious.map(entryOf));
+const fresh = [...current].filter((e) => !known.has(e));
+const fixed = [...known].filter((e) => !current.has(e));
+
+if (fixed.length > 0) {
+  console.log(`\n🎉 已消除的欠账（基线里有、现在没有）：${fixed.length} 条`);
+  for (const e of fixed) console.log(`   ✔ ${e}`);
+  console.log('   ⇒ 建议**同步删掉基线里的对应行**，让基线只反映当前真实欠账。\n');
+}
+
+if (fresh.length === 0) {
+  console.log(
+    `✅ UI props 接线：${current.size} 条欠账，与基线一致（无新增）。\n` +
+      `   （基线 ${known.size} 条 · 门禁只拦新增；彻底解决请逐个组件判断后删基线行）`,
+  );
+  process.exit(0);
+}
+
+console.log(`❌ 新增 ${fresh.length} 条「props 声明了却没接线」：\n`);
+for (const e of fresh) console.log(`  🔌 ${e}`);
+console.log(
+  '\n这些是**新引入**的静默失效 —— 用户传了参数，既不报错也不生效。\n' +
+    '请二选一：① 在组件体里真正实现它；② 从 `props` 声明里删掉它。\n' +
+    '若确认是既有欠账而本次只是暴露，请写进 scripts/ui-props-wiring-baseline.txt 并注明原因。',
+);
+process.exit(1);

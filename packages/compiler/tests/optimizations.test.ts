@@ -4,6 +4,10 @@
  * 背景：这几个 API 此前**没有任何测试**，而实跑暴露了 `precompileTemplate` 的问题 ——
  * 它以**原始模板串**为起点、只做文本级替换，于是 `AOTResult.code` 实际是模板本身
  * （`reduction` 恒为 0），与类型注释「编译后的代码」不符。
+ *
+ * 2026-10-10 二次核查（P2-3）：改为真 `compile()` 之后，追加的三个"文本级优化" pass
+ * 被探针证明**全部不成立**，其中算术折叠会**静默改坏用户代码**（`x1 + 2` → `x3`）。
+ * 故整组删除，`precompileTemplate` 收敛为「AOT = 构建期编译」。
  */
 
 import { describe, it, expect } from 'vitest';
@@ -26,11 +30,23 @@ describe('optimizations - 对外 API 契约', () => {
       expect(result.code).not.toContain('{{ msg }}');
     });
 
-    it('stats 应可度量（originalSize 为未优化产物长度，reduction ≥ 0）', () => {
+    it('size 应等于产物长度', () => {
       const result = precompileTemplate('<div>{{ msg }}</div>');
-      expect(result.stats.originalSize).toBeGreaterThan(0);
-      expect(result.stats.compiledSize).toBeGreaterThan(0);
-      expect(result.stats.reduction).toBeGreaterThanOrEqual(0);
+      expect(result.size).toBe(result.code.length);
+      expect(result.size).toBeGreaterThan(0);
+    });
+
+    // ⚠️ P2-3：历史 AOTResult 上有 stats.reduction，其**唯一非 0 来源是"误伤式改写"**
+    // （`x1 + 2` → `x3`）。该字段与产生它的 pass 一并删除，此处锁死"不再存在"。
+    it('不再暴露 reduction / types / staticAssets 等无法兑现的字段', () => {
+      const result = precompileTemplate('<div>{{ msg }}</div>') as unknown as Record<
+        string,
+        unknown
+      >;
+      expect(result.reduction).toBeUndefined();
+      expect(result.types).toBeUndefined();
+      expect(result.staticAssets).toBeUndefined();
+      expect(result.stats).toBeUndefined();
     });
   });
 

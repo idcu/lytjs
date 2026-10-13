@@ -244,8 +244,10 @@ describe('@lytjs/dom-runtime', () => {
         setHTML(container, '<a href="javascript:alert(1)">link</a>');
         const a = container.querySelector('a');
         expect(a).not.toBeNull();
-        // FIX: sanitizeHTML 会移除包含 javascript: 伪协议的 href 属性
-        expect(a!.getAttribute('href')).toBeNull();
+        // P2-4 收敛后 sanitizeHTML 的**单一真相源**是 @lytjs/common-security：
+        // 对危险 URI 协议采取「中和」策略（保留属性、置空其值），而非删除属性。
+        // 故此处期望空值而非 null —— 与 security / string 包的锁定行为一致。
+        expect(a!.getAttribute('href')).toBe('');
       });
 
       it('should remove <iframe> tags', () => {

@@ -6,6 +6,7 @@
 
 import type { VNode } from '@lytjs/vdom';
 import { isString } from '@lytjs/common-is';
+import { escapeAttrValue } from '@lytjs/common-string';
 import { renderToHtml } from './render';
 import { promises as fs } from 'fs';
 import { join, dirname } from 'path';
@@ -124,9 +125,21 @@ function pathToFilePath(path: string): string {
  * @param meta - 元信息键值对
  * @returns meta 标签 HTML 字符串
  */
+/**
+ * 生成 meta 标签 HTML 字符串
+ *
+ * ⚠️ XSS 防护：`name` 与 `content` 均经 `escapeAttrValue` 转义（属性上下文转义，
+ * 覆盖 `"` 跳出属性与 `=` 注入），防止调用方传入含 `"`/`<`/`>` 的元信息触发属性注入。
+ *
+ * @param meta - 元信息键值对
+ * @returns meta 标签 HTML 字符串
+ */
 function renderMetaTags(meta: Record<string, string>): string {
   return Object.entries(meta)
-    .map(([name, content]) => `<meta name="${name}" content="${content}">`)
+    .map(
+      ([name, content]) =>
+        `<meta name="${escapeAttrValue(name)}" content="${escapeAttrValue(content)}">`,
+    )
     .join('\n  ');
 }
 

@@ -1,7 +1,7 @@
 ---
 scope: meta
 status: active
-last-verified: 2026-10-05
+last-verified: 2026-10-11
 keywords: [宪法, 红线, 人审, 状态机, 验证纪律, 构建顺序]
 ---
 
@@ -44,6 +44,10 @@ keywords: [宪法, 红线, 人审, 状态机, 验证纪律, 构建顺序]
 8. **核实必须打到被验证对象**：判 API 本体用**运行时导出面探针**（`await import(dist)` +
    `Object.keys()`），核实依赖用**精确匹配**（`from 'X'` / `import('X')`），
    验证器必须**真跑一次命令**——grep 命中、`--dry`、`--list` 都只是线索，不是结论。
+9. **每个公开开关必须有产物级断言**：编译期常量（`__DEV__` / `process.env.*`）、预设 / 模式
+   （`preset` / `ssr` / `scoped`）、运行时能力开关（`setDevMode` 等）任何"开 / 关行为不同"的
+   公开 API，都必须有**翻转 ⇒ 变红**的断言（注入式验证）；无断言的开关不得合并。
+   （背景与判死方式见 `decisions/0006-public-switch-assertion.md`）
 
 <!-- 每条都得是"能被判死"的：写不出检查方式的，不是硬约束，是愿望。 -->
 

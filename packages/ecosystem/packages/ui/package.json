@@ -36,6 +36,7 @@
   "dependencies": {
     "@lytjs/common-is": "workspace:*",
     "@lytjs/common-a11y": "workspace:*",
+    "@lytjs/common-string": "workspace:*",
     "@lytjs/reactivity": "workspace:*",
     "@lytjs/component": "workspace:*",
     "@lytjs/vdom": "workspace:*",

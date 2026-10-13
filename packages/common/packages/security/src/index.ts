@@ -223,6 +223,19 @@ const RE_DATA_SVG = /^data\s*:\s*image\/svg\+xml/i;
 const RE_CSS_EXPRESSION = /expression\s*\(/gi;
 const RE_STYLE_ATTR = /(<[^>]*?)\s+(style)\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
 
+// Tag-pair removal: for these tags the *content* is itself dangerous
+// (CSS injection via <style>, SVG/HTML injection via <foreignObject>), so the
+// opening tag, inner content, and closing tag must all be removed together.
+// A single-tag pass (RE_DANGEROUS_OPEN_CLOSE_TAG) would otherwise leave the
+// inner payload behind.
+const RE_DANGEROUS_TAG_PAIR =
+  /<\s*(?:style|foreignObject|noscript|template)[^>]*>[\s\S]*?<\s*\/\s*(?:style|foreignObject|noscript|template)\s*>/gi;
+// Self-closing foreignObject fallback (no closing tag).
+const RE_FOREIGNOBJECT_SELF = /<\s*foreignObject[^>]*\/?>/gi;
+// Attributes that permit arbitrary HTML/script injection regardless of scheme.
+const RE_DANGEROUS_INJECT_ATTR =
+  /\s+(?:srcdoc|formaction|xlink:href)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi;
+
 const DECODE_MAP: [RegExp, string | ((substring: string, ...args: string[]) => string)][] = [
   [/&#x0*([0-9a-fA-F]+);/g, (_: string, code: string) => String.fromCodePoint(parseInt(code, 16))],
   [/&#0*([0-9]+);/g, (_: string, code: string) => String.fromCodePoint(parseInt(code, 10))],
@@ -243,6 +256,12 @@ const DECODE_MAP: [RegExp, string | ((substring: string, ...args: string[]) => s
  * 2. Dangerous tag removal: Strips dangerous tags via case-insensitive regex.
  * 3. Event-handler stripping: Removes on* attributes.
  * 4. Dangerous URI neutralisation: Inspects URL attributes and neutralises dangerous schemes.
+ * 5. Dangerous tag-pair removal: Strips <style>/<foreignObject>/... including their inner content.
+ * 6. Injection-prone attribute stripping: Removes srcdoc/formaction/xlink:href entirely
+ *    (these allow arbitrary HTML/script injection regardless of scheme).
+ * 7. Iterate (2)–(6) until the output stabilises (bounded): defeats mutation /
+ *    recombination XSS where stripping one tag exposes another
+ *    (e.g. `<scr<script>ipt>` collapses to `<script>` once the inner tag is gone).
  *
  * @param str - The raw HTML string to sanitize.
  * @returns The sanitized HTML string with dangerous content removed.
@@ -267,45 +286,69 @@ export function sanitizeHTML(str: string): string {
     }
   }
 
-  // 2. Remove dangerous tags.
-  decoded = decoded.replace(RE_DANGEROUS_OPEN_CLOSE_TAG, '');
+  // 2–6. 危险内容清除。包进**有界循环（最多 10 轮，直至稳定）**：
+  // 标签 / 属性移除可能暴露出新标签（mutation / 重组 XSS，例如
+  // `<div><scr<script>ipt>…</script></div>` —— 删掉内层 `<script>` 后，
+  // `<scr` 与 `ipt>` 会重新拼成 `<script>`），故需反复清理直到输出不再变化。
+  let output = decoded;
+  const MAX_ITERATIONS = 10;
+  let iterations = 0;
+  let prev = '';
+  do {
+    prev = output;
 
-  // 3. Remove event-handler attributes (on*).
-  decoded = decoded.replace(RE_EVENT_HANDLER_ATTR, '$1');
-  decoded = decoded.replace(RE_EVENT_HANDLER_ATTR_NOVALUE, '$1');
-  decoded = decoded.replace(RE_EVENT_HANDLER_ATTR_UNQUOTED, '$1');
+    // 2. Remove dangerous tags.
+    output = output.replace(RE_DANGEROUS_OPEN_CLOSE_TAG, '');
 
-  // 4. Neutralise dangerous URI schemes.
-  decoded = decoded.replace(RE_URI_ATTR, (_match, attr: string, dq: string, sq: string) => {
-    const value = dq ?? sq ?? '';
-    const cleaned = value.replace(RE_WHITESPACE_CTRL, '').toLowerCase();
-    if (RE_DANGEROUS_SCHEME.test(cleaned)) {
-      if (RE_DATA_SVG.test(cleaned)) {
+    // 2b. Remove dangerous tag *pairs* (content included). The single-tag pass above
+    // would otherwise leave the inner CSS / SVG payload behind
+    // (<style>…</style>, <foreignObject>…</foreignObject>, etc.).
+    output = output.replace(RE_DANGEROUS_TAG_PAIR, '');
+    output = output.replace(RE_FOREIGNOBJECT_SELF, '');
+
+    // 3. Remove event-handler attributes (on*).
+    output = output.replace(RE_EVENT_HANDLER_ATTR, '$1');
+    output = output.replace(RE_EVENT_HANDLER_ATTR_NOVALUE, '$1');
+    output = output.replace(RE_EVENT_HANDLER_ATTR_UNQUOTED, '$1');
+
+    // 3b. Strip attributes that permit arbitrary HTML/script injection regardless
+    // of their (possibly absent) scheme — srcdoc / formaction / xlink:href.
+    output = output.replace(RE_DANGEROUS_INJECT_ATTR, '');
+
+    // 4. Neutralise dangerous URI schemes.
+    output = output.replace(RE_URI_ATTR, (_match, attr: string, dq: string, sq: string) => {
+      const value = dq ?? sq ?? '';
+      const cleaned = value.replace(RE_WHITESPACE_CTRL, '').toLowerCase();
+      if (RE_DANGEROUS_SCHEME.test(cleaned)) {
+        if (RE_DATA_SVG.test(cleaned)) {
+          return `${attr}=""`;
+        }
         return `${attr}=""`;
       }
-      return `${attr}=""`;
-    }
-    return _match;
-  });
-
-  // 5. Remove expression() CSS expressions from style attributes.
-  decoded = decoded.replace(
-    RE_STYLE_ATTR,
-    (_match, tagPrefix: string, _attrName: string, dq: string, sq: string) => {
-      const value = dq ?? sq ?? '';
-      const cleaned = value.replace(RE_WHITESPACE_CTRL, '');
-      if (RE_CSS_EXPRESSION.test(cleaned)) {
-        const sanitized = cleaned.replace(RE_CSS_EXPRESSION, '').trim();
-        return `${tagPrefix} style="${sanitized}"`;
-      }
       return _match;
-    },
-  );
+    });
 
-  // 6. Remove any remaining javascript:/vbscript: in any context (catch-all).
-  decoded = decoded.replace(/(?:javascript|vbscript)\s*:/gi, 'blocked:');
+    // 5. Remove expression() CSS expressions from style attributes.
+    output = output.replace(
+      RE_STYLE_ATTR,
+      (_match, tagPrefix: string, _attrName: string, dq: string, sq: string) => {
+        const value = dq ?? sq ?? '';
+        const cleaned = value.replace(RE_WHITESPACE_CTRL, '');
+        if (RE_CSS_EXPRESSION.test(cleaned)) {
+          const sanitized = cleaned.replace(RE_CSS_EXPRESSION, '').trim();
+          return `${tagPrefix} style="${sanitized}"`;
+        }
+        return _match;
+      },
+    );
 
-  return decoded;
+    // 6. Remove any remaining javascript:/vbscript: in any context (catch-all).
+    output = output.replace(/(?:javascript|vbscript)\s*:/gi, 'blocked:');
+
+    iterations++;
+  } while (output !== prev && iterations < MAX_ITERATIONS);
+
+  return output;
 }
 
 declare const __DEV__: boolean;

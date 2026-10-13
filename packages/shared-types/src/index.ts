@@ -118,7 +118,6 @@ export type {
   // v6.8.0 新增：类型安全的事件系统类型
   EventHandler,
   EventListeners,
-  IEventEmitter,
   DefineEvents,
   ExtendEvents,
   // v6.8.0 新增：更强大的类型推断工具
@@ -128,9 +127,6 @@ export type {
   ThisParameterType,
   OmitThisParameter,
 } from './type-utils';
-
-// v6.8.0 新增：类型安全的事件发射器实现
-export { EventEmitter, createEventEmitter } from './event-emitter';
 
 // v6.8.0 新增：类型守卫运行时工具
 export {

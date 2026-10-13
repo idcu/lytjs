@@ -110,10 +110,18 @@ export const createDep = (): Dep => {
  */
 let triggerDepth = 0;
 
-// ==================== Trigger 批处理（signalBatch 桥接） ====================
+// ==================== Trigger 批处理（signalBatch / batch 共用） ====================
 
 /** 是否处于 trigger 批处理模式：trigger 只收集不执行，统一在 endTriggerBatch 执行 */
 let isTriggerBatching = false;
+
+/**
+ * 批处理嵌套深度（引用计数）。
+ *
+ * ⚠️ 必须是引用计数而不是布尔量：`signalBatch` 与 `batch` 都可能嵌套调用，
+ * 内层结束时**不能**提前 flush，否则「合并触发」会在嵌套场景下失效。
+ */
+let triggerBatchDepth = 0;
 
 /** 批处理期间收集的去重 effect 集合 */
 const pendingBatchEffects: ReactiveEffect[] = [];
@@ -121,18 +129,24 @@ const pendingBatchEffects: ReactiveEffect[] = [];
 /**
  * 开始 trigger 批处理。
  * 期间所有 trigger 的 effects 被收集（去重），不立即执行。
- * 用于 signalBatch 场景，合并多次 signal 更新对同一 effect 的重复触发。
- * @internal 供 signal 模块桥接调用
+ * 支持嵌套：只有最外层 `endTriggerBatch` 才真正 flush。
+ * @internal 供 signal / batch 模块桥接调用
  */
 export function beginTriggerBatch(): void {
+  triggerBatchDepth++;
   isTriggerBatching = true;
 }
 
 /**
  * 结束 trigger 批处理并统一执行收集的 effects。
- * @internal 供 signal 模块桥接调用
+ * 嵌套时内层调用只递减计数、不 flush。
+ * @internal 供 signal / batch 模块桥接调用
  */
 export function endTriggerBatch(): void {
+  if (triggerBatchDepth > 0) triggerBatchDepth--;
+  // 仍在嵌套中 ⇒ 交给最外层 flush
+  if (triggerBatchDepth > 0) return;
+
   isTriggerBatching = false;
   if (pendingBatchEffects.length > 0) {
     const effects = [...new Set(pendingBatchEffects)];
@@ -635,29 +649,39 @@ export function _resetTrackingState(): void {
   trackStack.length = 0;
   triggerDepth = 0;
   isTriggerBatching = false;
+  triggerBatchDepth = 0;
   pendingBatchEffects.length = 0;
   isFirstRenderPass = false;
   skippedTrackingCount = 0;
 }
 
 /**
- * 批量执行函数，期间暂停依赖追踪。
- * 与 signalBatch 不同，batch 侧重于暂停追踪而非延迟通知。
- * 支持嵌套调用，内层 batch 不会提前恢复追踪状态。
+ * 批量执行函数：期间**暂停依赖追踪**，且**合并通知** ——
+ * 函数内对同一 effect 的多次触发只在函数结束时执行**一次**。
+ * 支持嵌套调用，只有最外层结束时才统一 flush。
+ *
+ * ## 2026-10-10 修复（P1-1）
+ *
+ * 原实现**只暂停追踪、不延迟通知** —— 函数内每次 `set` 都会立即触发 effect，
+ * 与「batch（批）」的通行语义（Vue / Solid 的 `batch()`）以及本仓
+ * `batchScope()` 自己的文档（"只在作用域结束时统一触发更新"）都不符。
+ * 现改为复用 effect 系统已有的 trigger 批处理通道（`beginTriggerBatch` /
+ * `endTriggerBatch`，与 `signalBatch` 共用同一引用计数）。
  *
  * @param fn - 需要批量执行的函数
  *
  * @example
  * ```ts
  * batch(() => {
- *   state.a = 1; // 不会触发依赖更新
- *   state.b = 2; // 不会触发依赖更新
- * }); // 函数结束后恢复追踪
+ *   state.a = 1; // 不触发更新
+ *   state.b = 2; // 不触发更新
+ * }); // 到这里统一触发一次
  * ```
  */
 export function batch(fn: () => void): void {
   const stackLength = trackStack.length;
   pauseTracking();
+  beginTriggerBatch();
   try {
     fn();
   } finally {
@@ -666,34 +690,38 @@ export function batch(fn: () => void): void {
       trackStack.pop();
     }
     shouldTrack = trackStack.length > 0 ? trackStack[trackStack.length - 1]! : true;
+    endTriggerBatch();
   }
 }
 
 /**
  * batchAsync - like batch but supports async functions.
- * Pauses tracking during fn execution (including after await),
- * and restores tracking state when fn completes (or throws).
+ *
+ * Pauses tracking during fn execution (including after await), and
+ * **defers notifications** until the returned promise settles.
  * Returns a Promise.
  */
 export function batchAsync(fn: () => void | Promise<void>): Promise<void> {
   const stackLength = trackStack.length;
   pauseTracking();
-  const restoreTracking = () => {
+  beginTriggerBatch();
+  const finish = () => {
     while (trackStack.length > stackLength) {
       trackStack.pop();
     }
     shouldTrack = trackStack.length > 0 ? trackStack[trackStack.length - 1]! : true;
+    endTriggerBatch();
   };
   try {
     const result = fn();
     if (result && typeof result === 'object' && 'then' in result) {
-      return (result as Promise<void>).finally(restoreTracking);
+      return (result as Promise<void>).finally(finish);
     }
-    // 同步路径：立即恢复 tracking 状态
-    restoreTracking();
+    // 同步路径：立即恢复 tracking 状态并 flush
+    finish();
     return Promise.resolve();
   } catch (e) {
-    restoreTracking();
+    finish();
     return Promise.reject(e);
   }
 }

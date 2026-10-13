@@ -98,22 +98,32 @@ export interface CacheStats {
 
 /**
  * 多层缓存配置
+ *
+ * ## 2026-10-10 修复（P1-7）
+ *
+ * 此前这里声明了 `redis` 与 `http` 两层，但 `MultiLayerCache` 构造函数里
+ * 对应分支是**空 if 块**（注释写着「这里我们预留接口」）⇒ 用户配了 `redis`
+ * 却得到一个**只有内存层**的缓存，且**没有任何提示**。
+ *
+ * 现在：
+ * - 删掉无法兑现的 `redis` / `http` 声明（本包不引入 Redis 客户端依赖）；
+ * - 新增 {@link MultiLayerCacheConfig.extraLayers}：把「自定义远程层」变成
+ *   **真正可用**的能力 —— 只要实现公开的 {@link Cache} 接口即可接入 Redis /
+ *   文件 / 分布式缓存，多层读写与回写逻辑本来就是真的。
  */
 export interface MultiLayerCacheConfig {
-  /** 内存缓存配置 */
+  /** 内存缓存配置（第一层，默认启用）。传 `false` 关闭 */
   memory?: CacheOptions | boolean;
-  /** Redis 缓存配置 */
-  redis?: CacheOptions & {
-    host?: string;
-    port?: number;
-    password?: string;
-    db?: number;
-  };
-  /** HTTP 缓存配置 */
-  http?: CacheOptions & {
-    baseUrl?: string;
-    headers?: Record<string, string>;
-  };
+  /**
+   * 追加的自定义缓存层（按数组顺序排在 memory 之后）。
+   *
+   * 例：自己封装一个 Redis 层：
+   * ```ts
+   * class RedisCache implements Cache { /* 用你选定的 redis 客户端 *\/ }
+   * new MultiLayerCache({ extraLayers: [new RedisCache(...)] });
+   * ```
+   */
+  extraLayers?: Cache[];
 }
 
 /**
@@ -335,36 +345,36 @@ export class MemoryCache implements Cache {
  * 多层缓存实现（Memory → Redis → HTTP）
  */
 export class MultiLayerCache implements Cache {
-  private layers: Cache[];
+  private layersInternal: Cache[];
 
   constructor(config: MultiLayerCacheConfig = {}) {
-    this.layers = [];
+    this.layersInternal = [];
 
-    // 内存缓存始终作为第一层
+    // 内存缓存作为第一层
     if (config.memory !== false) {
       const memoryOptions = typeof config.memory === 'object' ? config.memory : undefined;
-      this.layers.push(new MemoryCache(memoryOptions));
+      this.layersInternal.push(new MemoryCache(memoryOptions));
     }
 
-    // Redis 缓存作为第二层（可选）
-    if (config.redis) {
-      // Redis 缓存可以在实际环境配置
-      // 这里我们预留接口
-    }
-
-    // HTTP 缓存作为第三层（可选）
-    if (config.http) {
-      // HTTP 缓存可以在实际环境配置
+    // 调用方提供的自定义层（Redis / 文件 / 分布式缓存……）
+    // FIX P1-7：此前这里是对 redis / http 的两个**空 if 块**，配了也不生效。
+    if (config.extraLayers) {
+      this.layersInternal.push(...config.extraLayers);
     }
   }
 
+  /** 当前生效的缓存层（按查找顺序，第 0 层最快）。只读，便于观测与调试 */
+  get layers(): readonly Cache[] {
+    return this.layersInternal;
+  }
+
   async get<T>(key: string): Promise<T | undefined> {
-    for (const layer of this.layers) {
+    for (const layer of this.layersInternal) {
       const value = await layer.get<T>(key);
       if (value !== undefined) {
         // 回写上层缓存
-        for (let i = 0; i < this.layers.indexOf(layer); i++) {
-          await this.layers[i].set(key, value);
+        for (let i = 0; i < this.layersInternal.indexOf(layer); i++) {
+          await this.layersInternal[i]!.set(key, value);
         }
         return value;
       }
@@ -374,14 +384,14 @@ export class MultiLayerCache implements Cache {
 
   async set<T>(key: string, value: T, options?: CacheOptions): Promise<void> {
     // 写入所有层
-    for (const layer of this.layers) {
+    for (const layer of this.layersInternal) {
       await layer.set(key, value, options);
     }
   }
 
   async delete(key: string): Promise<boolean> {
     let result = false;
-    for (const layer of this.layers) {
+    for (const layer of this.layersInternal) {
       const layerResult = await layer.delete(key);
       if (layerResult) {
         result = true;
@@ -391,7 +401,7 @@ export class MultiLayerCache implements Cache {
   }
 
   async has(key: string): Promise<boolean> {
-    for (const layer of this.layers) {
+    for (const layer of this.layersInternal) {
       if (await layer.has(key)) {
         return true;
       }
@@ -400,13 +410,13 @@ export class MultiLayerCache implements Cache {
   }
 
   async clear(): Promise<void> {
-    for (const layer of this.layers) {
+    for (const layer of this.layersInternal) {
       await layer.clear();
     }
   }
 
   async invalidateTag(tag: string): Promise<void> {
-    for (const layer of this.layers) {
+    for (const layer of this.layersInternal) {
       await layer.invalidateTag(tag);
     }
   }
@@ -419,7 +429,7 @@ export class MultiLayerCache implements Cache {
 
   async getStats(): Promise<CacheStats> {
     // 合并所有层的统计信息
-    const statsList = await Promise.all(this.layers.map((layer) => layer.getStats()));
+    const statsList = await Promise.all(this.layersInternal.map((layer) => layer.getStats()));
     const merged: CacheStats = {
       size: statsList.reduce((sum, stat) => sum + stat.size, 0),
       totalSize: statsList.reduce((sum, stat) => sum + stat.totalSize, 0),

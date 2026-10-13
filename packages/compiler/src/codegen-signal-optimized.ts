@@ -1196,16 +1196,9 @@ function processCallExpressionOptimized(
     if (renderFn && typeof renderFn !== 'string' && !Array.isArray(renderFn)) {
       if (renderFn.type === NodeTypes.COMPOUND_EXPRESSION) {
         const compound = renderFn as CompoundExpressionNode;
-        // eslint-disable-next-line no-console
-        console.log(
-          compound.children
-            .map((c) =>
-              typeof c === 'string'
-                ? JSON.stringify(c.slice(0, 18))
-                : String((c as { type?: number }).type),
-            )
-            .join(' | '),
-        );
+        // ⚠️ 2026-10-10 删除：此处原有一段 `console.log(compound.children.map(...))`
+        // 调试输出，位于 **codegen 热路径**（每个 v-for 都跑），且把编译期节点 dump 到
+        // 使用者控制台。属 P2「signal 默认路径残留调试代码」。
         for (const child of compound.children) {
           if (typeof child === 'string' && child.includes('=>')) {
             const headMatch = /^\s*\(?\s*([^)]*?)\s*\)?\s*=>/.exec(child);
@@ -1575,22 +1568,6 @@ function extractItemTextExpr(
         : typeof (raw as { content?: unknown } | undefined)?.content === 'string'
           ? (raw as { content: string }).content
           : null;
-    // eslint-disable-next-line no-console
-    console.log(
-      typeof raw,
-      'rawStr=',
-      String(raw),
-      'rawKeys=',
-      raw && typeof raw === 'object' ? JSON.stringify(Object.keys(raw as object)) : '-',
-    );
-    // eslint-disable-next-line no-console
-    console.log(
-      typeof raw,
-      'rawStr=',
-      String(raw),
-      'rawKeys=',
-      raw && typeof raw === 'object' ? JSON.stringify(Object.keys(raw as object)) : '-',
-    );
     if (text) return { dynamic: toItemExpr(text, locals) };
     return {};
   }

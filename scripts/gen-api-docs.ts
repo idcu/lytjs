@@ -181,7 +181,14 @@ const PACKAGES: PackageConfig[] = [
     '边缘运行时支持（Serverless 适配）',
   ),
   pkg('@lytjs/bundler', 'packages/ecosystem/packages/bundler/src', '与 Vite 集成的打包器'),
-  // 注意：@lytjs/compat 为 0 导出兼容层（src/index.ts 仅 `export {}`），不生成 API 文档，避免空文件
+  // ⚠️ 2026-10-10 订正（P1-8）：@lytjs/compat 此前是 0 导出占位包（src/index.ts 仅
+  // `export {}`），故被排除在生成之外以免产出空文件。现已实现 Vue 2 → Vue 3
+  // 生命周期钩子名迁移，有了真实导出 ⇒ 纳入生成。
+  pkg(
+    '@lytjs/compat',
+    'packages/ecosystem/packages/compat/src',
+    'Vue 2/3 迁移辅助（生命周期钩子名映射）',
+  ),
 ];
 
 // ===== TypeScript Parser =====

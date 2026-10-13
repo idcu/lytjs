@@ -25,9 +25,12 @@ export default defineConfig({
       // ⇒ 测试必然失败。指向 src 后，裸 `__DEV__` 在运行期解析到 `globalThis.__DEV__`
       // （`vitest.setup.ts` 置 true、`setDevMode()` 可切换），DEV/生产两种预期都成立。
       '@lytjs/common-error': resolve(root, 'packages/common/packages/error/src'),
+      // 与 common-error 同理：security 的 isSafeAttribute / sanitizeHTML 在 __DEV__ 下会发警告
+      // （"DEV 下应发出警告" 类断言），dist 由 tsup 以 __DEV__:false 构建会让这些警告永静默。
+      // 故 alias 到 src，使 vitest 的 define(__DEV__:true) 生效；生产侧仍走 dist（已压成 false）。
+      '@lytjs/common-security': resolve(root, 'packages/common/packages/security/src'),
       '@lytjs/common-vnode': resolve(root, 'packages/common/packages/vnode/dist/index.mjs'),
       '@lytjs/common-string': resolve(root, 'packages/common/packages/string/dist/index.mjs'),
-      '@lytjs/common-security': resolve(root, 'packages/common/packages/security/dist/index.mjs'),
       '@lytjs/common-events': resolve(root, 'packages/common/packages/events/dist/index.mjs'),
       '@lytjs/common-object': resolve(root, 'packages/common/packages/object/dist/index.mjs'),
       '@lytjs/common-algorithm': resolve(root, 'packages/common/packages/algorithm/dist/index.mjs'),
@@ -35,7 +38,10 @@ export default defineConfig({
       '@lytjs/common-cache': resolve(root, 'packages/common/packages/cache/dist/index.mjs'),
       '@lytjs/common-env': resolve(root, 'packages/common/packages/env/dist/index.mjs'),
       '@lytjs/common-constants': resolve(root, 'packages/common/packages/constants/dist/index.mjs'),
-      '@lytjs/common-dom': resolve(root, 'packages/common/packages/dom/dist/index.mjs'),
+      // 与 common-error / common-security 同理：common-dom 的 patchAttr / patchProp 在 __DEV__
+      // 下会发警告（"DEV 下应发出警告" 类断言），dist 由 tsup 以 __DEV__:false 构建会让警告永静默。
+      // alias 到 src，使 vitest 的 define(__DEV__:true) 生效；生产侧仍走 dist（已压成 false）。
+      '@lytjs/common-dom': resolve(root, 'packages/common/packages/dom/src'),
       '@lytjs/common-dom-helpers': resolve(
         root,
         'packages/common/packages/dom-helpers/dist/index.mjs',
@@ -87,6 +93,13 @@ export default defineConfig({
       '@lytjs/reactivity/async': resolve(root, 'packages/reactivity/dist/async.mjs'),
       '@lytjs/renderer': resolve(root, 'packages/renderer/dist/index.mjs'),
       '@lytjs/component': resolve(root, 'packages/component/dist/index.mjs'),
+      // ⚠️ 必须**先**给子路径建 alias，且目标指 **src**：
+      //   · 顺序无关（Vite 的 alias 匹配是 `id === find || id.startsWith(find + '/')`），
+      //     但 `@lytjs/compiler` → `dist/index.mjs` 会**吃掉** `@lytjs/compiler/sfc`
+      //     （前缀命中后拼成 `dist/index.mjs/sfc` ⇒ 解析失败）。
+      //   · 指 src 而非 `dist/sfc.mjs`：否则每次改编译器 SFC 代码都得先重建 dist，
+      //     否则测试跑的是**旧产物**（本仓反复踩过的坑）。
+      '@lytjs/compiler/sfc': resolve(root, 'packages/compiler/src/sfc/index.ts'),
       '@lytjs/compiler': resolve(root, 'packages/compiler/dist/index.mjs'),
       '@lytjs/core-vnode': resolve(root, 'packages/core-vnode/src'),
       '@lytjs/core-signal': resolve(root, 'packages/core-signal/src'),
@@ -144,20 +157,26 @@ export default defineConfig({
         'packages/shared-types/**',
         'packages/_templates/**',
       ],
-      // ⚠️ 阈值口径（2026-09-21 实测校正）
+      // ⚠️ 阈值口径（2026-10-11 实测校正）
       //
       // 此前 include 只覆盖 packages/*/src 与 common/packages/*/src，
       // 有约 49.5% 的源码（ecosystem / plugins / tools）不计入分母，
-      // 于是"85% 达标"只是在半壁江山上成立。分母补全后的真实数字为：
+      // 于是"85% 达标"只是在半壁江山上成立。分母补全后的真实数字（2026-09-21）为：
       //   statements 48.77% / lines 48.77% / functions 63.46% / branches 80.09%
-      // 这里把阈值设为**略低于当前真实值**，让门禁立刻变诚实且能防回退；
-      // 之后每次覆盖提升都同步上调阈值（棘轮式收紧），目标 85%。
+      // 2026-10-11 全仓实测（258 文件 / 6169 用例全绿）刷新为：
+      //   statements 59.76% / lines 59.76% / functions 69.62% / branches 85.45%
+      // 2026-10-12 全仓实测（6179 用例全绿；含本轮新增 AOT / 事件收敛用例）刷新为：
+      //   statements 59.84% / lines 59.84% / functions 69.76% / branches 85.45%
+      // 2026-10-13 全仓实测（261 文件 / 6179 用例全绿；删 1317 行死代码 + 新增测试后）刷新为：
+      //   statements 60.34% / lines 60.34% / functions 69.85% / branches 85.49%
+      // 阈值随棘轮上调至 lines/statements 60.3、functions 69.8、branches 85.4
+      //（小数口径：整数 59/69/85 已是实测值的下界，收紧到小数才真正锁住当前水平、防回退）。
       // 规则：只允许上调，不允许为了让 CI 变绿而下调。
       thresholds: {
-        lines: 48,
-        functions: 63,
-        branches: 85,
-        statements: 48,
+        lines: 60.3,
+        functions: 69.8,
+        branches: 85.4,
+        statements: 60.3,
       },
     },
   },

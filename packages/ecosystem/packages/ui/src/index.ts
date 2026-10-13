@@ -297,7 +297,7 @@ import { RichTextEditor } from './components/RichTextEditor';
 const LytUI = definePlugin({
   name: 'lytjs-ui',
   version: '6.9.6',
-  description: 'LytJS 官方 UI 组件库 - 60+ 组件，支持 Vapor 和 VDOM 双模式',
+  description: 'LytJS 官方 UI 组件库 - 56 个组件（VNode 模式）',
   install: (app) => {
     app.component('LytButton', Button);
     app.component('LytInput', Input);

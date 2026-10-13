@@ -192,9 +192,11 @@ export function patchEvent(
     invoker._parsed = parsed;
     invokers[eventKey] = invoker;
 
-    // 构建 AddEventListenerOptions
-    const options: AddEventListenerOptions | boolean | undefined =
-      buildEventListenerOptions(parsed);
+    // 构建 AddEventListenerOptions（prop 名 + 值对象两处来源取并集）
+    const options: AddEventListenerOptions | boolean | undefined = buildEventListenerOptions(
+      parsed,
+      extractEventOptions(nextValue),
+    );
     el.addEventListener(parsed.name, invoker, options);
   } else if (!actualNextValue && existingInvoker) {
     // 情况 3：无新值 + 有旧 invoker → 移除
@@ -267,14 +269,51 @@ function extractHandler(
 }
 
 /**
- * 根据 ParsedEvent 构建 AddEventListenerOptions。
+ * 从值中提取「监听器选项」。
+ *
+ * 编译器对 `.capture` / `.once` / `.passive` 产出的形态是**值对象**
+ * （`{ handler, once: true }`，见 `compiler/src/transforms/transform-element.ts`），
+ * 而这三个不是「守卫」（不能放进 `withModifiers`），只能作为 `addEventListener` 的选项。
+ *
+ * ⚠️ 2026-10-10 修复：此前 `patchEvent` **只从 prop 名**解析选项，
+ * 从不读值对象里的 `once/capture/passive` ⇒ 这三个修饰符被**静默丢弃**
+ * （`@click.once` 会重复触发，且不报错）。
  */
-function buildEventListenerOptions(parsed: ParsedEvent): AddEventListenerOptions | undefined {
-  if (parsed.capture || parsed.once || parsed.passive) {
+function extractEventOptions(value: unknown): {
+  capture: boolean;
+  once: boolean;
+  passive: boolean;
+} {
+  const out = { capture: false, once: false, passive: false };
+  if (value != null && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    if (record.capture === true) out.capture = true;
+    if (record.once === true) out.once = true;
+    if (record.passive === true) out.passive = true;
+  }
+  return out;
+}
+
+/**
+ * 根据 ParsedEvent 构建 AddEventListenerOptions。
+ *
+ * 选项来源有两处，取**并集**：
+ * - `parsed`：从 prop 名解析出的修饰符（历史路径）；
+ * - `fromValue`：编译器产出的值对象 `{ handler, once: true }`（VNode 路径主形态）。
+ */
+function buildEventListenerOptions(
+  parsed: ParsedEvent,
+  fromValue?: { capture: boolean; once: boolean; passive: boolean },
+): AddEventListenerOptions | undefined {
+  const capture = parsed.capture || Boolean(fromValue?.capture);
+  const once = parsed.once || Boolean(fromValue?.once);
+  const passive = parsed.passive || Boolean(fromValue?.passive);
+
+  if (capture || once || passive) {
     const options: AddEventListenerOptions = {};
-    if (parsed.capture) options.capture = true;
-    if (parsed.once) options.once = true;
-    if (parsed.passive) options.passive = true;
+    if (capture) options.capture = true;
+    if (once) options.once = true;
+    if (passive) options.passive = true;
     return options;
   }
   return undefined;

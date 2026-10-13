@@ -28,7 +28,8 @@
   "sideEffects": false,
   "license": "MIT",
   "dependencies": {
-    "@lytjs/reactivity": "workspace:*"
+    "@lytjs/reactivity": "workspace:*",
+    "@lytjs/common-security": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.5.1",

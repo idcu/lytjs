@@ -4,6 +4,13 @@
  *
  * 提供 batchScope 函数，支持嵌套批量操作和自动提交。
  * 允许在批量作用域内执行多个响应式操作，只在作用域结束时统一触发更新。
+ *
+ * ⚠️ **2026-10-10 订正（P1-1）**：上面这句「只在作用域结束时统一触发更新」
+ * 在此之前是**假的** —— `batchScope` 建在 `effect.ts` 的 `batch()` 之上，
+ * 而后者当时只暂停依赖追踪、**不延迟通知**（每次 `set` 都会立即跑 effect）。
+ * 现在 `batch()` / `batchAsync()` 已复用 trigger 批处理通道（引用计数，
+ * 与 `signalBatch` 共用），本文件文档描述的行为才真正成立。
+ * 回归判据见 `tests/batch.test.ts` 的「P1-1」组（以 effect **调用次数**断言）。
  */
 
 import { batch, batchAsync, untrack } from './effect';

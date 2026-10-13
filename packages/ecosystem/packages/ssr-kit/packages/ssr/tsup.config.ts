@@ -17,6 +17,7 @@ export default defineConfig({
   external: [
     '@lytjs/common-is',
     '@lytjs/common-env',
+    '@lytjs/common-string',
     '@lytjs/common-dom',
     '@lytjs/reactivity',
     '@lytjs/component',

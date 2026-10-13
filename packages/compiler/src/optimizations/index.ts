@@ -394,167 +394,83 @@ export function eliminateDeadCode(source: string, analysis: DeadCodeAnalysis): s
 // ============================================================
 
 /**
- * AOT 编译选项
- */
-export interface AOTOptions {
-  /** 是否内联静态内容 */
-  inlineStatic?: boolean;
-  /** 是否预计算常量表达式 */
-  precomputeConstants?: boolean;
-  /** 是否生成类型定义 */
-  generateTypes?: boolean;
-  /** 目标环境 */
-  target?: 'browser' | 'node' | 'edge';
-}
-
-/**
  * AOT 编译结果
+ *
+ * `code` 是**构建期**产出的渲染函数代码 —— 它的价值在于「AOT」本身：
+ * 运行时不必再走 `new Function` 编译模板，因而不必把编译器打进产物。
  */
 export interface AOTResult {
-  /** 编译后的代码 */
+  /**
+   * 完整 ESM 模块源（AOT 产物）：含 helper import（默认来自 `@lytjs/core`）
+   * + 渲染函数；可直接写入 `.mjs` 后 `import()`，运行时**无需再 `new Function`**、
+   * 也**不必把编译器打进产物**。这正是「运行时编译」的对立面。
+   */
   code: string;
-  /** 类型定义 */
-  types?: string;
-  /** 静态资源映射 */
-  staticAssets: Map<string, string>;
-  /** 编译统计 */
-  stats: {
-    originalSize: number;
-    compiledSize: number;
-    reduction: number;
-  };
+  /** 产物字符长度（构建期体积估算用） */
+  size: number;
 }
 
 /**
- * AOT 预编译模板
+ * AOT 预编译模板：**构建期**把模板编译为渲染函数代码。
+ *
+ * 这是「运行时编译」的对立面 —— 产物里只有渲染函数，不需要把 132.7KB 的编译器
+ * 打进 bundle，也不需要在运行时执行 `new Function`。
+ *
+ * ⚠️ **历史实现（已删除）与删除依据**
+ *
+ * 本函数此前在 `compile()` 之后追加了三个「文本级优化」pass，并在 `AOTResult` 上
+ * 暴露了四个开关。2026-10-10 用探针（`scripts/_probe-precompile.ts`）逐项实测，
+ * **四个开关全部不成立**：
+ *
+ * | 开关 | 实现 | 实测结果 | 判定 |
+ * |---|---|---|---|
+ * | `inlineStatic` | 正则匹配生成代码里的 `<template static>` | `staticAssets.size` 恒为 **0**、`__getStatic` 从不出现 —— `compile()` 产物是 JS，不含该字样 | 死 pass |
+ * | `precomputeConstants` | 正则 `(\d+)\s*([+\-*\/])\s*(\d+)` + `eval()` | **静默改坏代码**：`x1 + 2`→`x3`、`1.5 + 2`→`1.7`、`"1+2"`→`"3"`、`a1*2`→`a2`；且 `x - 1 - 2` 这类链式减法折叠后**语义翻转** | **有害** |
+ * | `target` | 正则 `document.` → `_document.` / `createElement(` → `document.createElement(` | 产物里既无 `document.` 也无 `createElement(`，永不命中；**若命中即产生未定义引用** | 死 + 有害 |
+ * | `generateTypes` | 正则抓产物里的 `defineComponent<...>` 泛型 | `compile()` 从不产出该字样，恒返回 `''`（而测试只断言 `typeof === 'string'` ⇒ 假绿） | 死 knob |
+ *
+ * 更关键的是：`stats.reduction` 的**唯一非 0 来源正是上述误伤** ——
+ * `<div>{{ x1 + 2 }}</div>` 的 2.78% "压缩"完全来自把 `x1 + 2` 改成了 `x3`。
+ * 也就是说这个"优化"是**靠破坏用户代码换来的**。
+ *
+ * ⇒ 结论：**在已生成的代码文本上做正则改写无法做到 sound**（需要真正的解析器才能
+ * 正确处理运算符优先级与结合性），故整组删除。常量折叠若要做，应放在**模板 AST 层**
+ * （codegen 之前），属于独立特性，不在本函数职责内。
  */
-export function precompileTemplate(template: string, options: AOTOptions = {}): AOTResult {
-  const {
-    inlineStatic = true,
-    precomputeConstants = true,
-    generateTypes = false,
-    target = 'browser',
-  } = options;
-
-  const staticAssets = new Map<string, string>();
-  let types: string | undefined;
-
-  // ⚠️ 修复：此处此前以**原始模板串**为起点、只做文本级替换 —— 于是 `AOTResult.code`
-  // 实际是模板本身（`reduction` 恒为 0），与类型注释「编译后的代码」不符、也与函数名
-  // 「precompile」不符。现在先真正调用 `compile()` 得到渲染函数代码，再做文本级优化；
-  // `originalSize` 取**未优化产物**长度，使 `reduction` 能被解释为「文本级优化的收益」。
-  const compiled = compile(template);
-  let code = compiled.code;
-  const originalSize = code.length;
-
-  // 1. 静态内容提取和内联
-  if (inlineStatic) {
-    code = extractAndInlineStatic(code, staticAssets);
-  }
-
-  // 2. 常量表达式预计算
-  if (precomputeConstants) {
-    code = precomputeConstantExpressions(code);
-  }
-
-  // 3. 目标环境优化
-  code = optimizeForTarget(code, target);
-
-  // 4. 生成类型定义
-  if (generateTypes) {
-    types = generateTypeDefinitions(code);
-  }
-
-  const compiledSize = code.length;
-
-  return {
-    code,
-    types,
-    staticAssets,
-    stats: {
-      originalSize,
-      compiledSize,
-      reduction: ((originalSize - compiledSize) / originalSize) * 100,
-    },
-  };
-}
-
 /**
- * 提取并内联静态内容
+ * AOT 预编译模板：**构建期**把模板编译为可直接 `import()` 的 ESM 模块源。
+ *
+ * 与「运行时编译」（`core/src/template-compiler.ts` 用 `new Function` 注入 helper）
+ * 完全相反：这里**保留** helper import、不剥离、不 `new Function`，并把 `render`
+ * 显式 `export`。产物可写入 `.mjs` 后由应用直接 `import`，从而把 ~132.7KB 的编译器
+ * 移出运行时产物 —— 这是本框架兑现「极致轻量」卖点的唯一路径。
+ *
+ * 旧实现的四个优化开关经探针实测全是装饰/有害（P2-3 已删），本函数现在只做
+ * 「构建期产出可导入模块源」这一件 sound 的事。
+ *
+ * @param template 模板字符串
+ * @param options.runtimeModuleName helper 的导入来源（默认 `@lytjs/core`，其再导出
+ *        `runtime-helpers` 中的全部 vdom/dom/component helper；与 `template-compiler.ts`
+ *        的注入对象同源，由 `check-runtime-contract` 门禁保证一致）
+ * @param options.filename 用于 sourcemap / 报错定位
  */
-function extractAndInlineStatic(code: string, staticAssets: Map<string, string>): string {
-  // 提取静态 HTML 块
-  const staticHTMLRegex = /<template\s+static>([\s\S]*?)<\/template>/g;
-  let match;
-  let counter = 0;
-
-  while ((match = staticHTMLRegex.exec(code)) !== null) {
-    const content = match[1]!;
-    const id = `static_${counter++}`;
-    staticAssets.set(id, content);
-
-    // 替换为内联函数调用
-    code = code.replace(match[0], `__getStatic('${id}')`);
-  }
-
-  return code;
-}
-
-/**
- * 预计算常量表达式
- */
-function precomputeConstantExpressions(code: string): string {
-  // 预计算简单算术表达式
-  const arithmeticRegex = /(\d+)\s*([+\-*/])\s*(\d+)/g;
-  code = code.replace(arithmeticRegex, (_, a, op, b) => {
-    const result = eval(`${a}${op}${b}`);
-    return String(result);
+export function precompileTemplate(
+  template: string,
+  options: { runtimeModuleName?: string; filename?: string } = {},
+): AOTResult {
+  const runtimeModuleName = options.runtimeModuleName ?? '@lytjs/core';
+  const compiled = compile(template, {
+    mode: 'module',
+    runtimeModuleName,
+    filename: options.filename,
   });
 
-  // 预计算字符串拼接
-  const concatRegex = /(['"])([^'"]*)\1\s*\+\s*(['"])([^'"]*)\3/g;
-  code = code.replace(concatRegex, (_, _q1, a, _q2, b) => {
-    return `"${a}${b}"`;
-  });
+  // 保留 import 前导；`generate()` 已把 hoist / render 写进 `code`，
+  // 这里只补一个 `export { render }` 使模块可被应用直接消费。
+  const preamble = compiled.preamble ?? '';
+  const moduleSource = `${preamble}${preamble ? '\n' : ''}${compiled.code}\nexport { render };\n`;
 
-  return code;
-}
-
-/**
- * 针对目标环境优化
- */
-function optimizeForTarget(code: string, target: string): string {
-  switch (target) {
-    case 'browser':
-      // 浏览器优化：使用 DOM API
-      code = code.replace(/createElement\(/g, 'document.createElement(');
-      break;
-    case 'node':
-      // Node.js 优化：使用虚拟 DOM
-      code = code.replace(/document\./g, '_document.');
-      break;
-    case 'edge':
-      // Edge Runtime 优化：最小化 API 使用
-      break;
-  }
-
-  return code;
-}
-
-/**
- * 生成类型定义
- */
-function generateTypeDefinitions(code: string): string {
-  const types: string[] = [];
-
-  // 提取组件定义
-  const componentRegex = /defineComponent\s*<\s*([^>]+)\s*>/g;
-  let match;
-  while ((match = componentRegex.exec(code)) !== null) {
-    types.push(`// Component props: ${match[1]}`);
-  }
-
-  return types.join('\n');
+  return { code: moduleSource, size: moduleSource.length };
 }
 
 // ============================================================

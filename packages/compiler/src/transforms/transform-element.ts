@@ -26,12 +26,14 @@ import type {
   TransformContext,
   ExpressionNode,
   TemplateChildNode,
+  Property,
 } from '../types';
 import {
   createVNodeCall,
   createSimpleExpression,
   createCompoundExpression,
   createCallExpression,
+  createArrayExpression,
   createObjectExpression,
   createObjectProperty,
   createConditionalExpression,
@@ -280,7 +282,36 @@ function hasDynamicChildren(node: ElementNode): boolean {
 }
 
 /**
+ * 把指令转换注册表的产出归一化为 `JSProperty`。
+ *
+ * 注册表实现存在**两种形状**（`types.ts` 里 `Property` 是联合类型）：
+ *  - `JSProperty`（AST 节点）—— 如 `transforms/on.ts`
+ *  - `{ key, value }`（纯字符串对）—— 如 `transforms/{bind,model,show}.ts`
+ *
+ * `transformElement` 需要的是前者，故在此统一转换：
+ * 字符串键走 `JSON.stringify` 变成字面量 key（与内联处理器一致），
+ * 字符串值按**非静态表达式**处理（原样输出，不加引号）。
+ */
+function normalizeDirectiveProp(p: Property, dir: DirectiveNode): JSProperty {
+  if (typeof p === 'object' && p !== null && 'type' in p) {
+    return p as JSProperty;
+  }
+  const pair = p as { key: string; value: string };
+  return createObjectProperty(
+    createSimpleExpression(JSON.stringify(pair.key), true, dir.loc, true),
+    createSimpleExpression(pair.value, false, dir.loc, false),
+  );
+}
+
+/**
  * 处理元素中的指令属性
+ *
+ * **registry-first**（2026-10-10 打通）：若用户在 `compile()` 里传了
+ * `directiveTransforms[name]`，则**优先**用它；否则回落到下面的内建内联分支。
+ *
+ * ⚠️ 修复前 `context.directiveTransforms` 根本不存在（`createTransformContext`
+ * 逐字段构造时漏了它）⇒ 该公开选项**静默失效**：探针实测自定义 on/bind/custom
+ * 三个 transform 的调用计数全为 0，而对照组 `nodeTransforms` 为 1。
  */
 function handleDirective(
   prop: DirectiveNode,
@@ -288,6 +319,15 @@ function handleDirective(
   context: TransformContext,
   properties: JSProperty[],
 ): void {
+  const custom = context.directiveTransforms?.[prop.name];
+  if (custom) {
+    const result = custom(prop, node, context);
+    for (const p of result.props) {
+      properties.push(normalizeDirectiveProp(p, prop));
+    }
+    return;
+  }
+
   switch (prop.name) {
     case 'bind':
       handleVBind(prop, node, context, properties);
@@ -347,23 +387,31 @@ function handleVBind(
 }
 
 /**
- * 处理 v-on 指令
+ * 处理 v-on 指令（**默认路径 / 实际生效的那条**）
+ *
  * FIX: P1-30 添加事件修饰符处理，支持 .stop/.prevent/.capture/.once/.self/.passive
  *
- * NOTE: handleVOn 与 transforms/on.ts 中的 transformOn 的分工说明：
- * - transformOn（on.ts）：作为 DirectiveTransform 注册到 builtInDirectiveTransforms 中，
- *   在 transform 阶段由 transform.ts 的 traverseNode 调用，处理 v-on 指令并返回
- *   DirectiveTransformResult（包含 props 数组），用于标准编译管线。
- * - handleVOn（此处）：在 transformElement 中直接调用，用于将 v-on 指令转换为
- *   VNodeCall 的 props 属性。这是 transformElement 内联处理指令的方式，
- *   与 transformOn 的独立 DirectiveTransform 模式互补。
- * 实际编译时，v-on 会优先走 on.ts 的 transformOn 路径（通过 builtInDirectiveTransforms），
- * 此处的 handleVOn 作为 transformElement 内部指令处理的备用路径。
+ * ⚠️ 2026-10-10 订正：本函数此前挂着一条**与实测相反**的 NOTE，自称
+ *   「实际编译时，v-on 会优先走 on.ts 的 transformOn 路径（通过
+ *   builtInDirectiveTransforms），此处的 handleVOn 只是备用路径」。
+ *
+ * 实证（探针 `scripts/_probe-directive-transforms.ts`，用完即删）：
+ *   `options.directiveTransforms` **完全未被消费** —— 自定义 on/bind/custom 三个
+ *   transform 的调用计数全为 0，而对照组 `nodeTransforms` 为 1。
+ *   根因：`createTransformContext` 逐字段构造 context、从未透传该字段。
+ *   ⇒ `transforms/on.ts` 的 `transformOn` 是**死代码**；本函数才是唯一生效路径。
+ *   ⇒ 那条"优先走 transformOn"的说明是错的，且会误导后续维护者去改错文件。
+ *
+ * 现状：该字段已透传（见 `handleDirective` 的 registry-first 分支），
+ * 但它**只承载用户自定义项**；内建 v-on 仍走本函数（`on.ts` 产出的是
+ * `{key,value}` 之外的形状约定不同，且其修饰符处理不区分"监听器选项"，
+ * 若改走它会让 `.once/.capture/.passive` 退化）。
+ * 两处若将来要合一，请以本函数的语义为准（含选项对象分支）。
  */
 function handleVOn(
   prop: DirectiveNode,
   _node: ElementNode,
-  _context: TransformContext,
+  context: TransformContext,
   properties: JSProperty[],
 ): void {
   const expContent = getExpContent(prop.exp);
@@ -375,9 +423,42 @@ function handleVOn(
         ? createSimpleExpression(expContent, false, prop.loc, false)
         : createSimpleExpression('undefined', true, prop.loc, true);
 
-    // FIX: P1-30 处理事件修饰符：将修饰符编译为事件选项对象
+    // FIX: P1-30 处理事件修饰符：守卫型走 withModifiers，选项型走事件选项对象
     const modifiers = prop.modifiers;
     if (modifiers && modifiers.length > 0) {
+      // 构建带修饰符的事件处理器
+      // 类型用 JSChildNode：既可能是原表达式（SimpleExpression），
+      // 也可能是 withModifiers(...) 调用（JSCallExpression）。
+      let eventHandler: JSChildNode = handler;
+
+      // 修饰符分两类，**必须分开处理**（2026-10-10 统一）：
+      //   ① 「守卫型」：stop / prevent / self / ctrl / shift / alt / meta / exact
+      //      + 按键名（.enter / .esc / 任意 KeyboardEvent.key）+ 鼠标键（.left/.middle/.right）
+      //      ⇒ 统一交给运行时 `withModifiers(fn, [...])` 包装。
+      //        此前这里**内联拼** `$event.stopPropagation()` 等字符串，且只认 stop/prevent/self，
+      //        其余修饰符**被静默丢弃**（`@keyup.enter` 对任意键都触发）。
+      //        改为单一运行时实现后，语义与 Signal 路径（`createEventHandler`）共用同一张表。
+      //   ② 「监听器选项」：capture / once / passive
+      //      ⇒ 它们是 `addEventListener` 的选项，**不是守卫**，只能以
+      //        `{ handler, capture: true }` 形态传给 patchEvent。
+      const listenerOptionNames = ['capture', 'once', 'passive'];
+      const guardModifiers = modifiers.filter((m) => !listenerOptionNames.includes(m));
+
+      if (guardModifiers.length > 0) {
+        eventHandler = createCallExpression(
+          context.helper('WITH_MODIFIERS'),
+          [
+            handler,
+            createArrayExpression(
+              guardModifiers.map((m) => createSimpleExpression(`"${m}"`, true, prop.loc, true)),
+              prop.loc,
+            ),
+          ],
+          prop.loc,
+        );
+      }
+
+      // 事件选项对象（capture / once / passive）
       const eventOptions: JSProperty[] = [];
       if (modifiers.includes('capture')) {
         eventOptions.push(
@@ -403,36 +484,6 @@ function handleVOn(
           ),
         );
       }
-
-      // 构建带修饰符的事件处理器
-      // FIX: P2-31 使用 ExpressionNode 类型以支持 SimpleExpressionNode 和 CompoundExpressionNode
-      let eventHandler: ExpressionNode = handler;
-      // FIX: P1-11 使用累加方式组合多个修饰符，避免后面的修饰符覆盖前面的
-      // 收集所有需要应用的修饰符前缀和后缀
-      const modifierPrefixes: string[] = [];
-
-      if (modifiers.includes('self')) {
-        modifierPrefixes.push('if ($event.target !== $event.currentTarget) return;');
-      }
-      if (modifiers.includes('stop')) {
-        modifierPrefixes.push('$event.stopPropagation();');
-      }
-      if (modifiers.includes('prevent')) {
-        modifierPrefixes.push('$event.preventDefault();');
-      }
-
-      // 如果有任何修饰符前缀，将所有修饰符组合到同一个包装函数内
-      if (modifierPrefixes.length > 0) {
-        eventHandler = createCompoundExpression([
-          `($event) => { `,
-          ...modifierPrefixes.map((p) => [p, ' ']).flat(),
-          '(',
-          handler,
-          `)($event); }`,
-        ]);
-      }
-
-      // 如果有事件选项，将事件名和选项一起传递
       if (eventOptions.length > 0) {
         properties.push(
           createObjectProperty(

@@ -73,4 +73,33 @@ describe('mountChildren - 非 VNode 子节点（裸字符串 / 数字）应渲�
     renderer.patch(n1, n2, host, null);
     expect(host.innerHTML).toBe('<div>new</div>');
   });
+
+  // ⚠️ 2026-10-10 新增（P0-3 的连带缺陷）：此前 `normalizeVNodeChildren` 对
+  // `null` / `undefined` / 布尔只是 `continue`（**跳过但保留在数组里**），于是数组
+  // 带着空洞进入 keyed diff，`patchKeyedChildren` 读 `c2[j].key` 抛
+  // `TypeError: Cannot read properties of null (reading 'key')`。
+  // 该缺陷长期被 Vapor 路径「每次清空 + 重新 mount」掩盖（mount 会跳过 null），
+  // 改为 patch 复用后立刻暴露。触发形态：`<b v-if="ok">` 为假 ⇒ 子节点数组是 `[null]`。
+  it('更新路径：数组变为 [null]（v-if 无 v-else）应卸载旧节点且不抛错', () => {
+    const host = makeHost();
+    const renderer = createTestRenderer();
+    const n1 = createVNode('div', null, [createVNode('b', null, 'yes')] as never);
+    renderer.mount(n1, host);
+    expect(host.innerHTML).toBe('<div><b>yes</b></div>');
+
+    const n2 = createVNode('div', null, [null] as never);
+    expect(() => renderer.patch(n1, n2, host, null)).not.toThrow();
+    expect(host.innerHTML).toBe('<div></div>');
+  });
+
+  it('更新路径：null 与 VNode 交错时应正确 diff（不再读 null.key）', () => {
+    const host = makeHost();
+    const renderer = createTestRenderer();
+    const n1 = createVNode('div', null, [createVNode('b', null, 'a')] as never);
+    renderer.mount(n1, host);
+
+    const n2 = createVNode('div', null, [null, createVNode('i', null, 'c')] as never);
+    expect(() => renderer.patch(n1, n2, host, null)).not.toThrow();
+    expect(host.innerHTML).toBe('<div><i>c</i></div>');
+  });
 });

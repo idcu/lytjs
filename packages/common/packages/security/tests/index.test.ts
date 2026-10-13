@@ -256,4 +256,30 @@ describe('sanitizeHTML', () => {
     expect(result).not.toContain('iframe');
     expect(result).not.toContain('object');
   });
+
+  it('should remove <style> tag pairs (CSS injection)', () => {
+    const input = '<style>body{background:red}</style><p>ok</p>';
+    const result = sanitizeHTML(input);
+    expect(result).not.toContain('<style');
+    expect(result).not.toContain('background:red');
+    expect(result).toContain('<p>ok</p>');
+  });
+
+  it('should remove <foreignObject> tags', () => {
+    const input = '<foreignObject><img src="x"></foreignObject>';
+    const result = sanitizeHTML(input);
+    expect(result).not.toContain('foreignObject');
+  });
+
+  it('should strip srcdoc attribute (HTML injection)', () => {
+    const input = '<div srcdoc="<script>alert(1)</script>">x</div>';
+    const result = sanitizeHTML(input);
+    expect(result).not.toContain('srcdoc');
+  });
+
+  it('should strip formaction attribute', () => {
+    const input = '<button formaction="javascript:alert(1)">x</button>';
+    const result = sanitizeHTML(input);
+    expect(result).not.toContain('formaction');
+  });
 });

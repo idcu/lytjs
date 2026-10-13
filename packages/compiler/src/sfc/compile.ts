@@ -53,6 +53,17 @@ export function compileSFC(
     rendererMode = 'vnode',
   } = options;
 
+  // ⚠️ 2026-10-10 订正（P1-8）：scopedId 此前写死为 `scoped ? id : undefined`，
+  // 而下方 `shouldScope` 的判定**还有第二支**——「未显式传 scoped 且 style 块自带
+  // `scoped` 属性」。该支下 `scopeCSS(css, undefined)` 产出 `[data-v-undefined]`：
+  // **所有未显式传 scoped 的组件共用同一个 scope 属性** ⇒ `<style scoped>` 的
+  // 隔离完全失效（样式跨组件泄漏），且 `result.scopedId` 也永远拿不到值。
+  // 现按与 shouldScope 完全相同的条件计算，并让 template 的 `scopeId` 与之同源。
+  const scopedId =
+    scoped === true || (scoped === undefined && descriptor.styles.some((s) => s.scoped))
+      ? id
+      : undefined;
+
   const parts: string[] = [];
 
   // 1. 编译 template block into a render function
@@ -61,8 +72,14 @@ export function compileSFC(
     const compilerOptions: CompilerOptions = {
       filename,
       ssr,
+      // ⚠️ 2026-10-10 订正（P1-8）：`compile()` 选择 SSR 通路读的是 **`ssrMode`**，
+      // 不是 `ssr` —— 后者是 transform / codegen 的子开关，且在 `compile()` 内被
+      // `ssr: ssrMode ?? false` **覆盖为 false**。此前只传 `ssr` ⇒
+      // `compileSFC(d, { ssr: true })` 的产物与 `ssr: false` **逐字节相同**
+      // （探针实测），即该选项是个死开关。现同时传 `ssrMode`。
+      ssrMode: ssr,
       rendererMode,
-      scopeId: scoped ? id : undefined,
+      scopeId: scopedId ?? null,
     };
     const templateResult = compile(descriptor.template.content, compilerOptions);
     renderFnCode = templateResult.code;
@@ -77,7 +94,7 @@ export function compileSFC(
   // 当显式提供 scoped 选项时，它控制所有 style 块。
   // 当未提供 scoped 选项（undefined）时，各个 style 块的
   // scoped attribute determines scoping.
-  const scopedId = scoped ? id : undefined;
+  // 注：scopedId 已在函数开头按同一条件算好（见那里的订正说明）。
 
   if (descriptor.styles.length > 0) {
     const cssParts: string[] = [];

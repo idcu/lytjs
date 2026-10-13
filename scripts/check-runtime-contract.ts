@@ -137,6 +137,32 @@ const SAMPLES: Array<{ label: string; template: string; options: Record<string, 
     template: '<button @click="inc">+</button>',
     options: { rendererMode: 'vnode' },
   },
+  // ⚠️ 2026-10-10 补：**含修饰符**的事件样本。
+  //
+  // 此前样本只有无修饰符的 `@click="inc"`，产物里不出现 `withModifiers` ⇒
+  // 本守卫对「产物 import 了 withModifiers 而运行时没导出它」这类断裂**天然失明**。
+  // 这是 P0-1 一路绿灯的直接原因：守卫覆盖不到那条分支。
+  // 守卫的职责是"产物 import 的绑定名必须存在于导出面"，故必须让样本走到该分支。
+  {
+    label: 'vnode/事件修饰符（守卫型 .stop）',
+    template: '<button @click.stop="inc">+</button>',
+    options: { rendererMode: 'vnode' },
+  },
+  {
+    label: 'vnode/事件修饰符（按键 .enter）',
+    template: '<input @keyup.enter="onEnter" />',
+    options: { rendererMode: 'vnode' },
+  },
+  {
+    label: 'vnode/事件修饰符（选项型 .once + 守卫型 .stop 共存）',
+    template: '<button @click.stop.once="inc">+</button>',
+    options: { rendererMode: 'vnode' },
+  },
+  {
+    label: 'vnode/事件修饰符（组合 .ctrl.prevent）',
+    template: '<button @click.ctrl.prevent="inc">+</button>',
+    options: { rendererMode: 'vnode' },
+  },
   {
     label: 'vnode/组件与插槽',
     template: '<Child :p="1"><span>slot</span></Child>',
@@ -171,6 +197,16 @@ const SAMPLES: Array<{ label: string; template: string; options: Record<string, 
   {
     label: 'signal/事件',
     template: '<button @click="inc">+</button>',
+    options: { rendererMode: 'signal', optimizeSignal: false },
+  },
+  {
+    label: 'signal/事件修饰符（守卫型 .stop）',
+    template: '<button @click.stop="inc">+</button>',
+    options: { rendererMode: 'signal', optimizeSignal: false },
+  },
+  {
+    label: 'signal/事件修饰符（按键 .enter）',
+    template: '<input @keyup.enter="onEnter" />',
     options: { rendererMode: 'signal', optimizeSignal: false },
   },
   {

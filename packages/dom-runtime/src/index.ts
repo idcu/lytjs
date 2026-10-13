@@ -3,30 +3,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { effect, stop } from '@lytjs/reactivity';
+import { sanitizeHTML } from '@lytjs/common-security';
 
 // ==================== 环境检测 ====================
 
 const isBrowser = typeof document !== 'undefined' && typeof HTMLElement !== 'undefined';
 
 // ==================== XSS 防护 ====================
+// sanitizeHTML 的**单一真相源**已收敛到 @lytjs/common-security（v-html 消毒的权威实现，
+// 覆盖实体解码 / 危险标签 / 危险标签对 / on* 属性 / 危险 URI 协议 / CSS expression /
+// srcdoc·formaction·xlink:href 注入属性 / style·foreignObject 标签对）。
+// 本包只再导出它，确保：
+//   1) 客户端 setHTML 与 SSR 注入（new Function 参数）共用同一套净化逻辑；
+//   2) 消除此前「core 从本包再导出较弱实现」的接错线（P2-4 治理；详见评估报告）。
+export { sanitizeHTML };
 
-/**
- * 危险标签名称列表，用于 sanitizeHTML 的正则匹配
- */
-const DANGEROUS_TAG_NAMES = 'script|iframe|object|embed|applet|form';
-
-/**
- * 自闭合危险标签名称列表（包含 input、textarea 等表单元素）
- */
-const DANGEROUS_SELF_CLOSING_TAG_NAMES = `${DANGEROUS_TAG_NAMES}|input|textarea|select|button|link|meta`;
-
-/**
- * 基础 HTML sanitizer，移除危险标签和属性
- * 注意：这不是一个完整的 sanitizer，仅提供基础防护
- * 生产环境建议使用 DOMPurify 等成熟库
- *
- * @internal 仅供内部使用，不作为公共 API 暴露
- */
 /**
  * 为元素下的每个 `<!--lyt-t-->` 注释「槽位」插入一个**空文本节点**，并按文档顺序返回。
  *
@@ -180,65 +171,8 @@ export function normalizeStyle(style: unknown): string {
   return parts.join(';');
 }
 
-// 导出：SSR 产物也需要它 —— v-html 在 SSR 下必须与客户端 setHTML **同一套净化逻辑**，
-// 否则两端输出不一致（ hydration 不匹配 ）；SSR 产物用 new Function 执行、不能 import，
-// 故由执行方把它作为参数注入。
-export function sanitizeHTML(html: string): string {
-  // FIX: P2-52 添加最大迭代次数限制，防止无限循环攻击
-  const MAX_ITERATIONS = 10;
-  let iterations = 0;
-
-  // 防御嵌套绕过：循环执行所有清理步骤，直到结果不再变化
-  let prevResult = '';
-  while (html !== prevResult && iterations < MAX_ITERATIONS) {
-    iterations++;
-    prevResult = html;
-    // 移除危险标签（含内容）
-    html = html.replace(
-      new RegExp(`<\\s*/?\\s*(${DANGEROUS_TAG_NAMES})[^>]*>[\\s\\S]*?<\\s*/\\s*\\1\\s*>`, 'gi'),
-      '',
-    );
-    // 移除自闭合的危险标签
-    html = html.replace(new RegExp(`<\\s*(${DANGEROUS_SELF_CLOSING_TAG_NAMES})[^>]*/?>`, 'gi'), '');
-    // 移除事件属性（on*）
-    html = html.replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '');
-    // 移除危险属性（srcdoc、formaction、xlink:href）
-    html = html.replace(
-      /\s+(srcdoc|formaction|xlink:href)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi,
-      '',
-    );
-    // FIX: P0-11 过滤 javascript: 伪协议，防止 XSS 绕过
-    // 匹配 href/src/action 等属性中的 javascript: 伪协议（含大小写变体和空白绕过）
-    html = html.replace(
-      /\s+(href|src|action|formaction|data)\s*=\s*(?:"[^"]*"|'[^']*')/gi,
-      (match) => {
-        // 检查属性值是否包含 javascript: 伪协议
-        const valueMatch = match.match(/=\s*(?:"([^"]*)"|'([^']*)')/);
-        if (valueMatch) {
-          // eslint-disable-next-line no-control-regex
-          const value = (valueMatch[1] ?? valueMatch[2] ?? '').replace(/[\s\x00-\x1f]+/g, '');
-          if (/^javascript\s*:/i.test(value)) {
-            return ''; // 移除包含 javascript: 伪协议的属性
-          }
-        }
-        return match;
-      },
-    );
-    // FIX: P0-11 过滤 SVG foreignObject 标签，防止通过 SVG 命名空间注入恶意 HTML
-    html = html.replace(/<\s*foreignObject[^>]*>[\s\S]*?<\s*\/\s*foreignObject\s*>/gi, '');
-    html = html.replace(/<\s*foreignObject[^>]*\/?>/gi, '');
-    // FIX: P2-52 过滤 style 标签，防止 CSS 注入攻击
-    html = html.replace(/<\s*style[^>]*>[\s\S]*?<\s*\/\s*style\s*>/gi, '');
-    // FIX: P2-52 过滤 base 标签，防止基地址劫持攻击
-    html = html.replace(/<\s*base[^>]*\/?>/gi, '');
-    // FIX: P2-52 过滤 data: URI，防止数据 URI 攻击
-    html = html.replace(
-      /\s+(href|src|action|formaction)\s*=\s*(?:"[^"]*data:[^"]*"|'[^']*data:[^']*')/gi,
-      '',
-    );
-  }
-  return html;
-}
+// sanitizeHTML 由文件顶部再从 @lytjs/common-security 再导出（见上方「XSS 防护」段）。
+// 单一真相源：客户端 setHTML（下方）与 SSR 注入（new Function 参数）皆走同一实现。
 
 // ==================== DOM 创建 ====================
 
@@ -855,6 +789,86 @@ export function createEventHandler(
   realNode.addEventListener(event, wrappedHandler as EventListener, options);
   return () => {
     realNode.removeEventListener(event, wrappedHandler as EventListener, options);
+  };
+}
+
+// ==================== v-on 修饰符包装（VNode / 编译器产物契约） ====================
+
+/** `exact` 判定用的系统键集合（顺序无关） */
+const SYSTEM_MODIFIERS = ['ctrl', 'shift', 'alt', 'meta'] as const;
+
+/**
+ * 判定一次事件是否应被修饰符**拦截**（返回 `true` = 不调用 handler）。
+ *
+ * 与 `createEventHandler`（Signal 路径，修饰符为**对象**）共用
+ * `NON_KEY_MODIFIERS` / `KEY_ALIASES` / `MOUSE_BUTTONS` 三张表，
+ * 保证两条渲染路径的修饰符语义**不会漂移**。
+ *
+ * 两类语义：
+ * - **副作用型**（`stop` / `prevent`）：无条件执行，**不拦截**；
+ * - **条件型**（`self` / 键位 / 鼠标键 / 按键名 / `exact`）：不满足即拦截。
+ */
+function isInterceptedByModifiers(event: Event, modifiers: string[]): boolean {
+  if (modifiers.includes('prevent')) event.preventDefault();
+  if (modifiers.includes('stop')) event.stopPropagation();
+
+  // `.self`：只有事件目标就是绑定元素本身时才放行
+  if (modifiers.includes('self') && event.target !== event.currentTarget) return true;
+
+  // 鼠标键：`.left` / `.middle` / `.right`（注意与方向键同名，见 NON_KEY_MODIFIERS）
+  const mouseMods = modifiers.filter((m) => m in MOUSE_BUTTONS);
+  if (mouseMods.length > 0) {
+    const button = (event as MouseEvent).button;
+    if (!mouseMods.some((m) => MOUSE_BUTTONS[m] === button)) return true;
+  }
+
+  const sysPressed = (m: string): boolean =>
+    Boolean((event as unknown as Record<string, boolean>)[`${m}Key`]);
+
+  if (modifiers.includes('exact')) {
+    // `.exact`：按下了任一**未被显式列出**的系统键 ⇒ 拦截
+    if (SYSTEM_MODIFIERS.some((m) => sysPressed(m) && !modifiers.includes(m))) return true;
+  } else {
+    // 显式键位修饰符：列出了但没按下 ⇒ 拦截（`.ctrl` 语义）
+    if (SYSTEM_MODIFIERS.some((m) => modifiers.includes(m) && !sysPressed(m))) return true;
+  }
+
+  // 按键名修饰符：`.enter` / `.esc` / 任意 `KeyboardEvent.key` 名；任一命中即放行
+  const keyMods = modifiers.filter((m) => !NON_KEY_MODIFIERS.has(m));
+  if (keyMods.length > 0) {
+    const key = (event as KeyboardEvent).key;
+    const matched = keyMods.some((m) => {
+      const aliases = KEY_ALIASES[m.toLowerCase()] ?? [m];
+      return aliases.some((a) => a === key);
+    });
+    if (!matched) return true;
+  }
+
+  return false;
+}
+
+/**
+ * 把事件处理函数包上 `v-on` 修饰符语义。
+ *
+ * **这是编译器产物的运行时契约**：`<button @click.stop="fn">` 被编译为
+ * `onClick: withModifiers(_ctx.fn, ["stop"])`（见 `compiler/src/transforms/on.ts`）。
+ * 该名字必须**同时**存在于三处，缺一即运行时 `ReferenceError`：
+ *   1. `compiler/src/constants.ts` 的 `helperNameMap`（驱动产物 import）
+ *   2. 本文件（实现）+ 包导出面
+ *   3. `core/src/runtime-helpers.ts`（`new Function` 的注入对象）
+ * 这三处的一致性由 `scripts/check-runtime-contract.ts` 守卫。
+ *
+ * @param fn        原始处理函数（产物中形如 `_ctx.fn`）
+ * @param modifiers 修饰符名数组，如 `["stop", "prevent"]`
+ * @returns 包装后的处理函数（首参为事件对象，其余参数原样透传）
+ */
+export function withModifiers<A extends unknown[]>(
+  fn: (...args: A) => unknown,
+  modifiers: string[],
+): (...args: A) => unknown {
+  return (...args: A) => {
+    if (isInterceptedByModifiers(args[0] as Event, modifiers)) return undefined;
+    return fn(...args);
   };
 }
 

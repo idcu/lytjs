@@ -52,8 +52,9 @@ export {
 export type { Block } from '@lytjs/vdom';
 
 // —— DOM 侧 helper（@lytjs/dom-runtime）——
-// class / style 归一化（:class / :style）与 HTML 消毒（v-html）
-export { normalizeClass, normalizeStyle, sanitizeHTML } from '@lytjs/dom-runtime';
+// class / style 归一化（:class / :style）、HTML 消毒（v-html）、
+// v-on 修饰符包装（@click.stop 等，产物形如 withModifiers(fn, ["stop"])）
+export { normalizeClass, normalizeStyle, sanitizeHTML, withModifiers } from '@lytjs/dom-runtime';
 
 // —— 插槽渲染（@lytjs/component）——
 export { renderSlot } from '@lytjs/component';

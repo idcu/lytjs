@@ -8,10 +8,11 @@
 // 本模块提供运行时入口 `mountComponent()`，配合 codegen 生成的调用
 // `mountComponent(_c.Child, props, container)` 完成真实挂载。
 //
-// 实现策略（首版）：
+// 实现策略：
 // - 复用 vdom + adapter-web 的 DOM 渲染器（它能正确处理组件 vnode 的 setup/渲染/更新）
-// - 用 effect 建立响应式边界，依赖变化时**整体重渲染**该组件子树
-//   （细粒度更新留到后续版本；整体重渲染保证正确性优先）
+// - 用 effect 建立响应式边界（预热插槽依赖）；**首次 `mount`、后续 `patch`**，
+//   复用同一组件实例与 DOM（2026-10-10 由「每次清空重挂载」改为 patch 复用，
+//   见 `mountComponent` 内 P0-3 注释）
 // - 组件实例由 @lytjs/component 的 createComponentInstance / setupComponent 建立，
 //   通过渲染器的 setupChildComponent / normalizeProps 回调接入
 
@@ -109,27 +110,41 @@ export function mountComponent(
     (host as Element).setAttribute('style', 'display: contents');
   }
 
-  // 首次渲染 + 依赖变化后的整体重渲染
+  // ⚠️ 2026-10-10（P0-3 修复）：此前本 effect 每次重跑都是「清空容器 + 重新 `mount`」，
+  // 等于**整体重挂载**：组件实例被销毁重建（`setup` 重跑、`onMounted`/`onUnmounted`
+  // 每次更新都触发、watcher 重订阅），DOM 也整棵重建（丢焦点 / 输入值 / 滚动位置）。
+  //
+  // 现在改为「首次 `mount`，之后只调用组件实例自己的 `update()`」：实例、DOM、
+  // 响应式订阅全部复用，仅对子树做一次 diff —— 语义仍是「重渲染该组件子树」，
+  // 但不再销毁重建。
+  //
+  // 为什么不是 `patch(prevVNode, nextVNode)`：本 effect 每次传的 props/slots 是
+  // **同一个引用**，而 patch 的组件分支以 `propsChanged || slotsChanged` 决定是否
+  // 调用 `update()` ⇒ 恒为假、不会更新。也不能依赖组件自身的渲染 effect ——
+  // 它是 `watchEffect`（`flush:'pre'`）的**异步**队列，无法保证本 effect 重跑后
+  // 同步可见（既有用例就是同步断言的）。
+  let instance: { update?: () => void } | null = null;
+
   effect(() => {
     // 插槽「预热」：插槽函数的**真正执行**发生在组件渲染内部（另一层响应式边界），
     // 若只在那里求值，插槽内引用的父级响应式数据不会被本 effect 收集为依赖 ⇒
-    // 父级数据变化时不会整体重渲染。故先在本 effect 上下文里求值一次（结果为 vnode，
+    // 父级数据变化时不会触发重渲染。故先在本 effect 上下文里求值一次（结果为 vnode，
     // 仅用于建立依赖，随即可丢弃）。
     warmupSlots(slots);
 
-    // 第三个参数是 children（即「插槽」）：setupComponent 内部会把它交给 initSlots
-    // 归一化 —— 支持「函数 = 默认插槽」与「对象 = 具名插槽集合」两种形态。
-    const vnode = createVNode(comp as never, (props ?? null) as never, (slots ?? null) as never);
-
-    // 清空占位容器（整体重渲染策略）
-    const maybeElement = host as unknown as { textContent?: unknown };
-    if (typeof maybeElement.textContent === 'string') {
-      (maybeElement as { textContent: string }).textContent = '';
-    } else {
-      while (host.firstChild) host.removeChild(host.firstChild);
+    if (instance !== null) {
+      // 依赖变化：复用同一实例与 DOM，同步重渲染子树
+      instance.update?.();
+      return;
     }
 
+    // 首次挂载。第三个参数是 children（即「插槽」）：setupComponent 内部会把它交给
+    // initSlots 归一化 —— 支持「函数 = 默认插槽」与「对象 = 具名插槽集合」两种形态。
+    // 容器里可能已有 codegen 留下的占位内容，先清空。
+    const vnode = createVNode(comp as never, (props ?? null) as never, (slots ?? null) as never);
+    clearHost(host);
     getRenderer().mount(vnode, host);
+    instance = (vnode as unknown as { component?: { update?: () => void } }).component ?? null;
   });
 }
 
@@ -151,7 +166,7 @@ function resolveSlotVNodes(slotFn: unknown, props: unknown): unknown[] {
   return Array.isArray(result) ? result : [result];
 }
 
-/** 清空宿主元素（整体重渲染策略，与 `mountComponent` 一致） */
+/** 清空宿主元素（**仅用于首次挂载**；更新走 `patch` / 实例 `update()`，不再清空重建） */
 function clearHost(host: Node): void {
   const maybeElement = host as unknown as { textContent?: unknown };
   if (typeof maybeElement.textContent === 'string') {
@@ -188,21 +203,44 @@ export function mountVNode(vnode: unknown, container: unknown): void {
 export function mountSlot(slotFn: unknown, container: unknown, props?: unknown): void {
   if (container === null || container === undefined) return;
 
-  const host = container as Node;
+  // 同 `mountComponent`（P0-3）：保留上一次 vnode，依赖变化时走 `patch` 复用实例与 DOM，
+  // 而不是「清空 + 重新挂载」—— 后者会让插槽内的子组件每次更新都被销毁重建。
+  let prevVNode: VNode | null = null;
 
   effect(() => {
+    // codegen 传进来的是 `createTemplate()` 的**包装对象**（TemplateWrapper）⇒ 先解析。
+    const host = getRealNode(container) as Node;
+
     const vnodes = resolveSlotVNodes(slotFn, props);
-    if (vnodes.length === 0) {
+    // 多个 vnode ⇒ 用 Fragment 承载（vdom 的 Fragment patch 已支持）
+    const next: VNode | null =
+      vnodes.length === 0
+        ? null
+        : ((vnodes.length === 1
+            ? vnodes[0]
+            : createVNode(Fragment as never, null, vnodes as never)) as VNode);
+
+    if (next === null) {
+      // 插槽内容清空：卸载旧节点（触发子组件 unmounted 并移除 DOM），再兜底清空容器
+      if (prevVNode !== null) {
+        getRenderer().unmount(prevVNode);
+        prevVNode = null;
+      }
       clearHost(host);
       return;
     }
 
-    // 多个 vnode ⇒ 用 Fragment 承载（vdom 的 Fragment patch 已支持）
-    const vnode =
-      vnodes.length === 1
-        ? (vnodes[0] as never)
-        : (createVNode(Fragment as never, null, vnodes as never) as never);
-
-    mountVNode(vnode, host);
+    if (prevVNode === null) {
+      clearHost(host);
+      getRenderer().mount(next, host);
+    } else if (prevVNode.type === next.type) {
+      getRenderer().patch(prevVNode, next, host);
+    } else {
+      // 类型变化（如插槽内 v-if 翻转）：旧节点无法复用，退回「卸载 + 清空 + 挂载」
+      getRenderer().unmount(prevVNode);
+      clearHost(host);
+      getRenderer().mount(next, host);
+    }
+    prevVNode = next;
   });
 }

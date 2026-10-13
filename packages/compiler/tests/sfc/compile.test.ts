@@ -231,3 +231,81 @@ export default { name: 'NoTemplate' }
     expect(result.code).not.toContain('Template render function');
   });
 });
+
+// ============================================================
+// P1-8 回归：`<style scoped>` 的默认路径 与 ssr 开关
+// ============================================================
+//
+// 背景（2026-10-10 实测）：这两条都是「能力存在但静默失效」，且此前的
+// 测试只覆盖了**显式传 `scoped: true`** 的那一支，恰好绕开了缺陷。
+describe('compileSFC — P1-8 回归（scoped 默认路径 / ssr 开关）', () => {
+  const SCOPED = `<template>
+  <div class="app">Hello</div>
+</template>
+
+<style scoped>
+.app { color: red; }
+</style>`;
+
+  it('未显式传 scoped 时，<style scoped> 必须得到真实 scopeId（不得是 data-v-undefined）', () => {
+    const descriptor = parseSFC(SCOPED, { filename: 'DefaultScoped.lyt' });
+    // ⚠️ 注意：这里**故意不传** scoped 选项 —— 正是此前未被覆盖的默认路径
+    const result = compileSFC(descriptor, { filename: 'DefaultScoped.lyt' });
+
+    expect(result.scopedId).toBeDefined();
+    expect(result.scopedId).toMatch(/^[0-9a-f]{8}$/);
+    expect(result.css).toBeDefined();
+    expect(result.css).not.toContain('data-v-undefined');
+    expect(result.css).toContain(`[data-v-${result.scopedId}]`);
+    // template 必须带上同一个 scope 属性，否则 CSS 选择器匹配不到任何元素
+    expect(result.code).toContain(`data-v-${result.scopedId}`);
+    expect(result.code).toContain(`const __scopeId = ${JSON.stringify(result.scopedId)};`);
+  });
+
+  it('不同文件的默认 scopeId 必须互不相同（隔离不塌陷为同一个属性）', () => {
+    const a = compileSFC(parseSFC(SCOPED, { filename: 'A.lyt' }), { filename: 'A.lyt' });
+    const b = compileSFC(parseSFC(SCOPED, { filename: 'B.lyt' }), { filename: 'B.lyt' });
+
+    expect(a.scopedId).toBeDefined();
+    expect(b.scopedId).toBeDefined();
+    expect(a.scopedId).not.toBe(b.scopedId);
+  });
+
+  it('未带 scoped 属性的 <style> 不得被作用域化（默认路径不应过度作用域）', () => {
+    const source = `<template><div class="app">x</div></template>
+<style>
+.app { color: red; }
+</style>`;
+    const result = compileSFC(parseSFC(source, { filename: 'Plain.lyt' }), {
+      filename: 'Plain.lyt',
+    });
+
+    expect(result.css).toBeDefined();
+    expect(result.css).not.toContain('[data-v-');
+    expect(result.scopedId).toBeUndefined();
+  });
+
+  it('ssr: true 必须真正走 SSR 代码生成（与 ssr: false 产物不同）', () => {
+    const descriptor = parseSFC(SCOPED, { filename: 'Ssr.lyt' });
+
+    const csr = compileSFC(descriptor, { filename: 'Ssr.lyt' });
+    const ssr = compileSFC(descriptor, { filename: 'Ssr.lyt', ssr: true });
+
+    expect(ssr.code).not.toBe(csr.code);
+    // SSR 通路产出字符串拼接 + HTML 转义；CSR 通路不得出现它们
+    expect(ssr.code).toContain('renderToString');
+    expect(ssr.code).toContain('escapeHtml');
+    expect(csr.code).not.toContain('renderToString');
+    expect(csr.code).not.toContain('escapeHtml');
+  });
+
+  it('ssr: true 时动态插值必须被 HTML 转义（而非直接拼进字符串）', () => {
+    const source = `<template><div>{{ msg }}</div></template>`;
+    const ssr = compileSFC(parseSFC(source, { filename: 'Dyn.lyt' }), {
+      filename: 'Dyn.lyt',
+      ssr: true,
+    });
+
+    expect(ssr.code).toContain('escapeHtml(_ctx.msg');
+  });
+});

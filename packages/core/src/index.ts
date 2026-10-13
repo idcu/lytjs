@@ -238,10 +238,11 @@ export {
   normalizeProps,
   guardReactiveProps,
   toHandlerKey,
-  // DOM 侧：class / style 归一化 + HTML 消毒
+  // DOM 侧：class / style 归一化 + HTML 消毒 + v-on 修饰符包装
   normalizeClass,
   normalizeStyle,
   sanitizeHTML,
+  withModifiers,
   // 插槽渲染：<slot> 编译为 renderSlot(_ctx.$slots, name, props, fallback)
   renderSlot,
 } from './runtime-helpers';

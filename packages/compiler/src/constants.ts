@@ -95,6 +95,10 @@ export const helperNameMap: Record<string, string> = {
   GUARD_REACTIVE_PROPS: 'guardReactiveProps',
   SANITIZE_HTML: 'sanitizeHTML',
   WITH_MEMO: 'withMemo',
+  // v-on 修饰符包装（@click.stop / .prevent / .self / .enter …）
+  // ⚠️ 名字须与 `@lytjs/dom-runtime` 的实现、`@lytjs/core` 的 runtime-helpers 注入面三处一致，
+  //    由 `scripts/check-runtime-contract.ts` 守卫。
+  WITH_MODIFIERS: 'withModifiers',
 } as const;
 
 /**

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * @lytjs/common-rate-limit tests
  */
@@ -131,6 +130,81 @@ describe('@lytjs/common-rate-limit', () => {
         refillTime: 1000,
       });
       expect(limiter).toBeInstanceOf(TokenBucketLimiter);
+    });
+  });
+
+  // ============================================================
+  // P1-3 回归（2026-10-10）
+  // ============================================================
+  describe('P1-3：SlidingWindowLimiter 必须是真滑动窗口', () => {
+    it('窗口边界处不得出现「两倍突发」（原实现是 epoch 网格对齐的固定窗口）', () => {
+      vi.useFakeTimers();
+      const limiter = new SlidingWindowLimiter({ max: 2, windowMs: 1000 });
+
+      vi.setSystemTime(990);
+      expect(limiter.check('k').allowed).toBe(true);
+      vi.setSystemTime(995);
+      expect(limiter.check('k').allowed).toBe(true);
+      // ⚠️ 原实现：t=1000 恰好跨到下一个 epoch 网格窗口 ⇒ 计数被清零 ⇒ 放行
+      //    于是 10ms 内实际放行了 3 次（max=2）—— 边界两倍突发。
+      vi.setSystemTime(1000);
+      expect(limiter.check('k').allowed).toBe(false);
+
+      vi.useRealTimers();
+    });
+
+    it('请求滑出窗口后名额应自动恢复', () => {
+      vi.useFakeTimers();
+      const limiter = new SlidingWindowLimiter({ max: 1, windowMs: 1000 });
+
+      vi.setSystemTime(10_000);
+      expect(limiter.check('k').allowed).toBe(true);
+      vi.setSystemTime(10_500);
+      expect(limiter.check('k').allowed).toBe(false);
+      vi.setSystemTime(11_001);
+      expect(limiter.check('k').allowed).toBe(true);
+
+      vi.useRealTimers();
+    });
+  });
+
+  describe('P1-3：跟踪表必须有界（原实现 Map 只增不减 ⇒ 内存泄漏）', () => {
+    it('SlidingWindowLimiter：键数量不超过 maxKeys（LRU 淘汰）', () => {
+      const limiter = new SlidingWindowLimiter({ max: 5, windowMs: 60_000, maxKeys: 10 });
+      for (let i = 0; i < 100; i++) limiter.check(`key-${i}`);
+      expect(limiter.size).toBeLessThanOrEqual(10);
+    });
+
+    it('SlidingWindowLimiter：整窗口内已无记录的键会被清扫回收', () => {
+      vi.useFakeTimers();
+      const limiter = new SlidingWindowLimiter({ max: 2, windowMs: 1000, maxKeys: 0 });
+
+      vi.setSystemTime(0);
+      limiter.check('a');
+      limiter.check('b');
+      expect(limiter.size).toBe(2);
+
+      // 远超一个窗口后再来请求 ⇒ 触发清扫，a / b 的记录已全部过期
+      vi.setSystemTime(5000);
+      limiter.check('c');
+      expect(limiter.size).toBe(1);
+
+      vi.useRealTimers();
+    });
+
+    it('FixedWindowLimiter / TokenBucketLimiter 同样有界', () => {
+      const fixed = new FixedWindowLimiter({ max: 5, windowMs: 60_000, maxKeys: 7 });
+      for (let i = 0; i < 100; i++) fixed.check(`key-${i}`);
+      expect(fixed.size).toBeLessThanOrEqual(7);
+
+      const bucket = new TokenBucketLimiter({
+        capacity: 5,
+        refillRate: 1,
+        refillTime: 1000,
+        maxKeys: 4,
+      });
+      for (let i = 0; i < 100; i++) bucket.check(`key-${i}`);
+      expect(bucket.size).toBeLessThanOrEqual(4);
     });
   });
 });

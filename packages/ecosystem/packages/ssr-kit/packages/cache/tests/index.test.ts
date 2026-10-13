@@ -72,6 +72,47 @@ describe('@lytjs/cache', () => {
       await cache.set('key', 'value');
       expect(await cache.get('key')).toBe('value');
     });
+
+    // ============================================================
+    // P1-7 回归（2026-10-10）
+    //
+    // 此前 MultiLayerCacheConfig 声明了 redis / http 两层，但构造函数里
+    // 是**空 if 块** ⇒ 配了也只有内存层，且无任何提示。
+    // 现在改为 extraLayers（真实可用）。下面用假层验证多层语义。
+    // ============================================================
+    it('set 应写入所有层（含 extraLayers）', async () => {
+      const lower = new MemoryCache();
+      const setSpy = vi.spyOn(lower, 'set');
+      const cache = new MultiLayerCache({ extraLayers: [lower] });
+
+      await cache.set('k', 'v');
+
+      expect(setSpy).toHaveBeenCalledWith('k', 'v', undefined);
+      expect(await lower.get('k')).toBe('v');
+    });
+
+    it('下层命中时应回写到上层（read-through 提升）', async () => {
+      const lower = new MemoryCache();
+      const cache = new MultiLayerCache({ extraLayers: [lower] });
+      const memoryLayer = cache.layers[0]!;
+
+      // 只写进下层，模拟「内存层过期但下层仍在」
+      await lower.set('k', 'from-lower');
+      expect(await memoryLayer.get('k')).toBeUndefined();
+
+      expect(await cache.get('k')).toBe('from-lower');
+      // 回写生效
+      expect(await memoryLayer.get('k')).toBe('from-lower');
+    });
+
+    it('memory:false + extraLayers 时只使用自定义层', async () => {
+      const lower = new MemoryCache();
+      const cache = new MultiLayerCache({ memory: false, extraLayers: [lower] });
+
+      await cache.set('k', 'v');
+      expect(await cache.get('k')).toBe('v');
+      expect(await lower.get('k')).toBe('v');
+    });
   });
 
   describe('createCache', () => {
