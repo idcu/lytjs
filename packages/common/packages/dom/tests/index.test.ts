@@ -330,6 +330,27 @@ describe('@lytjs/common-dom', () => {
       expect(el.getAttribute('disabled')).toBeNull();
     });
 
+    // ★ 2026-10-13 修复：此前 `value === false` 一律 removeAttribute ⇒ 所有 `aria-*`
+    //   的 false 都被丢弃。但 WAI-ARIA 要求 `aria-expanded` 在组合框上**必须存在**且为
+    //   true/false（缺失 ≠ false）；且 `aria-hidden="false"`（显式不隐藏）与缺省
+    //   （继承祖先）语义不同。Vue 运行时同样是「aria 属性 false ⇒ setAttribute('false')」。
+    it('★ aria-* 的 false 必须序列化为字符串 "false"（不能被移除）', () => {
+      patchAttr(el, 'aria-expanded', false, false);
+      expect(el.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('★ aria-* 的 true 序列化为 "true"', () => {
+      patchAttr(el, 'aria-expanded', true, false);
+      expect(el.getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('★ aria-* 的 null/undefined 仍移除 ——「不设置」与 false 语义不同', () => {
+      patchAttr(el, 'aria-hidden', false, false);
+      expect(el.getAttribute('aria-hidden')).toBe('false');
+      patchAttr(el, 'aria-hidden', null, false);
+      expect(el.getAttribute('aria-hidden')).toBeNull();
+    });
+
     it('should set boolean attribute to empty string when value is true', () => {
       patchAttr(el, 'disabled', true, false);
       expect(el.getAttribute('disabled')).toBe('');

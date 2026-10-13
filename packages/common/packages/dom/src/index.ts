@@ -171,8 +171,21 @@ export function patchStyle(el: Element, prev: unknown, next: unknown): void {
  * Includes safety checks via isSafeAttribute.
  */
 export function patchAttr(el: Element, key: string, value: unknown, _isSVG: boolean): void {
-  if (value == null || value === false) {
+  if (value == null) {
     el.removeAttribute(key);
+  } else if (value === false) {
+    // ⚠️ `aria-*` 的 `false` **必须**序列化为字符串 `"false"`，不能像 HTML 布尔属性那样移除：
+    //   · WAI-ARIA：组合框上的 `aria-expanded` **必须存在**且为 `true` / `false`，
+    //     缺失 ≠ false（读屏软件不会播报为「已折叠」）；
+    //   · `false` 与「不设置」语义不同：`aria-hidden="false"` = **显式不隐藏**，
+    //     而缺省 = 继承祖先的 `aria-hidden`。⇒ 要「不设置」应传 `undefined`/`null`。
+    //   Vue 运行时同样是「aria 属性 false ⇒ `setAttribute(key, 'false')`」。
+    //   实测（2026-10-13）：修复前 `Select` 关闭态的 `aria-expanded` 是 `null`（属性被丢弃）。
+    if (key.startsWith('aria-')) {
+      el.setAttribute(key, 'false');
+    } else {
+      el.removeAttribute(key);
+    }
   } else if (isBooleanAttr(key)) {
     if (value === true || value === '') {
       el.setAttribute(key, '');
