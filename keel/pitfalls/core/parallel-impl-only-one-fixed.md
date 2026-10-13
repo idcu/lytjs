@@ -2,26 +2,27 @@
 scope: core
 status: active
 severity: P1
-last-verified: 2026-10-10
-triggers: 0
-keywords: [平行实现, core-vnode, 只修一处, 生命周期钩子]
+last-verified: 2026-10-13
+triggers: 1
+keywords: [平行实现, 只修一处, 双触发, 冒泡]
 ---
 
 ## 症状
 
-同一能力一条路径正常、另一条完全不生效，且不报错、测试全绿。
-实测：4 个生命周期钩子在 `@lytjs/core` 正常，`@lytjs/core-vnode` 上**一个都不触发**。
+同一能力一条路径正常、另一条不生效（或**发生两次**），不报错、测试绿。
+实测：① 钩子在 `core` 正常、`core-vnode` **一个都不触发**；
+② `Slider` 按一次 ArrowRight 前进 **2 个 step**，回调被调 **2 次**。
 
 ## 根因
 
-仓里有**两条平行的 createApp**（`core/src/create-app.ts` 与 `core-vnode/src/create-app.ts`），
-各自向 vdom 注入回调。2026-09-26 修钩子时只改了 core 那份；
-vdom 侧是 `ctx.invokeMountedHook?.()` **可选调用** ⇒ 没注入就静默跳过。
-根因是**同族副本未被识别为同一缺陷的多个载体**。
+**同族副本未被识别为同一缺陷的多个载体**。三形态：
+- **平行实现**：两条 `createApp` 修钩子只改一份，消费侧 `?.()` ⇒ 静默跳过；
+- **修一处漏一处**：`emit('input', v)` 已调 `props.onInput`，其后又直接调一次 ⇒ 双触发；
+  只修了 `handleKeydown`，漏 `handleMouseMove` / `handleMouseUp`；
+- **父子同 handler**：同一 handler 挂根与把手，子元素在容器内 ⇒ 冒泡后再处理一次。
 
 ## 正解
 
-- 修"某能力不生效"先 grep **消费点**再 grep **写入点**：写入点有几个就改几个
-  （本例消费点在 vdom，写入点只有 core，漏了 core-vnode）；
-- 平行实现要有**对称性判据**：每条路径各写一条断言真实行为的用例（core-vnode 此前零断言 ⇒ 缺陷隐身）；
-- 判"修好"按硬约束 2 走完整链，并断言钩子**各恰好一次**（同时挡住重复触发）。
+- 先 grep **消费点**再 grep **写入点**：有几个改几个；
+- handler 只挂**真正可聚焦 / 可交互**的那个元素；容器不可聚焦就别挂；
+- 判据：每条路径写用例并断言**恰好一次**（`toEqual([x])`，不用 `toContain`）。

@@ -202,12 +202,15 @@ export const Slider = defineComponent({
           : state.firstValue;
         emit('update:modelValue', newModelValue);
         emit('input', newModelValue);
-        (_props.onInput as ((value: number | number[]) => void) | undefined)?.(newModelValue);
+        // ★ 2026-10-13：删掉紧随其后的 `_props.onInput?.(newModelValue)` ——
+        //   `emit` 本身就会去 props 里找 `onInput` 并调用（见 component/src/emit.ts）
+        //   ⇒ 直接调用是**重复触发**（实测回调被调用 2 次）。
+        //   同一修法此前只加在 `handleKeydown` 一处，漏了本处与 `handleMouseUp`
+        //   ⇒ keel 坑 `parallel-impl-only-one-fixed`（平行实现只修一处）。
       } else {
         state.firstValue = newValue;
         emit('update:modelValue', state.firstValue);
         emit('input', state.firstValue);
-        (_props.onInput as ((value: number) => void) | undefined)?.(state.firstValue);
       }
     };
 
@@ -218,13 +221,12 @@ export const Slider = defineComponent({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
 
+      // ★ 2026-10-13：同 `handleMouseMove` —— `emit('change')` 已会调用 props.onChange，
+      //   紧随其后的直接调用是重复触发（实测 change 回调被调用 2 次）。
       if (_props.range) {
-        const newModelValue: number[] = [state.firstValue, state.secondValue];
-        emit('change', newModelValue);
-        (_props.onChange as ((value: number[]) => void) | undefined)?.(newModelValue);
+        emit('change', [state.firstValue, state.secondValue]);
       } else {
         emit('change', state.firstValue);
-        (_props.onChange as ((value: number) => void) | undefined)?.(state.firstValue);
       }
     };
 
@@ -315,51 +317,51 @@ export const Slider = defineComponent({
             ])
           : null;
 
-        if (tooltip1) {
-          runwayChildren.push(
-            createVNode(
-              'div',
-              mergeA11yProps(
-                getSliderA11yProps({
-                  ariaLabel: _props.ariaLabel || 'Left value',
-                  disabled: _props.disabled,
-                  value: state.firstValue,
-                  min: _props.min,
-                  max: _props.max,
-                }),
-                {
-                  class: 'lyt-slider__button',
-                  style: _props.vertical ? { bottom: `${firstPct}%` } : { left: `${firstPct}%` },
-                  onKeydown: handleKeydown,
-                },
-              ),
-              [tooltip1],
+        // ★ 2026-10-13：**把手必须恒渲染** —— 此前 `showTooltip=false` 时整个
+        //   `.lyt-slider__button` 都不被推入 ⇒ 滑块失去把手、失去焦点与键盘入口
+        //   （`showTooltip` 只该控制提示气泡，不该控制把手本体）。实测断言变红。
+        runwayChildren.push(
+          createVNode(
+            'div',
+            mergeA11yProps(
+              getSliderA11yProps({
+                ariaLabel: _props.ariaLabel || 'Left value',
+                disabled: _props.disabled,
+                value: state.firstValue,
+                min: _props.min,
+                max: _props.max,
+              }),
+              {
+                class: 'lyt-slider__button',
+                style: _props.vertical ? { bottom: `${firstPct}%` } : { left: `${firstPct}%` },
+                onKeydown: handleKeydown,
+              },
             ),
-          );
-        }
+            tooltip1 ? [tooltip1] : [],
+          ),
+        );
 
-        if (tooltip2) {
-          runwayChildren.push(
-            createVNode(
-              'div',
-              mergeA11yProps(
-                getSliderA11yProps({
-                  ariaLabel: 'Right value',
-                  disabled: _props.disabled,
-                  value: state.secondValue,
-                  min: _props.min,
-                  max: _props.max,
-                }),
-                {
-                  class: 'lyt-slider__button',
-                  style: _props.vertical ? { bottom: `${secondPct}%` } : { left: `${secondPct}%` },
-                  onKeydown: handleKeydown,
-                },
-              ),
-              [tooltip2],
+        // ★ 同上：右把手恒渲染，仅气泡内容受 `showTooltip` 控制。
+        runwayChildren.push(
+          createVNode(
+            'div',
+            mergeA11yProps(
+              getSliderA11yProps({
+                ariaLabel: 'Right value',
+                disabled: _props.disabled,
+                value: state.secondValue,
+                min: _props.min,
+                max: _props.max,
+              }),
+              {
+                class: 'lyt-slider__button',
+                style: _props.vertical ? { bottom: `${secondPct}%` } : { left: `${secondPct}%` },
+                onKeydown: handleKeydown,
+              },
             ),
-          );
-        }
+            tooltip2 ? [tooltip2] : [],
+          ),
+        );
       } else {
         const tooltip = _props.showTooltip
           ? createVNode('div', { class: 'lyt-slider__tooltip' }, [
@@ -367,32 +369,31 @@ export const Slider = defineComponent({
             ])
           : null;
 
-        if (tooltip) {
-          runwayChildren.push(
-            createVNode(
-              'div',
-              mergeA11yProps(
-                getSliderA11yProps({
-                  ariaLabel: _props.ariaLabel || 'Value',
-                  ariaDescribedBy: _props.ariaDescribedBy,
-                  ariaRequired: _props.ariaRequired,
-                  ariaInvalid: _props.ariaInvalid,
-                  disabled: _props.disabled,
-                  tabIndex: _props.tabIndex,
-                  value: state.firstValue,
-                  min: _props.min,
-                  max: _props.max,
-                }),
-                {
-                  class: 'lyt-slider__button',
-                  style: _props.vertical ? { bottom: `${firstPct}%` } : { left: `${firstPct}%` },
-                  onKeydown: handleKeydown,
-                },
-              ),
-              [tooltip],
+        // ★ 同上：单值模式把手恒渲染，仅气泡内容受 `showTooltip` 控制。
+        runwayChildren.push(
+          createVNode(
+            'div',
+            mergeA11yProps(
+              getSliderA11yProps({
+                ariaLabel: _props.ariaLabel || 'Value',
+                ariaDescribedBy: _props.ariaDescribedBy,
+                ariaRequired: _props.ariaRequired,
+                ariaInvalid: _props.ariaInvalid,
+                disabled: _props.disabled,
+                tabIndex: _props.tabIndex,
+                value: state.firstValue,
+                min: _props.min,
+                max: _props.max,
+              }),
+              {
+                class: 'lyt-slider__button',
+                style: _props.vertical ? { bottom: `${firstPct}%` } : { left: `${firstPct}%` },
+                onKeydown: handleKeydown,
+              },
             ),
-          );
-        }
+            tooltip ? [tooltip] : [],
+          ),
+        );
       }
 
       children.push(
@@ -440,13 +441,17 @@ export const Slider = defineComponent({
         );
       }
 
+      // ★ 2026-10-13：**移除根元素上的 `onKeydown: handleKeydown`** —— 把手（`.lyt-slider__button`）
+      //   也挂了同一个 `handleKeydown`，且它在根元素内部 ⇒ 在把手上的按键会先由把手处理、
+      //   再冒泡到根元素**再处理一次**，导致一次 ArrowRight 前进 **2 个 step**（实测 [15,20]）。
+      //   根元素本身没有 `tabindex`（不可聚焦），故移除它不损失任何键盘入口；
+      //   数字输入框里的方向键也不再被误劫持去改滑块值。
       return createVNode(
         'div',
         {
           class: getSliderClass(),
           style: getSliderStyle(),
           id: _props.id,
-          onKeydown: handleKeydown,
         },
         children,
       );

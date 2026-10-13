@@ -8,7 +8,7 @@ keywords: [坑库, 索引, 转发链, dist, 假绿, 门禁]
 | 症状（grep 用） | scope | 级 | → 文件 |
 |---|---|---|---|
 | 转发丢字段 | core | P1 | [forwarding-chain-drops-options](core/forwarding-chain-drops-options.md) |
-| 平行实现漏改 | core | P1 | [parallel-impl-only-one-fixed](core/parallel-impl-only-one-fixed.md) |
+| 平行实现·双触发 | core | P1 | [parallel-impl-only-one-fixed](core/parallel-impl-only-one-fixed.md) |
 | 循环依赖债 | core | P2 | [circular-deps-three-layers](core/circular-deps-three-layers.md) |
 | signal 插值 | core | P1 | [signal-callable-contract](core/signal-callable-contract.md) |
 | null 崩 diff | core | P1 | [null-children-break-keyed-diff](core/null-children-break-keyed-diff.md) |
