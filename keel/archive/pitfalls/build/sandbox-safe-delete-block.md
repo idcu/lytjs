@@ -1,6 +1,6 @@
 ---
 scope: build
-status: distilled
+status: archived
 severity: P2
 last-verified: 2026-10-14
 triggers: 3

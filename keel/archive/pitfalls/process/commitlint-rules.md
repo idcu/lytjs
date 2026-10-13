@@ -1,6 +1,6 @@
 ---
 scope: process
-status: distilled
+status: archived
 severity: P2
 last-verified: 2026-10-05
 triggers: 4

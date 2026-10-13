@@ -1,6 +1,6 @@
 ---
 scope: core
-status: distilled
+status: archived
 severity: P1
 last-verified: 2026-10-10
 triggers: 5

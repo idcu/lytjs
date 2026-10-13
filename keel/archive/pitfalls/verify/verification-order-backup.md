@@ -1,6 +1,6 @@
 ---
 scope: verify
-status: distilled
+status: archived
 severity: P2
 last-verified: 2026-10-11
 triggers: 3

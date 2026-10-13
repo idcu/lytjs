@@ -15,3 +15,4 @@ keywords: [决策, ADR, 索引]
 | 0006 | 新增硬约束 #9：每个公开开关必须有产物级断言（翻转 ⇒ 变红） | active | [0006-public-switch-assertion.md](0006-public-switch-assertion.md) |
 | 0007 | 砍包范围：不全量合并 common 子包（只做同名不同实现收敛） | active | [0007-common-package-merge-scope.md](0007-common-package-merge-scope.md) |
 | 0008 | 环境类失败不得转化为仓库改动（内核提炼进「人审关卡」表，坑 `sandbox-safe-delete-block` 置 distilled） | active | [0008-env-failure-not-code-defect.md](0008-env-failure-not-code-defect.md) |
+| 0009 | 已蒸馏的坑移出检索面：`pitfalls/` → `archive/pitfalls/`，INDEX 只列活跃坑（不放宽预算） | active | [0009-pitfall-archive-out-of-retrieval.md](0009-pitfall-archive-out-of-retrieval.md) |

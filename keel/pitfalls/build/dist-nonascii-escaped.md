@@ -24,4 +24,5 @@ tsup / esbuild 默认 `charset: 'ascii'`，产物里非 ASCII 字符会被转义
 - 核对产物是否含中文改动时，grep **相邻 ASCII 片段**（变量名、英文词、数字），别 grep 中文原文；
 - 想看中文原文：`node -e "…readFileSync(…,'utf8').match(/description: \"[^\"]*\"/)"`；
 - 判"产物是否刷新"首选 **`ls -l dist/` 时间戳**；
-- 相关：`dist-src-split-brain.md`（那条讲 src/dist 两套真相，本条讲**读产物时被编码误导**）。
+- 相关（已归档）：`archive/pitfalls/build/dist-src-split-brain.md`（那条讲 src/dist 两套真相，
+  本条讲**读产物时被编码误导**）。
