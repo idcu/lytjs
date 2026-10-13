@@ -124,14 +124,19 @@ export const Menu = defineComponent({
           prevEl.focus();
         }
       } else {
+        // ★ 2026-10-13：`uniqueOpened` 分支此前先 `announce('已关闭其他子菜单')`、
+        //   紧接着又 `announce('已打开子菜单：X')` —— 两条写进**同一个** live region，
+        //   后者在**同一 tick 覆盖**前者 ⇒ 前一条**永远读不到**（实测 sro 只有后者）。
+        //   改为并入一条，使「关掉了其他子菜单」这一信息真正可被读出。
+        let message = `已打开子菜单：${itemLabel}`;
         if (p.uniqueOpened) {
           newOpened.clear();
           if (currentSubmenu()) {
-            announce('已关闭其他子菜单');
+            message = `已打开子菜单：${itemLabel}（已关闭其他子菜单）`;
           }
         }
         newOpened.add(index);
-        announce(`已打开子菜单：${itemLabel}`);
+        announce(message);
         p.onOpen?.(index);
         currentSubmenu.set(index);
 
@@ -276,7 +281,11 @@ export const Menu = defineComponent({
             };
           }
         ).props;
-        if (!itemProps) return item;
+        // ★ 2026-10-13：渲染路径此前只判 `!itemProps`，而键盘路径（`getMenuItems`）判的是
+        //   `!itemProps || !itemProps.index` —— 两者对"什么算菜单项"的口径**不一致**：
+        //   无 `index` 的子节点（如分隔线 `<li class="divider">`）会被**包成可点的 menuitem**，
+        //   点击后调 `onSelect(undefined)`。此处对齐键盘路径的口径，原样透传非菜单项。
+        if (!itemProps || !itemProps.index) return item;
 
         const isActive = itemProps.index === activeIndex();
         const isOpened = openedIndexes().has(itemProps.index as string);
