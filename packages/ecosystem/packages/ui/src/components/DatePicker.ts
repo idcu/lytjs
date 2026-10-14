@@ -75,7 +75,13 @@ export const DatePicker = defineComponent({
     const toDate = (v: unknown): Date | null => {
       if (v instanceof Date) return v;
       if (typeof v === 'string' || typeof v === 'number') {
-        const d = new Date(v);
+        // ★ 2026-10-14：`new Date('YYYY-MM-DD')` 按 **UTC** 解析 ⇒ 在非 UTC 时区会整体偏移
+        //   （GMT+8 下变成当天 08:00）。日历里的日期是 `new Date(y, m, d)`（**本地** 00:00），
+        //   两者相减 ⇒ `isInRange` 的 `date < end` 会把**范围终点当天**也判进区间（实测）。
+        //   ⇒ 日期型字符串按**本地**解析，与日历同源。
+        const m = typeof v === 'string' ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(v) : null;
+        if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+        const d = new Date(v as string | number);
         return Number.isNaN(d.getTime()) ? null : d;
       }
       return null;
@@ -85,6 +91,11 @@ export const DatePicker = defineComponent({
       : [toDate(initial)].filter((d): d is Date => d !== null);
     const rangeStart = signal<Date | null>(initialDates[0] ?? null);
     const rangeEnd = signal<Date | null>(initialDates[1] ?? null);
+    // ★ 2026-10-14：上面那句 2026-10-04 的注释声称「三种形态都作为初始值生效」，
+    //   但初始值只喂给了 `rangeStart/rangeEnd` ⇒ **默认的 `type='date'` 拿不到**
+    //   （`getDisplayValue()` 的非范围分支只看 `selectDate()`）⇒ 受控传值后显示仍是占位符。
+    //   此处补上 `selectDate` 的初始化（范围型仍走 rangeStart/rangeEnd，互不影响）。
+    selectDate.set(initialDates[0] ?? null);
     const showTime = signal(false);
     const currentHours = signal(0);
     const currentMinutes = signal(0);
@@ -189,8 +200,16 @@ export const DatePicker = defineComponent({
       } else if (shortcut.value instanceof Date) {
         handleSelectDate(shortcut.value);
       } else if (Array.isArray(shortcut.value)) {
-        rangeStart.set(shortcut.value[0] ?? null);
-        rangeEnd.set(shortcut.value[1] ?? null);
+        // ★ 2026-10-14：数组型快捷项此前只 `rangeStart/rangeEnd.set(...)`、**从不通知父组件**
+        //   ⇒ 显示变了但 `onChange` 一直是空（实测）。与点选两次完成范围的口径对齐：
+        //   两端都齐时发一次 `[start, end]`。
+        const start = (shortcut.value[0] as Date | undefined) ?? null;
+        const end = (shortcut.value[1] as Date | undefined) ?? null;
+        rangeStart.set(start);
+        rangeEnd.set(end);
+        if (start && end) {
+          p.onChange?.([formatDate(start, p.format), formatDate(end, p.format)]);
+        }
       }
     };
 

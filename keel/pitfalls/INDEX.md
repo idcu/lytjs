@@ -15,6 +15,7 @@ keywords: [坑库, 索引, 转发链, dist, 假绿, 门禁]
 | 判定写两遍 | core | P1 | [branch-condition-mismatch](core/branch-condition-mismatch.md) |
 | 正则误伤生成码 | core | P1 | [regex-rewrite-on-generated-code](core/regex-rewrite-on-generated-code.md) |
 | aria false 被移除 | core | P1 | [aria-false](core/aria-false.md) |
+| 日期串按 UTC 偏移 | core | P2 | [date-utc-parse](core/date-utc-parse.md) |
 | dist 中文 0 | build | P2 | [dist-nonascii-escaped](build/dist-nonascii-escaped.md) |
 | failed 但 Tests绿 | build | P1 | [alias-missing-tests-never-run](build/alias-missing-tests-never-run.md) |
 | 手写非生产输入 | verify | P1 | [self-fulfilling-green](verify/self-fulfilling-green.md) |
