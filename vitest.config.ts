@@ -183,14 +183,17 @@ export default defineConfig({
       //   statements 63.93% / lines 63.93% / functions 71.24% / branches 85.81%
       // 2026-10-15 八测（268 文件 / 6367 用例全绿；+ Cascader 行为电池 26 用例，登记 4 处设计怪癖）：
       //   statements 64.45% / lines 64.45% / functions 71.41% / branches 85.89%
-      // 阈值随棘轮上调至 lines/statements 64.4、functions 71.4、branches 85.8
+      // 2026-10-15 九测（269 文件 / 6397 用例全绿；+ TreeSelect 行为电池 26 用例 99.7%，
+      //   含并行落地的 ADR 0010 Tabs 受控修复；注：另两次并发跑因 coverage/.tmp 互清作废）：
+      //   statements 64.93% / lines 64.93% / functions 71.62% / branches 85.98%
+      // 阈值随棘轮上调至 lines/statements 64.9、functions 71.6、branches 85.9
       //（小数口径：整数 59/69/85 已是实测值的下界，收紧到小数才真正锁住当前水平、防回退）。
       // 规则：只允许上调，不允许为了让 CI 变绿而下调。
       thresholds: {
-        lines: 64.4,
-        functions: 71.4,
-        branches: 85.8,
-        statements: 64.4,
+        lines: 64.9,
+        functions: 71.6,
+        branches: 85.9,
+        statements: 64.9,
       },
     },
   },

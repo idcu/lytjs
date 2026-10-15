@@ -27,3 +27,4 @@ keywords: [坑库, 索引, 转发链, dist, 假绿, 门禁]
 | bench 无数字/NaN | verify | P2 | [vitest-bench-harness-traps](verify/vitest-bench-harness-traps.md) |
 | 0% 覆盖≠死码 | verify | P2 | [coverage-zero-is-not-dead](verify/coverage-zero-is-not-dead.md) |
 | grep 未命中当没有 | verify | P1 | [negative-evidence](verify/negative-evidence.md) |
+| 覆盖率并发作废 | verify | P1 | [coverage-concurrent-runs-clobber-tmp](verify/coverage-concurrent-runs-clobber-tmp.md) |

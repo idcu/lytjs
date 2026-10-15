@@ -3,36 +3,42 @@ scope: now
 status: active
 last-verified: 2026-10-15
 updated: 2026-10-15
-keywords: [评估, 门禁, 安全收敛, 硬约束9, AOT, keel监管, type-check, a11y, 蒸馏, 归档, 覆盖率, 并行会话]
+keywords: [评估, 门禁, 安全收敛, 硬约束9, AOT, keel监管, type-check, a11y, 蒸馏, 归档, 覆盖率]
 ---
 
 # NOW · main
 
 ## 当前焦点
-覆盖率长尾攻坚（UI 组件行为电池）+ **登记缺陷按 ADR 0010 二分处置**；棘轮只上不下。
+覆盖率长尾攻坚：UI 组件逐个写行为电池；登记缺陷按 ADR 0010 逐个决策修复；棘轮只上不下。
 
-## 本轮完成（2026-10-15 · Tabs 四处缺陷修复 + ADR 0010）
-ADR 0010 定规：登记缺陷**二分** —— 违背已声明契约的是**缺陷**（按 ADR 修 + 补守卫），
-其余是**取舍**（交 owner）。按此口径 Tabs 四条**全是缺陷** ⇒ 已修：非受控 / 受控同步改为
-「仅 `modelValue` 变化时同步」（此前每次渲染强制拉回第一个）；补 `emit('update:modelValue')`；
-`role=tablist` 只留 header（原为 2 个嵌套）；`handleKeydown` 只挂 tablist 容器（原冒泡双触发）。
-守卫 4 条（修复前全红）；`e2e-tabs` 51/51。
+## 本轮完成（2026-10-15 · TreeSelect 行为电池 26 用例）
+`TreeSelect.ts` 99.7%（293/294，分支 80/82）。登记 5 处怪癖（修复走决策）：
+A) multiple 只落类名无多选交互；B) 父节点点击即选中；C) 过滤不自动展开；
+D) selectedLabel 死代码 signal；E) value 受控语义。
+新坑 `coverage-concurrent-runs-clobber-tmp`：并发跑覆盖率互清 .tmp，数字作废（实测 -0.64pp）。
+实测 stmts 64.45→**64.93** / fns 71.41→71.62 / branches 85.89→85.98，
+棘轮 64.9/71.6/85.9（269 文件 / 6397 用例全绿，串行独占复测值）。
 
-## 本轮完成（2026-10-15 · Cascader 26 / Tabs 47 / TreeSelect（进行中）电池）
-`Cascader.ts` 99.4%、`Tabs.ts` 98.3%。Cascader 登记 4 怪癖（**待按 ADR 0010 判定**）：
-option 冒泡 toggle（点父级反而关）/ 无 children 需显式 isLeaf / 过滤态只渲一级 / load 不写 signal。
+## 进行中（并行会话 · 未提交）
+ADR 0010 落地：Tabs 非受控重置已修（同步仅跟 modelValue 变化 + 补 emit update:modelValue），
+工作区含 Tabs.ts / e2e-tabs.test.ts / decisions/0010 未提交改动。
 
-## 本轮完成（2026-10-13~15 · UI 电池累计）
-Select/Slider/Menu/ColorPicker/DatePicker 修 12 缺陷（`patchAttr` false 当 null、Slider 键盘双触发、
-Menu 口径不一致、ColorPicker 下拉打不开 / `onChange` 不调、DatePicker 数组快捷失效 / UTC 偏移）。
-新坑 `date-utc-parse`、`negative-evidence`；坑库归档 2991→1983B（ADR 0009）。
+## 本轮完成（2026-10-15 · Cascader / Tabs 电池）
+Cascader 26 用例 99.4%，登记 4 怪癖（冒泡双 toggle / isLeaf 约定 / 过滤只渲一级 /
+load resolve 不写 signal）；Tabs 47 用例 98.3%。stmts 63.39→63.93→64.45。
+
+## 本轮完成（2026-10-13~14 · UI 电池 → 12 个真实缺陷）
+Select/Slider/Menu/ColorPicker/DatePicker 共 112 用例，修 12 缺陷：
+`patchAttr` false 当 null（aria 违规）；Slider 键盘双触发；Menu 键盘口径不一致；
+ColorPicker 下拉打不开/onChange 不调；DatePicker 快捷数组失效/UTC 偏移。新坑 `date-utc-parse`。
 
 ## 下一步
-1. 继续组件电池：TreeSelect → Dialog → Upload → InputNumber → Pagination → Calendar → Modal。
-2. 按 ADR 0010 判定剩余登记项：Cascader 4 怪癖、`VaporListRenderer updateItem` 死代码、
-   `serializeData` Date 分支死代码。
+1. 按未覆盖排序继续组件电池：Dialog(239) → Upload(225) → InputNumber(224) →
+   Pagination(221) → Calendar(214) → Modal(209)。
+2. 登记怪癖待决策修复（勿顺手改）：TreeSelect 5 项、Cascader 4 项、
+   VaporListRenderer updateItem 死代码、serializeData Date 分支死代码。
 
 ## 阻塞
 | 卡在 | 解锁 | 绕行 |
 | --- | --- | --- |
-| **并行会话共用同一工作目录**（双方在途未提交文件会被对方 `git add -A` 卷走） | 约定分工 / 串行 | **只用显式路径 `git add`**，绝不用 `-A`；`coverage/` 不可同时跑 |
+| 覆盖率并发跑互清 .tmp | 串行独占跑（已入坑库） | `ps aux \| grep vitest` 先查 |
