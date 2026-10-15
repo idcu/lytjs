@@ -90,10 +90,17 @@ const pendingPrefetches = new Map<string, Promise<unknown>>();
  * 序列化数据（支持特殊类型）
  */
 export function serializeData(data: unknown): string {
-  return JSON.stringify(data, (_key, value) => {
+  // ★ 2026-10-15：`JSON.stringify` 在调用 replacer **之前**会先调用值的 `toJSON()`；
+  //   `Date` 恰好有 `toJSON` ⇒ replacer 拿到的已是 **ISO 字符串** ⇒ `value instanceof Date`
+  //   恒为 false ⇒ `__type:'Date'` 分支**永不执行**（而 `deserializeData` 实现了对应还原）
+  //   ⇒ Date 往返**静默失效**（登记见 `keel/NOW-history/2026-10-09-覆盖率分批与ADR0005.md` ②）。
+  //   解法：replacer 的 `this` 是当前键的**持有者对象** ⇒ `this[key]` 是**未经 toJSON** 的原始值。
+  return JSON.stringify(data, function (this: unknown, key: string, value: unknown) {
+    const holder = this as Record<string, unknown> | null;
+    const raw = holder == null ? value : holder[key];
     // 处理特殊类型
-    if (value instanceof Date) {
-      return { __type: 'Date', __value: value.toISOString() };
+    if (raw instanceof Date) {
+      return { __type: 'Date', __value: raw.toISOString() };
     }
     if (value instanceof Map) {
       return { __type: 'Map', __value: Array.from(value.entries()) };

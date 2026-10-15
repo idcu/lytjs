@@ -48,14 +48,14 @@ describe('data-fetching · serializeData / deserializeData', () => {
     expect((out.re as RegExp).test('abbbC')).toBe(true);
   });
 
-  it('⚠️ 缺陷登记：Date 被序列化为裸字符串（toJSON 抢先于 replacer）', () => {
-    // JSON.stringify 规范：先调 value.toJSON() 再进 replacer ⇒ replacer 收到的是
-    // ISO 字符串，`value instanceof Date` 永不命中 ⇒ Date 分支是死代码，
-    // 反序列化得到 string 而非 Date（2026-10-09 实测）。修复需预遍历替换，
-    // 属产品行为变更，走单独决策；此处按真实行为断言防漂移。
+  it('Date 按 __type 协议往返（ADR 0010 修复）', () => {
+    // ★ 2026-10-15：`JSON.stringify` 规范是**先调 value.toJSON() 再进 replacer** ⇒ replacer
+    //   收到的是 ISO 字符串，`value instanceof Date` 永不命中（2026-10-09 实测并登记为缺陷）。
+    //   按 ADR 0010 判定：`deserializeData` 已实现 `case 'Date'` 还原 ⇒ 该协议对 Date 静默失效
+    //   属**缺陷**（不是取舍）⇒ 已修：replacer 改用 `this[key]` 取**未经 toJSON 的原始值**。
     const out = deserializeData(serializeData({ d: new Date(0) })) as Record<string, unknown>;
-    expect(out.d).toBe('1970-01-01T00:00:00.000Z');
-    expect(out.d).not.toBeInstanceOf(Date);
+    expect(out.d).toBeInstanceOf(Date);
+    expect((out.d as Date).toISOString()).toBe('1970-01-01T00:00:00.000Z');
   });
 
   it('普通 JSON 与嵌套结构原样往返', () => {
