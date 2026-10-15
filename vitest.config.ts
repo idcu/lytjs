@@ -192,14 +192,17 @@ export default defineConfig({
       // 2026-10-15 十一测（271 文件 / 6456 用例全绿；+ Upload 行为电池 29 用例 97.6%，
       //   登记 6 处设计怪癖；串行独占，json 汇总值）：
       //   statements 65.71% / lines 65.71% / functions 72.07% / branches 86.10%
-      // 阈值随棘轮上调至 lines/statements 65.7、functions 72.0、branches 86.1
+      // 2026-10-15 十二测（272 文件 / 6485 用例全绿；+ InputNumber 行为电池 29 用例 98.0%，
+      //   登记 4 处设计怪癖；串行独占，json 汇总值）：
+      //   statements 66.10% / lines 66.10% / functions 72.20% / branches 86.16%
+      // 阈值随棘轮上调至 lines/statements 66.1、functions 72.2、branches 86.1
       //（小数口径：整数 59/69/85 已是实测值的下界，收紧到小数才真正锁住当前水平、防回退）。
       // 规则：只允许上调，不允许为了让 CI 变绿而下调。
       thresholds: {
-        lines: 65.7,
-        functions: 72.0,
+        lines: 66.1,
+        functions: 72.2,
         branches: 86.1,
-        statements: 65.7,
+        statements: 66.1,
       },
     },
   },
