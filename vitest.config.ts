@@ -189,14 +189,17 @@ export default defineConfig({
       // 2026-10-15 十测（270 文件 / 6427 用例全绿；+ Dialog 行为电池 30 用例 90.5%，
       //   登记 5 处设计怪癖；串行独占复测，json 汇总值）：
       //   statements 65.31% / lines 65.31% / functions 71.86% / branches 86.08%
-      // 阈值随棘轮上调至 lines/statements 65.3、functions 71.8、branches 86.0
+      // 2026-10-15 十一测（271 文件 / 6456 用例全绿；+ Upload 行为电池 29 用例 97.6%，
+      //   登记 6 处设计怪癖；串行独占，json 汇总值）：
+      //   statements 65.71% / lines 65.71% / functions 72.07% / branches 86.10%
+      // 阈值随棘轮上调至 lines/statements 65.7、functions 72.0、branches 86.1
       //（小数口径：整数 59/69/85 已是实测值的下界，收紧到小数才真正锁住当前水平、防回退）。
       // 规则：只允许上调，不允许为了让 CI 变绿而下调。
       thresholds: {
-        lines: 65.3,
-        functions: 71.8,
-        branches: 86.0,
-        statements: 65.3,
+        lines: 65.7,
+        functions: 72.0,
+        branches: 86.1,
+        statements: 65.7,
       },
     },
   },
