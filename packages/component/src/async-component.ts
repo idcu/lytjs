@@ -9,7 +9,6 @@ import type { VNode, VNodeChildren } from '@lytjs/vdom';
 // FIX: DTS build error - 统一从vdom 导入
 import { ShapeFlags, createVNode, createCommentVNode } from '@lytjs/vdom';
 import { isFunction } from '@lytjs/common-is';
-import { warn } from '@lytjs/common-error';
 import { getCurrentInstance, onBeforeUnmount } from './lifecycle';
 
 // ==================== 类型定义 ====================
@@ -82,6 +81,14 @@ interface AsyncComponentState {
 const preloadedComponents = new WeakMap<AsyncComponentLoader, Promise<ComponentOptions>>();
 
 /**
+ * 已预加载过的加载器集合。
+ * ★ 2026-10-16：WeakMap 无法遍历 ⇒ `clearPreloadCache()` 无参时**清不掉任何东西**，
+ *   而它的 JSDoc 承诺「清除**所有**加载器的预加载缓存」。这里用 Set 记住键以便清空。
+ *   不构成泄漏：加载器通常是模块级函数，本就随模块长期存活。
+ */
+const preloadedLoaders = new Set<AsyncComponentLoader>();
+
+/**
  * 活跃的异步组件实例注册表
  * 用于跨重渲染追踪加载状态
  */
@@ -149,6 +156,7 @@ export function defineAsyncComponent(
 
         // 缓存已加载的组件
         preloadedComponents.set(loader, Promise.resolve(resolvedComponent));
+        preloadedLoaders.add(loader);
 
         return resolvedComponent;
       })
@@ -274,12 +282,40 @@ export function defineAsyncComponent(
         }
       }
 
+      // ★ 2026-10-16：`delay` 此前**只当 `=== 0` 开关用** —— loading 组件会**立刻**出现，
+      //   而文档写的是「显示加载组件前的**延迟时间**（毫秒）」@default 200
+      //   ⇒ 快加载时会闪一下 loading 组件（实测：delay=100 + loadingComponent ⇒ 首帧即 loading）。
+      //   现在按文档实现：delay > 0 时，只有**超过 delay 仍未加载完**才显示加载态。
+      let delayElapsed = delay === 0;
+      if (delay > 0) {
+        const delayId = setTimeout(() => {
+          delayElapsed = true;
+          if (instance) triggerComponentUpdate(instance);
+        }, delay);
+        onBeforeUnmount(() => {
+          clearTimeout(delayId);
+        });
+      }
+
       // 加载中返回加载组件或占位符
       return () => {
-        // 如果 delay 为 0 或组件已预加载，不显示加载状态
-        if (delay === 0 && state.isLoading && !state.loadedComponent) {
-          return createAsyncCommentVNode(' Async component loading ');
+        // ★ 2026-10-16：`setup` **只在首挂载跑一次**，之后靠 `instance.update()` 触发重渲染，
+        //   而重渲染用的正是**这里返回的渲染函数**。此前它**只处理加载态**
+        //   ⇒ 加载完成 / 失败后仍渲染加载占位（实测：挂载后等 60ms，真实组件与错误组件
+        //   **都不出现**；`onError` 已被调用，只是视图不切）。现在把三态都在这里兜住。
+        if (state.isLoaded && state.loadedComponent) {
+          return renderLoadedComponent(state.loadedComponent, slots);
         }
+        if (state.isError) {
+          return errorComponent
+            ? createComponentVNode(errorComponent, { error: state.error })
+            : createAsyncCommentVNode(' Async component error ');
+        }
+
+        // delay === 0：明确不显示加载态（保持既有语义）
+        if (delay === 0) return createAsyncCommentVNode(' Async component loading ');
+        // delay > 0 但尚未到点：不显示加载态，避免闪烁
+        if (!delayElapsed) return createAsyncCommentVNode(' Async component loading ');
 
         // 如果配置了加载组件则显示
         if (loadingComponent) {
@@ -366,6 +402,7 @@ export function preloadComponent(loader: AsyncComponentLoader): Promise<void> {
     .then((comp) => {
       const resolvedComponent = (comp as { default?: ComponentOptions }).default || comp;
       preloadedComponents.set(loader, Promise.resolve(resolvedComponent));
+      preloadedLoaders.add(loader);
     })
     .catch(() => {
       // 预加载错误静默处理
@@ -385,15 +422,15 @@ export function isComponentPreloaded(loader: AsyncComponentLoader): boolean {
 export function clearPreloadCache(loader?: AsyncComponentLoader): void {
   if (loader) {
     preloadedComponents.delete(loader);
+    preloadedLoaders.delete(loader);
   } else {
-    // 注意：WeakMap 无法完全清空
-    // 如果需要完全清空，应改用 Map
-    if (__DEV__) {
-      warn(
-        'clearPreloadCache() without arguments is not supported with WeakMap. ' +
-          'Pass a specific loader to clear, or consider using a Map instead.',
-      );
+    // ★ 2026-10-16：此前无参时只 warn、**什么都不清**（WeakMap 不可遍历），
+    //   而 JSDoc 承诺清「所有加载器」⇒ 契约与实现不符。现在用 `preloadedLoaders`
+    //   记住所有键，无参时逐个删除，兑现文档承诺。
+    for (const l of preloadedLoaders) {
+      preloadedComponents.delete(l);
     }
+    preloadedLoaders.clear();
   }
 }
 
