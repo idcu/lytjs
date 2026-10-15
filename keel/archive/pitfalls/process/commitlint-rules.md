@@ -21,4 +21,5 @@ shared-types,e2e,docs,ci,release`）/ `subject-case` / `body-max-line-length`。
 
 - **省略 scope 最省事**（`ui` 包必须省）；subject 用中文起头最稳；
 - 排查：`./node_modules/.bin/commitlint --edit <msgfile>`；
-- 已提炼为 skills/commit-hygiene.md（操作性规则不占宪法行）。
+- 操作性规则已落在 **`skills/no-global-pnpm-commit.md`**（其「注意」段写明：省略 scope 最省事、
+  subject 中文起头）—— 原文写的 `skills/commit-hygiene.md` **并不存在**（悬空引用，2026-10-15 订正）。
