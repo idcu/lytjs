@@ -132,21 +132,28 @@ describe('defineAsyncComponent — delay 语义', () => {
 });
 
 describe('defineAsyncComponent — 真实挂载下的状态机', () => {
-  // ⚠️ 缺陷登记（2026-10-16，已实测确认，待修）：
-  //   挂载异步组件后**视图不会切换** —— 加载完成/失败后仍停在加载占位。
-  //   已排除"渲染函数只处理加载态"这一层（已修成三态感知），仍不切换 ⇒ 根因在
-  //   **重渲染没发生**：`triggerComponentUpdate` 只在 `instance.update` 存在时才调用，
-  //   而它的 JSDoc 承诺「不可用时回退到基于 nextTick 的重新渲染」——**回退并未实现**
-  //   （同包 `component-proxy.ts` 的 `$forceUpdate` 有完整回退，可作参照）。
-  //   ⇒ 用 `it.fails` 标记：**修好后这些用例会「意外通过」并因此报错**，提示摘掉标记。
-  it.fails('★ 加载完成后应渲染出真实组件（当前缺陷：视图不切换）', async () => {
+  // ⚠️ 缺陷登记（2026-10-16，已实测定位根因，待修）：挂载后**视图不切换**。
+  //
+  // 排查链（每步都有探针/实测）：
+  //   ① 渲染函数只处理加载态 ⇒ 已顺手修成三态感知，**仍不切换**；
+  //   ② `triggerComponentUpdate` 缺 nextTick 回退 ⇒ 已抽成共享的 `forceComponentUpdate`
+  //      （与 `$forceUpdate` 共用），**仍不切换**；
+  //   ③ 探针发现 `forceComponentUpdate` **根本没被调用** ⇒ `instance` 为 null；
+  //   ④ 探针确认 **`getCurrentInstance()` 在 setup 里返回 null** —— 而且**普通子组件也一样**
+  //      （`{ setup(){ console.log(getCurrentInstance()) } }` 挂载后打印 null，组件却能渲染）。
+  //
+  // ⇒ **根因在框架层**：`setup` 调用时未设置「当前实例」。后果不止异步组件：
+  //   **在 setup 里注册的生命周期钩子（`onBeforeUnmount` 等）会被静默丢弃**，
+  //   任何依赖 `getCurrentInstance()` 的组件逻辑都会静默失效。
+  //   用 `it.fails` 标记：修好后会「意外通过」并报错，提示摘掉标记。
+  it.fails('★ 加载完成后应渲染出真实组件（阻断于 getCurrentInstance() 为 null）', async () => {
     const w = defineAsyncComponent({ loader: async () => Comp, delay: 0 });
     const host = await mountWrapper(w);
     await flush(60);
     expect(host.querySelector('.real')).toBeTruthy();
   });
 
-  it.fails('★ 加载失败时应渲染 errorComponent（当前缺陷：视图不切换）', async () => {
+  it.fails('★ 加载失败时应渲染 errorComponent（同上阻断）', async () => {
     const onError = vi.fn();
     const w = defineAsyncComponent({
       loader: async () => {
@@ -162,7 +169,7 @@ describe('defineAsyncComponent — 真实挂载下的状态机', () => {
     expect(host.querySelector('.err')).toBeTruthy(); // 但视图不切
   });
 
-  it.fails('默认导出（{ default: Comp }）会被解包（受同一缺陷阻断）', async () => {
+  it.fails('默认导出（{ default: Comp }）会被解包（同上阻断）', async () => {
     const w = defineAsyncComponent({ loader: async () => ({ default: Comp }), delay: 0 });
     const host = await mountWrapper(w);
     await flush(60);

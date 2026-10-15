@@ -5,6 +5,7 @@ import { hasOwn } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
 import { nextTick } from '@lytjs/common-scheduler';
 import type { ComponentInternalInstance, ComponentPublicInstance } from './types';
+import { forceComponentUpdate } from './force-update';
 // FIX: DTS build error - VNode 未使用
 // import type { VNode } from '@lytjs/common-vnode';
 
@@ -279,39 +280,9 @@ export function createComponentPublicInstance(
     },
     $emit: instance.emit,
     $forceUpdate: () => {
-      if (instance.update) {
-        instance.update();
-      } else if (instance.isMounted && instance.render && !instance.isUnmounted) {
-        // 回退路径：已挂载但 instance.update 不可用（非标准渲染器场景）。
-        // 标记需要重新渲染，在下一个 tick 中执行 render 并通过
-        // instance.subTree 引用替换触发渲染器的更新机制。
-        // FIX: P2-35 添加 anchor 和 ref 处理：
-        // - 保留旧 subTree 的 anchor 信息（用于 Fragment 定位）
-        // - 将旧 subTree 的 ref 转移到新 subTree（保持 ref 绑定）
-        nextTick(() => {
-          if (instance.isUnmounted) return;
-          const prevTree = instance.subTree;
-          const nextTree = instance.render!(instance.ctx as Parameters<typeof instance.render>[0]);
-          if (nextTree) {
-            instance.subTree = nextTree;
-            // 将旧 subTree 标记为需要卸载，新 subTree 标记为需要挂载。
-            // 渲染器在下次调度时会检测到 subTree 变化并执行 patch。
-            nextTree.el = prevTree?.el ?? null;
-            // FIX: P2-35 保留 anchor 信息，确保 Fragment 子节点定位正确
-            if (prevTree && 'anchor' in prevTree) {
-              (nextTree as unknown as Record<string, unknown>).anchor = (
-                prevTree as unknown as Record<string, unknown>
-              ).anchor;
-            }
-            // FIX: P2-35 转移 ref 绑定，避免 ref 丢失
-            if (prevTree && 'ref' in prevTree) {
-              (nextTree as unknown as Record<string, unknown>).ref = (
-                prevTree as unknown as Record<string, unknown>
-              ).ref;
-            }
-          }
-        });
-      }
+      // ★ 2026-10-16：回退逻辑已抽到 `force-update.ts`，与 `async-component.ts` 共用
+      //   （此前这段回退**只在这里**，异步组件那边漏了 ⇒ 视图不切换）。
+      forceComponentUpdate(instance);
     },
     $nextTick: () => nextTick(),
   };

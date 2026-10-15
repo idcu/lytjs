@@ -10,6 +10,7 @@ import type { VNode, VNodeChildren } from '@lytjs/vdom';
 import { ShapeFlags, createVNode, createCommentVNode } from '@lytjs/vdom';
 import { isFunction } from '@lytjs/common-is';
 import { getCurrentInstance, onBeforeUnmount } from './lifecycle';
+import { forceComponentUpdate } from './force-update';
 
 // ==================== 类型定义 ====================
 
@@ -334,13 +335,15 @@ export function defineAsyncComponent(
 // ==================== 辅助函数 ====================
 
 /**
- * 通过调用 instance.update() 触发组件更新。
- * 如果 instance.update 不可用，回退到基于 nextTick 的重新渲染。
+ * 触发组件重新渲染（含 `instance.update` 不可用时的回退）。
+ *
+ * ★ 2026-10-16：此前这里**只有** `if (instance.update) instance.update()` ——
+ *   JSDoc 承诺的「不可用时回退到基于 nextTick 的重新渲染」**并未实现**
+ *   ⇒ 异步组件加载完成后**视图不切换**（实测：挂载后等 60ms，真实组件始终不出现）。
+ *   现改为与 `$forceUpdate` 共用 `forceComponentUpdate`（见 `force-update.ts`）。
  */
 function triggerComponentUpdate(instance: ComponentInternalInstance): void {
-  if (instance.update) {
-    instance.update();
-  }
+  forceComponentUpdate(instance);
 }
 
 /**
