@@ -33,9 +33,9 @@ Select/Slider/Menu/ColorPicker/DatePicker 112 用例修 12 缺陷。新坑 `date
 
 ## 下一步
 1. 按未覆盖排序继续组件电池：Calendar(214) → Modal(209)。
-2. 登记怪癖待决策修复（勿顺手改）：Pagination 4 项、InputNumber 4 项、Upload 6 项、
-   Dialog 5 项、TreeSelect 5 项、Cascader 4 项、VaporListRenderer updateItem 死代码、
-   serializeData Date 分支死代码。
+2. 登记怪癖按 **ADR 0010 二分**处置（违背已声明契约 = 缺陷 ⇒ 按 ADR 修 + 守卫；
+   其余 = 取舍 ⇒ 交 owner），不再是"一律搁置"：Pagination 4 / InputNumber 4 / Upload 6 /
+   Dialog 5 / TreeSelect 5 / Cascader 4 项 + `VaporListRenderer updateItem`、`serializeData` 两处死代码。
 
 ## 阻塞
 | 卡在 | 解锁 | 绕行 |
