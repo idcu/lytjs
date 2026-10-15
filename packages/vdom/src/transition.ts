@@ -119,7 +119,13 @@ function getOrCreateEngine<HN extends object, HE extends HN>(
  * 获取 CSS 属性值为字符串数组（处理逗号分隔的值）。
  */
 function getStylePropAsArray(styles: CSSStyleDeclaration, prop: string): string[] {
-  const value = styles.getPropertyValue(prop);
+  // ★ 2026-10-15：`CSSStyleDeclaration.getPropertyValue()` 只认 **kebab-case**
+  //   （`'transition-delay'`）；传 camelCase（`'transitionDelay'`）恒返回 `''`
+  //   ⇒ 本函数恒返回 `[]` ⇒ `getTransitionInfoDOM` **永远报「无过渡 / 无动画」**
+  //   （实测：给元素设了 `transition-duration: 0.3s`，`hasTransition` 仍为 false）。
+  //   此处统一转 kebab-case（两种写法都接受）。
+  const kebab = prop.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase());
+  const value = styles.getPropertyValue(kebab);
   if (!value) return [];
   return value.split(',').map((v) => v.trim());
 }
@@ -137,27 +143,34 @@ export function getTransitionInfoDOM(
   const animationDelays = getStylePropAsArray(styles, 'animationDelay');
   const animationDurations = getStylePropAsArray(styles, 'animationDuration');
 
+  // ★ 2026-10-15：原实现用 `d !== '0s'` 做**字符串**比较来判「有无过渡/动画」⇒ 任何非 '0s'
+  //   的记号（`'auto'` / `'0.0s'` / `'0ms'` / `'initial'` / `'none'`）都会被当成"有"，
+  //   随后 `parseDuration` 对不可解析的值返回 **NaN** ⇒ `Math.max(...)` 得到 **NaN**
+  //   （实测：jsdom 下未设 `animation-duration` 返回 `'auto'` ⇒ duration = NaN ⇒ 下游
+  //   `setTimeout(fn, NaN)` 会**立即触发**，过渡被截断）。
+  //   改为**数值**判定：不可解析一律按 0 计。
+  const ms = (v: string | undefined): number => {
+    const n = parseDuration(v);
+    return Number.isFinite(n) ? n : 0;
+  };
+
   const hasTransition =
-    transitionDurations.some((d) => d !== '0s') || transitionDelays.some((d) => d !== '0s');
+    transitionDurations.some((d) => ms(d) > 0) || transitionDelays.some((d) => ms(d) > 0);
   const hasAnimation =
-    animationDurations.some((d) => d !== '0s') || animationDelays.some((d) => d !== '0s');
+    animationDurations.some((d) => ms(d) > 0) || animationDelays.some((d) => ms(d) > 0);
 
   let duration = 0;
 
   if (hasTransition) {
     const maxDuration = Math.max(
-      ...transitionDurations.map(
-        (d, i) => parseDuration(d) + parseDuration(transitionDelays[i] ?? '0s'),
-      ),
+      ...transitionDurations.map((d, i) => ms(d) + ms(transitionDelays[i])),
     );
     duration = Math.max(duration, maxDuration);
   }
 
   if (hasAnimation) {
     const maxDuration = Math.max(
-      ...animationDurations.map(
-        (d, i) => parseDuration(d) + parseDuration(animationDelays[i] ?? '0s'),
-      ),
+      ...animationDurations.map((d, i) => ms(d) + ms(animationDelays[i])),
     );
     duration = Math.max(duration, maxDuration);
   }
@@ -358,7 +371,7 @@ export function hasCSSTransition<HN, HE extends HN>(
       return info.hasTransition || info.hasAnimation;
     }
 
-    const fromClass = t === 'enter' ? `${name}-from` : `${name}-leave-from`;
+    const fromClass = t === 'enter' ? `${name}-enter-from` : `${name}-leave-from`;
     const activeClass = t === 'enter' ? `${name}-enter-active` : `${name}-leave-active`;
     const toClass = t === 'enter' ? `${name}-enter-to` : `${name}-leave-to`;
 
@@ -384,7 +397,7 @@ export function hasCSSTransition<HN, HE extends HN>(
       return info.hasTransition || info.hasAnimation;
     }
 
-    const fromClass = t === 'enter' ? `${name}-from` : `${name}-leave-from`;
+    const fromClass = t === 'enter' ? `${name}-enter-from` : `${name}-leave-from`;
     const activeClass = t === 'enter' ? `${name}-enter-active` : `${name}-leave-active`;
     const toClass = t === 'enter' ? `${name}-enter-to` : `${name}-leave-to`;
 
