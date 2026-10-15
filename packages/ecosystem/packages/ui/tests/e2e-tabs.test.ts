@@ -158,14 +158,14 @@ describe('Tabs — 渲染', () => {
     expect(q(host, '[role="tabpanel"]')!.textContent).toBe('Content B');
   });
 
-  it('modelValue 匹配不到时无 tab 选中（真实行为，内外状态不一致已登记）', async () => {
-    // ⚠️ 真实行为：modelValue='nonexistent' 时 currentIndex=-1，渲染不强制 activeIndex，
-    //    但 isActive 按 currentName 计算 ⇒ 所有 tab 的 aria-selected 都是 false，
-    //    而内部 activeIndex 仍为 0（键盘 Enter 会按 activeIndex 触发第一个 tab）。
-    //    内外状态不一致属设计缺陷，修复走单独决策，此处断言真实行为。
+  it('modelValue 匹配不到时回落到内部激活项（不再出现「无 tab 选中」）', async () => {
+    // ★ 2026-10-15（ADR 0010）修复后：激活判定交回 `activeIndex`（默认 0），
+    //   故 modelValue 匹配不到时**不会**再出现「所有 tab 都未选中」的内外状态不一致。
+    //   （修复前 isActive 按 currentName 计算 ⇒ 全部 aria-selected=false。）
     const host = await mountTabs({ modelValue: 'nonexistent' });
     const tabs = qa(host, '[role="tab"]');
-    expect(tabs.every((t) => t.getAttribute('aria-selected') === 'false')).toBe(true);
+    expect(tabs[0]!.getAttribute('aria-selected')).toBe('true');
+    expect(tabs.slice(1).every((t) => t.getAttribute('aria-selected') === 'false')).toBe(true);
   });
 
   it('空 slot 时不渲染 tab，panel 占位 display:none', async () => {
@@ -213,18 +213,16 @@ describe('Tabs — 点击切换', () => {
     expect(q(host, '[role="tabpanel"]')!.textContent).toBe('Content B');
   });
 
-  it('非受控（静态 modelValue）下点击切换被渲染强制重置 —— 缺陷登记', async () => {
-    // ⚠️ 缺陷登记（2026-10-15）：渲染函数每次执行 `activeIndex` 强制同步
-    //    `modelValue || panes[0].name`（src/components/Tabs.ts:288-290）。
-    //    非受控用法（外部不回写 modelValue）下，点击切换的 activeIndex 在紧随的
-    //    重渲染中被重置回 0 ⇒ 视觉选中态跳回第一个 tab。组件无 defaultValue 式
-    //    非受控入口。onChange 回调本身仍正常触发。修复属行为变更，走单独决策。
+  it('非受控下点击切换应保持选中（ADR 0010 修复）', async () => {
+    // ★ 2026-10-15（ADR 0010）：修复前渲染函数**每次**都把 `activeIndex` 强制同步回
+    //   `modelValue || panes[0].name` ⇒ 非受控用法下点击切换会被重渲染**重置回第一个**
+    //   （原「缺陷登记」见 commit beb8710f）。修复后改为「仅 modelValue 变化时同步」。
     const onChange = vi.fn();
     const host = await mountTabs({ onChange });
     qa(host, '[role="tab"]')[1]!.click();
     await new Promise((r) => setTimeout(r, 30));
-    expect(onChange).toHaveBeenCalledWith('b'); // 事件正常发出
-    expect(qa(host, '[role="tab"]')[0]!.getAttribute('aria-selected')).toBe('true'); // 但被重置
+    expect(onChange).toHaveBeenCalledWith('b'); // 事件仍正常发出
+    expect(qa(host, '[role="tab"]')[1]!.getAttribute('aria-selected')).toBe('true'); // 且不再被重置
   });
 
   it('点击 disabled tab 不切换', async () => {
@@ -572,5 +570,37 @@ describe('Tabs — 状态同步', () => {
     const host = await mountTabs({});
     expect(qa(host, '.lyt-tabs__item--active')).toHaveLength(1);
     expect(qa(host, '[role="tab"]')[0]!.className).toContain('lyt-tabs__item--active');
+  });
+});
+
+// ★ 2026-10-15 修复守卫（ADR 0010）：下面 4 条在修复前**全红**，是"翻转 ⇒ 变红"的判据。
+describe('Tabs — 缺陷修复守卫', () => {
+  it('★ 非受控模式下点击标签应保持激活（不得被拉回第一个）', async () => {
+    const host = await mountTabs();
+    qa(host, '[role="tab"]')[2]!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 40));
+    expect(qa(host, '[role="tab"]')[2]!.getAttribute('aria-selected')).toBe('true');
+  });
+
+  it('★ 切换应发 update:modelValue（v-model 契约）', async () => {
+    const seen: unknown[] = [];
+    const host = await mountTabs({ 'onUpdate:modelValue': (v: unknown) => seen.push(v) });
+    qa(host, '[role="tab"]')[1]!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(seen).toEqual(['b']);
+  });
+
+  it('★ 页面里只应有一个 role=tablist（不得根 / header 嵌套）', async () => {
+    const host = await mountTabs();
+    expect(qa(host, '[role="tablist"]')).toHaveLength(1);
+  });
+
+  it('★ 在「标签项」上按方向键应只前进一格（不得冒泡双触发）', async () => {
+    const host = await mountTabsControlled({ modelValue: 'a' });
+    qa(host, '[role="tab"]')[0]!.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }),
+    );
+    await new Promise((r) => setTimeout(r, 40));
+    expect(qa(host, '[role="tab"]')[1]!.getAttribute('aria-selected')).toBe('true');
   });
 });

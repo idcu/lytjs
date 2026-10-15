@@ -76,7 +76,10 @@ export const Tabs = defineComponent({
     onKeydown: { type: Function, default: undefined },
   },
 
-  setup(props: Record<string, unknown>, { slots }: { slots: TabsSlots }) {
+  setup(
+    props: Record<string, unknown>,
+    { slots, emit }: { slots: TabsSlots; emit: (e: string, ...a: unknown[]) => void },
+  ) {
     const p = props as TabsSetupProps;
     const dragState = signal<DragState>({
       isDragging: false,
@@ -84,6 +87,9 @@ export const Tabs = defineComponent({
       dropIndex: -1,
     });
     const activeIndex = signal(0);
+    // ★ 2026-10-15（ADR 0010）：受控同步用 —— 记录「上一次已同步过的 modelValue」。
+    //   `null` 表示尚未同步过 ⇒ 首次渲染会按外部 `modelValue` 同步一次。
+    const syncedModelValue = signal<string | null>(null);
     const tabListRef = signal<HTMLElement | null>(null);
     const previousActiveElement = signal<HTMLElement | null>(null);
     const announcement = signal('');
@@ -127,6 +133,9 @@ export const Tabs = defineComponent({
 
       p.onChange?.(pane.props.name);
       p.onTabClick?.(pane, index);
+      // ★ 2026-10-15（ADR 0010）：此前**从不发 `update:modelValue`** ⇒ `v-model` 根本不可用，
+      //   父组件必须手工在 `onChange` 里回写（实测：`onUpdate:modelValue` 恒为空数组）。
+      emit('update:modelValue', pane.props.name);
 
       previousActiveElement.set(document.activeElement as HTMLElement);
       setTimeout(() => {
@@ -282,12 +291,17 @@ export const Tabs = defineComponent({
 
     return () => {
       const panes = getPanes();
-      const currentName = p.modelValue || panes[0]?.props.name;
-      const currentIndex = panes.findIndex((pane) => pane.props.name === currentName);
-
-      if (currentIndex !== -1 && currentIndex !== activeIndex()) {
-        activeIndex.set(currentIndex);
+      // ★ 2026-10-15（ADR 0010）：此前**每次渲染**都按 `modelValue || panes[0].name` 强制回写
+      //   `activeIndex` ⇒ 非受控用法下任何内部切换（点击 / 键盘）都会在重渲染时被**拉回第一个**
+      //   （实测：点第 3 个标签后激活态回到 0）—— 组件在非受控下完全不可用。
+      //   改为「**仅在 `modelValue` 变化时**同步」，激活判定交回 `activeIndex`。
+      const controlled = p.modelValue || '';
+      if (controlled && controlled !== syncedModelValue()) {
+        syncedModelValue.set(controlled);
+        const syncIndex = panes.findIndex((pane) => pane.props.name === controlled);
+        if (syncIndex !== -1 && syncIndex !== activeIndex()) activeIndex.set(syncIndex);
       }
+      const currentName = panes[activeIndex()]?.props.name;
 
       const tabsClass = ['lyt-tabs', `lyt-tabs--${p.type || 'normal'}`, p.class]
         .filter(Boolean)
@@ -346,7 +360,9 @@ export const Tabs = defineComponent({
               .join(' '),
             draggable: isDraggable,
             onClick: () => handleTabClick(pane, index),
-            onKeydown: handleKeydown,
+            // ★ 2026-10-15（ADR 0010）：键盘 handler **只挂在 tablist 容器**上（见下方 header）。
+            //   此前根 div 与每个标签项都挂了同一个 `handleKeydown` ⇒ 在标签项上按键会
+            //   先由标签项处理、再**冒泡到根再处理一次**（实测：受控模式下按一次 ArrowRight 前进 2 格）。
             onDragStart: () => handleDragStart(index),
             onDragOver: (e: DragEvent) => {
               e.preventDefault();
@@ -402,36 +418,32 @@ export const Tabs = defineComponent({
         ariaDescribedBy: p.ariaDescribedBy,
       });
 
-      return createVNode(
-        'div',
-        mergeA11yProps(tablistA11yProps, {
-          class: tabsClass,
-          onKeydown: handleKeydown,
-        }),
-        [
-          createVNode(
-            'div',
-            {
-              ref: (el: HTMLElement) => tabListRef.set(el),
-              class: 'lyt-tabs__header',
-              role: 'tablist',
-              'aria-label': p.ariaLabel || '标签页',
-            },
-            [createVNode('div', { class: 'lyt-tabs__nav' }, tabItems)],
-          ),
-          createVNode('div', { class: 'lyt-tabs__content' }, [contentPane]),
-          createVNode(
-            'div',
-            {
-              class: 'lyt-tabs__sro',
-              role: 'status',
-              'aria-live': 'polite',
-              'aria-atomic': 'true',
-            },
-            announcement(),
-          ),
-        ],
-      );
+      // ★ 2026-10-15（ADR 0010）：`role="tablist"` 此前**同时**落在根 div 与 header 上
+      //   ⇒ 页面里出现 **2 个嵌套 tablist**（无效 ARIA，实测 `querySelectorAll` 得 2）。
+      //   现在只保留 header 一处（它才是标签的容器），根 div 只留 class；
+      //   键盘 handler 也随之下移到 header（Fix A：只保留一处，消除冒泡双触发）。
+      return createVNode('div', { class: tabsClass }, [
+        createVNode(
+          'div',
+          mergeA11yProps(tablistA11yProps, {
+            ref: (el: HTMLElement) => tabListRef.set(el),
+            class: 'lyt-tabs__header',
+            onKeydown: handleKeydown,
+          }),
+          [createVNode('div', { class: 'lyt-tabs__nav' }, tabItems)],
+        ),
+        createVNode('div', { class: 'lyt-tabs__content' }, [contentPane]),
+        createVNode(
+          'div',
+          {
+            class: 'lyt-tabs__sro',
+            role: 'status',
+            'aria-live': 'polite',
+            'aria-atomic': 'true',
+          },
+          announcement(),
+        ),
+      ]);
     };
   },
 });
