@@ -14,11 +14,14 @@ keywords: [pnpm, corepack, shim, husky, commit]
 2. husky 钩子会调裸 `pnpm` ⇒ 提交前造 shim 并注入 PATH：
 
    ```sh
-   mkdir -p /tmp/pnpm-shim
-   printf '#!/bin/sh\nexec corepack pnpm@11.3.0 "$@"\n' > /tmp/pnpm-shim/pnpm
-   chmod +x /tmp/pnpm-shim/pnpm
-   PATH="/tmp/pnpm-shim:$PATH" git commit -F <msgfile>
+   mkdir -p ~/.cache/pnpm-shim
+   printf '#!/bin/sh\nexec corepack pnpm@11.3.0 "$@"\n' > ~/.cache/pnpm-shim/pnpm
+   chmod +x ~/.cache/pnpm-shim/pnpm
+   PATH="$HOME/.cache/pnpm-shim:$PATH" git commit -F <msgfile>
    ```
+
+   ⚠️ 放 **`~/.cache`** 而非 `/tmp`：实测 `/tmp` 会被系统清理（2026-10-15 两次踩到
+   shim 消失 ⇒ 提交被 pnpm 完整性校验拦下）。
 
 3. 提交后核对：`git log --oneline -1` + `git status`。
 
