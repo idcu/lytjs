@@ -361,6 +361,14 @@ export interface VaporListRenderer<T> {
 export interface VaporListOptions<T> {
   keyFn: (item: T) => string | number;
   renderItem: (item: T, index: number) => Node | Node[];
+  /**
+   * 判定「同名 key 的项内容是否已变」：返回 `true` 表示**已变** ⇒ 会对该项调用 `updateItem`。
+   * 语义与 `diffLists` 的 `compareFn` 一致（例：`(a, b) => a.name !== b.name`）。
+   *
+   * ★ 2026-10-15：此前**没有这个入口**，而 `render` 调 `diffLists` 时也不传 `compareFn`
+   *   ⇒ `diff.updated` 恒为空 ⇒ 下面 `updateItem` 的分支**永不执行**（公开选项静默失效）。
+   */
+  compareFn?: (oldItem: T, newItem: T) => boolean;
   updateItem?: (item: T, index: number, nodes: Node[]) => void;
   onMount?: (item: T, index: number, nodes: Node[]) => void;
   onUnmount?: (item: T, index: number, nodes: Node[]) => void;
@@ -401,7 +409,7 @@ export function createVaporListRenderer<T>(
   container: HTMLElement,
   options: VaporListOptions<T>,
 ): VaporListRenderer<T> {
-  const { keyFn, renderItem, updateItem, onMount, onUnmount } = options;
+  const { keyFn, renderItem, compareFn, updateItem, onMount, onUnmount } = options;
   const itemCache = new Map<string | number, { item: T; nodes: Node[]; index: number }>();
   let currentItems: T[] = [];
 
@@ -430,7 +438,9 @@ export function createVaporListRenderer<T>(
       return;
     }
 
-    const diff = diffLists(currentItems, items, keyFn);
+    // ★ 2026-10-15：必须把 `compareFn` 一并传入，否则 `diff.updated` 恒为空 ⇒
+    //   下方 `updateItem` 分支永不执行（`updateItem` 是公开选项，等于静默失效）。
+    const diff = diffLists(currentItems, items, keyFn, compareFn);
     currentItems = [...items];
 
     // 优化 2: 简单情况（完全替换）直接用 DocumentFragment
