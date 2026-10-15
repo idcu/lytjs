@@ -425,25 +425,41 @@ export async function hydrateVisible(
   const app = createApp(component);
 
   // 使用 IntersectionObserver 检测可见性
-  const observer = new IntersectionObserver(
-    async (entries) => {
-      for (const entry of entries) {
-        if (entry.isIntersecting) {
-          const element = entry.target as Element;
-          await hydrateElement(element, stats, options);
-          stats.hydratedNodes++;
-          observer.unobserve(element);
-        }
-      }
-    },
-    {
-      rootMargin: options.lazyThreshold ? `${options.lazyThreshold}px` : '100px',
-    },
-  );
+  // ★ 2026-10-16：`IntersectionObserver` 在 **Node/jsdom 与旧 Safari 下缺失**（探针实测 undefined）
+  //   ⇒ 直接 `new` 会抛 `ReferenceError`，整个 API 直接不可用。
+  //   改为**降级为立即水合全部元素**（语义上等价于"全部已可见"）。
+  const IO = (globalThis as { IntersectionObserver?: typeof IntersectionObserver })
+    .IntersectionObserver;
+  const observer =
+    typeof IO === 'function'
+      ? new IO(
+          async (entries) => {
+            for (const entry of entries) {
+              if (entry.isIntersecting) {
+                const element = entry.target as Element;
+                await hydrateElement(element, stats, options);
+                stats.hydratedNodes++;
+                observer!.unobserve(element);
+              }
+            }
+          },
+          {
+            rootMargin: options.lazyThreshold ? `${options.lazyThreshold}px` : '100px',
+          },
+        )
+      : null;
 
-  // 观察所有需要 Hydration 的元素
-  for (const element of hydrateElements) {
-    observer.observe(element);
+  if (observer) {
+    // 观察所有需要 Hydration 的元素
+    for (const element of hydrateElements) {
+      observer.observe(element);
+    }
+  } else {
+    // 无 IntersectionObserver：全部立即水合
+    for (const element of hydrateElements) {
+      await hydrateElement(element, stats, options);
+      stats.hydratedNodes++;
+    }
   }
 
   // 等待所有 Hydration 完成
@@ -452,16 +468,30 @@ export async function hydrateVisible(
       if (stats.hydratedNodes >= stats.totalNodes) {
         resolve();
       } else {
-        requestIdleCallback(checkComplete);
+        onIdle(checkComplete);
       }
     };
     checkComplete();
   });
 
   stats.duration = performance.now() - startTime;
-  observer.disconnect();
+  observer?.disconnect();
 
   return { app, stats };
+}
+
+/**
+ * 下一空闲回调：优先 `requestIdleCallback`，缺失时降级 `setTimeout`。
+ *
+ * ★ 2026-10-16：`requestIdleCallback` 在 **Safari 与 Node/jsdom 下均缺失**（探针实测 undefined）
+ *   ⇒ 直接调用会抛 `ReferenceError`。而在 `processHydrationQueue` 里它是 **await 内**抛的
+ *   ⇒ 排空循环**静默死掉**、`isProcessingQueue` 永为 `true` ⇒ **之后入队的任务再也不执行**。
+ */
+function onIdle(cb: () => void): void {
+  const ric = (globalThis as { requestIdleCallback?: (fn: () => void) => number })
+    .requestIdleCallback;
+  if (typeof ric === 'function') ric(cb);
+  else setTimeout(cb, 0);
 }
 
 /**
@@ -480,7 +510,14 @@ export function queueHydration(
   });
 
   if (!isProcessingQueue) {
-    processHydrationQueue();
+    // ★ 2026-10-16：此前是**同步**启动排空 ⇒ 首次调用立刻 `shift()` 掉队首任务，
+    //   随后入队的高优先级任务**无法插到它前面** ⇒ 文档承诺的"按优先级执行"只对
+    //   **同批已入队**者成立（实测：依次入队 low/high/medium，执行顺序是 low, high, medium）。
+    //   改为**下一空闲再排空**，让同步入队的一批先排好序。
+    isProcessingQueue = true;
+    onIdle(() => {
+      void processHydrationQueue();
+    });
   }
 }
 
@@ -488,8 +525,6 @@ export function queueHydration(
  * 处理 Hydration 队列
  */
 async function processHydrationQueue(): Promise<void> {
-  isProcessingQueue = true;
-
   while (hydrationQueue.length > 0) {
     const task = hydrationQueue.shift();
     if (task) {
@@ -497,7 +532,7 @@ async function processHydrationQueue(): Promise<void> {
     }
 
     // 让出控制权
-    await new Promise((resolve) => requestIdleCallback(resolve));
+    await new Promise<void>((resolve) => onIdle(resolve));
   }
 
   isProcessingQueue = false;
