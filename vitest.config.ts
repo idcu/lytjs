@@ -181,14 +181,16 @@ export default defineConfig({
       //   statements 63.39% / lines 63.39% / functions 70.93% / branches 85.71%
       // 2026-10-15 七测（267 文件 / 6341 用例全绿；+ Tabs 行为电池 47 用例，登记 1 处受控重置缺陷）：
       //   statements 63.93% / lines 63.93% / functions 71.24% / branches 85.81%
-      // 阈值随棘轮上调至 lines/statements 63.3、functions 70.9、branches 85.7
+      // 2026-10-15 八测（268 文件 / 6367 用例全绿；+ Cascader 行为电池 26 用例，登记 4 处设计怪癖）：
+      //   statements 64.45% / lines 64.45% / functions 71.41% / branches 85.89%
+      // 阈值随棘轮上调至 lines/statements 64.4、functions 71.4、branches 85.8
       //（小数口径：整数 59/69/85 已是实测值的下界，收紧到小数才真正锁住当前水平、防回退）。
       // 规则：只允许上调，不允许为了让 CI 变绿而下调。
       thresholds: {
-        lines: 63.9,
-        functions: 71.2,
+        lines: 64.4,
+        functions: 71.4,
         branches: 85.8,
-        statements: 63.9,
+        statements: 64.4,
       },
     },
   },
