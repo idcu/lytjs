@@ -1,22 +1,33 @@
-// @vitest-environment jsdom
 /**
  * 行为级判据：`defineAsyncComponent` 与预加载工具
  *
  * ## 为什么要有这条
  *
- * `packages/component/src/async-component.ts`（402 行）是 `@lytjs/component` 的**公开 API**
+ * `packages/component/src/async-component.ts` 是 `@lytjs/component` 的**公开 API**
  * （`defineAsyncComponent` / `preloadComponent(s)` / `isComponentPreloaded` / `clearPreloadCache`），
  * 覆盖率实测仅 **4.6%** —— 加载/错误/超时/延迟/预加载几乎无判据。
  *
- * ## 两种手法
+ * ## ⚠️ 为什么这里**不能**用 `@lytjs/core` 挂载（2026-10-16 订正）
  *
- * - **纯工具函数**（preload 系列）直接调用即可；
- * - **组件状态机**用 `createApp` **真实挂载**：`setup` 只在首挂载跑一次，之后靠
- *   `instance.update()` 触发重渲染 ⇒ 只有真实挂载才能验证「加载完成后到底渲染什么」。
+ * 本文件早前用 `createApp`（来自 `@lytjs/core`）**真实挂载**本文件的组件，并据此登记了一条
+ * 「框架层缺陷：setup 期间未设当前实例」。**该结论是错的**，根因是**双包危险**：
+ *
+ * - vitest alias 把 `@lytjs/core` / `@lytjs/component` 都指向 **dist**；
+ * - 而本文件从 `'../src/async-component'` 取被测组件 ⇒ 包装器内部 `'./lifecycle'` 也是 **src**；
+ * - `setCurrentInstance` / `getCurrentInstance` 是**模块级变量** ⇒ src 与 dist **各持一份**
+ *   （探针实测：`srcGet === distGet` 为 **false**；给 src 那份 set 之后，dist 那份仍是 null）。
+ * - 于是 src 包装器里的 `getCurrentInstance()` **永远是 null** ⇒ 不触发重渲染。
+ *   **这是测试环境的模块身份问题，不是产品缺陷** —— 全 dist 的真实路径下 `setup` 里能正常
+ *   拿到实例（同探针实测 `distGet() → obj`）。
+ *
+ * ⇒ 纪律：**同一个测试里，被测组件与挂载原语必须来自同一个模块实例。** 本文件因此改为
+ * **src 级**原语（`createComponentInstance` + `setupComponent`，与 `component.test.ts` 同款）；
+ * 真实挂载的端到端判据放在 `packages/core/tests/e2e-null-render.test.ts`（那里全走 dist，身份一致）。
  */
 
-import { describe, it, expect, afterEach, vi } from 'vitest';
-import { createApp, h } from '@lytjs/core';
+import { describe, it, expect, vi } from 'vitest';
+import { createComponentInstance, setupComponent } from '../src/index';
+import type { ComponentInternalInstance } from '../src/types';
 import {
   defineAsyncComponent,
   preloadComponent,
@@ -25,30 +36,31 @@ import {
   clearPreloadCache,
 } from '../src/async-component';
 
-const hosts: HTMLElement[] = [];
-afterEach(() => {
-  for (const x of hosts.splice(0)) x.remove();
-  vi.restoreAllMocks();
-});
-
 const flush = (ms = 40): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
-const Comp = { name: 'Real', render: () => h('div', { class: 'real' }, 'REAL') };
-const Loading = { name: 'Loading', render: () => h('div', { class: 'loading' }, 'LOADING') };
-const ErrComp = { name: 'Err', render: () => h('div', { class: 'err' }, 'ERR') };
+// 子组件只用于**身份断言**（比较渲染结果的 `.type`），其自身渲染内容无关紧要
+const Comp = { name: 'Real', render: () => ({ type: 'div' }) };
+const Loading = { name: 'Loading', render: () => ({ type: 'div' }) };
+const ErrComp = { name: 'Err', render: () => ({ type: 'div' }) };
 
 type Wrapper = ReturnType<typeof defineAsyncComponent>;
 
-async function mountWrapper(w: Wrapper, props: Record<string, unknown> = {}): Promise<HTMLElement> {
-  const host = document.createElement('div');
-  document.body.appendChild(host);
-  hosts.push(host);
-  await createApp({ render: () => h(w as never, props) } as never).mount(host);
-  await flush(20);
-  return host;
+/** src 级挂载原语：造实例 → 跑 setup（与 `component.test.ts` 同款，全程同一模块实例） */
+function setupWrapper(w: Wrapper): ComponentInternalInstance {
+  const vnode = { type: w, props: {}, children: null };
+  const instance = createComponentInstance(vnode, null);
+  setupComponent(instance);
+  return instance;
 }
 
-/** 手动取首帧渲染函数（组件上下文外 getCurrentInstance() 为 null ⇒ 状态是新建的） */
+/** 取渲染结果的组件身份（`.type`）；注释占位返回 null */
+const renderedType = (instance: ComponentInternalInstance): unknown => {
+  const out = (instance as unknown as { render: () => { type?: unknown } | null }).render();
+  const t = out?.type;
+  return typeof t === 'symbol' ? null : (t ?? null);
+};
+
+/** 手动取首帧渲染函数：无组件上下文（instance 为 null）⇒ 每次新建状态，仅用于与实例无关的判据 */
 const firstRender = (w: Wrapper): unknown => {
   const setup = (w as unknown as { setup: (p: unknown, s: unknown) => () => unknown }).setup;
   return setup({}, { slots: {} })();
@@ -131,29 +143,24 @@ describe('defineAsyncComponent — delay 语义', () => {
   });
 });
 
-describe('defineAsyncComponent — 真实挂载下的状态机', () => {
-  // ⚠️ 缺陷登记（2026-10-16，已实测定位根因，待修）：挂载后**视图不切换**。
-  //
-  // 排查链（每步都有探针/实测）：
-  //   ① 渲染函数只处理加载态 ⇒ 已顺手修成三态感知，**仍不切换**；
-  //   ② `triggerComponentUpdate` 缺 nextTick 回退 ⇒ 已抽成共享的 `forceComponentUpdate`
-  //      （与 `$forceUpdate` 共用），**仍不切换**；
-  //   ③ 探针发现 `forceComponentUpdate` **根本没被调用** ⇒ `instance` 为 null；
-  //   ④ 探针确认 **`getCurrentInstance()` 在 setup 里返回 null** —— 而且**普通子组件也一样**
-  //      （`{ setup(){ console.log(getCurrentInstance()) } }` 挂载后打印 null，组件却能渲染）。
-  //
-  // ⇒ **根因在框架层**：`setup` 调用时未设置「当前实例」。后果不止异步组件：
-  //   **在 setup 里注册的生命周期钩子（`onBeforeUnmount` 等）会被静默丢弃**，
-  //   任何依赖 `getCurrentInstance()` 的组件逻辑都会静默失效。
-  //   用 `it.fails` 标记：修好后会「意外通过」并报错，提示摘掉标记。
-  it.fails('★ 加载完成后应渲染出真实组件（阻断于 getCurrentInstance() 为 null）', async () => {
+describe('defineAsyncComponent — src 级状态机（模块身份一致）', () => {
+  it('★ 加载完成后**触发重渲染**，且 render() 返回真实组件', async () => {
     const w = defineAsyncComponent({ loader: async () => Comp, delay: 0 });
-    const host = await mountWrapper(w);
-    await flush(60);
-    expect(host.querySelector('.real')).toBeTruthy();
+    const instance = setupWrapper(w);
+
+    // 真实渲染器会在挂载时把 update 写到实例上（见 vdom/src/patch-component.ts）；
+    // 这里用 spy 代替，断言「加载完成后确实请求了重渲染」—— 这正是此前误判为
+    // 「框架层缺陷」的那件事：`triggerComponentUpdate` 拿不到实例就不会调用它。
+    const update = vi.fn();
+    (instance as unknown as { update?: () => void }).update = update;
+
+    await flush(30);
+
+    expect(update).toHaveBeenCalled();
+    expect(renderedType(instance)).toBe(Comp);
   });
 
-  it.fails('★ 加载失败时应渲染 errorComponent（同上阻断）', async () => {
+  it('★ 加载失败时应渲染 errorComponent，并调用 onError', async () => {
     const onError = vi.fn();
     const w = defineAsyncComponent({
       loader: async () => {
@@ -163,16 +170,47 @@ describe('defineAsyncComponent — 真实挂载下的状态机', () => {
       onError,
       delay: 0,
     });
-    const host = await mountWrapper(w);
-    await flush(60);
-    expect(onError).toHaveBeenCalled(); // 回调本身是通的
-    expect(host.querySelector('.err')).toBeTruthy(); // 但视图不切
+    const instance = setupWrapper(w);
+    await flush(30);
+
+    expect(onError).toHaveBeenCalled();
+    expect(renderedType(instance)).toBe(ErrComp);
   });
 
-  it.fails('默认导出（{ default: Comp }）会被解包（同上阻断）', async () => {
+  it('默认导出（{ default: Comp }）会被解包', async () => {
     const w = defineAsyncComponent({ loader: async () => ({ default: Comp }), delay: 0 });
-    const host = await mountWrapper(w);
-    await flush(60);
-    expect(host.querySelector('.real')).toBeTruthy();
+    const instance = setupWrapper(w);
+    await flush(30);
+
+    expect(renderedType(instance)).toBe(Comp);
+  });
+
+  it('超时后应渲染 errorComponent（并请求重渲染）', async () => {
+    const w = defineAsyncComponent({
+      loader: () => new Promise(() => {}),
+      errorComponent: ErrComp,
+      timeout: 30,
+      delay: 0,
+    });
+    const instance = setupWrapper(w);
+    const update = vi.fn();
+    (instance as unknown as { update?: () => void }).update = update;
+
+    await flush(80);
+
+    expect(update).toHaveBeenCalled();
+    expect(renderedType(instance)).toBe(ErrComp);
+  });
+
+  it('★ setup 期间 getCurrentInstance() 拿到本实例（状态按实例复用，不重复发起加载）', () => {
+    const loaderSpy = vi.fn(async () => Comp);
+    const w = defineAsyncComponent({ loader: loaderSpy, delay: 0 });
+    const instance = setupWrapper(w);
+
+    // 再跑一次 setup：只有「状态按实例缓存」成立时才会复用；
+    // 若 getCurrentInstance() 为 null（模块身份不一致），第二次会新建状态并**重新 load**。
+    setupComponent(instance);
+
+    expect(loaderSpy).toHaveBeenCalledTimes(1);
   });
 });
