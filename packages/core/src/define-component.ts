@@ -1,209 +1,44 @@
 // src/define-component.ts
-// @lytjs/core - 组件定义
+// @lytjs/core - 组件定义（**转发层**，不保留实现）
+//
+// ★ 2026-10-17（ADR 0011）：本文件曾有一份 `defineAsyncComponent` 的**独立实现**（205 行），
+//   与 `@lytjs/component`、`@lytjs/core-vnode` 的两份并行存在，导致「修复只落一份」——
+//   实测两次：① `delay` 语义只落在 component 版；② `showLoading` 非响应式（loading 永不出现）
+//   修在 core 版后**未同步**到 core-vnode 版（`diff` 实测其至今仍是 `let showLoading`）。
+//
+//   ⇒ 现改为**只转发**权威实现（`@lytjs/component`），**副本一律不得重建**。
+//   守卫：`packages/core/tests/e2e-async-component-convergence.test.ts` 断言**函数同一性**
+//   （`core.defineAsyncComponent === component.defineAsyncComponent`），副本重现即变红。
 
-import type { Component, AsyncComponentLoader, AsyncComponentOptions, VNode } from './types';
+import { defineComponent as _defineComponent } from '@lytjs/component';
 import type { ComponentOptions } from './types';
-import { defineComponent as _defineComponent, onBeforeUnmount } from '@lytjs/component';
-import { shallowRef, ref } from '@lytjs/reactivity';
-import { warn } from '@lytjs/common-error';
-import { h } from './h';
-
-/** onError 回调未响应时的默认超时时间（毫秒） */
-const DEFAULT_ON_ERROR_TIMEOUT = 30000;
 
 /**
- * 定义组件（re-export from @lytjs/component）
+ * 定义组件（转发自 `@lytjs/component`）
  *
- * 权威实现在 @lytjs/component 中，此处统一返回类型为 ComponentOptions。
- * 由于 Component = ComponentOptions | (() => any)，
- * 返回 ComponentOptions 是 Component 的子集，完全兼容。
+ * 权威实现在 `@lytjs/component` 中，此处统一返回类型为 ComponentOptions。
+ * 由于 Component = ComponentOptions | (() => any)，返回 ComponentOptions 是 Component 的子集，完全兼容。
  */
 export const defineComponent: (options: ComponentOptions) => ComponentOptions = _defineComponent;
 
 /**
- * 定义异步组件
+ * 定义异步组件（**转发**自 `@lytjs/component`，见 ADR 0011）
+ *
+ * `loader` / `loadingComponent` / `errorComponent` / `delay` / `timeout` /
+ * `onError(error, retry, fail, attempts)` 的语义**以权威实现为准**；本包不再维护副本。
+ * `onError` 的 retry 契约（原 core 版独有）已下沉到权威实现。
  */
-export function defineAsyncComponent(
-  source: AsyncComponentLoader | AsyncComponentOptions,
-): Component {
-  if (typeof source === 'function') {
-    source = { loader: source };
-  }
+export { defineAsyncComponent } from '@lytjs/component';
 
-  const { loader, loadingComponent, errorComponent, delay = 200, timeout, onError } = source;
-
-  const loadedComponent = shallowRef<Component | undefined>(undefined);
-  const error = ref<Error | undefined>(undefined);
-  const loading = ref<boolean>(false);
-  let retries = 0;
-  // ★ 2026-10-16：此前是**普通变量** `let showLoading = false`，而 `render()` 会读它
-  //   ⇒ delay 到点置位时**没有任何响应式依赖被触发** ⇒ 不重渲染 ⇒ **loadingComponent
-  //   永不出现**（实测：delay=120 + loadingComponent，等 200ms 仍是空）。
-  //   改为 ref 后 render 读取它即建立依赖（同 `loadedComponent` / `error`）。
-  const showLoading = ref<boolean>(false);
-  let delayTimer: ReturnType<typeof setTimeout> | null = null;
-  let loadingPromise: Promise<Component> | null = null;
-
-  const MAX_RETRIES = 3;
-  const retry = (): Promise<Component> | void => {
-    if (retries >= MAX_RETRIES) {
-      if (__DEV__) {
-        warn(`AsyncComponent: max retries (${MAX_RETRIES}) exceeded.`);
-      }
-      error.value = new Error(
-        `[lytjs/core] AsyncComponent: max retries (${MAX_RETRIES}) exceeded.`,
-      );
-      // FIX: P0-09 retry 耗尽后返回 Promise.reject，确保 Promise 链正确 settle，
-      // 避免调用方永远等待一个不会 resolve/reject 的 Promise
-      return Promise.reject(error.value);
-    }
-    retries++;
-    loadedComponent.value = undefined;
-    error.value = undefined;
-    loadingPromise = null;
-    startTimeout();
-    return load();
-  };
-
-  const load = (): Promise<Component> => {
-    // 防止重复并发加载
-    if (loadingPromise) return loadingPromise as Promise<Component>;
-
-    loading.value = true;
-    showLoading.value = false;
-    if (delayTimer) clearTimeout(delayTimer);
-    delayTimer = setTimeout(() => {
-      showLoading.value = true;
-    }, delay);
-    return (loadingPromise = Promise.resolve(loader())
-      .then((comp) => {
-        // FIX: P2-v11-15 验证 loader() 返回值，确保是有效的组件定义
-        // FIX: P2-batch2-9 添加括号明确运算符优先级，避免 && 和 || 混合使用时的歧义
-        if (comp == null || (typeof comp !== 'object' && typeof comp !== 'function')) {
-          throw new Error(
-            `[lytjs/core] AsyncComponent: loader() returned an invalid component value: ${String(comp)}. ` +
-              `Expected a component options object or function.`,
-          );
-        }
-        loadedComponent.value = comp;
-        error.value = undefined;
-        loading.value = false;
-        loadingPromise = null;
-        if (delayTimer) {
-          clearTimeout(delayTimer);
-          delayTimer = null;
-        }
-        showLoading.value = false;
-        // load 成功后清除 timeout，避免不必要的超时回调
-        if (timeoutId !== null) {
-          clearTimeout(timeoutId);
-          timeoutId = null;
-        }
-        return comp;
-      })
-      .catch((err): Promise<Component> => {
-        error.value = err;
-        loading.value = false;
-        if (onError) {
-          return new Promise<Component>((resolve, reject) => {
-            let settled = false;
-            const ON_ERROR_TIMEOUT = DEFAULT_ON_ERROR_TIMEOUT;
-            const timer = setTimeout(() => {
-              if (!settled) {
-                settled = true;
-                reject(
-                  new Error(
-                    `[lytjs/core] AsyncComponent: onError callback did not call retry() or reject() within ${ON_ERROR_TIMEOUT / 1000}s.`,
-                  ),
-                );
-              }
-            }, ON_ERROR_TIMEOUT);
-            onError(
-              err,
-              () => {
-                if (!settled) {
-                  settled = true;
-                  clearTimeout(timer);
-                  const result = retry();
-                  if (result) resolve(result);
-                }
-              },
-              (reason?: unknown) => {
-                if (!settled) {
-                  settled = true;
-                  clearTimeout(timer);
-                  reject(reason ?? err);
-                }
-              },
-              retries,
-            );
-          });
-        }
-        return Promise.reject(err);
-      }));
-  };
-
-  // 超时处理：封装为函数以便 retry 时重新设置
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
-  const startTimeout = () => {
-    if (timeout == null) return;
-    if (timeoutId !== null) {
-      clearTimeout(timeoutId);
-    }
-    timeoutId = setTimeout(() => {
-      if (!loadedComponent.value && !error.value) {
-        error.value = new Error(`[lytjs/core] AsyncComponent timed out after ${timeout}ms.`);
-        loading.value = false;
-      }
-    }, timeout);
-  };
-  startTimeout();
-
-  // 延迟加载：在组件首次渲染时触发，而非立即加载
-  // load();
-
-  const comp: ComponentOptions = {
-    name: 'AsyncComponent',
-    setup() {
-      const instance = {
-        resolved: loadedComponent,
-        loading,
-        error,
-        delay,
-        timeout,
-      };
-
-      onBeforeUnmount(() => {
-        if (timeoutId !== null) {
-          clearTimeout(timeoutId);
-          timeoutId = null;
-        }
-        if (delayTimer !== null) {
-          clearTimeout(delayTimer);
-          delayTimer = null;
-        }
-      });
-
-      // 在 setup 阶段触发加载，避免 render 中触发副作用
-      if (!loadedComponent.value && !error.value && !loading.value) {
-        load();
-      }
-
-      return instance;
-    },
-    render(): VNode | null {
-      if (loadedComponent.value) {
-        return h(loadedComponent.value);
-      }
-      if (error.value && errorComponent) {
-        return h(errorComponent);
-      }
-      if (showLoading.value && loadingComponent) {
-        return h(loadingComponent);
-      }
-      return null;
-    },
-  } as ComponentOptions;
-
-  return comp as Component;
-}
+/**
+ * 异步组件预加载工具（**转发**）
+ *
+ * ★ 2026-10-17 补：此前 `@lytjs/core` **漏转**这四个导出 —— 主入口有 `defineAsyncComponent`，
+ * 却没有配套的 preload 能力（用户只能绕道 `@lytjs/component`）。
+ */
+export {
+  preloadComponent,
+  preloadComponents,
+  isComponentPreloaded,
+  clearPreloadCache,
+} from '@lytjs/component';

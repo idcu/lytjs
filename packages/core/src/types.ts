@@ -156,17 +156,10 @@ export type { ComponentOptions, ComponentPublicInstance } from '@lytjs/component
 
 // ==================== Async Component ====================
 
-export type AsyncComponentLoader = () => Promise<Component>;
-
-export interface AsyncComponentOptions {
-  loader: AsyncComponentLoader;
-  loadingComponent?: Component;
-  errorComponent?: Component;
-  delay?: number;
-  timeout?: number;
-  suspensible?: boolean;
-  onError?: (error: Error, retry: () => void, fail: () => void, attempts: number) => void;
-}
+// ★ 2026-10-17（ADR 0011）：**只转发**权威实现的类型，不再各持一份 ——
+//   此前 core / core-vnode 各有一份 `AsyncComponentOptions`，其中 `onError` 签名与
+//   `@lytjs/component` 的**不一致**（前者 4 参、后者 1 参），正是三份实现漂移的一部分。
+export type { AsyncComponentLoader, AsyncComponentOptions } from '@lytjs/component';
 
 // ==================== Composition API ====================
 

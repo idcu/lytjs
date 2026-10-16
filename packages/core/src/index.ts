@@ -30,7 +30,16 @@ export {
   linkSuspenseBoundary,
 } from '@lytjs/component';
 export { h, h as createElement } from './h';
-export { defineComponent, defineAsyncComponent } from './define-component';
+// ★ 2026-10-17（ADR 0011）：补转 preload 系列 —— 此前主入口有 `defineAsyncComponent`
+//   却没有配套的 preload 能力（用户只能绕道 `@lytjs/component`）。
+export {
+  defineComponent,
+  defineAsyncComponent,
+  preloadComponent,
+  preloadComponents,
+  isComponentPreloaded,
+  clearPreloadCache,
+} from './define-component';
 // ★ 2026-10-04：`defineFunctionalComponent` 的本体在 `@lytjs/component`，
 //   但 core 未转出 ⇒ 从 `@lytjs/core` 导入得到 `undefined`
 //   （实测报「defineFunctionalComponent is not a function」）。

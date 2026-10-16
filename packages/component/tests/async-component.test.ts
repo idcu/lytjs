@@ -202,15 +202,23 @@ describe('defineAsyncComponent — src 级状态机（模块身份一致）', ()
     expect(renderedType(instance)).toBe(ErrComp);
   });
 
-  it('★ setup 期间 getCurrentInstance() 拿到本实例（状态按实例复用，不重复发起加载）', () => {
-    const loaderSpy = vi.fn(async () => Comp);
-    const w = defineAsyncComponent({ loader: loaderSpy, delay: 0 });
+  it('★ 同一实例重复 setup 复用状态（证明 setup 期间 getCurrentInstance() 拿到了实例）', async () => {
+    // 判别力：`state` 按实例缓存在 `asyncComponentStates`（**仅在 instance 非 null 时才写入**）。
+    //   · 复用 ⇒ 第二次 setup 见 `state.isLoading` 已为 true ⇒ **不再挂第二条加载链** ⇒ onError 只调 1 次；
+    //   · 若 getCurrentInstance() 为 null（模块身份不一致）⇒ 每次都新建状态 ⇒ 挂两条链 ⇒ onError 调 2 次。
+    const onError = vi.fn();
+    const w = defineAsyncComponent({
+      loader: async () => {
+        throw new Error('nope');
+      },
+      onError,
+      delay: 0,
+    });
     const instance = setupWrapper(w);
+    setupComponent(instance); // 第二次 setup
 
-    // 再跑一次 setup：只有「状态按实例缓存」成立时才会复用；
-    // 若 getCurrentInstance() 为 null（模块身份不一致），第二次会新建状态并**重新 load**。
-    setupComponent(instance);
+    await flush(30);
 
-    expect(loaderSpy).toHaveBeenCalledTimes(1);
+    expect(onError).toHaveBeenCalledTimes(1);
   });
 });

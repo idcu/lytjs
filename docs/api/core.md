@@ -202,6 +202,17 @@ const AsyncComp = defineAsyncComponent({
 });
 ```
 
+> **说明（2026-10-17，ADR 0011）**
+>
+> - `defineAsyncComponent` 与预加载工具（`preloadComponent` / `preloadComponents` /
+>   `isComponentPreloaded` / `clearPreloadCache`）的**权威实现在 `@lytjs/component`**；
+>   `@lytjs/core` 与 `@lytjs/core-vnode` **只做转发**（此前存在三份平行实现，实测导致
+>   「修复只落一份」）。⇒ 各入口拿到的都是**同一个函数**。
+> - `onError` 的 `retry()` / `fail()` 需在**本次回调内**决定；两者都未调用时**立即**按
+>   `fail()` 处理（错误组件立刻显示）。`retry()` 最多重试到 3 次尝试；`attempts` 为已失败次数。
+>   **不再有**旧 core 版「等 30 秒」的兜底。
+> - 只声明 `onError(error)` 的旧写法仍可用（等同「通知 + 立即失败」）。
+
 ---
 
 ## nextTick()

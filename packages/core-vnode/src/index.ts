@@ -12,7 +12,15 @@ export { h, h as createElement } from './h';
 
 // ==================== 组件定义 ====================
 
-export { defineComponent, defineAsyncComponent } from './define-component';
+// ★ 2026-10-17（ADR 0011）：与 `@lytjs/core` 保持同一套 surface（含 preload 系列）。
+export {
+  defineComponent,
+  defineAsyncComponent,
+  preloadComponent,
+  preloadComponents,
+  isComponentPreloaded,
+  clearPreloadCache,
+} from './define-component';
 
 // ==================== 调度 ====================
 

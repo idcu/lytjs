@@ -57,8 +57,18 @@ export interface AsyncComponentOptions {
 
   /**
    * 异步组件加载失败时的错误处理器
+   *
+   * 2026-10-17（ADR 0011）：由「`(error) => void` 仅通知」扩展为
+   * `@lytjs/core` / `@lytjs/core-vnode` 既有的 **retry 契约**
+   * （`docs/api/core.md` 已声明该签名），使三份平行实现收敛为一份。
+   *
+   * - `attempts`：已失败次数（首次为 1）；
+   * - 调 `retry()`：`attempts < MAX_ATTEMPTS(3)` 时清错误态并重新加载；否则维持错误态；
+   * - 调 `fail()`：明确放弃重试（维持错误态）；
+   * - **两者都未调** ⇒ 回调返回后立即按 `fail()` 处理（**只声明 `(error)` 的旧用法零回归**，
+   *   且不会像旧 core 版那样白等 30s）。
    */
-  onError?: (error: Error) => void;
+  onError?: (error: Error, retry: () => void, fail: () => void, attempts: number) => void;
 }
 
 /**
@@ -71,7 +81,15 @@ interface AsyncComponentState {
   isLoaded: boolean;
   isError: boolean;
   loadingPromise: Promise<void> | null;
+  /** 已失败次数（首次失败为 1）——供 `onError(…, attempts)` 与重试上限判定 */
+  attempts: number;
 }
+
+/**
+ * 最多尝试次数（含首次）。
+ * 2026-10-17 由 `@lytjs/core` 的 `MAX_RETRIES` 语义下沉（ADR 0011：能力集中到权威实现）。
+ */
+const MAX_ATTEMPTS = 3;
 
 // ==================== 预加载注册表 ====================
 
@@ -150,8 +168,19 @@ export function defineAsyncComponent(
     }
 
     // 创建新的加载 Promise
-    loadPromise = loader()
+    // `Promise.resolve().then(...)`：把 loader 的**同步抛出**转成 rejection（core 版同款）。
+    loadPromise = Promise.resolve()
+      .then(() => loader())
       .then((comp) => {
+        // ★ 2026-10-17（ADR 0011）：loader 返回值校验由 `@lytjs/core` 版**下沉**而来 ——
+        //   原先只有 core 版有这道防御，权威实现反而没有。
+        if (comp == null || (typeof comp !== 'object' && typeof comp !== 'function')) {
+          throw new Error(
+            `[lytjs] AsyncComponent: loader() returned an invalid component value: ${String(comp)}. ` +
+              `Expected a component options object or function.`,
+          );
+        }
+
         // 处理 ES 模块默认导出
         const resolvedComponent = (comp as { default?: ComponentOptions }).default || comp;
 
@@ -163,13 +192,10 @@ export function defineAsyncComponent(
       })
       .catch((err: unknown) => {
         loadPromise = null;
-        const error = err instanceof Error ? err : new Error(String(err));
-
-        if (onError) {
-          onError(error);
-        }
-
-        throw error;
+        // ⚠️ 此处**不再**调用 `onError`：它需要 `attempts` / `retry` / `fail` 上下文，
+        //    统一由渲染路径（`startLoad` 的 catch）调用。副作用（有意为之）：
+        //    `preload()` 的**投机性**失败不再触发 `onError` —— `onError` 只描述**渲染失败**。
+        throw err instanceof Error ? err : new Error(String(err));
       });
 
     return loadPromise;
@@ -212,6 +238,7 @@ export function defineAsyncComponent(
           isLoaded: false,
           isError: false,
           loadingPromise: null,
+          attempts: 0,
         };
         if (instance) {
           asyncComponentStates.set(instance, state);
@@ -231,12 +258,15 @@ export function defineAsyncComponent(
             : createAsyncCommentVNode(' Async component error ');
       }
 
-      // 如果尚未加载，开始加载
-      if (!state.isLoading) {
+      /**
+       * 发起（或重试）加载。
+       *
+       * ★ 2026-10-17（ADR 0011）：抽成函数，使 `onError` 的 `retry()` 能真正**重新加载** ——
+       *   此前加载逻辑内联在 `setup` 里、且 `onError` 只是 `(error) => void` 的通知，
+       *   没有任何重试入口（那是 `@lytjs/core` 版独有的能力）。
+       */
+      const startLoad = (): void => {
         state.isLoading = true;
-
-        // FIX: DTS build error - loadStartTime æœªä½¿ç”?
-        // const loadStartTime = Date.now();
 
         state.loadingPromise = load()
           .then((comp) => {
@@ -250,15 +280,40 @@ export function defineAsyncComponent(
             }
           })
           .catch((err: unknown) => {
-            state.error = err instanceof Error ? err : new Error(String(err));
+            const error = err instanceof Error ? err : new Error(String(err));
+            state.error = error;
             state.isError = true;
             state.isLoading = false;
+            state.attempts++;
+
+            if (onError) {
+              // `onError` 拥有**决定权**：调用 `retry()` / `fail()`。
+              // 两者都未调 ⇒ 回调返回后立即按 `fail()` 处理（维持错误态）——
+              // 既让「只声明 (error) 的旧用法」零回归，也不会像旧 core 版那样白等 30s。
+              const retry = (): void => {
+                if (state.attempts >= MAX_ATTEMPTS) return; // 超出上限 ⇒ 维持错误态（等价 fail）
+                state.error = null;
+                state.isError = false;
+                state.isLoading = false;
+                state.loadingPromise = null;
+                startLoad();
+              };
+              const fail = (): void => {
+                /* 明确放弃重试：维持错误态，无需额外动作 */
+              };
+              onError(error, retry, fail, state.attempts);
+            }
 
             // 触发重新渲染以显示错误
             if (instance) {
               triggerComponentUpdate(instance);
             }
           });
+      };
+
+      // 如果尚未加载，开始加载
+      if (!state.isLoading) {
+        startLoad();
 
         // 处理超时
         // FIX: P2-38 超时定时器在组件卸载时通过 onScopeDispose 清理，
