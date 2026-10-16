@@ -636,7 +636,21 @@ export function beginTimelineEvent(
 }
 
 /**
+ * 记录一个**已结束**的时序事件，并维持 `maxTimelineEvents` 上限
+ */
+function pushTimelineEvent(event: TimelineEvent): void {
+  timelineEvents.push(event);
+  if (timelineEvents.length > maxTimelineEvents) {
+    timelineEvents.shift();
+  }
+}
+
+/**
  * 结束指定时序事件
+ *
+ * ⚠️ **隐式收口**：若栈里在它之上还有**尚未结束**的嵌套事件，则这些事件以同一时刻
+ * （`endTime`）结束、**并一并记录**（外层先入、内层按开始顺序随后）。
+ * 即「结束外层 ⇒ 内层随之结束」——与火焰图的嵌套语义一致。
  */
 export function endTimelineEvent(id: string): TimelineEvent | null {
   const stackIndex = timelineEventStack.findIndex((item) => item.event.id === id);
@@ -646,28 +660,35 @@ export function endTimelineEvent(id: string): TimelineEvent | null {
     return null;
   }
 
-  const { event } = timelineEventStack[stackIndex]!;
   const endTime = performance.now();
 
-  event.duration = endTime - event.startTime;
+  // ★ 2026-10-17 修复：此前是 `timelineEventStack.splice(stackIndex)` —— 它会把**嵌套未结束**
+  //   的事件一并从栈里移除，却**只记录外层** ⇒ 内层既不出现在 `getTimelineEvents()` 里、
+  //   也再也无法收口（`endTimelineEvent(内层id)` 只会报「栈中找不到」）⇒ **数据静默丢失**。
+  //   而原先紧随其后的 duration 延长循环又**依赖这些嵌套项**（说明「外层结束 ⇒ 内层结束」
+  //   本就是既定语义），只是漏了「记录下来」这一步。
+  //
+  //   同时修 `currentDepth`：原先固定 `-1`，而实际可能移除多帧 ⇒ 深度记账漂移（后续事件
+  //   depth 偏大）。现按**实际移除帧数**回退。
+  const removed = timelineEventStack.splice(stackIndex);
+  const outer = removed[0]!;
 
-  for (let i = stackIndex + 1; i < timelineEventStack.length; i++) {
-    const nestedEvent = timelineEventStack[i]!;
-    event.duration = Math.max(
-      event.duration,
-      nestedEvent.startTime - event.startTime + nestedEvent.event.duration,
-    );
+  // 先统一收口各帧时长（内层以 endTime 为结束时刻）
+  outer.event.duration = endTime - outer.event.startTime;
+  for (let i = 1; i < removed.length; i++) {
+    const frame = removed[i]!;
+    frame.event.duration = Math.max(frame.event.duration, endTime - frame.event.startTime);
   }
 
-  timelineEventStack.splice(stackIndex);
-  currentDepth = Math.max(0, currentDepth - 1);
-
-  timelineEvents.push(event);
-  if (timelineEvents.length > maxTimelineEvents) {
-    timelineEvents.shift();
+  // 记录顺序：外层先入、内层按开始顺序随后（`getFlameGraphData` 的挂树启发式依赖「父先于子」）
+  pushTimelineEvent(outer.event);
+  for (let i = 1; i < removed.length; i++) {
+    pushTimelineEvent(removed[i]!.event);
   }
 
-  return event;
+  currentDepth = Math.max(0, currentDepth - removed.length);
+
+  return outer.event;
 }
 
 /**
@@ -706,9 +727,8 @@ export function getFlameGraphData(): FlameGraphNode {
     category: 'custom',
   };
 
-  const nodeMap = new Map<string, FlameGraphNode>();
-  nodeMap.set('root', root);
-
+  // ★ 2026-10-17：删除 `nodeMap` —— 它此前只被 `set`（3 处）而**从未被读**，
+  //   是纯死代码（父节点查找实际由下方 `findParentNode` 的「最后一个子节点」启发式完成）。
   timelineEvents.forEach((event) => {
     const node: FlameGraphNode = {
       name: event.name,
@@ -725,8 +745,6 @@ export function getFlameGraphData(): FlameGraphNode {
       }
       parentNode.children.push(node);
     }
-
-    nodeMap.set(event.id, node);
   });
 
   aggregateFlameGraphValues(root);
