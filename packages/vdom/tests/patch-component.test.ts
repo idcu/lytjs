@@ -587,3 +587,87 @@ describe('createComponentPatch', () => {
     });
   });
 });
+
+// ============================================================
+// render 返回 null / undefined —— 合法的「空渲染」
+// ============================================================
+//
+// `update()` 此前**无条件**读 `subTree.el`（src/patch-component.ts:255），而
+// `render(): VNode | null` 是**声明签名**，`@lytjs/core` 的 `defineAsyncComponent`
+// 就返回 null（未配 loadingComponent 时）。
+// 实测（2026-10-16）：`{ render: () => null }` 挂载即抛
+// `TypeError: Cannot read properties of null (reading 'el')`。
+describe('render 返回 null/undefined（空渲染）', () => {
+  let ctx: ReturnType<typeof createMockContext>;
+  let api: ComponentPatchAPI<Node, Element>;
+
+  beforeEach(() => {
+    ctx = createMockContext();
+    api = createComponentPatch(ctx);
+  });
+
+  /** 造一个「渲染结果可切换」的组件 vnode + 实例 */
+  function setupEmpty(render: () => unknown) {
+    const container = document.createElement('div');
+    const componentType = { name: 'EmptyComp', render: vi.fn(render) };
+    const vnode = createComponentVNode(componentType);
+    const instance = createMockComponentInstance({ type: componentType });
+    vnode.component = instance;
+    return { container, componentType, vnode, instance };
+  }
+
+  const asDiv = (): VNode =>
+    ({
+      type: 'div',
+      el: document.createElement('div'),
+      children: null,
+      props: null,
+    }) as unknown as VNode;
+
+  it('★ render 返回 null 时挂载不得抛', () => {
+    const { container, vnode, componentType } = setupEmpty(() => null);
+
+    expect(() => api.mountComponent(vnode, container, null, null, null, false)).not.toThrow();
+    expect(componentType.render).toHaveBeenCalled();
+  });
+
+  it('★ render 返回 undefined 时挂载不得抛', () => {
+    const { container, vnode } = setupEmpty(() => undefined);
+
+    expect(() => api.mountComponent(vnode, container, null, null, null, false)).not.toThrow();
+  });
+
+  it('★ 首帧空渲染、之后返回真实 vnode 时应挂载（以 null 为首参 patch）', () => {
+    const subTree = asDiv();
+    let empty = true;
+    const { container, vnode, instance } = setupEmpty(() => (empty ? null : subTree));
+
+    api.mountComponent(vnode, container, null, null, null, false);
+    empty = false;
+    (instance as unknown as { update: () => void }).update();
+
+    expect(ctx.patch).toHaveBeenCalledWith(null, subTree, container, null, instance, null, false);
+  });
+
+  it('★ 由「有内容」变为空渲染时应卸载旧 DOM', () => {
+    const subTree = asDiv();
+    let empty = false;
+    const { container, vnode, instance } = setupEmpty(() => (empty ? null : subTree));
+
+    api.mountComponent(vnode, container, null, null, null, false);
+    empty = true;
+    (instance as unknown as { update: () => void }).update();
+
+    expect(ctx.unmount).toHaveBeenCalledWith(subTree, null, null, true);
+  });
+
+  it('空渲染仍应触发 mounted 钩子（组件已挂载，只是渲染为空）', () => {
+    const invokeMountedHook = vi.fn();
+    (ctx as unknown as { invokeMountedHook?: unknown }).invokeMountedHook = invokeMountedHook;
+    const { container, vnode, instance } = setupEmpty(() => null);
+
+    api.mountComponent(vnode, container, null, null, null, false);
+
+    expect(invokeMountedHook).toHaveBeenCalledWith(instance);
+  });
+});

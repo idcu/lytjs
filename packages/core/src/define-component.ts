@@ -36,7 +36,11 @@ export function defineAsyncComponent(
   const error = ref<Error | undefined>(undefined);
   const loading = ref<boolean>(false);
   let retries = 0;
-  let showLoading = false;
+  // ★ 2026-10-16：此前是**普通变量** `let showLoading = false`，而 `render()` 会读它
+  //   ⇒ delay 到点置位时**没有任何响应式依赖被触发** ⇒ 不重渲染 ⇒ **loadingComponent
+  //   永不出现**（实测：delay=120 + loadingComponent，等 200ms 仍是空）。
+  //   改为 ref 后 render 读取它即建立依赖（同 `loadedComponent` / `error`）。
+  const showLoading = ref<boolean>(false);
   let delayTimer: ReturnType<typeof setTimeout> | null = null;
   let loadingPromise: Promise<Component> | null = null;
 
@@ -66,10 +70,10 @@ export function defineAsyncComponent(
     if (loadingPromise) return loadingPromise as Promise<Component>;
 
     loading.value = true;
-    showLoading = false;
+    showLoading.value = false;
     if (delayTimer) clearTimeout(delayTimer);
     delayTimer = setTimeout(() => {
-      showLoading = true;
+      showLoading.value = true;
     }, delay);
     return (loadingPromise = Promise.resolve(loader())
       .then((comp) => {
@@ -89,7 +93,7 @@ export function defineAsyncComponent(
           clearTimeout(delayTimer);
           delayTimer = null;
         }
-        showLoading = false;
+        showLoading.value = false;
         // load 成功后清除 timeout，避免不必要的超时回调
         if (timeoutId !== null) {
           clearTimeout(timeoutId);
@@ -194,7 +198,7 @@ export function defineAsyncComponent(
       if (error.value && errorComponent) {
         return h(errorComponent);
       }
-      if (showLoading && loadingComponent) {
+      if (showLoading.value && loadingComponent) {
         return h(loadingComponent);
       }
       return null;

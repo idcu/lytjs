@@ -128,7 +128,9 @@ export function createComponentPatch<HN, HE extends HN>(
     let initialSubTree: VNode | null = null;
 
     const update = () => {
-      let subTree: VNode;
+      // ⚠️ 声明为 `VNode | null`：`render()` 可以合法地返回 null/undefined（空渲染），
+      //    下方有专门分支处理（此前这里声明为 `VNode`，把 null 当成不可能 ⇒ 见该分支注释）。
+      let subTree: VNode | null;
       try {
         const result = renderFn.call(component!.ctx, component!.ctx) as
           | VNode
@@ -245,6 +247,41 @@ export function createComponentPatch<HN, HE extends HN>(
             }
           }
         }
+      }
+
+      // ★ 2026-10-16：`render()` 返回 null / undefined 是**合法的空渲染**。
+      //
+      // 声明签名就是 `render(): VNode | null`（`component/src/define-component.ts`
+      // 与本包注释均如此），而 `@lytjs/core` 的 `defineAsyncComponent` 在**未配
+      // loadingComponent** 时首帧正是返回 null（`render(){ … return null }`）。
+      //
+      // 缺陷（实测，最小复现 `{ render: () => null }`）：此前这里**无条件**执行
+      // `vnode.el = subTree.el` ⇒ 挂载即抛
+      // `TypeError: Cannot read properties of null (reading 'el')`
+      // ⇒ 应用**整个挂载失败**（`Failed to mount app`）。返回 undefined 同样命中
+      // （`render` 抛错被 errorCaptured 处理后 subTree 也未赋值）。
+      //
+      // 守卫：`tests/patch-component.test.ts` 的「render 返回 null/undefined（空渲染）」组。
+      if (subTree === null || subTree === undefined) {
+        // 由「有内容」变为「空」⇒ 必须**主动卸载**旧 DOM：
+        // `patch(n1, null)` 只在 DEV 下 warn 一句就 return（见 patch.ts:418），不会卸载。
+        if (initialSubTree) {
+          ctx.unmount(initialSubTree, null, null, true);
+          initialSubTree = null;
+        }
+        component!.subTree = null as unknown as VNode;
+        vnode.el = null;
+        // 空渲染也算「已挂载 / 已更新」：否则 `invokeMountedHook` 永不触发，
+        // 而 `instance.isMounted` 由 `callMountedHook` 置位
+        // （component/src/lifecycle.ts）⇒ 依赖 `isMounted` 的逻辑（如
+        // `forceComponentUpdate` 的回退路径）会静默失效。
+        if (!isMounted) {
+          isMounted = true;
+          ctx.invokeMountedHook?.(component!);
+        } else {
+          ctx.invokeUpdatedHook?.(component!);
+        }
+        return;
       }
 
       component!.subTree = subTree;
