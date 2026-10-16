@@ -17,3 +17,4 @@ keywords: [决策, ADR, 索引]
 | 0008 | 环境类失败不得转化为仓库改动（内核提炼进「人审关卡」表，坑 `sandbox-safe-delete-block` 置 distilled） | active | [0008-env-failure-not-code-defect.md](0008-env-failure-not-code-defect.md) |
 | 0009 | 已蒸馏的坑移出检索面：`pitfalls/` → `archive/pitfalls/`，INDEX 只列活跃坑（不放宽预算） | active | [0009-pitfall-archive-out-of-retrieval.md](0009-pitfall-archive-out-of-retrieval.md) |
 | 0010 | 登记缺陷二分：**缺陷**按 ADR 修复 + 守卫，**取舍**交 owner（首个执行项：Tabs 四处） | active | [0010-registered-defects-fix-vs-tradeoff.md](0010-registered-defects-fix-vs-tradeoff.md) |
+| 0011 | 同名公开 API 只允许**一份权威实现**，其余入口只转发（首个执行项：`defineAsyncComponent` 三份收敛为一份） | active | [0011-single-authoritative-implementation.md](0011-single-authoritative-implementation.md) |
