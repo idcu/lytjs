@@ -65,10 +65,12 @@ export function getStoreStates(): StoreStateInfo[] {
       }
     }
 
-    // 提取 getters
-    if (store.$id) {
-      stateInfo.id = store.$id;
-    }
+    // ★ 2026-10-17 修复：`id` 必须用**注册键**。
+    //   此前若 store 自带 `$id`，会用它覆盖注册键（注释还写着"提取 getters"，像是复制残留）。
+    //   后果：`getStoreStates()` 返回的 id 与 `getStoreState()` 的 id **不一致**，
+    //   而 `setStoreState` / `dispatchStoreAction` / `subscribeStore` 都只认**注册键**
+    //   ⇒ 「列表 → 按 id 写值」这条最自然的用法会**静默失败**（实测：返回 false）。
+    //   保留 `$id` 覆盖只会让列表里的 id 不可回写，故以注册键为准。
 
     states.push(stateInfo);
   }
@@ -102,26 +104,48 @@ export function getStoreState(storeId: string): StoreStateInfo | null {
 }
 
 /**
+ * 路径中**禁止**出现的键 —— 原型链污染的三个经典入口。
+ * `setStoreState` 的路径来自外部（devtools 面板 / 控制台 / 自动化脚本）⇒ 必须挡住。
+ */
+const FORBIDDEN_PATH_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+/**
  * 修改 Store 状态（用于开发时调试）
+ *
+ * ⚠️ **返回 `true` 当且仅当真的写进去了**。此前它有三类「谎报成功」：
+ * ① 写的是 `store` **顶层**，而读状态读的是 `store.$state` ⇒ 值落到别处、读回来仍是旧值
+ *    （Pinia 的 store 因为有代理才"看起来"生效，而 `{ $state: … }` 这种被本模块
+ *    `getStoreStates` 明确支持的形态会直接失效）；
+ * ② 空路径 / 中间段不存在 / 经过非对象时**照样返回 true**；
+ * ③ 无原型污染防护：`__proto__.x` / `constructor.prototype.x` 会写到 `Object.prototype`。
  */
 export function setStoreState(storeId: string, path: string, value: unknown): boolean {
   const store = storeRegistry.get(storeId);
   if (!store) return false;
 
+  if (!path) return false;
   const keys = path.split('.');
-  let current: unknown = store;
+  if (keys.some((k) => k === '' || FORBIDDEN_PATH_KEYS.has(k))) return false;
+
+  // 与 `getStoreState` 用**同一个读源**
+  const base: unknown = store.$state ?? store;
+  let current: unknown = base;
 
   // 遍历到倒数第二个 key
   for (let i = 0; i < keys.length - 1; i++) {
-    const key = keys[i]!;
     if (!isObject(current)) return false;
-    current = (current as Record<string, unknown>)[key];
+    current = (current as Record<string, unknown>)[keys[i]!];
   }
 
   // 设置最终值
-  const lastKey = keys[keys.length - 1];
-  if (lastKey && isObject(current)) {
+  const lastKey = keys[keys.length - 1]!;
+  if (!isObject(current)) return false;
+
+  try {
     (current as Record<string, unknown>)[lastKey] = value;
+  } catch {
+    // 冻结对象 / 只读属性 ⇒ 明确失败
+    return false;
   }
 
   return true;
