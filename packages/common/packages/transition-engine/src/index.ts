@@ -249,10 +249,18 @@ export class TransitionEngine<HN extends object = object, HE extends HN = HN> {
     }
 
     state.phase = 'idle';
+    // ★ 2026-10-17 修复（P1）：此前这里直接 `state.doneCallback = null` —— **从未调用**它
+    //   （全文件 grep `doneCallback` 只有写入与置空，**没有任何调用点**）⇒ 泛型路径
+    //   （真实渲染器走的 `performEnterTransition(host, el, props, done)` → `engine.performEnter`）
+    //   的 `done` **永不触发** ⇒ 调用方永远等不到过渡结束（离开的元素不会被移除）。
+    //   DOM 回退是**另一套内联实现**，它确实调了 `doneFn()`，所以此前只在泛型路径暴露。
+    const done = state.doneCallback;
     state.doneCallback = null;
 
     // 清理
     transitionCleanupMap.delete(el);
+
+    done?.();
   }
 
   // ==========================================================
@@ -334,9 +342,14 @@ export class TransitionEngine<HN extends object = object, HE extends HN = HN> {
     }
 
     state.phase = 'idle';
+    // ★ 2026-10-17 修复（P1）：同 `finishEnter` —— `doneCallback` 此前被置空而**从未调用**，
+    //   ⇒ 泛型路径的 leave 完成回调永不触发（渲染器不会移除离开的元素）。
+    const done = state.doneCallback;
     state.doneCallback = null;
 
     transitionCleanupMap.delete(el);
+
+    done?.();
   }
 
   // ==========================================================
