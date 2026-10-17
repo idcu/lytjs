@@ -208,5 +208,30 @@ export type {
 
 export type { VDOMNodeInfo } from './vdomInspector';
 
+// ★ 2026-10-17 修复：VDOM 检查器的**函数**此前一个都没转出（只转出了类型）——
+//   而 `DevTools` 的 VDOM 标签页文案明确写着「Use registerVDOMRoot() to register your
+//   VDOM roots.」⇒ 用户照着做会 `import` 失败（`package.json` 只暴露 `.`，无深路径入口，
+//   且 `treeshake` 会把这些函数从产物里摇掉）。`registerSignal` / `registerStore` 都转出了，
+//   唯独 VDOM 这一套漏了 —— 补齐后三个检查器的入口面才一致。
+export {
+  registerVDOMRoot,
+  unregisterVDOMRoot,
+  getVDOMRoots,
+  getVDOMNodeById,
+  getVDOMTree,
+  findVDOMNodesByTag,
+  findVDOMNodesByProp,
+  getVDOMStats,
+  clearVDOMRegistry,
+  serializeVDOMNode,
+  serializeVDOMTree,
+  getVDOMPath,
+  highlightVDOMNode,
+  inspectVDOMNode,
+} from './vdomInspector';
+
+// ★ 2026-10-17：`signalsInspector` 里这两个也漏转了（其余 29 个都在）。
+export { getSnapshot, recordPerformance } from './signalsInspector';
+
 // 默认导出
 export { installDevTools as default } from './devtools';

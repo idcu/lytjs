@@ -5,6 +5,7 @@
  */
 
 import type { VNode } from '@lytjs/vdom';
+import { Comment, Fragment, Text } from '@lytjs/vdom';
 
 export interface VDOMNodeInfo {
   id: string;
@@ -34,13 +35,29 @@ const registry: VDOMRegistry = {
   idCounter: 0,
 };
 
-const componentVDOMMap = new Map<string, string[]>();
+// ★ 2026-10-17：删除 `componentVDOMMap` —— 它此前只被**写入**（`registerVDOMRoot`）与**清空**
+//   （`clearVDOMRegistry`），**从未被任何地方读取**（grep 全文件仅 4 处：声明/写入×2/清空）
+//   ⇒ 纯死代码，且 `unregisterVDOMRoot` 也从不清它（若将来启用，会留下悬空 id）。
 
 function generateId(): string {
   return `vdom-${++registry.idCounter}-${Date.now().toString(36)}`;
 }
 
 function getVNodeType(vnode: VNode): { type: string; tagName?: string; isComponent: boolean } {
+  // ★ 2026-10-17 修复：**先判 symbol 类型**（`Text` / `Fragment` / `Comment`）。
+  //   此前只判 string / object / function ⇒ 真实 `h('div', {}, 'hi')` 产生的 Text vnode
+  //   （`type` 是 **symbol**）全部落到 `'unknown'` ⇒ 统计里 `textCount` 恒 0、
+  //   序列化时该分支无输出 ⇒ **文本在面板里直接消失**（实测：`🏷️ <div>` 下什么都没有）。
+  if (vnode.type === Text) {
+    return { type: 'text', isComponent: false };
+  }
+  if (vnode.type === Fragment) {
+    return { type: 'fragment', isComponent: false };
+  }
+  if (vnode.type === Comment) {
+    return { type: 'comment', isComponent: false };
+  }
+
   if (typeof vnode.type === 'string') {
     return { type: 'element', tagName: vnode.type, isComponent: false };
   } else if (typeof vnode.type === 'object' && vnode.type !== null) {
@@ -100,21 +117,19 @@ function extractProps(vnode: VNode): Record<string, unknown> | undefined {
 }
 
 export function registerVDOMRoot(vnode: VNode, componentId?: string): string {
-  const id = generateId();
-  const nodeInfo = processVNode(vnode, id, null, 0, componentId);
+  // ★ 2026-10-17 修复：此前这里先 `generateId()` 拿一个 id 当 **parentId** 传给 `processVNode`，
+  //   而 `processVNode` 内部**又生成一个** id 作为根节点自身的 id ⇒ 两个 id 并存：
+  //   · 根节点被写进 `registry.nodes` **两次**（`totalNodes` 虚高 1/根、注销后仍残留一条）；
+  //   · 根的 `parentId` 指向那个「被丢弃的 id」⇒ `getVDOMPath` 沿自身**无限回溯**（死循环，
+  //     `inspectVDOMNode` 一并挂死）。
+  //   现在：根的 `parentId` 为 undefined，注册键就是根节点**自己的** id。
+  const nodeInfo = processVNode(vnode, undefined, null, 0, componentId);
+  if (!nodeInfo) return '';
 
-  if (nodeInfo) {
-    registry.roots.set(id, nodeInfo);
-    registry.nodes.set(id, nodeInfo);
+  registry.roots.set(nodeInfo.id, nodeInfo);
+  // `processVNode` 已把自身写入 `registry.nodes`，此处不再重复 set（否则同一节点两个 id）
 
-    if (componentId) {
-      const existing = componentVDOMMap.get(componentId) || [];
-      existing.push(id);
-      componentVDOMMap.set(componentId, existing);
-    }
-  }
-
-  return id;
+  return nodeInfo.id;
 }
 
 function processVNode(
@@ -164,7 +179,8 @@ function processVNode(
     id,
     type,
     tagName,
-    text: type === 'text' || !tagName ? text : undefined,
+    // 只有真正的文本节点才带 text（symbol 已在上方被识别为 'text'）
+    text: type === 'text' ? text : undefined,
     props,
     children: [],
     parentId,
@@ -230,7 +246,10 @@ export function findVDOMNodesByTag(tagName: string): VDOMNodeInfo[] {
 export function findVDOMNodesByProp(propName: string, value?: unknown): VDOMNodeInfo[] {
   const results: VDOMNodeInfo[] = [];
   for (const node of registry.nodes.values()) {
-    if (node.props && propName in node.props) {
+    // ★ 2026-10-17 修复：此前用 `propName in node.props` —— `in` 会**查原型链**，
+    //   于是 `toString` / `constructor` / `valueOf` 这类名字会命中**所有**带 props 的节点
+    //   （实测 `findVDOMNodesByProp('toString')` 返回了全部节点）。改为只认自有属性。
+    if (node.props && Object.prototype.hasOwnProperty.call(node.props, propName)) {
       if (value === undefined || node.props[propName] === value) {
         results.push(node);
       }
@@ -273,7 +292,6 @@ export function clearVDOMRegistry(): void {
   registry.roots.clear();
   registry.nodes.clear();
   registry.idCounter = 0;
-  componentVDOMMap.clear();
 }
 
 export function serializeVDOMNode(node: VDOMNodeInfo, indent = 0): string {
@@ -300,6 +318,9 @@ export function serializeVDOMNode(node: VDOMNodeInfo, indent = 0): string {
       }
     }
     result += '>\n';
+  } else if (node.type === 'fragment') {
+    // ★ 2026-10-17：`Fragment`（symbol 类型）此前归为 'unknown' 且无任何分支 ⇒ 序列化时**整段消失**
+    result += `${spaces}🧩 <Fragment>\n`;
   }
 
   for (const child of node.children) {
