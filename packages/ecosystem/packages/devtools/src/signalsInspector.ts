@@ -125,21 +125,21 @@ const DEFAULT_LAYOUT_OPTIONS: LayoutOptions = {
   centerY: 200,
 };
 
+/** 注册表条目（内部类型：`signalRegistry` 与 `getSubgraph` 的子图视图共用） */
+interface SignalEntry {
+  type: 'signal' | 'computed' | 'effect';
+  name: string;
+  dependencies: Set<string>;
+  dependents: Set<string>;
+  value: unknown;
+  previousValue?: unknown;
+  updateCount: number;
+  updateTimes: number[];
+  lastUpdateTime: number;
+}
+
 // 信号注册表
-const signalRegistry = new Map<
-  string,
-  {
-    type: 'signal' | 'computed' | 'effect';
-    name: string;
-    dependencies: Set<string>;
-    dependents: Set<string>;
-    value: unknown;
-    previousValue?: unknown;
-    updateCount: number;
-    updateTimes: number[];
-    lastUpdateTime: number;
-  }
->();
+const signalRegistry = new Map<string, SignalEntry>();
 
 // 快照管理器
 const snapshotManager = {
@@ -571,8 +571,10 @@ export function serializePerformanceStats(): string {
 
 /**
  * 计算节点的层级（用于分层布局）
+ *
+ * @param registry 待布局的注册表（`getSubgraph` 会传入**子图视图**，见其实现）
  */
-function calculateNodeLevels(): Map<string, number> {
+function calculateNodeLevels(registry: Map<string, SignalEntry>): Map<string, number> {
   const levels = new Map<string, number>();
   const visited = new Set<string>();
 
@@ -588,7 +590,7 @@ function calculateNodeLevels(): Map<string, number> {
     visited.add(nodeId);
     levels.set(nodeId, level);
 
-    const node = signalRegistry.get(nodeId);
+    const node = registry.get(nodeId);
     if (node) {
       node.dependents.forEach((depId) => {
         visitNode(depId, level + 1);
@@ -596,13 +598,13 @@ function calculateNodeLevels(): Map<string, number> {
     }
   }
 
-  signalRegistry.forEach((node, id) => {
+  registry.forEach((node, id) => {
     if (node.dependencies.size === 0) {
       visitNode(id, 0);
     }
   });
 
-  signalRegistry.forEach((_, id) => {
+  registry.forEach((_, id) => {
     if (!visited.has(id)) {
       visitNode(id, 0);
     }
@@ -614,10 +616,12 @@ function calculateNodeLevels(): Map<string, number> {
 /**
  * 计算每个节点的入度和出度
  */
-function calculateNodeDegrees(): Map<string, { inDegree: number; outDegree: number }> {
+function calculateNodeDegrees(
+  registry: Map<string, SignalEntry>,
+): Map<string, { inDegree: number; outDegree: number }> {
   const degrees = new Map<string, { inDegree: number; outDegree: number }>();
 
-  signalRegistry.forEach((node, id) => {
+  registry.forEach((node, id) => {
     degrees.set(id, {
       inDegree: node.dependencies.size,
       outDegree: node.dependents.size,
@@ -628,17 +632,25 @@ function calculateNodeDegrees(): Map<string, { inDegree: number; outDegree: numb
 }
 
 /**
- * 获取可视化布局图
+ * 由给定注册表构建可视化布局图（`getVisualLayoutGraph` 与 `getSubgraph` 共用）
+ *
+ * ★ 2026-10-17 修复（静默丢边）：**先在第一步为所有节点定好位，第二步再统一生成边**。
+ *   此前是「边算边找」——生成某个节点的边时用 `nodes.find(n => n.id === depId)` 只在
+ *   **已经生成**的节点里找依赖方，而 `nodes` 是按层级顺序增长的 ⇒ 一旦依赖方与被依赖方
+ *   落在**同一层**（**依赖成环**时必然如此），依赖方尚未生成 ⇒ 该边被**静默丢弃**。
+ *   而「环」恰恰是用户代码的缺陷信号、也正是 devtools 应当显示出来的东西
+ *   （实测：`a⇄b` 两个信号 ⇒ 布局图只给出 1 条边）。
  */
-export function getVisualLayoutGraph(options?: Partial<LayoutOptions>): VisualLayoutGraph {
-  const opts: LayoutOptions = { ...DEFAULT_LAYOUT_OPTIONS, ...options };
-
-  if (signalRegistry.size === 0) {
+function buildLayoutGraph(
+  registry: Map<string, SignalEntry>,
+  opts: LayoutOptions,
+): VisualLayoutGraph {
+  if (registry.size === 0) {
     return { nodes: [], edges: [], width: 0, height: 0 };
   }
 
-  const levels = calculateNodeLevels();
-  const degrees = calculateNodeDegrees();
+  const levels = calculateNodeLevels(registry);
+  const degrees = calculateNodeDegrees(registry);
 
   const levelNodes = new Map<number, string[]>();
   levels.forEach((level, nodeId) => {
@@ -654,15 +666,15 @@ export function getVisualLayoutGraph(options?: Partial<LayoutOptions>): VisualLa
   const graphHeight = (maxLevel + 2) * (opts.nodeHeight + opts.verticalSpacing);
 
   const nodes: VisualLayoutNode[] = [];
-  const edges: VisualLayoutEdge[] = [];
 
+  // 第一步：为所有节点定位
   levelNodes.forEach((nodeIds, level) => {
     const levelWidth =
       nodeIds.length * (opts.nodeWidth + opts.horizontalSpacing) - opts.horizontalSpacing;
     const startX = (graphWidth - levelWidth) / 2;
 
     nodeIds.forEach((nodeId, index) => {
-      const node = signalRegistry.get(nodeId);
+      const node = registry.get(nodeId);
       if (!node) return;
 
       const degree = degrees.get(nodeId) || { inDegree: 0, outDegree: 0 };
@@ -685,20 +697,29 @@ export function getVisualLayoutGraph(options?: Partial<LayoutOptions>): VisualLa
         inDegree: degree.inDegree,
         outDegree: degree.outDegree,
       });
+    });
+  });
 
-      node.dependencies.forEach((depId) => {
-        const depNode = nodes.find((n) => n.id === depId);
-        if (depNode) {
-          edges.push({
-            source: depId,
-            target: nodeId,
-            sourceX: depNode.x + opts.nodeWidth,
-            sourceY: depNode.y + opts.nodeHeight / 2,
-            targetX: x,
-            targetY: y + opts.nodeHeight / 2,
-            type: 'dependency',
-          });
-        }
+  // 第二步：统一生成边（此时所有节点都已定位 ⇒ 环也能完整呈现）
+  const edges: VisualLayoutEdge[] = [];
+  const nodeById = new Map(nodes.map((n) => [n.id, n]));
+
+  nodes.forEach((n) => {
+    const node = registry.get(n.id);
+    if (!node) return;
+
+    node.dependencies.forEach((depId) => {
+      const depNode = nodeById.get(depId);
+      if (!depNode) return; // 依赖不在本次布局范围内（如子图边界外）⇒ 不画边
+
+      edges.push({
+        source: depId,
+        target: n.id,
+        sourceX: depNode.x + opts.nodeWidth,
+        sourceY: depNode.y + opts.nodeHeight / 2,
+        targetX: n.x,
+        targetY: n.y + opts.nodeHeight / 2,
+        type: 'dependency',
       });
     });
   });
@@ -707,7 +728,21 @@ export function getVisualLayoutGraph(options?: Partial<LayoutOptions>): VisualLa
 }
 
 /**
+ * 获取可视化布局图
+ */
+export function getVisualLayoutGraph(options?: Partial<LayoutOptions>): VisualLayoutGraph {
+  const opts: LayoutOptions = { ...DEFAULT_LAYOUT_OPTIONS, ...options };
+  return buildLayoutGraph(signalRegistry, opts);
+}
+
+/**
  * 获取以指定节点为中心的子图
+ *
+ * ★ 2026-10-17 修复：此前它**临时删空全局注册表**再复原（`signalRegistry.delete` ⇒
+ *   `getVisualLayoutGraph()` ⇒ `clear()` + 复原），是「**读** API 改全局状态」——
+ *   一旦中途抛错，注册表会被**永久截断**为子图内容（数据丢失）。
+ *   现改为构造一份**只含子图节点、且依赖/被依赖已过滤到子图内**的视图交给布局函数，
+ *   **不再触碰全局注册表**。
  */
 export function getSubgraph(centerId: string, depth: number = 2): VisualLayoutGraph {
   const includedNodes = new Set<string>([centerId]);
@@ -735,22 +770,18 @@ export function getSubgraph(centerId: string, depth: number = 2): VisualLayoutGr
     }
   }
 
-  const tempRegistry = new Map(signalRegistry);
-
-  signalRegistry.forEach((_, id) => {
-    if (!includedNodes.has(id)) {
-      signalRegistry.delete(id);
-    }
+  const view = new Map<string, SignalEntry>();
+  includedNodes.forEach((id) => {
+    const node = signalRegistry.get(id);
+    if (!node) return;
+    view.set(id, {
+      ...node,
+      dependencies: new Set([...node.dependencies].filter((d) => includedNodes.has(d))),
+      dependents: new Set([...node.dependents].filter((d) => includedNodes.has(d))),
+    });
   });
 
-  const subgraph = getVisualLayoutGraph();
-
-  signalRegistry.clear();
-  tempRegistry.forEach((value, key) => {
-    signalRegistry.set(key, value);
-  });
-
-  return subgraph;
+  return buildLayoutGraph(view, DEFAULT_LAYOUT_OPTIONS);
 }
 
 /**
