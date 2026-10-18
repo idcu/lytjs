@@ -329,19 +329,27 @@ function resolveTargetDir(type: AddType): string {
  * Add a component, page, or store
  */
 export async function add(type: AddType, name: string, options: AddOptions = {}): Promise<void> {
-  const targetDir = resolveTargetDir(type);
-  const fullPath = resolve(targetDir);
-
   if (!exists(join(process.cwd(), 'package.json'))) {
     logger.error('No package.json found. Are you in a LytJS project directory?');
     process.exit(1);
+    return; // 便于测试；真实 `process.exit` 不返回
   }
 
+  // ★ 2026-10-18 修复：**先校验 type，再解析目录**。
+  //   此前顺序是 `resolveTargetDir(type)` → `resolve(targetDir)` → `if (!template)`，
+  //   而 `resolveTargetDir` 的 `switch` **没有 default** ⇒ 未知类型返回 `undefined`
+  //   ⇒ `resolve(undefined)` 先抛 `TypeError: The "paths[0]" argument must be of type string`
+  //   ⇒ 下面那条「Unknown type」友好报错**永远走不到**（实测确认）。
   const template = TEMPLATES[type];
   if (!template) {
-    logger.error(`Unknown type: ${type}. Supported types: component, page, store`);
+    // 报错文本也修正：此前写死「component, page, store」三种，实际支持 8 种。
+    logger.error(`Unknown type: ${type}. Supported types: ${Object.keys(TEMPLATES).join(', ')}`);
     process.exit(1);
+    return;
   }
+
+  const targetDir = resolveTargetDir(type);
+  const fullPath = resolve(targetDir);
 
   const files = template(name, fullPath);
 
