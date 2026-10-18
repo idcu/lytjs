@@ -449,6 +449,11 @@ export async function validatePlugin(options: PluginValidateOptions = {}): Promi
   // Report results
   const hasErrors = errors.length > 0;
   const hasWarnings = warnings.length > 0;
+  // ★ 2026-10-18：`strict` 与 `warningsAsErrors` **都**表示「警告即失败」。
+  //   修复前 `warningsAsErrors` 只在「**已有 errors**」的分支里被读到 ⇒ 等于**完全无效**
+  //   （只有警告时照样 exit 0，用户以为开了"警告当错误"却没生效）。
+  const fatalWarnings =
+    hasWarnings && (options.strict === true || options.warningsAsErrors === true);
 
   if (hasErrors) {
     logger.error('Validation failed with errors:');
@@ -457,8 +462,11 @@ export async function validatePlugin(options: PluginValidateOptions = {}): Promi
     }
   }
 
-  if (hasWarnings && !options.strict) {
-    logger.warning('Warnings:');
+  // ★ 2026-10-18 修复：此前打印警告的条件是 `hasWarnings && !options.strict` ——
+  //   于是**strict 模式把警告藏起来、却照样 exit(1)**：用户只看到「passed (with warnings)」
+  //   然后退出码 1，**完全不知道哪里错了**。失败必须可解释 ⇒ 无条件打印。
+  if (hasWarnings) {
+    logger.warning(fatalWarnings ? 'Warnings (treated as errors):' : 'Warnings:');
     for (const warn of warnings) {
       logger.warning(`  - ${warn}`);
     }
@@ -466,17 +474,21 @@ export async function validatePlugin(options: PluginValidateOptions = {}): Promi
 
   if (!hasErrors && !hasWarnings) {
     logger.success('Plugin validation passed!');
-  } else if (hasWarnings && !hasErrors) {
-    logger.success('Plugin validation passed (with warnings)');
-    if (options.strict) {
-      process.exit(1);
-    }
-  } else {
-    if (options.warningsAsErrors && hasWarnings) {
-      logger.error('Strict mode: treating warnings as errors');
-    }
-    process.exit(1);
+    return;
   }
+
+  if (!hasErrors && fatalWarnings) {
+    logger.error('Validation failed: warnings are treated as errors');
+    process.exit(1);
+    return; // 便于测试；真实 `process.exit` 不返回
+  }
+
+  if (!hasErrors) {
+    logger.success('Plugin validation passed (with warnings)');
+    return;
+  }
+
+  process.exit(1);
 }
 
 // ==================== Helper Functions ====================
