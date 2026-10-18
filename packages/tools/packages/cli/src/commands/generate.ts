@@ -597,6 +597,7 @@ export async function generate(options: GenerateOptions): Promise<void> {
     path: basePath = './src',
     withStyles = false,
     withTest = false,
+    withStorybook = false,
     description = '',
     template = 'default',
     language = 'ts',
@@ -655,6 +656,21 @@ export async function generate(options: GenerateOptions): Promise<void> {
 
   if (withTest && template !== 'sfc') {
     logger.info('Test file included in generated component');
+  }
+
+  // ★ 2026-10-18 修复（声明 vs 实际）：`--storybook` 此前是**静默空操作** ——
+  //   `run.ts` 的帮助文本写着「--storybook  Generate Storybook story file」、README 也承诺了，
+  //   但 `generate()` **从不读取** `withStorybook`（全仓 grep 只有声明 + 透传两处，无读取点）
+  //   ⇒ 用户传了参数、什么都没发生、也没有任何提示。
+  //   这里**不**凭空实现：本仓未依赖 `@storybook/*`，生成出来必然「装了也跑不起来」
+  //   （与 `create` 模板那次缺陷同类，见 tests/template-validity.test.ts）。
+  //   按本文件对 `--template=sfc` 的既有先例，改为**显式警告**。
+  if (withStorybook) {
+    logger.warning(
+      '⚠️ `--storybook` 尚未实现：本命令**不会**生成 Storybook story 文件' +
+        '（本仓未依赖 @storybook/*，生成出来也无法使用）。' +
+        '如需请手写 .stories.ts，或先引入 Storybook 再补实现。',
+    );
   }
 
   logger.info('\nNext steps:');
