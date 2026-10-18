@@ -3,6 +3,9 @@
  * Better debugging experience and dev tools enhancements
  */
 
+// ★ 2026-10-18：检查点快照改用 `deepClone`（带 `seen` WeakMap ⇒ **循环引用安全**）
+import { deepClone } from '@lytjs/common-object';
+
 // Simple event emitter implementation
 class SimpleEventEmitter<Events extends Record<string, unknown[]>> {
   private listeners: Map<string, Set<(...args: unknown[]) => void>> = new Map();
@@ -246,7 +249,13 @@ export function onClear(callback: () => void): () => void {
 /**
  * Create a debug breakpoint
  */
-export function createDebugger(category: string, condition?: () => boolean): () => void {
+export function createDebugger(
+  category: string,
+  condition?: () => boolean,
+): (metadata?: Record<string, unknown>) => void {
+  // ★ 2026-10-18 修复：实现体接受 `metadata`，但返回类型此前写成 `() => void`
+  //   ⇒ **类型层面把 metadata 参数藏掉了**，带类型的调用方传 metadata 会报错
+  //   （"Expected 0 arguments"）。声明与实现对齐。
   return (metadata?: Record<string, unknown>) => {
     if (condition && !condition()) return;
 
@@ -265,10 +274,15 @@ export function measurePerformance(
   category: string = 'performance',
 ): <T extends (...args: unknown[]) => unknown>(fn: T) => T {
   return <T extends (...args: unknown[]) => unknown>(fn: T): T => {
-    const wrapped = (...args: unknown[]) => {
+    // ★ 2026-10-18 修复：此前是**箭头函数** + `fn(...args)` —— 箭头函数没有自己的 `this`，
+    //   且直接调用 `fn` 等于丢掉 receiver ⇒ 装饰**对象方法**时 `this` 为 undefined
+    //   （实测 `measurePerformance('add')(obj.add).call(obj, 5)` 抛
+    //   `Cannot read properties of undefined (reading 'base')`）。
+    //   改为普通函数表达式 + `fn.apply(this, args)`，保留调用方的 `this`。
+    const wrapped = function (this: unknown, ...args: unknown[]) {
       const start = performance.now();
       try {
-        const result = fn(...args);
+        const result = fn.apply(this, args);
         const duration = performance.now() - start;
         debug(category, `${name} executed`, { duration, args });
         return result;
@@ -324,7 +338,10 @@ export function createCheckpoint(name: string, state: Record<string, unknown>): 
     id: `checkpoint_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     name,
     timestamp: Date.now(),
-    state: JSON.parse(JSON.stringify(state)),
+    // ★ 2026-10-18 修复：此前是 `JSON.parse(JSON.stringify(state))` ⇒ 状态含**循环引用**时
+    //   直接抛 `TypeError: Converting circular structure to JSON`（devtools 检查的组件状态
+    //   常带 parent/instance 回指）。改用 `deepClone`（内置 `seen` WeakMap，循环安全）。
+    state: deepClone(state),
   };
 
   checkpoints.push(checkpoint);
@@ -339,6 +356,27 @@ export function createCheckpoint(name: string, state: Record<string, unknown>): 
  */
 export function getCheckpoints(): Checkpoint[] {
   return [...checkpoints];
+}
+
+/**
+ * 循环安全的序列化（仅用于检查点比较）
+ *
+ * ★ 2026-10-18：`createCheckpoint` 现在允许存**含循环引用**的状态，而 `JSON.stringify`
+ *   遇环会抛 ⇒ 比较也必须循环安全，否则「存得下、比不了」。
+ */
+function safeStringify(value: unknown): string {
+  const seen = new WeakSet<object>();
+  try {
+    return JSON.stringify(value, (_key, val: unknown) => {
+      if (val !== null && typeof val === 'object') {
+        if (seen.has(val as object)) return '[Circular]';
+        seen.add(val as object);
+      }
+      return val;
+    });
+  } catch {
+    return String(value);
+  }
 }
 
 /**
@@ -376,7 +414,7 @@ export function compareCheckpoints(
     } else if (!in1 && in2) {
       added.push(key);
     } else if (in1 && in2) {
-      if (JSON.stringify(cp1.state[key]) !== JSON.stringify(cp2.state[key])) {
+      if (safeStringify(cp1.state[key]) !== safeStringify(cp2.state[key])) {
         changed.push(key);
       }
     }
