@@ -333,6 +333,18 @@ export function isFocusable(element: Element): boolean {
   if (element.getAttribute('aria-hidden') === 'true') return false;
 
   const tag = element.tagName.toLowerCase();
+
+  // ★ 2026-10-19 修复：`<input type="hidden">` **不是**可聚焦元素。
+  //   浏览器里对隐藏输入调 `.focus()` 是**空操作**；而 `getFocusableElements` 的选择器
+  //   是 `input:not([disabled])` ⇒ 隐藏输入会混进候选集，再被这里误判为可聚焦
+  //   ⇒ 一旦它排在最前，就会成为 `focusTrap` 的 `firstElement` ⇒ **初始焦点落空**
+  //   （焦点仍停在对话框外，键盘用户被卡在陷阱之外）。
+  if (tag === 'input' && (element as HTMLInputElement).type === 'hidden') return false;
+
+  // ★ 2026-10-19 修复：**无 href 的 `<a>` 不可聚焦**（不在 Tab 序列中）。
+  //   容器路径因选择器写的是 `a[href]` 而侥幸正确，但直接调用本函数会误判。
+  if (tag === 'a' && !element.hasAttribute('href')) return false;
+
   const focusableTags = new Set([
     'a',
     'button',
