@@ -4,6 +4,7 @@
 
 import type { ComponentTreeNode } from './types';
 import { isObject } from '@lytjs/common-is';
+import { safeStringify } from './safe-stringify';
 
 // 组件 ID 计数器
 let componentIdCounter = 0;
@@ -68,6 +69,12 @@ function buildComponentTreeRecursive(
   if (component.children && Array.isArray(component.children)) {
     const children: ComponentTreeNode[] = [];
     for (const child of component.children) {
+      // ★ 2026-10-18 修复：`children?: unknown[]`，但**非对象子项**（字符串 / 数字 / null）
+      //   此前会被 `extractComponentInfo` 当成组件 ⇒ 名字回退成 `Anonymous`
+      //   ⇒ 面板里冒出**幽灵组件节点**（实测 `['纯文本', 42]` 生成 2 个 `Anonymous`）。
+      //   这里只把对象当作组件。
+      if (child === null || typeof child !== 'object') continue;
+
       const childNode = buildComponentTreeRecursive(
         child as {
           name?: string;
@@ -126,8 +133,10 @@ export function serializeComponentTree(nodes: ComponentTreeNode[], indent = 0): 
   for (const node of nodes) {
     result += `${prefix}- ${node.name}`;
     if (node.props && Object.keys(node.props).length > 0) {
+      // ★ 2026-10-18 修复：此前用 `JSON.stringify(v)` —— props 值含**循环引用**时直接抛
+      //   （实测 `TypeError: Converting circular structure to JSON`），整个组件树面板打不出来。
       const propsStr = Object.entries(node.props)
-        .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
+        .map(([k, v]) => `${k}=${safeStringify(v)}`)
         .join(', ');
       result += ` (${propsStr})`;
     }

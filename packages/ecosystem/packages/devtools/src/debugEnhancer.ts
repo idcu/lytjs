@@ -5,6 +5,8 @@
 
 // ★ 2026-10-18：检查点快照改用 `deepClone`（带 `seen` WeakMap ⇒ **循环引用安全**）
 import { deepClone } from '@lytjs/common-object';
+// 循环安全的序列化（与 componentTree 共用同一实现，见 ADR 0011）
+import { safeStringify } from './safe-stringify';
 
 // Simple event emitter implementation
 class SimpleEventEmitter<Events extends Record<string, unknown[]>> {
@@ -356,27 +358,6 @@ export function createCheckpoint(name: string, state: Record<string, unknown>): 
  */
 export function getCheckpoints(): Checkpoint[] {
   return [...checkpoints];
-}
-
-/**
- * 循环安全的序列化（仅用于检查点比较）
- *
- * ★ 2026-10-18：`createCheckpoint` 现在允许存**含循环引用**的状态，而 `JSON.stringify`
- *   遇环会抛 ⇒ 比较也必须循环安全，否则「存得下、比不了」。
- */
-function safeStringify(value: unknown): string {
-  const seen = new WeakSet<object>();
-  try {
-    return JSON.stringify(value, (_key, val: unknown) => {
-      if (val !== null && typeof val === 'object') {
-        if (seen.has(val as object)) return '[Circular]';
-        seen.add(val as object);
-      }
-      return val;
-    });
-  } catch {
-    return String(value);
-  }
 }
 
 /**

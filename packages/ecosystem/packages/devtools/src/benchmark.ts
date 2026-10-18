@@ -159,7 +159,10 @@ function storeBenchmarkResult(name: string, result: BenchmarkResult): void {
  */
 export function getBenchmarkResults(name?: string): BenchmarkResult[] {
   if (name) {
-    return benchmarkResults.get(name) || [];
+    // ★ 2026-10-18 修复：此前直接返回**内部数组的引用** ⇒ 调用方 push/splice 会污染存储
+    //   （实测 `getBenchmarkResults('a').push(...)` 之后内部长度变 2）。
+    //   无参分支本来就返回新数组，这里与之对齐。
+    return [...(benchmarkResults.get(name) || [])];
   }
   const allResults: BenchmarkResult[] = [];
   benchmarkResults.forEach((results) => {
@@ -276,6 +279,14 @@ export function createLargeScaleBenchmark(
     iterations: 100,
     warmup: 10,
     fn: () => testFn(scenario.nodeCount),
+    // ★ 2026-10-18 修复：此前**只设 `fn`**，而 `runAsyncBenchmark` 只认 `asyncFn`
+    //   ⇒ 传**异步** `testFn` 时两条路都不通：
+    //   · `runBenchmark`（同步）不会 await ⇒ 异步工作量被**测成 0**；
+    //   · `runAsyncBenchmark` 直接抛 `asyncFn is required`。
+    //   补上 `asyncFn` 后，异步场景才真正可被测量（同步 `testFn` 也兼容，`await` 非 Promise 无害）。
+    asyncFn: async () => {
+      await testFn(scenario.nodeCount);
+    },
   };
 }
 
