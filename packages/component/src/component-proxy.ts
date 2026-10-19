@@ -4,6 +4,9 @@
 import { hasOwn } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
 import { nextTick } from '@lytjs/common-scheduler';
+// ★ 2026-10-20：`get` 需要对 ctx / setupState / data 的返回值**解包 ref**，
+//   否则 options API 的 `computed` 读出来是 ComputedRef 对象（模板里渲染成 [object Object]）。
+import { unref, isRef } from '@lytjs/reactivity';
 import type { ComponentInternalInstance, ComponentPublicInstance } from './types';
 import { forceComponentUpdate } from './force-update';
 // FIX: DTS build error - VNode 未使用
@@ -101,16 +104,16 @@ export function createComponentPublicInstance(
             if (typeof res === 'function' && key !== '$emit') {
               return res.bind(target);
             }
-            return res;
+            return unref(res);
           }
           case PublicInstanceProxyAccessCache.OTHER:
             return undefined;
           case PublicInstanceProxyAccessCache.SETUP_STATE:
-            return instance.setupState[key];
+            return unref(instance.setupState[key]);
           case PublicInstanceProxyAccessCache.DATA:
-            return instance.data[key];
+            return unref(instance.data[key]);
           case PublicInstanceProxyAccessCache.PROPS:
-            return instance.props[key];
+            return unref(instance.props[key]);
           case PublicInstanceProxyAccessCache.GLOBAL_PROPERTIES: {
             const globalProperties = instance.appContext?.config?.globalProperties as
               | Record<string, unknown>
@@ -129,7 +132,9 @@ export function createComponentPublicInstance(
         }
         // 缓存查找结果
         instance.accessCache![key] = PublicInstanceProxyAccessCache.CONTEXT;
-        return res;
+        // ★ 2026-10-20：解包 ref —— options API 的 `computed` 是经 `ctx[key] = computedRef`
+        //   装到这里的（见 component-init 的 finishComponentSetup）。
+        return unref(res);
       }
 
       // 2. globalProperties
@@ -144,19 +149,19 @@ export function createComponentPublicInstance(
       // 3. setupState
       if (hasOwn(instance.setupState, key)) {
         instance.accessCache![key] = PublicInstanceProxyAccessCache.SETUP_STATE;
-        return instance.setupState[key as string];
+        return unref(instance.setupState[key as string]);
       }
 
       // 4. data
       if (hasOwn(instance.data, key)) {
         instance.accessCache![key] = PublicInstanceProxyAccessCache.DATA;
-        return instance.data[key as string];
+        return unref(instance.data[key as string]);
       }
 
       // 5. props
       if (hasOwn(instance.props, key)) {
         instance.accessCache![key] = PublicInstanceProxyAccessCache.PROPS;
-        return instance.props[key as string];
+        return unref(instance.props[key as string]);
       }
 
       // 6. 组件注册表（局部 components → 全局 components）
@@ -209,17 +214,36 @@ export function createComponentPublicInstance(
         return true;
       }
 
-      // FIX: P0-05 未找到属性时，在 DEV 模式下发出警告并返回 false，
-      // 避免静默吞没写入导致调试困难
-      // FIX: P2-10 注意：生产模式下此操作静默返回 false，不抛出错误。
-      // 这是有意的设计，以避免在生产环境中因意外的属性写入导致应用崩溃。
-      if (__DEV__) {
-        warn(
-          `Component public instance has no property "${String(key)}". ` +
-            `This set operation was silently ignored.`,
-        );
+      // 2.5 ctx 上已存在的 ref（options API 的 `computed`）⇒ 写 `.value` 才会走它的 setter。
+      //     `get` 已经对 ctx 做了 `unref`，所以读出来是值；写的时候必须回到 ref 本体。
+      const existing = (_target as unknown as Record<string, unknown>)[key];
+      if (isRef(existing)) {
+        (existing as { value: unknown }).value = value;
+        return true;
       }
-      return false;
+
+      // ★ 2026-10-20 修复（P1）：此前未命中 setupState / data 时**一律拒绝写入**并返回 false
+      //   ⇒ options API 的 `methods` / `computed` **装不上公共实例**：
+      //   `finishComponentSetup` 正是用 `instance.ctx[key] = …` 安装它们的，而 `ctx` 就是这个代理
+      //   ⇒ 赋值被静默丢弃（DEV 下还会为**每个**方法/计算属性刷一条
+      //   「has no property … This set operation was silently ignored」）。
+      //   后果：`render` / `template` 里写 `this.myMethod()` 直接抛 TypeError ⇒ **整页空白**；
+      //   `this.myComputed` 读到 undefined。既有测试只断言过 `instance.type.methods` **存在**，
+      //   从未真正调用过方法，所以这个断链一直没暴露。
+      //   修：兜底写到公共实例对象本身（与 Vue 的 `PublicInstanceProxyHandlers.set` 一致）；
+      //   但 `$` 前缀是框架保留的公共属性（$el / $emit / $props …），仍拒绝覆盖。
+      if (key.startsWith('$')) {
+        if (__DEV__) {
+          warn(
+            `Cannot set reserved public property "${key}" on component public instance. ` +
+              `This set operation was silently ignored.`,
+          );
+        }
+        return false;
+      }
+
+      (_target as unknown as Record<string, unknown>)[key] = value;
+      return true;
     },
 
     has(_target: ComponentPublicInstance, key: string | symbol): boolean {
