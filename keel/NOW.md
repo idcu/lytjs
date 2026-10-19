@@ -3,7 +3,7 @@ scope: now
 status: active
 last-verified: 2026-10-19
 updated: 2026-10-19
-keywords: [硬约束9, 并行会话, 覆盖率快照]
+keywords: [硬约束9, 并行会话, 原型污染, 覆盖率快照, 未覆盖行区间]
 ---
 
 # NOW · main
@@ -13,24 +13,21 @@ keywords: [硬约束9, 并行会话, 覆盖率快照]
 UI 由并行会话在写 ⇒ 走**非 UI 包**车道。
 
 ## 覆盖率实测（2026-10-18）
-全局 **71.25%**；非 UI 未覆盖 Top：`devtools/panel/*` **999 语句 0%**；
-`client-server-boundary` 244；`core/create-app` 228；`a11y` 218（**已补 38 条**）。
-（`treeShaking` 250 未完成，不测）
+全局 **71.25%**；非 UI 未覆盖 Top：`devtools/panel/*` **999 语句 0%**、`client-server-boundary` 244、
+`component-init` 213（`create-app` 228 与 `a11y` 218 **已补**；`treeShaking` 250 未完成，不测）。
+**手法**：用 `coverage-final.json` 的 `statementMap` 反查**未覆盖行区间**再定点补，别通读猜。
 
 ## 10-19 完成
-- **common-a11y**（38 条）→ 2 缺陷：`isFocusable` 把 **`input[type=hidden]`** 与**无 href 的 `<a>`**
-  误判为可聚焦 ⇒ 隐藏输入成为焦点陷阱的 `firstElement`，而 `.focus()` 对它**空操作** ⇒ **初始焦点落空**。
+- **core/create-app**（19）→ 2 缺陷：`return mountWithSignalMode()` **缺 `await`** ⇒ signal 模式异常
+  **逃出 try/catch**（`errorHandler` 永不触发）；挂载失败后 `_container` 未复位 ⇒ app 被锁在"已挂载"
+  状态（重试报 already mounted，真去 unmount 则**永久不可用**）。
+- **common-a11y**（38）→ 2 缺陷：`isFocusable` 把 **`input[type=hidden]`** 与**无 href 的 `<a>`**
+  误判为可聚焦 ⇒ 隐藏输入成为焦点陷阱的 `firstElement`，`.focus()` 对它**空操作** ⇒ **初始焦点落空**。
 
-## 10-18 完成（摘要）
-- **cli**：`add` 未知类型抛 TypeError；`plugin` 的 `strict` 藏警告却 exit(1)、`warningsAsErrors`
-  无效；`generate` 的 `--storybook` 静默空操作。
-- **devtools 9 模块** → 6 类缺陷：时序事件丢嵌套、**成环丢边**、`setStoreState` 三类
-  谎报成功（含**原型污染**）、`registerVDOMRoot` **id 双生成 ⇒ 死循环**、装饰器丢 `this`、循环引用抛错。
-- **过渡生命周期** → **P1**：`doneCallback` 置 null 却**从未调用**；**立规 0011 + 三份收敛**。
+（10-17~18 的成果见工作日志 `2026-10-17/18.md` 与 git 历史；未完成项已并入下方「下一步」。）
 
 ## 下一步
-1. **非 UI 车道继续核心包**（按实测排序）：`core/create-app`(228) → `component-init`(213) →
-   `client-server-boundary`(244)。
+1. **非 UI 车道继续核心包**：`compiler/client-server-boundary`(244) → `component-init`(213)。
 2. `devtools/panel/*` **999 语句 0%**：先判断是"扩展 UI"还是该补测。
 3. 按 ADR 0010 判定 UI 剩余登记项（28）—— 需串行。
 4. 待判定：`resetPerformanceMonitor()` **不重置 `options`**；`clearAlerts()` **不清冷却**；
