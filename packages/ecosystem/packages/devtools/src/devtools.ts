@@ -70,6 +70,17 @@ let devtoolsInstance: DevTools | null = null;
 class DevTools implements DevToolsAPI {
   private options: Required<DevToolsOptions>;
   private isOpen = false;
+  /**
+   * 当前标签页
+   *
+   * ★ 2026-10-20 修复：`refresh()` 原先靠
+   * `document.querySelector('.lytjs-devtools-tab.active')` 找当前标签，但标签点击处理器
+   * 只改**内联样式**（background / borderBottomColor）、**从不加 `active` 类**
+   * ⇒ 查询恒为 `null` ⇒ **`refresh()` 是空操作**，`open()` 内部的刷新也跟着失效。
+   * 后果：面板打开期间数据变化不会反映；关掉再打开看到的还是**旧内容**（除非手动点标签）。
+   * 改为用实例字段记录，不再依赖 DOM 上的类名。
+   */
+  private activeTab = 'components';
 
   constructor(options: DevToolsOptions = {}) {
     this.options = {
@@ -245,7 +256,8 @@ class DevTools implements DevToolsAPI {
         target.style.background = '#1e1e1e';
         target.style.borderBottomColor = '#4fc08d';
 
-        this.renderTab(tabName || 'components');
+        this.activeTab = tabName || 'components';
+        this.renderTab(this.activeTab);
       });
     });
 
@@ -258,6 +270,9 @@ class DevTools implements DevToolsAPI {
   private renderTab(tab: string): void {
     const content = document.getElementById('lytjs-devtools-content');
     if (!content) return;
+
+    // 记录**实际渲染**的标签，供 `refresh()` 使用
+    this.activeTab = tab;
 
     switch (tab) {
       case 'components':
@@ -689,10 +704,8 @@ class DevTools implements DevToolsAPI {
    * 刷新内容
    */
   refresh(): void {
-    const activeTab = document.querySelector('.lytjs-devtools-tab.active') as HTMLElement;
-    if (activeTab) {
-      this.renderTab(activeTab.dataset.tab || 'components');
-    }
+    // ★ 2026-10-20：用实例字段，而不是 `.lytjs-devtools-tab.active`（那个类从来没人加过）
+    this.renderTab(this.activeTab);
   }
 
   // API 方法
