@@ -160,6 +160,55 @@ const CLIENT_LIFECYCLE_HOOKS = [
   'renderTriggered',
 ];
 
+/**
+ * 把「匹配整个 import 路径」的锚点模式转成「匹配源码里出现的标识符」的正则
+ *
+ * ★ 2026-10-20 修复：上面两组模式是为 `p.test(importPath)` 写的（`/^fs$/` 正好匹配整个路径）。
+ *   但扫描源码时原先写的是 `new RegExp('\\b' + pattern.source + '\\b')` ⇒ 实际得到 `\b^fs$\b`，
+ *   **只有整个源文件恰好等于 `fs` 才匹配** ⇒ **全局 API 检测整体失效**（实测：用了 `document` /
+ *   `fetch` / `fs` 的源码，`clientImports` / `serverImports` 全为空，模块类型被误判成 `shared`，
+ *   函数级归属与 client/server 桩判定跟着全错）。
+ */
+function globalApiPattern(pattern: RegExp): RegExp {
+  const bare = pattern.source.replace(/^\^/, '').replace(/\$$/, '');
+  return new RegExp(`\\b${bare}\\b`);
+}
+
+/**
+ * 判断一个标识符是否**可 import 的模块**（而不是 `window` / `document` 这类全局对象名）
+ *
+ * ★ 2026-10-20：修复全局检测后会有一批「全局对象名」进入 `clientImports` / `serverImports`，
+ *   而生成器原来无条件写 `import '${id}';` ⇒ 会产出 `import 'document';` 这种**非法代码**。
+ */
+function isImportableModule(id: string): boolean {
+  if (id.startsWith('.') || id.startsWith('/') || id.startsWith('@') || id.startsWith('node:')) {
+    return true;
+  }
+  // 裸标识符里只有 Node 内置模块（fs / path / …）才是可 import 的
+  return SERVER_ONLY_PATTERNS.some((p) => p.test(id));
+}
+
+/**
+ * 从 `{` 所在下标提取**配平**的花括号内容（能处理嵌套对象）
+ *
+ * ★ 2026-10-20 修复：组件扫描原先用 `defineComponent\s*\(\s*\{([^}]+)\}` —— `[^}]+` 在**第一个** `}`
+ *   处就停，而真实组件几乎总有嵌套对象（`props: { … }` / `data() { return { … } }`）⇒ 组件体被截断，
+ *   排在 `props` **之后**的生命周期钩子永远扫不到 ⇒ `componentsToSplit` 实际恒为空。
+ */
+function extractBalanced(source: string, openBraceIndex: number): string {
+  let depth = 0;
+  for (let i = openBraceIndex; i < source.length; i++) {
+    const ch = source[i];
+    if (ch === '{') {
+      depth++;
+    } else if (ch === '}') {
+      depth--;
+      if (depth === 0) return source.slice(openBraceIndex + 1, i);
+    }
+  }
+  return source.slice(openBraceIndex + 1);
+}
+
 // ============================================================
 // 边界分析
 // ============================================================
@@ -187,16 +236,14 @@ export function analyzeBoundary(source: string): BoundaryAnalysis {
 
   // 分析全局 API 使用
   for (const pattern of CLIENT_ONLY_PATTERNS) {
-    const regex = new RegExp(`\\b${pattern.source}\\b`, 'g');
-    if (regex.test(source)) {
-      clientImports.push(pattern.source);
+    if (globalApiPattern(pattern).test(source)) {
+      clientImports.push(pattern.source.replace(/^\^/, '').replace(/\$$/, ''));
     }
   }
 
   for (const pattern of SERVER_ONLY_PATTERNS) {
-    const regex = new RegExp(`\\b${pattern.source}\\b`, 'g');
-    if (regex.test(source)) {
-      serverImports.push(pattern.source);
+    if (globalApiPattern(pattern).test(source)) {
+      serverImports.push(pattern.source.replace(/^\^/, '').replace(/\$$/, ''));
     }
   }
 
@@ -207,12 +254,8 @@ export function analyzeBoundary(source: string): BoundaryAnalysis {
     const fnBody = extractFunctionBody(source, fnName);
 
     if (fnBody) {
-      const usesClientAPI = CLIENT_ONLY_PATTERNS.some((p) =>
-        new RegExp(`\\b${p.source}\\b`).test(fnBody),
-      );
-      const usesServerAPI = SERVER_ONLY_PATTERNS.some((p) =>
-        new RegExp(`\\b${p.source}\\b`).test(fnBody),
-      );
+      const usesClientAPI = CLIENT_ONLY_PATTERNS.some((p) => globalApiPattern(p).test(fnBody));
+      const usesServerAPI = SERVER_ONLY_PATTERNS.some((p) => globalApiPattern(p).test(fnBody));
 
       if (usesClientAPI && !usesServerAPI) {
         clientFunctions.push(fnName);
@@ -222,10 +265,11 @@ export function analyzeBoundary(source: string): BoundaryAnalysis {
     }
   }
 
-  // 分析组件定义
-  const componentMatches = source.matchAll(/defineComponent\s*\(\s*\{([^}]+)\}/g);
+  // 分析组件定义（★ 用配平提取，见 `extractBalanced` 的说明）
+  const componentMatches = source.matchAll(/defineComponent\s*\(\s*\{/g);
   for (const match of componentMatches) {
-    const componentBody = match[1]!;
+    const openIndex = match.index + match[0].length - 1; // 指向 '{'
+    const componentBody = extractBalanced(source, openIndex);
     const componentName =
       componentBody.match(/name\s*:\s*['"](\w+)['"]/)?.[1] || 'AnonymousComponent';
 
@@ -405,7 +449,8 @@ function generateServerCode(
   lines.push('');
 
   for (const imp of _analysis.serverImports) {
-    lines.push(`import '${imp}';`);
+    // ★ 2026-10-20：只对**可 import 的模块**生成 import（全局对象名不是模块）
+    if (isImportableModule(imp)) lines.push(`import '${imp}';`);
   }
 
   for (const fn of _analysis.serverFunctions) {
@@ -433,7 +478,9 @@ function generateClientCode(
   lines.push('');
 
   for (const imp of _analysis.clientImports) {
-    lines.push(`import '${imp}';`);
+    // ★ 2026-10-20：`window` / `document` / `fetch` 是浏览器全局，**不是模块** ⇒
+    //   生成 `import 'document';` 是非法代码。只对真模块生成 import。
+    if (isImportableModule(imp)) lines.push(`import '${imp}';`);
   }
 
   for (const fn of _analysis.clientFunctions) {
