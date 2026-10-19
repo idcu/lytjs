@@ -251,12 +251,25 @@ export function createApp(
           if (mountOptions?.hydrate && __DEV__) {
             warn('[LytJS] App.mount(): `hydrate` 仅在 vnode 模式生效，signal 模式将忽略该选项。');
           }
-          return mountWithSignalMode(container);
+          // ★ 2026-10-19 修复：这里必须 `await`。
+          //   原先写的是 `return mountWithSignalMode(container)` —— 在 `try` 里**直接 return 一个
+          //   rejected promise** 是**不会**被下面的 `catch` 捕获的（经典陷阱）⇒ signal 模式下
+          //   ① `app.errorHandler` **永远不触发**（`mount` 的错误回调形同虚设）；
+          //   ② 失败后 `context._container` 仍指向容器 ⇒ app 被永久留在"已挂载"状态。
+          return await mountWithSignalMode(container);
         }
 
         // 默认 VNode 模式
         return await mountWithVNodeMode(container, mountOptions?.hydrate === true);
       } catch (err) {
+        // ★ 2026-10-19 修复：**挂载失败不能把 app 留在"已挂载"状态**。
+        //   此前 `context._container` 在 `try` **之前**就赋值，一旦 `mountWithSignalMode` /
+        //   `mountWithVNodeMode` 抛错，`_container` 仍然指向容器 ⇒ 用户修好问题（比如补上
+        //   `template`、修掉渲染异常）后**重试挂载**只会得到
+        //   「App is already mounted. Call app.unmount() first」——而实际上什么都没挂上。
+        //   更糟的是此时调 `unmount()` 会把 `_isUnmounted` 置真，app 永久不可用。
+        context._container = null;
+
         if (app.errorHandler) {
           app.errorHandler(err, null, 'mount');
         } else {
