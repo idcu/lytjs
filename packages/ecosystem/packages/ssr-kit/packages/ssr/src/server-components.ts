@@ -246,20 +246,34 @@ export async function prefetchAllComponents(
  * 处理循环引用、日期、正则表达式等特殊类型
  */
 export function safeSerializeState(state: unknown): string {
-  const seen = new WeakSet();
-  return JSON.stringify(state, (_key, value) => {
-    // 处理循环引用
-    if (typeof value === 'object' && value !== null) {
-      if (seen.has(value)) {
-        return '[Circular]';
-      }
-      seen.add(value);
+  // ★ 2026-10-21 修复（两处）：
+  //   ① **Date 分支是死代码**：`JSON.stringify` 会先调 `value.toJSON()`，再调 replacer
+  //      ⇒ replacer 拿到的 Date 已经是 ISO **字符串** ⇒ `value instanceof Date` 永假
+  //      ⇒ 日期被序列化成普通字符串，反序列化回来**不再是 Date**（水合后类型丢失）。
+  //      修：用 `this[key]` 取**原始值**来判断。
+  //   ② **共享引用被误判成循环引用**：原实现用一个只增不减的 `seen` 集合
+  //      ⇒ 同一对象出现第二次就返回 `'[Circular]'`，`{ a: shared, b: shared }` 的 b 直接丢数据。
+  //      修：改用**祖先链**判断（只在当前这条链上出现过才算循环）。
+  const ancestors: unknown[] = [];
+
+  return JSON.stringify(state, function (this: unknown, key: string, value: unknown) {
+    const raw = (this as Record<string, unknown> | undefined)?.[key];
+    if (raw instanceof Date) {
+      return { __type: 'Date', value: raw.toISOString() };
     }
 
-    // 处理日期
-    if (value instanceof Date) {
-      return { __type: 'Date', value: value.toISOString() };
+    if (typeof value !== 'object' || value === null) {
+      return value;
     }
+
+    // 维护祖先链：replacer 的 `this` 是当前值的持有者
+    while (ancestors.length > 0 && ancestors[ancestors.length - 1] !== this) {
+      ancestors.pop();
+    }
+    if (ancestors.includes(value)) {
+      return '[Circular]';
+    }
+    ancestors.push(value);
 
     // 处理正则表达式
     if (value instanceof RegExp) {
