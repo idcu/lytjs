@@ -71,22 +71,51 @@ function createBaseHistory(base: string): {
   };
 }
 
+/**
+ * 归一化 base
+ *
+ * ★ 2026-10-20 修复：原先只补前导斜杠，空 base 会被归一成 `'/'`，随后各处用
+ *   `${normalizedBase}${fullPath}` 拼接 ⇒ 得到 `'//about'`。
+ *   `//` 开头是**协议相对 URL**：浏览器会把它当成 `http://about/`（换主机！），
+ *   jsdom 则直接抛 `pushState() cannot update history to the URL …`。
+ *   也就是说 **`createWebHistory()`（不传 base，最常见的用法）根本推不动路由**。
+ *   同时 `'/app/'` 这种带尾斜杠的 base 会拼出 `'/app//user'`。
+ *   修：空 base 归一为 `''`；非空则补前导斜杠并**去掉尾斜杠**。
+ */
+function normalizeBase(base: string): string {
+  const withLeading = base.startsWith('/') ? base : `/${base}`;
+  if (withLeading === '/') return '';
+  return withLeading.replace(/\/+$/, '');
+}
+
+/**
+ * 归一化 hash（统一**不带**前导 `#`）
+ *
+ * ★ 2026-10-20：`parseFullPath()` 返回的 hash 已去掉 `#`，但 `push({ hash: '#x' })` 这种
+ *   对象入参会被**原样**存进 `location.hash` ⇒ 同一个 URL 因导航方式不同，
+ *   `location.hash` 有时带 `#`、有时不带。这里统一成不带 `#`（与 `parseFullPath` 一致）。
+ */
+function normalizeHash(hash: string | undefined): string {
+  return (hash || '').replace(/^#/, '');
+}
+
 // ===== Web History (HTML5 History API) =====
 
 /**
  * Create a Web History implementation using the HTML5 History API
  */
 export function createWebHistory(base: string = ''): RouterHistory {
-  const normalizedBase = base.startsWith('/') ? base : `/${base}`;
+  const normalizedBase = normalizeBase(base);
   const { listeners, currentLocation, pushState, replaceState, triggerListeners } =
     createBaseHistory(normalizedBase);
 
   // Initialize from current browser URL
   function getCurrentUrl(): string {
     const { pathname, search, hash } = window.location;
-    const path = pathname.startsWith(normalizedBase)
-      ? pathname.slice(normalizedBase.length) || '/'
-      : pathname;
+    const path =
+      normalizedBase && pathname.startsWith(normalizedBase)
+        ? pathname.slice(normalizedBase.length) || '/'
+        : pathname;
     return `${path}${search}${hash}`;
   }
 
@@ -126,7 +155,7 @@ export function createWebHistory(base: string = ''): RouterHistory {
     const routeLocation = typeof to === 'string' ? parseFullPath(to) : to;
     const path = routeLocation.path || '/';
     const query = routeLocation.query || {};
-    const hash = routeLocation.hash || '';
+    const hash = normalizeHash(routeLocation.hash);
 
     const fullPath = resolveFullPath(path, query, hash);
     const from = { ...currentLocation };
@@ -147,7 +176,7 @@ export function createWebHistory(base: string = ''): RouterHistory {
     const routeLocation = typeof to === 'string' ? parseFullPath(to) : to;
     const path = routeLocation.path || '/';
     const query = routeLocation.query || {};
-    const hash = routeLocation.hash || '';
+    const hash = normalizeHash(routeLocation.hash);
 
     const fullPath = resolveFullPath(path, query, hash);
     const from = { ...currentLocation };
@@ -201,7 +230,7 @@ export function createWebHistory(base: string = ''): RouterHistory {
  * Create a Hash History implementation using hashchange events
  */
 export function createWebHashHistory(base: string = ''): RouterHistory {
-  const normalizedBase = base.startsWith('/') ? base : `/${base}`;
+  const normalizedBase = normalizeBase(base);
   const { listeners, currentLocation, pushState, replaceState, triggerListeners } =
     createBaseHistory(normalizedBase);
 
@@ -215,7 +244,7 @@ export function createWebHashHistory(base: string = ''): RouterHistory {
   function getCurrentUrl(): string {
     const hash = getHash();
     // Remove base prefix from hash if present
-    if (normalizedBase !== '/' && hash.startsWith(normalizedBase)) {
+    if (normalizedBase && hash.startsWith(normalizedBase)) {
       return hash.slice(normalizedBase.length) || '/';
     }
     return hash || '/';
@@ -234,6 +263,11 @@ export function createWebHashHistory(base: string = ''): RouterHistory {
   function setupListeners() {
     hashChangeHandler = () => {
       const url = getCurrentUrl();
+      // ★ 2026-10-20 修复：程序化 `push`/`replace` 已经**同步**通知过监听器，
+      //   随后 `location.hash = …` 触发的 `hashchange` 只是"回声"（URL 与当前 location 相同）。
+      //   不去重的话一次跳转会派发**两次**导航事件（`afterEach` 之类的钩子跑两遍）。
+      if (url === currentLocation.fullPath) return;
+
       const { path, query, hash } = parseFullPath(url);
       const to = createRouteLocation(path, query, hash);
 
@@ -257,7 +291,7 @@ export function createWebHashHistory(base: string = ''): RouterHistory {
     const routeLocation = typeof to === 'string' ? parseFullPath(to) : to;
     const path = routeLocation.path || '/';
     const query = routeLocation.query || {};
-    const hash = routeLocation.hash || '';
+    const hash = normalizeHash(routeLocation.hash);
 
     const fullPath = resolveFullPath(path, query, hash);
     const from = { ...currentLocation };
@@ -274,7 +308,7 @@ export function createWebHashHistory(base: string = ''): RouterHistory {
     const routeLocation = typeof to === 'string' ? parseFullPath(to) : to;
     const path = routeLocation.path || '/';
     const query = routeLocation.query || {};
-    const hash = routeLocation.hash || '';
+    const hash = normalizeHash(routeLocation.hash);
 
     const fullPath = resolveFullPath(path, query, hash);
     const from = { ...currentLocation };
@@ -343,7 +377,7 @@ export function createMemoryHistory(initial: string = '/'): RouterHistory {
     const { path, query, hash } =
       typeof to === 'string'
         ? parseFullPath(to)
-        : { path: to.path || '/', query: to.query || {}, hash: to.hash || '' };
+        : { path: to.path || '/', query: to.query || {}, hash: normalizeHash(to.hash) };
 
     const fullPath = resolveFullPath(path, query, hash);
     const from = { ...currentLocation };
@@ -364,7 +398,7 @@ export function createMemoryHistory(initial: string = '/'): RouterHistory {
     const { path, query, hash } =
       typeof to === 'string'
         ? parseFullPath(to)
-        : { path: to.path || '/', query: to.query || {}, hash: to.hash || '' };
+        : { path: to.path || '/', query: to.query || {}, hash: normalizeHash(to.hash) };
 
     const fullPath = resolveFullPath(path, query, hash);
     const from = { ...currentLocation };
