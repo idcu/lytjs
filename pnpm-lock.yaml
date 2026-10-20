@@ -903,6 +903,9 @@ importers:
       '@lytjs/config':
         specifier: workspace:*
         version: link:../ecosystem/packages/config
+      '@lytjs/core-vnode':
+        specifier: workspace:*
+        version: link:../core-vnode
       '@lytjs/dom-runtime':
         specifier: workspace:*
         version: link:../dom-runtime
