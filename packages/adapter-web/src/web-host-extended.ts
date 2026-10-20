@@ -554,8 +554,15 @@ export function createExtendedWebHost(
             preventDefault: () => e.preventDefault(),
             stopPropagation: () => e.stopPropagation(),
           };
-          handler(hostEvent);
-          el.removeEventListener(event, wrappedHandler, options);
+          // ★ 2026-10-20 修复：注销必须放在 `finally` 里。
+          //   原先顺序是「先 handler(hostEvent)，再 removeEventListener」⇒ 一旦 handler 抛错，
+          //   注销语句被跳过 ⇒ 这个"一次性"监听**永久留在元素上**，下次事件还会再调它
+          //   （"once" 语义被一次异常废掉，且回调会越积越多）。
+          try {
+            handler(hostEvent);
+          } finally {
+            el.removeEventListener(event, wrappedHandler, options);
+          }
         };
         el.addEventListener(event, wrappedHandler, options);
         return () => el.removeEventListener(event, wrappedHandler, options);
