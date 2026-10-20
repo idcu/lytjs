@@ -6,7 +6,10 @@ import { ConfigValidator } from './config-validator';
 
 /**
  * 配置转换器
- * @description 负责应用默认值、类型转换和预处理
+ * @description 应用默认值、执行自定义 `transform`、递归处理对象/数组，最后交给校验器。
+ *
+ * ⚠️ **不做隐式类型转换** —— `'1'` 不会自动变成 `1`（会由校验器判为类型错误）。
+ * 需要转换请显式提供 `schema.transform`（例如 `transform: Number`）。
  */
 export class ConfigTransformer {
   private validator: ConfigValidator;
@@ -176,42 +179,40 @@ export class ConfigTransformer {
       }
     }
 
-    // 处理 patternProperties
-    if (objectSchema.patternProperties) {
-      for (const key of Object.keys(obj)) {
-        if (!definedKeys.has(key)) {
-          for (const [pattern, patternSchema] of Object.entries(objectSchema.patternProperties)) {
-            const regex = new RegExp(pattern);
-            if (regex.test(key)) {
-              const propertyPath = `${path}.${key}`;
-              const propertyResult = this.transform(obj[key], patternSchema, propertyPath);
-              result[key] = propertyResult.config;
-              errors.push(...propertyResult.errors);
-              warnings.push(...propertyResult.warnings);
-              transforms.push(...propertyResult.transforms);
-            }
+    // 处理额外属性（未在 properties 里声明的键）
+    //
+    // ★ 2026-10-20 修复：此前这里是**两段互不衔接**的代码 ——
+    //   ① `patternProperties` 块只拷贝**命中模式**的键；
+    //   ② `!additionalProperties` 块只对**未命中**的键发警告。
+    //   而 `additionalProperties: true`（字段含义就是"额外属性**允许**"）**没有任何拷贝逻辑**
+    //   ⇒ 额外键被**静默丢弃**（连警告都没有）：用户写了 `additionalProperties: true`，
+    //   配进去的自定义字段却消失了。
+    //   改为一遍扫描：命中模式 ⇒ 按模式 schema 转换；否则按 additionalProperties 决定保留/警告。
+    for (const key of Object.keys(obj)) {
+      if (definedKeys.has(key)) continue;
+
+      const propertyPath = path ? `${path}.${key}` : key;
+      let matchedPattern = false;
+
+      if (objectSchema.patternProperties) {
+        for (const [pattern, patternSchema] of Object.entries(objectSchema.patternProperties)) {
+          if (new RegExp(pattern).test(key)) {
+            const propertyResult = this.transform(obj[key], patternSchema, propertyPath);
+            result[key] = propertyResult.config;
+            errors.push(...propertyResult.errors);
+            warnings.push(...propertyResult.warnings);
+            transforms.push(...propertyResult.transforms);
+            matchedPattern = true;
           }
         }
       }
-    }
 
-    // 处理额外属性
-    if (!objectSchema.additionalProperties) {
-      for (const key of Object.keys(obj)) {
-        if (!definedKeys.has(key)) {
-          let matchesPattern = false;
-          if (objectSchema.patternProperties) {
-            for (const pattern of Object.keys(objectSchema.patternProperties)) {
-              const regex = new RegExp(pattern);
-              if (regex.test(key)) {
-                matchesPattern = true;
-                break;
-              }
-            }
-          }
-          if (!matchesPattern) {
-            warnings.push(`Additional property "${key}" will be ignored`);
-          }
+      if (!matchedPattern) {
+        if (objectSchema.additionalProperties) {
+          // 允许额外属性 ⇒ 原样保留
+          result[key] = obj[key];
+        } else {
+          warnings.push(`Additional property "${key}" will be ignored`);
         }
       }
     }
@@ -240,7 +241,17 @@ export class ConfigTransformer {
 
     for (let i = 0; i < arr.length; i++) {
       const itemPath = `${path}[${i}]`;
-      const itemResult = this.transform(arr[i], arraySchema.items!, itemPath);
+      // ★ 2026-10-20 修复：`ArraySchema.items` 是**可选**的（纯元组 / 未声明元素类型都合法），
+      //   而这里原先写 `arraySchema.items!` —— 非空断言只是骗过类型检查，运行时会拿
+      //   `undefined` 当 schema 传给 `transform()` ⇒ 读 `schema.default` 时
+      //   `TypeError: Cannot read properties of undefined` ⇒ **整个配置加载崩掉**。
+      //   改为：`items` 优先，其次按位置取 `tuple[i]`，都没有则**原样保留**。
+      const itemSchema = arraySchema.items ?? arraySchema.tuple?.[i];
+      if (!itemSchema) {
+        result.push(arr[i]);
+        continue;
+      }
+      const itemResult = this.transform(arr[i], itemSchema, itemPath);
       result.push(itemResult.config);
       errors.push(...itemResult.errors);
       warnings.push(...itemResult.warnings);
