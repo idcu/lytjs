@@ -14,22 +14,22 @@ UI 由并行会话在写 ⇒ 走**非 UI 包**车道。
 
 ## 覆盖率实测（2026-10-20）
 全局 **72.02%**；非 UI 未覆盖 Top：`devtools/panel/*` **999 语句 0%**、`treeShaking` 250（未完成）、
-`renderer/index` 223、`web-host-extended` 196。
+`web-host-extended` 196、`config-transformer` 195。
 **手法**：用 `coverage-final.json` 的 `statementMap` 反查**未覆盖行区间**再定点补。
 快照在 `~/.workbuddy-ai/tmp/cov-1020/`。
 
 ## 10-20 完成
-- **devtools 面板**（15 条）→ `refresh()` **恒为空操作**（查的 `.active` 类**从没人加过**）⇒
-  数据不刷新、重开仍是旧内容。改用实例字段记录。
-- **component 公共实例代理**（23 条）→ **P1**：options API 的 `methods` / `computed` **从未装到
-  实例上**（`finishComponentSetup` 往 `ctx[key]` 赋值，代理 `set` 只允许 setupState/data）⇒
-  `this.myMethod()` 抛 TypeError、**整页空白**。修：`set` 兜底写实例（`$` 前缀仍拒）+ `get` 解包 ref。
-- **compiler/client-server-boundary**（19 条）→ 2 根因 + 1 连带：**全局 API 检测整体失效**
-  （锚点模式被拼成 `\b^fs$\b`）；`[^}]+` **在首个 `}` 截断** ⇒ `componentsToSplit` 恒空；
-  连带修 `import 'document';`。
+- **component 公共实例代理**（23）→ **P1**：options API 的 `methods` / `computed` **从未装到实例上**
+  （`ctx[key]=` 的赋值被代理 `set` 拒绝）⇒ `this.m()` 抛 TypeError、**整页空白**。
+  修：`set` 兜底写实例 + `get` 解包 ref。
+- **renderer 插件系统**（15）→ `use()` 有两条注册通道，`removePlugin()` **只清一条** ⇒ `context.on`
+  注册的钩子**永久留在全局表**（插件"卸载"后回调还在跑）。
+- **devtools 面板**（15）→ `refresh()` **恒为空操作**（查的 `.active` 类**从没人加过**）。
+- **client-server-boundary**（19）→ **全局 API 检测整体失效**（锚点模式被拼成 `\b^fs$\b`）+
+  `[^}]+` 截断组件体（`componentsToSplit` 恒空）+ 连带 `import 'document';`。
 
 ## 下一步
-1. **非 UI 车道继续核心包**：`renderer/index`(223) → `web-host-extended`(196)。
+1. **非 UI 车道继续核心包**：`web-host-extended`(196) → `config-transformer`(195)。
 2. `devtools/panel/*` **999 语句 0%**：先判断是"扩展 UI"还是该补测。
 3. 按 ADR 0010 判定 UI 剩余登记项（28）—— 需串行。
 4. 待判定：`resetPerformanceMonitor()` **不重置 `options`**；`clearAlerts()` **不清冷却**；
