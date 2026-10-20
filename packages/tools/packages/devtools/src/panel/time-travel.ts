@@ -186,6 +186,11 @@ interface ErrorPayload {
   message?: string;
 }
 
+interface SlowRenderPayload {
+  componentName?: string;
+  renderTime?: number;
+}
+
 /**
  * Format event description
  */
@@ -207,6 +212,10 @@ function formatEventDescription(event: DevToolsEvent): string {
       return `Navigation: ${(event.payload as RouterPayload)?.to || 'Unknown'}`;
     case 'error:captured':
       return `Error: ${(event.payload as ErrorPayload)?.message || 'Unknown'}`;
+    case 'performance:slow-render': {
+      const p = event.payload as SlowRenderPayload;
+      return `Slow render: ${p?.componentName || 'Unknown'} (${p?.renderTime ?? '?'}ms)`;
+    }
     default:
       return `Event: ${event.type}`;
   }

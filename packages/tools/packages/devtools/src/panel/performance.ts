@@ -134,7 +134,7 @@ export function recordComponentRender(
 
   // Record slow renders
   if (renderTime > performanceConfig.slowRenderThreshold) {
-    recordEvent('error:captured', {
+    recordEvent('performance:slow-render', {
       type: 'slow-render',
       componentId,
       componentName,

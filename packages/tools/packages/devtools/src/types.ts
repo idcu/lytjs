@@ -51,7 +51,11 @@ export type EventType =
   | 'signal:changed'
   | 'store:mutation'
   | 'router:navigation'
-  | 'error:captured';
+  | 'error:captured'
+  // ★ 2026-10-20：慢渲染是**性能事件**，不是错误。此前没有这个类型，
+  //   `panel/performance.ts` 只好把它塞进 `error:captured` ⇒ 慢渲染被算进错误率，
+  //   且描述里读不到 `message` ⇒ 显示成「Error: Unknown」。
+  | 'performance:slow-render';
 
 export interface DevToolsEvent {
   id: string;
