@@ -211,18 +211,45 @@ export function applyStateEdit(componentId: string, path: string, value: unknown
 }
 
 /**
+ * 判断一个节点是否是 `StateValue` 包装（`{ type, value, editable, path }`）
+ */
+function isStateValue(node: unknown): node is StateValue {
+  return (
+    !!node && typeof node === 'object' && 'value' in node && 'editable' in node && 'path' in node
+  );
+}
+
+/**
  * Get current value at a path
+ *
+ * ★ 2026-10-20 修复（两处，都在这个函数里）：
+ *   ① **返回的是包装对象而不是值**：`extractComponentState()` 的 `state` 是
+ *      `Record<string, StateValue>`（每项形如 `{ type, value, editable, path }`），
+ *      而这里直接 `return current` ⇒ 拿到的是**包装对象**。
+ *      后果：`applyStateEdit` 记录的 `oldValue` 是垃圾对象，**撤销时把这个对象写回信号**
+ *      ⇒ 状态被污染（`signal.value` 变成 `{type:'ref', value:1, …}`）。
+ *   ② **`props.*` 路径永远解析不到**：遍历总是从 `state` 起，而 props 在另一个字段里。
+ *      修：按首段分流（`props` ⇒ 从 props 起，否则从 state 起），并在每一层解包 `StateValue`。
  */
 function getStateValue(componentId: string, path: string): unknown {
   const componentState = extractComponentState(componentId);
   if (!componentState) return undefined;
 
   const parts = path.split('.');
-  let current: unknown = componentState.state;
+  let current: unknown;
+
+  if (parts[0] === 'props') {
+    current = componentState.props;
+    parts.shift();
+  } else {
+    current = componentState.state;
+  }
 
   for (const part of parts) {
     if (current && typeof current === 'object' && part in current) {
       current = (current as Record<string, unknown>)[part];
+      // 顶层 state / props 的每项都是 StateValue 包装 ⇒ 解包出真实值
+      if (isStateValue(current)) current = current.value;
     } else {
       return undefined;
     }
@@ -273,7 +300,11 @@ export function setNestedValue(
 
   for (let i = 0; i < parts.length - 1; i++) {
     const part = parts[i]!;
-    if (!(part in current) || typeof current[part] !== 'object') {
+    // ★ 2026-10-20 修复：必须显式排除 `null`。
+    //   `typeof null === 'object'` ⇒ 原判断认为"已经是对象"，直接把 current 置成 `null`
+    //   ⇒ 下一层赋值 `null[last] = value` 抛 `TypeError: Cannot set properties of null`
+    //   （面板里改一个 null 字段的子属性就崩）。
+    if (!(part in current) || current[part] === null || typeof current[part] !== 'object') {
       current[part] = {};
     }
     current = current[part] as Record<string, unknown>;
