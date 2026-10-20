@@ -72,6 +72,20 @@ export type HookHandler = (...args: unknown[]) => void;
 /** 插件注册表 */
 const installedPlugins: RendererPlugin[] = [];
 
+/**
+ * 每个插件在 `install(context)` 期间通过 `context.on()` 注册的钩子
+ *
+ * ★ 2026-10-20 修复：`use()` 有**两条**注册通道 —— 插件对象上的 `beforeMount` 等属性，
+ *   以及 `install(context)` 里的 `context.on(event, handler)`。而 `removePlugin()` 原先只清理
+ *   前者 ⇒ 后者**永久留在全局钩子表里**：插件已经"卸载"，它的回调还在跑
+ *   （跨 app 污染 + 内存泄漏，且完全静默）。
+ *   这里按插件记账，卸载时精确清理。
+ */
+const pluginContextHandlers = new Map<
+  RendererPlugin,
+  Array<{ event: LifecycleEvent; handler: HookHandler }>
+>();
+
 /** 钩子注册表 */
 const hooks: Record<LifecycleEvent, Set<HookHandler>> = {
   beforeMount: new Set(),
@@ -111,18 +125,24 @@ export function use(plugin: RendererPlugin): void {
   }
 
   // 创建插件上下文
+  const registered: Array<{ event: LifecycleEvent; handler: HookHandler }> = [];
   const context: PluginContext = {
     on: (event, handler) => {
       hooks[event].add(handler);
+      registered.push({ event, handler });
     },
     off: (event, handler) => {
       hooks[event].delete(handler);
+      // 账目同步：已被插件自己撤销的钩子不该再进卸载清单
+      const i = registered.findIndex((r) => r.event === event && r.handler === handler);
+      if (i !== -1) registered.splice(i, 1);
     },
   };
 
   // 安装插件
   plugin.install(context);
   installedPlugins.push(plugin);
+  if (registered.length > 0) pluginContextHandlers.set(plugin, registered);
 
   // 注册插件的生命周期钩子（如果提供）
   // FIX: DTS build error - 类型断言
@@ -156,6 +176,15 @@ export function removePlugin(pluginName: string): boolean {
   if (index === -1) return false;
 
   const plugin = installedPlugins[index]!;
+
+  // ★ 2026-10-20：先清掉 `install(context)` 里通过 `context.on()` 注册的钩子
+  const ctxHandlers = pluginContextHandlers.get(plugin);
+  if (ctxHandlers) {
+    for (const { event, handler } of ctxHandlers) {
+      hooks[event].delete(handler);
+    }
+    pluginContextHandlers.delete(plugin);
+  }
 
   // 移除钩子
   // FIX: DTS build error - 类型断言
