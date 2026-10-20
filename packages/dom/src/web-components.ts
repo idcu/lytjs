@@ -278,6 +278,16 @@ export function createEnhancedElementClass(
 
     private _propertyValues = new Map<string, unknown>();
     private _isConnected = false;
+    /**
+     * ★ 2026-10-21：是否正在把属性值**反射**到 attribute。
+     *
+     * `setProperty()` 写完 `_propertyValues` 后会 `setAttribute()`，而自定义元素的
+     * `attributeChangedCallback` 是**同步**触发的 ⇒ 它会把同一个值再写回 `_propertyValues`
+     * 并**再通知一次** `onChange` / `onPropertyChanged`。
+     * 结果：一次 `setProperty` 触发**两次**变更回调（第二次的 oldValue 已经是新值）。
+     * 这个标志用来识别"回声"，只转发 `onAttributeChanged`，不再重复通知属性变更。
+     */
+    private _isReflecting = false;
 
     constructor() {
       super();
@@ -316,6 +326,12 @@ export function createEnhancedElementClass(
 
     attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
       if (oldValue === newValue) return;
+
+      // ★ 回声：本次 attribute 变更就是 `setProperty` 自己反射出来的，值已经同步并通知过了
+      if (this._isReflecting) {
+        this.onAttributeChanged?.(name, oldValue, newValue);
+        return;
+      }
 
       const reflection = reflector.reflectFromAttribute(this, name);
       if (reflection) {
@@ -366,10 +382,15 @@ export function createEnhancedElementClass(
 
       this._propertyValues.set(name, value);
 
-      // 反射到 attribute
+      // 反射到 attribute（用标志标记"这是回声"，避免 attributeChangedCallback 再通知一次）
       const propDef = options.properties?.find((p) => p.name === name);
       if (propDef?.reflect !== false) {
-        reflector.reflectToAttribute(this, name, value);
+        this._isReflecting = true;
+        try {
+          reflector.reflectToAttribute(this, name, value);
+        } finally {
+          this._isReflecting = false;
+        }
       }
 
       // 触发变更回调
