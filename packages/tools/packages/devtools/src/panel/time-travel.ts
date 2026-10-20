@@ -74,12 +74,25 @@ export function startHistoryRecording(): void {
   recordingStartTime = Date.now();
 
   // Subscribe to events
-  unsubscribeEvents = subscribeEvents((event) => {
-    const eventWithPayload = event as DevToolsEvent;
+  unsubscribeEvents = subscribeEvents((record) => {
+    // ★ 2026-10-20 修复：`subscribeEvents` 回调给的是 `EventRecord`（负载字段是 `data`），
+    //   而 `DevToolsEvent` 的负载字段是 `payload`。原先直接 `as DevToolsEvent` 强转
+    //   ⇒ `payload` 恒 `undefined`，后果有两个：
+    //     ① 事件描述永远是「Component mounted: Unknown」这类，**看不到任何有用信息**；
+    //     ② `jumpToHistory()` 读 `entry.data.event.payload.signalId` 恒 `undefined`
+    //        ⇒ **状态变更的回放完全不生效**（时间旅行的核心功能等于失效）。
+    //   这里显式做一次字段映射，不再依赖结构巧合。
+    const event: DevToolsEvent = {
+      id: record.id,
+      type: record.type as DevToolsEvent['type'],
+      timestamp: record.timestamp,
+      payload: record.data,
+      componentId: record.componentId,
+    };
     addHistoryEntry({
       type: 'event',
-      description: formatEventDescription(eventWithPayload),
-      data: { event: eventWithPayload },
+      description: formatEventDescription(event),
+      data: { event },
     });
   });
 
@@ -205,7 +218,9 @@ function formatEventDescription(event: DevToolsEvent): string {
  * Jump to a specific point in history
  */
 export function jumpToHistory(index: number): boolean {
-  if (index < 0 || index >= timeTravelState.history.length) {
+  // ★ 2026-10-20 修复：非整数下标（如 1.5）能通过范围检查，但 `history[1.5]` 是 `undefined`
+  //   ⇒ 下一行 `entry.data` 直接抛 TypeError（面板发来脏数据就把整个消息处理打挂）。
+  if (!Number.isInteger(index) || index < 0 || index >= timeTravelState.history.length) {
     return false;
   }
 
@@ -345,6 +360,13 @@ export function importHistory(json: string): boolean {
     // Validate version
     if (!data.version || !data.history) {
       throw new Error('Invalid export format');
+    }
+
+    // ★ 2026-10-20 修复：**必须先校验 `history` 是数组，再 clearHistory()**。
+    //   否则 `{"version":"1.0.0","history":{}}` 这种能通过上面的宽松校验 ⇒ 先清空了用户
+    //   历史 ⇒ 后面 `.map` 才抛错 ⇒ 函数返回 false，但**用户的录制已经没了**（静默数据丢失）。
+    if (!Array.isArray(data.history)) {
+      throw new Error('Invalid export format: history must be an array');
     }
 
     // Clear existing history
