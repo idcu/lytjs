@@ -57,6 +57,22 @@ describe('同名公开 API 只有一份权威实现（ADR 0011）', () => {
       expect((core as Record<string, unknown>)[k]).toBe((component as Record<string, unknown>)[k]);
     }
   });
+
+  // ── Web Component 系列（2026-10-21 收敛）──────────────────────────────
+  // `core/src/web-component.ts` 曾是 `core-vnode` 的**平行副本**，且两份都因
+  // 「渲染器没注入 setupChildComponent」而**渲染为空**。现统一以 core-vnode 为权威。
+  it('★ core 的 Web Component API 必须与 core-vnode 的是**同一函数**', () => {
+    const keys = [
+      'defineCustomElement',
+      'useShadowRoot',
+      'useHost',
+      'useWebComponentSlots',
+      'injectChildStyles',
+    ] as const;
+    for (const k of keys) {
+      expect((core as Record<string, unknown>)[k]).toBe((coreVnode as Record<string, unknown>)[k]);
+    }
+  });
 });
 
 describe('defineAsyncComponent — retry 契约（onError(error, retry, fail, attempts)）', () => {

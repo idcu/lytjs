@@ -5,7 +5,6 @@ declare const __DEV__: boolean;
 
 import { createVNode } from '@lytjs/vdom';
 import type { VNode } from '@lytjs/vdom';
-import { createDOMRenderer } from '@lytjs/renderer';
 import { error, warn } from '@lytjs/common-error';
 import type {
   App,
@@ -21,16 +20,9 @@ import {
   createComponentInstance,
   setupComponent,
   createComponentPublicInstance,
-  callMountedHook,
-  callUpdatedHook,
-  callBeforeUnmountHook,
-  callUnmountedHook,
-  initProps,
 } from '@lytjs/component';
-import type {
-  AppContext as ComponentAppContext,
-  ComponentInternalInstance,
-} from '@lytjs/component';
+import { createComponentRenderer } from './component-renderer';
+import type { AppContext as ComponentAppContext } from '@lytjs/component';
 
 export function createApp(
   rootComponent: Component,
@@ -127,57 +119,12 @@ export function createApp(
         // 保存根实例引用，用于卸载生命周期钩子
         context._instance = instance;
 
-        // 使用 DOM 渲染器进行渲染 - 添加 setupChildComponent 和 normalizeProps 选项
+        // 使用组件感知的 DOM 渲染器（装配见 `component-renderer.ts`，与 `web-component.ts` 共用）。
         // 说明：@lytjs/component 与 @lytjs/vdom（经 @lytjs/common-vnode）各自声明了一份
-        // 同名的 ComponentInternalInstance，二者结构不等价。渲染器选项走的是 vdom 那份，
-        // 因此这里先把选项对象按 vdom 契约断言传入，回调内部再转回 component 的类型使用
-        // （core 包也是同样的跨包桥接思路）。
-        type RendererOptionsArg = NonNullable<Parameters<typeof createDOMRenderer>[0]>;
-        const rendererOptions = {
-          setupChildComponent(childVNode: VNode, parentComponent: unknown) {
-            const parent = parentComponent as ComponentInternalInstance | null;
-            const childInstance = createComponentInstance(childVNode, parent);
-            // 从父组件或根组件继承 appContext
-            if (parent) {
-              childInstance.appContext = parent.appContext;
-            } else {
-              childInstance.appContext = context as ComponentAppContext;
-            }
-            setupComponent(childInstance);
-            (childVNode as unknown as { component: ComponentInternalInstance }).component =
-              childInstance;
-          },
-          normalizeProps(instance: unknown, rawProps: Record<string, unknown> | null) {
-            initProps(instance as ComponentInternalInstance, rawProps);
-          },
-          // ── 组件生命周期钩子的实现注入 ──────────────────────────────────────
-          // vdom 不能反向依赖 @lytjs/component（会循环），因此钩子的**实现**由本包注入，
-          // 与上面的 setupChildComponent / normalizeProps 同模式。
-          //
-          // ⚠️ 2026-10-10 修复（P0-2）：此前这里**完全没有**注入这 4 个回调，
-          // 而 vdom 侧只在 `ctx.invokeXxxHook?.()` 处消费它们（可选调用 ⇒ 静默跳过）⇒
-          // `onMounted` / `onUpdated` / `onBeforeUnmount` / `onUnmounted`
-          // 在 **core-vnode 这条 VNode 生产路径上永不执行**，且不报错、不警告。
-          //
-          // 判据（硬约束 8：打到被验证对象）：`packages/vdom/src/patch-component.ts:262`
-          // 与 `packages/vdom/src/patch.ts:592,601` 是仅有的消费点；全仓对
-          // `invokeMountedHook` 的**写入点**此前只有 `core/src/create-app.ts`。
-          // 本包与 core 是两条平行的 createApp 实现，core 修了、core-vnode 漏了。
-          invokeMountedHook(inst: unknown) {
-            callMountedHook(inst as ComponentInternalInstance);
-          },
-          invokeUpdatedHook(inst: unknown) {
-            callUpdatedHook(inst as ComponentInternalInstance);
-          },
-          invokeBeforeUnmountHook(inst: unknown) {
-            callBeforeUnmountHook(inst as ComponentInternalInstance);
-          },
-          invokeUnmountedHook(inst: unknown) {
-            callUnmountedHook(inst as ComponentInternalInstance);
-          },
-        } as unknown as RendererOptionsArg;
-
-        const renderer = createDOMRenderer(rendererOptions) as unknown as {
+        // 同名的 ComponentInternalInstance，二者结构不等价；跨包桥接在 helper 内部完成。
+        const renderer = createComponentRenderer(
+          () => context as unknown as ComponentAppContext,
+        ) as unknown as {
           mount: (vnode: VNode, container: Node) => void;
         };
         context.renderer = renderer as unknown as DOMRenderer;

@@ -23,6 +23,7 @@ export default defineConfig({
     '@lytjs/compiler',
     '@lytjs/renderer',
     '@lytjs/component',
+    '@lytjs/core-vnode',
     '@lytjs/common-is',
     '@lytjs/common-env',
     '@lytjs/common-error',
