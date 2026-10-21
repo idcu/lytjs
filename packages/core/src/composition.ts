@@ -2,14 +2,7 @@
 // @lytjs/core - Composition API 辅助函数
 
 import { getCurrentInstance, onMounted } from '@lytjs/component';
-import {
-  computed,
-  shallowRef,
-  watch,
-  watchEffect,
-  readonly,
-  onScopeDispose,
-} from '@lytjs/reactivity';
+import { computed, shallowRef, watchEffect, readonly, onScopeDispose } from '@lytjs/reactivity';
 import { warnOnce } from '@lytjs/common-error';
 import type { WritableComputedRef, Ref } from '@lytjs/reactivity';
 import type { InternalSlots } from './types';
@@ -153,16 +146,30 @@ export function useTemplateRef<T = unknown>(key: string): Ref<T | null> {
   const ref = shallowRef<T | null>(null);
 
   if (instance) {
-    // 使用 watch 持续追踪 instance.refs[key] 的变化，
-    // 支持 v-if 等动态绑定场景下 ref 的响应式更新。
-    const stop = watch(
-      () => (instance.refs as Record<string, T | null>)[key] ?? null,
-      (newVal) => {
-        ref.value = newVal;
+    // ★ 2026-10-22：原实现用
+    //   `watch(() => instance.refs[key] ?? null, …, { immediate: true })` —— **完全无效**：
+    //   ① `instance.refs` 是**普通对象**（渲染器里就一句 `parentComponent.refs[ref] = el`），
+    //      读它不会建立任何响应式依赖 ⇒ watch 除了 immediate 那次**永不重跑**；
+    //   ② 而 refs 是在 **mount 阶段**才写入的，setup 时必然还是 undefined
+    //      ⇒ immediate 拿到 `null` 之后就一直 `null`。**整个 API 从未生效过**。
+    //   改为在 `refs[key]` 上装 getter/setter（与 Vue 3.5 的 useTemplateRef 同思路）：
+    //   渲染器那句 `refs[ref] = el` 会走 setter 写进本函数的 ref，无需响应式容器。
+    const refs = instance.refs as Record<string, unknown>;
+    Object.defineProperty(refs, key, {
+      enumerable: true,
+      configurable: true,
+      get: () => ref.value,
+      set: (val: T | null) => {
+        ref.value = val;
       },
-      { immediate: true, flush: 'pre' },
-    );
-    onScopeDispose(stop);
+    });
+    onScopeDispose(() => {
+      // 只清理自己装的那个访问器，别误删别人后续写入的普通值
+      const desc = Object.getOwnPropertyDescriptor(refs, key);
+      if (desc && typeof desc.get === 'function') {
+        delete refs[key];
+      }
+    });
   } else if (__DEV__) {
     warnOnce('useTemplateRef() was called outside of setup().');
   }
@@ -293,10 +300,16 @@ export function useCssVars(vars: () => Record<string, string>): void {
 
   // 在 mounted 和 updated 时将 CSS 变量设置到组件根元素上
   const updateStyle = (): void => {
+    // ★ 2026-10-22：**必须先调用 `vars()`**。
+    //   原顺序是「先取 el、没有就 return」，而 setup 阶段 `vnode.el` 必然还没有
+    //   ⇒ `watchEffect` 的**首次（也是唯一一次建立依赖的）**执行直接 return
+    //   ⇒ `vars()` 里的响应式读取一次都没发生 ⇒ **依赖从未被收集**
+    //   ⇒ 之后变量变化时 watchEffect 不会重跑，CSS 变量永远停在首次挂载时的值。
+    const varsObj = vars();
+
     const el = instance.vnode?.el as HTMLElement | null;
     if (!el) return;
 
-    const varsObj = vars();
     for (const [key, value] of Object.entries(varsObj)) {
       const cssVar = key.startsWith('--') ? key : `--${key}`;
       el.style.setProperty(cssVar, value);
