@@ -230,6 +230,40 @@ if (typeof document !== 'undefined' && document.readyState === 'complete') {
   document.addEventListener('DOMContentLoaded', autoHydrate);
 }
 
+/**
+ * 创建客户端代理
+ * 用于在客户端调用服务端函数
+ *
+ * ★ 2026-10-21：编译器生成的**客户端桩**写的是
+ *   `import { createServerProxy } from '@lytjs/renderer/client'`
+ *   （见 `compiler/src/server-components`），但本模块没有这个函数、包也没有 `./client`
+ *   子路径导出 ⇒ 桩文件连 import 都解析不到。这里补齐实现（它做的是 `fetch`，
+ *   本来就是**客户端**行为），并在 `package.json` 的 `exports` 里开 `./client`。
+ */
+export function createServerProxy<T extends (...args: unknown[]) => Promise<unknown>>(
+  componentName: string,
+  functionName: string,
+): T {
+  return (async (...args: unknown[]) => {
+    // 发送请求到服务端
+    const response = await fetch('/__lytjs_server_action', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Server-Component': componentName,
+        'X-Server-Function': functionName,
+      },
+      body: JSON.stringify({ args }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`[LytJS] Server function ${functionName} failed: ${response.statusText}`);
+    }
+
+    return response.json();
+  }) as T;
+}
+
 // ============================================================
 // 导出（函数已在上面定义）
 // ============================================================

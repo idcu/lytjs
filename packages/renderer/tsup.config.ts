@@ -6,6 +6,10 @@ export default defineConfig({
     dom: 'src/dom/dom-renderer.ts',
     ssr: 'src/ssr/ssr-renderer.ts',
     'vapor/vapor-app': 'src/vapor/vapor-app.ts',
+    // ★ 2026-10-21：编译器生成的 Server Component 代码按子路径 import
+    //   （`@lytjs/renderer/server` / `@lytjs/renderer/client`），必须有对应入口。
+    'server/index': 'src/server/server-components.ts',
+    'client/index': 'src/client/server-components-client.ts',
   },
   format: ['esm', 'cjs'],
   dts: {

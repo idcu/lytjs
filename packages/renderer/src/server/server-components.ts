@@ -177,10 +177,16 @@ export function createServerActionHandler() {
  * 序列化 Server Component 数据
  */
 export function serializeServerData(data: unknown): string {
-  return JSON.stringify(data, (_key, value) => {
+  // ★ 2026-10-21：`Date` 判断必须看**原始值**（`this[key]`），不能看 replacer 收到的 `value`。
+  //   `JSON.stringify` 的求值顺序是「先调 `value.toJSON()`，再调 replacer」——
+  //   Date 自带 `toJSON()` ⇒ replacer 拿到的已经是 ISO **字符串** ⇒ `value instanceof Date`
+  //   **永假** ⇒ 日期被当成普通字符串序列化，`deserializeServerData` 的 `Date` 分支永远不触发。
+  //   （同一 bug 在 `ssr-kit/ssr` 的 `safeSerializeState` 里也出现过，这是第二份副本。）
+  return JSON.stringify(data, function (this: unknown, key: string, value: unknown) {
+    const raw = (this as Record<string, unknown> | undefined)?.[key];
     // 处理特殊类型
-    if (value instanceof Date) {
-      return { __type: 'Date', value: value.toISOString() };
+    if (raw instanceof Date) {
+      return { __type: 'Date', value: raw.toISOString() };
     }
     if (value instanceof Map) {
       return { __type: 'Map', value: Array.from(value.entries()) };
@@ -226,6 +232,25 @@ export function deserializeServerData(json: string): unknown {
 // ============================================================
 
 /**
+ * 把 JSON 文本转义成可安全嵌入内联 `<script>` 的形式
+ *
+ * ★ 2026-10-21：原先直接把 `serializeData()` 的结果拼进
+ *   `<script>window.__LYTJS_SERVER_DATA__=…;</script>`。只要数据里出现 `</script>`
+ *   （用户昵称、文章内容、URL……任意可控字符串），浏览器就会**提前闭合脚本标签**，
+ *   后面的内容被当成 HTML 解析 ⇒ 存储型 XSS。
+ *   `JSON.stringify` **不会**转义 `<` / `>`，所以必须自己转义成 JSON 的 `\uXXXX` 形式：
+ *   既不能闭合标签，`JSON.parse` 又能原样还原。
+ */
+function escapeForInlineScript(json: string): string {
+  return json
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+}
+
+/**
  * 渲染 Server Component
  */
 export async function renderServerComponent(
@@ -245,9 +270,9 @@ export async function renderServerComponent(
   // 渲染
   const html = await component.render();
 
-  // 注入数据脚本
+  // 注入数据脚本（**必须转义**，见 escapeForInlineScript 的说明）
   const dataScript = component.serializeData
-    ? `<script>window.__LYTJS_SERVER_DATA__=${component.serializeData()};</script>`
+    ? `<script>window.__LYTJS_SERVER_DATA__=${escapeForInlineScript(component.serializeData())};</script>`
     : '';
 
   return html + dataScript;
@@ -289,6 +314,30 @@ export function defineServerComponent(
   registerServerComponent(component);
 
   return component;
+}
+
+// ============================================================
+// Server Function 运行时支持
+// ============================================================
+
+/**
+ * 创建服务端函数引用
+ * 用于在服务端标记可被客户端调用的函数
+ *
+ * ★ 2026-10-21：编译器生成的**服务端**代码写的是
+ *   `import { createServerReference } from '@lytjs/renderer/server'`
+ *   （见 `compiler/src/server-components`），但本包既没有 `./server` 子路径导出，
+ *   也没有这个函数 ⇒ 生成的代码**连 import 都解析不到**。
+ *   这里补齐实现，并在 `package.json` 的 `exports` 里开 `./server`。
+ */
+export function createServerReference<T extends (...args: unknown[]) => Promise<unknown>>(
+  id: string,
+  fn: T,
+): T {
+  const serverFn = fn as T & { __serverReferenceId?: string; __isServerReference?: boolean };
+  serverFn.__serverReferenceId = id;
+  serverFn.__isServerReference = true;
+  return fn;
 }
 
 // ============================================================

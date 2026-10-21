@@ -31,6 +31,16 @@
       "types": "./dist/vapor/vapor-app.d.ts",
       "import": "./dist/vapor/vapor-app.mjs",
       "require": "./dist/vapor/vapor-app.cjs"
+    },
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "import": "./dist/server/index.mjs",
+      "require": "./dist/server/index.cjs"
+    },
+    "./client": {
+      "types": "./dist/client/index.d.ts",
+      "import": "./dist/client/index.mjs",
+      "require": "./dist/client/index.cjs"
     }
   },
   "files": [
