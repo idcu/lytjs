@@ -58,8 +58,12 @@ export interface ServerComponentResult {
  */
 export function detectServerDirective(source: string): ServerDirective | null {
   // 匹配 'use server' 或 'use client' 指令
-  const useServerMatch = source.match(/^['"]use server['"]/m);
-  const useClientMatch = source.match(/^['"]use client['"]/m);
+  //
+  // ★ 2026-10-21：`^` 后面补 `\s*`。JS 的指令序言允许行首缩进（`  'use server';` 合法），
+  //   而原正则要求引号**紧贴行首** ⇒ 缩进过的文件会被判成「不是 Server Component」，
+  //   编译结果直接退化成 `serverCode: null`（静默失效，不报错）。
+  const useServerMatch = source.match(/^\s*['"]use server['"]/m);
+  const useClientMatch = source.match(/^\s*['"]use client['"]/m);
 
   if (useServerMatch) return 'use server';
   if (useClientMatch) return 'use client';
@@ -174,15 +178,23 @@ export function generateServerComponentCode(
   lines.push('');
 
   // 保留原始代码（移除 'use server' 指令）
-  const cleanedSource = source.replace(/^['"]use server['"]\s*;?\s*\n?/m, '');
+  const cleanedSource = source.replace(/^\s*['"]use server['"]\s*;?[ \t]*\n?/m, '');
+
+  // ★ 2026-10-21：**Reference 常量必须放在源码之后**。
+  //   原先插在源码之前 —— 对 `function` 声明靠变量提升还能活，但对
+  //   `export const submit = async () => {}`（现代写法，也是最常见写法）会命中
+  //   **TDZ**：`createServerReference('submit', submit)` 在 `const submit` 初始化之前执行
+  //   ⇒ 模块一加载就 `ReferenceError: Cannot access 'submit' before initialization`。
+  //   放到源码之后，两种写法都成立。
+  lines.push(cleanedSource);
 
   // 为每个服务端函数创建引用
-  for (const fn of analysis.serverFunctions) {
-    lines.push(`export const ${fn}Reference = createServerReference('${fn}', ${fn});`);
+  if (analysis.serverFunctions.length > 0) {
+    lines.push('');
+    for (const fn of analysis.serverFunctions) {
+      lines.push(`export const ${fn}Reference = createServerReference('${fn}', ${fn});`);
+    }
   }
-
-  lines.push('');
-  lines.push(cleanedSource);
 
   return lines.join('\n');
 }
@@ -211,7 +223,15 @@ export function generateClientStubCode(
   lines.push('');
 
   // 导出数据获取函数的占位符
+  //
+  // ★ 2026-10-21：跳过**同时也是服务端函数**的 fetcher。
+  //   `async function fetchUser()` 会同时被 `extractServerFunctions` 与
+  //   `extractDataFetchers` 命中 ⇒ 上面已生成 `const fetchUser = createServerProxy(...)`，
+  //   这里再生成 `function fetchUser(...)` 就是**重复声明** ⇒ 桩文件 `SyntaxError`，
+  //   整个客户端构建直接失败。既然它是服务端函数，走代理才是对的。
+  const serverFnNames = new Set(analysis.serverFunctions);
   for (const fetcher of analysis.dataFetchers) {
+    if (serverFnNames.has(fetcher)) continue;
     lines.push(`export async function ${fetcher}(...args: unknown[]) {`);
     lines.push(
       `  throw new Error('[LytJS] ${fetcher} is a server-only function and cannot be called on the client.');`,
