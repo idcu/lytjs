@@ -13,6 +13,7 @@
  * 回归判据见 `tests/batch.test.ts` 的「P1-1」组（以 effect **调用次数**断言）。
  */
 
+import { error as logError } from '@lytjs/common-error';
 import { batch, batchAsync, untrack } from './effect';
 
 // ============================================================
@@ -56,6 +57,27 @@ let globalBatchDepth = 0;
 
 /** 最大嵌套深度限制 */
 const MAX_NESTING_DEPTH = 100;
+
+/**
+ * 挂起中的异步批量作用域。
+ *
+ * ★ 2026-10-22：`flushBatchScopes()` 此前是**空操作**（注释自称 deprecated），
+ *   而 `batchScope({ async: true })` 的完成时机对外完全不可知。现在把异步作用域的
+ *   Promise 记账，`flushBatchScopes()` 才真的能「等到所有异步批量作用域完成」。
+ */
+const pendingScopes = new Set<Promise<void>>();
+
+/**
+ * 从作用域栈中移除**指定**作用域。
+ *
+ * ★ 2026-10-22：原先异步分支用 `scopeStack.pop()` —— 异步作用域会交错，
+ *   弹栈时栈顶可能已经是别人的作用域 ⇒ 删错对象、深度计数漂移。改为按身份删除。
+ */
+function removeScope(ctx: BatchScopeContext): void {
+  const index = scopeStack.indexOf(ctx);
+  if (index >= 0) scopeStack.splice(index, 1);
+  if (globalBatchDepth > 0) globalBatchDepth--;
+}
 
 // ============================================================
 // Core API
@@ -125,26 +147,31 @@ export function batchScope<T>(callback: BatchScopeCallback<T>, options: BatchSco
       // 确保 batchAsync 的异步操作完成后再弹出作用域栈
       // FIX: P2-1 初始化 result 为 undefined 并添加运行时检查，避免非空断言
       let result: T | undefined;
-      const promise = batchAsync(() => {
+      const settled: Promise<void> = batchAsync(() => {
         result = callback(ctx);
-      });
-      promise
+      })
         .then(() => {
           ctx.committed = true;
-          // 异步操作完成后再弹出作用域栈
-          scopeStack.pop();
-          globalBatchDepth--;
         })
-        .catch((error) => {
-          // 异步操作失败时也要弹出作用域栈
-          scopeStack.pop();
-          globalBatchDepth--;
+        .catch((err: unknown) => {
+          // ★ 2026-10-22：**不能**在 `.catch` 里 `throw` —— 这个 Promise 没有任何消费者，
+          //   抛出去就是 unhandledRejection（Node 会打印警告，严格模式下直接崩）。
+          //   而 `batchScope(..., { async: true })` 的返回类型是 `T`（同步值），
+          //   错误本来就无法回传给调用方 ⇒ 交给 onError，没有就至少留下可诊断日志。
           if (onError) {
-            onError(error);
+            onError(err);
           } else {
-            throw error;
+            logError(
+              `batchScope(${name}) async failed: ` +
+                (err instanceof Error ? err.message : String(err)),
+            );
           }
+        })
+        .finally(() => {
+          removeScope(ctx);
+          pendingScopes.delete(settled);
         });
+      pendingScopes.add(settled);
       // FIX: P1-6 移除对 undefined 返回值的检查，void 函数合法返回 undefined
       return result as T;
     } else {
@@ -155,10 +182,11 @@ export function batchScope<T>(callback: BatchScopeCallback<T>, options: BatchSco
         result = callback(ctx);
       });
       ctx.committed = true;
-      if (result === undefined) {
-        throw new Error('[lytjs/reactivity] batchScope sync mode: callback returned undefined.');
-      }
-      return result;
+      // ★ 2026-10-22：**不再对 `undefined` 返回值抛错**。
+      //   异步分支早就以 P1-6 移除了同样的检查（"void 函数合法返回 undefined"），
+      //   同步分支被漏掉 ⇒ `batchScope(() => { sig.value = 1 })` 这种最常见写法、
+      //   以及本文件 JSDoc 里的示例**全部直接抛错**。
+      return result as T;
     }
   } catch (error) {
     // 同步模式下的错误处理
@@ -169,10 +197,9 @@ export function batchScope<T>(callback: BatchScopeCallback<T>, options: BatchSco
     }
     throw error;
   } finally {
-    // 仅在同步模式下弹出作用域栈（异步模式在 .then() 中处理）
+    // 仅在同步模式下弹出作用域栈（异步模式在 finally 回调里处理）
     if (!async) {
-      scopeStack.pop();
-      globalBatchDepth--;
+      removeScope(ctx);
     }
   }
 }
@@ -241,9 +268,8 @@ export async function batchScopeAsync<T>(
     }
     throw error;
   } finally {
-    // 弹出作用域栈
-    scopeStack.pop();
-    globalBatchDepth--;
+    // 弹出作用域栈（按身份删除，避免与其它交错的作用域互相踩）
+    removeScope(ctx);
   }
 }
 
@@ -294,19 +320,13 @@ export function isInBatchScope(): boolean {
  * 导致 pendingCallbacks 永远不会被填充。移除死代码，避免误导维护者。
  * 如需等待异步 batchScope 完成，应直接 await batchScopeAsync()。
  *
- * FIX: P2-batch1-7 保留原因：
- * 1. API 兼容性：此函数是公共 API 的一部分，直接删除会导致破坏性变更
- * 2. 未来扩展：可用于实现等待所有异步 batchScope 完成的功能
- * 3. 测试用途：提供一种同步刷新所有批量操作的方式（即使当前为空操作）
- * 4. 类型安全：返回 Promise<void> 与异步 API 签名保持一致
- *
- * @deprecated 当前实现为空操作，如需等待异步 batchScope 完成，请直接使用 await batchScopeAsync()
+ * ★ 2026-10-22：此前是**空操作**（且标了 @deprecated），名字与行为不符。
+ *   现在真的会等到所有挂起的异步批量作用域完成（循环等待：作用域内可能再开新作用域）。
  */
-export function flushBatchScopes(): Promise<void> {
-  // FIX: P2-2 pendingCallbacks 在当前实现中始终为空（死代码已移除）。
-  // 异步批量操作的完成通过 batchScopeAsync() 的 Promise 链保证。
-  // 此函数保留为空操作以维持 API 兼容性，未来可用于等待所有异步 batchScope 完成。
-  return Promise.resolve();
+export async function flushBatchScopes(): Promise<void> {
+  while (pendingScopes.size > 0) {
+    await Promise.all([...pendingScopes]);
+  }
 }
 
 // ============================================================
@@ -319,8 +339,7 @@ export function _resetBatchScopeState(): void {
   globalBatchDepth = 0;
 }
 
-/** @internal 获取待处理回调数量（仅用于测试） */
-// FIX: P2-3 pendingCallbacks 已移除，此函数始终返回 0
+/** @internal 获取挂起中的异步批量作用域数量（仅用于测试） */
 export function _getPendingCallbacksCount(): number {
-  return 0;
+  return pendingScopes.size;
 }
