@@ -8,7 +8,7 @@
  * 面板照样显示、按钮照样能点，只是**回放不生效**。
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   startHistoryRecording,
   stopHistoryRecording,
@@ -25,8 +25,11 @@ import {
   importHistory,
   compareSnapshots,
   getStateDiffForEntry,
+  downloadHistory,
+  initTimeTravel,
   timeTravelState,
 } from '../src/panel/time-travel';
+import { sendToPanel, onPanelMessage } from '../src/bridge';
 import { recordEvent, clearEvents } from '../src/events';
 import { registerSignal, clearSignalRegistry, getSignalValue } from '../src/signals';
 
@@ -269,5 +272,281 @@ describe('compareSnapshots / getStateDiffForEntry', () => {
 
     expect(getStateDiffForEntry(0)).toEqual([]);
     expect(getStateDiffForEntry(99)).toEqual([]);
+  });
+});
+
+// ==================== 事件描述：全部分支 ====================
+
+describe('formatEventDescription 的全部分支', () => {
+  it('9 种事件类型都能带出真实负载（不只是 component:mounted）', () => {
+    recordEvents(0);
+
+    const cases: [string, unknown, string][] = [
+      ['component:created', { name: 'A' }, 'Component created: A'],
+      ['component:updated', { name: 'C' }, 'Component updated: C'],
+      ['component:unmounted', { name: 'D' }, 'Component unmounted: D'],
+      ['signal:changed', { path: 'count' }, 'State changed: count'],
+      ['store:mutation', { type: 'set' }, 'Store mutation: set'],
+      ['router:navigation', { to: '/home' }, 'Navigation: /home'],
+      ['error:captured', { message: 'boom' }, 'Error: boom'],
+      [
+        'performance:slow-render',
+        { componentName: 'Slow', renderTime: 12 },
+        'Slow render: Slow (12ms)',
+      ],
+    ];
+
+    for (const [type, data] of cases) recordEvent(type, data);
+
+    const descriptions = getHistory()
+      .filter((h) => h.type === 'event')
+      .map((h) => h.description);
+
+    for (const [, , expected] of cases) expect(descriptions).toContain(expected);
+  });
+
+  it('未知类型退化为 `Event: <type>`', () => {
+    recordEvents(0);
+    recordEvent('weird:thing');
+
+    expect(getHistory().some((h) => h.description === 'Event: weird:thing')).toBe(true);
+  });
+
+  it('slow-render 缺 renderTime 时显示 `?`', () => {
+    recordEvents(0);
+    recordEvent('performance:slow-render', { componentName: 'S' });
+
+    expect(getHistory().some((h) => h.description === 'Slow render: S (?ms)')).toBe(true);
+  });
+});
+
+// ==================== 跳转：新值为 undefined ====================
+
+describe('跳转到「值被置为 undefined」的记录', () => {
+  it('★ 新值为 undefined 时也必须写回（不能因 `!== undefined` 判断而静默跳过）', () => {
+    registerSignal({ id: 'sig-u', name: 'x', value: 'has-value' } as never);
+    recordEvents(0);
+    recordEvent('signal:changed', { signalId: 'sig-u', path: 'x', newValue: undefined });
+
+    const idx = getHistory().findIndex((h) => h.data.event?.type === 'signal:changed');
+    expect(idx).toBeGreaterThanOrEqual(0);
+
+    expect(jumpToHistory(idx)).toBe(true);
+    expect(getSignalValue('sig-u')).toBeUndefined();
+  });
+});
+
+// ==================== 导出：录制时长 ====================
+
+describe('导出元数据', () => {
+  it('★ 停止录制后 recordingDuration 不再随真实时间增长', async () => {
+    startHistoryRecording();
+    await new Promise((r) => setTimeout(r, 20));
+    stopHistoryRecording();
+
+    const first = JSON.parse(exportHistory()).metadata.recordingDuration as number;
+    await new Promise((r) => setTimeout(r, 30));
+    const second = JSON.parse(exportHistory()).metadata.recordingDuration as number;
+
+    // 修复前用的是 `Date.now() - recordingStartTime` ⇒ 停止后仍一直涨
+    expect(second).toBe(first);
+  });
+});
+
+// ==================== 导入：脏数据 ====================
+
+describe('导入时的脏数据', () => {
+  it('★ 非对象条目被过滤（否则后续跳转会读到 undefined.data 崩掉）', () => {
+    const payload = JSON.stringify({
+      version: '1.0.0',
+      history: [null, 42, { type: 'snapshot', description: 'ok', data: {}, id: 'h', timestamp: 1 }],
+    });
+
+    expect(importHistory(payload)).toBe(true);
+    expect(getHistory()).toHaveLength(1);
+    expect(getHistory()[0]!.description).toBe('ok');
+  });
+});
+
+// ==================== 快照对比：不可 JSON 化的值 ====================
+
+describe('compareSnapshots 对不可 JSON 化的值', () => {
+  const snap = (signals: unknown[]) => ({ signals }) as never;
+
+  it('★ BigInt 值不得抛 TypeError', () => {
+    const a = snap([{ id: '1', name: 'big', value: 1n }]);
+    const b = snap([{ id: '1', name: 'big', value: 2n }]);
+
+    expect(() => compareSnapshots(a, b)).not.toThrow();
+    expect(compareSnapshots(a, b)).toHaveLength(1);
+  });
+
+  it('★ 循环引用值不得抛 TypeError', () => {
+    const cyc: Record<string, unknown> = {};
+    cyc.self = cyc;
+    const a = snap([{ id: '1', name: 'c', value: cyc }]);
+    const b = snap([{ id: '1', name: 'c', value: { ...cyc } }]);
+
+    expect(() => compareSnapshots(a, b)).not.toThrow();
+  });
+});
+
+// ==================== 面板消息分发 ====================
+
+describe('initTimeTravel 的面板命令', () => {
+  let captured: { type: string; payload?: unknown }[] = [];
+  let offCapture: (() => void) | null = null;
+
+  beforeEach(() => {
+    captured = [];
+    offCapture = onPanelMessage((m) => captured.push(m as { type: string; payload?: unknown }));
+  });
+
+  afterEach(() => {
+    offCapture?.();
+    offCapture = null;
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  const typesOf = () => captured.map((m) => m.type);
+
+  it('GET_HISTORY ⇒ HISTORY_LIST', () => {
+    recordEvents(1);
+    const off = initTimeTravel();
+
+    sendToPanel({ type: 'GET_HISTORY' } as never);
+    off();
+
+    expect(typesOf()).toContain('HISTORY_LIST');
+  });
+
+  it('★ JUMP_TO_HISTORY 必须读到 payload.index（此前读 msg.data ⇒ 恒 undefined）', () => {
+    recordEvents(1);
+    const off = initTimeTravel();
+
+    sendToPanel({ type: 'JUMP_TO_HISTORY', payload: { index: 0 } } as never);
+    off();
+
+    const result = captured.find((m) => m.type === 'JUMP_RESULT');
+    // 修复前 `handleJumpToHistory(undefined)` ⇒ 连 JUMP_RESULT 都不会发出
+    expect(result).toBeDefined();
+    expect(result!.payload).toEqual({ success: true, index: 0 });
+    expect(getCurrentIndex()).toBe(0);
+  });
+
+  it('四个导航命令都回 NAVIGATION_RESULT 且方向正确', () => {
+    recordEvents(2);
+    const off = initTimeTravel();
+
+    for (const type of ['GO_BACK', 'GO_FORWARD', 'GO_TO_START', 'GO_TO_END']) {
+      sendToPanel({ type } as never);
+    }
+    off();
+
+    const dirs = captured
+      .filter((m) => m.type === 'NAVIGATION_RESULT')
+      .map((m) => (m.payload as { direction: string }).direction);
+
+    expect(dirs).toEqual(['back', 'forward', 'start', 'end']);
+  });
+
+  it('CLEAR_HISTORY / EXPORT_HISTORY 生效', () => {
+    recordEvents(1);
+    const off = initTimeTravel();
+
+    sendToPanel({ type: 'EXPORT_HISTORY' } as never);
+    sendToPanel({ type: 'CLEAR_HISTORY' } as never);
+    off();
+
+    expect(typesOf()).toContain('HISTORY_EXPORTED');
+    expect(typesOf()).toContain('HISTORY_CLEARED');
+    expect(getHistory()).toHaveLength(0);
+  });
+
+  it('★ IMPORT_HISTORY 必须读到 payload.json', () => {
+    const off = initTimeTravel();
+    const json = JSON.stringify({ version: '1.0.0', history: [] });
+
+    sendToPanel({ type: 'IMPORT_HISTORY', payload: { json } } as never);
+    off();
+
+    expect(typesOf()).toContain('HISTORY_IMPORT_RESULT');
+  });
+
+  it('★ GET_STATE_DIFF 必须读到 payload.index', () => {
+    recordEvents(1);
+    const off = initTimeTravel();
+
+    sendToPanel({ type: 'GET_STATE_DIFF', payload: { index: 1 } } as never);
+    off();
+
+    expect(typesOf()).toContain('STATE_DIFF');
+  });
+
+  it('START / STOP 录制命令生效', () => {
+    const off = initTimeTravel();
+
+    sendToPanel({ type: 'START_TIME_TRAVEL_RECORDING' } as never);
+    expect(timeTravelState.isRecording).toBe(true);
+    sendToPanel({ type: 'STOP_TIME_TRAVEL_RECORDING' } as never);
+    expect(timeTravelState.isRecording).toBe(false);
+    off();
+  });
+
+  it('未知消息类型被忽略（不抛错）', () => {
+    const off = initTimeTravel();
+
+    expect(() => sendToPanel({ type: 'NOT_A_COMMAND' } as never)).not.toThrow();
+    off();
+  });
+
+  it('返回的取消函数能解除订阅', () => {
+    const off = initTimeTravel();
+    off();
+    captured.length = 0;
+
+    sendToPanel({ type: 'GET_HISTORY' } as never);
+
+    // 不能用「总条数不变」断言：我自己的 capture 处理器也会收到发出去的那条消息。
+    // 该看的是「处理器**产出**的消息」有没有再出现。
+    expect(typesOf()).not.toContain('HISTORY_LIST');
+  });
+});
+
+// ==================== 下载 ====================
+
+describe('downloadHistory', () => {
+  it('浏览器路径：创建 blob URL、点击、回收', () => {
+    recordEvents(0);
+    const createObjectURL = vi.fn(() => 'blob:fake');
+    const revokeObjectURL = vi.fn();
+    const click = vi.fn();
+    const anchor = { href: '', download: '', click };
+    const appendChild = vi.fn();
+    const removeChild = vi.fn();
+
+    vi.stubGlobal('URL', { createObjectURL, revokeObjectURL });
+    vi.stubGlobal('Blob', class {});
+    vi.stubGlobal('document', {
+      createElement: () => anchor,
+      body: { appendChild, removeChild },
+    });
+
+    expect(() => downloadHistory('x.json')).not.toThrow();
+
+    expect(createObjectURL).toHaveBeenCalledTimes(1);
+    expect(anchor.download).toBe('x.json');
+    expect(click).toHaveBeenCalledTimes(1);
+    expect(removeChild).toHaveBeenCalledTimes(1);
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:fake');
+  });
+
+  it('非浏览器路径：只警告不抛错', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.stubGlobal('document', undefined);
+
+    expect(() => downloadHistory()).not.toThrow();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('only available in browser'));
   });
 });

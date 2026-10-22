@@ -60,6 +60,13 @@ const timeTravelState: TimeTravelState = {
 };
 
 let recordingStartTime = 0;
+/**
+ * 停止录制的时刻。
+ *
+ * ★ 2026-10-23：原先 `exportHistory` 用 `Date.now() - recordingStartTime` 算时长，
+ *   停止录制后**仍随真实时间增长** ⇒ 导出的 `recordingDuration` 是错的（越晚导出越离谱）。
+ */
+let recordingStopTime = 0;
 let unsubscribeEvents: (() => void) | null = null;
 
 // ===== History Recording =====
@@ -72,6 +79,7 @@ export function startHistoryRecording(): void {
 
   timeTravelState.isRecording = true;
   recordingStartTime = Date.now();
+  recordingStopTime = 0;
 
   // Subscribe to events
   unsubscribeEvents = subscribeEvents((record) => {
@@ -117,6 +125,7 @@ export function stopHistoryRecording(): void {
   if (!timeTravelState.isRecording) return;
 
   timeTravelState.isRecording = false;
+  recordingStopTime = Date.now();
 
   if (unsubscribeEvents) {
     unsubscribeEvents();
@@ -244,7 +253,10 @@ export function jumpToHistory(index: number): boolean {
       newValue?: unknown;
     }
     const payload = entry.data.event.payload as SignalChangePayload;
-    if (payload?.signalId && payload?.newValue !== undefined) {
+    // ★ 2026-10-23：不能用 `newValue !== undefined` 判断 —— 「值被置为 undefined」本身
+    //   就是一条合法的状态变更记录，用 `!== undefined` 会把它**静默跳过**
+    //   （时间旅行停在这一步不生效，面板却显示跳转成功）。改为判断「键是否存在」。
+    if (payload?.signalId && 'newValue' in payload) {
       setSignalValue(payload.signalId, payload.newValue);
     }
   }
@@ -352,7 +364,10 @@ export function exportHistory(): string {
     snapshots: getSnapshots(),
     metadata: {
       totalEvents: timeTravelState.history.filter((h) => h.type === 'event').length,
-      recordingDuration: recordingStartTime ? Date.now() - recordingStartTime : 0,
+      // 用「停止时刻」而不是「此刻」：停止后时长必须冻结
+      recordingDuration: recordingStartTime
+        ? (recordingStopTime || Date.now()) - recordingStartTime
+        : 0,
     },
   };
 
@@ -382,10 +397,13 @@ export function importHistory(json: string): boolean {
     clearHistory();
 
     // Import history
-    timeTravelState.history = data.history.map((h, i) => ({
-      ...h,
-      index: i,
-    }));
+    //
+    // ★ 2026-10-23：先过滤掉**非对象条目**。`[null, 42]` 这类脏数据经 `{...null}` 会变成
+    //   `{ index: 0 }`（没有 `data`）⇒ 之后 `jumpToHistory()` 读 `entry.data.snapshot`
+    //   直接 TypeError，把面板消息处理打挂。
+    timeTravelState.history = data.history
+      .filter((h): h is HistoryEntry => !!h && typeof h === 'object')
+      .map((h, i) => ({ ...h, index: i }));
     timeTravelState.currentIndex = timeTravelState.history.length - 1;
 
     // Notify panel
@@ -440,6 +458,31 @@ export function downloadHistory(filename?: string): void {
 /**
  * Compare two snapshots and return differences
  */
+/**
+ * 把值转成可比较的字符串键。
+ *
+ * ★ 2026-10-23：原先直接 `JSON.stringify(value)` 比较 —— 值里只要有 **BigInt**
+ *   或**循环引用**就会抛 `TypeError`，整个 diff（进而整条面板消息）直接失败。
+ *   这里做两点兜底：BigInt 转字符串、循环引用标记为 `[Circular]`。
+ */
+function stableValueKey(value: unknown): string {
+  const seen = new WeakSet<object>();
+  try {
+    return (
+      JSON.stringify(value, (_key, v) => {
+        if (typeof v === 'bigint') return `${v.toString()}n`;
+        if (v && typeof v === 'object') {
+          if (seen.has(v)) return '[Circular]';
+          seen.add(v);
+        }
+        return v;
+      }) ?? 'undefined'
+    );
+  } catch {
+    return String(value);
+  }
+}
+
 export function compareSnapshots(snapshot1: StateSnapshot, snapshot2: StateSnapshot): StateDiff[] {
   const diffs: StateDiff[] = [];
 
@@ -456,7 +499,7 @@ export function compareSnapshots(snapshot1: StateSnapshot, snapshot2: StateSnaps
         oldValue: undefined,
         newValue: signal2.value,
       });
-    } else if (JSON.stringify(signal1.value) !== JSON.stringify(signal2.value)) {
+    } else if (stableValueKey(signal1.value) !== stableValueKey(signal2.value)) {
       diffs.push({
         path: `signals.${signal2.name}`,
         oldValue: signal1.value,
@@ -504,7 +547,12 @@ export function getStateDiffForEntry(index: number): StateDiff[] {
  */
 export function initTimeTravel(): () => void {
   const unsubscribe = onPanelMessage((message: unknown) => {
-    const msg = message as { type: string; data?: unknown };
+    // ★ 2026-10-23：`BridgeMessage` 的负载字段是 **`payload`**，而这里原先读的是 `data`
+    //   ⇒ 所有带数据的命令（JUMP_TO_HISTORY / IMPORT_HISTORY / GET_STATE_DIFF）
+    //   收到的都是 `undefined`，再被 `if (data)` 守卫静默吞掉：
+    //   **面板点「跳转」毫无反应，也不报错**。两个字段都认（`data` 为历史写法）。
+    const raw = message as { type: string; payload?: unknown; data?: unknown };
+    const msg = { type: raw.type, data: raw.payload ?? raw.data };
 
     switch (msg.type) {
       case 'START_TIME_TRAVEL_RECORDING':
