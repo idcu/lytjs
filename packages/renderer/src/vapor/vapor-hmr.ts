@@ -316,22 +316,37 @@ export function createVaporHMRHandler(componentId: string) {
  * 在编译时注入到组件代码中
  */
 export function generateHMRCode(componentId: string): string {
+  // ★ 2026-10-22 两处修正：
+  //   ① **id 必须转义**。原实现直接把 `componentId` 插进单引号字符串
+  //      ⇒ id 里出现 `'` / `\` / 换行时，生成的文件**语法错误**（连编译都过不去）。
+  //   ② **回调必须真的触发更新**。原实现只是 `instance.component = newModule.default`
+  //      + 一句空注释（"Vapor 模式会自动通过 effect 重新渲染"）—— 但没有任何东西
+  //      观察 `instance.component` ⇒ **HMR 接受了、界面不变**，等于没生效。
+  //      改为调用模块安装到 window 上的 `__LYTJS_HMR_UPDATE__`（走真实的
+  //      `handleComponentUpdate`：换定义 + 保留状态 + 通知监听器）。
+  const id = escapeForSingleQuotedString(componentId);
   return `
 if (import.meta.hot) {
   import.meta.hot.accept((newModule) => {
     if (newModule && newModule.default) {
-      const instance = window.__LYTJS_HMR_REGISTRY__?.get('${componentId}');
-      if (instance) {
-        instance.component = newModule.default;
-        // 触发重新渲染
-        if (instance.container && instance.component.template) {
-          // Vapor 模式会自动通过 effect 重新渲染
-        }
-      }
+      window.__LYTJS_HMR_UPDATE__?.('${id}', newModule.default);
     }
   });
 }
 `;
+}
+
+/**
+ * 把字符串转义成可安全嵌入**单引号 JS 字符串字面量**的形式
+ */
+function escapeForSingleQuotedString(value: string): string {
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\r/g, '\\r')
+    .replace(/\n/g, '\\n')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
 }
 
 // ============================================================
@@ -342,6 +357,13 @@ if (import.meta.hot) {
 if (typeof window !== 'undefined') {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).__LYTJS_HMR_REGISTRY__ = componentRegistry;
+  // ★ 2026-10-22：`generateHMRCode()` 产出的 accept 回调通过它触发**真正的**热更新
+  //   （默认按 template 处理：换定义、保留状态、不刷新页面）。
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any).__LYTJS_HMR_UPDATE__ = (
+    id: string,
+    component: VaporComponentDefinition,
+  ): boolean => handleComponentUpdate(id, component, 'template');
 }
 
 // ============================================================
