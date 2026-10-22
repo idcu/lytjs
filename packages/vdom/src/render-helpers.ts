@@ -25,7 +25,7 @@
 import type { VNode, VNodeChildren, VNodeTypes } from '@lytjs/common-vnode';
 import { Fragment } from '@lytjs/common-vnode';
 import { isArray } from '@lytjs/common-is';
-import { capitalize } from '@lytjs/common-string';
+import { capitalize, kebabToCamel } from '@lytjs/common-string';
 import { createVNode, createTextVNode } from './vnode';
 import { setBlockTracking } from './block';
 
@@ -75,9 +75,14 @@ export function createStaticVNode(content: string, numberOfNodes = 1): VNode {
     children.push(createTextVNode(content));
   } else {
     // 多节点静态内容：按空白切分近似还原（编译器传入的 content 是其拼接结果）
+    //
+    // ★ 2026-10-22：节点数**必须严格等于 `numberOfNodes`**。
+    //   原实现用 `Math.max(numberOfNodes, parts.length)` —— 内容里出现两处以上连续空白
+    //   时 `parts.length` 会大于声明值 ⇒ 多造文本节点 ⇒ 服务端按 N 个节点输出、
+    //   客户端按 N+1 个水合 ⇒ **结构错位**（水合是逐节点比对的）。
+    //   段数不足时补空串，段数过多时截断。
     const parts = content.split(/\s{2,}/).filter(Boolean);
-    const count = Math.max(numberOfNodes, parts.length);
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < numberOfNodes; i++) {
       children.push(createTextVNode(parts[i] ?? ''));
     }
   }
@@ -110,9 +115,13 @@ export function renderList<T, R>(
       ret[i] = renderItem(list[i] as T, i, i);
     }
   } else if (typeof source === 'number') {
-    ret = new Array(source) as R[];
+    // ★ 2026-10-22：不再 `new Array(source)`。
+    //   负数 / 小数 / NaN 会让 `new Array()` 抛
+    //   `RangeError: Invalid array length`（模板里 `v-for="n in -1"` 之类会直接把渲染打挂）。
+    //   改用 push 循环，与参考语义一致：非正整数 ⇒ 空数组。
+    ret = [] as R[];
     for (let i = 0; i < source; i++) {
-      ret[i] = renderItem((i + 1) as unknown as T, i + 1, i);
+      ret.push(renderItem((i + 1) as unknown as T, i + 1, i));
     }
   } else if (typeof source === 'object' && source !== null) {
     const record = source as Record<string, T>;
@@ -127,7 +136,17 @@ export function renderList<T, R>(
   }
 
   // 与 Vue 一致：给结果数组打上标记，便于渲染器识别「来自 renderList 的列表」
-  (ret as R[] & { _isVList?: boolean })._isVList = true;
+  //
+  // ★ 2026-10-22：改为**不可枚举**。原先直接赋值 ⇒ 标记会出现在
+  //   `Object.keys(list)` / 展开 / `JSON.stringify` / 深比较里（Vue 用 `def()` 定义，
+  //   正是为了不可枚举）。注意：本仓目前**没有任何代码读它**（孤儿标记），
+  //   保留只为对齐契约。
+  Object.defineProperty(ret, '_isVList', {
+    value: true,
+    enumerable: false,
+    configurable: true,
+    writable: true,
+  });
   return ret;
 }
 
@@ -141,6 +160,10 @@ const OBJECT_STRINGIFY = /\[object (Map|Set|RegExp)\]/;
 function stringifyReplacer(_key: string, value: unknown): unknown {
   if (typeof value === 'symbol') return value.toString();
   if (typeof value === 'bigint') return value.toString();
+  // ★ 2026-10-22：补 RegExp。上面 `OBJECT_STRINGIFY` 特意把 RegExp 列进「需要字符串化」
+  //   的名单（注释写着「避免 JSON.stringify 得到 {}」），但 replacer 里没有对应分支
+  //   ⇒ 正则最终仍然序列化成 `{}`，意图没兑现。
+  if (value instanceof RegExp) return value.toString();
   if (value instanceof Map || value instanceof Set) return Array.from(value as Iterable<unknown>);
   return value;
 }
@@ -253,7 +276,14 @@ export function guardReactiveProps(
  * （两侧同时改，否则组件事件收不到）。
  */
 export function toHandlerKey(str: string): string {
-  return str ? `on${capitalize(str)}` : '';
+  // ★ 2026-10-22：**必须先 kebab→camel**。
+  //   `@lytjs/component` 的 `emit()` 查找键是 `on${kebabToCamel(event) 首字母大写}`
+  //   （见 `component/src/emit.ts` 的 `toHandlerKey`）。而这里原来只 `capitalize`
+  //   ⇒ `toHandlerKey('update:model-value')` 得到 `onUpdate:model-value`，
+  //   与 emit 查的 `onUpdate:modelValue` **对不上** ⇒ 模板里写 kebab 事件名时
+  //   监听器**永远收不到事件**（本文件注释也明确要求两侧保持一致）。
+  if (!str) return '';
+  return `on${capitalize(kebabToCamel(str))}`;
 }
 
 // ============================================================
