@@ -53,6 +53,10 @@ class LRUCache implements KeepAliveCache {
   }
 
   set(key: string, instance: ComponentInternalInstance): void {
+    // ★ 2026-10-23：容量为 0（或负数）⇒ **不缓存任何条目**。
+    //   原实现会先淘汰再插入 ⇒ 即使 `max: 0` 也仍然留下 1 条，与「不缓存」的语义不符。
+    if (this.maxSize <= 0) return;
+
     // 如果 key 已存在，先删除以更新顺序
     if (this.cache.has(key)) {
       this.cache.delete(key);
@@ -97,17 +101,24 @@ class LRUCache implements KeepAliveCache {
    * 更新缓存的最大容量
    */
   setMaxSize(newMaxSize: number): void {
-    this.maxSize = newMaxSize;
+    // ★ 2026-10-23：**必须 clamp 到 >= 0**。
+    //   原实现直接 `this.maxSize = newMaxSize`，然后 `while (size > maxSize)` 修剪；
+    //   一旦传入负数（例如 `max` prop 被写成 `-1`），条件 `0 > -1` 恒真，而空缓存的
+    //   `keys().next().value` 是 `undefined` ⇒ **一次都删不掉** ⇒ **同步死循环**，
+    //   整个进程卡死（实测：探针 12s 后被 SIGTERM 杀掉，无任何输出）。
+    this.maxSize = Math.max(0, Math.floor(newMaxSize) || 0);
+
     // 如有必要则修剪
     while (this.cache.size > this.maxSize) {
       const oldestKey = this.cache.keys().next().value;
-      if (oldestKey !== undefined) {
-        const oldestInstance = this.cache.get(oldestKey);
-        if (oldestInstance) {
-          evictInstance(oldestInstance);
-        }
-        this.cache.delete(oldestKey);
+      // 兜底：没有可删的条目时必须跳出，避免任何情况下的死循环
+      if (oldestKey === undefined) break;
+
+      const oldestInstance = this.cache.get(oldestKey);
+      if (oldestInstance) {
+        evictInstance(oldestInstance);
       }
+      this.cache.delete(oldestKey);
     }
   }
 }
@@ -517,13 +528,35 @@ export function getCacheKey(keepAlive: ComponentInternalInstance, vnode: VNode):
   if (typeof type === 'string') {
     return type;
   }
-  if (type && typeof type === 'object' && 'name' in type) {
-    return String((type as { name?: string }).name) || String(type);
-  }
-  if (typeof type === 'function' && 'name' in type) {
-    return (type as { name?: string }).name || String(type);
+
+  const named =
+    (type && typeof type === 'object' && 'name' in type
+      ? (type as { name?: string }).name
+      : undefined) ?? (typeof type === 'function' ? (type as { name?: string }).name : undefined);
+
+  if (named) return String(named);
+
+  // ★ 2026-10-23：**匿名组件不能都退化成 `String(type)`**。
+  //   `String({ render })` 与 `String({ render })` 都是 `'[object Object]'`
+  //   ⇒ 两个不同的匿名组件共用同一个缓存键 ⇒ 切回来时**渲染出另一个组件**（静默错渲染）。
+  //   改为按 type 对象分配稳定 id（同一个组件定义多次取值不变，不同定义必不同）。
+  if (type && (typeof type === 'object' || typeof type === 'function')) {
+    return `__anonymous_${getAnonymousTypeId(type as object)}`;
   }
   return String(type);
+}
+
+/** 匿名组件/函数 type ⇒ 稳定数字 id（WeakMap，不阻止回收） */
+const anonymousTypeIds = new WeakMap<object, number>();
+let anonymousTypeIdSeed = 0;
+
+function getAnonymousTypeId(type: object): number {
+  let id = anonymousTypeIds.get(type);
+  if (id === undefined) {
+    id = ++anonymousTypeIdSeed;
+    anonymousTypeIds.set(type, id);
+  }
+  return id;
 }
 
 /**

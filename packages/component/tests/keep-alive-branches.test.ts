@@ -94,12 +94,19 @@ describe('keep-alive 分支补测', () => {
       expect(getCacheKey(ka, vnodeOf({ name: 'CompA' }))).toBe('CompA');
     });
 
-    it('vnode.type 为「name 为空字符串的对象」⇒ 回退到 String(type)', () => {
+    it('vnode.type 为「name 为空字符串的对象」⇒ 按匿名组件分配稳定 id', () => {
       const ka = createKeepAliveInstance();
-      // 注意：`name: undefined` 不行 —— `String(undefined)` 是字符串 'undefined'（真值），
-      // 不会走 `||` 兜底。只有 `name === ''` 才让 `String(name)` 为假值。
+      // ★ 2026-10-23 语义变更：原先回退到 `String(type)`（即 '[object Object]'），
+      //   导致**所有匿名组件共用同一个缓存键** ⇒ 切回来会渲染出另一个组件。
+      //   现在改为按 type 对象分配稳定 id。
       const type = { name: '' };
-      expect(getCacheKey(ka, vnodeOf(type))).toBe(String(type));
+      const key = getCacheKey(ka, vnodeOf(type));
+
+      expect(key).toMatch(/^__anonymous_\d+$/);
+      // 同一个定义多次取值必须一致
+      expect(getCacheKey(ka, vnodeOf(type))).toBe(key);
+      // 不同定义必须不同
+      expect(getCacheKey(ka, vnodeOf({ name: '' }))).not.toBe(key);
     });
 
     it('vnode.type 为「具名函数」⇒ 用函数名', () => {
@@ -110,11 +117,13 @@ describe('keep-alive 分支补测', () => {
       expect(getCacheKey(ka, vnodeOf(NamedComp))).toBe('NamedComp');
     });
 
-    it('vnode.type 为「匿名函数」⇒ 回退到 String(type)', () => {
+    it('vnode.type 为「匿名函数」⇒ 按匿名组件分配稳定 id', () => {
       const ka = createKeepAliveInstance();
       const anon = (): null => null;
       Object.defineProperty(anon, 'name', { value: '' });
-      expect(getCacheKey(ka, vnodeOf(anon))).toBe(String(anon));
+
+      // ★ 2026-10-23 语义变更（同上）：不再回退到函数源码文本。
+      expect(getCacheKey(ka, vnodeOf(anon))).toMatch(/^__anonymous_\d+$/);
     });
 
     it('自定义 onCacheKey：返回数字时转成字符串', () => {
