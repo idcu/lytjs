@@ -102,47 +102,19 @@ function flushDOMOperations(): void {
   const operations = domOperationQueue;
   domOperationQueue = [];
 
-  // 合并相同父元素的 insert 操作，使用 DocumentFragment
-  const fragmentMap = new Map<Node, DocumentFragment>();
-  const otherOperations: DOMOperation[] = [];
-
-  for (const op of operations) {
-    if (op.type === 'insert') {
-      // 检查是否可以使用 DocumentFragment 批量插入
-      const { child, parent, anchor } = op;
-      if (!anchor && child instanceof Element) {
-        let fragment = fragmentMap.get(parent);
-        if (!fragment) {
-          fragment = document.createDocumentFragment();
-          fragmentMap.set(parent, fragment);
-        }
-        fragment.appendChild(child);
-      } else {
-        otherOperations.push(op);
-      }
-    } else {
-      otherOperations.push(op);
-    }
-  }
-
-  // 执行 DocumentFragment 批量插入
-  for (const [parent, fragment] of fragmentMap) {
-    if (fragment.childNodes.length > 0) {
-      parent.appendChild(fragment);
-    }
-  }
-
-  // 执行其他操作
-  for (const op of otherOperations) {
+  // ★ 2026-10-22：原实现把所有「无 anchor 的元素 insert」先收进 DocumentFragment
+  //   **统一提前执行**，其余操作随后执行 ⇒ 一旦队列里同时有文本节点与元素节点
+  //   （例如 `[text('T'), element(<b>)]`），实际 DOM 顺序会**颠倒**成 `[<b>, 'T']`。
+  //   改为**按连续段**合并：只把队列里「相邻的、同父的、无 anchor 的元素插入」合并成一个
+  //   DocumentFragment，并在该段的原位置追加 ⇒ 顺序与入队顺序严格一致。
+  const applyOperation = (op: DOMOperation): void => {
     switch (op.type) {
       case 'insert':
         op.parent.insertBefore(op.child, op.anchor);
         break;
       case 'remove': {
         const parent = op.child.parentNode;
-        if (parent) {
-          parent.removeChild(op.child);
-        }
+        if (parent) parent.removeChild(op.child);
         break;
       }
       case 'setText':
@@ -152,6 +124,38 @@ function flushDOMOperations(): void {
         op.node.textContent = op.text;
         break;
     }
+  };
+
+  let i = 0;
+  while (i < operations.length) {
+    const op = operations[i]!;
+
+    const canBatch = op.type === 'insert' && !op.anchor && op.child instanceof Element && op.parent;
+
+    if (!canBatch) {
+      applyOperation(op);
+      i++;
+      continue;
+    }
+
+    // 收集「相邻 + 同父 + 无 anchor + 元素」的连续段
+    const parent = op.parent;
+    const fragment = document.createDocumentFragment();
+    while (i < operations.length) {
+      const next = operations[i]!;
+      if (
+        next.type === 'insert' &&
+        !next.anchor &&
+        next.child instanceof Element &&
+        next.parent === parent
+      ) {
+        fragment.appendChild(next.child);
+        i++;
+      } else {
+        break;
+      }
+    }
+    parent.appendChild(fragment);
   }
 }
 
@@ -246,6 +250,15 @@ export interface DOMRenderer {
   patch(n1: VNode | null, n2: VNode, container: Node, anchor?: Node | null): void;
   unmount(vnode: VNode): void;
   mount(vnode: VNode, container: Node): void;
+  /**
+   * 登记一个与 vnode 绑定的**资源清理函数**（动画帧、IntersectionObserver、
+   * ResizeObserver、MutationObserver 等）。
+   *
+   * ★ 2026-10-22：此前 `vnodeResourceMap` **只有 get 没有 set** —— `cleanupVNodeResources`
+   *   每次都被调用，但表永远是空的 ⇒ 整套「Web 平台资源清理」是**空转的死代码**。
+   *   补上生产者后，`unmount()` / `render(null)` 才会真正执行这些清理。
+   */
+  trackResource(vnode: VNode, cleanup: () => void): void;
   /**
    * 水合挂载：复用容器内**既有**的 DOM（典型来源：SSR 产出的 HTML），
    * 同时照常建立组件实例与响应式 effect ⇒ 挂载后**由客户端接管更新**。
@@ -441,6 +454,14 @@ export function createDOMRenderer(
       }
     },
     patch: renderer.patch,
+    trackResource(vnode: VNode, cleanup: () => void): void {
+      let resources = vnodeResourceMap.get(vnode);
+      if (!resources) {
+        resources = new Set();
+        vnodeResourceMap.set(vnode, resources);
+      }
+      resources.add(cleanup);
+    },
     unmount(vnode: VNode): void {
       cleanupVNodeResources(vnode);
       renderer.unmount(vnode);
