@@ -13,21 +13,21 @@ keywords: [硬约束9]
 
 ## 覆盖率实测（10-22 四跑）
 全局 **77.26%**（76.35% → 77.26%）。非 UI 未覆盖 Top：`treeShaking` 250（未完成）、
-`codegen-signal-optimized` 176/1629(89%)、`vdom/render-helpers` 135/148(**9%**)、
-`core/composition` 128/182(**30%**)。手法：`statementMap` 反查区间；快照 `~/.workbuddy-ai/tmp/cov-1022/`。
+`codegen-signal-optimized` 176/1629、`vdom/render-helpers` 135/148(**9%**)。快照 `~/.workbuddy-ai/tmp/cov-1022/`。
 
-## 10-22 完成（1 电池 / 27 守卫）
+## 10-22 完成（2 电池 / 51 守卫）
+- **core/composition**（24）→ **`useTemplateRef()` 恒为 null**（watch 读的是**普通对象** `refs`，
+  且 refs 在 mount 阶段才写入 ⇒ 除 immediate 外永不重跑）；**`useCssVars()` 依赖从未被收集**
+  （首跑在 `vars()` 之前就因 `vnode.el` 为空 return）。既有测试把 `getCurrentInstance` 全 mock 了。
 - **reactivity/batch**（27）→ **同步模式对 `undefined` 返回值直接抛错**（void 写法与文件自己的
-  JSDoc 示例全跑不通；异步分支早已修过、同步漏了）；异步 `.catch` 里 `throw` ⇒ **unhandledRejection**；
-  `flushBatchScopes()` 空操作却叫「等待全部完成」（现真等待）；异步出栈 `pop()` 删错对象（改按身份）。
+  JSDoc 示例全跑不通）；异步 `.catch` 里 `throw` ⇒ **unhandledRejection**；`flushBatchScopes()`
+  空操作却叫「等待全部完成」（现真等待）；异步出栈 `pop()` 删错对象（改按身份）。
 
 ## 10-21 摘要（6 电池 / 157 守卫；明细见日志）
-- **renderer/server**（P1 存储型 XSS）：SSR 数据原样嵌 `<script>` ⇒ `</script>` 可闭合。
-- **compiler/server**：产物 TDZ / 桩重复声明。**core-vnode/web-component**（P1 渲染恒为空）。
-- **dom/web-components**：反射回声两次回调。**ssr**：`Date` 死代码 + 共享引用误判为循环。
+- 两个 P1：SSR 数据注入可被 `</script>` 闭合（XSS）、`defineCustomElement` 渲染恒为空。
 
 ## 下一步
-1. **非 UI 车道**：`core/composition`(128, 30%) → `vdom/render-helpers`(135, 9%)。
+1. **非 UI 车道**：`vdom/render-helpers`(135, 9%) → 之后需**重跑覆盖率重排**。
 2. 按 ADR 0010 判定 UI 剩余登记项（28）—— 需串行。
 3. 待判定：`resetPerformanceMonitor()` 不重置 `options`；`clearAlerts()` 不清冷却；
    `recordMetric`/`log()` 禁用时返回假记录；`canRedo` 恒 false；`suspensible` 从未读取；
