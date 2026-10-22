@@ -1,8 +1,8 @@
 ---
 scope: now
 status: active
-last-verified: 2026-10-22
-updated: 2026-10-22
+last-verified: 2026-10-23
+updated: 2026-10-23
 keywords: [硬约束9]
 ---
 
@@ -13,21 +13,20 @@ keywords: [硬约束9]
 
 ## 覆盖率实测（10-22 四跑）
 全局 **77.26%**。非 UI 未覆盖 Top：`treeShaking` 250、
-`codegen-signal-optimized` 176/1629、`devtools/panel/time-travel` 146/386(62%)。快照 `~/.workbuddy-ai/tmp/cov-1022/`。
+`codegen-signal-optimized` 176/1629、`component/keep-alive` 117/334(65%)。快照 `~/.workbuddy-ai/tmp/cov-1022/`。
 
-## 10-22 完成（6 电池 / 170 守卫）
-- **adapter-web/web-dom-renderer**（24）→ 批量 DOM 队列把文本与元素**插反了**（fragment 提前执行）；
-  `vnodeResourceMap` **只有 get 没有 set** ⇒ 资源清理空转（已补 `trackResource`）。
-- **vdom/patch**（23，纯测试）→ legacy options、组件更新三判定、ref 卸载、hydrate 退化；
-  **行为都对，未发现缺陷**。
-- **vapor/vapor-hmr**（32）→ 生成的 accept 回调**是空操作**（HMR 接受但界面不变）；id 未转义。
-- **vdom/render-helpers**（40）→ **`toHandlerKey` 没转 kebab→camel**（事件键与 `emit()` 对不上）；
-  静态节点多造、`renderList` 负数抛 RangeError。
-- **core/composition**（24）→ **`useTemplateRef()` 恒为 null**；**`useCssVars()` 依赖从未被收集**。
-- **reactivity/batch**（27）→ void 回调抛错、异步失败变 unhandledRejection、`flushBatchScopes` 空操作。
+## 10-23 完成（1 电池 / 12 条新增）
+- **devtools/panel/time-travel**（39 条，含既有 27）→ **面板命令读错字段**（`BridgeMessage` 是
+  `payload`、处理器读 `msg.data`）⇒ 跳转/导入/取 diff **静默失效**；`jumpToHistory` 用
+  `newValue !== undefined` ⇒ 值置 undefined 的变更跳不过去；`recordingDuration` 停止后仍增长；
+  导入不过滤非对象条目 ⇒ 后续跳转 TypeError；`compareSnapshots` 遇 BigInt/循环引用抛错。
+
+## 10-22 摘要（6 电池 / 170 守卫；明细见日志）
+- 三个「机制空转」：`useTemplateRef` 恒 null、`useCssVars` 依赖未收集、HMR 生成代码空操作。
+- 两个「跨层不一致」：`toHandlerKey` 缺 kebab→camel、渲染器批量 DOM 插反 + 资源表无写入方。
 
 ## 下一步
-1. **非 UI 车道**：`devtools/panel/time-travel`(146, 62%) → `tools/test-utils`(162, 40%)。
+1. **非 UI 车道**：`component/keep-alive`(117, 65%) → `tools/test-utils`(162, 40%)。
 2. 按 ADR 0010 判定 UI 剩余项（28）—— 需串行。
 3. 待判定：`resetPerformanceMonitor()` 不重置 `options`；`clearAlerts()` 不清冷却；
    `recordMetric`/`log()` 禁用返回假记录；`canRedo` 恒 false；`suspensible` 从未读取；
