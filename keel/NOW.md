@@ -13,21 +13,20 @@ keywords: [硬约束9]
 
 ## 覆盖率实测（10-22 四跑）
 全局 **77.26%**。非 UI 未覆盖 Top：`treeShaking` 250、
-`codegen-signal-optimized` 176/1629、`vdom/patch` 141/423(67%)。快照 `~/.workbuddy-ai/tmp/cov-1022/`。
+`codegen-signal-optimized` 176/1629、`adapter-web/web-dom-renderer` 142/256(45%)。快照 `~/.workbuddy-ai/tmp/cov-1022/`。
 
-## 10-22 完成（4 电池 / 123 守卫）
-- **vapor/vapor-hmr**（32）→ **生成的 accept 回调是空操作**（只赋值 `instance.component` + 空注释，
-  没有任何东西观察它 ⇒ HMR「接受」但界面不变）；**id 未转义** ⇒ 含 `'`/`\`/换行时生成的文件语法错误。
-- **vdom/render-helpers**（40）→ **`toHandlerKey` 没做 kebab→camel** ⇒ 事件键与 `emit()` 对不上；
-  `createStaticVNode` 多造节点；`renderList` 负数抛 **RangeError**；`_isVList` 可枚举；RegExp 退化。
+## 10-22 完成（5 电池 / 146 守卫）
+- **vdom/patch**（23，纯测试）→ 覆盖 legacy options 适配、组件更新的三条判定、事件清理注册表、
+  三种 ref 卸载清理、Fragment move、hydrate 退化。**行为都对，未发现缺陷**。
+- **vapor/vapor-hmr**（32）→ 生成的 accept 回调**是空操作**（HMR 接受但界面不变）；id 未转义
+  ⇒ 含引号/反斜杠时生成的文件语法错误。
+- **vdom/render-helpers**（40）→ **`toHandlerKey` 没转 kebab→camel**（事件键与 `emit()` 对不上）；
+  静态节点多造、`renderList` 负数抛 RangeError、`_isVList` 可枚举、RegExp 退化。
 - **core/composition**（24）→ **`useTemplateRef()` 恒为 null**；**`useCssVars()` 依赖从未被收集**。
-- **reactivity/batch**（27）→ 同步模式对 `undefined` 返回值抛错；异步 `.catch` 里 `throw` ⇒
-  **unhandledRejection**；`flushBatchScopes()` 空操作；异步出栈删错对象。
-
-## 10-21 摘要（6 电池 / 157 守卫）：两个 P1 —— SSR 注入 XSS、`defineCustomElement` 渲染恒为空。
+- **reactivity/batch**（27）→ void 回调抛错、异步失败变 unhandledRejection、`flushBatchScopes` 空操作。
 
 ## 下一步
-1. **非 UI 车道**：`vdom/patch`(141, 67%) → `adapter-web/web-dom-renderer`(142, 45%)。
+1. **非 UI 车道**：`adapter-web/web-dom-renderer`(142, 45%) → `devtools/panel/time-travel`。
 2. 按 ADR 0010 判定 UI 剩余项（28）—— 需串行。
 3. 待判定：`resetPerformanceMonitor()` 不重置 `options`；`clearAlerts()` 不清冷却；
    `recordMetric`/`log()` 禁用返回假记录；`canRedo` 恒 false；`suspensible` 从未读取；
