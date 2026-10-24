@@ -1,8 +1,8 @@
 ---
 scope: now
 status: active
-last-verified: 2026-10-23
-updated: 2026-10-23
+last-verified: 2026-10-24
+updated: 2026-10-24
 keywords: [硬约束9]
 ---
 
@@ -13,25 +13,23 @@ keywords: [硬约束9]
 
 ## 覆盖率实测（10-22 四跑）
 全局 **77.26%**。非 UI 未覆盖 Top：`treeShaking` 250、
-`codegen-signal-optimized` 176/1629、`tools/test-utils` 162/270(40%)。快照 `~/.workbuddy-ai/tmp/cov-1022/`。
+`codegen-signal-optimized` 176/1629、`vdom/transition-group` 121/…(72%)。快照 `~/.workbuddy-ai/tmp/cov-1022/`。
 
-## 10-23 完成（2 电池 / 26 条新增）
-- **component/keep-alive**（14）→ **`setMaxSize(负数)` 同步死循环**（探针 12s 被 SIGTERM、电池挂死）；
-  **匿名组件缓存键全撞成 `'[object Object]'`** ⇒ 切回渲染错组件；`max: 0` 仍缓存 1 条。
-- **devtools/panel/time-travel**（39 条，含既有 27）→ **面板命令读错字段**（`BridgeMessage` 是
-  `payload`、处理器读 `msg.data`）⇒ 跳转/导入/取 diff **静默失效**；`jumpToHistory` 用
-  `newValue !== undefined` ⇒ 值置 undefined 的变更跳不过去；`recordingDuration` 停止后仍增长；
-  导入不过滤非对象条目 ⇒ 后续跳转 TypeError；`compareSnapshots` 遇 BigInt/循环引用抛错。
-
-## 10-22 摘要（6 电池 / 170 守卫）
-- 三个「机制空转」（`useTemplateRef`/`useCssVars`/HMR 生成代码）+ 两个「跨层不一致」。
+## 10-24 完成（1 电池 / 37 守卫）
+- **tools/test-utils**（37，jsdom）→ 挂载层此前**零判据**（既有测试跑 node 环境）。三个 P1：
+  `mount()` 没 await core 的 async `app.mount()` ⇒ `vm` 是 Promise（`$emit`/`$props` 全 undefined）、
+  DOM 空、`root` 恒为容器；`options.props` 一个都没进组件（漏了 createApp 第二参）；
+  `setProps()` 彻底空操作。另 3 处：容器不入文档、`assertEmits` 换 `$emit` 劫持（组件走 `emit()`
+  闭包 ⇒ 永远收不到）、`spyOn` 把方法变 stub。顺带修 component：`app.provide()` 在根组件 inject
+  不到（无 parent ⇒ 循环不执行）、未声明 props 的实例共用冻结 `EMPTY_OBJ`。⚠️ `mount()` 返回 Promise。
 
 ## 下一步
-1. **非 UI 车道**：`tools/test-utils`(162, 40%) → `vdom/transition-group`(121, 72%)。
+1. **非 UI 车道**：`vdom/transition-group`(121, 72%) → 之后需**重跑覆盖率重排**。
 2. 按 ADR 0010 判定 UI 剩余项（28）—— 需串行。
 3. 待判定：`resetPerformanceMonitor()` 不重置 `options`；`clearAlerts()` 不清冷却；
    `recordMetric`/`log()` 禁用返回假记录；`canRedo` 恒 false；`suspensible` 从未读取；
-   `ServerComponentOptions` 的 3 个输出/前缀选项、HMR 的 `_preservation`/`mounted` 从未读取。
+   `ServerComponentOptions` 的 3 个输出/前缀选项、HMR 的 `_preservation`/`mounted` 从未读取；
+   **`@lytjs/core` 与 `@lytjs/core-vnode` 各有一份 `createApp`**（ADR 0011 第三例），前者 `mount` 是 async。
 
 ## 阻塞
 | 卡在 | 解锁 | 绕行 |
