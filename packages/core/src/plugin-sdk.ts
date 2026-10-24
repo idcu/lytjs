@@ -3,6 +3,8 @@
 /* eslint-disable no-console */
 
 import type { EnhancedPlugin, App } from './types';
+import { createApp } from './create-app';
+import { h } from './h';
 import type { ConfigSchema, ConfigValidationReport, ConfigTransformReport } from './config-schema';
 import { ConfigTransformer, transformConfig } from './config-transformer';
 import { validateConfig } from './config-validator';
@@ -36,6 +38,38 @@ export interface PluginDefinition<TOptions = unknown> extends EnhancedPlugin<TOp
 }
 
 /**
+ * 把 JSON-Schema 风格的「顶层 `properties`」归一化成校验器要求的嵌套形态。
+ *
+ * ★ 2026-10-24：`@lytjs/config` 的校验器读的是 `schema.object.properties`
+ *   （见 `config-validator.ts` 的 `const objectSchema = schema.object; if (!objectSchema) return errors;`），
+ *   而**本文件原先的 JSDoc 示例写的是顶层 `properties`** —— 于是按示例写出来的插件：
+ *   - `validateConfig()` 恒返回 `valid: true`（对象分支直接 return，**一个字段都不校验**）；
+ *   - `transformConfig()` 不报错但也**不填默认值**。
+ *   ⇒ 「插件配置校验」整套静默失效，非法配置照装不误。
+ *   这里同时接受两种写法（顶层 `properties` 归一化为 `object.properties`），
+ *   让示例与实现一致；`ConfigSchema` 的类型定义不受影响。
+ */
+function normalizeConfigSchema<T>(
+  schema: ConfigSchema<T> | undefined,
+): ConfigSchema<T> | undefined {
+  if (!schema || schema.type !== 'object' || schema.object) return schema;
+
+  const flat = schema as unknown as {
+    properties?: Record<string, ConfigSchema>;
+    required?: string[];
+  };
+  if (!flat.properties) return schema;
+
+  // ⚠️ **原地补字段、不克隆**：调用方可能依赖 `plugin.configSchema === 传入的 schema`
+  //   （既有测试 `plugin-sdk.test.ts` 就断言了这个同一性）。
+  (schema as { object?: unknown }).object = {
+    properties: flat.properties,
+    required: flat.required,
+  };
+  return schema;
+}
+
+/**
  * 创建插件定义
  * @description 提供类型安全的插件定义方式
  *
@@ -45,11 +79,15 @@ export interface PluginDefinition<TOptions = unknown> extends EnhancedPlugin<TOp
  *   name: 'my-plugin',
  *   version: '1.0.0',
  *   description: 'My awesome plugin',
+ *   // ⚠️ 字段定义必须放在 `object.properties` 下（JSON-Schema 的顶层 `properties`
+ *   //    也兼容，会被归一化，但推荐用下面的写法）
  *   schema: {
  *     type: 'object',
- *     properties: {
- *       theme: { type: 'string', string: { enum: ['light', 'dark'] }, default: 'light' },
- *       debug: { type: 'boolean', default: false },
+ *     object: {
+ *       properties: {
+ *         theme: { type: 'string', string: { enum: ['light', 'dark'] }, default: 'light' },
+ *         debug: { type: 'boolean', default: false },
+ *       },
  *     },
  *   },
  *   install: (app, options) => {
@@ -61,7 +99,8 @@ export interface PluginDefinition<TOptions = unknown> extends EnhancedPlugin<TOp
 export function definePlugin<TOptions = unknown>(
   config: PluginConfig<TOptions>,
 ): PluginDefinition<TOptions> {
-  const { name, version, description, author, keywords, schema, install } = config;
+  const { name, version, description, author, keywords, install } = config;
+  const schema = normalizeConfigSchema(config.schema);
 
   const plugin: PluginDefinition<TOptions> = {
     name,
@@ -79,6 +118,15 @@ export function definePlugin<TOptions = unknown>(
       if (schema) {
         const transformer = new ConfigTransformer();
         const report = transformer.transform(rawOptions, schema);
+
+        // ★ 2026-10-24：`configReport` 此前**声明了却从未赋值**（装饰性字段）。
+        //   现在记录最近一次安装的校验结果，便于测试与面板读取。
+        plugin.configReport = {
+          valid: report.success,
+          errors: report.errors,
+          errorCount: report.errors.length,
+          warningCount: report.warnings.length,
+        };
 
         if (!report.success) {
           const errors = report.errors.map((e) => `${e.path}: ${e.message}`).join(', ');
@@ -218,11 +266,21 @@ export class PluginTester {
    * 创建测试 App
    */
   async createApp(): Promise<App> {
-    const { createApp, h } = await import('./index');
-
+    // ★ 2026-10-24：原实现 `await import('./index')` 在 `createApp()` 里**动态导入本包入口** ——
+    //   入口会连带加载 compiler 等一大串模块，在整套测试并行跑时首次导入可能久到超时
+    //   （实测：单跑 30ms，整包并行时 5s 超时）。这里直接静态引用实际需要的两个模块，
+    //   依赖方向是 `plugin-sdk → create-app / h`，不存在循环。
     const app = createApp({
       render: () => h('div'),
     });
+
+    // ★ 2026-10-24：`appConfig` 此前**完全被忽略**（选项声明了但没有任何消费点）。
+    //   `globalProperties` 可以直接挂到 app.config 上；`performance` 目前没有对应
+    //   的运行时开关（`AppOptions` 只有 `rendererMode`），已登记为待判定。
+    const globalProperties = this.options.appConfig.globalProperties;
+    if (globalProperties) {
+      Object.assign(app.config.globalProperties, globalProperties);
+    }
 
     this.app = app;
     return app;
@@ -244,6 +302,11 @@ export class PluginTester {
         if (this.options.debug) {
           console.error('[PluginTester] Validation errors:', report.errors);
         }
+        // ★ 2026-10-24：**校验失败就不再安装**。此前只是回调报告一声、然后照装
+        //   ⇒ `testPluginInstall()` 对非法配置返回 `success: true`（"测试通过"），
+        //   与「配置验证」的意图完全相反。
+        const detail = report.errors.map((e) => `${e.path}: ${e.message}`).join(', ');
+        throw new Error(`Plugin "${plugin.name}" configuration validation failed: ${detail}`);
       }
     }
 
@@ -255,7 +318,27 @@ export class PluginTester {
     }
 
     // 安装
-    this.app!.use(plugin, options);
+    //
+    // ★ 2026-10-24：`app.use()` 是**同步**的，它内部 `plugin.install(app, ...)` 的返回值
+    //   （异步 install 会返回 Promise）被直接丢弃 ⇒ 异步插件「还没装完」就被当成已安装，
+    //   异步失败更是变成 unhandledRejection，而 `testPluginInstall()` 报 `success: true`。
+    //   这里用一个包装器把 install 的 Promise 接住，再 await 它。
+    let pending: Promise<void> | undefined;
+    const probed = {
+      ...plugin,
+      install: (app: App, ...args: unknown[]) => {
+        const result = plugin.install?.(app, ...args);
+        if (result && typeof (result as Promise<void>).then === 'function') {
+          pending = result as Promise<void>;
+        }
+        return result;
+      },
+    } as EnhancedPlugin;
+
+    this.app!.use(probed, options);
+    if (pending) {
+      await pending;
+    }
 
     this.installedPlugins.add(plugin.name);
 
