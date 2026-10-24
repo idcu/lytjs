@@ -170,6 +170,28 @@ const snapshotManager = {
   },
 };
 
+/**
+ * 时间旅行游标：当前「停留」在哪一个快照上。
+ *
+ * `null` 表示「跟随最新」（还没回看过历史）。
+ *
+ * ★ 2026-10-24：此前**根本没有游标概念** —— `getTimeTravelState()` 里
+ *   `currentIndex` 恒为 `length - 1`、`canRedo` 硬编码 `false`；
+ *   而 `timeTravelBack()` / `timeTravelForward()` 都拿「最后一条」当当前位置
+ *   ⇒ `timeTravelForward()` 的 `canGoForward` **永远为 false**，是个永久的空操作。
+ *   表现：面板上「重做」按钮永远不可用，「前进」永远没反应。
+ */
+let snapshotCursor: number | null = null;
+
+/**
+ * 把游标解析成合法的快照下标（越界钳制；空列表返回 0）。
+ */
+function resolveCursor(length: number): number {
+  if (length <= 0) return 0;
+  const index = snapshotCursor ?? length - 1;
+  return Math.min(Math.max(index, 0), length - 1);
+}
+
 // 性能记录
 const performanceRecords: PerformanceRecord[] = [];
 const maxPerformanceRecords = 1000;
@@ -350,6 +372,8 @@ export function createSnapshot(label?: string): Snapshot {
   });
 
   snapshotManager.add(snapshot);
+  // 新建快照 ⇒ 游标回到「跟随最新」（用户此刻看到的就是刚拍下的这一帧）
+  snapshotCursor = null;
   return snapshot;
 }
 
@@ -372,11 +396,13 @@ export function getSnapshot(index: number): Snapshot | undefined {
  */
 export function getTimeTravelState(): TimeTravelState {
   const length = snapshotManager.getLength();
+  const currentIndex = resolveCursor(length);
   return {
     snapshots: snapshotManager.getAll(),
-    currentIndex: length - 1,
-    canUndo: length > 1,
-    canRedo: false,
+    currentIndex,
+    // ★ 2026-10-24：两个能力位都按**游标**算，而不是「有没有历史」
+    canUndo: currentIndex > 0,
+    canRedo: currentIndex < length - 1,
   };
 }
 
@@ -394,6 +420,10 @@ export function restoreSnapshot(index: number): Snapshot | undefined {
     }
   });
 
+  // ★ 2026-10-24：恢复即「移动到该快照」—— 游标必须跟着走，
+  //   否则 `canRedo` / `canGoForward` 永远算不对。
+  snapshotCursor = index;
+
   return snapshot;
 }
 
@@ -402,6 +432,7 @@ export function restoreSnapshot(index: number): Snapshot | undefined {
  */
 export function clearSnapshots(): void {
   snapshotManager.clear();
+  snapshotCursor = null;
 }
 
 /**
@@ -952,7 +983,9 @@ export interface TimeTravelNavigator {
  */
 export function getTimeTravelNavigator(index?: number): TimeTravelNavigator {
   const snapshots = getSnapshots();
-  const currentIndex = index !== undefined ? index : Math.max(0, snapshots.length - 1);
+  // ★ 2026-10-24：不传 index 时按**游标**算（此前恒取「最后一条」
+  //   ⇒ `canGoForward` 永远为 false，`timeTravelForward()` 永久空操作）
+  const currentIndex = index !== undefined ? index : resolveCursor(snapshots.length);
 
   return {
     currentIndex,
