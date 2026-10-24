@@ -1,8 +1,8 @@
 ---
 scope: now
 status: active
-last-verified: 2026-10-24
-updated: 2026-10-24
+last-verified: 2026-10-25
+updated: 2026-10-25
 keywords: [硬约束9]
 ---
 
@@ -13,22 +13,21 @@ keywords: [硬约束9]
 
 ## 覆盖率实测（10-24 五跑）
 全局 **79.42%**（+2.16pt）。非 UI 未覆盖 Top：`treeShaking` 250（未完成）、
-`codegen-signal-optimized` 176、`devtools/panel/performance` 123、`ssr/ssr-stream` 108。
+`codegen-signal-optimized` 176、`devtools/panel/performance` 123、`dom-runtime/index` 115。
 快照 `~/.workbuddy-ai/tmp/cov-1024/`
 
-## 10-24 完成（5 电池 / 126 守卫）
-- **core/plugin-sdk**（25）→ 按 SDK 文档写的 schema（顶层 `properties`）**完全不校验**（校验器要
-  `object.properties`）⇒ 非法配置照装；`PluginTester` **不等异步 install** ⇒ 测试假成功、
-  cleanup 早于安装完成；`appConfig`/`configReport` 装饰性。
-- **dom-runtime/events**（20）→ 模块未导出、无消费方（0%）；同一容器只能委托**一种**事件类型。
-- **devtools/signalsInspector**（16）→ 时间旅行无游标：`canRedo` 恒 false、`forward()` 恒空操作。
-- **vdom/transition-group**（28）→ 重载判别靠 props 有无 `name` ⇒ `(el,{},done)` 被当成泛型版；
-  DOM 路径漏 enter 等待、`onBefore*`、自定义 `*Class`。
-- **tools/test-utils**（37）→ `mount()` 没 await core 的 async `mount()` ⇒ `vm` 是 Promise、
-  props 没进组件、`setProps()` 空操作。⚠️ `mount()` 改返回 Promise。
+## 10-25 完成（1 电池 / 25 守卫）
+- **renderer/ssr/ssr-stream**（25）→ **真实 `<Suspense>` 输出空串**：判别要求「组件位」而真实 vnode 是
+  `ARRAY_CHILDREN|SUSPENSE`；插槽读 `props.default` 而框架放在 `children`。**`setup()` 返回渲染函数**
+  时 SSR 也为空（`resolveFromSetupResult` 只认 vnode / setup 对象 + render）——同步与流式两入口皆空。
+
+## 10-24 摘要（5 电池 / 126 守卫）
+- plugin-sdk（schema 写法不校验、测试器不等异步 install）· events（多事件类型失效、模块未导出）·
+  time-travel（无游标）· transition-group（重载判别靠 name）· test-utils（mount 未 await）。
+- 覆盖率五跑：**77.26% → 79.42%**。
 
 ## 下一步
-1. **非 UI 车道**：`core/plugin-sdk`(103, 35%) → `renderer/ssr/ssr-stream`(108, 58%)。
+1. **非 UI 车道**：`devtools/panel/performance`(123, 65%) → 之后需**重跑覆盖率重排**。
 2. 按 ADR 0010 判定 UI 剩余项（28）—— 需串行。
 3. 待判定：`resetPerformanceMonitor()` 不重置 `options`；`clearAlerts()` 不清冷却；
    `recordMetric`/`log()` 禁用返回假记录；`suspensible`、`ServerComponentOptions` 的 3 个输出选项、
