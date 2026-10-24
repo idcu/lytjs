@@ -52,6 +52,24 @@ interface FLIPState {
 // ============================================================
 
 /**
+ * 判断第一个参数是 `RendererHost` 还是 DOM 元素。
+ *
+ * ★ 2026-10-24：重载判别**不能靠 props 上有没有 `name`**。
+ *   原实现是 `'name' in elOrProps` ⇒ `performGroupEnterTransition(el, {}, done)`
+ *   （不写 name，完全合法的 DOM 用法）会被判成「泛型版」，
+ *   把 Element 当 host 用 ⇒ 直接抛 `host.addClass is not a function`。
+ *   既有测试**全部**传了 `{ name: 'fade' }`，所以这个判别错误从未暴露。
+ *   改为看第一个参数**是不是 host**（具备 `addClass` 能力），与平台无关。
+ */
+function isRendererHost<HN, HE extends HN>(value: unknown): value is RendererHost<HN, HE> {
+  return (
+    !!value &&
+    typeof (value as RendererHost<HN, HE>).addClass === 'function' &&
+    typeof (value as RendererHost<HN, HE>).removeClass === 'function'
+  );
+}
+
+/**
  * FLIP 动画的位移阈值（像素）。
  * 当位移小于此值时，跳过动画以避免不必要的计算。
  */
@@ -327,7 +345,7 @@ export function performGroupEnterTransition<HN, HE extends HN>(
   propsOrDone?: TransitionGroupProps<HE> | (() => void),
   done?: () => void,
 ): void {
-  if (typeof elOrProps === 'object' && elOrProps !== null && 'name' in elOrProps) {
+  if (!isRendererHost(hostOrEl)) {
     // 向后兼容：(el: Element, props, done)
     const el = hostOrEl as Element;
     const props = elOrProps as TransitionGroupProps<Element>;
@@ -335,24 +353,54 @@ export function performGroupEnterTransition<HN, HE extends HN>(
 
     // FIX: P1-7 使用 globalTransitionPrefix 替代硬编码的 'v'
     const name = props.name ?? globalTransitionPrefix;
-    el.classList.add(`${name}-enter-from`);
-    el.classList.add(`${name}-enter-active`);
+    // ★ 2026-10-24：补齐自定义类名 —— 此前**只有泛型版**支持，DOM 版恒用 `${name}-enter-*`
+    //   ⇒ `enterFromClass` / `enterActiveClass` / `enterToClass` 在 DOM 路径被静默忽略。
+    const from = props.enterFromClass ?? `${name}-enter-from`;
+    const active = props.enterActiveClass ?? `${name}-enter-active`;
+    const to = props.enterToClass ?? `${name}-enter-to`;
+
+    // ★ 2026-10-24：补齐 `onBeforeEnter` —— 此前**只有泛型版**有调用点。
+    if (props.onBeforeEnter) {
+      props.onBeforeEnter(el);
+    }
+
+    el.classList.add(from);
+    el.classList.add(active);
     void el.getBoundingClientRect();
-    el.classList.remove(`${name}-enter-from`);
-    el.classList.add(`${name}-enter-to`);
+    el.classList.remove(from);
+    el.classList.add(to);
 
     if (props.onEnter) {
       props.onEnter(el, () => {
-        el.classList.remove(`${name}-enter-active`);
-        el.classList.remove(`${name}-enter-to`);
+        el.classList.remove(active);
+        el.classList.remove(to);
         if (props.onAfterEnter) props.onAfterEnter(el);
         doneFn();
       });
     } else {
-      el.classList.remove(`${name}-enter-active`);
-      el.classList.remove(`${name}-enter-to`);
-      if (props.onAfterEnter) props.onAfterEnter(el);
-      doneFn();
+      // ★ 2026-10-24：**必须等过渡结束**。
+      //   原实现在这里**同步**移除 active/to 并调 done ⇒ 有 CSS 过渡时 enter 动画
+      //   被立刻截断（leave 版早在 P1-13 就修成「等过渡」，enter 被漏掉 ——
+      //   同一个 bug 只修了其中一条路径）。
+      const info = getTransitionInfoDOM(el, 'enter');
+      if (info.hasTransition || info.hasAnimation) {
+        const finish = () => {
+          el.classList.remove(active);
+          el.classList.remove(to);
+          if (props.onAfterEnter) props.onAfterEnter(el);
+          doneFn();
+        };
+        if (info.duration > 0) {
+          setTimeout(finish, info.duration + 50);
+        } else {
+          waitForTransitionEndDOM(el, info, finish);
+        }
+      } else {
+        el.classList.remove(active);
+        el.classList.remove(to);
+        if (props.onAfterEnter) props.onAfterEnter(el);
+        doneFn();
+      }
     }
   } else {
     // 泛型版本：(host, el, props, done)
@@ -462,7 +510,7 @@ export function performGroupLeaveTransition<HN, HE extends HN>(
   propsOrRemove?: TransitionGroupProps<HE> | (() => void),
   removeElement?: () => void,
 ): void {
-  if (typeof elOrProps === 'object' && elOrProps !== null && 'name' in elOrProps) {
+  if (!isRendererHost(hostOrEl)) {
     // 向后兼容：(el: Element, props, removeElement)
     const el = hostOrEl as Element;
     const props = elOrProps as TransitionGroupProps<Element>;
@@ -470,18 +518,28 @@ export function performGroupLeaveTransition<HN, HE extends HN>(
 
     // FIX: P1-7 使用 globalTransitionPrefix 替代硬编码的 'v'
     const name = props.name ?? globalTransitionPrefix;
-    el.classList.add(`${name}-leave-from`);
-    el.classList.add(`${name}-leave-active`);
+    // ★ 2026-10-24：补齐自定义类名（此前只有泛型版支持）
+    const from = props.leaveFromClass ?? `${name}-leave-from`;
+    const active = props.leaveActiveClass ?? `${name}-leave-active`;
+    const to = props.leaveToClass ?? `${name}-leave-to`;
+
+    // ★ 2026-10-24：补齐 `onBeforeLeave`（此前只有泛型版有调用点）
+    if (props.onBeforeLeave) {
+      props.onBeforeLeave(el);
+    }
+
+    el.classList.add(from);
+    el.classList.add(active);
     void el.getBoundingClientRect();
-    el.classList.remove(`${name}-leave-from`);
-    el.classList.add(`${name}-leave-to`);
+    el.classList.remove(from);
+    el.classList.add(to);
 
     // FIX: P1-13 DOM 回退版 leave 动画修复：添加 CSS 过渡检测和等待逻辑，
     // 避免在 leave 动画未完成时就移除元素
     if (props.onLeave) {
       props.onLeave(el, () => {
-        el.classList.remove(`${name}-leave-active`);
-        el.classList.remove(`${name}-leave-to`);
+        el.classList.remove(active);
+        el.classList.remove(to);
         if (props.onAfterLeave) props.onAfterLeave(el);
         removeFn();
       });
@@ -489,8 +547,8 @@ export function performGroupLeaveTransition<HN, HE extends HN>(
       const info = getTransitionInfoDOM(el, 'leave');
       if (info.hasTransition || info.hasAnimation) {
         const finish = () => {
-          el.classList.remove(`${name}-leave-active`);
-          el.classList.remove(`${name}-leave-to`);
+          el.classList.remove(active);
+          el.classList.remove(to);
           if (props.onAfterLeave) props.onAfterLeave(el);
           removeFn();
         };
@@ -500,8 +558,8 @@ export function performGroupLeaveTransition<HN, HE extends HN>(
           waitForTransitionEndDOM(el, info, finish);
         }
       } else {
-        el.classList.remove(`${name}-leave-active`);
-        el.classList.remove(`${name}-leave-to`);
+        el.classList.remove(active);
+        el.classList.remove(to);
         if (props.onAfterLeave) props.onAfterLeave(el);
         removeFn();
       }
