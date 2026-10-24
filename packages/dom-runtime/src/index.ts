@@ -1316,3 +1316,19 @@ export function createCleanupScope(): { dispose: () => void } {
     },
   };
 }
+
+// ==================== 事件委托 ====================
+//
+// ★ 2026-10-24：`src/events.ts`（215 行）此前**没有从入口导出**，全仓也没有任何消费方
+//   ⇒ 整个模块 100 条语句 0% 覆盖（死代码）。这里把它接进公开面；
+//   同时修了「同一容器只能委托一种事件类型」的缺陷（见 events.ts 的注释）。
+export {
+  delegateEvent,
+  delegateEventBatch,
+  stopPropagation,
+  preventDefault,
+  stopEvent,
+  isValidEventType,
+  COMMON_EVENTS,
+} from './events';
+export type { EventType } from './events';

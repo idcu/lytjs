@@ -9,9 +9,26 @@ interface EventHandler {
   handler: (event: Event, target: Element) => void;
 }
 
-interface DelegatedEvents {
-  [eventType: string]: EventHandler[];
+/**
+ * 单个事件类型的委托条目。
+ *
+ * ★ 2026-10-24：此前用 `{[eventType: string]: EventHandler[]}` 存 handler，
+ *   再把原生监听器塞进同一个对象的 `_nativeHandler` 字段 —— 于是**每个元素只有一个
+ *   原生监听器**，且它闭包里写死了「第一次注册时的事件类型」：
+ *   ```ts
+ *   if (!events) { … element.addEventListener(eventType, nativeHandler); events._nativeHandler = … }
+ *   ```
+ *   ⇒ 同一容器注册第二种事件类型时（`delegateEventBatch` 的文档示例就是
+ *   `click` + `input` + `click`），`events` 已存在 ⇒ **不挂新监听**
+ *   ⇒ 第二种事件**永远不触发**。
+ *   现在按事件类型各存一条（handler 列表 + 自己的原生监听器）。
+ */
+interface DelegatedEntry {
+  handlers: EventHandler[];
+  nativeHandler: (nativeEvent: Event) => void;
 }
+
+type DelegatedEvents = Record<string, DelegatedEntry>;
 
 const delegatedEventsMap = new WeakMap<Element, DelegatedEvents>();
 
@@ -44,57 +61,58 @@ export function delegateEvent(
   }
 
   let events = delegatedEventsMap.get(element);
-
   if (!events) {
     events = {};
     delegatedEventsMap.set(element, events);
+  }
 
+  let entry = events[eventType];
+
+  if (!entry) {
     const nativeHandler = (nativeEvent: Event) => {
-      const currentEvents = delegatedEventsMap.get(element);
-      if (!currentEvents) return;
+      const current = delegatedEventsMap.get(element)?.[eventType];
+      if (!current) return;
 
-      const handlers = currentEvents[eventType];
-      if (!handlers) return;
+      const target = nativeEvent.target as Element | null;
 
-      const target = nativeEvent.target as Element;
-
-      for (const { selector: sel, handler: h } of handlers) {
-        const matched = sel === '' ? element : target.closest(sel);
+      // 遍历**快照**：handler 在派发过程中注销自己时，不应影响本轮其它 handler
+      for (const { selector: sel, handler: h } of [...current.handlers]) {
+        let matched: Element | null;
+        if (sel === '') {
+          matched = element;
+        } else if (target && typeof target.closest === 'function') {
+          matched = target.closest(sel);
+        } else {
+          matched = null;
+        }
         if (matched) {
-          h(nativeEvent, matched as Element);
+          h(nativeEvent, matched);
         }
       }
     };
 
     element.addEventListener(eventType, nativeHandler);
-    events._nativeHandler = nativeHandler as never;
+    entry = { handlers: [], nativeHandler };
+    events[eventType] = entry;
   }
 
-  if (!events[eventType]) {
-    events[eventType] = [];
-  }
-
-  events[eventType].push({ selector, handler });
+  entry.handlers.push({ selector, handler });
 
   return () => {
     const currentEvents = delegatedEventsMap.get(element);
-    if (!currentEvents || !currentEvents[eventType]) return;
+    const currentEntry = currentEvents?.[eventType];
+    if (!currentEvents || !currentEntry) return;
 
-    const index = currentEvents[eventType].findIndex(
+    const index = currentEntry.handlers.findIndex(
       (h) => h.selector === selector && h.handler === handler,
     );
     if (index !== -1) {
-      currentEvents[eventType].splice(index, 1);
+      currentEntry.handlers.splice(index, 1);
     }
 
-    if (currentEvents[eventType].length === 0) {
+    if (currentEntry.handlers.length === 0) {
+      element.removeEventListener(eventType, currentEntry.nativeHandler);
       delete currentEvents[eventType];
-
-      const nativeHandler = currentEvents._nativeHandler;
-      if (nativeHandler) {
-        element.removeEventListener(eventType, nativeHandler as unknown as EventListener);
-        delete currentEvents._nativeHandler;
-      }
 
       if (Object.keys(currentEvents).length === 0) {
         delegatedEventsMap.delete(element);
