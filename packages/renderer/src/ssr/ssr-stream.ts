@@ -43,8 +43,18 @@ function isComponentVNode(vnode: VNode): boolean {
   return !!(vnode.shapeFlag & COMPONENT_MASK);
 }
 
-/** 通过名称检查 vnode 是否为 Suspense 组件 */
+/**
+ * 检查 vnode 是否为 Suspense 边界。
+ *
+ * ★ 2026-10-25：**先看 shapeFlag**。真实 `<Suspense>` 的 vnode 由 `getShapeFlag` 产出
+ *   `ARRAY_CHILDREN | SUSPENSE`（见 `vdom/src/vnode.ts` 的 `__vnodeType` 分支），
+ *   **不含任何组件位** —— 而原实现要求 `isComponentVNode()`，于是真实 Suspense
+ *   **一个分支都进不去**（不是 ELEMENT、也不是组件）⇒ 整棵子树被静默丢掉，
+ *   流里连 start/end 标记都没有（实测输出 `""`）。
+ *   只有「手写 `{ name: 'Suspense' }` 的普通组件对象」才能命中旧判别。
+ */
 function isSuspenseVNode(vnode: VNode): boolean {
+  if (vnode.shapeFlag & ShapeFlags.SUSPENSE) return true;
   if (!isComponentVNode(vnode)) return false;
   const type = vnode.type;
   if (typeof type === 'object' && type !== null && 'name' in type) {
@@ -195,6 +205,41 @@ async function streamFragmentAsync(
 // ============================================================
 
 /**
+ * 解析 Suspense 的 default / fallback 分支。
+ *
+ * 返回值统一为「可调用或可直接取值」的槽：函数（惰性）或 vnode / vnode 数组。
+ */
+function resolveSuspenseSlots(vnode: VNode): {
+  defaultSlot: unknown;
+  fallbackSlot: unknown;
+} {
+  const children = vnode.children;
+  let defaultSlot: unknown = null;
+  let fallbackSlot: unknown = null;
+
+  if (isArray(children)) {
+    // VNode[] ⇒ default 分支（与 patch-suspense 的约定一致：children[0]）
+    defaultSlot = children[0] ?? null;
+  } else if (children && typeof children === 'object') {
+    const slots = children as Record<string, unknown>;
+    defaultSlot = slots.default ?? null;
+    fallbackSlot = slots.fallback ?? null;
+  }
+
+  // 兼容旧写法：插槽挂在 props 上
+  const props = (vnode.props ?? {}) as Record<string, unknown>;
+  if (!defaultSlot && props.default) defaultSlot = props.default;
+  if (!fallbackSlot && props.fallback) fallbackSlot = props.fallback;
+
+  return { defaultSlot, fallbackSlot };
+}
+
+/** 取槽的值：函数则调用（可能是异步），否则原样返回 */
+function readSlot(slot: unknown): unknown {
+  return typeof slot === 'function' ? (slot as () => unknown)() : slot;
+}
+
+/**
  * 流式渲染 Suspense 边界：
  * 1. 立即流式输出 fallback 内容
  * 2. 解析异步子节点
@@ -216,9 +261,16 @@ async function streamSuspenseBoundary(
   // 打开 Suspense 边界标记
   pushChunk(controller, encoder, `<!--${suspenseId}-start-->`, commentMarkers, 'suspense:start');
 
-  // 尝试解析默认插槽子节点
-  const defaultSlot = vnode.props?.default as (() => unknown) | undefined;
-  const fallbackSlot = vnode.props?.fallback as (() => unknown) | undefined;
+  // 解析默认 / fallback 插槽
+  //
+  // ★ 2026-10-25：插槽**在 `children` 上**，不在 `props` 上。原实现只读
+  //   `vnode.props?.default` ⇒ 真实 `<Suspense>`（children 是插槽对象或 vnode 数组）
+  //   两个插槽都拿不到 ⇒ 即使判别修好了也只会输出 start/end 两个空标记。
+  //   这里与 `vdom/src/patch-suspense.ts` 的 `resolveSuspenseChildren` 保持同一语义：
+  //   - `children` 是数组 ⇒ 视作 default 分支（无 fallback）；
+  //   - `children` 是插槽对象 ⇒ 取 `default` / `fallback`；
+  //   - 兜底再认旧的 `props.default` / `props.fallback` 写法。
+  const { defaultSlot, fallbackSlot } = resolveSuspenseSlots(vnode);
 
   // 如果有 fallback 则先流式输出
   if (fallbackSlot) {
@@ -230,7 +282,7 @@ async function streamSuspenseBoundary(
       'suspense:fallback',
     );
     try {
-      const fallbackResult = fallbackSlot();
+      const fallbackResult = readSlot(fallbackSlot);
       if (isArray(fallbackResult)) {
         for (const child of fallbackResult) {
           if (child != null && typeof child === 'object' && 'type' in child) {
@@ -259,7 +311,7 @@ async function streamSuspenseBoundary(
   // 现在尝试解析默认（异步）内容
   if (defaultSlot) {
     try {
-      const result = defaultSlot();
+      const result = readSlot(defaultSlot);
       // 如果结果是 Promise，则等待解析
       const resolved = result instanceof Promise ? await result : result;
 

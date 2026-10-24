@@ -4,7 +4,7 @@
  */
 
 import type { VNode } from '@lytjs/vdom';
-import { Fragment, Text, ShapeFlags } from '@lytjs/vdom';
+import { Fragment, Text, ShapeFlags, createVNode } from '@lytjs/vdom';
 import { isString, isArray } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
 import { isOn } from '@lytjs/common-events';
@@ -156,6 +156,7 @@ function isVNodeLike(value: unknown): value is VNode {
  *
  * 解析顺序（本仓的**单一真相源**）：
  * 1. `setup(props)` 的返回值若本身是 vnode ⇒ 直接使用（不再调 `render`）；
+ * 1.5 若返回值是**函数** ⇒ 视作渲染函数并调用（组合式 API 的标准写法）；
  * 2. 否则若 `setup` 返回了对象 ⇒ 作为 ctx 传给 `render`；
  * 3. `setup` 未返回对象（含根本没有 `setup`）⇒ 以 `props` 作 ctx 传给 `render`。
  *
@@ -229,6 +230,19 @@ function resolveFromSetupResult(
 ): VNode | undefined {
   // setup 直接返回 VNode ⇒ 跳过 render
   if (isVNodeLike(setupResult)) return setupResult;
+
+  // ★ 2026-10-25：`setup()` 返回**渲染函数**（组合式 API 的标准写法
+  //   `setup() { return () => h('div') }`）此前被完全忽略 —— 它既不是 vnode、
+  //   也不走 `component.render` ⇒ 返回 `undefined` ⇒ **SSR 渲染为空**。
+  //   实测：同一组件经同步入口与流式入口都输出 `""`（整棵子树静默消失）。
+  if (typeof setupResult === 'function') {
+    const rendered = (setupResult as () => unknown)();
+    if (isVNodeLike(rendered)) return rendered;
+    // 多根：包一层 Fragment（与 vdom 的渲染路径一致）
+    if (isArray(rendered)) {
+      return createVNode(Fragment, null, rendered as never) as unknown as VNode;
+    }
+  }
 
   if (typeof component.render === 'function') {
     // setup 返回普通对象 ⇒ 作为 ctx；否则退回 props 作 ctx
