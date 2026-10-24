@@ -398,7 +398,18 @@ export function initProps(
   //   patch 再 initProps → 再 bump ⇒ **更新循环**（core 整套被 SIGTERM）。
   //   改成「浅比较内容，变了才替换 + bump」后，同样的循环会在第二趟
   //   （内容已相同 ⇒ 不 bump）自然终止。
-  if (shallowEqualProps(instance.props, props) && shallowEqualProps(instance.attrs, attrs)) {
+  // ★ 2026-10-24：**不能把共享的 `EMPTY_OBJ` 留在实例上**。
+  //   `createComponentInstance` 里 `props: EMPTY_OBJ`，而「没有声明 props 的组件」
+  //   首帧 `props` 与 `EMPTY_OBJ` 内容相同 ⇒ 上面的浅比较直接 return
+  //   ⇒ **所有这类实例共用同一个被冻结的空对象**。后果：任何对 `instance.props`
+  //   的原地写入都抛 `Cannot add property …, object is not extensible`
+  //   （实测：`@lytjs/test-utils` 的 `assertEmits` 往 props 挂事件处理器时命中）。
+  //   这里把「仍是共享空对象」也当作需要替换的情形，让每个实例拿到自己的 props 对象。
+  if (
+    instance.props !== EMPTY_OBJ &&
+    shallowEqualProps(instance.props, props) &&
+    shallowEqualProps(instance.attrs, attrs)
+  ) {
     return;
   }
 

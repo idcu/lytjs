@@ -117,6 +117,16 @@ export function inject<T>(
     current = current.parent;
   }
 
+  // ★ 2026-10-24：**兜底查 app 级 provides**。
+  //   根组件没有 parent ⇒ 上面的循环体一次都不执行 ⇒ `app.provide()` 注册的值
+  //   在根组件里**永远 inject 不到**（实测：`app.provide('theme','dark')` 之后
+  //   根组件的 `inject('theme')` 返回 `undefined`；只有子组件能通过父链拿到）。
+  //   app 级 provides 就挂在 `appContext.provides` 上，这里补一次查找。
+  const appProvides = instance.appContext?.provides as Record<string | symbol, unknown> | undefined;
+  if (appProvides && (lookupKey as string | symbol) in appProvides) {
+    return appProvides[lookupKey as string] as T | undefined;
+  }
+
   return resolveDefault(defaultValue, options);
 }
 
