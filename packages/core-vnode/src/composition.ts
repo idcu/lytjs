@@ -46,6 +46,12 @@ export function useModel<T>(
 ): WritableComputedRef<T> {
   const instance = getCurrentInstance();
   if (!instance) {
+    // ★ 2026-10-25：补 DEV 告警，与 `useSlots` / `useAttrs` 对齐。
+    //   此前这里**静默**返回一个永远读 `undefined`、写入被吞掉的 computed ——
+    //   用户拿到的是"能调、不报错、永远不生效"的对象，比直接抛错难查得多。
+    if (__DEV__) {
+      warnOnce('useModel() was called outside of setup().');
+    }
     return computed<T>({
       get() {
         return undefined as T;
