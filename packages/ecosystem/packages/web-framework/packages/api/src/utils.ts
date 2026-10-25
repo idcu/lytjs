@@ -20,13 +20,45 @@ export function isFile(path: string): boolean {
 /** HTTP 请求方法列表 */
 const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'];
 
+/** 词边界字符：方法名必须被这些字符（或首尾）夹住 */
+const METHOD_BOUNDARIES = '.-_/[]';
+
+/**
+ * 文件名里是否把 `method` 当作**独立的词**出现。
+ *
+ * ★ 2026-10-25 修复：`extractHttpMethods` 原先用 `filename.includes(method)` ——
+ *   **裸子串**匹配，于是普通单词里的片段被当成 HTTP 方法：
+ *   `postal.ts` ⇒ POST、`dispatch.ts` ⇒ PATCH（`dispatch` 里含 `patch`）、
+ *   `budget.ts` ⇒ GET（凑巧与默认值相同，把问题掩盖了）。
+ *   表现是**接口静默 404**（方法对不上路由表），不是报错。
+ *   现在要求方法名两侧是 `.` `-` `_` `/` `[` `]` 或字符串首尾：
+ *   `users.get.ts` / `get-users.ts` / `users_post.ts` / `[id].put.ts` 都能识别，
+ *   而 `postal` / `dispatch` / `budget` 不会。
+ */
+function hasMethodToken(filename: string, method: string): boolean {
+  const haystack = filename.toLowerCase();
+  const needle = method.toLowerCase();
+
+  let index = haystack.indexOf(needle);
+  while (index !== -1) {
+    const before = index === 0 ? '' : haystack[index - 1];
+    const after = haystack[index + needle.length] ?? '';
+    const leftOk = index === 0 || METHOD_BOUNDARIES.includes(before!);
+    const rightOk = after === '' || METHOD_BOUNDARIES.includes(after);
+
+    if (leftOk && rightOk) return true;
+    index = haystack.indexOf(needle, index + 1);
+  }
+
+  return false;
+}
+
 /** 从文件名中提取 HTTP 方法 */
 export function extractHttpMethods(filename: string): HttpMethod[] {
-  const lower = filename.toLowerCase();
   const methods: HttpMethod[] = [];
 
   for (const method of HTTP_METHODS) {
-    if (lower.includes(method.toLowerCase())) {
+    if (hasMethodToken(filename, method)) {
       methods.push(method);
     }
   }
