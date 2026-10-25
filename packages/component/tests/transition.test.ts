@@ -607,3 +607,74 @@ describe('TransitionGroup - TransitionGroupComponentProps 接口', () => {
     expect(props.tag).toBe('div');
   });
 });
+
+// ==================== TransitionGroup 行为（tag 是否真的生效）====================
+//
+// ★ 2026-10-25：此前的用例全是「props 定义长什么样」的形状断言，**没有一条验证
+//   setup 的产物**。于是 `tag` 声明了 16 个 prop 却一个都不生效（setup 直接返回
+//   `slots.default()`）也全绿 —— `<TransitionGroup tag="ul">` 渲染出来根本没有 `<ul>`。
+
+describe('TransitionGroup - 行为：tag 必须真的包一层', () => {
+  const setupGroup = (props: Record<string, unknown>, children: unknown[]) => {
+    const setup = TransitionGroup.setup as unknown as (
+      p: Record<string, unknown>,
+      ctx: { slots: { default: () => unknown[] } },
+    ) => () => unknown;
+
+    return setup(props, { slots: { default: () => children } });
+  };
+
+  const kids = () => [{ type: 'li', children: 'a' }];
+
+  it('tag="ul" ⇒ 返回 ul 元素 vnode，子节点挂在 children 上', () => {
+    const render = setupGroup({ tag: 'ul' }, kids());
+    const vnode = render() as { type: string; children: unknown[] };
+
+    expect(vnode.type).toBe('ul');
+    expect(vnode.children).toHaveLength(1);
+  });
+
+  it('未传 tag ⇒ 原样返回子节点数组（不额外包裹，保持既有行为）', () => {
+    const children = kids();
+    const render = setupGroup({}, children);
+
+    expect(render()).toBe(children);
+  });
+
+  it('tag: false ⇒ 不包裹', () => {
+    const children = kids();
+    const render = setupGroup({ tag: false }, children);
+
+    expect(render()).toBe(children);
+  });
+
+  it('tag: "" ⇒ 不包裹（空标签名不能变成 vnode.type）', () => {
+    const children = kids();
+    const render = setupGroup({ tag: '' }, children);
+
+    expect(render()).toBe(children);
+  });
+
+  it('★ 未接线的过渡属性必须明确告警，不能沉默接受', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    setupGroup({ tag: 'ul', name: 'fade', onEnter: () => {} }, kids());
+
+    expect(warnSpy).toHaveBeenCalled();
+    const msg = String(warnSpy.mock.calls[0]?.[0] ?? '');
+    expect(msg).toContain('name');
+    expect(msg).toContain('onEnter');
+    expect(msg).toContain('尚未接线');
+
+    warnSpy.mockRestore();
+  });
+
+  it('只传 tag 时不告警（不给正常用法刷屏）', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    setupGroup({ tag: 'ul' }, kids());
+
+    expect(warnSpy).not.toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
+});

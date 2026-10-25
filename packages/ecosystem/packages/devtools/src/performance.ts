@@ -96,6 +96,29 @@ const alertCooldowns: Map<string, number> = new Map();
 // 配置
 let options: Required<MonitorOptions> = { ...DEFAULT_OPTIONS };
 
+/**
+ * 已注册的 `PerformanceObserver`。
+ *
+ * ★ 2026-10-25 修复：此前 `initPageMetrics()` / `initLongTaskObserver()` 每次都 `new`
+ *   `PerformanceObserver` 却**不保留引用** ⇒ ① 重复 `initPerformanceMonitor()`（改配置、
+ *   HMR、多次挂载 devtools）会叠加 N 份观察器，同一个长任务被记录 N 次，统计与告警全部翻倍；
+ *   ② `resetPerformanceMonitor()` 关不掉它们，模块"重置"后仍在后台采集并往已清空的
+ *   `metrics` 里写。这里统一登记，重入前先断开。
+ */
+let activeObservers: PerformanceObserver[] = [];
+
+/** 断开全部自动采集观察器（幂等） */
+function disconnectObservers(): void {
+  for (const observer of activeObservers) {
+    try {
+      observer.disconnect();
+    } catch {
+      // 环境已回收 / 观察器已失效：忽略即可，不影响后续重建
+    }
+  }
+  activeObservers = [];
+}
+
 // 观察者回调
 type ObserverCallback = (metric: PerformanceMetric) => void;
 const observers: Set<ObserverCallback> = new Set();
@@ -104,6 +127,9 @@ const observers: Set<ObserverCallback> = new Set();
  * 初始化性能监控
  */
 export function initPerformanceMonitor(opts?: MonitorOptions): void {
+  // 重入即重建：先断开上一轮注册的观察器，否则每调一次就多一份采集（见 activeObservers）
+  disconnectObservers();
+
   options = { ...DEFAULT_OPTIONS, ...opts };
 
   if (options.enabled) {
@@ -126,7 +152,7 @@ function initPageMetrics(): void {
   // 记录首次内容绘制
   if (typeof PerformanceObserver !== 'undefined') {
     try {
-      new PerformanceObserver((list) => {
+      const paintObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           if (entry.entryType === 'paint') {
             recordMetric({
@@ -137,14 +163,16 @@ function initPageMetrics(): void {
             });
           }
         }
-      }).observe({ type: 'paint', buffered: true });
+      });
+      paintObserver.observe({ type: 'paint', buffered: true });
+      activeObservers.push(paintObserver);
     } catch (e) {
       console.warn('[LytJS Performance] Failed to observe paint metrics:', e);
     }
 
     // 记录首次输入延迟
     try {
-      new PerformanceObserver((list) => {
+      const inputObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           const firstInputEntry = entry as PerformanceEventTiming;
           if (firstInputEntry.processingStart !== undefined) {
@@ -156,7 +184,9 @@ function initPageMetrics(): void {
             });
           }
         }
-      }).observe({ type: 'first-input', buffered: true });
+      });
+      inputObserver.observe({ type: 'first-input', buffered: true });
+      activeObservers.push(inputObserver);
     } catch (e) {
       console.warn('[LytJS Performance] Failed to observe first-input:', e);
     }
@@ -170,7 +200,7 @@ function initLongTaskObserver(): void {
   if (typeof PerformanceObserver === 'undefined') return;
 
   try {
-    new PerformanceObserver((list) => {
+    const longTaskObserver = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
         if (entry.entryType === 'longtask') {
           recordMetric({
@@ -181,7 +211,9 @@ function initLongTaskObserver(): void {
           });
         }
       }
-    }).observe({ type: 'longtask', buffered: true });
+    });
+    longTaskObserver.observe({ type: 'longtask', buffered: true });
+    activeObservers.push(longTaskObserver);
   } catch (e) {
     console.warn('[LytJS Performance] Failed to observe long tasks:', e);
   }
@@ -227,17 +259,24 @@ function initDefaultAlertRules(): void {
 
 /**
  * 记录性能指标
+ *
+ * @returns 实际入库的指标；**未入库时返回 `null`**（监控被禁用，或被 `sampleRate` 抽样丢弃）。
+ *
+ * ★ 2026-10-25 修复：此前未入库时返回 `{ id: '', timestamp: 0, ...metric }` —— 一个
+ *   **长得像真记录的空壳**。后果：① 调用方用 `if (result)` 判断"是否记录了"永远为真；
+ *   ② `result.timestamp` 是 `0`（1970），任何"从记录时刻算起"的耗时/延迟都会算成天文数字；
+ *   ③ `result.id` 是空串，无法回查。三处内部调用点都不读返回值，故改为 `null` 无回归。
  */
 export function recordMetric(
   metric: Omit<PerformanceMetric, 'id' | 'timestamp'>,
-): PerformanceMetric {
+): PerformanceMetric | null {
   if (!options.enabled) {
-    return { id: '', timestamp: 0, ...metric };
+    return null;
   }
 
   // 采样
   if (Math.random() > options.sampleRate) {
-    return { id: '', timestamp: 0, ...metric };
+    return null;
   }
 
   const fullMetric: PerformanceMetric = {
@@ -379,6 +418,10 @@ export function acknowledgeAllAlerts(): void {
 
 /**
  * 清除告警记录
+ *
+ * ⚠️ **不**清 `alertCooldowns`：冷却时间是**限流器**（"同一规则多久内只报一次"），
+ *    不是告警记录。清空列表后立刻又能收到同一规则的新告警，等于把限流器一起关掉。
+ *    要彻底恢复出厂状态请用 `resetPerformanceMonitor()`（它清冷却）。
  */
 export function clearAlerts(): void {
   alerts.length = 0;
@@ -477,13 +520,22 @@ export function clearMetrics(): void {
 
 /**
  * 重置性能监控
+ *
+ * 恢复到**模块刚加载**的状态：清数据、清规则、断开自动采集，并把配置还原为默认值。
+ *
+ * ★ 2026-10-25 修复：此前不清 `options` ⇒ `initPerformanceMonitor({ maxRecords: 2 })`
+ *   之后调用 `reset()`，`maxRecords` 仍是 2（`sampleRate` / `longTaskThreshold` 同理），
+ *   所谓"重置"只重置了一半，后续记录仍被上一轮的配置约束。同时补上观察器断开，
+ *   否则重置后仍在后台采集并往清空后的 `metrics` 写入。
  */
 export function resetPerformanceMonitor(): void {
+  disconnectObservers();
   metrics.length = 0;
   alerts.length = 0;
   observers.clear();
   alertCooldowns.clear();
   alertRules.clear();
+  options = { ...DEFAULT_OPTIONS };
 }
 
 /**

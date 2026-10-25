@@ -146,7 +146,8 @@ export function defineAsyncComponent(
     errorComponent,
     delay = 200,
     timeout,
-    // FIX: DTS build error - suspensible æœªä½¿ç”?
+    // ⚠️ `suspensible` 是**装饰性选项**：三份历史实现都从未读取它（ADR 0011「代价 / 风险」
+    //   已登记）。此处不参与解构，仅保留在类型上，避免「声明了却静默无效」被当成已支持。
     // suspensible = false,
     onError,
   } = normalizedOptions;

@@ -327,3 +327,65 @@ describe('createServerProxy', () => {
     await expect(proxy()).rejects.toThrow(/Server function boom failed: Internal Server Error/);
   });
 });
+
+// ==================== serverFunctionPrefix：两侧 id 必须一致 ====================
+
+describe('serverFunctionPrefix', () => {
+  const source = `
+    'use server';
+    export async function save(data) { return data; }
+    export const load = async (id) => id;
+  `;
+
+  it('前缀同时写进服务端 reference id 与客户端 proxy id（否则运行时静默 404）', () => {
+    const r = compileServerComponent(source, 'src/Thing.ts', { serverFunctionPrefix: 'thing_' });
+
+    expect(r.serverCode).toContain(`createServerReference('thing_save', save)`);
+    expect(r.serverCode).toContain(`createServerReference('thing_load', load)`);
+    expect(r.clientCode).toContain(`createServerProxy('Thing', 'thing_save')`);
+    expect(r.clientCode).toContain(`createServerProxy('Thing', 'thing_load')`);
+
+    // 两侧 id 逐字相同 —— 这才是「能对上」的判据
+    const serverIds = [...r.serverCode!.matchAll(/createServerReference\('([^']+)'/g)].map(
+      (m) => m[1],
+    );
+    const clientIds = [...r.clientCode!.matchAll(/createServerProxy\('[^']+', '([^']+)'\)/g)].map(
+      (m) => m[1],
+    );
+    expect(clientIds).toEqual(serverIds);
+  });
+
+  it('不传前缀时产物与旧行为逐字一致（无回归）', () => {
+    const withoutOpts = compileServerComponent(source, 'src/Thing.ts');
+    const withEmptyPrefix = compileServerComponent(source, 'src/Thing.ts', {
+      serverFunctionPrefix: '',
+    });
+
+    expect(withEmptyPrefix.serverCode).toBe(withoutOpts.serverCode);
+    expect(withEmptyPrefix.clientCode).toBe(withoutOpts.clientCode);
+    expect(withoutOpts.serverCode).toContain(`createServerReference('save', save)`);
+  });
+
+  it('不同前缀把同名 action 的 id 隔离开', () => {
+    const a = compileServerComponent(source, 'src/A.ts', { serverFunctionPrefix: 'a_' });
+    const b = compileServerComponent(source, 'src/B.ts', { serverFunctionPrefix: 'b_' });
+
+    expect(a.serverCode).toContain(`'a_save'`);
+    expect(b.serverCode).toContain(`'b_save'`);
+    expect(a.serverCode).not.toContain(`'b_save'`);
+  });
+
+  it('带前缀的产物仍可解析与执行', () => {
+    const r = compileServerComponent(source, 'src/Thing.ts', { serverFunctionPrefix: 'thing_' });
+
+    expect(() => new Function('createServerReference', toExecutable(r.serverCode!))).not.toThrow();
+    expect(() => new Function('createServerProxy', toExecutable(r.clientCode!))).not.toThrow();
+  });
+
+  it('generateClientStubCode 直接调用时同样遵守前缀', () => {
+    const analysis = analyzeServerComponent(source);
+    const stub = generateClientStubCode('Thing', analysis, { serverFunctionPrefix: 'x_' });
+
+    expect(stub).toContain(`createServerProxy('Thing', 'x_save')`);
+  });
+});

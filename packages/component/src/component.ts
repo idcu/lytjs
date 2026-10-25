@@ -22,11 +22,7 @@ export {
 export { finishComponentSetup } from './component-init';
 
 // component-proxy.ts: 公共实例代理
-export {
-  PublicInstanceProxyAccessCache,
-  PUBLIC_PROPERTIES_MAP,
-  createComponentPublicInstance,
-} from './component-proxy';
+export { PublicInstanceProxyAccessCache, createComponentPublicInstance } from './component-proxy';
 
 // component-options.ts: 选项合并和组件定义
 export {

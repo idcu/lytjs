@@ -47,24 +47,15 @@ export const enum PublicInstanceProxyAccessCache {
 
 /**
  * 公共属性名到 accessCache 位掩码的映射。
- * 用于快速判断一个 key 是否是 Vue 内置公共属性（$data, $props 等）。
+ *
+ * ⚠️ 2026-10-25 **已删除**（原为 `PUBLIC_PROPERTIES_MAP`）。原因：
+ *   它是同一概念（"这个 key 属于哪个来源桶"）的**第二套编码**，且与上面的
+ *   `PublicInstanceProxyAccessCache` **数值冲突** —— 例如 `$el: 2`，而枚举里
+ *   `2` 是 `SETUP_STATE`。谁若拿它去填 `accessCache`，`get` 就会去
+ *   `setupState.$el` 取 `$el`（永远 undefined）。
+ *   全仓**零消费点**（只有两处 `export` 转发），留着就是给后来者埋雷。
+ *   需要判断"是不是内置公共属性"请用 `key.startsWith('$')` 或直接查 `ctx`。
  */
-export const PUBLIC_PROPERTIES_MAP: Record<string, number> = {
-  $: 1,
-  $el: 2,
-  $data: 4,
-  $props: 8,
-  $attrs: 16,
-  $slots: 32,
-  $refs: 64,
-  $parent: 128,
-  $root: 256,
-  $emit: 512,
-  $options: 1024,
-  $forceUpdate: 2048,
-  $nextTick: 4096,
-  $watch: 8192,
-};
 
 // ==================== createComponentPublicInstance ====================
 
@@ -81,6 +72,16 @@ export function createComponentPublicInstance(
     instance.accessCache = Object.create(null) as Record<string, number>;
   }
 
+  // ★ 2026-10-25 修复（P1）：此前三处 `res.bind(target)` 把函数绑到 **target（原始 ctx 对象）**，
+  //   而 `target` 只是 `$data`/`$props`/`$el` 这些 getter 的宿主 —— `setupState` / `data` / `props`
+  //   里的值**不在它身上**。于是 Options API 的 `methods` 里写 `this.count`（count 在 data 里）
+  //   一律拿到 undefined：方法能调用，但读不到任何数据。
+  //   正确做法与 Vue 一致：绑到**对外那个 Proxy**。
+  //   用「容器对象」而不是 `let publicThis`：`prefer-const` 会把「声明后只赋值一次」
+  //   判成该用 const，而 const 又没法在 handlers 之后赋值 ⇒ 只能借一个可变字段。
+  //   陷阱只在赋值之后才会被触发，故读 `self.current` 时一定已经就绪。
+  const self = { current: null as unknown as ComponentPublicInstance };
+
   const PublicInstanceProxyHandlers: ProxyHandler<ComponentPublicInstance> = {
     get(target: ComponentPublicInstance, key: string | symbol): unknown {
       // Symbol.key 无法缓存，直接走原始逻辑
@@ -88,7 +89,7 @@ export function createComponentPublicInstance(
         if (key in target) {
           const res = (target as unknown as Record<string | symbol, unknown>)[key];
           if (typeof res === 'function' && key !== Symbol.toPrimitive && key !== Symbol.iterator) {
-            return res.bind(target);
+            return res.bind(self.current);
           }
           return res;
         }
@@ -102,7 +103,7 @@ export function createComponentPublicInstance(
           case PublicInstanceProxyAccessCache.CONTEXT: {
             const res = (target as unknown as Record<string | symbol, unknown>)[key];
             if (typeof res === 'function' && key !== '$emit') {
-              return res.bind(target);
+              return res.bind(self.current);
             }
             return unref(res);
           }
@@ -128,7 +129,7 @@ export function createComponentPublicInstance(
         const res = (target as unknown as Record<string | symbol, unknown>)[key];
         // Bind functions to the proxy so `this` works correctly
         if (typeof res === 'function' && key !== '$emit') {
-          return res.bind(target);
+          return res.bind(self.current);
         }
         // 缓存查找结果
         instance.accessCache![key] = PublicInstanceProxyAccessCache.CONTEXT;
@@ -264,22 +265,45 @@ export function createComponentPublicInstance(
         return cachedValue !== PublicInstanceProxyAccessCache.OTHER;
       }
 
+      // ★ 2026-10-25 修复（P1）：此前命中后**一律写 `CONTEXT`**，而 `get` 读到 `CONTEXT`
+      //   时只去 `target`（= 公共实例 ctx）上取值 —— `setupState` / `data` / `props` 的值
+      //   并不在 target 上 ⇒ `'count' in vm` 之后再 `vm.count` 得到 **undefined**。
+      //   即：一次 `in` 探测会把该 key 的取值路径永久带偏（accessCache 是粘性的）。
+      //   现在按与 `get` **相同的优先级**判定命中的是哪个桶，再写缓存。
       const globalProperties = instance.appContext?.config?.globalProperties as
         | Record<string, unknown>
         | undefined;
-      const found =
-        key in instance.setupState ||
-        key in instance.data ||
-        key in instance.props ||
-        (globalProperties ? key in globalProperties : false) ||
-        key in _target;
 
-      // 缓存 has 结果
-      instance.accessCache![key] = found
-        ? PublicInstanceProxyAccessCache.CONTEXT
-        : PublicInstanceProxyAccessCache.OTHER;
+      let bucket: PublicInstanceProxyAccessCache;
+      if (key in _target) {
+        bucket = PublicInstanceProxyAccessCache.CONTEXT;
+      } else if (globalProperties && hasOwn(globalProperties, key)) {
+        bucket = PublicInstanceProxyAccessCache.GLOBAL_PROPERTIES;
+      } else if (hasOwn(instance.setupState, key)) {
+        bucket = PublicInstanceProxyAccessCache.SETUP_STATE;
+      } else if (hasOwn(instance.data, key)) {
+        bucket = PublicInstanceProxyAccessCache.DATA;
+      } else if (hasOwn(instance.props, key)) {
+        bucket = PublicInstanceProxyAccessCache.PROPS;
+      } else {
+        bucket = PublicInstanceProxyAccessCache.OTHER;
+      }
 
-      return found;
+      // 组件注册表与 `get` 保持一致：能取到就算存在，但**不写缓存**
+      // （`get` 对组件名也不缓存，见其注释）
+      if (bucket === PublicInstanceProxyAccessCache.OTHER) {
+        const localComponents = (instance.type as { components?: Record<string, unknown> })
+          .components;
+        if (localComponents && hasOwn(localComponents, key)) return true;
+        const appComponents = instance.appContext?.components as
+          | Record<string, unknown>
+          | undefined;
+        if (appComponents && hasOwn(appComponents, key)) return true;
+      }
+
+      instance.accessCache![key] = bucket;
+
+      return bucket !== PublicInstanceProxyAccessCache.OTHER;
     },
   };
 
@@ -311,5 +335,6 @@ export function createComponentPublicInstance(
     $nextTick: () => nextTick(),
   };
 
-  return new Proxy(ctx, PublicInstanceProxyHandlers);
+  self.current = new Proxy(ctx, PublicInstanceProxyHandlers);
+  return self.current;
 }

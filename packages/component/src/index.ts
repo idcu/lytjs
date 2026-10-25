@@ -13,7 +13,6 @@ export {
   provide,
   inject,
   createComponentPublicInstance,
-  PUBLIC_PROPERTIES_MAP,
   initProps,
 } from './component';
 export type { InjectOptions } from './component';

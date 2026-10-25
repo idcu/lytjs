@@ -27,13 +27,28 @@ export interface ServerComponentAnalysis {
 
 /** Server Component 编译选项 */
 export interface ServerComponentOptions {
-  /** 服务端组件输出目录 */
-  serverOutputDir?: string;
-  /** 客户端组件输出目录 */
-  clientOutputDir?: string;
-  /** 是否生成客户端桩 */
+  /**
+   * 是否生成客户端桩（默认 `true`）。
+   *
+   * `false` ⇒ `compileServerComponent()` 的 `clientCode` 为 `null`，
+   * 适用于「客户端桩由打包器另行生成」的场景。
+   */
   generateClientStubs?: boolean;
-  /** 服务端函数命名前缀 */
+  /**
+   * 服务端函数（server action）**引用 id 的命名前缀**（默认空串）。
+   *
+   * 前缀会同时写进两侧，保证 id 对得上：
+   * - 服务端 `createServerReference('<前缀><fn>', <fn>)`
+   * - 客户端 `createServerProxy('<组件>', '<前缀><fn>')`
+   *
+   * 用途：多个 Server Component 可能导出同名 action（`submit` / `load`），
+   * 前缀把它们的 action id 隔离开，避免服务端路由表互相覆盖。
+   *
+   * ★ 2026-10-25：此前该选项**声明了但从未被读取**（三处形参都叫 `_options`）——
+   *   按「声明 ≠ 实际」的纪律，要么接线要么删掉。这里接线（前缀是真实需求），
+   *   同时删除同批的 `serverOutputDir` / `clientOutputDir`：本模块的函数**只返回代码字符串、
+   *   从不写文件**，那两个选项在结构上不可能生效，属于纯装饰性声明。
+   */
   serverFunctionPrefix?: string;
 }
 
@@ -169,9 +184,10 @@ function extractDataFetchers(source: string): string[] {
 export function generateServerComponentCode(
   source: string,
   analysis: ServerComponentAnalysis,
-  _options: ServerComponentOptions = {},
+  options: ServerComponentOptions = {},
 ): string {
   const lines: string[] = [];
+  const prefix = options.serverFunctionPrefix ?? '';
 
   // 添加服务端运行时导入
   lines.push(`import { createServerReference } from '@lytjs/renderer/server';`);
@@ -192,7 +208,7 @@ export function generateServerComponentCode(
   if (analysis.serverFunctions.length > 0) {
     lines.push('');
     for (const fn of analysis.serverFunctions) {
-      lines.push(`export const ${fn}Reference = createServerReference('${fn}', ${fn});`);
+      lines.push(`export const ${fn}Reference = createServerReference('${prefix}${fn}', ${fn});`);
     }
   }
 
@@ -201,13 +217,17 @@ export function generateServerComponentCode(
 
 /**
  * 生成客户端桩代码
+ *
+ * ⚠️ `serverFunctionPrefix` 必须与 `generateServerComponentCode()` 用**同一个值**：
+ *    两侧的 action id 必须逐字相同，否则运行时找不到服务端函数（静默 404）。
  */
 export function generateClientStubCode(
   componentName: string,
   analysis: ServerComponentAnalysis,
-  _options: ServerComponentOptions = {},
+  options: ServerComponentOptions = {},
 ): string {
   const lines: string[] = [];
+  const prefix = options.serverFunctionPrefix ?? '';
 
   lines.push(`// Client stub for server component: ${componentName}`);
   lines.push(`// This file is auto-generated. Do not edit.`);
@@ -217,7 +237,7 @@ export function generateClientStubCode(
 
   // 为每个服务端函数生成代理
   for (const fn of analysis.serverFunctions) {
-    lines.push(`export const ${fn} = createServerProxy('${componentName}', '${fn}');`);
+    lines.push(`export const ${fn} = createServerProxy('${componentName}', '${prefix}${fn}');`);
   }
 
   lines.push('');

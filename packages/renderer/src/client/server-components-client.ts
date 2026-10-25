@@ -66,7 +66,13 @@ export async function callServer<T = unknown>(
     });
 
     if (!response.ok) {
-      throw new Error(`Server action failed: ${response.status} ${response.statusText}`);
+      // ★ 2026-10-25：错误消息统一为「服务端函数 <名字> 失败」——`callServer` 与
+      //   `createServerProxy` 现在共用这一条路径（见下方 `createServerProxy`），
+      //   消息里带上函数名比只给状态码可定位得多。
+      const status = typeof response.status === 'number' ? `${response.status} ` : '';
+      throw new Error(
+        `[LytJS] Server function ${functionName} failed: ${status}${response.statusText ?? ''}`,
+      );
     }
 
     const result = await response.json();
@@ -101,10 +107,13 @@ export function createServerFunction<T>(
 
 /**
  * 获取服务端预取的数据
+ *
+ * ⚠️ 无 `window`（Node / 边缘运行时）时返回 `undefined`，**不抛 `ReferenceError`**。
+ *    本模块末尾用 `typeof document !== 'undefined'` 判过环境，说明「可以非浏览器导入」；
+ *    既然如此，这里直接写 `window.__LYTJS_SERVER_DATA__` 就自相矛盾。
  */
 export function getServerData<T = unknown>(key?: string): T | undefined {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const serverData = (window as any).__LYTJS_SERVER_DATA__;
+  const serverData = serverDataRoot();
   if (!serverData) return undefined;
 
   if (key) {
@@ -118,8 +127,14 @@ export function getServerData<T = unknown>(key?: string): T | undefined {
  * 检查是否有服务端数据
  */
 export function hasServerData(): boolean {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return !!(window as any).__LYTJS_SERVER_DATA__;
+  return !!serverDataRoot();
+}
+
+/** 读取注入的 `__LYTJS_SERVER_DATA__`（无 `window` 时为 `undefined`） */
+function serverDataRoot(): Record<string, unknown> | undefined {
+  if (typeof window === 'undefined') return undefined;
+  const root = (window as unknown as { __LYTJS_SERVER_DATA__?: unknown }).__LYTJS_SERVER_DATA__;
+  return root && typeof root === 'object' ? (root as Record<string, unknown>) : undefined;
 }
 
 // ============================================================
@@ -158,19 +173,20 @@ export function markHydrated(componentId: string): void {
 
 /**
  * 获取 hydration 状态
+ *
+ * ⚠️ 返回**副本**：此前直接把 `Map` 里那个对象交出去，调用方（面板、调试器）
+ * 只要改一下 `state.hydrated` 就篡改了内部状态机，`isHydrated()` 随之说谎。
  */
 export function getHydrationState(componentId: string): {
   hydrated: boolean;
   pending: boolean;
   error: Error | null;
 } {
-  return (
-    hydrationState.get(componentId) ?? {
-      hydrated: false,
-      pending: false,
-      error: null,
-    }
-  );
+  const state = hydrationState.get(componentId);
+  if (!state) {
+    return { hydrated: false, pending: false, error: null };
+  }
+  return { hydrated: state.hydrated, pending: state.pending, error: state.error };
 }
 
 // ============================================================
@@ -244,24 +260,12 @@ export function createServerProxy<T extends (...args: unknown[]) => Promise<unkn
   componentName: string,
   functionName: string,
 ): T {
-  return (async (...args: unknown[]) => {
-    // 发送请求到服务端
-    const response = await fetch('/__lytjs_server_action', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Server-Component': componentName,
-        'X-Server-Function': functionName,
-      },
-      body: JSON.stringify({ args }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`[LytJS] Server function ${functionName} failed: ${response.statusText}`);
-    }
-
-    return response.json();
-  }) as T;
+  // ★ 2026-10-25（ADR 0011）：此前这里是 `callServer` 的**第二份实现** —— 自己拼了一份
+  //   `fetch`，因此**完全无视** `configureServerAction()`：自定义 `endpoint` 不生效
+  //   （照旧打 `/__lytjs_server_action`）、`headers` 丢失、`onError` 不触发。
+  //   而编译器生成的客户端桩走的正是这个函数（`@lytjs/renderer/client`），
+  //   即"配置了却不生效"发生在**主路径**上。收敛为单一实现，两者行为从此一致。
+  return ((...args: unknown[]) => callServer(componentName, functionName, ...args)) as T;
 }
 
 // ============================================================

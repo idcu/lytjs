@@ -225,9 +225,15 @@ export function mergePluginConfig<TOptions>(
  * @description 用于在隔离环境中测试插件
  */
 export interface PluginTesterOptions {
-  /** 测试用的 App 配置 */
+  /**
+   * 测试用 App 的配置。
+   *
+   * ★ 2026-10-25：删掉了同批的 `performance?: boolean` —— 它**没有任何运行时消费点**
+   *   （`AppOptions` 只有 `rendererMode`，全仓也没有"性能开关"这个能力），
+   *   留着等于对使用者承诺一个不存在的能力。需要性能观测请在测试里直接装
+   *   `@lytjs/devtools` 的 `initPerformanceMonitor()`。
+   */
   appConfig?: {
-    performance?: boolean;
     globalProperties?: Record<string, unknown>;
   };
   /** 是否启用调试日志 */
@@ -275,8 +281,8 @@ export class PluginTester {
     });
 
     // ★ 2026-10-24：`appConfig` 此前**完全被忽略**（选项声明了但没有任何消费点）。
-    //   `globalProperties` 可以直接挂到 app.config 上；`performance` 目前没有对应
-    //   的运行时开关（`AppOptions` 只有 `rendererMode`），已登记为待判定。
+    //   `globalProperties` 直接挂到 app.config 上；同批的 `performance` 已于 2026-10-25
+    //   删除（无运行时消费者，见 `PluginTesterOptions.appConfig` 的注释）。
     const globalProperties = this.options.appConfig.globalProperties;
     if (globalProperties) {
       Object.assign(app.config.globalProperties, globalProperties);
