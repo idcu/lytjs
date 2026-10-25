@@ -13,7 +13,7 @@ import type {
 } from './types';
 import { getState, enable, disable } from './state';
 import { getComponentTree, getComponentById } from './component-tree';
-import { getSignals, getSignalById } from './signals';
+import { getSignals, getSignalValue as readSignalValue } from './signals';
 import {
   startRecording as startEventRecording,
   stopRecording as stopEventRecording,
@@ -44,8 +44,10 @@ export function createDevToolsAPI(): DevToolsAPI {
       return getSignals() as unknown as SignalInfo[];
     },
     getSignalValue(id: string): unknown {
-      const signalInfo = getSignalById(id);
-      return signalInfo?.value;
+      // ★ 2026-10-25：改为一律转发 `signals.getSignalValue`。此前在门面上**又写了一遍**
+      //   `getSignalById(id)?.value`（ADR 0011：同一能力只留一处实现）——一旦底层改成
+      //   解包 ref / 处理 computed，门面这条就会悄悄与它分叉。
+      return readSignalValue(id);
     },
     startRecording(): void {
       startEventRecording();
@@ -54,9 +56,10 @@ export function createDevToolsAPI(): DevToolsAPI {
       stopEventRecording();
     },
     getEvents(filter?: EventType[]): DevToolsEvent[] {
-      const allEvents = getEvents() as unknown as DevToolsEvent[];
-      if (!filter) return allEvents;
-      return allEvents.filter((e) => filter.includes(e.type as EventType));
+      // ★ 2026-10-25：转发底层已有的类型白名单。此前是「先全量取出、再自己 filter」——
+      //   而 `events.getEvents(types)` 的注释正写着「此前只支持全量返回，调用方只能自己
+      //   再 filter 一遍」，等于把刚补上的能力又绕过了一次。
+      return getEvents(filter) as unknown as DevToolsEvent[];
     },
     clearEvents(): void {
       clearEvents();
