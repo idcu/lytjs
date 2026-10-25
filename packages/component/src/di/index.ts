@@ -114,7 +114,14 @@ export function inject<T>(
   }
 
   // 2. 检查 Provider 节点树 / 令牌工厂 / 默认值（委托 @lytjs/di）
-  return injectValue(key, options);
+  //
+  // ★ 2026-10-25 修复（P1）：**默认不抛**。
+  //   本函数签名是 `T | undefined`、JSDoc 也只说「注入值」，但此前把 `options` 原样透传，
+  //   而 `injectValue` 的 `optional` 默认是 `false` ⇒ 找不到就抛 `InjectionError`。
+  //   于是任何「可选依赖」（`inject('x')` 期望拿到 undefined）都会在运行时崩，
+  //   连 `{ local: true }` 这种限定范围查不到也不例外。
+  //   调用方仍可显式传 `optional: false` 要回抛错语义。
+  return injectValue(key, { optional: true, ...options });
 }
 
 /**
