@@ -177,11 +177,10 @@ function optimize(root: RootNode, options: TransformOptions): void;
 
 ### 未从包入口导出、无调用方（预留 / 未完成功能）
 
-| 模块                                   | 行数 | 说明                                                                                                                                                      |
-| -------------------------------------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `optimizations/treeShaking.ts`         | 453  | `analyzeTreeShakingOpportunities` / `applyTreeShakingOptimizations` / `treeShakeTemplate(source, ast, options)`；实测可用，但无导出入口、无调用方、无测试 |
-| `optimizations/staticAnalysis.ts`      | 544  | `performStaticAnalysis` / `formatStaticAnalysisResult`；实测对含绑定与指令的模板返回空结果，实现尚不完整                                                  |
-| `optimizations/incremental-compile.ts` | 519  | `IncrementalCompiler` / `incrementalCompile` / `getIncrementalCompiler` / `clearIncrementalCache`                                                         |
+| 模块                                   | 行数 | 说明                                                                                                     |
+| -------------------------------------- | ---- | -------------------------------------------------------------------------------------------------------- |
+| `optimizations/staticAnalysis.ts`      | 544  | `performStaticAnalysis` / `formatStaticAnalysisResult`；实测对含绑定与指令的模板返回空结果，实现尚不完整 |
+| `optimizations/incremental-compile.ts` | 519  | `IncrementalCompiler` / `incrementalCompile` / `getIncrementalCompiler` / `clearIncrementalCache`        |
 
 > **处置建议**：若需启用其中能力，应「显式从 `src/index.ts` 导出 + 补契约测试 + 更新本文档」；
 > 否则应视为**未完成功能**，不要在对外材料中声称已支持。

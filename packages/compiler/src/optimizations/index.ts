@@ -1,14 +1,20 @@
 // packages/compiler/src/optimizations/index.ts
 // 编译器优化模块
 // Phase 1.12-1.14: 自动 memo 检测、死代码消除、AOT 预编译
-// v6.9.0: Tree Shaking 优化
+//
+// ★ 2026-10-25：**删除** `./treeShaking`（459 行）。它不是"待接入"的可用模块，而是桩：
+//   - `treeShakeTemplate(source, ast, options)` 的 4 个选项（safeMode / removeUnusedReferences
+//     / staticizeNodes / simplifyConditions）**全部解构成 `_xxx` 后从未读取**；
+//   - `applyTreeShakingOptimizations()` 是**空变换**：只在 AST 上挂一个
+//     `__treeShakingAnalysis`，而全仓**无任何读取点**（它自己的注释也承认
+//     "实际优化会在代码生成阶段应用"，但 codegen 里没有这一步）；
+//   - 全仓 **0 引用、0 测试**，也未从 `src/index.ts` 导出。
+//   ⇒ 留着等于对外承诺一个不存在的优化器（`decorative-option-never-read` ×4）。
+//   真正的 tree shaking 应在 codegen 阶段做，届时按「显式导出 + 契约测试 + 文档」重建。
 
 import { compile } from '../index';
 import type { RootNode, TemplateChildNode } from '../types';
 import { NodeTypes } from '../constants';
-
-// 导出 Tree Shaking 优化
-export * from './treeShaking';
 
 // 导出静态分析优化
 export * from './staticAnalysis';

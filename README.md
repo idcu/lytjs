@@ -49,13 +49,13 @@
 
 ### ❌ 占位 / 未接入（对外暴露但无行为）
 
-| 能力                                                             | 状态                                                                 |
-| ---------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `@lytjs/compiler/wasm`                                           | **不是 WebAssembly**：0 处 `WebAssembly` API，纯 JS 包装，无性能收益 |
-| `optimizations/{treeShaking,staticAnalysis,incremental-compile}` | **未接入编译管线**（全仓外部引用 0）                                 |
-| `@lytjs/compat`                                                  | 未实现（Vue 2/3 兼容层为 TODO）                                      |
-| `@lytjs/bundler`                                                 | 插件骨架：`.lyt` / `.vue` 不做任何转换                               |
-| 性能基准                                                         | 历史报告自承口径问题，**当前没有可信数字**                           |
+| 能力                                                 | 状态                                                                 |
+| ---------------------------------------------------- | -------------------------------------------------------------------- |
+| `@lytjs/compiler/wasm`                               | **不是 WebAssembly**：0 处 `WebAssembly` API，纯 JS 包装，无性能收益 |
+| `optimizations/{staticAnalysis,incremental-compile}` | **未接入编译管线**（全仓外部引用 0）                                 |
+| `@lytjs/compat`                                      | 未实现（Vue 2/3 兼容层为 TODO）                                      |
+| `@lytjs/bundler`                                     | 插件骨架：`.lyt` / `.vue` 不做任何转换                               |
+| 性能基准                                             | 历史报告自承口径问题，**当前没有可信数字**                           |
 
 ### 已知环境限制
 
