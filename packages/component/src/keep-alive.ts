@@ -483,6 +483,11 @@ export function matchesPattern(
   }
 
   if (pattern instanceof RegExp) {
+    // ★ 2026-10-25 修复：带 `g` / `y` 标志的正则，`test()` 会**推进 `lastIndex`** ——
+    //   同一个模式连续调用会在 true/false 之间跳变。而这里做的是「这个组件名匹不匹配」
+    //   的纯查询，结果只该取决于名字 ⇒ 每次从头匹配。
+    //   症状：`include: /Foo/g` 的组件"有时缓存、有时不缓存"，取决于渲染次数。
+    pattern.lastIndex = 0;
     return pattern.test(name);
   }
 
