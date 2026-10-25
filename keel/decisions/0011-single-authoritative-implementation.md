@@ -64,3 +64,17 @@ superseded-by:
   **传了 `onError` 且依赖 30s 兜底**的用法（文档未承诺该兜底）；`retry()` / `fail()` / `attempts`
   形参**保持可用**，故文档示例 `if (attempts <= 3) retry(); else fail();` 仍成立。
 - `suspensible` 选项三份实现**都从未读取**（装饰性选项）⇒ 本次保留类型、不实现，另行登记。
+
+## 第三例：`createApp`（2026-10-25 评估，判为**不合并**）
+
+`core` 的 createApp（672 行）有插件校验 / 注册表 / signal 模式 / 异步 mount / 全局监听器；
+`core-vnode` 的（234 行）都没有。**不合并**，因为：
+
+1. 依赖方向 `core → core-vnode` ⇒ 权威实现若在 core，core-vnode 转发即成环；要合并只能把
+   672 行连同 `app-context` / `plugin-registry` / `plugin-validator` / `template-compiler`
+   一起**下沉**到 core-vnode —— 包级搬迁，风险高于收益。
+2. 两者类型不同（core-vnode 的 `rendererMode` 只允许 `'vnode'`）⇒ 是**刻意收窄的变体**，
+   不是背景里那种"陈旧 fork"；且它在发布清单里 ⇒ 不能靠删副本了事。
+
+**决定**：不合并；在 `core-vnode/src/create-app.ts` 顶部写明**能力矩阵**。将来若合并
+方向只能是"下沉"。

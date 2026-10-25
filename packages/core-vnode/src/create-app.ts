@@ -1,5 +1,26 @@
 // src/create-app.ts
 // @lytjs/core-vnode - createApp 工厂函数（仅 VNode 模式）
+//
+// ============================================================================
+// ⚠️ 能力矩阵：本文件与 `@lytjs/core` 的 `createApp` **同名但不同契约**
+//    （ADR 0011 第三例：评估后判为"刻意收窄的变体"，不做合并）
+//
+// | 能力                         | 本包（core-vnode） | @lytjs/core |
+// | ---------------------------- | ------------------ | ----------- |
+// | VNode 渲染 / 生命周期钩子     | ✅                 | ✅          |
+// | `provide` / `inject`         | ✅                 | ✅          |
+// | `component` / `directive` / `mixin` | ✅          | ✅          |
+// | `rendererMode: 'signal'`     | ❌ 类型不允许       | ✅          |
+// | 插件校验（PluginValidator）   | ❌                 | ✅          |
+// | 插件注册表 / 依赖检查         | ❌                 | ✅          |
+// | `beforeInstall` / `afterInstall` | ❌              | ✅          |
+// | 异步 `mount`（返回 Promise）  | ❌ 同步            | ✅          |
+// | `on` / `off`（全局监听器）    | ❌                 | ✅          |
+//
+// ⇒ 需要上述任一项请从 `@lytjs/core` 导入 `createApp`。本包只做"最小 VNode 核心"，
+//   便于在体积敏感场景裁掉插件体系与 signal 运行时。
+// ============================================================================
+//
 // FIX: DTS build error - 声明 __DEV__ 全局变量
 declare const __DEV__: boolean;
 
