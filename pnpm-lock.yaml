@@ -1534,6 +1534,9 @@ importers:
 
   packages/ecosystem/packages/web-framework/packages/router:
     dependencies:
+      '@lytjs/component':
+        specifier: workspace:*
+        version: link:../../../../../component
       '@lytjs/reactivity':
         specifier: workspace:*
         version: link:../../../../../reactivity

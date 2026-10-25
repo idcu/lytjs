@@ -29,6 +29,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@lytjs/component": "workspace:*",
     "@lytjs/reactivity": "workspace:*",
     "@lytjs/vdom": "workspace:*"
   },
