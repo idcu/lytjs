@@ -20,15 +20,9 @@ import { warn } from '@lytjs/common-error';
 export interface OptimizedStreamOptions {
   /** 是否启用预加载提示 */
   preloadHints?: boolean;
-  /** 是否启用 HTTP/2 Push */
-  http2Push?: boolean;
   /** 关键 CSS 内联 */
   criticalCSS?: string;
-  /** 延迟加载阈值（毫秒） */
-  deferThreshold?: number;
-  /** 是否启用压缩 */
-  compression?: boolean;
-  /** 缓冲区大小（字节） */
+  /** 缓冲区大小（**字符数**，与 `push()` 的累加口径一致） */
   bufferSize?: number;
   /** 是否启用 Early Flush */
   earlyFlush?: boolean;
@@ -98,10 +92,7 @@ export class OptimizedSSRStream {
     this.encoder = new TextEncoder();
     this.options = {
       preloadHints: options.preloadHints ?? true,
-      http2Push: options.http2Push ?? false,
       criticalCSS: options.criticalCSS ?? '',
-      deferThreshold: options.deferThreshold ?? 50,
-      compression: options.compression ?? false,
       bufferSize: options.bufferSize ?? 4096,
       earlyFlush: options.earlyFlush ?? true,
     };
@@ -145,7 +136,8 @@ export class OptimizedSSRStream {
     this.buffer = [];
     this.bufferSize = 0;
 
-    this.controller.enqueue(this.encoder.encode(chunk));
+    const encoded = this.encoder.encode(chunk);
+    this.controller.enqueue(encoded);
 
     // 记录首字节时间
     if (!this.flushedFirstChunk) {
@@ -154,7 +146,9 @@ export class OptimizedSSRStream {
     }
 
     this.stats.chunkCount++;
-    this.stats.totalBytes += chunk.length;
+    // ★ 2026-10-25：记**编码后的字节数**。此前累加 `chunk.length`（字符数），
+    //   中文内容 1 字符 = 3 字节 ⇒ 统计值只有真实值的三分之一，监控/带宽核算全错。
+    this.stats.totalBytes += encoded.length;
   }
 
   /**
