@@ -9,7 +9,25 @@ import { locationQueryToSearchParams } from '../types';
 import { useRouter } from '../composables/useRouter';
 import { useRoute } from '../composables/useRoute';
 import { computedSignal as computed } from '@lytjs/reactivity';
+import { createVNode } from '@lytjs/vdom';
+import type { VNode } from '@lytjs/vdom';
 import { resolveLocation, isSameRouteLocation } from '../location';
+
+/**
+ * 路径激活判定（**按段**比较）。
+ *
+ * ★ 2026-10-25 修复：此前是裸 `currentPath.startsWith(target.path)`，两个常见误判：
+ * ① `to="/"` —— 任何路径都以 `/` 开头 ⇒ 首页链接在**所有**路由下都高亮；
+ * ② `to="/user"` 在 `/users/1` 下也被判激活（前缀恰好命中）。
+ * 现在要求"相等"或"命中后紧跟 `/`"，且 `/` 只匹配 `/`。
+ */
+function isPathActive(currentPath: string, targetPath: string): boolean {
+  if (targetPath === '' || targetPath === '/') {
+    return currentPath === '' || currentPath === '/';
+  }
+  const target = targetPath.endsWith('/') ? targetPath.slice(0, -1) : targetPath;
+  return currentPath === target || currentPath.startsWith(`${target}/`);
+}
 
 export interface RouterLinkProps {
   to: string;
@@ -70,7 +88,7 @@ export const RouterLink = {
 
     const isActive = computed(() => {
       const target = targetLocation();
-      return route().path.startsWith(target.path);
+      return isPathActive(route().path, target.path);
     });
 
     const isExactActive = computed(() => {
@@ -106,20 +124,23 @@ export const RouterLink = {
       if (isActive()) classes.push(props.activeClass!);
       if (isExactActive()) classes.push(props.exactActiveClass!);
 
-      const linkData = {
-        tag: 'a',
-        props: {
+      const children = slots?.default
+        ? slots.default({ isActive: isActive(), isExactActive: isExactActive() })
+        : null;
+
+      // ★ 2026-10-25 修复（P1）：此前返回的是描述对象 `{ tag, props, children }`，
+      //   而渲染器只认带 `type` 的 vnode ⇒ `<RouterLink>` **渲染不出任何东西**
+      //   （patch 拿到的 `n2.type` 是 undefined）。改为真正的 `createVNode('a', …)`。
+      return createVNode(
+        'a',
+        {
           href: href(),
           class: classes.join(' '),
           'aria-current': isExactActive() ? props.ariaCurrentValue : undefined,
           onClick: handleClick,
         },
-        children: slots?.default
-          ? slots.default({ isActive: isActive(), isExactActive: isExactActive() })
-          : null,
-      };
-
-      return linkData;
+        children as VNode[] | null,
+      );
     };
   },
 };

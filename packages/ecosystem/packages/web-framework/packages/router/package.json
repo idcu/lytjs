@@ -29,7 +29,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lytjs/reactivity": "workspace:*"
+    "@lytjs/reactivity": "workspace:*",
+    "@lytjs/vdom": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

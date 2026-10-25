@@ -1537,6 +1537,9 @@ importers:
       '@lytjs/reactivity':
         specifier: workspace:*
         version: link:../../../../../reactivity
+      '@lytjs/vdom':
+        specifier: workspace:*
+        version: link:../../../../../vdom
     devDependencies:
       tsup:
         specifier: ^8.0.0

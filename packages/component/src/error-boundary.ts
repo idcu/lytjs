@@ -4,7 +4,7 @@
 import type { ComponentOptions, RenderFunction } from './types';
 import type { VNode as VNodeType } from '@lytjs/vdom';
 import { onErrorCaptured, onMounted, onUnmounted } from './lifecycle';
-import { ref } from '@lytjs/reactivity';
+import { ref, shallowRef } from '@lytjs/reactivity';
 import { createVNode } from '@lytjs/vdom';
 import { Text, Fragment } from '@lytjs/common-vnode';
 import type { VNode } from '@lytjs/common-vnode';
@@ -52,7 +52,11 @@ export const ErrorBoundary: ComponentOptions = {
     capturePromiseRejections: { type: Boolean, default: false },
   },
   setup(props: Record<string, unknown>) {
-    const error = ref<Error | null>(null);
+    // ★ 2026-10-25：用 `shallowRef` 而不是 `ref`。`ref()` 会把 Error 对象**深度转成
+    //   reactive 代理** ⇒ ① `error.value === 原始 err` 为假（错误对象被换了个壳，
+    //   身份断言、`WeakMap` 查表、错误上报里的对象比较全部失效）；② 给一个不可变的
+    //   错误对象建深层依赖追踪纯属浪费。这里只整体替换、不就地改，浅层引用即可。
+    const error = shallowRef<Error | null>(null);
     const hasError = ref(false);
 
     // FIX: P2-35 使用类型守卫替代重复的类型断言
@@ -131,6 +135,15 @@ export const ErrorBoundary: ComponentOptions = {
             return createVNode(Fragment, null, result as VNode[]);
           }
         }
+        // ★ 2026-10-25 修复：`fallback` prop 此前**声明了但从未读取** —— render 只认
+        //   `$slots.fallback`，于是 `<ErrorBoundary :fallback="Foo">` 静默无效
+        //   （props 定义里有它、类型上有它、文档也写了，就是不生效）。
+        //   优先级：具名插槽 > `fallback` 组件 > 默认文本。
+        const fallbackComponent = typedProps.fallback as ComponentOptions | undefined;
+        if (fallbackComponent) {
+          return createVNode(fallbackComponent, { error: error.value });
+        }
+
         // 默认错误 UI
         return createVNode(
           Text,

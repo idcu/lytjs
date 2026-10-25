@@ -27,7 +27,7 @@
 //   - activated / deactivated：KeepAlive 组件激活/停用时调用
 
 import type { ComponentInternalInstance, ComponentPublicInstance } from './types';
-import { warnOnce } from '@lytjs/common-error';
+import { error, warnOnce } from '@lytjs/common-error';
 import type { DebuggerEvent } from '@lytjs/shared-types';
 
 // 当前正在 setup 的实例（用于生命周期钩子注册）
@@ -449,6 +449,17 @@ export function handleError(
       return true;
     }
   }
+
+  // ★ 2026-10-25 修复（P1）：**无人处理时必须留痕**。
+  //   此前直接 `return false`，而**全部**调用点（setup / 生命周期 / data / computed /
+  //   watch / render）都忽略返回值 ⇒ 既没有 `onErrorCaptured`、也没有
+  //   `app.errorHandler` 时，抛出的错误**完全静默**：页面空白，控制台一行都没有。
+  //   排查时只能靠二分注释代码，代价极高。
+  //   `error()` 在 dev 与 prod 下都会输出（不是 dev-only 的 `warn`）。
+  error(
+    `Unhandled error in ${info}: ${err?.message ?? String(err)}` +
+      (err?.stack ? `\n${err.stack}` : ''),
+  );
 
   return false;
 }
