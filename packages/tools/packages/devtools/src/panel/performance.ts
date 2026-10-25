@@ -502,7 +502,13 @@ export function getPerformanceConfig(): PerformanceConfig {
  */
 export function initPerformancePanel(): () => void {
   const unsubscribe = onPanelMessage((message: unknown) => {
-    const msg = message as { type: string; data?: unknown };
+    // ★ 2026-10-25：`BridgeMessage` 的负载字段是 **`payload`**，而这里原先读的是 `data`
+    //   ⇒ 所有**带参数**的命令（`GET_COMPONENT_PERFORMANCE` / `UPDATE_PERFORMANCE_CONFIG`）
+    //   拿到的都是 `undefined`：前者被 `if (!data?.componentId) return;` 吞掉（**连回包都没有**），
+    //   后者被 `if (msg.data)` 吞掉（**配置纹丝不动**）。与 time-travel 面板同款缺陷。
+    //   两个字段都认（`data` 为历史写法）。
+    const raw = message as { type: string; payload?: unknown; data?: unknown };
+    const msg = { type: raw.type, data: raw.payload ?? raw.data };
 
     switch (msg.type) {
       case 'START_PERFORMANCE_MONITORING':

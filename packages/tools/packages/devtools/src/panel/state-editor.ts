@@ -424,7 +424,12 @@ export function undoLastEdit(): StateEditResult {
 export function initStateEditor(): () => void {
   // Listen for messages from panel
   const unsubscribe = onPanelMessage((message: unknown) => {
-    const msg = message as { type: string; data?: unknown };
+    // ★ 2026-10-25：`BridgeMessage` 的负载字段是 **`payload`**，此前读 `data`
+    //   ⇒ `GET_COMPONENT_STATE` / `EDIT_STATE` 拿到的都是 undefined，
+    //   前者被 `if (!data?.componentId) return;` 吞掉（**连回包都没有**），后者直接 return。
+    //   （与 performance / time-travel 面板同款，属「同一缺陷只修一处」的典型）
+    const raw = message as { type: string; payload?: unknown; data?: unknown };
+    const msg = { type: raw.type, data: raw.payload ?? raw.data };
 
     switch (msg.type) {
       case 'GET_COMPONENT_STATE':

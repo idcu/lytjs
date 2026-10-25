@@ -65,7 +65,10 @@ export function cleanupDevToolsPanel(): void {
 
 function initPanelMessageHandler(): () => void {
   return onPanelMessage((message: unknown) => {
-    const msg = message as { type: string; data?: unknown };
+    // ★ 2026-10-25：负载字段是 `payload`（此前读 `data`）⇒ `SWITCH_TAB` /
+    //   `SELECT_COMPONENT` 的 payload 永远读不到，切页签/选组件**毫无反应**。
+    const raw = message as { type: string; payload?: unknown; data?: unknown };
+    const msg = { type: raw.type, data: raw.payload ?? raw.data };
     switch (msg.type) {
       case 'SWITCH_TAB':
         if (msg.data && typeof msg.data === 'object') {
