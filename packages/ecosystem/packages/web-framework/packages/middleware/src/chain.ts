@@ -42,15 +42,34 @@ export class MiddlewareChain {
       }
 
       const middleware = middlewares[i];
-      if (middleware) {
-        const result = await middleware(
-          request,
-          context,
-          () => dispatch(i + 1) as unknown as Promise<void>,
-        );
-        if (result !== undefined && result !== null) {
-          return result as Response;
+      if (!middleware) {
+        return dispatch(i + 1);
+      }
+
+      // ★ 2026-10-25 修复（P1）：**下游只能下发一次**。
+      //
+      //   此前是「中间件返回 undefined ⇒ `return dispatch(i + 1)`」，而洋葱圈的常规写法正是
+      //   `await next()` 之后**不返回任何东西** —— 于是 `next()` 已经把下游跑完一遍，
+      //   这里又跑一遍。N 层就是 **2^N 次** `finalHandler`（实测三层 = 8 次）：
+      //   响应被重复写、数据库被重复提交、日志翻倍。
+      //
+      //   修法：`next()` 的结果被记住并**复用**（重复调用 `next()` 也只在第一次下发）；
+      //   中间件自己返回了响应就用它的（允许后置处理覆盖），否则返回下游的结果，
+      //   而**没有调过** `next()` 的中间件仍然按「放行」语义继续往下走。
+      let nextPromise: Promise<Response> | undefined;
+      const next = (): Promise<void> => {
+        if (!nextPromise) {
+          nextPromise = dispatch(i + 1);
         }
+        return nextPromise as unknown as Promise<void>;
+      };
+
+      const result = await middleware(request, context, next);
+      if (result !== undefined && result !== null) {
+        return result as Response;
+      }
+      if (nextPromise) {
+        return nextPromise;
       }
       return dispatch(i + 1);
     };

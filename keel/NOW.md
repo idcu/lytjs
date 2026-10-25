@@ -14,9 +14,9 @@ keywords: [硬约束9]
 ## 覆盖率（10-25 四跑：330 文件 / 7791 例）
 行 **81.65%** / 分支 87.28% / 函数 86.14%（79.42% → **+2.23pt**）。
 ⚠️ 全量报表对**同被 src 与 dist 引用**的文件会低估 ⇒ **定方向前先单包复核**。
-下一批候选（升序）：`middleware/chain` 16%、`router-fs/utils` 21%、`component/di` 50%。
+下一批候选（升序）：`router-fs/utils` 21%、`component/di` 50%。
 
-## 10-25 完成（14 电池 / 213 守卫）
+## 10-25 完成（15 电池 / 226 守卫）
 - **错误链**：`handleError` 无人处理时**静默 return false**（调用点又全忽略返回值）⇒
   setup/生命周期/data/computed/watch/render 的错**完全不留痕**；ErrorBoundary 的 `fallback`
   未读、`ref` 把 Error 包成代理。
@@ -25,7 +25,9 @@ keywords: [硬约束9]
 - **api/utils**：`extractHttpMethods` 裸子串 ⇒ `postal` 判 POST、`dispatch` 判 PATCH ⇒ 静默 404。
 - **core-vnode/composition**：`useModel` 无实例时静默返回死 computed（另两个同类函数都告警）。
 - **门面**：devtools `createDevToolsAPI()` **0% 覆盖**；两处重复实现收敛为转发。
-- **ssr/VirtualList**（13）→ 窗口/偏移/总高/插槽下标全部正确，纯补判据（15.3% → 覆盖）。
+- **ssr/VirtualList**（13）→ 窗口/偏移/总高/插槽下标全部正确，纯补判据。
+- **middleware/chain**（13）→ 中间件调 `next()` 后不返回时**下游再下发一次** ⇒
+  N 层就是 **2^N 次** `finalHandler` ⇒ 响应重写、写库重复。
 - 删 `optimizations/treeShaking.ts`（459 行桩）；ADR 0011 第三例（`createApp`）**不合并**。
 
 ## 下一步
