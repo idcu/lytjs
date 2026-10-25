@@ -14,21 +14,18 @@ keywords: [硬约束9]
 ## 覆盖率（10-25 四跑：330 文件 / 7791 例）
 行 **81.65%** / 分支 87.28% / 函数 86.14%（79.42% → **+2.23pt**）。
 ⚠️ 全量报表对**同被 src 与 dist 引用**的文件会低估 ⇒ **定方向前先单包复核**。
-下一批候选（升序）：`ssr/virtualList` 15%、`middleware/chain` 16%、
-`router-fs/utils` 21%、`component/di` 50%。
+下一批候选（升序）：`middleware/chain` 16%、`router-fs/utils` 21%、`component/di` 50%。
 
-## 10-25 完成（13 电池 / 200 守卫）
-- **lifecycle**（23）→ `handleError()` 无人处理时**静默 return false**，调用点又全忽略返回值
-  ⇒ setup / 生命周期 / data / computed / watch / render 的错**完全不留痕**。
-- **error-boundary**（17）→ `fallback` prop 未读；`ref` 把 Error 包成代理 ⇒ 改 `shallowRef`
-- **RouterLink**（16）+ **RouterView**（15）→ render **都返回非 vnode** ⇒ 路由入口与出口
-  **都渲染不出东西**；active 用裸 `startsWith`；RouterView 无层级、懒加载拿到 Promise。
-- **api/utils**（27）→ `extractHttpMethods` 裸子串 ⇒ `postal` 判 POST、`dispatch` 判 PATCH
-  ⇒ **接口静默 404**。改词边界。
-- **tools/devtools/api**（16）→ 门面 **0% 覆盖**；两处重复实现收敛为转发。
-- **core-vnode/composition**（11）→ `useModel` 无实例时**静默**返回死 computed
-  （`useSlots`/`useAttrs` 都告警）⇒ 补 DEV 告警。
-- 前六电池（59）：devtools 性能 · srv-comp-client · component-proxy · 前缀 · TransitionGroup。
+## 10-25 完成（14 电池 / 213 守卫）
+- **错误链**：`handleError` 无人处理时**静默 return false**（调用点又全忽略返回值）⇒
+  setup/生命周期/data/computed/watch/render 的错**完全不留痕**；ErrorBoundary 的 `fallback`
+  未读、`ref` 把 Error 包成代理。
+- **路由**：RouterLink / RouterView 的 render **都返回非 vnode** ⇒ 入口与出口**都渲染不出东西**；
+  active 裸 `startsWith`；RouterView 无层级（嵌套递归）、懒加载拿到 Promise。
+- **api/utils**：`extractHttpMethods` 裸子串 ⇒ `postal` 判 POST、`dispatch` 判 PATCH ⇒ 静默 404。
+- **core-vnode/composition**：`useModel` 无实例时静默返回死 computed（另两个同类函数都告警）。
+- **门面**：devtools `createDevToolsAPI()` **0% 覆盖**；两处重复实现收敛为转发。
+- **ssr/VirtualList**（13）→ 窗口/偏移/总高/插槽下标全部正确，纯补判据（15.3% → 覆盖）。
 - 删 `optimizations/treeShaking.ts`（459 行桩）；ADR 0011 第三例（`createApp`）**不合并**。
 
 ## 下一步
