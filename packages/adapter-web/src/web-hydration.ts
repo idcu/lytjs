@@ -382,9 +382,28 @@ function hydrateComponent(
     let ctx: Record<string, unknown> = (vnode.props ?? {}) as Record<string, unknown>;
 
     if (isFunction(options.setup)) {
-      const setupResult = (options.setup as (p: unknown) => unknown)(vnode.props ?? {});
+      // ★ 2026-10-26：给 setup 一个**空上下文**。此前第二个参数是 `undefined`，
+      //   于是任何 `setup(props, { slots })` 的解构写法在水合期直接 TypeError
+      //   （而同一份组件在客户端挂载时是正常的 —— 只有走水合的页面崩）。
+      const setupContext = {
+        slots: {},
+        attrs: {},
+        emit: () => {},
+        expose: () => {},
+      };
+      const setupResult = (options.setup as (p: unknown, c: unknown) => unknown)(
+        vnode.props ?? {},
+        setupContext,
+      );
       if (isVNodeLike(setupResult)) {
         childVNode = setupResult as VNode;
+      } else if (isFunction(setupResult)) {
+        // ★ 2026-10-26 修复（P1）：**`setup` 返回渲染函数**是 Composition API 的标准写法
+        //   （本仓的 `ErrorBoundary` 就是这样）。此前只认「返回 vnode」与「返回对象」两种，
+        //   函数被漏掉 ⇒ 组件被整体跳过，服务端 HTML 原样留着不报错，看起来"页面是好的"，
+        //   但事件/响应式全都没接上。
+        const result = (setupResult as (c: unknown) => unknown)((vnode.props ?? {}) as object);
+        if (isVNodeLike(result)) childVNode = result as VNode;
       } else if (setupResult && typeof setupResult === 'object') {
         ctx = setupResult as Record<string, unknown>;
       }

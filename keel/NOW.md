@@ -16,23 +16,23 @@ keywords: [硬约束9]
 ⚠️ 全量报表对**同被 src 与 dist 引用**的文件会低估 ⇒ **定方向前先单包复核**。
 
 
-## 10-25/26 完成（20 电池 / 313 守卫）
+## 10-25/26 完成（21 电池 / 328 守卫）
 - **错误链**：`handleError` 无人处理时静默 ⇒ setup/生命周期/data/computed/watch/render 全不留痕。
-- **路由**：RouterLink / RouterView 的 render 都返回非 vnode ⇒ 入口出口都渲染不出东西；
-  active 裸 `startsWith`；RouterView 无层级、懒加载拿到 Promise。
+- **路由**：RouterLink / RouterView 的 render 都返回非 vnode ⇒ 入口出口都渲染不出东西。
 - **中间件链**：`await next()` 不返回时下游再下发 ⇒ **2^N 次** `finalHandler`。
 - **KeepAlive**：`matchesPattern` 的 `g`/`y` 正则未重置 `lastIndex` ⇒ 时而缓存时而丢弃。
-- **DI**：`inject()` 找不到就抛（签名却是 `T | undefined`）；`provideTransient` 实为单例（`it.fails`）。
-- **其它**：api 方法裸子串误判、`useModel` 静默失败、ErrorBoundary `fallback` 未读、devtools 门面 0% 覆盖。
-- **纯补判据**（无缺陷）：VirtualList / router-fs / 前六电池。
-- **SSR 流**：`stats.totalBytes` 按**字符**累加（中文只有真实值 1/3）；`http2Push` /
-  `deferThreshold` / `compression` 三个选项声明+默认值却从未读取 ⇒ 已删。
-- **事件总线**：`once()` 存的是 wrapper，`off(event, 原始函数)` 删不掉 ⇒ 一次性监听**无法取消**、
-  组件卸载后闭包泄漏。
+- **DI**：`inject()` 找不到就抛（签名却是 `T | undefined`）；`provideTransient` 实为单例。
+- **其它**：api 方法裸子串、`useModel` 静默失败、ErrorBoundary `fallback` 未读、devtools 门面 0% 覆盖。
+- **纯补判据**：VirtualList / router-fs / 前六电池。
+- **SSR 流**：`totalBytes` 按**字符**累加（中文只有 1/3）；`http2Push`/`deferThreshold`/
+  `compression` 声明+默认值却未读 ⇒ 已删。
+- **事件总线**：`once()` 存 wrapper，`off(原始函数)` 删不掉 ⇒ 监听无法取消、闭包泄漏。
+- **水合**：`setup` 返回渲染函数时组件被**整体跳过**（服务端 HTML 原样留着，看似正常但没接上）；
+  `setup` 第二参是 `undefined` ⇒ 解构 `{ slots }` 直接崩。
 - 删 `optimizations/treeShaking.ts`（459 行桩）；ADR 0011 第三例（`createApp`）不合并。
 
 ## 下一步
-1. 选点判据「跨层 / 状态机 / 并发」：`web-hydration`、`ssr-island`。
+1. 选点判据「跨层 / 状态机 / 并发」：`ssr-island`（岛屿激活）。
 2. UI 车道**接不了**：并行会话在改 `TreeSelect`，需 owner 明确分工后再动。
 3. 待办：`suspensible`；vapor-hmr `_preservation` 未读；devtools `startRecording` 只是标志位；
    `provideTransient` 在组件内等同单例。
