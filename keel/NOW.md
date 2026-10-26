@@ -16,7 +16,7 @@ keywords: [硬约束9]
 ⚠️ 全量报表对**同被 src 与 dist 引用**的文件会低估 ⇒ **定方向前先单包复核**。
 
 
-## 10-25 完成（19 电池 / 295 守卫）
+## 10-25/26 完成（20 电池 / 313 守卫）
 - **错误链**：`handleError` 无人处理时静默 ⇒ setup/生命周期/data/computed/watch/render 全不留痕。
 - **路由**：RouterLink / RouterView 的 render 都返回非 vnode ⇒ 入口出口都渲染不出东西；
   active 裸 `startsWith`；RouterView 无层级、懒加载拿到 Promise。
@@ -27,10 +27,12 @@ keywords: [硬约束9]
 - **纯补判据**（无缺陷）：VirtualList / router-fs / 前六电池。
 - **SSR 流**：`stats.totalBytes` 按**字符**累加（中文只有真实值 1/3）；`http2Push` /
   `deferThreshold` / `compression` 三个选项声明+默认值却从未读取 ⇒ 已删。
+- **事件总线**：`once()` 存的是 wrapper，`off(event, 原始函数)` 删不掉 ⇒ 一次性监听**无法取消**、
+  组件卸载后闭包泄漏。
 - 删 `optimizations/treeShaking.ts`（459 行桩）；ADR 0011 第三例（`createApp`）不合并。
 
 ## 下一步
-1. 选点判据「跨层 / 状态机 / 并发」：`web-hydration`、`ssr-island`、`common/events`（事件总线）。
+1. 选点判据「跨层 / 状态机 / 并发」：`web-hydration`、`ssr-island`。
 2. UI 车道**接不了**：并行会话在改 `TreeSelect`，需 owner 明确分工后再动。
 3. 待办：`suspensible`；vapor-hmr `_preservation` 未读；devtools `startRecording` 只是标志位；
    `provideTransient` 在组件内等同单例。

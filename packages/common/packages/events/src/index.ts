@@ -212,6 +212,10 @@ export class EventEmitter {
       this.off(event, wrapper);
       handler(...args);
     };
+    // ★ 2026-10-26 修复：把原始回调挂在包装器上，使 `off(event, 原始函数)` 也能摘掉。
+    //   此前 `off` 拿原始函数去 `Set.delete`，而 Set 里存的是 wrapper ⇒ 删不掉：
+    //   调用方**无法取消**一个一次性监听，只能等它被触发；组件卸载后闭包一直被持有。
+    (wrapper as EventHandler & { __originalHandler?: EventHandler }).__originalHandler = handler;
     return this.on(event, wrapper);
   }
 
@@ -221,7 +225,14 @@ export class EventEmitter {
   off(event: string, handler: EventHandler): this {
     const handlers = this.events.get(event);
     if (handlers) {
-      handlers.delete(handler);
+      // 直接命中，或命中「once 包装器」里记录的原始回调
+      for (const registered of handlers) {
+        const original = (registered as EventHandler & { __originalHandler?: EventHandler })
+          .__originalHandler;
+        if (registered === handler || original === handler) {
+          handlers.delete(registered);
+        }
+      }
       if (handlers.size === 0) {
         this.events.delete(event);
       }
