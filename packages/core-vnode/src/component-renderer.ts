@@ -17,6 +17,7 @@ import {
   createComponentInstance,
   setupComponent,
   initProps,
+  initSlots,
   callMountedHook,
   callUpdatedHook,
   callBeforeUnmountHook,
@@ -52,6 +53,10 @@ export function createComponentRenderer(
     // 缺省时 patch 会退化为 `component.props = nextProps` 直接赋值）
     normalizeProps(instance: unknown, rawProps: Record<string, unknown> | null) {
       initProps(instance as ComponentInternalInstance, rawProps);
+    },
+    // 组件更新时重建插槽（否则父组件重渲染后子组件仍渲染旧插槽内容）
+    initSlots(instance: unknown, children: unknown) {
+      initSlots(instance as ComponentInternalInstance, children);
     },
     // ── 组件生命周期钩子的实现注入（vdom 侧只做可选调用）────────────────────
     invokeMountedHook(instance: unknown) {

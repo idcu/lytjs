@@ -89,8 +89,19 @@ describe('codegen', () => {
   });
 
   describe('v-model codegen', () => {
-    it('should generate modelValue and onUpdate:modelValue', () => {
+    // ⚠️ 2026-10-27 修正：这条用例此前断言 `<input v-model>` 产出
+    // `modelValue` / `onUpdate:modelValue` —— 那是**把缺陷写成了断言**。
+    // 原生 input 不认这两个名字，正确产物是 `value` + `onInput`（组件形态才是 modelValue）。
+    // 见 packages/compiler/tests/native-v-model.test.ts 的完整回归电池。
+    it('原生 input 应生成 value + onInput（不是 modelValue）', () => {
       const result = compile('<input v-model="message">');
+      expect(result.code).toContain('"value"');
+      expect(result.code).toContain('"onInput"');
+      expect(result.code).not.toContain('modelValue');
+    });
+
+    it('组件形态应生成 modelValue 和 onUpdate:modelValue', () => {
+      const result = compile('<MyInput v-model="message" />');
       expect(result.code).toContain('modelValue');
       expect(result.code).toContain('onUpdate:modelValue');
     });

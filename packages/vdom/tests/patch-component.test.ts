@@ -342,7 +342,10 @@ describe('createComponentPatch', () => {
       expect(subTree.props).not.toHaveProperty('data-test');
     });
 
-    it('render 抛出错误时应通过 errorCaptured 传播', () => {
+    // ⚠️ 2026-10-27 行为变更：`errorCaptured` 返回 false 表示「错误已被接管」。
+    // 此前实现照样 `throw renderError`（`handled` 算了却不用），于是首帧 `app.mount`
+    // 直接抛错、ErrorBoundary 的 fallback 永远没机会渲染。现在改为**不抛**。
+    it('render 抛出错误且 errorCaptured 返回 false 时不应再向上抛', () => {
       const container = document.createElement('div');
       const renderError = new Error('render error');
 
@@ -370,7 +373,7 @@ describe('createComponentPatch', () => {
 
       expect(() => {
         api.mountComponent(vnode, container, null, null, null, false);
-      }).toThrow(renderError);
+      }).not.toThrow();
 
       // errorCaptured 应被调用
       expect(parentInstance.type.errorCaptured).toHaveBeenCalled();
@@ -412,7 +415,7 @@ describe('createComponentPatch', () => {
 
       expect(() => {
         api.mountComponent(vnode, container, null, null, null, false);
-      }).toThrow(renderError);
+      }).not.toThrow();
 
       // 父组件的 errorCaptured 应被调用
       expect(parentInstance.type.errorCaptured).toHaveBeenCalled();
@@ -451,9 +454,10 @@ describe('createComponentPatch', () => {
       });
       vnode.component = mockInstance;
 
+      // app errorHandler 接管后同样不再向上抛（否则首帧 mount 会崩）
       expect(() => {
         api.mountComponent(vnode, container, null, null, null, false);
-      }).toThrow(renderError);
+      }).not.toThrow();
 
       // app errorHandler 应被调用
       expect(appErrorHandler).toHaveBeenCalledWith(
@@ -578,9 +582,10 @@ describe('createComponentPatch', () => {
       });
       vnode.component = mockInstance;
 
+      // 钩子返回 false ⇒ 错误已被接管，不再向上抛（2026-10-27 行为变更）
       expect(() => {
         api.mountComponent(vnode, container, null, null, null, false);
-      }).toThrow(renderError);
+      }).not.toThrow();
 
       // errorCapturedHooks 应被调用
       expect(hook).toHaveBeenCalled();

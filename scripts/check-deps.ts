@@ -54,6 +54,10 @@ const LAYER_MAP: Record<string, number> = {
   '@lytjs/adapter-web': 2,
   // L3
   '@lytjs/core': 3,
+  // `@lytjs/core-vnode` 与 core 同属「核心运行时层」，但它是**窄核心**：
+  // 只依赖 L0~L2，而 core 反过来组合它（`core/src/web-component.ts` 转发 Web Component）。
+  // 二者的依赖方向是单向的 core → core-vnode，故在 `ALLOWED_SAME_LAYER_DIRECTED` 里
+  // 显式登记这一条**有向**例外，而不是把它下移到 L2（它依赖 component/renderer，下移会误报）。
   '@lytjs/core-vnode': 3,
   '@lytjs/core-signal': 3,
   // L4
@@ -325,6 +329,10 @@ const ALLOWED_CROSS_LAYER: Record<string, Set<string>> = {
 };
 
 // 允许同层交叉依赖的包（聚合包等特殊情况）
+//
+// ⚠️ 这份白名单是**无向**的（`has(source) || has(target)` 即放行），
+// 因此它无法表达「A 依赖 B 可以，B 依赖 A 不行」。真有方向性需求时用下面的
+// `ALLOWED_SAME_LAYER_DIRECTED`，不要往这里加。
 const ALLOWED_SAME_LAYER_DEPS: Record<number, Set<string>> = {
   0: new Set([
     '@lytjs/common',
@@ -364,6 +372,18 @@ const ALLOWED_SAME_LAYER_DEPS: Record<number, Set<string>> = {
     '@lytjs/plugin-validation',
   ]),
 };
+
+/**
+ * **有向**的同层依赖例外：`[from, to]` 表示只允许 `from → to`，反向仍算违规。
+ *
+ * 用途：同一层里存在「窄核心 / 完整核心」这种单向组合关系时，无向白名单会
+ * 连反向依赖一起放行（那会掩盖真正的循环依赖）。
+ *
+ * 当前只有一条：
+ * - `@lytjs/core → @lytjs/core-vnode` —— core 是完整核心，core-vnode 是仅 VNode 的窄核心，
+ *   core 组合它（`core/src/web-component.ts` 转发 Web Component 权威实现）。
+ */
+const ALLOWED_SAME_LAYER_DIRECTED: Array<[string, string]> = [['@lytjs/core', '@lytjs/core-vnode']];
 
 interface Violation {
   source: string;
@@ -451,6 +471,12 @@ function checkDependencies(): Violation[] {
           (allowedSameLayer.has(sourceName) || allowedSameLayer.has(depName))
         ) {
           continue; // 聚合包之间的依赖是允许的
+        }
+        // 有向例外：只放行登记过的那一个方向，反向仍报违规
+        if (
+          ALLOWED_SAME_LAYER_DIRECTED.some(([from, to]) => from === sourceName && to === depName)
+        ) {
+          continue;
         }
         violations.push({
           source: sourceName,

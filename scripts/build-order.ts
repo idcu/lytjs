@@ -66,9 +66,13 @@ export const BUILD_ORDER: BuildOrderEntry[] = [
   { name: '@lytjs/renderer', path: 'packages/renderer' },
   { name: '@lytjs/dom', path: 'packages/dom' },
   { name: '@lytjs/web', path: 'packages/web' },
+  // ⚠️ 顺序约束（2026-10-27 修）：`@lytjs/core` 依赖 `@lytjs/core-vnode`
+  //    （`core/src/web-component.ts` 从它转发 Web Component 能力，权威实现在 core-vnode）。
+  //    此前 core 排在前、core-vnode 排在后 ⇒ 冷构建时 core 拿不到 core-vnode 的类型声明，
+  //    `check-build-order` 直接 exit 1，`pnpm build` 首步即失败。
+  { name: '@lytjs/core-vnode', path: 'packages/core-vnode' },
   { name: '@lytjs/core', path: 'packages/core' },
   { name: '@lytjs/core-signal', path: 'packages/core-signal' },
-  { name: '@lytjs/core-vnode', path: 'packages/core-vnode' },
   { name: '@lytjs/store', path: 'packages/ecosystem/packages/store' },
   { name: '@lytjs/ui', path: 'packages/ecosystem/packages/ui' },
   { name: '@lytjs/devtools', path: 'packages/ecosystem/packages/devtools' },

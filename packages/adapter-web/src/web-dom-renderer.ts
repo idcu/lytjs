@@ -299,6 +299,7 @@ export function createDOMRenderer(
       RendererOptions<Node, Element>,
       | 'setupChildComponent'
       | 'normalizeProps'
+      | 'initSlots'
       | 'invokeMountedHook'
       | 'invokeUpdatedHook'
       | 'invokeBeforeUnmountHook'
@@ -377,6 +378,7 @@ export function createDOMRenderer(
       ? { setupChildComponent: extraOptions.setupChildComponent }
       : {}),
     ...(extraOptions?.normalizeProps ? { normalizeProps: extraOptions.normalizeProps } : {}),
+    ...(extraOptions?.initSlots ? { initSlots: extraOptions.initSlots } : {}),
     // 生命周期钩子回调：必须逐个转发（本处与上方 Pick 是一对，新增回调时两处同改）
     ...(extraOptions?.invokeMountedHook
       ? { invokeMountedHook: extraOptions.invokeMountedHook }

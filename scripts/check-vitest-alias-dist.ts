@@ -34,7 +34,16 @@ const CONFIG = resolve(ROOT, 'vitest.config.ts');
 function collectAliasTargets(src: string): Array<[string, string]> {
   const out: Array<[string, string]> = [];
   // 只关心形如 `'@lytjs/xxx': resolve(root, 'packages/...')` 的条目
-  const re = /'(@lytjs\/[^']+)':\s*resolve\(\s*root,\s*'([^']+)'\s*\)/g;
+  //
+  // ⚠️ 2026-10-27 修：此前正则结尾是 `'([^']+)'\s*\)`，**不容忍尾逗号**。
+  // 而多行写法（prettier 对超长行会自动折行）必然带尾逗号：
+  //   '@lytjs/common-dom-helpers': resolve(
+  //     root,
+  //     'packages/common/packages/dom-helpers/src',
+  //   ),
+  // ⇒ 8 条 alias 被静默漏检（实测 47 条只解析到 39 条），门禁报「39 个全部存在」是假绿。
+  // 现在允许可选的尾逗号。
+  const re = /'(@lytjs\/[^']+)':\s*resolve\(\s*root,\s*'([^']+)'\s*,?\s*\)/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(src)) !== null) {
     out.push([m[1]!, m[2]!]);

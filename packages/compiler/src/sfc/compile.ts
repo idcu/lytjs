@@ -68,6 +68,10 @@ export function compileSFC(
 
   // 1. 编译 template block into a render function
   let renderFnCode = '';
+  // ⚠️ 2026-10-27 修（P0）：`compile()` 把 helper 的 import 放在 `preamble` 里，
+  // 而这里此前**只取 `result.code`** ⇒ 产物里的 `openBlock` / `createBlock` /
+  // `toDisplayString` 全部没有来源，消费方一执行就 `ReferenceError`。
+  let renderPreamble = '';
   if (descriptor.template) {
     const compilerOptions: CompilerOptions = {
       filename,
@@ -83,6 +87,7 @@ export function compileSFC(
     };
     const templateResult = compile(descriptor.template.content, compilerOptions);
     renderFnCode = templateResult.code;
+    renderPreamble = templateResult.preamble ?? '';
   }
 
   // 2. Process script block
@@ -135,6 +140,7 @@ export function compileSFC(
       scriptContent,
       scriptSetupContent,
       renderFnCode,
+      renderPreamble,
       scopedId,
       filename,
       customBlockImports,
@@ -164,6 +170,7 @@ interface ModuleCodeOptions {
   scriptContent: string;
   scriptSetupContent: string;
   renderFnCode: string;
+  renderPreamble: string;
   scopedId: string | undefined;
   filename: string;
   customBlockImports: string[];
@@ -175,6 +182,13 @@ function generateModuleCode(opts: ModuleCodeOptions): string {
   // Module preamble
   lines.push(`/* Generated from ${opts.filename} */`);
   lines.push('');
+
+  // ⚠️ 2026-10-27 修（P0）：先输出 render 函数的 helper import。
+  // 缺了它，产物里的 `openBlock` / `createBlock` / `toDisplayString` 全是未定义标识符。
+  if (opts.renderPreamble.trim()) {
+    lines.push(opts.renderPreamble.trim());
+    lines.push('');
+  }
 
   // Custom block imports
   if (opts.customBlockImports.length > 0) {
@@ -192,9 +206,21 @@ function generateModuleCode(opts: ModuleCodeOptions): string {
   }
 
   // Script content
+  //
+  // ⚠️ 2026-10-27 修（P0）：`export default {...}` 直接输出的话，后面的 render 函数
+  // 是一个**游离的函数声明** —— 既没挂到组件上，也没有任何引用。消费方 import 到的
+  // 组件没有 render，模板等于不存在（且不报错）。
+  // 这里把 `export default X` 改写成 `const __sfc__ = X`，再在末尾挂 render / scopeId
+  // 后统一导出。没有 script 块时直接生成 `export default { render }`。
+  let componentVar: string | undefined;
   if (opts.scriptContent.trim()) {
+    let body = opts.scriptContent.trim();
+    if (/export\s+default\s+/.test(body)) {
+      body = body.replace(/export\s+default\s+/, 'const __sfc__ = ');
+      componentVar = '__sfc__';
+    }
     lines.push('// <script>');
-    lines.push(opts.scriptContent.trim());
+    lines.push(body);
     lines.push('');
   }
 
@@ -210,6 +236,29 @@ function generateModuleCode(opts: ModuleCodeOptions): string {
     lines.push(`// Scoped styles`);
     lines.push(`const __scopeId = ${JSON.stringify(opts.scopedId)};`);
     lines.push('');
+  }
+
+  // 把 render / scopeId 挂到组件并导出
+  if (opts.renderFnCode) {
+    if (componentVar) {
+      lines.push(`${componentVar}.render = render;`);
+      if (opts.scopedId) {
+        lines.push(`${componentVar}.__scopeId = __scopeId;`);
+      }
+      lines.push('export default __sfc__;');
+      lines.push('');
+    } else if (!opts.scriptContent.trim()) {
+      const fields = ['render'];
+      if (opts.scopedId) fields.push('__scopeId');
+      lines.push(`export default { ${fields.join(', ')} };`);
+      lines.push('');
+    } else {
+      // 有 script 但没有 `export default`（例如只写了具名导出 / `<script setup>` 形态）：
+      // 无法安全地挂载，保留原样并显式说明，避免"看起来成功了"。
+      lines.push('// ⚠️ 本 SFC 的 script 块没有 `export default`，render 函数未自动挂载；');
+      lines.push('//    请在消费侧手动 `Component.render = render`。');
+      lines.push('');
+    }
   }
 
   return lines.join('\n');

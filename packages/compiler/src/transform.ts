@@ -594,6 +594,15 @@ function hasDescendantDynamicContent(element: ElementNode): boolean {
       if (hasDescendantDynamicContent(childElement)) {
         return true;
       }
+      continue;
+    }
+    // ⚠️ 2026-10-27 修（P0）：除 TEXT / COMMENT 之外，这里还可能遇到 transform
+    //   阶段**改写出来的 JS 节点** —— v-if 会把分支元素换成 `JSConditionalExpression`(15)、
+    //   v-for 会换成函数表达式。此前只认 ELEMENT / INTERPOLATION，这类节点被**跳过**，
+    //   于是父节点被判为静态并被 `hoistStatic` 整棵提升，动态分支随之消失。
+    //   判据改为「不认识的节点一律视为动态」（保守但安全）。
+    if (child.type !== NodeTypes.TEXT && child.type !== NodeTypes.COMMENT) {
+      return true;
     }
   }
   return false;

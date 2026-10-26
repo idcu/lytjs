@@ -126,6 +126,16 @@ export interface RendererOptions<HN = unknown, HE extends HN = HN> {
     rawProps: Record<string, unknown> | null,
   ): void;
   /**
+   * 可选回调：组件更新时**重建插槽**。
+   *
+   * ⚠️ 2026-10-27 新增（P0）。此前 `initSlots` 只在**首次挂载**（`setupComponent`）调用一次，
+   * 更新路径只重建 props、不重建 slots ⇒ 父组件重渲染后子组件仍渲染**旧插槽内容**，
+   * 且模板形态（children 是 VNode[]）下 slots 被固化成 `() => list`，永远指向首帧数组。
+   *
+   * 与 `normalizeProps` 同模式：vdom 不反向依赖 `@lytjs/component`，实现由 core 注入。
+   */
+  initSlots?(instance: ComponentInternalInstance, children: unknown): void;
+  /**
    * 可选回调：组件**首次挂载完成**后调用（对应 `onMounted` / `mounted`）。
    *
    * ⚠️ 2026-09-26 新增。此前 vdom **从不调用** `callMountedHook` ——

@@ -201,10 +201,24 @@ export function createComponentPatch<HN, HE extends HN>(
               component!.ctx,
               'render function',
             );
+            // 应用级 errorHandler 已接管 ⇒ 视为已处理
+            handled = true;
           }
         }
 
-        throw renderError;
+        // ⚠️ 2026-10-27 修（P0）：此前这里**无条件** `throw renderError`，
+        //   把上面辛苦算出来的 `handled` 完全忽略。后果：
+        //   · ErrorBoundary 已经把错误态写好、fallback 也备好了，却仍向上抛；
+        //   · `watchEffect(update)` 没有 onError，effect 捕获后 rethrow
+        //     （reactivity/src/effect.ts:447-452）⇒ **首帧 app.mount 直接抛错**、
+        //     更新期该次 patch 中断、控制台留下未捕获异常。
+        //   现在：已处理 ⇒ 用空 Fragment 顶替失败的子树（边界自己会渲染 fallback）；
+        //         未处理 ⇒ 保持原语义，继续向上抛（让用户看得见）。
+        if (handled) {
+          subTree = createVNode(Fragment as never, null, [] as never) as unknown as VNode;
+        } else {
+          throw renderError;
+        }
       }
 
       // 应用 inheritAttrs：将实例的 attrs 合并到根 VNode props

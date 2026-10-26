@@ -29,6 +29,7 @@ import {
   callUpdatedHook,
   callBeforeUnmountHook,
   initProps,
+  initSlots,
   setTemplateCompiler,
 } from '@lytjs/component';
 import type {
@@ -509,6 +510,11 @@ export function createApp(
       },
       normalizeProps(inst: ComponentInternalInstance, rawProps: Record<string, unknown> | null) {
         initProps(inst, rawProps);
+      },
+      // ⚠️ 2026-10-27 新增（P0）：更新时重建插槽。
+      // 此前 initSlots 只在首次挂载调用 ⇒ 父组件重渲染后子组件仍渲染旧插槽内容。
+      initSlots(inst: ComponentInternalInstance, children: unknown) {
+        initSlots(inst, children);
       },
       // ── 组件生命周期钩子的实现注入 ──────────────────────────────────────
       // vdom 不能反向依赖 @lytjs/component（会循环），因此钩子的**实现**由 core 注入，

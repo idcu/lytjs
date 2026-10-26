@@ -16,83 +16,76 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      // common 子包
-      '@lytjs/common-is': resolve(root, 'packages/common/packages/is/dist/index.mjs'),
-      '@lytjs/common-scheduler': resolve(root, 'packages/common/packages/scheduler/dist/index.mjs'),
-      // ⚠️ 指向 **src** 而非 dist：`tsup` 以 `define: { __DEV__: 'false' }` 产出**生产版** dist，
-      // 其中 `warn` / `warnOnce` 被压成空操作（`function warn(){return;}`）。而本仓多处以
-      // 「DEV 下应发出警告」为断言（common-dom / reactivity 等），若走 dist 则**永不触发**
-      // ⇒ 测试必然失败。指向 src 后，裸 `__DEV__` 在运行期解析到 `globalThis.__DEV__`
+      // ⚠️ 2026-10-27 统一策略：**全部 alias 指向 `src/`，不再指向 `dist/`**。
+      //
+      // 原因（实证）：此前 38 条 alias 指向 `dist/*.mjs`，而 `dist` 是历史构建产物。
+      // 2026-10-26 的全维度评估发现 `src` 最后改动是 10-26、`dist` 停在 10-15/10-24
+      // ⇒ **测试跑的是旧产物**，"全绿"与"当前源码正确"之间没有因果关系。
+      // 同一天报出的两个 P0（`v-if` 子节点被静默删除、原生 `v-model` 只产 modelValue）
+      // 全部在这套"全绿"测试的眼皮底下发生。
+      //
+      // 附带收益：`tsup` 以 `define: { __DEV__: 'false' }` 产出生产版 dist，
+      // 其中 `warn` / `warnOnce` 被压成空操作；而本仓多处以「DEV 下应发出警告」为断言。
+      // 指向 src 后，裸 `__DEV__` 在运行期解析到 `globalThis.__DEV__`
       // （`vitest.setup.ts` 置 true、`setDevMode()` 可切换），DEV/生产两种预期都成立。
+      //
+      // 维护约定：新增包时**只加 `src` alias**。若某个测试确实需要验证产物形态，
+      // 请在该测试内显式 import `dist` 路径，而不是把整条 alias 改回 dist。
+      //
+      // common 子包
+      '@lytjs/common-is': resolve(root, 'packages/common/packages/is/src'),
+      '@lytjs/common-scheduler': resolve(root, 'packages/common/packages/scheduler/src'),
       '@lytjs/common-error': resolve(root, 'packages/common/packages/error/src'),
-      // 与 common-error 同理：security 的 isSafeAttribute / sanitizeHTML 在 __DEV__ 下会发警告
-      // （"DEV 下应发出警告" 类断言），dist 由 tsup 以 __DEV__:false 构建会让这些警告永静默。
-      // 故 alias 到 src，使 vitest 的 define(__DEV__:true) 生效；生产侧仍走 dist（已压成 false）。
       '@lytjs/common-security': resolve(root, 'packages/common/packages/security/src'),
-      '@lytjs/common-vnode': resolve(root, 'packages/common/packages/vnode/dist/index.mjs'),
-      '@lytjs/common-string': resolve(root, 'packages/common/packages/string/dist/index.mjs'),
-      '@lytjs/common-events': resolve(root, 'packages/common/packages/events/dist/index.mjs'),
-      '@lytjs/common-object': resolve(root, 'packages/common/packages/object/dist/index.mjs'),
-      '@lytjs/common-algorithm': resolve(root, 'packages/common/packages/algorithm/dist/index.mjs'),
-      '@lytjs/common-timing': resolve(root, 'packages/common/packages/timing/dist/index.mjs'),
-      '@lytjs/common-cache': resolve(root, 'packages/common/packages/cache/dist/index.mjs'),
-      '@lytjs/common-env': resolve(root, 'packages/common/packages/env/dist/index.mjs'),
-      '@lytjs/common-constants': resolve(root, 'packages/common/packages/constants/dist/index.mjs'),
+      '@lytjs/common-vnode': resolve(root, 'packages/common/packages/vnode/src'),
+      '@lytjs/common-string': resolve(root, 'packages/common/packages/string/src'),
+      '@lytjs/common-events': resolve(root, 'packages/common/packages/events/src'),
+      '@lytjs/common-object': resolve(root, 'packages/common/packages/object/src'),
+      '@lytjs/common-algorithm': resolve(root, 'packages/common/packages/algorithm/src'),
+      '@lytjs/common-timing': resolve(root, 'packages/common/packages/timing/src'),
+      '@lytjs/common-cache': resolve(root, 'packages/common/packages/cache/src'),
+      '@lytjs/common-env': resolve(root, 'packages/common/packages/env/src'),
+      '@lytjs/common-constants': resolve(root, 'packages/common/packages/constants/src'),
       // 与 common-error / common-security 同理：common-dom 的 patchAttr / patchProp 在 __DEV__
       // 下会发警告（"DEV 下应发出警告" 类断言），dist 由 tsup 以 __DEV__:false 构建会让警告永静默。
       // alias 到 src，使 vitest 的 define(__DEV__:true) 生效；生产侧仍走 dist（已压成 false）。
       '@lytjs/common-dom': resolve(root, 'packages/common/packages/dom/src'),
-      '@lytjs/common-dom-helpers': resolve(
-        root,
-        'packages/common/packages/dom-helpers/dist/index.mjs',
-      ),
-      '@lytjs/common-path': resolve(root, 'packages/common/packages/path/dist/index.mjs'),
-      '@lytjs/common-query': resolve(root, 'packages/common/packages/query/dist/index.mjs'),
-      '@lytjs/common-a11y': resolve(root, 'packages/common/packages/a11y/dist/index.mjs'),
-      '@lytjs/common-keyboard': resolve(root, 'packages/common/packages/keyboard/dist/index.mjs'),
-      '@lytjs/common-storage': resolve(root, 'packages/common/packages/storage/dist/index.mjs'),
-      '@lytjs/common-validate': resolve(root, 'packages/common/packages/validate/dist/index.mjs'),
-      '@lytjs/common-http': resolve(root, 'packages/common/packages/http/dist/index.mjs'),
-      '@lytjs/common-raf': resolve(root, 'packages/common/packages/raf/dist/index.mjs'),
-      '@lytjs/common-render-queue': resolve(
-        root,
-        'packages/common/packages/render-queue/dist/index.mjs',
-      ),
+      '@lytjs/common-dom-helpers': resolve(root, 'packages/common/packages/dom-helpers/src'),
+      '@lytjs/common-path': resolve(root, 'packages/common/packages/path/src'),
+      '@lytjs/common-query': resolve(root, 'packages/common/packages/query/src'),
+      '@lytjs/common-a11y': resolve(root, 'packages/common/packages/a11y/src'),
+      '@lytjs/common-keyboard': resolve(root, 'packages/common/packages/keyboard/src'),
+      '@lytjs/common-storage': resolve(root, 'packages/common/packages/storage/src'),
+      '@lytjs/common-validate': resolve(root, 'packages/common/packages/validate/src'),
+      '@lytjs/common-http': resolve(root, 'packages/common/packages/http/src'),
+      '@lytjs/common-raf': resolve(root, 'packages/common/packages/raf/src'),
+      '@lytjs/common-render-queue': resolve(root, 'packages/common/packages/render-queue/src'),
       '@lytjs/common-event-normalizer': resolve(
         root,
-        'packages/common/packages/event-normalizer/dist/index.mjs',
+        'packages/common/packages/event-normalizer/src',
       ),
-      '@lytjs/common-node-cache': resolve(
-        root,
-        'packages/common/packages/node-cache/dist/index.mjs',
-      ),
+      '@lytjs/common-node-cache': resolve(root, 'packages/common/packages/node-cache/src'),
       '@lytjs/common-async-scheduler': resolve(
         root,
-        'packages/common/packages/async-scheduler/dist/index.mjs',
+        'packages/common/packages/async-scheduler/src',
       ),
       '@lytjs/common-transition-engine': resolve(
         root,
-        'packages/common/packages/transition-engine/dist/index.mjs',
+        'packages/common/packages/transition-engine/src',
       ),
-      '@lytjs/common-performance': resolve(
-        root,
-        'packages/common/packages/performance/dist/index.mjs',
-      ),
-      '@lytjs/common-assertions': resolve(
-        root,
-        'packages/common/packages/assertions/dist/index.mjs',
-      ),
+      '@lytjs/common-performance': resolve(root, 'packages/common/packages/performance/src'),
+      '@lytjs/common-assertions': resolve(root, 'packages/common/packages/assertions/src'),
       // 主包
       '@lytjs/shared-types': resolve(root, 'packages/shared-types/src'),
       '@lytjs/host-contract': resolve(root, 'packages/host-contract/src'),
-      '@lytjs/vdom': resolve(root, 'packages/vdom/dist/index.mjs'),
-      '@lytjs/vdom/transition': resolve(root, 'packages/vdom/dist/transition.mjs'),
-      '@lytjs/core': resolve(root, 'packages/core/dist/index.mjs'),
-      '@lytjs/reactivity': resolve(root, 'packages/reactivity/dist/index.mjs'),
-      '@lytjs/reactivity/scope': resolve(root, 'packages/reactivity/dist/scope.mjs'),
-      '@lytjs/reactivity/async': resolve(root, 'packages/reactivity/dist/async.mjs'),
-      '@lytjs/renderer': resolve(root, 'packages/renderer/dist/index.mjs'),
-      '@lytjs/component': resolve(root, 'packages/component/dist/index.mjs'),
+      '@lytjs/vdom': resolve(root, 'packages/vdom/src'),
+      '@lytjs/vdom/transition': resolve(root, 'packages/vdom/src/transition.ts'),
+      '@lytjs/core': resolve(root, 'packages/core/src'),
+      '@lytjs/reactivity': resolve(root, 'packages/reactivity/src'),
+      '@lytjs/reactivity/scope': resolve(root, 'packages/reactivity/src/scope.ts'),
+      '@lytjs/reactivity/async': resolve(root, 'packages/reactivity/src/async.ts'),
+      '@lytjs/renderer': resolve(root, 'packages/renderer/src'),
+      '@lytjs/component': resolve(root, 'packages/component/src'),
       // ⚠️ 必须**先**给子路径建 alias，且目标指 **src**：
       //   · 顺序无关（Vite 的 alias 匹配是 `id === find || id.startsWith(find + '/')`），
       //     但 `@lytjs/compiler` → `dist/index.mjs` 会**吃掉** `@lytjs/compiler/sfc`
@@ -100,21 +93,12 @@ export default defineConfig({
       //   · 指 src 而非 `dist/sfc.mjs`：否则每次改编译器 SFC 代码都得先重建 dist，
       //     否则测试跑的是**旧产物**（本仓反复踩过的坑）。
       '@lytjs/compiler/sfc': resolve(root, 'packages/compiler/src/sfc/index.ts'),
-      '@lytjs/compiler': resolve(root, 'packages/compiler/dist/index.mjs'),
+      '@lytjs/compiler': resolve(root, 'packages/compiler/src'),
       '@lytjs/core-vnode': resolve(root, 'packages/core-vnode/src'),
       '@lytjs/core-signal': resolve(root, 'packages/core-signal/src'),
       '@lytjs/adapter-web': resolve(root, 'packages/adapter-web/src'),
       '@lytjs/dom-runtime': resolve(root, 'packages/dom-runtime/src'),
-      '@lytjs/dom': resolve(root, 'packages/dom/dist/index.mjs'),
-      // 插件包
-      '@lytjs/plugin-logger': resolve(
-        root,
-        'packages/plugins/packages/plugin-logger/dist/index.mjs',
-      ),
-      '@lytjs/plugin-storage': resolve(
-        root,
-        'packages/plugins/packages/plugin-storage/dist/index.mjs',
-      ),
+      '@lytjs/dom': resolve(root, 'packages/dom/src'),
       // ⚠️ 2026-10-05 移除 `@lytjs/plugin-vite` 的 alias：该包**已迁出本仓**
       //   （`packages/plugins/` 整个目录树都不存在），且全仓**没有任何真实 import**
       //   —— 此前那 10 处「引用」全是**注释与提示字符串**（错误文案 / 注释 /

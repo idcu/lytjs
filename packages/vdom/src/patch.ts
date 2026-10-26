@@ -63,6 +63,8 @@ interface InternalRendererOptions<HN, HE extends HN> {
   normalizeProps:
     | ((instance: ComponentInternalInstance, rawProps: Record<string, unknown> | null) => void)
     | undefined;
+  /** 组件更新时重建插槽的回调 */
+  initSlots: ((instance: ComponentInternalInstance, children: unknown) => void) | undefined;
   /** 组件生命周期钩子回调（见 RendererOptions 同名说明；由 @lytjs/core 注入） */
   invokeMountedHook: ((instance: ComponentInternalInstance) => void) | undefined;
   invokeUpdatedHook: ((instance: ComponentInternalInstance) => void) | undefined;
@@ -97,6 +99,7 @@ function hostToOptions<HN, HE extends HN>(
       : undefined,
     setupChildComponent: undefined,
     normalizeProps: undefined,
+    initSlots: undefined,
     invokeMountedHook: undefined,
     invokeUpdatedHook: undefined,
     invokeBeforeUnmountHook: undefined,
@@ -129,6 +132,7 @@ function optionsToInternal<HN, HE extends HN>(
     getChildNodes: options.getChildNodes ? (node) => options.getChildNodes!(node) : undefined,
     setupChildComponent: options.setupChildComponent,
     normalizeProps: options.normalizeProps,
+    initSlots: options.initSlots,
     invokeMountedHook: options.invokeMountedHook,
     invokeUpdatedHook: options.invokeUpdatedHook,
     invokeBeforeUnmountHook: options.invokeBeforeUnmountHook,
@@ -303,6 +307,7 @@ export function createRenderer<HN, HE extends HN>(
     getChildNodes,
     setupChildComponent,
     normalizeProps,
+    initSlots,
     invokeMountedHook,
     invokeUpdatedHook,
     invokeBeforeUnmountHook,
@@ -351,6 +356,7 @@ export function createRenderer<HN, HE extends HN>(
   ctx.hydrateUsed = new Set<HN>();
   ctx.setupChildComponent = setupChildComponent;
   ctx.normalizeProps = normalizeProps;
+  ctx.initSlots = initSlots;
   ctx.invokeMountedHook = invokeMountedHook;
   ctx.invokeUpdatedHook = invokeUpdatedHook;
   ctx.invokeBeforeUnmountHook = invokeBeforeUnmountHook;
@@ -492,6 +498,14 @@ export function createRenderer<HN, HE extends HN>(
           } else {
             // 回退：直接赋值（无规范化时保持旧行为）
             n2.component.props = nextProps ?? {};
+          }
+
+          // ⚠️ 2026-10-27 修（P0）：slots 必须随 children 一起重建。
+          // 此前只重建 props，`instance.slots` 永远停在首帧 ⇒ 父组件重渲染后
+          // 子组件仍渲染旧插槽内容（静默）；模板形态下 slots 还被固化成
+          // `() => list`，指向首帧那个数组。
+          if (slotsChanged && ctx.initSlots) {
+            ctx.initSlots(n2.component, n2.children);
           }
 
           const { update } = n2.component;

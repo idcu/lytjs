@@ -56,6 +56,15 @@ const GATES = [
     desc: '构建顺序表与实际包集合一致、无顺序倒置（单一真相源：build-order.ts）',
   },
   {
+    name: 'check-e2e-assertions',
+    tier: 'fast',
+    cmd: ['tsx', 'scripts/check-e2e-assertions.ts'],
+    approx: '~1.5s',
+    desc:
+      '端到端断言强度：禁止 toBeDefined() / toContain("createBlock") / typeof==="object" ' +
+      '这类「形状断言」冒充「行为断言」（2026-10-27 新增，起因：5,889 条用例全绿却有丢内容 P0）',
+  },
+  {
     name: 'check-ui-slot-single-node',
     tier: 'fast',
     cmd: ['tsx', 'scripts/check-ui-slot-single-node.ts'],

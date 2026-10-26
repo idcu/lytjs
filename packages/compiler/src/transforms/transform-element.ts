@@ -19,7 +19,7 @@ import type {
   InterpolationNode,
   DirectiveNode,
   SimpleExpressionNode,
-  CompoundExpressionNode,
+  TextNode,
   JSChildNode,
   JSObjectExpression,
   JSProperty,
@@ -198,33 +198,69 @@ function buildElementCodegen(node: ElementNode, context: TransformContext): void
         vnodeChildren = createCompoundExpression(joined);
       }
     } else {
-      // 从代码生成中过滤非 JSChildNode 类型
-      const jsChildren = nonCommentChildren.filter(
-        (
-          c,
-        ): c is
-          | SimpleExpressionNode
-          | CompoundExpressionNode
-          | (ElementNode & { codegenNode: JSChildNode }) =>
-          c.type === NodeTypes.SIMPLE_EXPRESSION ||
-          c.type === NodeTypes.COMPOUND_EXPRESSION ||
-          hasCodegenNode(c),
-      );
+      // 把每个子节点映射成合法的 JSChildNode。
+      //
+      // ⚠️ 2026-10-27 修（P0）：此前这里是一个**白名单过滤**
+      //   （只留 SIMPLE_EXPRESSION / COMPOUND_EXPRESSION / 带 codegenNode 的 ELEMENT），
+      //   于是 TEXT、INTERPOLATION、以及被 transform 改写成 JS 节点的 v-if / v-for
+      //   全部被**静默丢弃**。实测：
+      //     <div><span/>hello</div>                → hello 消失
+      //     <div><span/>{{ msg }}</div>            → 插值消失
+      //     <div><span/><p v-if="ok">A</p></div>   → v-if 整支消失（连 _ctx.ok 都不出现）
+      //   「文字与元素混排」是最常见的模板形态 ⇒ 这不是 v-if 专属缺陷，而是通用丢节点。
+      const jsChildren: JSChildNode[] = [];
+      for (const c of nonCommentChildren) {
+        if (c.type === NodeTypes.TEXT) {
+          const content = (c as TextNode).content;
+          // 纯空白（源码缩进 / 换行）不产节点：与浏览器渲染语义一致，
+          // 也避免产物里出现一串 `"  "` 常量。
+          if (!content.trim()) continue;
+          jsChildren.push(createSimpleExpression(JSON.stringify(content), true));
+          continue;
+        }
+        if (c.type === NodeTypes.INTERPOLATION) {
+          context.helper('TO_DISPLAY_STRING');
+          jsChildren.push(
+            createCallExpression(context.helper('TO_DISPLAY_STRING'), [
+              (c as InterpolationNode).content,
+            ]),
+          );
+          continue;
+        }
+        if (c.type === NodeTypes.ELEMENT) {
+          if (hasCodegenNode(c)) jsChildren.push(c.codegenNode);
+          continue;
+        }
+        // 其余是 transform 阶段产出的 JS 节点（v-if 的 JSConditionalExpression、
+        // v-for 的 JSFunctionExpression 等）—— 它们本身就是 codegen 节点，直接用。
+        if (c.type >= NodeTypes.SIMPLE_EXPRESSION) {
+          jsChildren.push(c as unknown as JSChildNode);
+        }
+      }
       if (jsChildren.length > 0) {
-        vnodeChildren = jsChildren.map((c) =>
-          c.type === NodeTypes.ELEMENT
-            ? (c as ElementNode & { codegenNode: JSChildNode }).codegenNode
-            : (c as JSChildNode),
-        ) as JSChildNode[];
+        vnodeChildren = jsChildren;
       }
     }
   }
 
   // 确定 patch flag
+  //
+  // ⚠️ 2026-10-27 修（P0）：TEXT 位的语义是「children 是一整段文本，只需 setElementText」。
+  // 此前判据是「children 里**存在**插值」，于是 `<div><span/>{{ msg }}</div>` 这种
+  // 混排也会带上 TEXT ⇒ 运行时会用文本覆盖整个子节点数组（表现为 `[object Object]`）。
+  // 改为「**全部**子节点都是文本/插值」才允许 TEXT。
+  const isTextOnlyChildren =
+    children.length > 0 &&
+    children.every(
+      (c) =>
+        c.type === NodeTypes.TEXT ||
+        c.type === NodeTypes.INTERPOLATION ||
+        c.type === NodeTypes.COMMENT,
+    );
   let patchFlag: number | undefined;
   if (hasDynamicProps) {
     patchFlag = PatchFlags.FULL_PROPS;
-  } else if (children.some((c) => c.type === NodeTypes.INTERPOLATION)) {
+  } else if (isTextOnlyChildren && children.some((c) => c.type === NodeTypes.INTERPOLATION)) {
     patchFlag = PatchFlags.TEXT;
   }
 
@@ -517,30 +553,104 @@ function handleVOn(
 }
 
 /**
- * 处理 v-model 指令（内联，已有独立 transform）
+ * 处理 v-model 指令
+ *
+ * ⚠️ 2026-10-27 修（P0）：此前**不分元素类型**，一律产出
+ *   `{ modelValue, "onUpdate:modelValue" }`。
+ *   这对组件是对的，对原生表单元素是**静默失效**：
+ *   `<input v-model="msg">` 会渲染出一个叫 modelValue 的未知属性，
+ *   既没有初值也不回写 —— 用户打字，`msg` 永远不变。
+ *
+ * 现在按元素类型分派：
+ *   - 组件            → `modelValue` / `onUpdate:modelValue`（组件侧约定，保持不变）
+ *   - input[text…]    → `value` / `onInput`（`.lazy` 走 `onChange`）
+ *   - textarea        → `value` / `onInput`
+ *   - select          → `value` / `onChange`
+ *   - input[checkbox] → `checked` / `onChange`（布尔模型）
+ *   - input[radio]    → `checked`（与 `value` 比较）/ `onChange`（赋 `value`）
+ *
+ * 支持修饰符：`.lazy` / `.number` / `.trim`。
+ * 已知未支持：checkbox 绑定数组（`v-model` + `:value` 的多选语义）——
+ *   需要运行时 helper，留待单独设计；当前会退化为布尔语义并在产物注释中标注。
  */
 function handleVModel(
   prop: DirectiveNode,
-  _node: ElementNode,
+  node: ElementNode,
   _context: TransformContext,
   properties: JSProperty[],
 ): void {
   const expContent = getExpContent(prop.exp);
+  if (expContent === undefined) return;
 
-  if (expContent !== undefined) {
+  const push = (key: string, value: string, isStaticValue: boolean): void => {
     properties.push(
       createObjectProperty(
-        createSimpleExpression('"modelValue"', true, prop.loc, true),
-        createSimpleExpression(expContent, false, prop.loc, false),
+        createSimpleExpression(JSON.stringify(key), true, prop.loc, true),
+        createSimpleExpression(value, isStaticValue, prop.loc, isStaticValue),
       ),
     );
-    properties.push(
-      createObjectProperty(
-        createSimpleExpression('"onUpdate:modelValue"', true, prop.loc, true),
-        createSimpleExpression(`$event => (${expContent} = $event)`, false, prop.loc, false),
-      ),
-    );
+  };
+
+  // ① 组件：沿用 modelValue 约定
+  if (node.tagType === ElementTypes.COMPONENT) {
+    push('modelValue', expContent, false);
+    push('onUpdate:modelValue', `$event => (${expContent} = $event)`, false);
+    return;
   }
+
+  const tag = node.tag.toLowerCase();
+  const modifiers = new Set(prop.modifiers ?? []);
+  const eventName = modifiers.has('lazy') ? 'onChange' : 'onInput';
+
+  const readValue = (): string => {
+    let e = '$event.target.value';
+    if (modifiers.has('trim')) e = `${e}.trim()`;
+    // ⚠️ 用一元 `+` 而不是 `Number(...)`：本仓的 `prefix-identifiers` 会把裸标识符
+    //   当成 `_ctx` 上的属性改写（实测产出 `_ctx.Number(...)`，运行时 undefined）。
+    //   一元 `+` 无标识符，语义与 `Number()` 一致（空串→0、非法→NaN）。
+    if (modifiers.has('number')) e = `+(${e})`;
+    return e;
+  };
+
+  const findStaticAttr = (name: string): string | undefined => {
+    const attr = node.props.find(
+      (p) => p.type === NodeTypes.ATTRIBUTE && (p as { name?: string }).name === name,
+    );
+    if (!attr) return undefined;
+    const value = (attr as { value?: { content?: string } }).value;
+    return value?.content;
+  };
+
+  // ② checkbox / radio：绑定的是 checked，不是 value
+  if (tag === 'input') {
+    const inputType = findStaticAttr('type') ?? 'text';
+    if (inputType === 'checkbox') {
+      push('checked', expContent, false);
+      push('onChange', `$event => (${expContent} = $event.target.checked)`, false);
+      return;
+    }
+    if (inputType === 'radio') {
+      const value = findStaticAttr('value');
+      if (value !== undefined) {
+        push('checked', `${expContent} === ${JSON.stringify(value)}`, false);
+        push('onChange', `$event => (${expContent} = ${JSON.stringify(value)})`, false);
+      } else {
+        push('checked', expContent, false);
+        push('onChange', `$event => (${expContent} = $event.target.checked)`, false);
+      }
+      return;
+    }
+  }
+
+  // ③ textarea / select / 其余 input：绑定 value
+  if (tag === 'select') {
+    push('value', expContent, false);
+    push('onChange', `$event => (${expContent} = ${readValue()})`, false);
+    return;
+  }
+
+  push('value', expContent, false);
+  push(eventName, `$event => (${expContent} = ${readValue()})`, false);
 }
 
 /**
