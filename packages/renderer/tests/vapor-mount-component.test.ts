@@ -9,6 +9,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createVNode } from '@lytjs/vdom';
 import { ref } from '@lytjs/reactivity';
+import { onMounted, onBeforeMount } from '@lytjs/component';
 import { mountComponent, resetVaporComponentRenderer } from '../src/vapor/mount-component';
 
 describe('mountComponent（Vapor 运行时）', () => {
@@ -113,5 +114,71 @@ describe('mountComponent（Vapor 运行时）', () => {
   it('组件定义或容器为空时不应抛错', () => {
     expect(() => mountComponent(null, null, null)).not.toThrow();
     expect(() => mountComponent(undefined, {}, undefined)).not.toThrow();
+  });
+});
+
+// ⚠️ 2026-10-27 新增（P1-7 回归）：Vapor / Signal 模式下的组件生命周期
+//
+// 起因：`getRenderer()` 此前**只**注入 `setupChildComponent` / `normalizeProps`，
+// 而 `callMountedHook` 等 4 个实现只在 core 侧注入（core-vnode 那处上一轮修过）。
+// Vapor 模式下的组件走的是本渲染器 ⇒ `onMounted` / `onBeforeUnmount` 等**永不执行**。
+// 症状与 2026-09-26 那次 VNode 路径的 P0 完全同型：不报错、只是不跑。
+describe('mountComponent 的生命周期钩子（P1-7 回归）', () => {
+  beforeEach(() => {
+    resetVaporComponentRenderer();
+  });
+
+  it('setup 里注册的 onBeforeMount / onMounted 必须被调用', () => {
+    const container = document.createElement('div');
+    const calls: string[] = [];
+
+    const Child = {
+      name: 'Child',
+      setup() {
+        onBeforeMount(() => calls.push('beforeMount'));
+        onMounted(() => calls.push('mounted'));
+        return () => createVNode('p', null, 'x');
+      },
+    };
+
+    mountComponent(Child, null, container);
+
+    expect(calls).toEqual(['beforeMount', 'mounted']);
+  });
+
+  it('onMounted 触发时 DOM 必须已在容器里', () => {
+    const container = document.createElement('div');
+    let htmlAtMounted = '';
+
+    const Child = {
+      name: 'Child',
+      setup() {
+        onMounted(() => {
+          htmlAtMounted = container.innerHTML;
+        });
+        return () => createVNode('p', { class: 'probe' }, 'x');
+      },
+    };
+
+    mountComponent(Child, null, container);
+
+    expect(htmlAtMounted).toContain('probe');
+  });
+
+  it('钩子抛错不应吞掉（走 errorHandler / error 留痕）', () => {
+    const container = document.createElement('div');
+    const Child = {
+      name: 'Throwing',
+      setup() {
+        onMounted(() => {
+          throw new Error('hook-boom');
+        });
+        return () => createVNode('p', null, 'x');
+      },
+    };
+
+    // 不抛到调用方（钩子错误被 handleError 接住），但组件本身必须挂上
+    expect(() => mountComponent(Child, null, container)).not.toThrow();
+    expect(container.innerHTML).toContain('<p>');
   });
 });

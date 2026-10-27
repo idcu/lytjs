@@ -2,6 +2,7 @@
 // @lytjs/core - createApp 工厂函数
 
 import { createVNode } from '@lytjs/vdom';
+import { reactive } from '@lytjs/reactivity';
 import type { VNode } from '@lytjs/vdom';
 import { error, warn } from '@lytjs/common-error';
 import type {
@@ -32,6 +33,8 @@ import {
   initSlots,
   setAppFactory,
   hasAppFactory,
+  setCurrentInstance,
+  callLifecycleHook,
 } from '@lytjs/component';
 import type {
   AppContext as ComponentAppContext,
@@ -649,7 +652,13 @@ export function createApp(
     }
 
     // 构建上下文对象：合并 data、setup 返回值和 props
-    const ctx: Record<string, unknown> = { ...rootProps };
+    //
+    // ⚠️ 2026-10-27 修（P1-6）：此前是**普通对象** `{ ...rootProps }`，`data()` 的返回值
+    //   只是被 `Object.assign` 拷进去 —— 模板里读到的是一次性快照，
+    //   后续修改 `ctx.count` **不会**触发 signal 重渲染（实测「模板永不更新」）。
+    //   现在 ctx 本身是 `reactive`：`Object.assign(ctx, dataResult)` 写的是代理的属性，
+    //   编译产物里的读取会被 effect 追踪。
+    const ctx: Record<string, unknown> = reactive({ ...rootProps }) as Record<string, unknown>;
 
     // 执行 data 函数
     if (typeof componentOptions.data === 'function') {
@@ -670,7 +679,20 @@ export function createApp(
     }
 
     // 执行 setup 函数
+    //
+    // ⚠️ 2026-10-27 修（P1-5）：此前直接调 `setup()`，**没有设置 currentInstance**。
+    //   而 `onMounted` / `onUnmounted` / `onBeforeMount` 全靠 `currentInstance` 才能
+    //   把回调登记进实例 ⇒ signal 模式下这些钩子**永不触发**（只有一条 DEV warn）。
+    //   现在建一个真实组件实例承载钩子，与 vnode 模式同一套语义。
+    const lifecycleInstance = createComponentInstance(
+      createVNode(rootComponent as never, rootProps) as unknown as VNode,
+      null,
+    );
+    // 让 `app.config.errorHandler` 在钩子里抛错时也能生效
+    lifecycleInstance.appContext = context as unknown as ComponentAppContext;
+
     if (typeof componentOptions.setup === 'function') {
+      setCurrentInstance(lifecycleInstance);
       try {
         const setupResult = (
           componentOptions.setup as (
@@ -691,10 +713,14 @@ export function createApp(
         (enhancedError as Error & { cause: unknown }).cause = e;
         error(enhancedError.message);
         throw enhancedError;
+      } finally {
+        // 必须复位：否则后续任意代码里的 onMounted 都会错误地挂到这个实例上
+        setCurrentInstance(null);
       }
     }
 
-    // 调用 beforeMount 生命周期钩子
+    // 调用 beforeMount 生命周期钩子（`onBeforeMount` 注册的 + 选项式 beforeMount）
+    callLifecycleHook(lifecycleInstance, 'beforeMount');
     const beforeMount = componentOptions.beforeMount as (() => void) | undefined;
     if (typeof beforeMount === 'function') {
       beforeMount.call(ctx);
@@ -707,7 +733,9 @@ export function createApp(
 
     _isMounted = true;
 
-    // 调用 mounted 生命周期钩子
+    // 调用 mounted 生命周期钩子（`onMounted` 注册的 + 选项式 mounted）
+    callLifecycleHook(lifecycleInstance, 'mounted');
+    lifecycleInstance.isMounted = true;
     const mounted = componentOptions.mounted as (() => void) | undefined;
     if (typeof mounted === 'function') {
       mounted.call(ctx);

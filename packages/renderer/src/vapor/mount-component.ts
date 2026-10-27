@@ -19,7 +19,16 @@
 import { createVNode, Fragment } from '@lytjs/vdom';
 import type { VNode } from '@lytjs/vdom';
 import { createDOMRenderer } from '@lytjs/adapter-web';
-import { createComponentInstance, setupComponent, initProps } from '@lytjs/component';
+import {
+  createComponentInstance,
+  setupComponent,
+  initProps,
+  initSlots,
+  callMountedHook,
+  callUpdatedHook,
+  callBeforeUnmountHook,
+  callUnmountedHook,
+} from '@lytjs/component';
 import { effect } from '@lytjs/reactivity';
 import { getRealNode } from '@lytjs/dom-runtime';
 
@@ -46,6 +55,30 @@ function getRenderer(): ReturnType<typeof createDOMRenderer> {
     },
     normalizeProps(instance: unknown, rawProps: unknown): void {
       initProps(instance as never, (rawProps ?? null) as Record<string, unknown> | null);
+    },
+    // ⚠️ 2026-10-27 修（P1-7）：此前这里**只**注入 setupChildComponent / normalizeProps。
+    //   而 `callMountedHook` 等 4 个实现只在 core 注入（core-vnode 那一处上一轮修过），
+    //   Vapor / Signal 模式下的组件走的是本渲染器 ⇒
+    //   `onMounted` / `onUpdated` / `onBeforeUnmount` / `onUnmounted` **永不执行**。
+    //   症状与 2026-09-26 那次 VNode 路径的 P0 完全同型：不报错、只是不跑。
+    // 注：参数不写类型注解 —— 由 `createDOMRenderer` 的选项类型推断（vdom 侧的
+    // ComponentInternalInstance 与 @lytjs/component 的是两个结构不同的声明），
+    // 再在内部按 `@lytjs/component` 的签名断言，与 core 侧同一写法。
+    invokeMountedHook(inst) {
+      callMountedHook(inst as never);
+    },
+    invokeUpdatedHook(inst) {
+      callUpdatedHook(inst as never);
+    },
+    invokeBeforeUnmountHook(inst) {
+      callBeforeUnmountHook(inst as never);
+    },
+    invokeUnmountedHook(inst) {
+      callUnmountedHook(inst as never);
+    },
+    // 插槽变化时重建（与 core 侧同一语义，见 RendererOptions.initSlots）
+    initSlots(inst, children) {
+      initSlots(inst as never, children);
     },
   });
 

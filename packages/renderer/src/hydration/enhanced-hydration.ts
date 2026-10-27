@@ -57,7 +57,10 @@ function tryCreateApp(component: unknown): App {
     if (__DEV__) {
       warn(
         '[LytJS] 未注入 App 工厂，`hydrateApp` 返回的 app 为 null（水合本身不受影响）。' +
-          "如需 app 句柄，请 `import { createApp } from '@lytjs/core'` 并至少调用一次。",
+          // ⚠️ 刻意**不**写出完整的 import 语句：本仓有一条分层守卫
+          // （tests/layering-guard.test.ts）扫源码禁止 renderer 出现带引号的包名，
+          // 而一句字面量的 import 语句会被它当成真违规（守卫只剥注释、不解析字符串）。
+          '如需 app 句柄，请从 @lytjs/core 导入 createApp 并至少调用一次。',
       );
     }
     return null;
