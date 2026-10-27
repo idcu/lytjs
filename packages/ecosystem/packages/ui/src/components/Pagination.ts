@@ -2,6 +2,10 @@
  * @lytjs/ui - Pagination 分页组件
  *
  * 分页组件，支持多种分页模式、总数显示、每页条数选择
+ *
+ * @beta 2026-10-26 全维度审计列为**半成品**：主要路径可用，
+ *       边界条件 / 交互闭环 / 键盘可达性未系统覆盖。
+ *       成熟度表见 `src/component-status.ts`（单一真相源）。
  */
 
 import { defineComponent } from '@lytjs/component';

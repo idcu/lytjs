@@ -2,6 +2,10 @@
  * @lytjs/ui - DatePicker 组件
  *
  * 日期选择器组件，支持范围选择、时间选择、禁用日期、快捷选项，自研日期处理逻辑（零依赖）
+ *
+ * @beta 2026-10-26 全维度审计列为**半成品**：主要路径可用，
+ *       边界条件 / 交互闭环 / 键盘可达性未系统覆盖。
+ *       成熟度表见 `src/component-status.ts`（单一真相源）。
  */
 
 import { defineComponent } from '@lytjs/component';

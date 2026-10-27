@@ -2,6 +2,10 @@
  * @lytjs/ui - Input 组件
  *
  * 基础输入框组件，支持多种类型和状态
+ *
+ * @beta 2026-10-26 全维度审计列为**半成品**：主要路径可用，
+ *       边界条件 / 交互闭环 / 键盘可达性未系统覆盖。
+ *       成熟度表见 `src/component-status.ts`（单一真相源）。
  */
 
 import { defineComponent } from '@lytjs/component';

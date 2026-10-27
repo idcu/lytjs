@@ -1,6 +1,6 @@
 # @lytjs/ui
 
-LytJS 官方 UI 组件库，零第三方依赖，支持主题切换，30+ 组件应有尽有。
+LytJS 官方 UI 组件库，零第三方依赖，支持主题切换。**61 个对外导出中 24 个仍是 beta** —— 成熟度逐个标注，见下文「组件成熟度」。
 
 ## 特性
 
@@ -12,7 +12,32 @@ LytJS 官方 UI 组件库，零第三方依赖，支持主题切换，30+ 组件
 
 ## 简介·独立声明
 
-`@lytjs/ui` 是 LytJS 官方 UI 组件库（56 个组件），**零第三方依赖**，仅构建于 LytJS 核心框架之上（`@lytjs/reactivity` / `@lytjs/component` / `@lytjs/vdom` / `@lytjs/core` 及通用工具 `@lytjs/common-is` / `@lytjs/common-a11y`），并随框架版本同步演进。按 v6.10 路线图规划，本库将迁出为独立仓库 `lytjs-ui`，保持 API 兼容并提供迁移指南。
+`@lytjs/ui` 是 LytJS 官方 UI 组件库（61 个对外导出，其中 **37 个 stable / 24 个 beta**），**零第三方依赖**，仅构建于 LytJS 核心框架之上（`@lytjs/reactivity` / `@lytjs/component` / `@lytjs/vdom` / `@lytjs/core` 及通用工具 `@lytjs/common-is` / `@lytjs/common-a11y`），并随框架版本同步演进。按 v6.10 路线图规划，本库将迁出为独立仓库 `lytjs-ui`，保持 API 兼容并提供迁移指南。
+
+## 组件成熟度
+
+> ⚠️ 2026-10-26 全维度审计的结论：本库对外宣称的「56 个组件」里，**24 个是半成品** ——
+> 主要路径能渲染，但边界条件、交互闭环、键盘可达性普遍没有系统覆盖。
+> 把「能用」和「能用得放心」混在同一个数字里，代价是**使用者的时间**。
+
+因此每个导出都有一个明确分级（**单一真相源** = `src/component-status.ts`）：
+
+| 分级     | 含义                                                               |
+| -------- | ------------------------------------------------------------------ |
+| `stable` | 主要路径 + 常见边界有行为级用例，可以放心用于生产                  |
+| `beta`   | 主要路径可用；**边界 / 交互 / 无障碍未系统覆盖**，用于生产前请自测 |
+
+- 取某个组件的分级：`getComponentStatus('Table')` → `{ status: 'beta', note: '…' }`
+- 列出全部 beta：`listBetaComponents()`
+- IDE 里悬停 `beta` 组件的名字，也能看到 `@beta` 标签与说明
+
+**beta 清单（24 个）**：Alert、Calendar、Cascader、CheckboxGroup、ColorPicker、DatePicker、
+Dialog、Drawer、Form、Input、Menu、Modal、Pagination、Popconfirm、RadioGroup、Rate、
+RichTextEditor、Select、Slider、Table、TimePicker、Tree、TreeSelect、Upload
+
+> 这 24 个里的**交互 P0**（Modal 点击穿透、受控弹层关不掉、Cascader 冒泡双 toggle、
+> Popconfirm 移入即消失、Upload / RichTextEditor 的 ref 失效）已于 2026-10-27 修复，
+> 但**功能覆盖度**仍是 beta。修好一个就从表里改成 `stable` —— 有守卫棘轮盯着，数量只降不升。
 
 ## 依赖关系
 

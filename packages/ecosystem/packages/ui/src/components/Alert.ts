@@ -2,6 +2,10 @@
  * @lytjs/ui - Alert 组件
  *
  * 警告提示组件，用于展示重要的提示信息
+ *
+ * @beta 2026-10-26 全维度审计列为**半成品**：主要路径可用，
+ *       边界条件 / 交互闭环 / 键盘可达性未系统覆盖。
+ *       成熟度表见 `src/component-status.ts`（单一真相源）。
  */
 
 import { defineComponent } from '@lytjs/component';

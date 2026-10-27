@@ -2,6 +2,10 @@
  * @lytjs/ui - Drawer 组件
  *
  * 抽屉组件，支持上下左右弹出、遮罩控制、宽度自适应、嵌套弹窗功能
+ *
+ * @beta 2026-10-26 全维度审计列为**半成品**：主要路径可用，
+ *       边界条件 / 交互闭环 / 键盘可达性未系统覆盖。
+ *       成熟度表见 `src/component-status.ts`（单一真相源）。
  */
 
 import { defineComponent, Teleport } from '@lytjs/component';

@@ -2,6 +2,10 @@
  * @lytjs/ui - Upload 组件
  *
  * 文件上传组件，支持拖拽上传、文件预览、进度显示、分片上传
+ *
+ * @beta 2026-10-26 全维度审计列为**半成品**：主要路径可用，
+ *       边界条件 / 交互闭环 / 键盘可达性未系统覆盖。
+ *       成熟度表见 `src/component-status.ts`（单一真相源）。
  */
 
 import { defineComponent } from '@lytjs/component';

@@ -2,6 +2,10 @@
  * @lytjs/ui - Tree 组件
  *
  * 树形控件组件，支持勾选、拖拽、连接线等高级功能
+ *
+ * @beta 2026-10-26 全维度审计列为**半成品**：主要路径可用，
+ *       边界条件 / 交互闭环 / 键盘可达性未系统覆盖。
+ *       成熟度表见 `src/component-status.ts`（单一真相源）。
  */
 
 import { defineComponent } from '@lytjs/component';

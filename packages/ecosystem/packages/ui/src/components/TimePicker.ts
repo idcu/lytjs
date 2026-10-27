@@ -2,6 +2,10 @@
  * @lytjs/ui - TimePicker 组件
  *
  * 时间选择器组件，支持任意时间点、范围选择、自定义格式
+ *
+ * @beta 2026-10-26 全维度审计列为**半成品**：主要路径可用，
+ *       边界条件 / 交互闭环 / 键盘可达性未系统覆盖。
+ *       成熟度表见 `src/component-status.ts`（单一真相源）。
  */
 
 import { defineComponent, type PropType } from '@lytjs/component';

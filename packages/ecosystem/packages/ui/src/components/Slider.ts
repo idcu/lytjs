@@ -2,6 +2,10 @@
  * @lytjs/ui - Slider 组件
  *
  * 滑块组件，用于在给定范围内选择一个值
+ *
+ * @beta 2026-10-26 全维度审计列为**半成品**：主要路径可用，
+ *       边界条件 / 交互闭环 / 键盘可达性未系统覆盖。
+ *       成熟度表见 `src/component-status.ts`（单一真相源）。
  */
 
 import type { SliderProps, SliderSlots, SliderSetupProps } from './types';
