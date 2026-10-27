@@ -56,6 +56,15 @@ const GATES = [
     desc: '构建顺序表与实际包集合一致、无顺序倒置（单一真相源：build-order.ts）',
   },
   {
+    name: 'check-dead-packages',
+    tier: 'fast',
+    cmd: ['tsx', 'scripts/check-dead-packages.ts'],
+    approx: '~2s',
+    desc:
+      '死包棘轮：packages/common 下的内部工具包若「零生产引用」即红（清单见脚本，' +
+      '16 个已确认死包已钉住；阻止新增死代码，2026-10-27 新增）',
+  },
+  {
     name: 'check-e2e-assertions',
     tier: 'fast',
     cmd: ['tsx', 'scripts/check-e2e-assertions.ts'],
