@@ -276,8 +276,10 @@ describe('InputNumber · 输入与 blur', () => {
     typeAndBlur(getInput(host), '99');
     await flush();
     expect(onChange).toHaveBeenCalledWith(10);
-    // 怪癖 A：输入框已 dirty，setAttribute('value') 失效 ⇒ 显示与内部值脱节
-    expect(getInput(host).value).toBe('99');
+    // ⚠️ 2026-10-28 行为变更（原「怪癖 A」已修）：此前这里断言 '99'，
+    //   原因是 `patchProp` 对 value 走 `setAttribute`，而输入框已 dirty ⇒ 显示不更新，
+    //   于是「内部值 10、显示 99」脱节。修好表单状态后显示会跟着钳制到 '10'。
+    expect(getInput(host).value).toBe('10');
     // 内部值确为 10：点 '−' 从 10 起步得 9（'+' 会撞 max 再钳回 10）
     getDec(host).click();
     await flush();
@@ -311,7 +313,10 @@ describe('InputNumber · 输入与 blur', () => {
     typeAndBlur(getInput(host), '12abc');
     await flush();
     expect(onChange).toHaveBeenCalledWith(12);
-    expect(getInput(host).value).toBe('12abc'); // 怪癖 A：显示脱节
+    // ⚠️ 2026-10-28 行为变更：原断言 '12abc' 是「显示与内部值脱节」的怪癖。
+    //   失焦后显示应回到内部值的格式化结果 '12'。
+    //   （注意 `parseFloat('12abc') === 12` 这个**静默截断**本身仍是已知缺陷，见报告。）
+    expect(getInput(host).value).toBe('12');
   });
 
   it('输入过程不 clamp：超 max 输入即时生效，blur 才钳制内部值', async () => {
@@ -333,7 +338,11 @@ describe('InputNumber · 输入与 blur', () => {
     input.value = '1';
     input.dispatchEvent(new Event('input', { bubbles: true }));
     await flush();
-    expect(getInput(host).value).toBe('1'); // 非 '1.00'：dirty 后 setAttribute 失效
+    // ⚠️ 2026-10-28 行为变更（理由变了，结论不变）：
+    //   以前是「dirty 后 setAttribute 失效」这个 bug 恰好让显示停在 '1'；
+    //   现在是组件**故意**在聚焦期间显示用户原文（`state.inputText`），
+    //   避免 toFixed 改写导致光标跳动。语义与 Vue 一致：失焦后才格式化。
+    expect(getInput(host).value).toBe('1');
   });
 
   it('stepStrictly：blur 取整到 step 倍数', async () => {

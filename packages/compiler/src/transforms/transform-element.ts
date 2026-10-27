@@ -172,7 +172,20 @@ function buildElementCodegen(node: ElementNode, context: TransformContext): void
   } else if (children.length > 1) {
     // 过滤注释节点 - 它们不是有效的 JSChildNode 类型
     const nonCommentChildren = children.filter((c) => c.type !== NodeTypes.COMMENT);
-    const hasNonText = nonCommentChildren.some((c) => c.type === NodeTypes.ELEMENT);
+    // ⚠️ 2026-10-27 修（P0）：判据从「有没有 ELEMENT」改成「有没有**非文本**节点」。
+    //
+    // 原因：`transformIf` / `transformFor` 在本函数**之前**执行，已经把带结构指令的
+    // 元素**替换成了 JS 节点**（v-for → JS_CALL_EXPRESSION(10)，v-if → JS_CONDITIONAL_EXPRESSION(15)）。
+    // 于是「两个 v-for 并列」时 children 里**一个 ELEMENT 都没有**，旧判据判定
+    // 「纯文本」⇒ 走下面的文本拼接分支 ⇒ 那里只收 TEXT / INTERPOLATION ⇒
+    // **整棵子树被静默丢弃**。实测：
+    //   <div><i v-for="i in n">…</i><b v-for="j in n">…</b></div>  → createElementVNode("div", null)
+    //   <div><i v-if="a">A</i><b v-if="b">B</b></div>              → 同上（A/B 全没了）
+    // 而「v-for + 普通元素」能出结果，正是因为它恰好还有一个 ELEMENT 兜住了判据 ——
+    // 这种「一半能用」的形态最容易让人误判成「只是某个指令有问题」。
+    const hasNonText = nonCommentChildren.some(
+      (c) => c.type !== NodeTypes.TEXT && c.type !== NodeTypes.INTERPOLATION,
+    );
     if (!hasNonText) {
       const parts: (string | SimpleExpressionNode | InterpolationNode)[] = [];
       for (const child of nonCommentChildren) {

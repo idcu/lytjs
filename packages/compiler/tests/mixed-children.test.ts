@@ -108,3 +108,53 @@ describe('混排子节点不被丢弃（P0 回归）', () => {
     expect(code).not.toContain('"\\n  "');
   });
 });
+
+// ⚠️ 2026-10-27 新增（P0 回归）：两个**结构指令**并列时整棵子树被丢弃
+//
+// 上一轮修的是「白名单过滤丢节点」；这一轮暴露出**同一处的第二个判据错**：
+// `hasNonText` 写的是 `some(c => c.type === NodeTypes.ELEMENT)`，但
+// `transformIf` / `transformFor` 在 `transformElement` **之前**执行，已经把带结构指令的
+// 元素**替换成了 JS 节点**（v-for → JS_CALL_EXPRESSION(10)，v-if → JS_CONDITIONAL_EXPRESSION(15)）。
+// 于是「两个 v-for 并列」时 children 里一个 ELEMENT 都没有 ⇒ 被误判成「纯文本」
+// ⇒ 走文本拼接分支（只收 TEXT / INTERPOLATION）⇒ 全部丢弃。
+//
+// 注意「v-for + 普通元素」当时是**能用的**（恰好还有 ELEMENT 兜住判据）——
+// 这种「一半能用」的形态最容易让人误判成「只是某个指令偶发」。
+describe('结构指令并列（P0 回归）', () => {
+  it('两个 v-for 并列都必须产出 renderList', () => {
+    const { code } = compile(
+      '<div><i v-for="i in a">{{ i }}</i><b v-for="j in b">{{ j }}</b></div>',
+    );
+    expect(code.match(/renderList\(/g) ?? []).toHaveLength(2);
+    expect(code).toContain('_ctx.a');
+    expect(code).toContain('_ctx.b');
+  });
+
+  it('两个 v-if 并列都必须产出条件表达式', () => {
+    const { code } = compile('<div><i v-if="a">A</i><b v-if="b">B</b></div>');
+    expect(code).toContain('_ctx.a');
+    expect(code).toContain('_ctx.b');
+    expect(code).toContain('"A"');
+    expect(code).toContain('"B"');
+  });
+
+  it('v-for 与 v-if 并列都必须保留', () => {
+    const { code } = compile('<div><i v-for="i in a">{{ i }}</i><b v-if="b">B</b></div>');
+    expect(code).toContain('renderList(');
+    expect(code).toContain('_ctx.b');
+  });
+
+  it('v-for + v-if 并列 + 普通元素三者混合', () => {
+    const { code } = compile(
+      '<div><span>s</span><i v-for="i in a">{{ i }}</i><b v-if="b">B</b></div>',
+    );
+    expect(code).toContain('renderList(');
+    expect(code).toContain('"s"');
+    expect(code).toContain('_ctx.b');
+  });
+
+  it('纯文本 + 插值仍走拼接分支（不得因为改动而回归）', () => {
+    const { code } = compile('<div>a{{ x }}b</div>');
+    expect(code).toContain('toDisplayString(_ctx.x)');
+  });
+});

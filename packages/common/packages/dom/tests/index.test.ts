@@ -642,3 +642,54 @@ describe('patchClass（P0 回归）', () => {
     expect(el.getAttribute('class') ?? '').toBe('');
   });
 });
+
+// ⚠️ 2026-10-27 新增（P0 回归）：`value` / `checked` 必须写 **property**，不能写 attribute
+//
+// `setAttribute('value', …)` 只改 **defaultValue**。输入框被用户输入过一次后会置上
+// *dirty value flag*，此后 attribute 变化**不再影响** live `value`。表现就是
+// 「数据改了、`<p>` 也变了，但输入框里的字不动」—— `v-model` 只能单向。
+// `checked` 同理（attribute 只改 defaultChecked）。
+describe('patchProp 的表单状态（P0 回归）', () => {
+  it('value 写的是 live property（用户输入过之后仍能更新）', () => {
+    const input = document.createElement('input');
+    input.value = 'typed-by-user';
+
+    patchProp(input, 'value', 'typed-by-user', 'from-data');
+
+    expect(input.value).toBe('from-data');
+    // 关键：不是只改了 defaultValue
+    expect(input.getAttribute('value')).not.toBe('from-data');
+  });
+
+  it('checked 写的是 live property', () => {
+    const box = document.createElement('input');
+    box.type = 'checkbox';
+
+    patchProp(box, 'checked', false, true);
+    expect(box.checked).toBe(true);
+
+    patchProp(box, 'checked', true, false);
+    expect(box.checked).toBe(false);
+  });
+
+  it('值未变化时不重写（避免打断光标/输入法）', () => {
+    const input = document.createElement('input');
+    input.value = 'same';
+    const before = input.value;
+    patchProp(input, 'value', 'same', 'same');
+    expect(input.value).toBe(before);
+  });
+
+  it('null / undefined 归一化为空串', () => {
+    const input = document.createElement('input');
+    input.value = 'x';
+    patchProp(input, 'value', 'x', null);
+    expect(input.value).toBe('');
+  });
+
+  it('selected 写 property（<option>）', () => {
+    const option = document.createElement('option');
+    patchProp(option, 'selected', false, true);
+    expect(option.selected).toBe(true);
+  });
+});

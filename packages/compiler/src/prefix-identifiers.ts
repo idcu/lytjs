@@ -170,6 +170,7 @@ export function prefixIdentifiers(content: string, locals?: ReadonlySet<string>)
       const isDeclarationTarget = inDeclaration && !isDeclarationKeyword;
       const isObjectKey =
         !isDeclarationTarget && next === ':' && (prev === '{' || prev === ',' || prev === '');
+
       const isLocal = state.locals.has(word);
       const isKeyword = NON_BINDING_WORDS.has(word);
 
@@ -178,6 +179,24 @@ export function prefixIdentifiers(content: string, locals?: ReadonlySet<string>)
       while (nextNonSpace < content.length && /\s/.test(content[nextNonSpace] as string))
         nextNonSpace++;
       const isArrowSingleParam = content[nextNonSpace] === '=' && content[nextNonSpace + 1] === '>';
+
+      // 对象字面量的**简写属性**：`{ color }`。
+      //
+      // ⚠️ 2026-10-27 修（P0）：此前只判断了「是不是 key」，简写被当成普通变量引用
+      //   ⇒ 产物是 `{ _ctx.color }` —— 这是**非法 JS**（简写位置不能是成员表达式），
+      //   `new Function` 直接抛 SyntaxError ⇒ 整个渲染函数不可用。
+      //   实测 `<span :style="{ color }">A</span>` 渲染出空（span 根本不存在），
+      //   而 `:style="{ color: c }"` 正常 —— 「一半能用」最容易被误判成偶发。
+      //   正确产物是 `{ color: _ctx.color }`。
+      const isObjectShorthand =
+        !isMemberAccess &&
+        !isObjectKey &&
+        !isLocal &&
+        !isKeyword &&
+        !isArrowSingleParam &&
+        !isDeclarationTarget &&
+        (prev === '{' || prev === ',') &&
+        (next === ',' || next === '}');
       // 函数声明 / 函数表达式的名字
       const isFunctionName = prev === 'c' && /\bfunction$/.test(content.slice(0, i).trimEnd());
 
@@ -198,7 +217,12 @@ export function prefixIdentifiers(content: string, locals?: ReadonlySet<string>)
         !isDeclarationTarget &&
         !isDeclarationKeyword;
 
-      out += shouldPrefix ? `_ctx.${word}` : word;
+      if (shouldPrefix && isObjectShorthand) {
+        // 展开成显式键值对：`{ color }` → `{ color: _ctx.color }`
+        out += `${word}: _ctx.${word}`;
+      } else {
+        out += shouldPrefix ? `_ctx.${word}` : word;
+      }
       i = j;
       continue;
     }

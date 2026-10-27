@@ -49,9 +49,29 @@ export const InputNumber = defineComponent({
     const state = reactive({
       inputValue: _props.modelValue,
       focus: false,
+      /**
+       * 聚焦期间用户**原始输入文本**。
+       *
+       * ⚠️ 2026-10-28 新增：此前 `displayValue` 无条件按 `precision` 做 `toFixed`，
+       * 于是用户刚敲下 `1`（precision=2）就立刻被改写成 `1.00` —— 光标跳到末尾，
+       * 再敲 `5` 变成 `1.005`，**根本没法输入小数**。
+       * 修好 `patchProp` 的表单状态之后这个老问题会真的显现（以前 attribute 写不进 dirty 输入框，
+       * 恰好把症状掩盖了），所以必须在组件层加 focus 守卫。
+       * 语义与 Vue 的 InputNumber 一致：**聚焦时显示用户敲的原文，失焦后才格式化**。
+       */
+      inputText: undefined as string | undefined,
     });
 
     const displayValue = computed(() => {
+      // 用户敲过字（且还没失焦）时显示原文（不做 toFixed / 不补零），避免光标跳动。
+      //
+      // 判据刻意**不**写成 `state.focus && …`：`focus` 事件在部分环境/测试里不会派发
+      // （实测 InputNumber 的用例只派发 input + blur，不派发 focus），
+      // 那样守卫会静默失效、又退回到「敲 1 立刻变 1.00」。以「有没有原文」为准更稳。
+      // 原文在 `handleBlur` 里清空，因此失焦后一定会回到格式化显示。
+      if (state.inputText !== undefined) {
+        return state.inputText;
+      }
       if (state.inputValue === undefined || state.inputValue === null) {
         return '';
       }
@@ -123,6 +143,8 @@ export const InputNumber = defineComponent({
     const handleInput = (e: Event) => {
       const target = e.target as HTMLInputElement;
       const value = target.value;
+      // 记录原文：聚焦期间 displayValue 直接返回它（不重格式化）
+      state.inputText = value;
 
       if (value === '') {
         state.inputValue = undefined;
@@ -142,6 +164,8 @@ export const InputNumber = defineComponent({
 
     const handleBlur = (e: Event) => {
       state.focus = false;
+      // 失焦后回到「按 precision 格式化」的显示
+      state.inputText = undefined;
       const target = e.target as HTMLInputElement;
       const value = target.value;
 

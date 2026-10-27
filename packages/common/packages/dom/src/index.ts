@@ -243,6 +243,34 @@ export function patchAttr(el: Element, key: string, value: unknown, _isSVG: bool
  * (vdom/renderer) should handle events themselves based on their
  * chosen strategy (direct binding vs invoker pattern).
  */
+/**
+ * 表单**状态**属性：必须写 DOM **property**，不能写 attribute。
+ *
+ * ⚠️ 2026-10-27 修（P0）：`value` / `checked` 此前直接落到 `patchAttr` ⇒ `setAttribute`。
+ * 而 `setAttribute('value', …)` 只改 **defaultValue**：用户输入过一次之后，
+ * 输入框会置上 *dirty value flag*，此后 attribute 变化**不再影响** live `value`。
+ * 表现就是「数据改了、`<p>` 也变了，但输入框里的字不动」——
+ * 即 `v-model` 只能单向（输入→数据），数据→DOM 失效。实测：
+ *   S2 input=typed p=typed ref=typed
+ *   S3 input=typed p=from-data ref=from-data   ← p 更新了，input 没有
+ * `checked` 同理（attribute 只改 defaultChecked）。
+ */
+const FORM_STATE_KEYS = new Set(['value', 'checked', 'selected', 'indeterminate', 'muted']);
+
+/** 写表单状态（property），并在值未变时跳过以免打断光标/输入法 */
+function patchFormState(el: Element, key: string, nextValue: unknown): void {
+  const node = el as unknown as Record<string, unknown>;
+
+  if (key === 'value') {
+    const next = nextValue == null ? '' : String(nextValue);
+    if (node.value !== next) node.value = next;
+    return;
+  }
+
+  const next = Boolean(nextValue);
+  if (node[key] !== next) node[key] = next;
+}
+
 export function patchProp(
   el: Element,
   key: string,
@@ -254,6 +282,8 @@ export function patchProp(
     patchClass(el, prevValue, nextValue);
   } else if (key === 'style') {
     patchStyle(el, prevValue, nextValue);
+  } else if (FORM_STATE_KEYS.has(key)) {
+    patchFormState(el, key, nextValue);
   } else if (key === 'innerHTML') {
     if (nextValue !== prevValue) {
       if (__DEV__ && nextValue != null && typeof nextValue !== 'string') {
