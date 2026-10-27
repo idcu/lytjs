@@ -18,6 +18,22 @@ import type { ComponentInternalInstance, InternalSlots, SlotFunction } from './t
  * 如果需要动态更新 slots（如通过 scoped slots），应通过
  * 组件更新机制触发重新初始化，而非直接修改 instance.slots。
  */
+/**
+ * 把插槽函数的返回值**统一规范化为数组**。
+ *
+ * ⚠️ 2026-10-27 修（P0）：`slots.default()` 的契约允许返回**单个 VNode**，
+ *   但组件里普遍写 `children.push(...slots.default())` —— 返回单 vnode 时
+ *   `...vnode` 直接抛 `Spread syntax requires ...iterable[Symbol.iterator]`。
+ *   实测 Modal 在 `<Modal><input/></Modal>`（单子节点）下**整棵渲染崩溃**，
+ *   而既有测试都传数组，所以一直没被发现。
+ *
+ *   在 `initSlots` 这一层统一包装，是唯一能一次性覆盖所有 `...slots.x()` 写法的位置。
+ */
+function wrapSlot(fn: SlotFunction): SlotFunction {
+  return ((...args: unknown[]) =>
+    normalizeSlotValue((fn as (...a: unknown[]) => unknown)(...args))) as SlotFunction;
+}
+
 export function initSlots(instance: ComponentInternalInstance, children: unknown): void {
   if (isNullish(children)) {
     instance.slots = {} as InternalSlots;
@@ -28,7 +44,7 @@ export function initSlots(instance: ComponentInternalInstance, children: unknown
 
   if (isFunction(children)) {
     // 单个函数 => 默认插槽
-    slots.default = children as SlotFunction;
+    slots.default = wrapSlot(children as SlotFunction);
   } else if (isArray(children) || (children as VNode).__v_isVNode === true) {
     // ★ 2026-10-02 新增：**VNode / VNode[]** —— 这是**模板编译产物最常见的形态**，
     //   此前完全没有分支（数组落空、单个 vnode 被当成「插槽名字典」逐 key 遍历），
@@ -45,7 +61,7 @@ export function initSlots(instance: ComponentInternalInstance, children: unknown
     const slotObj = children as Record<string, unknown>;
     for (const key in slotObj) {
       if (isFunction(slotObj[key])) {
-        slots[key] = slotObj[key] as SlotFunction;
+        slots[key] = wrapSlot(slotObj[key] as SlotFunction);
       }
     }
   }

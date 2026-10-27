@@ -119,7 +119,11 @@ export const RichTextEditor = defineComponent({
       const editorContent = _props.modelValue || '';
       children.push(
         createVNode('div', {
-          ref: editorRef,
+          // ⚠️ 2026-10-27 修（P0）：同 Upload —— `{ current }` 不被 setRef 识别，
+          //   导致 `getContent()` 恒读空串、`onChange('')` 把用户输入清空。
+          ref: (el: unknown) => {
+            editorRef.current = el as HTMLElement | null;
+          },
           class: 'lyt-rich-text-editor__content',
           contentEditable: !_props.disabled && !_props.readonly,
           'data-placeholder': _props.placeholder,

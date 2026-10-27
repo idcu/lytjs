@@ -24,6 +24,17 @@ export interface ApiRouteConfig {
 
 /** API 路由器配置选项 */
 export interface ApiRouterOptions {
+  /**
+   * 自定义 handler 解析器（默认按 `handlerPath` 动态 `import()`）。
+   *
+   * 用途：
+   *  - 打包场景：handler 已被 bundle，无法按文件路径 import ⇒ 由构建插件注入映射表；
+   *  - 测试：注入假 handler，避免依赖真实文件系统。
+   */
+  resolveHandler?: (
+    handlerPath: string,
+    method: HttpMethod,
+  ) => Promise<ApiHandler | undefined> | ApiHandler | undefined;
   /** API 目录路径 */
   apiDir: string;
   /** API 处理函数扩展名 */

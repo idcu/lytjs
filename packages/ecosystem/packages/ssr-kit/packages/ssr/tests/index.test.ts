@@ -57,3 +57,23 @@ describe('SSR', () => {
     });
   });
 });
+
+// ⚠️ 2026-10-27 新增（P0 回归）：Fragment 必须**展开 children**
+//
+// 起因：Fragment 的 type 是 `Symbol.for('Fragment')`，而 renderToString 里有一条
+// 「type 是 symbol ⇒ 当文本节点」的分支 ⇒ 多根子树被 `String(children)` 转成
+// `[object Object],[object Object]` 输出（实测）。
+describe('renderToString 的 Fragment（P0 回归）', () => {
+  it('多根 Fragment 应展开成 HTML，而不是 [object Object]', async () => {
+    const { createVNode, Fragment } = await import('@lytjs/vdom');
+    const vnode = createVNode(Fragment, null, [
+      createVNode('h1', null, 'T'),
+      createVNode('p', null, 'P'),
+    ]);
+
+    const html = renderToString(vnode as never);
+
+    expect(html).toBe('<h1>T</h1><p>P</p>');
+    expect(html).not.toContain('[object Object]');
+  });
+});

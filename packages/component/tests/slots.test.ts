@@ -199,3 +199,46 @@ describe('normalizeSlotValue', () => {
     expect(normalizeSlotValue(42)).toEqual([42]);
   });
 });
+
+// ⚠️ 2026-10-27 新增（P0 回归）：插槽返回**单个 VNode** 时也必须能安全展开
+//
+// 起因：`slots.default()` 的契约允许返回单个 VNode，而组件里普遍写
+// `children.push(...slots.default())` —— 单 vnode 直接抛
+// `Spread syntax requires ...iterable[Symbol.iterator]`，整棵渲染崩溃。
+// 实测 `<Modal><input/></Modal>`（单子节点）就会崩，而既有测试都传数组所以没被发现。
+describe('initSlots 规范化返回值（P0 回归）', () => {
+  const makeInstance = () =>
+    ({ slots: {}, type: { name: 'X' }, props: {}, ctx: {} }) as unknown as Parameters<
+      typeof initSlots
+    >[0];
+
+  it('默认插槽返回单个 VNode 时应可被展开', () => {
+    const instance = makeInstance();
+    const vnode = { __v_isVNode: true, type: 'div' } as never;
+    initSlots(instance, () => vnode);
+
+    const result = instance.slots.default!({});
+    expect(Array.isArray(result)).toBe(true);
+    expect(result).toEqual([vnode]);
+    // 关键：展开不再抛
+    expect(() => [...(result as never[])]).not.toThrow();
+  });
+
+  it('具名插槽返回单个 VNode 时同样规范化', () => {
+    const instance = makeInstance();
+    const vnode = { __v_isVNode: true, type: 'span' } as never;
+    initSlots(instance, { header: () => vnode });
+
+    const result = instance.slots.header!({});
+    expect(Array.isArray(result)).toBe(true);
+    expect(result).toEqual([vnode]);
+  });
+
+  it('返回数组时保持原样（不额外包一层）', () => {
+    const instance = makeInstance();
+    const vnode = { __v_isVNode: true, type: 'i' } as never;
+    initSlots(instance, { default: () => [vnode] });
+
+    expect(instance.slots.default!({})).toEqual([vnode]);
+  });
+});

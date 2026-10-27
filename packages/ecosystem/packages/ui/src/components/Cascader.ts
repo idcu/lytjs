@@ -219,7 +219,14 @@ export const Cascader = defineComponent({
           ]
             .filter(Boolean)
             .join(' '),
-          onClick: () => selectOption(option, level),
+          // ⚠️ 2026-10-27 修（P0）：必须阻止冒泡。根节点挂着 `onClick: toggleDropdown`，
+          //   此前点选项后事件冒泡到根 ⇒ 再 toggle 一次：
+          //   · 单选：selectOption 里刚 `set(false)`，冒泡又把它打开 ⇒ **单选不关**；
+          //   · 多选：本来要常驻，冒泡却关掉 ⇒ **每选一次就关**。
+          onClick: (e: Event) => {
+            e.stopPropagation();
+            selectOption(option, level);
+          },
         },
         optionChildren,
       );

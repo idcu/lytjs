@@ -247,14 +247,18 @@ describe('Upload · 文件添加（autoUpload=false）', () => {
   });
 });
 
-describe('Upload · trigger 点击（怪癖 A）', () => {
-  it('怪癖 A：点击 trigger 不触发 input.click —— inputRef 协议不匹配恒 null', async () => {
+describe('Upload · trigger 点击（P0 回归）', () => {
+  // ⚠️ 2026-10-27 行为变更（原「怪癖 A」已修）：
+  //   此前用 `ref: inputRef`（`{ current: null }` 形态），而渲染器的 setRef 只认
+  //   字符串 / 函数 / 带 `.value` 的对象 ⇒ `inputRef.current` 恒为 null，
+  //   点上传区**不弹文件框**。现改为函数 ref，这条改为断言「真的触发了 click」。
+  it('点击 trigger 必须触发 input.click', async () => {
     const host = await mountUpload();
     const input = getInput(host);
     const clickSpy = vi.spyOn(input, 'click');
     getTrigger(host).click();
     await flush();
-    expect(clickSpy).not.toHaveBeenCalled();
+    expect(clickSpy).toHaveBeenCalledTimes(1);
   });
 
   it('disabled 时点击 trigger 同样不触发（handleClick 直接 return）', async () => {

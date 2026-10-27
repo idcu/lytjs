@@ -309,3 +309,29 @@ describe('@lytjs/common-query', () => {
     });
   });
 });
+
+// ⚠️ 2026-10-27 新增（P0 回归）：解析器必须能吃**整条 URL**
+//
+// 起因：http-server 直接把 `req.url`（形如 `/p?x=1&y=2`）传进来，而旧实现只剥前导 `?`，
+// 于是第一个键变成 `"/p?x"` ⇒ 首个查询参数永远取不到。
+describe('parseQueryString 接受整条 URL（P0 回归）', () => {
+  it('传整条 URL 时首个参数不能丢', () => {
+    expect(parseQueryString('/p?x=1&y=2')).toEqual({ x: '1', y: '2' });
+    expect(parseQueryStringWithArrays('/p?x=1&y=2')).toEqual({ x: '1', y: '2' });
+  });
+
+  it('键里不得混入路径', () => {
+    const result = parseQueryString('/api/users?page=2');
+    expect(Object.keys(result)).toEqual(['page']);
+  });
+
+  it('应切掉 hash 片段', () => {
+    expect(parseQueryString('/p?a=1#section')).toEqual({ a: '1' });
+    expect(parseQueryString('?a=1#section')).toEqual({ a: '1' });
+  });
+
+  it('纯查询串（无路径）行为保持不变', () => {
+    expect(parseQueryString('a=1&b=2')).toEqual({ a: '1', b: '2' });
+    expect(parseQueryString('?a=1')).toEqual({ a: '1' });
+  });
+});

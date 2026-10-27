@@ -6,7 +6,7 @@
  * 屏蔽底层平台差异。
  */
 
-import { isFunction, isString } from '@lytjs/common-is';
+import { isFunction, isObject, isString } from '@lytjs/common-is';
 import type { VNode } from '@lytjs/common-vnode';
 import type { PlatformAdapter, PlatformConfig } from './types';
 
@@ -156,8 +156,27 @@ function createHostNodeFromVNode<HN, HE extends HN>(
     }
 
     // 递归处理子节点
-    if (children && isString(children)) {
+    //
+    // ⚠️ 2026-10-27 修（P0）：此前**只处理字符串**子节点，数组/单个 VNode 被整棵丢弃 ——
+    //   实测 `<div><span/></div>` 渲染出的是一个空 `<div>`，且不报错。
+    //   现在按「数组 → 逐个递归 + insert」「单个 vnode → 递归 + insert」「字符串 → 文本」分派。
+    if (Array.isArray(children)) {
+      for (const child of children) {
+        if (child === null || child === undefined || typeof child === 'boolean') continue;
+        if (isString(child)) {
+          adapter.insert(adapter.createText(child), el as unknown as HN);
+          continue;
+        }
+        if (isObject(child)) {
+          const childNode = createHostNodeFromVNode(adapter, child as VNode);
+          if (childNode) adapter.insert(childNode, el as unknown as HN);
+        }
+      }
+    } else if (isString(children)) {
       adapter.setElementText(el, children);
+    } else if (isObject(children)) {
+      const childNode = createHostNodeFromVNode(adapter, children as unknown as VNode);
+      if (childNode) adapter.insert(childNode, el as unknown as HN);
     }
 
     return el as unknown as HN;

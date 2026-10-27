@@ -85,11 +85,75 @@ async function readRequestBody(
 /**
  * HTTP 服务器类
  */
+/** 本仓的**规范**中间件签名：`(ctx, next)` —— 与 Koa / Express / Fastify 一致。 */
+export type Middleware = (ctx: Context, next: () => Promise<void>) => Promise<void> | void;
+
+/**
+ * 兼容签名：`(request, ctx, next)` —— `@lytjs/middleware-cors` / `middleware-rate-limit` /
+ * `middleware-auth` 三个包按这个形态实现（它们面向 Fetch 风格的宿主，
+ * 读的是 `request.headers.get(...)`）。
+ *
+ * ⚠️ 2026-10-27 修（P0）：此前把这三者直接 `use()` 到 http-server 会**全部 500** ——
+ *   宿主按 `(ctx, next)` 调用，于是第一个实参拿到的是 ctx、第二个拿到的是 next，
+ *   `ctx` 为 undefined，中间件内部 `request.headers.get` 直接抛。
+ *   现在在边界处做一次**适配**：把 Node 的 `ctx.request` 包装成带 `headers.get()` 的门面，
+ *   并按实参个数分派。规范仍是 `(ctx, next)`；三参形态只作为已发布包的兼容入口。
+ */
+export type LegacyMiddleware = (
+  request: unknown,
+  ctx: Context,
+  next: () => Promise<void>,
+) => Promise<void> | void;
+
+/** 把 Node 的 headers（普通对象）包装成 Fetch 风格（`get` / `has` / `entries`） */
+function createHeadersFacade(headers: Record<string, unknown>): {
+  get(name: string): string | null;
+  has(name: string): boolean;
+  entries(): IterableIterator<[string, string]>;
+} {
+  const normalized = new Map<string, string>();
+  for (const [key, value] of Object.entries(headers)) {
+    if (value === undefined) continue;
+    normalized.set(key.toLowerCase(), Array.isArray(value) ? value.join(', ') : String(value));
+  }
+  return {
+    get: (name: string) => normalized.get(name.toLowerCase()) ?? null,
+    has: (name: string) => normalized.has(name.toLowerCase()),
+    entries: () => normalized.entries(),
+  };
+}
+
+/**
+ * 按实参个数把三参中间件适配成规范签名。
+ *
+ * 判据用 `fn.length`：`(request, ctx, next)` 的 length 是 3，`(ctx, next)` 是 2。
+ * 带默认值的写法（`(request, ctx, next = noop)`）length 会变成 2 —— 这种情况请显式包一层。
+ */
+function normalizeMiddleware(middleware: Middleware | LegacyMiddleware): Middleware {
+  if (middleware.length < 3) return middleware as Middleware;
+  const legacy = middleware as LegacyMiddleware;
+  return async (ctx: Context, next: () => Promise<void>) => {
+    const request = ctx.request;
+    const facade = {
+      method: request.method,
+      url: request.url,
+      path: request.path,
+      query: request.query,
+      params: request.params,
+      body: request.body,
+      rawBody: request.rawBody,
+      ip: request.ip,
+      headers: createHeadersFacade((request.headers ?? {}) as Record<string, unknown>),
+    };
+    return legacy(facade, ctx, next);
+  };
+}
+
 export class Server {
   /** 路由实例 */
   private router: Router;
   /** 中间件列表（**按注册顺序执行**） */
-  private middlewares: Array<(ctx: Context, next: () => Promise<void>) => Promise<void>> = [];
+  private middlewares: Middleware[] = [];
   /** Node.js 服务器实例 */
   private server?: NodeServer;
   /** 请求体上限 */
@@ -111,8 +175,8 @@ export class Server {
    * @param middleware - 中间件函数
    * @returns 服务器实例
    */
-  use(middleware: (ctx: Context, next: () => Promise<void>) => Promise<void>): this {
-    this.middlewares.push(middleware);
+  use(middleware: Middleware): this {
+    this.middlewares.push(normalizeMiddleware(middleware));
     return this;
   }
 
@@ -261,7 +325,10 @@ export class Server {
       url,
       path,
       headers: req.headers,
-      query: parseQueryStringWithArrays(url),
+      // ⚠️ 2026-10-27 修（P0）：此前直接把**整条 URL** 传进去，`parseQueryString` 只剥前导
+      //   `?` ⇒ 实测 `?x=1&y=2` 得到 `{"/p?x":"1","y":"2"}`，首个参数恒 undefined。
+      //   这里显式只传查询串（`parseQueryString` 也已加防御，双保险）。
+      query: parseQueryStringWithArrays(url.includes('?') ? url.slice(url.indexOf('?') + 1) : ''),
       params: {},
       ip: req.socket.remoteAddress,
     };
@@ -289,37 +356,45 @@ export class Server {
           ctx.request.params[key] = value;
         }
       }
+    }
 
-      // 解析请求体（仅在处理器确实需要时才有开销：GET/HEAD/OPTIONS 直接返回）
-      const body = await readRequestBody(req, this.bodyLimit);
-      if (body) {
-        ctx.request.rawBody = body.raw;
-        ctx.request.body = body.parsed;
-      }
+    // 解析请求体（仅在处理器确实需要时才有开销：GET/HEAD/OPTIONS 直接返回）
+    const body = await readRequestBody(req, this.bodyLimit);
+    if (body) {
+      ctx.request.rawBody = body.raw;
+      ctx.request.body = body.parsed;
+    }
 
-      const handler = async () => {
+    // 终态：命中路由 → 路由处理器；未命中 → 404
+    const handler = async () => {
+      if (match) {
         await match.handler(ctx);
-      };
-
-      // 洋葱圈：index 从 -1 起递增 ⇒ **注册顺序即执行顺序**
-      let index = -1;
-      const next = async (): Promise<void> => {
-        index++;
-        const middleware = this.middlewares[index];
-        if (middleware) {
-          await middleware(ctx, next);
-        } else {
-          await handler();
-        }
-      };
-
-      await next();
-    } else {
+        return;
+      }
       if (ctx.response) {
         ctx.response.status = 404;
         ctx.response.body = { error: '未找到' };
       }
-    }
+    };
+
+    // 洋葱圈：index 从 -1 起递增 ⇒ **注册顺序即执行顺序**
+    //
+    // ⚠️ 2026-10-27 修（P1）：此前整条链只在**命中路由后**才执行，
+    //   于是 `OPTIONS` 预检（没有路由）与 404 都拿不到 CORS 头 ——
+    //   浏览器侧的预检实测返回 404 且无 `Access-Control-Allow-*`，跨域请求必失败。
+    //   现在所有请求都过中间件，未命中路由由终态 handler 产出 404。
+    let index = -1;
+    const next = async (): Promise<void> => {
+      index++;
+      const middleware = this.middlewares[index];
+      if (middleware) {
+        await middleware(ctx, next);
+      } else {
+        await handler();
+      }
+    };
+
+    await next();
 
     if (ctx.response) {
       this.sendResponse(res, ctx.response);

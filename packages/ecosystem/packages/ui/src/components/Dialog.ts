@@ -49,7 +49,16 @@ export const Dialog = defineComponent({
     onKeydown: { type: Function, default: undefined },
   },
 
-  setup(props: Record<string, unknown>, { slots }: { slots: DialogSlots }) {
+  setup(
+    props: Record<string, unknown>,
+    {
+      slots,
+      emit,
+    }: {
+      slots: DialogSlots;
+      emit: (event: string, ...args: unknown[]) => void;
+    },
+  ) {
     const p = props as DialogSetupProps;
     const visible = signal(p.modelValue);
     const dialogRef = signal<HTMLElement | null>(null);
@@ -102,6 +111,10 @@ export const Dialog = defineComponent({
         if (result === false) return;
       }
       visible.set(false);
+      // ⚠️ 2026-10-27 修（P0）：此前**从不**回写 `v-model`（测试里已登记为「已知设计怪癖 B」）。
+      //   后果：受控用法下点 ESC / 遮罩 / × 后，外部 `modelValue` 仍是 true，
+      //   想重开必须先 false 再 true —— 调用方以为关闭成功了。
+      emit('update:modelValue', false);
       if (scrollLocked) setScrollLocked(false);
       p.onClose?.();
 

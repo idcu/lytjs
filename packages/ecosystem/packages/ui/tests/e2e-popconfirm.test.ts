@@ -72,13 +72,28 @@ describe('行为：Popconfirm 的开合', () => {
     expect(host.querySelector('.lyt-popconfirm__popup')).not.toBeNull();
   });
 
-  it('★ 移开后气泡消失', async () => {
+  // ⚠️ 2026-10-27 行为变更：hover 事件从 `reference` 上移到**根容器**。
+  //   原因：气泡是 reference 的**兄弟节点**（不是子节点），鼠标从触发元素移进气泡
+  //   必然先触发 reference 的 mouseleave ⇒ 气泡立刻消失，用户点不到「确认」。
+  //   现在：离开 reference **不**隐藏；离开整个组件区域才隐藏。
+  it('★ 移开 reference 不隐藏（否则移进气泡就消失）', async () => {
     const host = mount();
     await renderPopconfirm(host);
     const ref = host.querySelector('.lyt-popconfirm__reference')!;
     enter(ref);
     await new Promise((r) => setTimeout(r, 20));
     leave(ref);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(host.querySelector('.lyt-popconfirm__popup')).not.toBeNull();
+  });
+
+  it('★ 离开整个组件区域后气泡消失', async () => {
+    const host = mount();
+    await renderPopconfirm(host);
+    const root = host.querySelector('.lyt-popconfirm')!;
+    enter(host.querySelector('.lyt-popconfirm__reference')!);
+    await new Promise((r) => setTimeout(r, 20));
+    leave(root);
     await new Promise((r) => setTimeout(r, 20));
     expect(host.querySelector('.lyt-popconfirm__popup')).toBeNull();
   });

@@ -4,6 +4,7 @@
  * 将 VNode 渲染为 HTML 字符串
  */
 
+import { Fragment } from '@lytjs/vdom';
 import type { VNode } from '@lytjs/vdom';
 import { createComponentInstance, setupComponent } from '@lytjs/component';
 import { isString, isNumber, isArray, isObject, isFunction } from '@lytjs/common-is';
@@ -53,7 +54,16 @@ export function renderToString(
 
   const node = vnode as VNode;
 
-  // 处理文本节点
+  // ⚠️ 2026-10-27 修（P0）：Fragment 的 type 是 `Symbol.for('Fragment')`，
+  //   此前被下面的「symbol 即文本」分支接住 ⇒ 整棵多根子树被 `String(children)`
+  //   转成 `[object Object],[object Object]` 输出（实测）。
+  //   Fragment 必须**展开 children**，而不是当文本转义。
+  if (node.type === Fragment) {
+    if (!isArray(node.children)) return '';
+    return (node.children as VNode[]).map((child) => renderToString(child)).join('');
+  }
+
+  // 处理文本节点（Text 的 type 也是 symbol）
   if (node.type === 'text' || typeof node.type === 'symbol') {
     return escapeHtml(String(node.children || ''));
   }

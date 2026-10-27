@@ -109,8 +109,11 @@ export const Popconfirm = defineComponent({
               'div',
               {
                 class: 'lyt-popconfirm__reference',
+                // ⚠️ 2026-10-27 修（P0）：hover 事件已上移到**根容器**。
+                //   此前挂在 reference 上，而气泡是 reference 的**兄弟节点**（不是子节点），
+                //   鼠标从触发元素移进气泡 ⇒ 触发 reference 的 mouseleave ⇒ 气泡立刻消失，
+                //   用户根本点不到「确认」。
                 onMouseenter: show,
-                onMouseleave: hide,
               },
               refNodes,
             ),
@@ -221,6 +224,9 @@ export const Popconfirm = defineComponent({
         {
           class: getPopconfirmClass(),
           style: getPopconfirmStyle(),
+          // 气泡与触发元素都在根容器内 ⇒ 只有**离开整块区域**才隐藏
+          onMouseenter: show,
+          onMouseleave: hide,
         },
         children,
       );

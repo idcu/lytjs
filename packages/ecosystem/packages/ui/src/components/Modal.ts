@@ -42,7 +42,16 @@ export const Modal = defineComponent({
     onKeydown: { type: Function, default: undefined },
   },
 
-  setup(props: Record<string, unknown>, { slots }: { slots: ModalSlots }) {
+  setup(
+    props: Record<string, unknown>,
+    {
+      slots,
+      emit,
+    }: {
+      slots: ModalSlots;
+      emit: (event: string, ...args: unknown[]) => void;
+    },
+  ) {
     const p = props as ModalSetupProps;
     const isClosing = signal(false);
     const isFullscreen = signal(p.fullscreen);
@@ -82,6 +91,10 @@ export const Modal = defineComponent({
         if (result === false) return;
       }
       isClosing.set(true);
+      // ⚠️ 2026-10-27 修（P0）：此前只改内部 `isClosing`、从不回写 `v-model`。
+      //   而可见性由 `modelValue` 驱动（`if (!p.modelValue) return 隐藏占位`）⇒
+      //   点 × / 遮罩 / Esc **弹层不会消失**，`v-model` 永远是 true。
+      emit('update:modelValue', false);
       p.onClose?.();
       if (scrollLocked) setScrollLocked(false);
       setTimeout(() => {
@@ -261,6 +274,10 @@ export const Modal = defineComponent({
                 class: modalClass,
                 style: modalStyle,
                 onKeydown: handleKeydown,
+                // ⚠️ 2026-10-27 修（P0）：此前内容区**没有** stopPropagation，
+                //   而遮罩层挂了 onClick=close ⇒ 点正文、点输入框、点按钮都会把弹层关掉
+                //   （输入到一半内容丢失）。
+                onClick: (e: Event) => e.stopPropagation(),
               }),
               [
                 ...headerChildren,

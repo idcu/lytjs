@@ -16,6 +16,7 @@ import type {
 } from './types';
 import { NavigationFailureType, locationQueryToSearchParams } from './types';
 import { signal } from '@lytjs/reactivity';
+import { error } from '@lytjs/common-error';
 import {
   normalizeRouteRecord,
   flattenMatchers,
@@ -131,108 +132,184 @@ export function createRouter(options: RouterOptions): Router {
   /**
    * Navigate to a new route
    */
+  /** 重定向嵌套深度（只统计守卫触发的重定向，用户主动导航不计数） */
+  let redirectDepth = 0;
+  const MAX_REDIRECT_DEPTH = 10;
+
   async function navigate(
     to: RouteLocationRaw,
     replace: boolean = false,
+    isRedirect: boolean = false,
   ): Promise<NavigationFailure | void> {
-    // Check for duplicate navigation
-    const resolved = resolveLocation(to, currentRoute(), { resolveName });
-    const targetPath = resolved.path;
-
-    // Check for name-based navigation with unknown route name
-    if (
-      typeof to !== 'string' &&
-      to.name !== null &&
-      to.name !== undefined &&
-      !resolveName(to.name, to.params)
-    ) {
-      return {
-        type: NavigationFailureType.aborted,
-        from: currentRoute(),
-        to: currentRoute(),
-      };
-    }
-
-    // Resolve the route
-    const { matched, params, meta } = resolveRoute(targetPath);
-
-    if (matched.length === 0) {
-      return {
-        type: NavigationFailureType.aborted,
-        from: currentRoute(),
-        to: currentRoute(),
-      };
-    }
-
-    // Build the target location
-    const lastMatched = matched[matched.length - 1];
-    const targetLocation: RouteLocationNormalized = {
-      name: lastMatched?.record?.name ?? null,
-      path: targetPath,
-      fullPath:
-        resolved.path +
-        (Object.keys(resolved.query).length
-          ? '?' + locationQueryToSearchParams(resolved.query).toString()
-          : '') +
-        (resolved.hash ? `#${resolved.hash}` : ''),
-      query: resolved.query,
-      hash: resolved.hash,
-      params,
-      matched: matched.map((m) => m.record),
-      meta,
-    };
-
-    // Check for same route navigation
-    if (isSameRouteLocation(currentRoute(), targetLocation)) {
-      return {
-        type: NavigationFailureType.duplicated,
-        from: currentRoute(),
-        to: targetLocation,
-      };
-    }
-
-    const from = currentRoute();
-
-    // Run navigation guards (pass fromMatched for beforeRouteLeave)
-    const fromMatched = currentRoute()
-      .matched.map((record) => {
-        // Find the corresponding matcher for the from route records
-        return flatMatchers.find((m) => m.record === record);
-      })
-      .filter((m): m is RouteRecordMatcher => m !== undefined);
-
-    const failure = await runGuardSequence(targetLocation, from, matched, fromMatched);
-    if (failure) {
-      return failure;
-    }
-
-    // Commit navigation
-    if (replace) {
-      await options.history.replace(targetLocation);
-    } else {
-      await options.history.push(targetLocation);
-    }
-
-    currentRoute.set(targetLocation);
-
-    // Handle scroll behavior
-    if (options.scrollBehavior) {
-      const savedPosition = replace ? null : null; // Would come from history.state
-      const scrollPosition = options.scrollBehavior(targetLocation, from, savedPosition);
-      if (scrollPosition) {
-        // Use requestAnimationFrame for smooth scrolling
-        if (typeof window !== 'undefined') {
-          window.scrollTo(scrollPosition);
-        }
+    // ⚠️ 2026-10-27 修（P0）：无条件重定向（`beforeEach(() => '/x')` 且 /x 又重定向回来）
+    //   此前没有任何深度上限 ⇒ 实测 256MB 堆 **OOM 进程崩溃**。
+    if (isRedirect) {
+      redirectDepth += 1;
+      if (redirectDepth > MAX_REDIRECT_DEPTH) {
+        redirectDepth = 0;
+        error(
+          `[router] 重定向超过 ${MAX_REDIRECT_DEPTH} 层，已中止（疑似守卫无条件重定向导致死循环）`,
+        );
+        return {
+          type: NavigationFailureType.aborted,
+          from: currentRoute(),
+          to: currentRoute(),
+        };
       }
     }
+    try {
+      // Check for duplicate navigation
+      const resolved = resolveLocation(to, currentRoute(), { resolveName });
+      const targetPath = resolved.path;
 
-    // Run afterEach hooks
-    for (const hook of afterEachHooks) {
-      hook(targetLocation, from);
+      // Check for name-based navigation with unknown route name
+      if (
+        typeof to !== 'string' &&
+        to.name !== null &&
+        to.name !== undefined &&
+        !resolveName(to.name, to.params)
+      ) {
+        return {
+          type: NavigationFailureType.aborted,
+          from: currentRoute(),
+          to: currentRoute(),
+        };
+      }
+
+      // Resolve the route
+      const { matched, params, meta } = resolveRoute(targetPath);
+
+      if (matched.length === 0) {
+        return {
+          type: NavigationFailureType.aborted,
+          from: currentRoute(),
+          to: currentRoute(),
+        };
+      }
+
+      // Build the target location
+      const lastMatched = matched[matched.length - 1];
+      const targetLocation: RouteLocationNormalized = {
+        name: lastMatched?.record?.name ?? null,
+        path: targetPath,
+        fullPath:
+          resolved.path +
+          (Object.keys(resolved.query).length
+            ? '?' + locationQueryToSearchParams(resolved.query).toString()
+            : '') +
+          (resolved.hash ? `#${resolved.hash}` : ''),
+        query: resolved.query,
+        hash: resolved.hash,
+        params,
+        matched: matched.map((m) => m.record),
+        meta,
+      };
+
+      // Check for same route navigation
+      if (isSameRouteLocation(currentRoute(), targetLocation)) {
+        return {
+          type: NavigationFailureType.duplicated,
+          from: currentRoute(),
+          to: targetLocation,
+        };
+      }
+
+      const from = currentRoute();
+
+      // Run navigation guards (pass fromMatched for beforeRouteLeave)
+      const fromMatched = currentRoute()
+        .matched.map((record) => {
+          // Find the corresponding matcher for the from route records
+          return flatMatchers.find((m) => m.record === record);
+        })
+        .filter((m): m is RouteRecordMatcher => m !== undefined);
+
+      const failure = await runGuardSequence(targetLocation, from, matched, fromMatched);
+      if (failure) {
+        return failure;
+      }
+
+      // Commit navigation
+      if (replace) {
+        await options.history.replace(targetLocation);
+      } else {
+        await options.history.push(targetLocation);
+      }
+
+      currentRoute.set(targetLocation);
+
+      // Handle scroll behavior
+      if (options.scrollBehavior) {
+        const savedPosition = replace ? null : null; // Would come from history.state
+        const scrollPosition = options.scrollBehavior(targetLocation, from, savedPosition);
+        if (scrollPosition) {
+          // Use requestAnimationFrame for smooth scrolling
+          if (typeof window !== 'undefined') {
+            window.scrollTo(scrollPosition);
+          }
+        }
+      }
+
+      // Run afterEach hooks
+      for (const hook of afterEachHooks) {
+        hook(targetLocation, from);
+      }
+
+      return;
+    } finally {
+      if (isRedirect) redirectDepth -= 1;
     }
+  }
 
-    return;
+  /**
+   * 守卫结果归一化 —— **同时支持两种风格**：
+   *
+   *   | 写法 | 结果 |
+   *   |---|---|
+   *   | `next()` / 无返回 / 返回 `true` | 继续 |
+   *   | `next(false)` / 返回 `false` / 抛错 | 中止 |
+   *   | `next('/login')` / 返回 `'/login'` / 返回 location 对象 | 重定向 |
+   *
+   * ⚠️ 2026-10-27 修（P0）：此前 4 处调用都传的是 `noop`（空函数）——
+   *   守卫里写 `next('/login')` **什么都不会发生**，导航静默放行到受保护路由。
+   *   这是「看起来有守卫、实际没守卫」的最坏形态：不报错、不告警。
+   */
+  type GuardOutcome =
+    | { action: 'proceed' }
+    | { action: 'abort' }
+    | { action: 'redirect'; target: RouteLocationRaw };
+
+  function interpretGuardDecision(decided: unknown): GuardOutcome {
+    if (decided === false) return { action: 'abort' };
+    if (decided instanceof Error) return { action: 'abort' };
+    if (typeof decided === 'string') return { action: 'redirect', target: decided };
+    if (decided !== null && typeof decided === 'object') {
+      return { action: 'redirect', target: decided as RouteLocationRaw };
+    }
+    return { action: 'proceed' };
+  }
+
+  async function runSingleGuard(
+    guard: (
+      to: RouteLocationNormalized,
+      from: RouteLocationNormalized,
+      next: NavigationGuardNext,
+    ) => unknown,
+    to: RouteLocationNormalized,
+    from: RouteLocationNormalized,
+  ): Promise<GuardOutcome> {
+    let nextCalled = false;
+    let nextArg: unknown;
+    const next = ((value?: unknown) => {
+      // 只认第一次调用：重复 next 是常见误用，不应改变结论
+      if (!nextCalled) {
+        nextCalled = true;
+        nextArg = value;
+      }
+    }) as NavigationGuardNext;
+
+    const returned = await guard(to, from, next);
+    return interpretGuardDecision(nextCalled ? nextArg : returned);
   }
 
   /**
@@ -244,79 +321,63 @@ export function createRouter(options: RouterOptions): Router {
     matched: RouteRecordMatcher[],
     fromMatched: RouteRecordMatcher[],
   ): Promise<NavigationFailure | void> {
+    /** 执行一个守卫；返回 'proceed' 表示继续下一个守卫 */
+    const step = async (
+      guard: (
+        to: RouteLocationNormalized,
+        from: RouteLocationNormalized,
+        next: NavigationGuardNext,
+      ) => unknown,
+    ): Promise<NavigationFailure | 'proceed'> => {
+      const outcome = await runSingleGuard(guard, to, from);
+      if (outcome.action === 'proceed') return 'proceed';
+      if (outcome.action === 'abort') {
+        return { type: NavigationFailureType.aborted, from, to };
+      }
+      // 重定向：内层导航在这里完成，外层必须**停止**，
+      // 否则会把原目标提交上去（此前正是如此：用户被送进受保护页）。
+      await navigate(outcome.target, true, true);
+      return { type: NavigationFailureType.redirected, from, to };
+    };
+
     // 1. in-component beforeRouteLeave guards (from current matched components)
     for (const matcher of fromMatched) {
       const component = matcher.record.component as Record<string, unknown> | undefined;
-      if (component && component.beforeRouteLeave) {
-        const result = await (
-          component.beforeRouteLeave as (
+      const leaveGuard = component?.beforeRouteLeave as
+        | ((
             to: RouteLocationNormalized,
             from: RouteLocationNormalized,
             next: NavigationGuardNext,
-          ) => unknown
-        )(to, from, noop as NavigationGuardNext);
-        if (result === false || result instanceof Error) {
-          return { type: NavigationFailureType.aborted, from, to };
-        }
-        if (typeof result === 'string' || (typeof result === 'object' && result !== null)) {
-          return navigate(result, true);
-        }
+          ) => unknown)
+        | undefined;
+      if (leaveGuard) {
+        const result = await step(leaveGuard);
+        if (result !== 'proceed') return result;
       }
     }
 
     // 2. global beforeEach guards
     for (const guard of beforeEachGuards) {
-      const result = await guard(to, from, noop as NavigationGuardNext);
-      if (result === false || result instanceof Error) {
-        return {
-          type: NavigationFailureType.aborted,
-          from,
-          to,
-        };
-      }
-      if (typeof result === 'string' || (typeof result === 'object' && result !== null)) {
-        // Redirect
-        return navigate(result, true);
-      }
+      const result = await step(guard);
+      if (result !== 'proceed') return result;
     }
 
     // 3. route record beforeEnter guards
     for (const matcher of matched) {
       if (matcher.record.beforeEnter) {
-        const result = await matcher.record.beforeEnter(to, from, noop as NavigationGuardNext);
-        if (result === false || result instanceof Error) {
-          return {
-            type: NavigationFailureType.aborted,
-            from,
-            to,
-          };
-        }
-        if (typeof result === 'string' || (typeof result === 'object' && result !== null)) {
-          return navigate(result, true);
-        }
+        const result = await step(matcher.record.beforeEnter);
+        if (result !== 'proceed') return result;
       }
     }
 
     // 4. global beforeResolve guards
     for (const guard of beforeResolveGuards) {
-      const result = await guard(to, from, noop as NavigationGuardNext);
-      if (result === false || result instanceof Error) {
-        return {
-          type: NavigationFailureType.aborted,
-          from,
-          to,
-        };
-      }
-      if (typeof result === 'string' || (typeof result === 'object' && result !== null)) {
-        return navigate(result, true);
-      }
+      const result = await step(guard);
+      if (result !== 'proceed') return result;
     }
 
     return;
   }
-
-  // No-op function for guard next() callback
-  function noop() {}
 
   // Listen to history changes (popstate/hashchange)
   options.history.listen((to, _from, info) => {

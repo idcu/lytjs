@@ -116,6 +116,14 @@ export enum NavigationFailureType {
   aborted = 1,
   cancelled = 2,
   duplicated = 4,
+  /**
+   * 守卫触发了重定向（`next('/login')` 或 `return '/login'`）。
+   *
+   * ⚠️ 2026-10-27 新增：此前重定向被当成「内层 navigate 成功 ⇒ 返回 undefined」，
+   * 外层于是**继续提交原目标** ⇒ 用户看到的是被保护页而不是登录页。
+   * 现在重定向以这个失败类型**中止**当前导航（内层导航已在内部完成）。
+   */
+  redirected = 8,
 }
 
 // ===== Router =====

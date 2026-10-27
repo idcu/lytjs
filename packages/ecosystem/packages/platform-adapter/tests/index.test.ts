@@ -665,3 +665,95 @@ describe('PlatformPlugin 生命周期', () => {
     adapter.createElement = originalCreateElement;
   });
 });
+
+// ⚠️ 2026-10-27 新增（P0 回归）：元素子节点必须递归挂载
+//
+// 起因：`createHostNodeFromVNode` 此前只处理 `isString(children)`，
+// 数组 / 单个 VNode 子节点被**整棵丢弃** —— `<div><span/></div>` 渲染出空 div，且不报错。
+describe('platform-adapter 的元素子节点（P0 回归）', () => {
+  /** 极简 DOM 桩：只记录结构，便于断言 */
+  interface FakeEl {
+    tag: string;
+    children: FakeEl[];
+    text: string;
+  }
+
+  function createFakeAdapter() {
+    const make = (tag: string): FakeEl => ({ tag, children: [], text: '' });
+    const adapter: PlatformAdapter<FakeEl, FakeEl> = {
+      name: 'fake',
+      version: '1.0.0',
+      createElement: (tag) => make(tag),
+      createText: (text) => ({ tag: '#text', children: [], text }),
+      createComment: (text) => ({ tag: '#comment', children: [], text }),
+      insert: (child, parent) => {
+        parent.children.push(child);
+      },
+      remove: (child) => {
+        child.children = [];
+      },
+      setElementText: (node, text) => {
+        node.text = text;
+      },
+      setAttribute: () => {},
+      removeAttribute: () => {},
+      addClass: () => {},
+      removeClass: () => {},
+      setStyle: () => {},
+      setProperty: () => {},
+      getProperty: () => undefined,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      getParent: () => null,
+      getNextSibling: () => null,
+      getTagName: (node) => node.tag,
+    } as unknown as PlatformAdapter<FakeEl, FakeEl>;
+    return { adapter, make };
+  }
+
+  it('数组子节点应被递归挂载', async () => {
+    const { adapter } = createFakeAdapter();
+    const renderer = createPlatformRenderer(adapter) as unknown as {
+      render(vnode: VNode, container: FakeEl): void;
+    };
+
+    const root = { tag: '#root', children: [], text: '' };
+    const vnode = {
+      type: 'div',
+      props: {},
+      children: [
+        { type: 'span', props: {}, children: 'a' },
+        { type: 'span', props: {}, children: 'b' },
+      ],
+    } as unknown as VNode;
+
+    renderer.render(vnode, root);
+
+    const div = root.children[0]!;
+    expect(div.tag).toBe('div');
+    expect(div.children).toHaveLength(2);
+    expect(div.children[0]!.tag).toBe('span');
+    expect(div.children[0]!.text).toBe('a');
+    expect(div.children[1]!.text).toBe('b');
+  });
+
+  it('单个 VNode 子节点也应挂载', async () => {
+    const { adapter } = createFakeAdapter();
+    const renderer = createPlatformRenderer(adapter) as unknown as {
+      render(vnode: VNode, container: FakeEl): void;
+    };
+
+    const root = { tag: '#root', children: [], text: '' };
+    const vnode = {
+      type: 'div',
+      props: {},
+      children: { type: 'em', props: {}, children: 'x' },
+    } as unknown as VNode;
+
+    renderer.render(vnode, root);
+
+    const div = root.children[0]!;
+    expect(div.children).toHaveLength(1);
+    expect(div.children[0]!.tag).toBe('em');
+  });
+});

@@ -36,7 +36,16 @@ export const Drawer = defineComponent({
     onClose: { type: Function, default: undefined },
   },
 
-  setup(props: Record<string, unknown>, { slots }: { slots: DrawerSlots }) {
+  setup(
+    props: Record<string, unknown>,
+    {
+      slots,
+      emit,
+    }: {
+      slots: DrawerSlots;
+      emit: (event: string, ...args: unknown[]) => void;
+    },
+  ) {
     const p = props as DrawerSetupProps;
     const isClosing = signal(false);
 
@@ -74,6 +83,8 @@ export const Drawer = defineComponent({
         if (result === false) return;
       }
       isClosing.set(true);
+      // ⚠️ 2026-10-27 修（P0）：与 Modal 同款 —— 从不回写 `v-model` ⇒ 受控抽屉关不掉。
+      emit('update:modelValue', false);
       setTimeout(() => {
         isClosing.set(false);
       }, 300);
@@ -216,6 +227,8 @@ export const Drawer = defineComponent({
         {
           class: 'lyt-drawer__container',
           style: formatStyle(getSizeStyle()),
+          // ⚠️ 2026-10-27 修（P0）：内容区阻止冒泡，否则点抽屉内部会触发遮罩关闭
+          onClick: (e: Event) => e.stopPropagation(),
         },
         drawerChildren,
       );

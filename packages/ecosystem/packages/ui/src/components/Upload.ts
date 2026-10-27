@@ -261,7 +261,12 @@ export const Upload = defineComponent({
         createVNode(
           'input',
           {
-            ref: inputRef,
+            // ⚠️ 2026-10-27 修（P0）：`{ current }` 形态的 ref **渲染器不认**
+            //   （setRef 只支持 string / function / 带 `.value` 的对象）⇒ 此前
+            //   `inputRef.current` 恒为 null，点上传区不弹文件框。改用函数 ref。
+            ref: (el: unknown) => {
+              inputRef.current = el as HTMLInputElement | null;
+            },
             type: 'file',
             class: 'lyt-upload__input',
             accept: p.accept,

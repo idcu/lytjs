@@ -193,3 +193,32 @@ describe('@lytjs/bundler', () => {
     });
   });
 });
+
+// ⚠️ 2026-10-27 新增（P0 回归）：产物必须**自带 helper import 且挂上 render**
+//
+// 起因：`compileSFC` 此前丢掉 `preamble`（helper import）、也不把 render 挂到组件上，
+// 于是 `.lyt` 转换出来的模块一执行就 `ReferenceError: openBlock is not defined`，
+// 或者"能 import 但组件没有 render、模板等于不存在"。bundler 只是原样转发 `result.code`，
+// 所以这条必须在 bundler 这一层锁住。
+describe('transformSFC 产物可执行性（P0 回归）', () => {
+  const SRC = `<template><div><span/>hi {{ msg }}</div></template>
+<script>export default { setup() { return { msg: 'x' } } }</script>`;
+
+  it('产物必须包含 helper import', () => {
+    const result = transformSFC(SRC, '/a/App.lyt');
+    expect(result).not.toBeNull();
+    expect(result!.code).toMatch(/^import\s+\{[^}]*createBlock[^}]*\}\s+from\s+'@lytjs\//m);
+  });
+
+  it('产物必须把 render 挂到组件上并默认导出', () => {
+    const result = transformSFC(SRC, '/a/App.lyt');
+    expect(result!.code).toContain('.render = render');
+    expect(result!.code).toContain('export default __sfc__');
+  });
+
+  it('混排子节点不得丢失（bundler 链路回归）', () => {
+    const result = transformSFC(SRC, '/a/App.lyt');
+    expect(result!.code).toContain('"hi "');
+    expect(result!.code).toContain('toDisplayString(_ctx.msg)');
+  });
+});

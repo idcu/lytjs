@@ -32,7 +32,17 @@ export function parseQueryString(
 ): Record<string, string> | Record<string, string | string[]> {
   if (!search) return {};
 
-  const str = search.startsWith('?') ? search.slice(1) : search;
+  // ⚠️ 2026-10-27 修（P0）：此前只剥前导 `?`。传整条 URL（`/p?x=1&y=2`）时，
+  //   第一个键会变成 `"/p?x"` ⇒ 首个查询参数**永远取不到**（实测 http-server 就这么传）。
+  //   这里做一次防御：若串里出现 `?`，只取问号之后的部分。
+  //   注意 `#hash` 也要切掉（`?a=1#x` 的 hash 不属于查询串）。
+  const qIndex = search.indexOf('?');
+  const hashIndex = search.indexOf('#');
+  let str = qIndex >= 0 ? search.slice(qIndex + 1) : search;
+  const hIndex = str.indexOf('#');
+  if (hIndex >= 0) str = str.slice(0, hIndex);
+  if (hashIndex >= 0 && qIndex < 0) str = search.slice(0, hashIndex);
+  if (str.startsWith('?')) str = str.slice(1);
   if (!str) return {};
 
   const supportArrays = options?.supportArrays ?? false;

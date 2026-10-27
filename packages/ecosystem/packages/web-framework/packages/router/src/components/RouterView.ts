@@ -40,12 +40,40 @@ type ViewComponent = unknown;
  *    「懒加载」显式声明为 `() => Promise<Component>`。不需要 props 的函数式组件请先用
  *    `defineFunctionalComponent` 包一层再放进路由。
  */
+/**
+ * 懒加载组件包装的**缓存**。
+ *
+ * ⚠️ 2026-10-27 修（P0）：`resolveViewComponent` 是在**渲染函数内部**调用的，
+ *   而 `defineAsyncComponent(loader)` 每次调用都返回一个**新对象**。
+ *   渲染器按 `vnode.type` 判同 ⇒ 每次重渲染都被当成「组件类型变了」→ 卸载 + 重挂。
+ *   实测：`/l1 → /l2` 后 DOM 变成 `<i class=l2><i class=l2>`（两份），来回切持续累积。
+ *
+ *   修法：以 loader 函数本身为键缓存包装结果（WeakMap，不阻止回收）。
+ */
+const asyncComponentCache = new WeakMap<() => Promise<ComponentOptions>, ViewComponent>();
+
+/**
+ * 取（或创建）懒加载组件的包装对象。
+ *
+ * 单独导出是为了让「同一 loader 必须得到同一个包装对象」这条契约可被直接测试 ——
+ * 否则只能靠挂载后再数 DOM 节点来间接验证。
+ */
+export function getOrCreateAsyncViewComponent(
+  loader: () => Promise<ComponentOptions>,
+): ViewComponent {
+  const cached = asyncComponentCache.get(loader);
+  if (cached) return cached;
+  const wrapped = defineAsyncComponent(loader) as unknown as ViewComponent;
+  asyncComponentCache.set(loader, wrapped);
+  return wrapped;
+}
+
 function resolveViewComponent(component: ViewComponent): ViewComponent {
   if (typeof component !== 'function') return component;
   if ('setup' in component || 'render' in component) return component;
-  return component.length === 0
-    ? (defineAsyncComponent(component as unknown as () => Promise<ComponentOptions>) as unknown)
-    : component;
+  if (component.length !== 0) return component;
+
+  return getOrCreateAsyncViewComponent(component as unknown as () => Promise<ComponentOptions>);
 }
 
 /** 按路由记录的 `props` 配置算出要透传给视图组件的 props */

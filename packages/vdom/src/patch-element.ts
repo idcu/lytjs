@@ -191,6 +191,16 @@ export function createElementPatch<HN, HE extends HN>(
       ref(el);
     } else if (ref !== null && typeof ref === 'object' && 'value' in ref) {
       (ref as { value: unknown }).value = el;
+    } else if (__DEV__ && ref !== null && ref !== undefined) {
+      // ⚠️ 2026-10-27 新增：此前「形态不认识」是**完全静默**的 ——
+      //   最常见的误用是 React 风格的 `{ current: null }`，它既不是函数也没有 `.value`，
+      //   于是 ref 永远拿不到元素，而组件里 `ref.current?.click()` 静默失效
+      //   （实测 UI 的 Upload / RichTextEditor 都踩了这个坑）。
+      //   这里把静默变成一条可见的 DEV 告警。
+      warn(
+        '[lytjs] 无法识别的 ref 形态：支持 字符串 / 函数 / 带 .value 的对象（ref() 的返回值）。' +
+          '若你用的是 `{ current }`，请改成函数 ref：`ref: (el) => { obj.current = el }`。',
+      );
     }
   }
 
