@@ -38,8 +38,50 @@ const IMPERATIVE_EXPORTS: Record<string, string> = {
   Message: '命令式 API：Message.success(...) 直接操作全局容器，没有组件形态',
 };
 
+/**
+ * 按组件的**声明 props** 自动造样本值。
+ *
+ * 为什么不是手写 61 组 props：手写只能覆盖「我想到的用法」，
+ * 而这里要回答的是「**每一个声明出来的 prop 被赋值时会不会崩**」。
+ * 从 `component.props` 的 `type` 推导样本值，新增 prop 会自动被覆盖 ——
+ * 这是它比手写清单更值钱的地方。
+ *
+ * 只造「安全」样本：String → 'x'、Number → 1、Boolean → true、Array → []、Object → {}。
+ * 不造边界值（空串、负数、非法日期）—— 那是各组件自己的用例该管的事。
+ */
+function samplePropValue(type: unknown): unknown {
+  if (Array.isArray(type)) return samplePropValue(type[0]);
+  if (type === String) return 'x';
+  if (type === Number) return 1;
+  if (type === Boolean) return true;
+  if (type === Array) return [];
+  if (type === Object) return {};
+  if (type === Function) return () => {};
+  return undefined;
+}
+
+/** 从组件定义里取出「该给哪些 prop 赋样本值」 */
+function sampleProps(comp: unknown): Record<string, unknown> {
+  const def = comp as { props?: Record<string, unknown> } | undefined;
+  const propsDef = def?.props ?? {};
+  const out: Record<string, unknown> = {};
+
+  for (const [key, raw] of Object.entries(propsDef)) {
+    // 事件/类名/无障碍属性不参与（它们不是「数据」，赋样本值没有意义）
+    if (key.startsWith('on') || key === 'class' || key === 'id' || key.startsWith('aria')) continue;
+    const type = (raw as { type?: unknown })?.type ?? raw;
+    const value = samplePropValue(type);
+    if (value !== undefined) out[key] = value;
+  }
+
+  return out;
+}
+
 /** 挂载一个组件，返回 { html, error } */
-async function mountOne(comp: unknown): Promise<{ html: string; error: string }> {
+async function mountOne(
+  comp: unknown,
+  props: Record<string, unknown> = {},
+): Promise<{ html: string; error: string }> {
   const host = document.createElement('div');
   document.body.appendChild(host);
 
@@ -47,7 +89,7 @@ async function mountOne(comp: unknown): Promise<{ html: string; error: string }>
   try {
     await createApp({
       setup() {
-        return () => h(comp as never, {}, { default: () => [h('span', null, 'slot')] });
+        return () => h(comp as never, props, { default: () => [h('span', null, 'slot')] });
       },
     } as never).mount(host);
     // 让可能的微任务/异步子组件跑完
@@ -98,6 +140,34 @@ describe('全组件冒烟电池', () => {
       expect(html, `${name} 把对象当字符串写进了 DOM`).not.toContain('[object Object]');
       expect(html, `${name} 残留未替换的占位注释`).not.toMatch(/<!--\s*lyt-/);
       expect(html.trim(), `${name} 渲染为空（用户什么都看不到）`).not.toBe('');
+    });
+  }
+});
+
+/**
+ * 第二遍：把**每一个声明出来的 prop** 都赋一个样本值再挂一次。
+ *
+ * 第一遍（`{}`）只证明「组件能在默认状态下挂上」；这一遍证明「prop 被赋值时不会崩」。
+ * 实测两遍都过 —— 说明 props 路径是健康的（第一遍抓到的 Empty/Spin 是 svg class 的锅，
+ * 与 props 无关）。留着它是因为：**新增 prop 时没人会记得补测试**，而这条会自动覆盖。
+ */
+describe('全组件冒烟电池 · 带声明 props', () => {
+  const names = Object.keys(COMPONENT_STATUS).sort();
+
+  for (const name of names) {
+    if (IMPERATIVE_EXPORTS[name]) continue;
+
+    it(`${name}：所有声明 prop 赋值后仍能挂载`, async () => {
+      const comp = (UI as Record<string, unknown>)[name];
+      const props = sampleProps(comp);
+
+      const { html, error } = await mountOne(comp, props);
+
+      expect(error, `${name} 在 props=${JSON.stringify(Object.keys(props))} 下抛错：${error}`).toBe(
+        '',
+      );
+      expect(html).not.toContain('[object Object]');
+      expect(html).not.toMatch(/<!--\s*lyt-/);
     });
   }
 });
