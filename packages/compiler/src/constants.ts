@@ -72,6 +72,10 @@ export const RENDER_HELPER = 'renderHelper' as const;
 // 代码生成的辅助函数名称映射
 export const helperNameMap: Record<string, string> = {
   CREATE_VNODE: 'createElementVNode',
+  // ⚠️ 2026-10-27 新增（P1）：多根模板的产物是 `createElementVNode(Fragment, ...)`，
+  //   而 `Fragment` 此前**不在 helperNameMap 里** ⇒ 既没被登记为 helper、也就没有 import，
+  //   AOT 产物一执行就 `Fragment is not defined`。
+  FRAGMENT: 'Fragment',
   CREATE_ELEMENT_VNODE: 'createElementVNode',
   CREATE_COMMENT: 'createCommentVNode',
   CREATE_TEXT: 'createTextVNode',

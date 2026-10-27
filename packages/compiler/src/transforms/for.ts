@@ -354,7 +354,12 @@ function matchVForExpression(exp: string): RegExpMatchArray | null {
     if (braceEnd !== -1) {
       const left = trimmed.slice(0, braceEnd + 1).trim();
       const rest = trimmed.slice(braceEnd + 1).trim();
-      const inOfMatch = rest.match(/^(?:,\s*(\w+))?\s+(?:in|of)\s+(.+)$/);
+      // ⚠️ 2026-10-27 修（P1）：`rest` 已经 trim 过，`{ a, b } in list` 的 rest 是
+      //   "in list"（前面没有空白）⇒ 原正则 `\s+(?:in|of)` 要求**至少一个**空白，
+      //   匹配失败后 `matchVForExpression` 返回 null，`transformFor` 直接 return
+      //   ⇒ v-for **整条被静默忽略**（产物里连 renderList 都没有，渲染成 `_ctx.a`）。
+      //   改为 `\s*` 允许零空白。
+      const inOfMatch = rest.match(/^(?:,\s*(\w+))?\s*(?:in|of)\s+(.+)$/);
       if (inOfMatch) {
         return [
           trimmed,
@@ -374,7 +379,12 @@ function matchVForExpression(exp: string): RegExpMatchArray | null {
     if (bracketEnd !== -1) {
       const left = trimmed.slice(0, bracketEnd + 1).trim();
       const rest = trimmed.slice(bracketEnd + 1).trim();
-      const inOfMatch = rest.match(/^(?:,\s*(\w+))?\s+(?:in|of)\s+(.+)$/);
+      // ⚠️ 2026-10-27 修（P1）：`rest` 已经 trim 过，`{ a, b } in list` 的 rest 是
+      //   "in list"（前面没有空白）⇒ 原正则 `\s+(?:in|of)` 要求**至少一个**空白，
+      //   匹配失败后 `matchVForExpression` 返回 null，`transformFor` 直接 return
+      //   ⇒ v-for **整条被静默忽略**（产物里连 renderList 都没有，渲染成 `_ctx.a`）。
+      //   改为 `\s*` 允许零空白。
+      const inOfMatch = rest.match(/^(?:,\s*(\w+))?\s*(?:in|of)\s+(.+)$/);
       if (inOfMatch) {
         return [
           trimmed,

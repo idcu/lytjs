@@ -143,17 +143,12 @@ class ComputedRefImpl<T> {
         try {
           const value = this.effect.run();
 
-          // FIX: P1-02 effect.run() 返回 undefined 时不覆盖缓存，
-          // 避免 getter 返回 undefined 被误认为是有效值而覆盖之前的有效缓存
-          // FIX: P1-3 移除 || this._dirty 条件（在 _dirty 块内恒为 true），
-          // 仅在 value !== undefined 时覆盖缓存
-          // FIX: P2-25 缓存未命中处理优化：即使返回 undefined 也标记为已计算，
-          // 避免重复执行 effect.run()，但保留 _initialized 状态不变
-          if (value !== undefined) {
-            this._value = value as T;
-            this._initialized = true;
-          }
-          // FIX: P2-25 无论 value 是否为 undefined，都标记为 clean 以避免重复计算
+          // ⚠️ 2026-10-27 修（P1）：此前「getter 返回 undefined 时不覆盖缓存，但仍置 clean」
+          //   ⇒ 计算属性一旦返回 undefined，后续读取拿到的是**上一次的旧值**
+          //   （实测：先返回 1，依赖变化后应返回 undefined，实际仍返回 1）。
+          //   `undefined` 是完全合法的计算值，必须照常写入缓存。
+          this._value = value as T;
+          this._initialized = true;
           this._dirty = false;
         } catch (e) {
           // FIX: P2-25 缓存未命中处理优化：异常时如果已有缓存值，保持 clean 状态

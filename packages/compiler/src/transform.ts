@@ -96,6 +96,12 @@ export function transform(root: RootNode, options: TransformOptions = {}): void 
           true,
         );
       } else if (child.type === NodeTypes.INTERPOLATION) {
+        // ⚠️ 2026-10-27 修（P1）：同 Fragment —— `root.helpers` 在函数前段已赋值，
+        //   这里再调 `context.helper()` 不会反映到产物 ⇒ 单插值模板的 AOT 产物
+        //   用了 `toDisplayString` 却没有 import（实测 preamble 为空）。
+        if (!root.helpers.includes('TO_DISPLAY_STRING')) {
+          root.helpers.push('TO_DISPLAY_STRING');
+        }
         root.codegenNode = createCallExpression(context.helper('TO_DISPLAY_STRING'), [
           (child as InterpolationNode).content,
         ]);
@@ -111,7 +117,14 @@ export function transform(root: RootNode, options: TransformOptions = {}): void 
         c.type === NodeTypes.INTERPOLATION,
     );
     if (elements.length > 0) {
+      // 让 `Fragment` 出现在 preamble 的 import 里
+      if (!root.helpers.includes('FRAGMENT')) root.helpers.push('FRAGMENT');
       root.codegenNode = createCallExpression(context.helper('CREATE_VNODE'), [
+        // ⚠️ 2026-10-27 修（P1）：多根模板的产物是 `createElementVNode(Fragment, ...)`，
+        //   但 `Fragment` 既不在 helperNameMap、也没被登记进 root.helpers
+        //   ⇒ preamble 里没有它的 import，AOT 产物一执行就 `Fragment is not defined`。
+        //   注意不能在这里调 `context.helper()`：`root.helpers` 早在函数前段就赋值完了，
+        //   之后的登记不会反映到产物里 —— 只能显式 push。
         createSimpleExpression('Fragment', true),
         createSimpleExpression('null', true),
         createArrayExpression(elements as unknown as JSChildNode[]),

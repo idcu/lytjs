@@ -161,16 +161,42 @@ export function createApp(
           }
 
           // 执行安装 - 检查是否存在 install 方法
+          //
+          // ⚠️ 2026-10-27 修（P1）：`install` 常常是 `async`（例如 `definePlugin` 的默认实现
+          //   内部会 `await` 配置校验）。此前直接丢弃返回值 ⇒ 失败变成
+          //   **unhandledRejection**（Node 默认直接退出进程，浏览器只剩一条 console 记录），
+          //   而且「已安装」标记在真正装完之前就置位了。
+          //   `use()` 是同步 API，不能 await；这里改为「检测 thenable → 完成后才 markInstalled，
+          //   失败则交给 app.config.errorHandler（没配就 error 留痕）」。
+          const finishInstall = (): void => {
+            pluginRegistry.markInstalled(enhancedPlugin.name);
+            if (enhancedPlugin.afterInstall) {
+              enhancedPlugin.afterInstall(app);
+            }
+          };
+
+          let installResult: unknown;
           if (typeof plugin.install === 'function') {
-            plugin.install(app, ...options);
+            installResult = plugin.install(app, ...options);
           }
 
-          // 标记为已安装
-          pluginRegistry.markInstalled(enhancedPlugin.name);
-
-          // 触发 afterInstall 生命周期钩子
-          if (enhancedPlugin.afterInstall) {
-            enhancedPlugin.afterInstall(app);
+          const thenable = installResult as { then?: unknown } | undefined;
+          if (thenable && typeof thenable.then === 'function') {
+            void (installResult as Promise<unknown>).then(finishInstall).catch((err: unknown) => {
+              const e = err instanceof Error ? err : new Error(String(err));
+              const cfg = context.config as { errorHandler?: unknown } | undefined;
+              if (cfg && typeof cfg.errorHandler === 'function') {
+                (cfg.errorHandler as (err: Error, instance: null, info: string) => void)(
+                  e,
+                  null,
+                  `plugin "${enhancedPlugin.name}" install`,
+                );
+              } else {
+                error(`[lytjs] 插件 "${enhancedPlugin.name}" 安装失败: ${e.message}`);
+              }
+            });
+          } else {
+            finishInstall();
           }
         } else {
           // 基础 Plugin 或函数式插件，保持原有行为

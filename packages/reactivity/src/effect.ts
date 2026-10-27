@@ -435,6 +435,12 @@ export class ReactiveEffect<T = unknown> {
       this._cleanups.length = 0;
     }
 
+    // ⚠️ 2026-10-27 修（P1）：此前只跑 `_cleanups`（用户注册的清理函数），
+    //   **没有把自己从旧依赖里摘掉** ⇒ 条件分支切换后旧依赖仍持有该 effect，
+    //   无关的 state 变化也会触发它（实测 deps 只增不减：2 → 3 → 3）。
+    //   Vue 的做法是在每次 run 前 cleanupEffect，让依赖按本轮实际读取重建。
+    cleanupEffect(this);
+
     const prevShouldTrack = shouldTrack;
     try {
       this.parent = activeEffect;

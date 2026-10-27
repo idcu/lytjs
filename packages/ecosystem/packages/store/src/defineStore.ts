@@ -297,7 +297,11 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
       if (options.getters) {
         for (const [key, fn] of Object.entries(options.getters)) {
           const getterFn = fn as (...args: unknown[]) => unknown;
-          const computedSig = computed(() => getterFn.call(thisContext));
+          // ⚠️ 2026-10-27 修（P1）：此前只 `call(thisContext)`、**不传 state**
+          //   ⇒ Pinia 的标准写法 `getters: { double: (state) => state.n * 2 }`
+          //   里 `state` 是 undefined，直接 `TypeError: Cannot read properties of undefined`。
+          //   现在按 Pinia 的签名传 (state, getters, store)。
+          const computedSig = computed(() => getterFn.call(thisContext, state, getters, store));
           Object.defineProperty(getters, key, {
             get: () => computedSig(),
             enumerable: true,

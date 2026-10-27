@@ -54,15 +54,63 @@ const NEW_FUNCTION_ALLOWLIST: Record<string, string> = {
 };
 
 /** 规则 C：`console.log(` 的合法文件（附理由） */
-const CONSOLE_ALLOWLIST: Record<string, string> = {
-  'packages/tools/packages/cli':
-    'CLI 面向用户的输出 + 脚手架**生成**的模板内容（写进用户项目，不是本仓运行日志）',
-  'packages/ecosystem/packages/ssr-kit/packages/hmr':
-    'HMR 客户端日志（浏览器端，用户可见的连接状态）',
-  'packages/ecosystem/packages/devtools': 'DevTools 面板的日志输出',
-  'packages/ecosystem/packages/platform-adapter': '`config.debug` 显式开关门控的调试输出',
-  'packages/renderer/src/vapor/vapor-app.ts': '`__DEV__` 门控的 emit 事件日志',
-  'packages/core/src/plugin-sdk.ts': '`PluginTester`（测试辅助工具）的安装/卸载日志',
+/**
+ * `console.log` 的**按文件计数基线**（棘轮）。
+ *
+ * ⚠️ 2026-10-27 升级：此前是**文件级豁免**（`rel.startsWith(prefix)` 即整文件放行）——
+ *   只要一个文件进过清单，之后往里加多少 `console.log` 都不会被拦。
+ *   实测清单内仍有 29 处（12 个文件），门禁却一直报「✅ 无未清单化命中」。
+ *
+ * 现在改成「文件 → 允许的最大条数」：
+ *   - 新增文件有 `console.log` ⇒ 红；
+ *   - 已登记文件**超出基线** ⇒ 红（并报出超出多少）；
+ *   - 少于基线 ⇒ 只提示「可收紧」，不失败（允许顺手清理）。
+ */
+const CONSOLE_BASELINE: Record<string, { max: number; reason: string }> = {
+  'packages/ecosystem/packages/ssr-kit/packages/hmr/src/index.ts': {
+    max: 7,
+    reason: 'HMR 客户端日志（浏览器端，用户可见的连接状态）',
+  },
+  'packages/tools/packages/cli/src/utils/logger.ts': {
+    max: 5,
+    reason: 'CLI logger 的落盘/落屏实现本身',
+  },
+  'packages/core/src/plugin-sdk.ts': {
+    max: 2,
+    reason: '`PluginTester`（测试辅助工具）的安装/卸载日志',
+  },
+  'packages/ecosystem/packages/platform-adapter/src/create-renderer.ts': {
+    max: 2,
+    reason: '`config.debug` 显式开关门控的调试输出',
+  },
+  'packages/tools/packages/cli/src/commands/create.ts': {
+    max: 2,
+    reason: '脚手架**生成**的模板内容（写进用户项目，不是本仓运行日志）',
+  },
+  'packages/tools/packages/cli/src/commands/plugin.ts': {
+    max: 2,
+    reason: 'CLI 面向用户的输出',
+  },
+  'packages/tools/packages/cli/src/commands/run.ts': {
+    max: 2,
+    reason: 'CLI 面向用户的输出',
+  },
+  'packages/ecosystem/packages/devtools/src/debugEnhancer.ts': {
+    max: 1,
+    reason: 'DevTools 面板的日志输出',
+  },
+  'packages/renderer/src/vapor/vapor-app.ts': {
+    max: 1,
+    reason: '`__DEV__` 门控的 emit 事件日志',
+  },
+  'packages/tools/packages/cli/src/commands/add.ts': {
+    max: 1,
+    reason: '脚手架生成内容',
+  },
+  'packages/tools/packages/cli/src/commands/generate.ts': {
+    max: 1,
+    reason: '脚手架生成内容',
+  },
 };
 
 interface Hit {
@@ -130,12 +178,19 @@ function scanFile(file: string, rel: string): Hit[] {
       hits.push({ rule: 'B new Function(', file: rel, line, snippet: snip });
     }
     if (/console\s*\.\s*log\s*\(/.test(code)) {
-      const allowed = Object.keys(CONSOLE_ALLOWLIST).some((prefix) => rel.startsWith(prefix));
-      if (!allowed) hits.push({ rule: 'C console.log(', file: rel, line, snippet: snip });
+      const entry = consoleByFile.get(rel) ?? { count: 0, lines: [] };
+      entry.count += 1;
+      entry.lines.push(line);
+      consoleByFile.set(rel, entry);
     }
   }
   return hits;
 }
+
+/** 每个文件的 `console.log` 计数（用于与基线比对） */
+const consoleByFile = new Map<string, { count: number; lines: number[] }>();
+/** 基线可以收紧的提示（不失败） */
+const tightenNotices: string[] = [];
 
 const files = walk(PACKAGES);
 const hits: Hit[] = [];
@@ -146,10 +201,44 @@ for (const f of files) {
   hits.push(...scanFile(f, rel));
 }
 
+// ── 规则 C 的基线比对（按文件计数） ─────────────────────────────
+for (const [file, entry] of consoleByFile) {
+  const baseline = CONSOLE_BASELINE[file];
+  if (!baseline) {
+    hits.push({
+      rule: 'C console.log(',
+      file,
+      line: entry.lines[0] ?? 0,
+      snippet: `${entry.count} 处（该文件不在基线中）`,
+    });
+    continue;
+  }
+  if (entry.count > baseline.max) {
+    hits.push({
+      rule: 'C console.log(',
+      file,
+      line: entry.lines[baseline.max] ?? entry.lines[0] ?? 0,
+      snippet: `基线 ${baseline.max} 处，实际 ${entry.count} 处（新增 ${entry.count - baseline.max}）`,
+    });
+  } else if (entry.count < baseline.max) {
+    tightenNotices.push(`${file}: 基线 ${baseline.max} → 实际 ${entry.count}（可收紧）`);
+  }
+}
+
+// 基线里有、但文件已经没有任何 console.log 的条目
+for (const file of Object.keys(CONSOLE_BASELINE)) {
+  if (!consoleByFile.has(file)) tightenNotices.push(`${file}: 已无 console.log（可删除基线条目）`);
+}
+
 console.log(`扫描 ${files.length} 个 .ts 文件（仅 src/）：`);
 console.log(`  规则 A eval( 清单 ${Object.keys(EVAL_ALLOWLIST).length} 项`);
 console.log(`  规则 B new Function( 清单 ${Object.keys(NEW_FUNCTION_ALLOWLIST).length} 项`);
-console.log(`  规则 C console.log( 清单 ${Object.keys(CONSOLE_ALLOWLIST).length} 项`);
+console.log(`  规则 C console.log( 基线 ${Object.keys(CONSOLE_BASELINE).length} 个文件`);
+
+if (tightenNotices.length > 0) {
+  console.log('\nℹ️  基线可收紧（不失败）：');
+  for (const n of tightenNotices) console.log(`   ${n}`);
+}
 
 if (hits.length === 0) {
   console.log('\n✅ 无未清单化的 eval / new Function / console.log');

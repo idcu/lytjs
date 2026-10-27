@@ -4,6 +4,7 @@
 import { describe, it, expect } from 'vitest';
 import { NodeTypes } from '../../src/constants';
 import { transformFor } from '../../src/transforms/for';
+import { compile } from '../../src/index';
 import { createMockContext, runTransform } from './helpers';
 import {
   createElement,
@@ -303,5 +304,30 @@ describe('transformFor', () => {
       // 非解构表达式应该被正确处理
       expect(replaced).toBeDefined();
     });
+  });
+});
+
+// ⚠️ 2026-10-27 新增（P1 回归）：解构式 v-for 此前被**整条静默忽略**
+//
+// 根因：`matchVForExpression` 里 `rest` 已经 trim 过（`{ a, b } in list` 的 rest 是
+// "in list"，前面没有空白），而正则写的是 `\s+(?:in|of)` —— 要求至少一个空白 ⇒
+// 匹配失败 ⇒ `transformFor` 直接 return，产物里连 renderList 都没有，
+// 模板退化成 `_ctx.a`。
+describe('v-for 解构（P1 回归）', () => {
+  it('{ a, b } in list 必须产出 renderList 与解构语句', () => {
+    const { code } = compile('<div v-for="{ a, b } in list">{{ a }}</div>');
+    expect(code).toContain('renderList(_ctx.list');
+    expect(code).toMatch(/const\s*\{\s*a\s*,\s*b\s*\}\s*=/);
+  });
+
+  it('[x, y] in pairs 同样要产出 renderList', () => {
+    const { code } = compile('<div v-for="[x, y] in pairs">{{ x }}</div>');
+    expect(code).toContain('renderList(_ctx.pairs');
+    expect(code).toMatch(/const\s*\[\s*x\s*,\s*y\s*\]\s*=/);
+  });
+
+  it('(item, idx) in list 的既有行为不变', () => {
+    const { code } = compile('<div v-for="(item, idx) in list">{{ item }}</div>');
+    expect(code).toContain('renderList(_ctx.list, (item, idx)');
   });
 });

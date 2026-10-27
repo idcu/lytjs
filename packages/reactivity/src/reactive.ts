@@ -117,8 +117,24 @@ arrayTraverseMethods.forEach((method) => {
     const arr = toRaw(this);
     pauseTracking();
     try {
+      // ⚠️ 2026-10-27 修（P1）：这四个方法**不改变长度**，只重排/覆盖元素。
+      //   此前只 `trigger(ADD, ITERATE_KEY)` ⇒ 只读过 `arr[i]`（SET 依赖）的 effect
+      //   **不会重跑**（实测 effect 只读 arr[0]，sort 后仍看到旧值）。
+      //   现在先快照旧顺序，改完逐下标比较，只对**真正变了**的下标触发 SET。
+      const before = arr.slice();
       const result = originMethod.apply(arr, args);
-      // 只触发一次 ADD 类型的 ITERATE_KEY，这样会同时收集 length 和 ITERATE_KEY 的依赖！
+
+      const len = arr.length;
+      for (let i = 0; i < len; i++) {
+        if (before[i] !== arr[i]) {
+          trigger(arr, TriggerOpTypes.SET, String(i));
+        }
+      }
+      if (before.length !== len) {
+        trigger(arr, TriggerOpTypes.SET, 'length');
+      }
+
+      // 迭代 / length 依赖照旧
       trigger(arr, TriggerOpTypes.ADD, ITERATE_KEY);
       return result;
     } finally {
