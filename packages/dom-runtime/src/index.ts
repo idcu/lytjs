@@ -533,6 +533,16 @@ export function setProperty(el: unknown, key: string, value: unknown): void {
   // FIX: P2-55 使用 Object.prototype.hasOwnProperty 检查属性是否定义在元素自身上，
   // 避免意外触发原型链上的 getter/setter
   const hasOwnProperty = Object.prototype.hasOwnProperty;
+
+  // ⚠️ 2026-10-27 修（安全，P1）：`innerHTML` 走的是「直接赋属性」这条路，
+  //   **完全绕过 sanitizeHTML** —— 而 `setHTML` 是会过滤的。同一个能力两条路径、
+  //   一条安全一条不安全，等于没有防护（调用方只要写 `setProperty(el,'innerHTML',x)`
+  //   就能注入 script / on* 事件属性）。这里把 innerHTML 统一交给 setHTML。
+  if (key === 'innerHTML') {
+    setHTML(el, realValue);
+    return;
+  }
+
   if (PROPERTY_KEYS.has(key) || hasOwnProperty.call(realNode, key)) {
     // 增量更新：值相同时跳过
     if ((realNode as unknown as Record<string, unknown>)[key] === realValue) return;
