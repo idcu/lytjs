@@ -106,6 +106,16 @@ const GATES = [
       '用例一个都不跑（但「Tests N passed」看起来仍像通过）',
   },
   {
+    name: 'check-bundle-size',
+    tier: 'slow',
+    cmd: ['tsx', 'scripts/check-bundle-size.ts'],
+    approx: '~8s',
+    desc:
+      '★ 真实产物体积（esbuild 真打包 + gzip）：vdom-only 与 minimal-app 两条入口的棘轮。' +
+      '单包 dist 体积会低估真实成本 —— createApp 静态带编译器，实测最小 app 约 94 KB gzip',
+    needsDist: true,
+  },
+  {
     name: 'build',
     tier: 'slow',
     cmd: ['pnpm', 'run', 'build'],
