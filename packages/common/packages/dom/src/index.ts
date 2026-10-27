@@ -11,7 +11,13 @@
 
 // ==================== Imports ====================
 
-import { camelToKebab, isSafeAttribute, sanitizeHTML, isBooleanAttr } from '@lytjs/common-string';
+import {
+  camelToKebab,
+  isSafeAttribute,
+  sanitizeHTML,
+  isBooleanAttr,
+  normalizeClass,
+} from '@lytjs/common-string';
 import { warn } from '@lytjs/common-error';
 
 // Global dev flag declaration (injected by build tool)
@@ -95,15 +101,31 @@ export function isSVGTag(tag: string): boolean {
 
 /**
  * Patch the class attribute on an element.
- * Uses String() conversion for robust null/undefined handling.
+ *
+ * ## ⚠️ 2026-10-27 修（P0）：两处都是真崩过的
+ *
+ * ### ① SVG 元素上 `className` 是**只读**的
+ *
+ * `SVGElement.className` 是 `SVGAnimatedString`（不是字符串），赋值直接抛
+ * `TypeError: Cannot set property className of [object SVGElement] which has only a getter`。
+ * 而 `<svg class="icon">` 是最常见的写法之一 —— 实测 `<Empty />` 与 `<Spin />`
+ * **挂载即崩**（两者都渲染 svg 图标），且异常会中断整棵树的挂载。
+ * 改用 `setAttribute('class', …)`：对 HTML 与 SVG 语义一致。
+ *
+ * ### ② `String(next)` 会把对象/数组形态变成 `[object Object]`
+ *
+ * `:class="{ active: isActive }"` / `:class="['a', b]"` 是标准写法，
+ * 旧实现 `String({active:true})` → 字面量 `[object Object]` 写进 DOM。
+ * 改用 `@lytjs/common-string` 的 `normalizeClass`（本包已依赖它，不新增依赖边），
+ * 与 `@lytjs/dom-runtime` 的 `setClass` 共用同一份归一化逻辑，避免两套实现分叉。
  */
 export function patchClass(el: Element, prev: unknown, next: unknown): void {
-  const el_ = el as HTMLElement;
-  const prevClass = prev == null ? '' : String(prev);
-  const nextClass = next == null ? '' : String(next);
-  if (prevClass !== nextClass) {
-    el_.className = nextClass;
-  }
+  const prevClass = normalizeClass(prev as never);
+  const nextClass = normalizeClass(next as never);
+  if (prevClass === nextClass) return;
+
+  // 不用 `el.className = …`：SVG 上是只读的（见上）
+  el.setAttribute('class', nextClass);
 }
 
 // ==================== patchStyle ====================

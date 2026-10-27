@@ -588,3 +588,57 @@ describe('@lytjs/common-dom', () => {
     });
   });
 });
+
+// ⚠️ 2026-10-27 新增（P0 回归）：`patchClass` 的两处真崩
+//
+// ① SVG 元素上 `className` 是**只读**的（`SVGAnimatedString`），赋值直接抛
+//    `TypeError: Cannot set property className of [object SVGElement] which has only a getter`。
+//    而 `<svg class="icon">` 是最常见的写法之一 —— 实测 UI 的 `<Empty />` 与 `<Spin />`
+//    （都渲染 svg 图标）**挂载即崩**，且异常中断整棵树的挂载。
+// ② `String({active:true})` → 字面量 `[object Object]` 写进 DOM，
+//    而 `:class="{ active: x }"` / `:class="['a', b]"` 是标准写法。
+describe('patchClass（P0 回归）', () => {
+  it('SVG 元素上设置 class 不得抛错', () => {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+
+    expect(() => patchClass(svg, null, 'icon')).not.toThrow();
+    expect(svg.getAttribute('class')).toBe('icon');
+  });
+
+  it('SVG 上更新与清除 class 同样安全', () => {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    patchClass(svg, null, 'a');
+    expect(() => patchClass(svg, 'a', 'b')).not.toThrow();
+    expect(svg.getAttribute('class')).toBe('b');
+    expect(() => patchClass(svg, 'b', null)).not.toThrow();
+    expect(svg.getAttribute('class')).toBe('');
+  });
+
+  it('对象形态的 class 不得变成 [object Object]', () => {
+    const el = document.createElement('div');
+    patchClass(el, null, { active: true, off: false });
+    expect(el.getAttribute('class')).toBe('active');
+    expect(el.className).not.toContain('[object Object]');
+  });
+
+  it('数组形态的 class 应拼接（可嵌套对象）', () => {
+    const el = document.createElement('div');
+    patchClass(el, null, ['a', ['b'], { c: true, d: false }]);
+    expect(el.getAttribute('class')).toBe('a b c');
+  });
+
+  it('值未变化时不重写属性（保持增量语义）', () => {
+    const el = document.createElement('div');
+    el.setAttribute('class', 'x');
+    const before = el.getAttribute('class');
+    patchClass(el, 'x', 'x');
+    expect(el.getAttribute('class')).toBe(before);
+  });
+
+  it('null / false 归一化为空串（不写入 "false" 字面量）', () => {
+    const el = document.createElement('div');
+    patchClass(el, null, false);
+    // 空串与「从未设置」等价 ⇒ 增量更新会 early-return，属性不存在
+    expect(el.getAttribute('class') ?? '').toBe('');
+  });
+});

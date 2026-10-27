@@ -262,7 +262,12 @@ export function normalizeClass(
     return result.join(' ');
   }
 
-  return '';
+  // ⚠️ 2026-10-27 修：此前这里是 `return ''`，把**数字等原始值**直接丢掉了
+  //   （签名里明明写了 `number`）。`class={123}` 在 Vue 里得到 '123'，
+  //   而 `@lytjs/common-dom` 的既有用例也明确锁定这个行为
+  //   （`patchClass > should convert non-string values via String()`）。
+  //   `false` / `0` / `''` 已在函数开头的 `if (!value)` 里归零，不会走到这里。
+  return String(value);
 }
 
 /**
