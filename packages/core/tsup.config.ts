@@ -1,7 +1,8 @@
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
-  entry: { index: 'src/index.ts' },
+  // `index` = 含运行时模板编译器；`runtime` = 不含（AOT / SSR / 手写 render 用）
+  entry: { index: 'src/index.ts', runtime: 'src/runtime.ts' },
   format: ['esm', 'cjs'],
   dts: true,
   sourcemap: true,

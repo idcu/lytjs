@@ -3,21 +3,24 @@
 // Phase 1.15-1.17: 全应用 Hydration、选择性 Hydration、水合错误恢复
 
 /**
- * 关于本文件里对 `@lytjs/core` 的处理（踩过两次坑，勿轻易改动）：
+ * 关于本文件与 `@lytjs/core` 的关系（2026-10-27 已彻底断开）
  *
- * renderer 与 core 是**双向**关系 —— core 运行时依赖 renderer；而这里需要动态 import core。
- * renderer 的 tsconfig 的 `paths` **没有映射** `@lytjs/core`，于是：
- *   · `tsc` 解析到 `core/dist/index.mjs`（无声明）⇒ **TS7016**
- *   · `tsup` 的 DTS 构建用另一套模块解析、能找到类型 ⇒ **没有该错误**
- * ⇒ 同一处代码，`@ts-expect-error` 在 tsc 下「有用」（消耗 7016）、在 DTS 下「多余」（TS2578），
- *   两边结论相反，删也错、留也错。
+ * 历史：本文件曾有 4 处 `await import('@lytjs/core')` 来拿 `createApp`，
+ * 并因此需要 `src/types/lytjs-core.d.ts` 给 core 打一份最小模块声明
+ * （否则 tsc 报 TS7016、而 tsup 的 DTS 构建又不报 —— 两套检查结论相反，
+ *   `@ts-expect-error` 删也错留也错）。那份声明文件已随本次修复删除。
  *
- * 解法：在 `src/types/lytjs-core.d.ts` 里给出**模块声明**（独立 .d.ts，不是模块增强），
- *       让两套检查拿到同一份类型（不再使用任何压制指令）。
- *   - 不能改成 `Parameters<typeof import('@lytjs/core').createApp>[0]`：该类型会进入本文件
- *     导出的签名 ⇒ renderer 的 .d.ts 依赖 core ⇒ core 构建时**循环失败**（实测）。
- *   - 不能移除本声明：动态 import 会重新触发 TS7016。
+ * 现在：renderer **不再引用 core**，改为从 `@lytjs/component` 的注入缝取
+ * `getAppFactory()`（core 在**首次调用 `createApp` 时**注入）。
+ *   · 依赖方向恢复单向：core → renderer（component 是共同下层）
+ *   · renderer 的 package.json 里那个**幽灵依赖**（从未声明过 core）消失
+ *   · `@lytjs/core/runtime` 得以把编译器 tree-shake 掉（实测 98.5 → 80.2 KB gzip）
+ *
+ * ⚠️ 若将来要在本包里用 core 的**类型**：不要在导出的签名里写
+ *    `Parameters<typeof import('@lytjs/core').createApp>[0]` —— 那会让 renderer 的
+ *    .d.ts 反向依赖 core，而 core 构建顺序在 renderer 之后 ⇒ 循环构建失败（实测过）。
  */
+
 // ============================================================
 // 水合标记属性（**唯一真相源**）
 // ============================================================
@@ -38,6 +41,31 @@ const HYDRATE_ATTR = 'data-hydrate';
 const LEGACY_HYDRATE_ATTR = 'data-ssr-id';
 
 type App = unknown;
+
+/**
+ * 尽力创建一个 App 实例。
+ *
+ * 为什么不是「没有就抛」：`hydrateApp` 的**主职责是水合 DOM**，返回的 `app`
+ * 只是一个句柄（本模块内部并不使用它 —— `performHydration` 不接收 app）。
+ * 为它硬抛会让「只 import renderer 做水合」的用法直接不可用。
+ *
+ * 因此：注入了工厂（正常路径，`@lytjs/core` 的 `createApp` 被调用过）⇒ 返回真 app；
+ * 未注入 ⇒ 返回 `null` 并在 DEV 告警（提示 `import { createApp } from '@lytjs/core'`）。
+ */
+function tryCreateApp(component: unknown): App {
+  if (!hasAppFactory()) {
+    if (__DEV__) {
+      warn(
+        '[LytJS] 未注入 App 工厂，`hydrateApp` 返回的 app 为 null（水合本身不受影响）。' +
+          "如需 app 句柄，请 `import { createApp } from '@lytjs/core'` 并至少调用一次。",
+      );
+    }
+    return null;
+  }
+  return getAppFactory()(component);
+}
+
+import { getAppFactory, hasAppFactory } from '@lytjs/component';
 type Component = unknown;
 import { warn } from '@lytjs/common-error';
 // ⚠️ 2026-10-02：`hydrateApp` 此前是「DOM 遍历占位」——只数节点 + 摘 `on*` 属性，
@@ -162,16 +190,14 @@ export async function hydrateApp(
   // 检查是否已经 Hydration
   if (containerEl.hasAttribute('data-hydrated')) {
     warn('[LytJS] Container already hydrated');
-    const { createApp } = await import('@lytjs/core');
     return {
-      app: createApp(component),
+      app: tryCreateApp(component),
       stats,
     };
   }
 
   // 创建应用实例
-  const { createApp } = await import('@lytjs/core');
-  const app = createApp(component);
+  const app = tryCreateApp(component);
 
   // 执行 Hydration
   try {
@@ -421,8 +447,7 @@ export async function hydrateVisible(
   };
 
   const startTime = performance.now();
-  const { createApp } = await import('@lytjs/core');
-  const app = createApp(component);
+  const app = tryCreateApp(component);
 
   // 使用 IntersectionObserver 检测可见性
   // ★ 2026-10-16：`IntersectionObserver` 在 **Node/jsdom 与旧 Safari 下缺失**（探针实测 undefined）
@@ -736,9 +761,8 @@ export async function safeHydrate(
     if (containerEl) {
       // 清空容器并重新渲染
       containerEl.innerHTML = '';
-      const { createApp } = await import('@lytjs/core');
-      const app = createApp(component);
-      app.mount(containerEl);
+      const app = tryCreateApp(component) as { mount(el: unknown): unknown } | null;
+      app?.mount(containerEl);
 
       return {
         app,

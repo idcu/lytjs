@@ -21,6 +21,10 @@ export type { InjectOptions } from './component';
 // `@lytjs/core` 通过 setTemplateCompiler 注入运行时模板编译能力，使
 // `options.template` 可用；component 本身**不依赖** @lytjs/compiler。
 export { setTemplateCompiler, getTemplateCompiler } from './component-init';
+// ⚠️ 2026-10-27 新增：App 工厂注入缝。`@lytjs/core` 注入、`@lytjs/renderer` 消费 ——
+//   用来切断 renderer → core 的反向依赖（幽灵依赖 + 循环 + 体积污染）。
+export { setAppFactory, getAppFactory, hasAppFactory } from './app-factory';
+export type { AppFactory, AppLike } from './app-factory';
 
 // Props
 /** Props 规范化与校验 */

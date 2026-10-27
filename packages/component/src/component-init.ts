@@ -51,8 +51,9 @@ function resolveTemplateRender(type: Record<string, unknown>): RenderFunction {
     if (__DEV__) {
       warn(
         `组件 "${(type.name as string) || '(anonymous)'}" 提供了 template，但没有可用的模板编译器。` +
-          `请从 '@lytjs/core' 导入 createApp（它会自动注入编译器），` +
-          `或显式调用 setTemplateCompiler()。`,
+          `两种修法：① 从 '@lytjs/core'（而非 '@lytjs/core/runtime'）导入 createApp —— 它会自动注入编译器；` +
+          `② 若你确实要用手写 render / AOT 预编译，请去掉 template 选项；` +
+          `③ 或显式调用 setTemplateCompiler() 注入自己的实现。`,
       );
     }
     return (() => null as unknown as VNode) as RenderFunction;

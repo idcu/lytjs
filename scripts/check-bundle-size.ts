@@ -7,13 +7,24 @@
  * 但用户实际交付的是**打包后的 app**：`createApp` 静态依赖 `@lytjs/compiler`
  * （运行时模板编译），所以一个最小应用的真实体积远大于单包数字。
  *
- * 实测（本脚本，2026-10-27）：
- *   - 最小 app（createApp + h + ref + computed）→ **约 94 KB gzip**
- *   - 只用 `@lytjs/vdom` 的 `createVNode` + `h`     → **约 1.6 KB gzip**
+ * 实测（本脚本，2026-10-27 整改后）：
+ *   - `@lytjs/core` 只取 `ref/computed/h`（不调 createApp）→ **8.9 KB gzip**
+ *   - `@lytjs/core` 的 `createApp`（支持 template）        → **82.5 KB gzip**
+ *   - `@lytjs/core/runtime` 的 `createApp`（不含编译器）    → **80.5 KB gzip**
+ *   - 只用 `@lytjs/vdom` 的 `createVNode` + `h`             → **1.6 KB gzip**
  *
- * 也就是说：「极致轻量」只在**不用 createApp** 时成立；用了 `createApp` 就必然带上编译器。
- * 这不是 bug，是「运行时编译」这一架构选择的代价 —— 但必须**被测量、被盯住**，
- * 否则包体会在一次次的「顺手加个依赖」里悄悄膨胀。
+ * ## 三个数字分别锁住什么
+ *
+ * - **barrel-only 8.9 KB**：锁「顶层副作用不能拖垮 tree-shaking」。
+ *   整改前，`create-app.ts` 模块顶层那句 `setTemplateCompiler(...)` 是一条有副作用的
+ *   顶层语句 ⇒ 打包器无法删除 ⇒ 只 import 一个 `ref` 也会把 createApp + renderer +
+ *   compiler 全部拖进来（实测 82 KB）。现在注入挪进函数体，这条降到 8.9 KB。
+ * - **minimal-app vs runtime-app**：锁「两个入口的分工」。
+ *   ⚠️ 目前两者只差 2 KB，因为 `@lytjs/renderer` 的 `signal-renderer.ts` **静态** import 了
+ *   编译器，而 renderer 从 core 的 `createApp` 动态可达。这项留作下一批（见评估报告）。
+ * - **vdom-only 1.6 KB**：锁「不用 createApp 时的极致轻量」这条卖点。
+ *
+ * 包体必须**被测量、被盯住**，否则会在一次次的「顺手加个依赖」里悄悄膨胀。
  *
  * ## 判据
  *
@@ -53,14 +64,35 @@ export { createVNode, h };`,
     budget: 1800,
   },
   {
+    name: 'barrel-only',
+    scenario:
+      '只从 `@lytjs/core` 取 `ref/computed/h`（**不调** createApp）—— 锁 tree-shaking 不被顶层副作用拖垮',
+    contents: `import { ref, computed, h } from '@lytjs/core';
+const count = ref(0);
+const double = computed(() => count.value * 2);
+export { count, double, h };`,
+    budget: 9_500,
+  },
+  {
     name: 'minimal-app',
-    scenario: '`createApp` + `h` + `ref` + `computed`（最典型的起步用法）',
+    scenario: '`createApp` + `h` + `ref` + `computed`（最典型的起步用法，主入口）',
     contents: `import { createApp, h, ref, computed } from '@lytjs/core';
 const count = ref(0);
 const double = computed(() => count.value * 2);
 export const app = createApp({ render: () => h('div', null, [String(count.value), String(double.value)]) });
 export { count, double };`,
-    budget: 100_000,
+    budget: 85_000,
+  },
+  {
+    name: 'runtime-app',
+    scenario:
+      '`createApp` 来自 `@lytjs/core/runtime`（不含运行时模板编译器；靠 AOT 预编译 / 手写 render）',
+    contents: `import { createApp, h, ref, computed } from '@lytjs/core/runtime';
+const count = ref(0);
+const double = computed(() => count.value * 2);
+export const app = createApp({ render: () => h('div', null, [String(count.value), String(double.value)]) });
+export { count, double };`,
+    budget: 83_000,
   },
 ];
 

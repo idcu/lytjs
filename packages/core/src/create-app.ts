@@ -30,24 +30,26 @@ import {
   callBeforeUnmountHook,
   initProps,
   initSlots,
-  setTemplateCompiler,
+  setAppFactory,
+  hasAppFactory,
 } from '@lytjs/component';
 import type {
   AppContext as ComponentAppContext,
   ComponentInternalInstance,
 } from '@lytjs/component';
 import type { SignalRenderer } from '@lytjs/renderer';
-import { compileTemplateToRender } from './template-compiler';
-
 // ---------------------------------------------------------------------------
-// 注入运行时模板编译能力（幂等）
+// ⚠️ 2026-10-27 改（P1-N）：**本模块不再 import `./template-compiler`**。
 //
-// `@lytjs/component` 不硬依赖 `@lytjs/compiler`，`options.template` 的支持
-// 由 core 提供实现（core 已依赖 compiler）。放在模块级：本模块只加载一次；
-// 且只要用户调用 createApp，注入必然已完成。
-// 修复前 `createApp({ setup, template })` 会静默渲染空白（P0）。
+// 原因：`template-compiler.ts` 静态 `import { compile } from '@lytjs/compiler'`，
+//   而本模块是 `createApp` 的实现 ⇒ 任何 `import { createApp } from '@lytjs/core'`
+//   的应用都会被强制打上 52 KB 编译器（实测最小 app 94.3 KB gzip）。
+//
+// 现在注入点移到 `./create-app-with-compiler.ts`：
+//   · 主入口 `@lytjs/core` 的 `createApp` 来自那个模块（含编译器，`template` 可用）；
+//   · 新入口 `@lytjs/core/runtime` 直接用本模块（不含编译器，需 AOT 预编译）。
+// 这样「只用 ref/h、不调 createApp」的包也能被完整 tree-shake 掉编译器。
 // ---------------------------------------------------------------------------
-setTemplateCompiler(compileTemplateToRender);
 
 let createSignalRenderer:
   | ((template: string, ctx: Record<string, unknown>) => Promise<SignalRenderer>)
@@ -73,11 +75,37 @@ async function getDOMRenderer() {
   return createDOMRenderer;
 }
 
+/**
+ * 注入 App 工厂（供 `@lytjs/renderer` 的 `hydrateApp` / `hydrateVisible` / `safeHydrate`）。
+ *
+ * ⚠️ 2026-10-27（P1-N 前置）：此前 renderer 里写的是 `await import('@lytjs/core')`
+ *   来拿 `createApp` —— **分层倒置**（renderer 是 core 的下层）+ **幽灵依赖**
+ *   （renderer 的 package.json 从未声明 core，严格安装下直接解析不到）。
+ *   现在方向反转：core 注入，renderer 从注入缝取用。
+ *
+ * ⚠️ 注册点为什么在 `createApp` 体内、而不是模块顶层：
+ *   模块顶层的 `setAppFactory((c) => createApp(c))` 是一条**有副作用的顶层语句**，
+ *   它会强制把整个 `create-app` 模块（以及它动态 import 的 renderer）留在产物里 ——
+ *   实测「只 `import { ref } from '@lytjs/core'`」的最小包从 8.9 KB 涨到 82 KB gzip。
+ *   放进函数体后，未使用 `createApp` 的包可以把它完整 tree-shake 掉。
+ *
+ * 代价：`hydrateApp` 若在**从未调用过 `createApp`** 的情况下被使用，拿到的 `app` 为 null
+ *   （水合本身不受影响，见 renderer 的 `tryCreateApp`）。
+ */
+function installAppFactoryOnce(): void {
+  if (!hasAppFactory()) {
+    setAppFactory((component) => createApp(component as never));
+  }
+}
+
 export function createApp(
   rootComponent: Component,
   rootProps: Record<string, unknown> | null = null,
   options?: AppOptions,
 ): App {
+  // 注册 App 工厂（幂等，仅首次生效）—— 供 renderer 的水合 API 取用。
+  installAppFactoryOnce();
+
   // FIX: P2-36 全局配置继承机制：
   // 如果提供了父 app context，子 app 继承父 app 的全局配置
   const context = createAppContext();
