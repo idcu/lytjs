@@ -48,7 +48,15 @@ describe('transformIf', () => {
       const root = createRoot([ifElement, elseElement]);
       const context = createMockContext({ parent: root });
 
+      // ⚠️ 2026-10-28 契约变更：条件链由**链尾**构建（见 if.ts 的 chainEnd）。
+      //
+      // 原因：链首的 exit 早于后面分支的遍历 ⇒ 那时分支的 codegenNode 还没生成，
+      // 手调 transformElement 兜底又会丢掉分支内部的**元素**子节点（P0）。
+      // 推到链尾后，所有分支的 codegenNode 都已就绪。
+      //
+      // 因此单测必须像真实遍历那样**按顺序驱动每个分支**，而不是只跑链首。
       runTransform(transformIf, ifElement, context);
+      runTransform(transformIf, elseElement, context);
 
       // 两个元素被合并为一个条件表达式
       expect(root.children).toHaveLength(1);
@@ -75,7 +83,10 @@ describe('transformIf', () => {
       const root = createRoot([el1, el2, el3]);
       const context = createMockContext({ parent: root });
 
+      // 同上的契约变更：按遍历顺序驱动整条链
       runTransform(transformIf, el1, context);
+      runTransform(transformIf, el2, context);
+      runTransform(transformIf, el3, context);
 
       expect(root.children).toHaveLength(1);
       expect(root.children[0]?.type).toBe(NodeTypes.JS_CONDITIONAL_EXPRESSION);

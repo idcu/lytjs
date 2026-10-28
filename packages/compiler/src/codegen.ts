@@ -26,6 +26,7 @@ import type {
 import { helperNameMap } from './constants';
 import { SourceMapGenerator } from './source-map';
 import { prefixIdentifiers } from './prefix-identifiers';
+import { FRAGMENT_SENTINEL } from './transforms/transform-element';
 
 // ============================================================
 // 主生成函数
@@ -291,7 +292,11 @@ function genVNodeCall(node: VNodeCall, context: CodegenContext): void {
   // 标签
   // 组件标签也要前缀化：产物是 `function render(_ctx, _cache)`，
   // `createBlock(Child, ...)` 里的裸标识符在运行时不存在（应为 `_ctx.Child`）。
-  if (node.isComponent && typeof tag === 'string') {
+  if (tag === FRAGMENT_SENTINEL) {
+    // `<template>` → `createVNode(Fragment, …)`（见 transform-element 的 isTemplateTag）。
+    // 这里走 `helper('FRAGMENT')`：既登记 import，又保证产物里是 `Fragment` 而不是字符串。
+    context.push(context.helper('FRAGMENT'), node);
+  } else if (node.isComponent && typeof tag === 'string') {
     context.push(prefixIdentifiers(tag, context.locals), node);
   } else {
     genNodeExpr(tag, context);

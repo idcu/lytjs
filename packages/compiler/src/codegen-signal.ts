@@ -4,6 +4,7 @@
 import { NodeTypes, ElementTypes } from './constants';
 import { buildItemComponentProps } from './codegen-signal-optimized';
 import { prefixIdentifiers } from './prefix-identifiers';
+import { FRAGMENT_SENTINEL } from './transforms/transform-element';
 import type {
   RootNode,
   ElementNode,
@@ -1207,9 +1208,15 @@ function serializeBranchHTML(
   if (branch.type === NodeTypes.VNODE_CALL) {
     const vnode = branch as VNodeCall;
     if (typeof vnode.tag === 'string') {
-      const tag = vnode.tag.replace(/^"|"$/g, '');
-      // FIX: P1-S6: 验证动态组件名
-      validateComponentName(tag, 'v-for dynamic component');
+      const rawTag = vnode.tag.replace(/^"|"$/g, '');
+      // `<template>` 的 Fragment 哨兵：signal 模式不支持 Fragment（见上文的说明），
+      // 这里按字面量 `template` 元素序列化，并且**跳过组件名校验**
+      //（哨兵名带下划线，会被 VALID_COMPONENT_NAME 判为非法）。
+      const tag = rawTag === FRAGMENT_SENTINEL ? 'template' : rawTag;
+      if (rawTag !== FRAGMENT_SENTINEL) {
+        // FIX: P1-S6: 验证动态组件名
+        validateComponentName(tag, 'v-for dynamic component');
+      }
       let attrs = '';
       // 从 props 中提取静态属性
       if (vnode.props && vnode.props.type === NodeTypes.JS_OBJECT_EXPRESSION) {
@@ -1810,7 +1817,16 @@ export function serializeVNodeCall(
   if (childrenCode === null) return null;
 
   // 组件 tag 是**裸名**（如 `Inner`）必须前缀化；HTML 标签已是 JSON 字符串（如 `"div"`）
-  const tagCode = (vn as { isComponent?: boolean }).isComponent ? `${prefix}${vn.tag}` : vn.tag;
+  //
+  // ⚠️ 2026-10-28：`<template>` 在 **VNode 模式**下编译成 `Fragment`（见 transform-element
+  //   的 isTemplateTag），但那用的是 vnode 侧的哨兵常量；**signal 模式的渲染器完全没有
+  //   Fragment 概念**（`createSignalRenderer` 走 dom-runtime 的模板槽位），
+  //   把哨兵原样透出去会让组件名校验抛错（实测：`Invalid component name in v-for
+  //   dynamic component: "__LYTJS_FRAGMENT__"`）。
+  //   因此这里退回旧行为（字面量 `template` 元素），并记在报告里：
+  //   **signal 模式暂不支持 Fragment**，`<template v-if>` 在该模式下内容不可见。
+  const rawTag = vn.tag === FRAGMENT_SENTINEL ? JSON.stringify('template') : vn.tag;
+  const tagCode = (vn as { isComponent?: boolean }).isComponent ? `${prefix}${vn.tag}` : rawTag;
 
   return `createVNode(${tagCode},${propsCode},${childrenCode})`;
 }

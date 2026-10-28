@@ -56,6 +56,16 @@ export function transformIf(
     let chainStart = currentIndex;
     for (let i = currentIndex - 1; i >= 0; i--) {
       const sibling = siblings[i];
+      // 跳过**纯空白**的 TEXT（模板缩进）—— 与下面正向扫描的规则一致。
+      // ⚠️ 2026-10-28：不跳过时，`<i v-if>…</i>\n<i v-else>…</i>`（多行书写，
+      //   实际模板几乎都是这样）会让反向扫描在换行处 `break` ⇒ 链尾找不到链首
+      //   ⇒ v-else 被当成「独立分支」构造成 `(true ? 分支 : null)`
+      //   ⇒ **v-if 的条件与另一分支一起丢失**（实测 slots demo 的用例变红）。
+      if (sibling && sibling.type === NodeTypes.TEXT) {
+        const text = (sibling as { content?: unknown }).content;
+        if (typeof text !== 'string' || !text.trim()) continue;
+        break;
+      }
       if (sibling && sibling.type === NodeTypes.ELEMENT) {
         const sibElement = sibling as ElementNode;
         const hasIf = !!findDirective(sibElement, 'if');
@@ -71,7 +81,13 @@ export function transformIf(
           // v-else 后面不应该有 v-if，这是错误用法，但停止查找
           break;
         } else if (hasIf) {
-          // 遇到独立的 v-if，这是新链的开始，停止查找
+          // 遇到 v-if ⇒ 它就是链首。
+          //
+          // ⚠️ 2026-10-28：此前这里只 `break`、不改 chainStart —— 因为链是由
+          //   **v-if 节点自己**在 exit 时构建的，它天然知道自己在链首。
+          //   现在改为「由链尾构建」（见下面的 chainEnd），链尾必须能找回链首，
+          //   所以这里要显式记下来。
+          chainStart = i;
           break;
         } else {
           // 没有条件指令，停止查找
@@ -81,6 +97,37 @@ export function transformIf(
         break;
       }
     }
+
+    // 计算链尾：从 chainStart 向后，连续收集 v-else-if / v-else 的兄弟。
+    //
+    // ⚠️ 2026-10-28 修（P0）：此前链是由**链首（v-if 节点）**在它自己的 exit 里构建的，
+    //   而那时后面的分支兄弟**还没被遍历** ⇒ 它们的 `codegenNode` 尚未生成 ⇒
+    //   `transformElement` 只能靠手调兜底，而手调时**分支内部的子元素也没有 codegenNode**
+    //   ⇒ 整片丢失。实测：
+    //     <p v-if="ok"><b>A</b></p><p v-else><i>B</i></p>
+    //       → createElementVNode("p", null, createElementVNode("b", …)) : createElementVNode("p", null)
+    //   即 **v-else 分支里的元素子节点被静默丢弃**（文本子节点侥幸存活，
+    //   因为字符串不需要子节点 codegen）—— 又一次「一半能用」。
+    //
+    //   修法：把构建时机推到**链尾**。链尾的 exit 一定发生在所有前序兄弟的 exit 之后，
+    //   此时每个分支的 codegenNode 都已就绪，直接取用即可，无需手调 transformElement。
+    let chainEnd = chainStart;
+    for (let i = chainStart + 1; i < siblings.length; i++) {
+      const sib = siblings[i];
+      if (!sib) break;
+      if (sib.type === NodeTypes.TEXT) {
+        const text = (sib as { content?: unknown }).content;
+        if (typeof text !== 'string' || !text.trim()) continue;
+        break;
+      }
+      if (sib.type !== NodeTypes.ELEMENT) break;
+      const el = sib as ElementNode;
+      if (!findDirective(el, 'else-if') && !findDirective(el, 'else')) break;
+      chainEnd = i;
+    }
+
+    // 还没走到链尾 ⇒ 交给链尾那次 exit 统一构建
+    if (currentIndex !== chainEnd) return;
 
     // 构建条件链
     let conditional: JSConditionalExpression | undefined;
@@ -129,13 +176,16 @@ export function transformIf(
           ),
       );
 
-      // 转换元素（不含 v-if）
-      const savedParent = context.parent;
-      context.parent = parent;
-      try {
-        transformElement(sibElement, context, { sync: true });
-      } finally {
-        context.parent = savedParent;
+      // 分支元素此时应已有 codegenNode（链尾的 exit 晚于所有前序兄弟）。
+      // 兜底：万一遍历顺序变了，仍手动转一次（对纯文本分支有效）。
+      if (!sibElement.codegenNode) {
+        const savedParent = context.parent;
+        context.parent = parent;
+        try {
+          transformElement(sibElement, context, { sync: true });
+        } finally {
+          context.parent = savedParent;
+        }
       }
 
       if (!sibElement.codegenNode) continue;

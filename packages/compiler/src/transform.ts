@@ -194,6 +194,7 @@ function createTransformContext(root: RootNode, options: TransformOptions): Tran
     // 漏掉任何一个字段都会让对应 transform 静默失效 ——
     // scopeId 漏掉时，`transformScoped` 直接 return，scoped CSS 端到端失效。
     scopeId: options.scopeId ?? undefined,
+    rendererMode: options.rendererMode ?? 'vnode',
     // ⚠️ 同上：指令转换注册表也必须显式透传（2026-10-10 补）。
     // 漏掉它 ⇒ `compile({ directiveTransforms })` 这个公开选项**静默失效**。
     directiveTransforms: options.directiveTransforms,

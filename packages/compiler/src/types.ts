@@ -401,6 +401,15 @@ export interface TransformContext {
    */
   scopeId?: string;
   /**
+   * 渲染器模式（`vnode` / `signal` / `vapor`）。
+   *
+   * ⚠️ 2026-10-28 新增：与 `scopeId` **同族**的坑 —— 只存在于 `TransformOptions`、
+   * 没进 `TransformContext`，于是 transform 层拿不到它，无法做「按目标渲染器分派」的判断。
+   * 当前唯一用途：**signal / vapor 模式已经支持具名插槽**（`mountComponent(…, {header})`），
+   * 不能在那种模式下发「插槽尚未实现」的告警（否则是假警报）。
+   */
+  rendererMode?: 'vnode' | 'signal' | 'vapor';
+  /**
    * 指令转换注册表 —— **用户自定义指令的扩展点**。
    *
    * ⚠️ 与上面 `scopeId` **同族**的坑（2026-10-10 修复）：本字段此前只存在于

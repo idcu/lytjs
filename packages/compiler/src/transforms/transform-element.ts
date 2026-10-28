@@ -14,6 +14,7 @@
  */
 
 import { NodeTypes, ElementTypes, PatchFlags } from '../constants';
+import { warn } from '@lytjs/common-error';
 import type {
   ElementNode,
   InterpolationNode,
@@ -66,6 +67,8 @@ function hasCodegenNode(
  * 需要同步拿到结果的调用方（v-if 链 / v-for / v-once / v-memo 会在自己的
  * 转换里立刻读取 `element.codegenNode`）请传 `{ sync: true }`。
  */
+export const FRAGMENT_SENTINEL = '__LYTJS_FRAGMENT__';
+
 export function transformElement(
   node: ElementNode,
   context: TransformContext,
@@ -104,6 +107,23 @@ function buildElementCodegen(node: ElementNode, context: TransformContext): void
 
   const isComponent = node.tagType === ElementTypes.COMPONENT;
 
+  // ⚠️ 2026-10-28：具名 / 作用域插槽**尚未实现**，但语法能被解析（`#header` → `v-slot:header`）。
+  //   此前它被静默当成普通属性 ⇒ 产物里出现字面量 `<template #header>` 元素，
+  //   插槽内容既不进 `header` 也不进 `default`（`<template>` 是惰性元素，内容不可见）。
+  //   现在至少**说出来**：告警 + 可操作的替代写法。
+  //
+  //   为什么不是「顺手实现」：需要 AST 的 JS_FUNCTION_EXPRESSION 节点 + codegen 支持
+  //   + 作用域参数登记为局部绑定（否则 `#default="{ item }"` 里的 `item` 会被改写成
+  //   `_ctx.item`），是编译器的一个独立特性，不适合夹在缺陷修复里做半套。
+  if (isComponent) {
+    // ⚠️ 只在 **vnode 模式**告警：signal / vapor 的 codegen 已经支持具名插槽
+    //   （产物是 `mountComponent(_ctx.Card, {}, el, { header: () => [...] })`），
+    //   在那些模式里发「尚未实现」是**假警报**（实测会把 slots demo 的用例吓成红）。
+    if ((context.rendererMode ?? 'vnode') === 'vnode') {
+      warnUnsupportedSlotSyntax(children);
+    }
+  }
+
   // 构建 props 对象
   let propsExpression: JSObjectExpression | undefined;
   const hasDynamicProps = props.some((p) => p.type === NodeTypes.DIRECTIVE);
@@ -130,9 +150,24 @@ function buildElementCodegen(node: ElementNode, context: TransformContext): void
     }
   }
 
+  // `<template>` 不是元素，是 **Fragment**（与 Vue 一致）。
+  //
+  // ⚠️ 2026-10-28 修（P0）：此前 `<template>` 被当成普通元素，产物是
+  //   `createElementVNode("template", null, …)` —— 而 `<template>` 在浏览器里是
+  //   **惰性元素**，其子内容根本不渲染。于是最常见的分组写法**静默不可见**：
+  //     <div><template v-if="ok">A</template></div>   → 渲染出 <template>A</template>，A 看不见
+  //     <div><template v-for="x in l">…</template></div> → 同上
+  //   实测两例都只在 DOM 里留下一个空的 <template>。
+  const isTemplateTag = node.tagType === ElementTypes.TEMPLATE;
+
+  // helper 必须在 **transform 阶段**登记：preamble（import 语句）在遍历之前生成，
+  // 若等到 codegen 才 `helper('FRAGMENT')`，产物里会出现裸标识符 `Fragment`
+  // 而 import 里没有它 —— 运行时报 `Fragment is not defined`。
+  if (isTemplateTag) context.helper('FRAGMENT');
+
   // 构建 children
   let vnodeChildren: JSChildNode | TemplateChildNode[] | string | undefined;
-  if (children.length === 1) {
+  if (children.length === 1 && !isTemplateTag) {
     const child = children[0];
     if (child) {
       if (child.type === NodeTypes.TEXT) {
@@ -169,7 +204,7 @@ function buildElementCodegen(node: ElementNode, context: TransformContext): void
         }
       }
     }
-  } else if (children.length > 1) {
+  } else if (children.length > 1 || isTemplateTag) {
     // 过滤注释节点 - 它们不是有效的 JSChildNode 类型
     const nonCommentChildren = children.filter((c) => c.type !== NodeTypes.COMMENT);
     // ⚠️ 2026-10-27 修（P0）：判据从「有没有 ELEMENT」改成「有没有**非文本**节点」。
@@ -186,7 +221,7 @@ function buildElementCodegen(node: ElementNode, context: TransformContext): void
     const hasNonText = nonCommentChildren.some(
       (c) => c.type !== NodeTypes.TEXT && c.type !== NodeTypes.INTERPOLATION,
     );
-    if (!hasNonText) {
+    if (!hasNonText && !isTemplateTag) {
       const parts: (string | SimpleExpressionNode | InterpolationNode)[] = [];
       for (const child of nonCommentChildren) {
         if (child.type === NodeTypes.TEXT) {
@@ -263,6 +298,7 @@ function buildElementCodegen(node: ElementNode, context: TransformContext): void
   // 混排也会带上 TEXT ⇒ 运行时会用文本覆盖整个子节点数组（表现为 `[object Object]`）。
   // 改为「**全部**子节点都是文本/插值」才允许 TEXT。
   const isTextOnlyChildren =
+    !isTemplateTag &&
     children.length > 0 &&
     children.every(
       (c) =>
@@ -287,7 +323,7 @@ function buildElementCodegen(node: ElementNode, context: TransformContext): void
   const shouldBeBlock = !node.isStatic && (patchFlag !== undefined || hasDynamicChildren(node));
 
   const vnodeCall = createVNodeCall(
-    isComponent ? tag : JSON.stringify(tag),
+    isComponent ? tag : isTemplateTag ? FRAGMENT_SENTINEL : JSON.stringify(tag),
     propsExpression,
     vnodeChildren,
     patchFlag,
@@ -786,6 +822,37 @@ function handleVText(
         createSimpleExpression('"textContent"', true, prop.loc, true),
         createSimpleExpression(expContent, false, prop.loc, false),
       ),
+    );
+  }
+}
+
+/**
+ * 检测组件子节点里的**具名 / 作用域插槽语法**并告警（该特性尚未实现）。
+ *
+ * 语法已经能被正确解析（`#header` → `DirectiveNode{ name: 'slot', arg: 'header' }`），
+ * 但 transform 层完全忽略它 —— 于是 `<template #header>` 被当成普通 `<template>` 元素，
+ * 插槽内容既不进 `header` 也不进 `default`，且**不报错**。
+ *
+ * 这是「语法能写、语义不存在」的典型形态：比语法错误更难发现，因为模板本身是合法的。
+ */
+function warnUnsupportedSlotSyntax(children: TemplateChildNode[]): void {
+  for (const child of children) {
+    if (!child || child.type !== NodeTypes.ELEMENT) continue;
+    const el = child as ElementNode;
+    const slotDirective = el.props.find(
+      (p) => p !== undefined && p.type === NodeTypes.DIRECTIVE && p.name === 'slot',
+    );
+    if (!slotDirective) continue;
+
+    const name =
+      slotDirective.type === NodeTypes.DIRECTIVE
+        ? getExpContent(slotDirective.arg) || 'default'
+        : 'default';
+    warn(
+      `模板里的具名/作用域插槽语法（<template #${name}> / v-slot）**尚未实现**：` +
+        `该插槽的内容不会被传给子组件，也不会出现在默认插槽里。` +
+        `替代写法：h(Child, props, { ${name}: () => [ … ] })；` +
+        `或把内容写成默认子节点（<Child>…</Child>）。`,
     );
   }
 }
