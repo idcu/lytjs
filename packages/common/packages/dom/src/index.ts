@@ -135,9 +135,50 @@ export function patchClass(el: Element, prev: unknown, next: unknown): void {
  * Handles string <-> object transitions, camelCase <-> kebab-case conversion,
  * and proper property removal via removeProperty.
  */
+/**
+ * 把「静态 style + 动态 :style」的数组形态合并成一个对象。
+ *
+ * ⚠️ 2026-10-29 新增：编译器对 `style="color:blue" :style="{fontSize: s}"` 产出的是
+ * **数组**（两个值都要保留）。此前 `patchStyle` 只认对象 / 字符串，数组直接落到
+ * 「类型不认识 ⇒ return」⇒ **静态样式整条丢失**（实测只剩动态那部分）。
+ * 合并规则与 CSS 层叠一致：后面的覆盖前面的。
+ */
+function normalizeStyleInput(value: unknown): Record<string, string | number> | string | null {
+  if (value == null || value === '') return null;
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) {
+    const merged: Record<string, string | number> = {};
+    for (const item of value) {
+      const normalized = normalizeStyleInput(item);
+      if (normalized === null) continue;
+      if (typeof normalized === 'string') {
+        // 字符串片段：解析成 k:v 再并入（`color:blue;font-size:12px`）
+        for (const part of normalized.split(';')) {
+          const idx = part.indexOf(':');
+          if (idx <= 0) continue;
+          const key = part.slice(0, idx).trim();
+          const val = part.slice(idx + 1).trim();
+          if (key) merged[key] = val;
+        }
+        continue;
+      }
+      Object.assign(merged, normalized);
+    }
+    return merged;
+  }
+  if (typeof value === 'object') return value as Record<string, string | number>;
+  return null;
+}
+
 export function patchStyle(el: Element, prev: unknown, next: unknown): void {
   const el_ = el as HTMLElement;
   const style = el_.style;
+
+  // 数组形态（静态 + 动态混写）先合并。
+  // ⚠️ 只对**数组**做归一化：其它类型必须保持原样，让下面的「非法类型提前返回」
+  //   分支继续生效（既有用例锁着这条契约）。
+  if (Array.isArray(prev)) prev = normalizeStyleInput(prev);
+  if (Array.isArray(next)) next = normalizeStyleInput(next);
 
   if (!next || next === '') {
     el_.removeAttribute('style');

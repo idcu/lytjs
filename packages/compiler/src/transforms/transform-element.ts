@@ -165,6 +165,16 @@ function buildElementCodegen(node: ElementNode, context: TransformContext): void
         handleDirective(prop, node, context, properties);
       }
     }
+    // `class` / `style` 的**静态 + 动态混写**必须合并，不能留两个同名键。
+    //
+    // ⚠️ 2026-10-29 修（P0）：`<div class="a" :class="{ b: on }">` 此前产出
+    //   `{ "class": "a", "class": { b: _ctx.on } }` —— JS 对象字面量里**同名键后者胜**
+    //   ⇒ 静态的 `a` **整条丢失**（实测渲染出 `class="b"`）。`style` 同病。
+    //   修法：合并成数组 —— 运行时的 `normalizeClass` / `patchStyle` 都能吃数组
+    //   （`normalizeClass` 本就支持嵌套数组；`patchStyle` 本批补上数组合并）。
+    mergeDuplicateProps(properties, 'class');
+    mergeDuplicateProps(properties, 'style');
+
     if (properties.length > 0) {
       propsExpression = createObjectExpression(properties);
     }
@@ -1056,4 +1066,36 @@ function resolveDynamicComponent(node: ElementNode): { tag: string } | undefined
   }
 
   return undefined;
+}
+
+/**
+ * 把同名 prop（只用于 `class` / `style`）合并成一个**数组值**。
+ *
+ * 对象字面量里同名键后者胜 ⇒ 静态值会被动态值整条覆盖。合并成数组后由运行时的
+ * `normalizeClass` / `patchStyle` 按 CSS 层叠语义处理（后者覆盖前者的同名项，
+ * 不同名项全部保留）。
+ */
+function mergeDuplicateProps(properties: JSProperty[], name: string): void {
+  const quoted = JSON.stringify(name);
+  const indexes: number[] = [];
+
+  for (let i = 0; i < properties.length; i++) {
+    const prop = properties[i];
+    if (!prop || prop.type !== NodeTypes.JS_PROPERTY) continue;
+    const key = prop.key;
+    if (key && key.type === NodeTypes.SIMPLE_EXPRESSION && key.content === quoted) {
+      indexes.push(i);
+    }
+  }
+
+  if (indexes.length < 2) return;
+
+  const values = indexes.map((i) => properties[i]!.value as JSChildNode);
+  const merged = createArrayExpression(values);
+
+  // 从后往前删，再在第一个位置插入合并后的属性
+  for (let i = indexes.length - 1; i >= 1; i--) {
+    properties.splice(indexes[i]!, 1);
+  }
+  properties[indexes[0]!] = createObjectProperty(createSimpleExpression(quoted, true), merged);
 }
