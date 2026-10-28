@@ -44,19 +44,51 @@ function stripComments(code: string): string {
   return code.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
 }
 
+/**
+ * 判定一段**已剥注释**的代码里是否真的 import 了 `@lytjs/core`。
+ *
+ * ⚠️ 2026-10-28 修（**守卫自身的假阳性**）：此前判据是「出现带引号的包名」，
+ *   于是**告警文案里**写出的包名也会被当成违规。这个守卫因此咬到自己两次：
+ *     · `tryCreateApp` 的 DEV 文案（"请从 … 导入"）
+ *     · SSR 的「未注入编译器」告警
+ *   两次的处置都是「把文案改成不带引号」—— 那等于**让代码迁就守卫的粗糙**，
+ *   而文案里写清楚包名恰恰是有用的信息。
+ *
+ *   正确判据是看**语法位置**：`from '…'` / `import('…')` / `require('…')`。
+ *   字符串字面量里的包名不是依赖边，不该被拦。
+ *
+ *   判据本身由下面的「守卫的守卫」用例锁定（否则改坏判据会静默放行真违规）。
+ */
+function hasCoreImport(code: string): boolean {
+  return /(?:\bfrom|\bimport|\brequire)\s*\(?\s*['"]@lytjs\/core['"]/.test(code);
+}
+
 describe('renderer 分层守卫（P1-N 回归）', () => {
   it('src 里不得 import @lytjs/core（注释除外）', () => {
     const offenders: string[] = [];
 
     for (const file of walk(RENDERER_SRC)) {
       const code = stripComments(readFileSync(file, 'utf8'));
-      // 匹配 `from '@lytjs/core'` / `import('@lytjs/core')` / `require('@lytjs/core')`
-      if (/['"]@lytjs\/core['"]/.test(code)) {
+      if (hasCoreImport(code)) {
         offenders.push(relative(RENDERER_SRC, file));
       }
     }
 
     expect(offenders).toEqual([]);
+  });
+
+  it('守卫自身的判据：字符串里的包名不算违规，真 import 才算', () => {
+    // ① 字符串字面量（告警文案）—— **不是**依赖边
+    expect(hasCoreImport(`const msg = "请从 '@lytjs/core' 导入";`)).toBe(false);
+    expect(hasCoreImport(`warn(\`从 '@lytjs/core' 导入\`);`)).toBe(false);
+
+    // ② 各种真 import 形态 —— 必须被抓到
+    expect(hasCoreImport(`import { createApp } from '@lytjs/core';`)).toBe(true);
+    expect(hasCoreImport(`import type { App } from '@lytjs/core';`)).toBe(true);
+    expect(hasCoreImport(`export { a } from '@lytjs/core';`)).toBe(true);
+    expect(hasCoreImport(`const m = await import('@lytjs/core');`)).toBe(true);
+    expect(hasCoreImport(`const m = require("@lytjs/core");`)).toBe(true);
+    expect(hasCoreImport(`import x from '@lytjs/core/runtime';`)).toBe(false); // 子路径不在本守卫范围
   });
 
   it('renderer 的 package.json 不得声明 @lytjs/core（否则就是把环合法化）', () => {

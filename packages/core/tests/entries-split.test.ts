@@ -57,6 +57,18 @@ describe('@lytjs/core 的两个入口（P1-N 回归）', () => {
     expect(typeof (mainEntry as Record<string, unknown>).compileTemplateToRender).toBe('function');
   });
 
+  it('SSR 入口只在主入口转出（runtime 必须保持「不含编译器」）', () => {
+    // ⚠️ 2026-10-28 新增：`renderToString` 需要一个模板编译器才能渲染 `template` 组件，
+    //   所以它**只能**出现在主入口。若哪天有人图方便把它加进 `./runtime`，
+    //   `./template-compiler` 会被静态拉进 runtime 的图 ⇒ 该入口立刻失去存在意义
+    //   （实测两者差 52 KB）。这条断言就是那个「不许」。
+    expect(typeof (mainEntry as Record<string, unknown>).renderToString).toBe('function');
+    expect(typeof (mainEntry as Record<string, unknown>).renderToStream).toBe('function');
+
+    expect((runtimeEntry as Record<string, unknown>).renderToString).toBeUndefined();
+    expect((runtimeEntry as Record<string, unknown>).renderToStream).toBeUndefined();
+  });
+
   it('两个入口的 createApp 是不同函数（一个注入编译器、一个不注入）', () => {
     expect(createAppWithCompiler).not.toBe(createAppRuntime);
     // 主入口的 createApp 必须来自 with-compiler 版本

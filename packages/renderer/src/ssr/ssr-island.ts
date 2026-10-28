@@ -9,6 +9,11 @@ import { isString, isArray } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
 import { isOn } from '@lytjs/common-events';
 import { patchProp } from '@lytjs/adapter-web';
+// ⚠️ 2026-10-28：模板编译器走**注入缝**（`@lytjs/component`，与客户端的
+//   `finishComponentSetup` 同一个注入点）。renderer **不**静态 import 编译器 ——
+//   那会把 52 KB 拖进每一个用 renderer 的产物（P1-N 的教训）。
+import { getTemplateCompiler } from '@lytjs/component';
+import { proxyRefs, computed } from '@lytjs/reactivity';
 import { escapeHtml } from '../utils';
 
 // ============================================================
@@ -217,11 +222,147 @@ export async function resolveComponentRootVNodeAsync(
 }
 
 /**
+ * 模板编译产物的缓存（按**组件对象**缓存）。
+ *
+ * 为什么按组件对象而不是按 template 字符串：同一个 template 字符串被两个不同组件
+ * 复用时，产物的 `_ctx` 语义相同、可以共享；但按对象缓存能让「SSR 两次同一组件
+ * 产出完全一致」这条判据不受字符串去重策略影响，也不会因字符串表无限增长。
+ */
+const templateRenderCache = new WeakMap<object, (ctx: unknown) => unknown>();
+
+/**
+ * 取（并缓存）组件的模板渲染函数。
+ *
+ * ⚠️ 2026-10-28 新增（P0）：`resolveFromSetupResult` 此前**只认 `render`**，
+ *   于是任何用 `template` 写的组件在 SSR 下都返回 `undefined` ⇒ **渲染成空串**，
+ *   且**没有任何告警**。实测：
+ *
+ * ```
+ * { setup(){ return { msg: ref('hi') } }, render: … }   → <div id="app"><span>hi</span></div>
+ * { setup(){ return { msg: ref('hi') } }, template: … } → ""        ← 静默空白
+ * ```
+ *
+ * 同一个组件对象在客户端能渲染（`finishComponentSetup` 步骤 7 支持 `template`）、
+ * 在服务端渲染成空 —— 这正是本仓反复出现的「**静默**」缺陷：SSR 页面白屏，
+ * 而开发者在浏览器里看到的是正常内容。
+ *
+ * 编译器从 `@lytjs/component` 的注入缝取（`@lytjs/core` 在首次 `createApp` 时注入，
+ * `@lytjs/core` 的 `renderToString` 也会注入）。**未注入时给可操作的告警**，
+ * 而不是继续静默返回空串。
+ */
+function getTemplateRender(component: Record<string, unknown>): ((ctx: unknown) => unknown) | null {
+  const cached = templateRenderCache.get(component);
+  if (cached) return cached;
+
+  const compiler = getTemplateCompiler();
+  if (!compiler) {
+    if (__DEV__) {
+      warn(
+        `组件 "${(component.name as string) || '(anonymous)'}" 提供了 template，` +
+          `但服务端没有可用的模板编译器，SSR 输出为空。` +
+          // ⚠️ 文案里刻意**不**给包名加引号：本仓有一条分层守卫
+          // （tests/layering-guard.test.ts）扫源码禁止 renderer 出现带引号的包名，
+          // 而它只剥注释、不解析字符串 ⇒ 一句字面量 import 会被当成真违规（咬过两次）。
+          `修法：① 从 @lytjs/core（而不是 @lytjs/renderer）导入 renderToString —— 它会注入编译器；` +
+          `② 或显式调用 setTemplateCompiler() 注入自己的实现；` +
+          `③ 或改用 AOT 预编译的 render 函数。`,
+      );
+    }
+    return null;
+  }
+
+  const render = compiler(component.template as string) as (ctx: unknown) => unknown;
+  templateRenderCache.set(component, render);
+  return render;
+}
+
+/**
+ * 为「无实例」的 SSR 渲染构造一个**与客户端语义一致**的上下文对象。
+ *
+ * ⚠️ 2026-10-28 新增（P0）：此前 ctx 要么是 `setup()` 的返回值、要么是 `props`，
+ *   于是两类写法在 SSR 下静默失效：
+ *   · **选项式 `data()` 完全不执行** ⇒ 模板里 `{{ n }}` 得到 `undefined`；
+ *   · **`setup()` 返回的 ref 不解包** ⇒ 模板里 `{{ msg }}` 得到 `[object Object]`
+ *     （客户端走公共实例代理会自动解包，服务端不走）。
+ *
+ * 合并顺序与 Vue 的公共实例一致：`props` < `data` < `setup` 返回值，
+ * 最后经 `proxyRefs` 包一层（自动解包 ref / computed），`methods` 绑定到该代理，
+ * `computed` 以懒求值方式挂上（其 getter 的 `this` 也是该代理）。
+ *
+ * ⚠️ 这里**不是**第二套组件实现：它只做「把选项摊平成 ctx」这一件事，
+ *   不碰生命周期、不碰错误边界、不碰 props 校验 —— 那些仍由客户端实例负责，
+ *   因为 SSR 只渲染一次、不挂载。
+ */
+function buildSSRContext(
+  component: ComponentOptions,
+  setupResult: unknown,
+  props: Record<string, unknown>,
+): Record<string, unknown> {
+  // 局部注册的子组件：编译器把 `<Child />` 编成 `createElementVNode(_ctx.Child, …)`，
+  // 而客户端的公共实例代理会自动解析 `components` 选项。SSR 没有那个代理，
+  // 必须显式摊平 —— 否则嵌套子组件**静默渲染为空**（实测 `<div id="app"></div>`）。
+  // 放在最底层：props / data / setup 返回值仍可覆盖同名键。
+  const raw: Record<string, unknown> = {};
+  if (component.components && typeof component.components === 'object') {
+    Object.assign(raw, component.components);
+  }
+  Object.assign(raw, props);
+
+  if (typeof component.data === 'function') {
+    try {
+      Object.assign(
+        raw,
+        (component.data as () => Record<string, unknown> | undefined).call(raw) ?? {},
+      );
+    } catch (err) {
+      if (__DEV__) {
+        warn(`SSR: 组件 data() 抛错（该组件的 data 字段全部缺失）：${(err as Error).message}`);
+      }
+    }
+  }
+
+  if (setupResult && typeof setupResult === 'object') {
+    Object.assign(raw, setupResult as Record<string, unknown>);
+  }
+
+  const ctx = proxyRefs(raw) as Record<string, unknown>;
+
+  if (component.methods && typeof component.methods === 'object') {
+    for (const key of Object.keys(component.methods as object)) {
+      const fn = (component.methods as Record<string, unknown>)[key];
+      if (typeof fn === 'function') raw[key] = (fn as (...a: unknown[]) => unknown).bind(ctx);
+    }
+  }
+
+  if (component.computed && typeof component.computed === 'object') {
+    for (const key of Object.keys(component.computed as object)) {
+      const opt = (component.computed as Record<string, unknown>)[key];
+      if (typeof opt === 'function') {
+        raw[key] = computed(() => (opt as () => unknown).call(ctx));
+      } else if (
+        opt &&
+        typeof opt === 'object' &&
+        typeof (opt as { get?: unknown }).get === 'function'
+      ) {
+        const o = opt as { get: () => unknown; set?: (v: unknown) => void };
+        raw[key] = computed({
+          get: () => o.get.call(ctx),
+          set: o.set ? (v: unknown) => o.set!.call(ctx, v) : undefined,
+        } as Parameters<typeof computed>[0]);
+      }
+    }
+  }
+
+  return ctx;
+}
+
+/**
  * 「setup 结果 → 根 vnode」的**共享后半段**（同步版与 async 版共用）。
  *
  * 1. `setupResult` 本身是 vnode ⇒ 直接使用（跳过 `render`）；
- * 2. 否则若它是对象 ⇒ 作为 ctx 传给 `render`；
- * 3. 否则（含没有 `setup`）⇒ 以 `props` 作 ctx 传给 `render`。
+ * 2. 若它是**函数** ⇒ 视作渲染函数并调用；
+ * 3. 否则构造 ctx（`props` + `data` + `setup` 返回值，经 `proxyRefs` 解包），
+ *    依次尝试 `component.render` → `component.template`（运行时编译）。
  */
 function resolveFromSetupResult(
   component: ComponentOptions,
@@ -244,14 +385,31 @@ function resolveFromSetupResult(
     }
   }
 
+  const ctx = buildSSRContext(component, setupResult, props);
+
   if (typeof component.render === 'function') {
-    // setup 返回普通对象 ⇒ 作为 ctx；否则退回 props 作 ctx
-    const ctx =
-      setupResult && typeof setupResult === 'object'
-        ? (setupResult as Record<string, unknown>)
-        : props;
     const result = component.render(ctx);
     if (isVNodeLike(result)) return result;
+    if (isArray(result)) {
+      return createVNode(Fragment, null, result as never) as unknown as VNode;
+    }
+  }
+
+  // ★ 2026-10-28：模板分支（此前 SSR **完全不支持** `template`，见 getTemplateRender）
+  if (typeof component.template === 'string' && component.template.length > 0) {
+    const render = getTemplateRender(component as Record<string, unknown>);
+    if (!render) return undefined;
+    const result = render(ctx);
+    if (isVNodeLike(result)) return result;
+    if (isArray(result)) {
+      return createVNode(Fragment, null, result as never) as unknown as VNode;
+    }
+    if (__DEV__) {
+      warn(
+        `SSR: 组件 "${component.name || '(anonymous)'}" 的模板编译产物没有返回 vnode ` +
+          `（得到 ${typeof result}），该组件输出为空。`,
+      );
+    }
   }
 
   return undefined;
