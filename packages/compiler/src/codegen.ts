@@ -11,6 +11,7 @@ import type {
   JSObjectExpression,
   JSProperty,
   JSArrayExpression,
+  JSFunctionExpression,
   JSConditionalExpression,
   TextNode,
   InterpolationNode,
@@ -235,6 +236,9 @@ function genNode(node: JSChildNode | TemplateChildNode, context: CodegenContext)
     case NodeTypes.JS_ARRAY_EXPRESSION:
       genArrayExpression(node as JSArrayExpression, context);
       break;
+    case NodeTypes.JS_FUNCTION_EXPRESSION:
+      genFunctionExpression(node as JSFunctionExpression, context);
+      break;
     case NodeTypes.JS_CONDITIONAL_EXPRESSION:
       genConditional(node as JSConditionalExpression, context);
       break;
@@ -265,6 +269,39 @@ function genNode(node: JSChildNode | TemplateChildNode, context: CodegenContext)
 // ============================================================
 // 生成 VNodeCall
 // ============================================================
+
+/**
+ * 函数表达式：`(p1, p2) => [ … ]`（插槽内容的载体）。
+ *
+ * ⚠️ 2026-10-28 新增（具名/作用域插槽）：`JS_FUNCTION_EXPRESSION` 的 NodeType 与类型
+ *   早就在仓库里，但 codegen 从来没有对应分支 —— 遇到它只会落到默认分支、静默产出空串。
+ */
+function genFunctionExpression(node: JSFunctionExpression, context: CodegenContext): void {
+  const { params, returns } = node;
+
+  // 参数：字符串原样输出（`item` / `{ item }` 这类解构），表达式节点走 genNode
+  context.push('(');
+  params.forEach((param, i) => {
+    if (i > 0) context.push(', ');
+    if (typeof param === 'string') context.push(param);
+    else genNode(param, context);
+  });
+  context.push(') => ');
+
+  // 返回体：数组 → `[ … ]`；单个节点 → 原样；空 → `[]`
+  if (Array.isArray(returns)) {
+    context.push('[');
+    returns.forEach((child, i) => {
+      if (i > 0) context.push(', ');
+      genNode(child as JSChildNode, context);
+    });
+    context.push(']');
+  } else if (returns) {
+    genNode(returns as JSChildNode, context);
+  } else {
+    context.push('[]');
+  }
+}
 
 function genVNodeCall(node: VNodeCall, context: CodegenContext): void {
   const { tag, props, children, patchFlag, isBlock } = node;

@@ -138,29 +138,21 @@ describe('<template> 是 Fragment（不是惰性元素）', () => {
   });
 });
 
-describe('具名 / 作用域插槽：语法未实现时必须**说出来**', () => {
-  it('`<template #header>` 编译时告警，且告警是可操作的', () => {
+describe('具名 / 作用域插槽', () => {
+  // ⚠️ 2026-10-28 更新：`<template #name>` 已经**实现**（见 e2e-named-slots.test.ts）。
+  // 本文件此前断言「必须告警」—— 那是「实现之前不许沉默」的临时哨兵，
+  // 实现之后它如约变红，逼着把哨兵换成真实断言。现在只保留「仍未实现的形态」的告警。
+  it('组件标签上的 v-slot 仍告警（该形态未实现）', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    compile('<div><Child><template #header><b>H</b></template></Child></div>');
+    compile('<div><Child v-slot="{ x }"><b>{{ x }}</b></Child></div>');
 
     const said = warnSpy.mock.calls.map((c) => String(c[0])).join('\n');
-    expect(said).toContain('slot');
-    expect(said).toContain('尚未实现');
-    // 必须给出替代写法，否则等于只说「不行」
-    expect(said).toMatch(/h\(Child/);
+    expect(said).toContain('v-slot');
+    expect(said).toContain('<template #name>');
   });
 
-  it('`v-slot:foo` 长写法同样告警', () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-    compile('<div><Child><template v-slot:foo><b>F</b></template></Child></div>');
-
-    const said = warnSpy.mock.calls.map((c) => String(c[0])).join('\n');
-    expect(said).toContain('foo');
-  });
-
-  it('普通子节点不得触发该告警（避免噪声）', () => {
+  it('普通子节点不得触发告警（避免噪声）', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     compile('<div><Child><b>plain</b></Child></div>');

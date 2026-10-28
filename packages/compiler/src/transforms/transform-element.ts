@@ -36,6 +36,7 @@ import {
   createCallExpression,
   createArrayExpression,
   createObjectExpression,
+  createFunctionExpression,
   createObjectProperty,
   createConditionalExpression,
 } from '../ast';
@@ -119,8 +120,10 @@ function buildElementCodegen(node: ElementNode, context: TransformContext): void
     // ⚠️ 只在 **vnode 模式**告警：signal / vapor 的 codegen 已经支持具名插槽
     //   （产物是 `mountComponent(_ctx.Card, {}, el, { header: () => [...] })`），
     //   在那些模式里发「尚未实现」是**假警报**（实测会把 slots demo 的用例吓成红）。
+    // ⚠️ 2026-10-28：`<template #name>` 已经实现（见 buildSlotsExpression），
+    //   只剩「v-slot 直接写在组件标签上」这一种形态没做（`<Child v-slot="{x}">`）。
     if ((context.rendererMode ?? 'vnode') === 'vnode') {
-      warnUnsupportedSlotSyntax(children);
+      warnUnsupportedSlotSyntax(children, node);
     }
   }
 
@@ -167,7 +170,19 @@ function buildElementCodegen(node: ElementNode, context: TransformContext): void
 
   // 构建 children
   let vnodeChildren: JSChildNode | TemplateChildNode[] | string | undefined;
-  if (children.length === 1 && !isTemplateTag) {
+
+  // 组件的具名 / 作用域插槽：`<Child><template #header>…</template>…</Child>`
+  //
+  // ⚠️ 2026-10-28：这一步必须**先于**下面的常规 children 逻辑 —— 一旦存在具名插槽，
+  //   children 就不是「vnode 数组」而是「插槽对象」，两者语义完全不同。
+  const slotsExpression =
+    isComponent && (context.rendererMode ?? 'vnode') === 'vnode'
+      ? buildSlotsExpression(children, context)
+      : undefined;
+
+  if (slotsExpression) {
+    vnodeChildren = slotsExpression;
+  } else if (children.length === 1 && !isTemplateTag) {
     const child = children[0];
     if (child) {
       if (child.type === NodeTypes.TEXT) {
@@ -258,32 +273,8 @@ function buildElementCodegen(node: ElementNode, context: TransformContext): void
       //   「文字与元素混排」是最常见的模板形态 ⇒ 这不是 v-if 专属缺陷，而是通用丢节点。
       const jsChildren: JSChildNode[] = [];
       for (const c of nonCommentChildren) {
-        if (c.type === NodeTypes.TEXT) {
-          const content = (c as TextNode).content;
-          // 纯空白（源码缩进 / 换行）不产节点：与浏览器渲染语义一致，
-          // 也避免产物里出现一串 `"  "` 常量。
-          if (!content.trim()) continue;
-          jsChildren.push(createSimpleExpression(JSON.stringify(content), true));
-          continue;
-        }
-        if (c.type === NodeTypes.INTERPOLATION) {
-          context.helper('TO_DISPLAY_STRING');
-          jsChildren.push(
-            createCallExpression(context.helper('TO_DISPLAY_STRING'), [
-              (c as InterpolationNode).content,
-            ]),
-          );
-          continue;
-        }
-        if (c.type === NodeTypes.ELEMENT) {
-          if (hasCodegenNode(c)) jsChildren.push(c.codegenNode);
-          continue;
-        }
-        // 其余是 transform 阶段产出的 JS 节点（v-if 的 JSConditionalExpression、
-        // v-for 的 JSFunctionExpression 等）—— 它们本身就是 codegen 节点，直接用。
-        if (c.type >= NodeTypes.SIMPLE_EXPRESSION) {
-          jsChildren.push(c as unknown as JSChildNode);
-        }
+        const mapped = childToJSNode(c, context);
+        if (mapped) jsChildren.push(mapped);
       }
       if (jsChildren.length > 0) {
         vnodeChildren = jsChildren;
@@ -835,24 +826,151 @@ function handleVText(
  *
  * 这是「语法能写、语义不存在」的典型形态：比语法错误更难发现，因为模板本身是合法的。
  */
-function warnUnsupportedSlotSyntax(children: TemplateChildNode[]): void {
-  for (const child of children) {
-    if (!child || child.type !== NodeTypes.ELEMENT) continue;
-    const el = child as ElementNode;
-    const slotDirective = el.props.find(
-      (p) => p !== undefined && p.type === NodeTypes.DIRECTIVE && p.name === 'slot',
-    );
-    if (!slotDirective) continue;
+function warnUnsupportedSlotSyntax(children: TemplateChildNode[], node: ElementNode): void {
+  void children;
+  // 只针对「v-slot 写在**组件标签自身**上」的形态（`<Child v-slot="{ x }">`）。
+  // `<template #name>` 已由 buildSlotsExpression 支持，不再告警。
+  const own = node.props.find(
+    (p) => p !== undefined && p.type === NodeTypes.DIRECTIVE && p.name === 'slot',
+  );
+  if (!own) return;
+  warn(
+    `组件标签上的 v-slot（<${node.tag} v-slot="…">）尚未实现：` +
+      `该插槽的内容不会被传给子组件。请改用 <template #name>…</template> 包裹。`,
+  );
+}
 
-    const name =
-      slotDirective.type === NodeTypes.DIRECTIVE
-        ? getExpContent(slotDirective.arg) || 'default'
-        : 'default';
-    warn(
-      `模板里的具名/作用域插槽语法（<template #${name}> / v-slot）**尚未实现**：` +
-        `该插槽的内容不会被传给子组件，也不会出现在默认插槽里。` +
-        `替代写法：h(Child, props, { ${name}: () => [ … ] })；` +
-        `或把内容写成默认子节点（<Child>…</Child>）。`,
+/**
+ * 单个子节点 → 合法的 codegen 节点。
+ *
+ * ⚠️ 2026-10-28 抽出：这段映射原本内联在「多子节点」分支里，写具名插槽时需要同一套
+ *   规则（默认插槽的内容也是子节点）。**同一份逻辑只能有一处实现** —— 复制一份
+ *   就是下一个「一半能用」的来源。
+ *
+ * 返回 `undefined` 表示该节点不该产出任何东西（纯空白文本、无 codegenNode 的元素）。
+ */
+function childToJSNode(c: TemplateChildNode, context: TransformContext): JSChildNode | undefined {
+  if (c.type === NodeTypes.TEXT) {
+    const content = (c as TextNode).content;
+    // 纯空白（源码缩进 / 换行）不产节点：与浏览器渲染语义一致，
+    // 也避免产物里出现一串 `"  "` 常量。
+    if (!content.trim()) return undefined;
+    return createSimpleExpression(JSON.stringify(content), true);
+  }
+  if (c.type === NodeTypes.INTERPOLATION) {
+    context.helper('TO_DISPLAY_STRING');
+    return createCallExpression(context.helper('TO_DISPLAY_STRING'), [
+      (c as InterpolationNode).content,
+    ]);
+  }
+  if (c.type === NodeTypes.ELEMENT) {
+    return hasCodegenNode(c) ? c.codegenNode : undefined;
+  }
+  // 其余是 transform 阶段产出的 JS 节点（v-if 的 JSConditionalExpression 等）
+  if (c.type >= NodeTypes.SIMPLE_EXPRESSION) {
+    return c as unknown as JSChildNode;
+  }
+  return undefined;
+}
+
+/** 从 `#default="{ item, index }"` 的作用域参数里取出**绑定名**（用于登记局部名） */
+function extractParamNames(param: string | undefined): string[] {
+  if (!param) return [];
+  const trimmed = param.trim();
+  // 解构形态：`{ item }` / `{ item, index }` / `{ item: it }`
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    const inner = trimmed.slice(1, trimmed.lastIndexOf(trimmed.startsWith('{') ? '}' : ']'));
+    return inner
+      .split(',')
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .map((part) => {
+        const afterColon = part.includes(':') ? part.slice(part.indexOf(':') + 1) : part;
+        // `item = 1` 这类默认值：取等号左边
+        return afterColon.split('=')[0]!.trim();
+      })
+      .filter((name) => /^[A-Za-z_$][\w$]*$/.test(name));
+  }
+  // 简单标识符
+  return /^[A-Za-z_$][\w$]*$/.test(trimmed) ? [trimmed] : [];
+}
+
+/**
+ * 把组件子节点里的 `<template #name>` 收成**插槽对象表达式**：
+ * `{ header: () => [...], default: (item) => [...] }`
+ *
+ * ⚠️ 2026-10-28 新增（P0）：具名/作用域插槽此前**完全没有实现** —— `#header` 能被解析成
+ *   `DirectiveNode{ name: 'slot' }`，但 transform 层完全忽略它，`<template>` 被当成普通
+ *   元素（且是惰性元素，内容不可见）。用户写的是标准 Vue 语法，得到的是空白。
+ *
+ * 返回 `undefined` 表示「没有具名插槽语法」，调用方走原来的 children 逻辑。
+ */
+function buildSlotsExpression(
+  children: TemplateChildNode[],
+  context: TransformContext,
+): JSObjectExpression | undefined {
+  const slotTemplates: { name: string; params: string[]; node: ElementNode }[] = [];
+  const defaultChildren: TemplateChildNode[] = [];
+
+  for (const child of children) {
+    if (!child) continue;
+    if (child.type === NodeTypes.ELEMENT) {
+      const el = child as ElementNode;
+      if (el.tagType === ElementTypes.TEMPLATE) {
+        const dir = el.props.find(
+          (p) => p !== undefined && p.type === NodeTypes.DIRECTIVE && p.name === 'slot',
+        );
+        if (dir && dir.type === NodeTypes.DIRECTIVE) {
+          const name = getExpContent(dir.arg) || 'default';
+          const paramText = getExpContent(dir.exp) || '';
+          slotTemplates.push({ name, params: paramText ? [paramText] : [], node: el });
+          continue;
+        }
+      }
+    }
+    // 有具名插槽时，纯空白文本不进默认插槽（否则 default 会多出模板缩进）
+    if (child.type === NodeTypes.TEXT && !(child as TextNode).content.trim()) continue;
+    defaultChildren.push(child);
+  }
+
+  if (slotTemplates.length === 0) return undefined;
+
+  const properties: JSProperty[] = [];
+
+  for (const slot of slotTemplates) {
+    // 作用域参数必须登记为**局部名**：否则 `{{ item }}` 会被 prefix-identifiers
+    // 改写成 `_ctx.item`（运行时 undefined）—— 这正是「作用域插槽」的核心语义。
+    for (const name of extractParamNames(slot.params[0])) {
+      context.addIdentifiers(name);
+    }
+    properties.push(
+      createObjectProperty(
+        createSimpleExpression(JSON.stringify(slot.name), true),
+        createFunctionExpression(
+          slot.params,
+          (slot.node.codegenNode ?? []) as JSChildNode,
+          false,
+          true,
+        ),
+      ),
     );
   }
+
+  if (defaultChildren.length > 0) {
+    const nodes: JSChildNode[] = [];
+    for (const child of defaultChildren) {
+      const mapped = childToJSNode(child, context);
+      if (mapped) nodes.push(mapped);
+    }
+    if (nodes.length > 0) {
+      properties.push(
+        createObjectProperty(
+          createSimpleExpression('"default"', true),
+          createFunctionExpression([], nodes, false, true),
+        ),
+      );
+    }
+  }
+
+  return createObjectExpression(properties);
 }

@@ -17,6 +17,7 @@ import type {
   JSObjectExpression,
   JSProperty,
   JSArrayExpression,
+  JSFunctionExpression,
   JSConditionalExpression,
   JSChildNode,
   ExpressionNode,
@@ -258,6 +259,34 @@ export function createConditionalExpression(
     consequent,
     alternate,
     newline,
+    loc,
+  };
+}
+
+/**
+ * 创建函数表达式节点（**插槽内容**的唯一载体）。
+ *
+ * 产物形如 `(item, index) => [ … ]`。`isSlot` 仅作语义标记（调试/工具用），
+ * 不影响 codegen。
+ *
+ * ⚠️ 2026-10-28 新增：`JS_FUNCTION_EXPRESSION` 这个 NodeType 与 `JSFunctionExpression`
+ *   类型**早就在仓库里**（constants 14 / types.ts:189），但既没有工厂也没有 codegen 分支
+ *   —— 也就是说它是「为插槽预留、但从未实现」的空壳。具名插槽一直无法落地，
+ *   缺的就是这一块。
+ */
+export function createFunctionExpression(
+  params: (string | JSChildNode)[] = [],
+  returns: JSChildNode | TemplateChildNode | TemplateChildNode[] = [],
+  newline: boolean = false,
+  isSlot: boolean = false,
+  loc: SourceLocation = DEFAULT_LOC,
+): JSFunctionExpression {
+  return {
+    type: NodeTypes.JS_FUNCTION_EXPRESSION,
+    params,
+    returns,
+    newline,
+    isSlot,
     loc,
   };
 }
