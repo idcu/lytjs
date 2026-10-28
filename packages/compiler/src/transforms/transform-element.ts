@@ -495,6 +495,22 @@ function handleVBind(
         valueExpr,
       ),
     );
+    return;
+  }
+
+  // `v-bind="obj"` —— **对象展开**。
+  //
+  // ⚠️ 2026-10-29 修（P0）：此前这里什么都不做 ⇒ `<div v-bind="attrs">` 的属性
+  //   **一个都上不去**，而且不报错（产物是 `createBlock("div", null)`）。
+  //   现在产出 `{ ..._ctx.attrs }`，由运行时的 patchProp 逐个写入。
+  if (expContent !== undefined) {
+    properties.push({
+      type: NodeTypes.JS_PROPERTY,
+      key: createSimpleExpression('__spread__', true, prop.loc, true),
+      value: createSimpleExpression(expContent, false, prop.loc, false),
+      spread: true,
+      loc: prop.loc,
+    });
   }
 }
 

@@ -445,6 +445,13 @@ function genObjectExpression(node: JSObjectExpression, context: CodegenContext):
 function genProperty(node: JSProperty, context: CodegenContext): void {
   const { key, value } = node;
 
+  // `{ ...expr }` —— `v-bind="obj"` 的对象展开。key 不参与输出。
+  if (node.spread) {
+    context.push('...', node);
+    genNode(value, context);
+    return;
+  }
+
   if (key.type === NodeTypes.SIMPLE_EXPRESSION) {
     context.push(key.content, node);
   } else {

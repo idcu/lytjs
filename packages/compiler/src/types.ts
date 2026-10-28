@@ -179,6 +179,14 @@ export interface JSProperty extends BaseNode {
   type: typeof NodeTypes.JS_PROPERTY;
   key: JSChildNode;
   value: JSChildNode;
+  /**
+   * 展开语法：`{ ...expr }`（`v-bind="obj"` 的对象展开）。
+   *
+   * ⚠️ 2026-10-29 新增：`v-bind` **不带参数**时（`<div v-bind="attrs">`）此前**没有任何
+   * 分支**处理 ⇒ props 直接丢弃 ⇒ 一个属性都上不去，且不报错。
+   * 有 spread 标记时 `key` 不参与输出。
+   */
+  spread?: boolean;
 }
 
 export interface JSArrayExpression extends BaseNode {
