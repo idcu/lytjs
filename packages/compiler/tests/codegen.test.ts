@@ -249,8 +249,15 @@ describe('codegen', () => {
     });
 
     it('should handle is attribute for dynamic component', () => {
+      // ⚠️ 2026-10-28 行为变更：此前断言的是「产物里出现 `is`」—— 即断言
+      //   `<component :is="x">` 被编译成**字面量元素** `<component is="x">`。
+      //   那正是缺陷本身（浏览器把 `<component>` 当未知元素 ⇒ 组件根本没挂）。
+      //   现在 `is` 是**选择器**：作为 vnode 类型，且不再作为 prop 输出。
       const result = compile('<component :is="componentName"></component>');
-      expect(result.code).toContain('is');
+
+      expect(result.code).not.toContain('"component"');
+      expect(result.code).toContain('_ctx.componentName');
+      expect(result.code).not.toContain('"is"');
     });
   });
 });

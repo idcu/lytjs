@@ -17,6 +17,7 @@ import { NodeTypes, ElementTypes, PatchFlags } from '../constants';
 import { warn } from '@lytjs/common-error';
 import type {
   ElementNode,
+  AttributeNode,
   InterpolationNode,
   DirectiveNode,
   SimpleExpressionNode,
@@ -41,6 +42,7 @@ import {
   createConditionalExpression,
 } from '../ast';
 import { getExpContent, findDirective } from './helpers';
+import { prefixIdentifiers } from '../prefix-identifiers';
 import { capitalize } from '@lytjs/common-string';
 
 /**
@@ -106,7 +108,22 @@ function buildElementCodegen(node: ElementNode, context: TransformContext): void
   // 常规元素 - 转换为 VNodeCall
   const { tag, props, children } = node;
 
-  const isComponent = node.tagType === ElementTypes.COMPONENT;
+  // `<component :is="…">` —— 动态组件。
+  //
+  // ⚠️ 2026-10-28 修（P0）：此前 `component` 被当成**普通标签**，产物是
+  //   `createBlock("component", { "is": _ctx.tag })` —— 浏览器把 `<component>` 当未知元素，
+  //   于是「内容能看见、但组件根本没挂」：props 不透传、事件不接、`is` 变了也不重建。
+  //   这是「看起来能用」的最坏形态。
+  const dynamic = resolveDynamicComponent(node);
+  const isComponent = node.tagType === ElementTypes.COMPONENT || dynamic !== undefined;
+
+  if (dynamic) {
+    // `is` 只是选择器，不是要传给组件的 prop —— 从 props 里摘掉（原地修改，
+    // 与上面解构出的 `props` 是同一个数组引用）。
+    for (let i = props.length - 1; i >= 0; i--) {
+      if (isIsProp(props[i])) props.splice(i, 1);
+    }
+  }
 
   // ⚠️ 2026-10-28：具名 / 作用域插槽**尚未实现**，但语法能被解析（`#header` → `v-slot:header`）。
   //   此前它被静默当成普通属性 ⇒ 产物里出现字面量 `<template #header>` 元素，
@@ -314,7 +331,13 @@ function buildElementCodegen(node: ElementNode, context: TransformContext): void
   const shouldBeBlock = !node.isStatic && (patchFlag !== undefined || hasDynamicChildren(node));
 
   const vnodeCall = createVNodeCall(
-    isComponent ? tag : isTemplateTag ? FRAGMENT_SENTINEL : JSON.stringify(tag),
+    dynamic
+      ? dynamic.tag
+      : isComponent
+        ? tag
+        : isTemplateTag
+          ? FRAGMENT_SENTINEL
+          : JSON.stringify(tag),
     propsExpression,
     vnodeChildren,
     patchFlag,
@@ -322,7 +345,10 @@ function buildElementCodegen(node: ElementNode, context: TransformContext): void
     undefined,
     shouldBeBlock,
     false,
-    isComponent,
+    // ⚠️ 动态组件的 tag 是**已自带前缀的表达式**（见 resolveDynamicComponent），
+    //   这里必须传 false —— 传 true 会让 genVNodeCall 再跑一遍 prefixIdentifiers，
+    //   把 `_ctx` 前缀成 `_ctx._ctx`（实测过）。
+    isComponent && !dynamic,
   );
 
   node.codegenNode = vnodeCall;
@@ -339,7 +365,7 @@ function buildElementCodegen(node: ElementNode, context: TransformContext): void
     context.helper('SET_BLOCK_TRACKING');
   }
 
-  if (isComponent) {
+  if (isComponent && !dynamic) {
     context.components.add(tag);
   }
 }
@@ -973,4 +999,61 @@ function buildSlotsExpression(
   }
 
   return createObjectExpression(properties);
+}
+
+/** 是否是 `<component :is>` 的 `is` 属性（静态 `is` 或 `:is`） */
+function isIsProp(p: AttributeNode | DirectiveNode | undefined): boolean {
+  if (!p) return false;
+  if (p.type === NodeTypes.ATTRIBUTE) return p.name === 'is';
+  return p.type === NodeTypes.DIRECTIVE && p.name === 'bind' && getExpContent(p.arg) === 'is';
+}
+
+/**
+ * 解析 `<component is="…">` / `<component :is="…">`，返回要作为 vnode 类型的表达式。
+ *
+ * 规则：
+ * - `:is="expr"` ⇒ 原样作为表达式（裸标识符会在 codegen 时补 `_ctx.`）
+ * - `is="Foo"`（**大写开头**）⇒ 视作组件名，按 `_ctx.Foo` 解析
+ *   （与模板里写 `<Foo>` 得到 `_ctx.Foo` 的约定一致）
+ * - `is="div"`（小写）⇒ 原生标签，输出 JSON 字符串
+ *
+ * ⚠️ 这里用「首字母大小写」区分组件与原生标签，是**编译期的约定**，不是运行期解析。
+ *   代价：`is="my-comp"` 这种 kebab-case 组件名会被当成原生标签。
+ *   本仓的模板里组件一律按 `_ctx.Xxx` 解析（`<my-comp>` 也一样会变成 `_ctx["my-comp"]`？不 ——
+ *   见 `isComponentTag`），所以这里与既有约定保持同一套判据，不做第二套。
+ */
+function resolveDynamicComponent(node: ElementNode): { tag: string } | undefined {
+  if (node.tag.toLowerCase() !== 'component') return undefined;
+
+  for (const p of node.props) {
+    if (!p) continue;
+
+    if (p.type === NodeTypes.ATTRIBUTE && p.name === 'is') {
+      const literal = p.value?.content ?? '';
+      if (!literal) continue;
+      return { tag: /^[A-Z]/.test(literal) ? literal : JSON.stringify(literal) };
+    }
+
+    if (p.type === NodeTypes.DIRECTIVE && p.name === 'bind' && getExpContent(p.arg) === 'is') {
+      const exp = getExpContent(p.exp);
+      if (exp) {
+        // `:is` 的值**可能是字符串**（组件名 / 原生标签），也可能是组件对象。
+        // 编译期无法区分 ⇒ 生成一段运行期解析：
+        //   字符串 ⇒ 先按名字查 ctx（局部 / 全局 / 内置组件都挂在 ctx 上），查不到就当原生标签；
+        //   其它   ⇒ 原样作为 vnode 类型。
+        // 注：`${exp}` 会被 genVNodeCall 的 prefixIdentifiers 补成 `_ctx.xxx`，
+        // 方括号里的同名引用同理变成 `_ctx[_ctx.xxx]` —— 正是需要的形态。
+        // ⚠️ 不能把这个表达式当**裸字符串**交出去：genVNodeCall 会对组件 tag 跑一遍
+        //   `prefixIdentifiers`，它会把我写的 `_ctx` 再前缀一次（实测产出
+        //   `_ctx._ctx[_ctx.tag]`）。这里先自己前缀好，再包成 `isStatic: true` 的
+        //   简单表达式 —— codegen 对静态表达式**原样输出**。
+        const prefixed = prefixIdentifiers(exp);
+        return {
+          tag: `(typeof ${prefixed} === 'string' ? (_ctx[${prefixed}] || ${prefixed}) : ${prefixed})`,
+        };
+      }
+    }
+  }
+
+  return undefined;
 }
