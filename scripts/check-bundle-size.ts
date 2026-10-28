@@ -7,11 +7,22 @@
  * 但用户实际交付的是**打包后的 app**：`createApp` 静态依赖 `@lytjs/compiler`
  * （运行时模板编译），所以一个最小应用的真实体积远大于单包数字。
  *
- * 实测（本脚本，2026-10-27 整改后）：
- *   - `@lytjs/core` 只取 `ref/computed/h`（不调 createApp）→ **8.9 KB gzip**
- *   - `@lytjs/core` 的 `createApp`（支持 template）        → **82.5 KB gzip**
- *   - `@lytjs/core/runtime` 的 `createApp`（不含编译器）    → **80.5 KB gzip**
+ * 实测（本脚本，2026-10-28 整改后）：
+ *   - `@lytjs/core` 只取 `ref/computed/h`（不调 createApp）→ **8.7 KB gzip**
+ *   - `@lytjs/core` 的 `createApp`（支持 template）        → **82.6 KB gzip**
+ *   - `@lytjs/core/runtime` 的 `createApp`（不含编译器）    → **80.7 KB gzip**
  *   - 只用 `@lytjs/vdom` 的 `createVNode` + `h`             → **1.6 KB gzip**
+ *
+ * ## 2026-10-28 的一次**主动**上调（+1.8 KB），理由写在下面
+ *
+ * 修「内置组件在模板里全部渲染为空」（报告 §20）时，组件实例代理必须能按名字解析
+ * `Teleport` / `Suspense` / `Transition` / `TransitionGroup` / `KeepAlive`，
+ * 于是这五个组件**必然**进入每个应用的产物 —— 实测 +1.8 KB gzip（80.8 → 82.6）。
+ *
+ * 这是**用体积换正确性**，而且价格合理（Vue 的 runtime 同样始终包含这几个内置组件）。
+ * 不修的代价是：模板里写 `<Teleport>` 静默渲染为空，且不报错。
+ * 预算随之从 83.0 / 81.1 上调到 84.9 / 83.0 —— 留 2.3 KB 余量，
+ * 否则下一个 0.4 KB 的改动就会误报。
  *
  * ## 三个数字分别锁住什么
  *
@@ -81,7 +92,7 @@ const count = ref(0);
 const double = computed(() => count.value * 2);
 export const app = createApp({ render: () => h('div', null, [String(count.value), String(double.value)]) });
 export { count, double };`,
-    budget: 85_000,
+    budget: 87_000,
   },
   {
     name: 'runtime-app',
@@ -92,7 +103,7 @@ const count = ref(0);
 const double = computed(() => count.value * 2);
 export const app = createApp({ render: () => h('div', null, [String(count.value), String(double.value)]) });
 export { count, double };`,
-    budget: 83_000,
+    budget: 85_000,
   },
 ];
 

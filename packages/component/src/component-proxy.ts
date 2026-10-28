@@ -9,6 +9,7 @@ import { nextTick } from '@lytjs/common-scheduler';
 import { unref, isRef } from '@lytjs/reactivity';
 import type { ComponentInternalInstance, ComponentPublicInstance } from './types';
 import { forceComponentUpdate } from './force-update';
+import { isBuiltinComponentName, getBuiltinComponent } from './builtin-components';
 // FIX: DTS build error - VNode 未使用
 // import type { VNode } from '@lytjs/common-vnode';
 
@@ -185,6 +186,20 @@ export function createComponentPublicInstance(
       const appComponents = instance.appContext?.components as Record<string, unknown> | undefined;
       if (appComponents && hasOwn(appComponents, key)) {
         return appComponents[key as string];
+      }
+
+      // 7. 内置组件（`Teleport` / `Suspense` / `Transition` / `TransitionGroup` / `KeepAlive`）
+      //
+      // ⚠️ 2026-10-28 修（P0）：此前**没有这一步**，于是模板里写 `<Teleport>` 编成的
+      //   `_ctx.Teleport` 恒为 `undefined` ⇒ 四个内置组件在模板里**静默渲染为空**
+      //   （不报错、不告警）。而 `import { Teleport } from '@lytjs/core'` + `h(Teleport)`
+      //   一直正常 ⇒「内置组件可用」只在 import 路径上成立，模板路径上是假的。
+      //
+      // 顺序放在**用户注册之后**：用户可以用同名局部组件覆盖内置组件（与 Vue 一致）。
+      // 同样**不写 accessCache**：缓存 `OTHER` 的语义是「未找到」，写进去会让第二次
+      // render 直接返回 undefined（见上一段注释）。
+      if (isBuiltinComponentName(key)) {
+        return getBuiltinComponent(key);
       }
 
       // 未找到，缓存为 OTHER 以避免重复查找

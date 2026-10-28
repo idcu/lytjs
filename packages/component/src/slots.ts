@@ -4,6 +4,7 @@
 import { isFunction, isArray, isObject, isNullish } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
 import type { VNode } from '@lytjs/common-vnode';
+import { createTextVNode } from '@lytjs/vdom';
 import type { ComponentInternalInstance, InternalSlots, SlotFunction } from './types';
 
 /**
@@ -56,6 +57,19 @@ export function initSlots(instance: ComponentInternalInstance, children: unknown
     //   `h(Transition, null, { default: () => [...] })`（显式 slots）一直正常。
     const list = (isArray(children) ? children : [children]) as VNode[];
     slots.default = (() => list) as unknown as SlotFunction;
+  } else if (typeof children === 'string' || typeof children === 'number') {
+    // ★ 2026-10-28 修（P0）：**纯文本子节点**。
+    //
+    // 编译器对 `<Child>hello</Child>` 产出的是 `createElementVNode(_ctx.Child, null, "hello")`
+    // —— children 是一个**字符串**，而下面的分支只认「函数 / 数组 / vnode / 函数对象」，
+    // 字符串一个都不匹配 ⇒ `slots.default` **从未建立** ⇒ 组件里 `slots.default?.()`
+    // 得到 undefined ⇒ 文本整块消失（不报错、不告警）。
+    //
+    // 实测对照（同一子组件）：
+    //   `<Child><span>S</span></Child>`  → 渲染出 S（走数组/vnode 分支）
+    //   `<Child>hello</Child>`           → **什么都不渲染**（本条）
+    // 而「文本 + 元素混排」是数组形态、一直正常 —— 又一次「一半能用」。
+    slots.default = (() => [createTextVNode(String(children))]) as unknown as SlotFunction;
   } else if (isObject(children) && !isArray(children)) {
     // 插槽函数对象
     const slotObj = children as Record<string, unknown>;
