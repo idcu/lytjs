@@ -511,7 +511,15 @@ export function createRenderer<HN, HE extends HN>(
           const { update } = n2.component;
           if (update && (propsChanged || slotsChanged)) {
             update();
-          } else if (__DEV__ && !propsChanged && !slotsChanged) {
+          }
+
+          // ⚠️ 2026-10-30：这里**刻意没有**「更新后再下沉一次过渡钩子」的代码。
+          //
+          // 我一度加过它（担心 `mountComponent` 的闭包只认首帧 vnode、钩子会过期），
+          // 但**注入验证显示删掉它 22 例过渡用例全绿** ⇒ 它当时没有任何用例需要。
+          // 按本仓纪律（不留没有驱动的机制），删掉；若将来真出现「组件根元素类型在更新中
+          // 改变、新根元素该播 enter」的场景，应当**先写一条会红的用例**再加回来。
+          else if (__DEV__ && !propsChanged && !slotsChanged) {
             const compName = (n2.component.type as { name?: string }).name || 'anonymous';
             console.warn(`[lytjs/patch] 跳过组件更新 "${compName}"：props 和 slots 未变化`);
           }

@@ -310,6 +310,28 @@ export function createComponentPatch<HN, HE extends HN>(
 
       component!.subTree = subTree;
 
+      // ============================================================
+      // ★ 2026-10-30 新增：把过渡钩子**下沉**到组件的根元素 vnode
+      // ============================================================
+      //
+      // `<Transition>` / `<TransitionGroup>` 把钩子挂在**子 vnode** 上，而
+      // `mountElement` / `unmount` 只在**元素** vnode 上读它 ⇒ 子节点写成组件时
+      // （`<Transition><MyComp/></Transition>`，最常见的真实用法）**enter / leave 全都不发生**，
+      // 且不报错：
+      //
+      //   <Transition name="fade"><p v-if="on">X</p></Transition>     → 有动画
+      //   <Transition name="fade"><MyComp v-if="on" /></Transition>   → 没动画
+      //
+      // 修法：挂载根元素之前把它写上去 —— `mountElement` 随后自然会消费（enter），
+      // `unmount(instance.subTree)` 也会消费（leave）。与 Vue 的
+      // `setTransitionHooks(vnode, hooks)` 同一思路。
+      //
+      // 只处理**根是元素**的情况：多根（Fragment）没有唯一的宿主元素，钩子无处可挂
+      // （已记在报告 §29.5）。
+      if (vnode.transition && subTree.shapeFlag & ShapeFlags.ELEMENT) {
+        subTree.transition = vnode.transition;
+      }
+
       if (!isMounted) {
         // 首次挂载
         patch(null, subTree, container, anchor, component, parentSuspense, isSVG);
