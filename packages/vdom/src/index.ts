@@ -137,3 +137,24 @@ export {
   registerSuspensePendingChild,
   notifySuspenseChildResolved,
 } from './patch-suspense';
+
+// ============================================================
+// ★ 2026-10-29：过渡机制（`<Transition>` 需要它）
+// ============================================================
+//
+// ⚠️ 这些函数此前**没有从 barrel 导出**，因此 `@lytjs/component` 的 `<Transition>`
+//   根本拿不到它们 —— 只能把插槽原样渲染出去（pass-through），动画完全不发生。
+//   780 行的过渡实现（enter / leave / 等待结束 / FLIP）一直只被自己的单测调用。
+export {
+  performEnterTransition,
+  performLeaveTransition,
+  nextFrame,
+  addTransitionClass,
+  removeTransitionClass,
+  hasCSSTransition,
+  getTransitionInfo,
+  getTransitionInfoDOM,
+  waitForTransitionEndDOM,
+  setTransitionPrefix,
+} from './transition';
+export type { TransitionProps } from './transition';

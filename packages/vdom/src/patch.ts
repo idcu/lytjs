@@ -664,7 +664,28 @@ export function createRenderer<HN, HE extends HN>(
     }
 
     if (doRemove) {
-      if (el) hostRemove(el);
+      if (el) {
+        // ★ 2026-10-29 新增：过渡 leave。
+        //
+        // 有 `leave` 钩子时**不立即移除**，而是把 `hostRemove(el)` 交给它，在过渡结束后
+        // 再调 —— 否则「动画刚开始播、元素已经被摘掉」，等于没有动画。
+        //
+        // 注意 children 已经在上方递归卸载完了：leave 期间元素是**空壳**。
+        // 这与 Vue 不同（Vue 会延迟卸载子树），但本仓的 unmount 语义是「实例立即销毁」，
+        // 让空壳播完动画是能在不改卸载语义的前提下做到的最好结果（已记在报告里）。
+        const leaveHooks = vnode.transition;
+        if (leaveHooks?.leave) {
+          let removed = false;
+          const removeOnce = () => {
+            if (removed) return;
+            removed = true;
+            hostRemove(el);
+          };
+          leaveHooks.leave(el, removeOnce);
+        } else {
+          hostRemove(el);
+        }
+      }
     }
   }
 

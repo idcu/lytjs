@@ -36,12 +36,30 @@ function wrapSlot(fn: SlotFunction): SlotFunction {
 }
 
 export function initSlots(instance: ComponentInternalInstance, children: unknown): void {
+  // ============================================================
+  // ★ 2026-10-29 修（P0）：**原地清空 / 填充**，绝不替换对象本身
+  // ============================================================
+  //
+  // `setup(props, { slots })` 拿到的 `ctx.slots` 是 `instance.slots` 的**引用**
+  // （component-setup.ts 的 `const context = { slots: instance.slots, … }`）。
+  // 而 2026-10-27 那次「更新时重建插槽」的修法写的是 `instance.slots = slots` ——
+  // **换了个新对象** ⇒ 组件里那个引用永远指向首帧那个 `{}`。
+  //
+  // 后果（实测）：`<Transition>`（以及任何 `setup(_p, { slots })` 的组件）在父组件
+  // 重渲染后**完全看不到新的插槽内容** —— 表现为「v-if 在插槽里切换，组件毫无反应」，
+  // 不报错、不告警。而同一份代码若改成读 `instance.slots`（渲染时读）就是对的，
+  // 于是「有的组件正常、有的组件冻结」，极难归因。
+  //
+  // 修法：保留对象引用，只清空键再重填。这样 `ctx.slots` 恒等于 `instance.slots`。
+  const slots: InternalSlots = instance.slots ?? ({} as InternalSlots);
+  for (const key of Object.keys(slots)) {
+    delete (slots as Record<string, unknown>)[key];
+  }
+  instance.slots = slots;
+
   if (isNullish(children)) {
-    instance.slots = {} as InternalSlots;
     return;
   }
-
-  const slots: InternalSlots = {};
 
   if (isFunction(children)) {
     // 单个函数 => 默认插槽

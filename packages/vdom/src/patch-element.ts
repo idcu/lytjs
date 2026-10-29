@@ -302,6 +302,21 @@ export function createElementPatch<HN, HE extends HN>(
       insert(el, container, anchor);
     }
 
+    // ============================================================
+    // ★ 2026-10-29 新增：过渡 enter（`<Transition>` 写在子 vnode 上的钩子）
+    // ============================================================
+    //
+    // 必须在 **insert 之后**：`performEnterTransition` 要先量 `getBoundingClientRect()`
+    // 再切类名，元素不在文档里时量到的尺寸恒为 0，过渡不会触发。
+    //
+    // `shouldEnter === false` 用于「首次挂载且没有 `appear`」—— 与 Vue 一致：
+    // 页面首屏不该播进入动画，但之后 `v-if` 变真时必须播。
+    const transitionHooks = vnode.transition;
+    if (transitionHooks && transitionHooks.shouldEnter !== false) {
+      transitionHooks.beforeEnter?.(el);
+      transitionHooks.enter?.(el);
+    }
+
     // 处理 ref：在父组件实例上存储元素引用
     const refValue = vnode.ref;
     if (refValue && parentComponent) {

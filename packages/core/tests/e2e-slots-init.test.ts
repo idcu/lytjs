@@ -67,9 +67,19 @@ describe('端到端：模板 children 形态 ⇒ 组件默认插槽', () => {
   });
 
   it('多个子节点（数组形态）同样应成为默认插槽', async () => {
+    // ⚠️ 2026-10-29 契约变更：本用例原来用 `<Transition>` 验证「多子节点 → 默认插槽」，
+    // 但 `<Transition>` 现在是**真正的过渡组件**（BaseTransition 形态），
+    // 与 Vue 一致：**只作用于单个子节点**，多子节点会告警且只渲染第一个。
+    // 所以「多子节点 → 默认插槽」这条契约改用**普通消费者组件**来钉，
+    // `<Transition>` 的单子节点语义由 `e2e-transition.test.ts` 钉。
+    const Consumer = {
+      setup(_p: unknown, { slots }: { slots: { default?: () => unknown[] } }) {
+        return () => h('div', { id: 'c' }, (slots.default?.() ?? []) as never);
+      },
+    };
     const html = await mountHtml({
-      setup: () => ({ Transition }),
-      template: '<Transition><i>1</i><i>2</i><i>3</i></Transition>',
+      setup: () => ({ Consumer }),
+      template: '<Consumer><i>1</i><i>2</i><i>3</i></Consumer>',
     });
     expect(html).toContain('<i>1</i>');
     expect(html).toContain('<i>3</i>');

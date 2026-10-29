@@ -13,6 +13,19 @@
  *   - `@lytjs/core/runtime` 的 `createApp`（不含编译器）    → **80.7 KB gzip**
  *   - 只用 `@lytjs/vdom` 的 `createVNode` + `h`             → **1.6 KB gzip**
  *
+ * ## 2026-10-29 的一次**主动**上调（+2.2 KB），理由写在下面
+ *
+ * 修「`<Transition>` 根本不播动画」（报告 §27）时，过渡引擎（`vdom/transition.ts`
+ * 的 enter / leave / 等待结束 / FLIP）第一次真正被 patch 调用 ⇒ 它从**死代码**
+ * 变成**必然进产物**的代码。实测 83.1 → 85.3 KB（+2.2）。
+ *
+ * 这是**用体积换正确性**：不修的代价是 `<Transition>` 一个类名、一个钩子都不发生
+ * （子元素照常渲染，所以看起来"只是动画没生效"，极难归因）。
+ * Vue 的 runtime 同样始终包含 BaseTransition。
+ *
+ * 预算（按 `kb()` 的 /1024 口径显示）85.4 / 83.5 → **87.4 / 85.4**，
+ * 留 ~2 KB 余量而不是贴着实测值 —— 贴太紧会变成噪声源（上一次就是这么定的规矩）。
+ *
  * ## 2026-10-28 的一次**主动**上调（+1.8 KB），理由写在下面
  *
  * 修「内置组件在模板里全部渲染为空」（报告 §20）时，组件实例代理必须能按名字解析
@@ -92,7 +105,7 @@ const count = ref(0);
 const double = computed(() => count.value * 2);
 export const app = createApp({ render: () => h('div', null, [String(count.value), String(double.value)]) });
 export { count, double };`,
-    budget: 87_000,
+    budget: 89_500,
   },
   {
     name: 'runtime-app',
@@ -103,7 +116,7 @@ const count = ref(0);
 const double = computed(() => count.value * 2);
 export const app = createApp({ render: () => h('div', null, [String(count.value), String(double.value)]) });
 export { count, double };`,
-    budget: 85_000,
+    budget: 87_500,
   },
 ];
 

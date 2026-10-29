@@ -116,6 +116,30 @@ export interface VNodeData {
   [key: string]: unknown;
 }
 
+/**
+ * 过渡钩子（挂在 vnode 上，由 patch 在挂载/卸载时调用）。
+ *
+ * 与 `vdom/transition.ts` 的 `TransitionProps` 是**两层**：这里只描述「patch 在什么
+ * 时机调用什么」，具体类名 / 时长 / 钩子顺序全部交给 `performEnterTransition` /
+ * `performLeaveTransition`（它们已经有完整实现与单测）。
+ */
+export interface VNodeTransitionHooks {
+  /**
+   * 本次挂载是否要播 enter。
+   *
+   * 首次挂载默认**不播**（与 Vue 一致：只有 `<Transition appear>` 才播）；
+   * 之后由 `v-if` / 列表变化导致的挂载都要播。由 `<Transition>` 计算好后写入。
+   */
+  shouldEnter?: boolean;
+  beforeEnter?: (el: unknown) => void;
+  enter?: (el: unknown) => void;
+  /**
+   * 卸载时调用。`done` 必须由实现方在过渡结束后调用 —— patch 会等它来决定何时真正
+   * 从 DOM 移除节点（不等就会「动画还没播完元素已经没了」）。
+   */
+  leave?: (el: unknown, done: () => void) => void;
+}
+
 export interface VNode {
   /** VNode 类型 */
   type: VNodeTypes;
@@ -164,6 +188,19 @@ export interface VNode {
   /** Suspense 边界 */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   suspense?: any;
+  /**
+   * 过渡钩子（由 `<Transition>` 写在它的**子 vnode** 上，由 patch 在挂载/卸载时调用）。
+   *
+   * ⚠️ 2026-10-29 新增：`vdom/transition.ts` 里那 780 行（enter / leave / 等待结束 /
+   *   下一帧 / FLIP）**早就实现且有自己的单测**，但 patch 路径**一次都没调用过** ——
+   *   于是 `<Transition>` 只是个 pass-through：子元素照常渲染，**类名与钩子一个都不发生**。
+   *   这个字段就是把「过渡机制」接到「patch 生命周期」上的那根线。
+   *
+   * 为什么放在 VNode 上而不是让 patch 认识 `Transition` 组件：patch 不该知道任何具体
+   * 组件；`<Transition>` 只需要在自己的渲染函数里给子 vnode 挂钩子即可（与 Vue 的
+   * `vnode.transition` 同构）。
+   */
+  transition?: VNodeTransitionHooks;
   /** 源码位置 */
   loc: VNodeSourceLocation | null;
   /** 内部标记 */
