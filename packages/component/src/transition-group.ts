@@ -6,8 +6,10 @@
 
 import type { ComponentOptions, SetupContext } from './types';
 import { createVNode } from '@lytjs/vdom';
-import type { VNode } from '@lytjs/vdom';
-import { warn } from '@lytjs/common-error';
+import type { FLIPState, TransitionProps, VNode } from '@lytjs/vdom';
+import { createFLIPState, beforeUpdate, afterUpdate } from '@lytjs/vdom';
+import { performEnterTransition, performLeaveTransition } from '@lytjs/vdom';
+import { onUpdated } from './lifecycle';
 
 // ==================== TransitionGroup Props ====================
 
@@ -44,36 +46,6 @@ export type TransitionGroupComponentPropsLegacy = TransitionGroupComponentProps<
 
 // ==================== TransitionGroup Component ====================
 
-/**
- * 声明了、但**当前尚未接线**的过渡属性。
- *
- * 正确的组过渡需要 FLIP 前后两帧的 DOM 快照（`recordPositions` → 改 DOM → `applyFLIP`），
- * 只能在 patch 层完成；`@lytjs/vdom` 已有整套工具（`recordPositions` / `applyFLIP` /
- * `performGroupEnterTransition` / `performGroupLeaveTransition` / `beforeUpdate` / `afterUpdate`），
- * 但**没有任何调用方**。组件侧拿不到"哪些子节点是新增/被删"的差分，因此无法在此正确实现。
- *
- * 现状口径：`tag` 生效（结构性，组件侧可完整实现）；下面这些**不生效**，
- * 且在 DEV 下会明确告警 —— 沉默地"接受但不做事"比报错更难排查。
- */
-const UNWIRED_TRANSITION_PROPS = [
-  'name',
-  'moveClass',
-  'enterFromClass',
-  'enterActiveClass',
-  'enterToClass',
-  'leaveFromClass',
-  'leaveActiveClass',
-  'leaveToClass',
-  'onBeforeEnter',
-  'onEnter',
-  'onAfterEnter',
-  'onEnterCancelled',
-  'onBeforeLeave',
-  'onLeave',
-  'onAfterLeave',
-  'onLeaveCancelled',
-] as const;
-
 export const TransitionGroup: ComponentOptions = {
   name: 'TransitionGroup',
 
@@ -98,30 +70,91 @@ export const TransitionGroup: ComponentOptions = {
     onLeaveCancelled: { type: Function },
   },
 
-  // FIX: DTS build error - 添加类型断言
   setup(props: Record<string, unknown>, { slots }: SetupContext) {
-    // ★ 2026-10-25：`tag` 此前**完全不生效** —— setup 直接返回 `slots.default()`，
-    //   于是 `<TransitionGroup tag="ul">` 渲染出来没有 `<ul>`（组件名与 props 都在承诺
-    //   "有包裹元素"，实际是无包裹 Fragment）。这里补上唯一一个组件侧能完整实现的属性。
-    if (__DEV__) {
-      const received = UNWIRED_TRANSITION_PROPS.filter((key) => props[key] !== undefined);
-      if (received.length > 0) {
-        warn(
-          `<TransitionGroup> 收到过渡属性 [${received.join(', ')}]，但它们**尚未接线**` +
-            `（组过渡需要 patch 层的 FLIP 快照，当前无调用方）；目前只有 tag 生效。`,
-        );
+    const transitionProps = props as unknown as TransitionProps<Element>;
+
+    /** 上一帧的子 vnode（FLIP 需要它来量「改之前」的位置） */
+    let prevChildren: VNode[] = [];
+    let flipState: FLIPState | null = null;
+    let isFirstRender = true;
+
+    /**
+     * 取子 vnode 的宿主元素。
+     *
+     * ⚠️ 顺带给有 `key` 的元素写 `data-key`：vdom 的 FLIP 实现按
+     * `data-key` 属性匹配前后两次位置（`getChildKeyDOM`），没有它就只能按
+     * **下标**匹配 —— 列表重排时会把「换了位置的 A」当成「位置没变的 B」，
+     * 于是 FLIP 算出错误的位移。`key` 本来就是身份契约，写进 DOM 是它的自然延伸。
+     */
+    const collectElements = (nodes: VNode[]): Element[] => {
+      const out: Element[] = [];
+      for (const node of nodes) {
+        const el = (node as { el?: unknown }).el;
+        if (!el || typeof (el as Element).getBoundingClientRect !== 'function') continue;
+        const key = (node as { key?: unknown }).key;
+        if (key !== undefined && key !== null) {
+          (el as Element).setAttribute('data-key', String(key));
+        }
+        out.push(el as Element);
       }
-    }
+      return out;
+    };
+
+    // FLIP 的后半段：patch 完成后量新位置并对移动过的元素施加位移
+    onUpdated(() => {
+      if (!flipState) return;
+      const name = (props.name as string | undefined) ?? 'v';
+      const moveClass = (props.moveClass as string | undefined) ?? `${name}-move`;
+      afterUpdate(flipState, collectElements(prevChildren), moveClass);
+      flipState = null;
+    });
 
     return (() => {
-      const children = (slots.default?.() ?? []) as VNode[];
-      const tag = props.tag;
+      const rawChildren = (slots.default?.() ?? []) as unknown[];
+      // ⚠️ 保持「未传 tag 时原样返回**同一个**数组」的既有契约（有单测按 `toBe` 钉着）：
+      //   只有真的存在 null / 字符串等非 vnode 项时才新建数组。
+      const children = rawChildren.some((c) => c === null || typeof c !== 'object')
+        ? (rawChildren.filter((c) => c !== null && typeof c === 'object') as VNode[])
+        : (rawChildren as VNode[]);
 
+      // FLIP 的前半段：**渲染发生在 patch 之前** ⇒ 此刻 DOM 还是旧的，
+      // 正好是「改之前」的快照点。（不依赖 `onBeforeUpdate`：那个钩子在
+      // vdom 的更新路径里没有被调用，只有 `onUpdated` 有。）
+      if (!isFirstRender && prevChildren.length > 0) {
+        flipState = createFLIPState();
+        beforeUpdate(flipState, collectElements(prevChildren));
+      }
+
+      // 每个子节点挂 enter / leave 钩子。
+      //
+      // 只有**新挂载**的子节点会走 `mountElement` ⇒ 只有它们会播 enter；
+      // 已有子节点被 patch 时不会重播（这是 patch 的天然语义，不需要额外判断）。
+      // 首次渲染默认不播（`appear` 才播），与 Vue 一致。
+      const shouldEnter = !isFirstRender || props.appear === true;
+      for (const child of children) {
+        // 不按 `shapeFlag` 过滤：钩子只由 patch 在「元素挂载 / 卸载」时调用，
+        // 挂在组件子节点上是无害的 no-op（组件子节点不播过渡，见报告 §28.5）。
+        // 过滤反而会让「手写 vnode / 测试夹具」这类没有 shapeFlag 的对象被漏掉。
+        child.transition = {
+          shouldEnter,
+          enter: (el) => {
+            performEnterTransition(el as Element, transitionProps, () => {});
+          },
+          leave: (el, done) => {
+            performLeaveTransition(el as Element, transitionProps, done);
+          },
+        };
+      }
+
+      prevChildren = children;
+      isFirstRender = false;
+
+      const tag = props.tag;
       if (typeof tag === 'string' && tag !== '') {
         return createVNode(tag, null, children) as unknown as VNode;
       }
 
-      // `tag: false` 与未传同义：不包裹，直接返回子节点（保持既有行为）
+      // `tag: false` 与未传同义：不包裹，直接返回子节点
       return children as unknown as VNode;
     }) as unknown as () => VNode;
   },

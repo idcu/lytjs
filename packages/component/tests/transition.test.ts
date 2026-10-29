@@ -655,16 +655,24 @@ describe('TransitionGroup - 行为：tag 必须真的包一层', () => {
     expect(render()).toBe(children);
   });
 
-  it('★ 未接线的过渡属性必须明确告警，不能沉默接受', () => {
+  it('★ 过渡属性**已接线**：不再告警，且子节点拿到了 transition 钩子', () => {
+    // ⚠️ 2026-10-29 契约变更：此前这里断言「必须告警（尚未接线）」——
+    // 那是「实现之前不许沉默」的临时哨兵。现在 FLIP / enter / leave 真正接上了
+    // （`vnode.transition` + `beforeUpdate` / `afterUpdate`），哨兵如约变红，
+    // 换成真实行为断言：**不告警** + 每个元素子节点都挂了钩子。
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    setupGroup({ tag: 'ul', name: 'fade', onEnter: () => {} }, kids());
+    const children = kids();
+    // ⚠️ 必须**调用**返回的渲染函数：钩子是在 render 里挂到子 vnode 上的
+    const render = setupGroup({ tag: 'ul', name: 'fade', onEnter: () => {} }, children);
+    render();
 
-    expect(warnSpy).toHaveBeenCalled();
-    const msg = String(warnSpy.mock.calls[0]?.[0] ?? '');
-    expect(msg).toContain('name');
-    expect(msg).toContain('onEnter');
-    expect(msg).toContain('尚未接线');
+    expect(warnSpy).not.toHaveBeenCalled();
+    for (const child of children) {
+      expect(child.transition).toBeDefined();
+      expect(typeof child.transition?.enter).toBe('function');
+      expect(typeof child.transition?.leave).toBe('function');
+    }
 
     warnSpy.mockRestore();
   });

@@ -40,7 +40,13 @@ export type LegacyTransitionGroupProps = TransitionGroupProps<Element>;
 // FLIP animation state
 // ============================================================
 
-interface FLIPState {
+/**
+ * FLIP 状态：改前 / 改后两次位置快照。
+ *
+ * ⚠️ 2026-10-29：此前**没有 export** ⇒ `@lytjs/component` 的 `<TransitionGroup>`
+ * 连类型都拿不到，更谈不上接线。
+ */
+export interface FLIPState {
   /** 元素 key 到旧位置（DOM 更新前）的映射 */
   oldPositions: Map<string, HostRect>;
   /** 元素 key 到新位置（DOM 更新后）的映射 */

@@ -158,3 +158,15 @@ export {
   setTransitionPrefix,
 } from './transition';
 export type { TransitionProps } from './transition';
+
+// `<TransitionGroup>` 的 FLIP 工具（2026-10-29 起真正接线，此前零调用点）
+export {
+  createFLIPState,
+  beforeUpdate,
+  afterUpdate,
+  recordPositions,
+  applyFLIP,
+  performGroupEnterTransition,
+  performGroupLeaveTransition,
+} from './transition-group';
+export type { FLIPState, TransitionGroupProps } from './transition-group';
