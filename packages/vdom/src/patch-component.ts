@@ -8,7 +8,8 @@
 import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
 import { Fragment, ShapeFlags } from '@lytjs/common-vnode';
 import { warn, error } from '@lytjs/common-error';
-import { watchEffect } from '@lytjs/reactivity';
+import { effect } from '@lytjs/reactivity';
+import { queuePreFlushCb } from '@lytjs/common-scheduler';
 import type { SuspenseBoundary } from './types';
 import type { RendererContext } from './patch-element';
 import { createVNode } from './vnode';
@@ -85,6 +86,15 @@ export function createComponentPatch<HN, HE extends HN>(
       const activate = ka.activate as ((v: VNode, c: unknown, a: unknown) => void) | undefined;
       activate?.(vnode, container, anchor);
       return;
+    }
+
+    // ★ 2026-10-29：把所在 suspense 边界记到 vnode 上，**必须在 setupChildComponent 之前**。
+    //
+    // 子组件的 `setupComponent` 会在「setup 返回 Promise」时调
+    // `registerSuspensePendingChild(vnode)` 登记等待；那时它只能靠 `vnode.suspense`
+    // 找回边界。写晚了就登记不上 ⇒ `<Suspense>` 的 fallback 永不出现。
+    if (parentSuspense) {
+      vnode.suspense = parentSuspense;
     }
 
     if (!component) {
@@ -321,7 +331,27 @@ export function createComponentPatch<HN, HE extends HN>(
     };
 
     // Set up the update function on the component instance
-    (component as unknown as { update: () => void }).update = update;
+    //
+    // ⚠️ 2026-10-29 修（P0）：这里必须指向**渲染 effect 的 runner**，而不是裸 `update`。
+    //
+    // 裸 `update` 的问题：调用它等于在 effect **外面**执行渲染 ⇒ 读到的响应式依赖
+    // **不会被收集**。对同步组件无害（首次渲染发生在 effect 内，依赖已收集），
+    // 但对 `async setup` 致命：
+    //   · 首次渲染时 setupState 还是空的 ⇒ 什么都没读到 ⇒ 依赖表为空；
+    //   · Promise 兑现后 `component-setup.ts` 调 `instance.update()` 重渲染一次
+    //     ⇒ **DOM 对了，但依赖表仍是空的**；
+    //   · 之后任何 `ref.value = x` 都不再触发重渲染 ⇒ 页面冻结在兑现那一刻的内容。
+    // 实测（`core/tests/e2e-suspense-fallback.test.ts` 的「切回 default 后仍是活的」）：
+    // 兑现后 `n=0` 正确，改成 `n=7` 后**永不更新**。
+    //
+    // 修法：让 `instance.update` 指向 `effect(...)` 返回的 runner —— 调用它会在
+    // effect 内重跑渲染，**顺便重新收集依赖**（这也是 Vue 的做法：
+    // `instance.update = effect(...)`）。effect 尚未建立时退回裸 `update`（首帧用）。
+    let renderEffect: (() => void) | null = null;
+    (component as unknown as { update: () => void }).update = () => {
+      if (renderEffect) renderEffect();
+      else update();
+    };
 
     // ============================================================
     // 把「渲染器的 unmount」暴露到组件实例上
@@ -343,7 +373,12 @@ export function createComponentPatch<HN, HE extends HN>(
     }
 
     // Run the initial update (mount)
-    watchEffect(update);
+    //
+    // 调度器与 `watchEffect` 的默认 `flush: 'pre'` 保持一致（同一个 `queuePreFlushCb`），
+    // 所以「多次改数据只重渲染一次」的批处理行为不变；区别只在于**我们拿到了 runner**。
+    renderEffect = effect(update, {
+      scheduler: () => queuePreFlushCb(() => renderEffect?.()),
+    });
   }
 
   return {

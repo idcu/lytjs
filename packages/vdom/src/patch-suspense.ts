@@ -39,6 +39,64 @@ export function registerSuspenseLinker(linker: SuspenseLinkerFn): void {
 }
 
 // ============================================================
+// ★ 2026-10-29 新增：异步子组件的「登记 / 注销」入口
+// ============================================================
+//
+// ## 为什么需要这两个函数
+//
+// `patchSuspense` 此前靠 `defaultBranch.isAsyncPlaceholder === true` 判断「要不要显示
+// fallback」。那个标记是**子组件 `setupComponent` 跑完**才置位的，而检查发生在
+// `patch(null, defaultBranch, …)` **之前** ⇒ 恒为 false ⇒ **fallback 从未出现**
+// （实测：全程渲染 default，只是数据是 undefined）。
+//
+// 而且它天生只对「default 分支的**根 vnode** 就是异步组件」有效：
+// `<Suspense><div><Async/></div><Fallback/></Suspense>` 的根是 `div`，标记永远 false。
+//
+// 改成**由子组件自己登记**：`setupComponent` 发现 setup 返回 Promise 时调
+// `registerSuspensePendingChild(vnode)`，兑现时调 `notifySuspenseChildResolved(vnode)`。
+// boundary 从 `vnode.suspense` 取（`mountComponent` 在 setup 之前就把它写上去），
+// 于是**任意深度**的异步子组件都会被计入，不依赖「根 vnode 恰好是异步组件」。
+//
+// ⚠️ 这两个函数是 vdom 对 component 的**窄接口**（参数只有一个 vnode），
+//   component 不需要知道 `SuspenseBoundary` 的任何字段 —— 与 `registerSuspenseLinker`
+//   同一套「注入缝」思路，只是方向相反。
+
+/** 取 vnode 关联的 suspense 边界（没有则 null） */
+function getBoundaryOf(vnode: VNode): SuspenseBoundary | null {
+  const b = vnode.suspense as SuspenseBoundary | null | undefined;
+  return b && typeof b === 'object' ? b : null;
+}
+
+/**
+ * 登记一个**正在等待**的异步子组件（`setup` 返回了 Promise）。
+ *
+ * 返回 `true` 表示已计入某个 suspense 边界；`false` 表示该组件不在任何
+ * `<Suspense>` 内（正常路径，无需处理）。
+ */
+export function registerSuspensePendingChild(vnode: VNode): boolean {
+  const boundary = getBoundaryOf(vnode);
+  if (!boundary || boundary.isUnmounted) return false;
+  boundary.pendingCount = (boundary.pendingCount ?? 0) + 1;
+  return true;
+}
+
+/**
+ * 通知「某个异步子组件已兑现（或失败）」，计数归零时**切回 default**。
+ *
+ * ⚠️ 必须由调用方在**重渲染之后**调用：子组件的 DOM 此刻还挂在「被摘下来」的
+ *   状态里，先让 `instance.update()` 把内容画好，再把节点放回容器。
+ */
+export function notifySuspenseChildResolved(vnode: VNode): void {
+  const boundary = getBoundaryOf(vnode);
+  if (!boundary || boundary.isUnmounted) return;
+  const next = (boundary.pendingCount ?? 0) - 1;
+  boundary.pendingCount = next > 0 ? next : 0;
+  if (boundary.pendingCount === 0) {
+    boundary.switchToDefault?.();
+  }
+}
+
+// ============================================================
 // Suspense patch 工厂
 // ============================================================
 
@@ -87,33 +145,65 @@ export function createSuspensePatch<HN, HE extends HN>(
   /**
    * 从 vnode children 中提取 default 和 fallback 分支。
    * Children 可以是：
-   * - VNode[]（仅 default slot，无 fallback）
-   * - { default: VNode[], fallback?: VNode[] }（命名 slots）
+   * - VNode[]（`[default]` 或 `[default, fallback]`）
+   * - { default: VNode[] | () => VNode[], fallback?: 同 }（命名 slots）
+   *
+   * ⚠️ 2026-10-29 修：**slot 函数形态**此前解析不出内容。
+   *   `h(Suspense, null, { default: () => [...], fallback: () => [...] })` 是渲染函数里
+   *   最自然的写法（与 `h(Child, null, { default: () => [...] })` 一致），而这里只认
+   *   `Array.isArray(slot)` ⇒ 两个分支都得到 null ⇒ **整块渲染为空**（实测）。
+   *   现在两种形态都接受：数组直接取，函数**调用后**取。
    */
   function resolveSuspenseChildren(children: VNode['children']): {
     defaultBranch: VNode | null;
     fallbackBranch: VNode | null;
   } {
+    /** 把「数组 / 函数 / 单 vnode」统一取成首个 vnode */
+    const first = (slot: unknown): VNode | null => {
+      if (slot == null) return null;
+      if (isArray(slot)) return (slot[0] as VNode | undefined) ?? null;
+      if (typeof slot === 'function') return first((slot as () => unknown)());
+      return (slot as VNode) ?? null;
+    };
+
     if (isArray(children)) {
-      // VNode[]：视为 default slot，无 fallback
+      // VNode[]：`[default, fallback]`（fallback 可选）
       return {
-        defaultBranch: children[0] ?? null,
-        fallbackBranch: null,
+        defaultBranch: first(children[0]),
+        fallbackBranch: first(children[1]),
       };
     }
 
-    if (children && typeof children === 'object' && !isArray(children)) {
-      // Slot 对象：{ default: VNode[], fallback?: VNode[] }
-      const slots = children as Record<string, VNode[]>;
-      const defaultSlot = slots.default;
-      const fallbackSlot = slots.fallback;
+    if (children && typeof children === 'object') {
+      // Slot 对象：{ default, fallback }
+      const slots = children as Record<string, unknown>;
       return {
-        defaultBranch: isArray(defaultSlot) ? (defaultSlot[0] ?? null) : null,
-        fallbackBranch: isArray(fallbackSlot) ? (fallbackSlot[0] ?? null) : null,
+        defaultBranch: first(slots.default),
+        fallbackBranch: first(slots.fallback),
       };
     }
 
     return { defaultBranch: null, fallbackBranch: null };
+  }
+
+  /**
+   * 「这一帧的 default 分支还在等吗」的**统一判据**。
+   *
+   * 两个信号，缺一不可：
+   *
+   * 1. `boundary.pendingCount > 0` —— 真实应用里的主信号。异步子组件在
+   *    `setupComponent` 里主动登记（`registerSuspensePendingChild`），
+   *    **任意深度**都能算到，且计数归零才切回 default（多个异步组件不会被提前收工）。
+   * 2. `branch.isAsyncPlaceholder === true` —— 兼容信号。给「手写 vnode」的场景
+   *    （`vdom` 的单测就是直接构造带该标记的 vnode，不经过 `setupComponent`）。
+   *
+   * ⚠️ 关键差别在于**检查时机**：这两个信号都必须在 `patch(null, defaultBranch, …)`
+   *   **之后**读。此前的缺陷正是「挂之前读 isAsyncPlaceholder」—— 那个标记要等
+   *   挂载时的 `setupComponent` 才置位，读的时候恒为 false。
+   */
+  function isBranchPending(branch: VNode | null, boundary: SuspenseBoundary): boolean {
+    if ((boundary.pendingCount ?? 0) > 0) return true;
+    return branch?.isAsyncPlaceholder === true;
   }
 
   // ============================================================
@@ -160,6 +250,9 @@ export function createSuspensePatch<HN, HE extends HN>(
       isInFallback: false,
       isHydrating: false,
       effects: [],
+      pendingCount: 0,
+      fallbackBranch: null,
+      isUnmounted: false,
     };
 
     vnode.suspense = boundary;
@@ -173,15 +266,18 @@ export function createSuspensePatch<HN, HE extends HN>(
         if (asyncState && typeof asyncState === 'object') {
           suspenseLinker(asyncState, boundary, (_boundary: unknown, toFallback: boolean) => {
             // domSwitch：在 default 和 fallback 分支之间切换
-            const b = _boundary as { vnodeBoundary?: SuspenseBoundary & { isInFallback: boolean } };
+            const b = _boundary as { vnodeBoundary?: SuspenseBoundary };
             const vb = b.vnodeBoundary;
-            if (!vb) return;
+            if (!vb || vb.isUnmounted) return;
             if (toFallback && !vb.isInFallback) {
-              // 切换到 fallback：由下次更新的 patchSuspense 处理
-              vb.isInFallback = true;
+              // 真正的执行者是边界自己的 `switchToFallback`（`vb` 就是 boundary 本身）
+              if (vb.switchToFallback && vb.fallbackBranch) {
+                vb.switchToFallback(vb.fallbackBranch);
+              } else {
+                vb.isInFallback = true;
+              }
             } else if (!toFallback && vb.isInFallback) {
-              // 切换回 default：由下次更新的 patchSuspense 处理
-              vb.isInFallback = false;
+              vb.switchToDefault?.();
             }
           });
         }
@@ -191,25 +287,80 @@ export function createSuspensePatch<HN, HE extends HN>(
     // 从 children 中解析 default 和 fallback 分支
     const { defaultBranch, fallbackBranch } = resolveSuspenseChildren(vnode.children);
 
-    // 检查 default 分支是否包含异步组件
-    const isAsync = defaultBranch?.isAsyncPlaceholder === true;
+    // ============================================================
+    // 两个切换原语（挂在 boundary 上，供异步子组件兑现时调用）
+    // ============================================================
 
-    if (isAsync && fallbackBranch) {
-      // 异步内容：将 fallback 作为 pendingBranch 挂载
-      boundary.isInFallback = true;
-      boundary.pendingBranch = defaultBranch;
+    boundary.switchToFallback = (fallback: VNode) => {
+      if (boundary.isUnmounted || boundary.isInFallback) return;
+
+      // ① 把 default 的 DOM **摘下来**。
+      //    `remove` 只是从容器摘除，**不**卸载实例 ⇒ 内部 effect 继续跑，
+      //    异步子组件兑现后仍能更新自己（它是按 el 引用原地 patch 的）。
+      const active = boundary.activeBranch;
+      if (active?.el) {
+        hostRemove(active.el as unknown as HN);
+      }
+      boundary.pendingBranch = active;
       boundary.activeBranch = null;
 
-      // 挂载 fallback 内容
-      patch(null, fallbackBranch, container, anchor, parentComponent, boundary, isSVG);
-      vnode.el = fallbackBranch.el;
-    } else {
-      // 同步内容：将 default 作为 activeBranch 挂载
-      boundary.activeBranch = defaultBranch;
+      // ② 挂上 fallback
+      boundary.fallbackBranch = fallback;
+      boundary.isInFallback = true;
+      patch(null, fallback, container, anchor, parentComponent, boundary, isSVG);
+      boundary.vnode.el = fallback.el;
+    };
 
-      if (defaultBranch) {
-        patch(null, defaultBranch, container, anchor, parentComponent, boundary, isSVG);
-        vnode.el = defaultBranch.el;
+    boundary.switchToDefault = () => {
+      if (boundary.isUnmounted || !boundary.isInFallback) return;
+
+      // ① 卸载 fallback
+      const fb = boundary.fallbackBranch;
+      boundary.fallbackBranch = null;
+      if (fb?.el) {
+        unmount(fb, boundary.parentComponent, boundary, true);
+      }
+
+      // ② 把 default 的 DOM 放回原位。
+      //    此刻异步子组件已经在自己那块 DOM 上完成过重渲染（`instance.update()`），
+      //    所以直接插回去就是**已就绪**的内容。
+      const active = boundary.pendingBranch;
+      boundary.pendingBranch = null;
+      boundary.activeBranch = active;
+      boundary.isInFallback = false;
+
+      if (active?.el) {
+        insert(active.el as unknown as HN, container, anchor);
+        boundary.vnode.el = active.el;
+      }
+    };
+
+    // 先把 default 分支**挂上去**。
+    //
+    // ⚠️ 2026-10-29 修（P0）：此前是「挂之前先判断 isAsync」——
+    //   而 isAsync 的来源 `isAsyncPlaceholder` 要等**挂载时**的 setupComponent 才置位
+    //   ⇒ 判断恒为 false ⇒ fallback 永不出现。
+    //   现在改成「先挂、再看计数」：挂载期间异步子组件会通过
+    //   `registerSuspensePendingChild` 把 boundary.pendingCount 加上去，
+    //   挂完之后这里才读得到真实值。
+    boundary.activeBranch = defaultBranch;
+
+    if (defaultBranch) {
+      patch(null, defaultBranch, container, anchor, parentComponent, boundary, isSVG);
+      vnode.el = defaultBranch.el;
+    }
+
+    // 挂载完才知道「有没有在等」——有就切到 fallback
+    if (isBranchPending(defaultBranch, boundary)) {
+      if (fallbackBranch) {
+        boundary.switchToFallback(fallbackBranch);
+      } else if (__DEV__) {
+        // 没有 fallback 可显示：保持现状（渲染半成品）是唯一选择，但要**说出来**
+        console.warn(
+          `[lytjs/patch-suspense] <Suspense> 内有异步子组件，但没有提供 fallback 分支，` +
+            `首帧会显示尚未就绪的内容。写法：h(Suspense, null, [default, fallback]) ` +
+            `或 h(Suspense, null, { default: () => [...], fallback: () => [...] })。`,
+        );
       }
     }
 
@@ -236,105 +387,82 @@ export function createSuspensePatch<HN, HE extends HN>(
   ): void {
     // 复用已有的 boundary
     const boundary = n1.suspense as SuspenseBoundary | undefined;
-    if (boundary) {
-      n2.suspense = boundary;
-      boundary.vnode = n2;
+    if (!boundary) {
+      // 没有 boundary（理论上不该发生）：退化成全新挂载，至少不会渲染为空
+      mountSuspense(n2, container, anchor, parentComponent, parentSuspense, isSVG);
+      return;
     }
 
+    n2.suspense = boundary;
+    boundary.vnode = n2;
     n2.el = n1.el;
 
-    // 解析新的 children
     const { defaultBranch: newDefault, fallbackBranch: newFallback } = resolveSuspenseChildren(
       n2.children,
     );
 
-    // 检查是否需要从 pending 过渡到 resolved
-    const wasInFallback = boundary?.isInFallback ?? false;
-    const isAsync = newDefault?.isAsyncPlaceholder === true;
+    if (boundary.isInFallback) {
+      // ── 仍显示 fallback ──
+      // default 分支此刻是「摘下来」的状态，它的实例还活着；这里**不动它**
+      // （等它自己兑现）。只更新 fallback 自身的 props/children。
+      const oldFallback = boundary.fallbackBranch;
+      boundary.fallbackBranch = newFallback;
 
-    if (wasInFallback && !isAsync) {
-      // 过渡：pending -> resolved
-      // 卸载 fallback（pendingBranch 显示）并挂载 active 内容
-      if (boundary) {
-        boundary.isInFallback = false;
-        boundary.activeBranch = newDefault;
-        boundary.pendingBranch = null;
-      }
-
-      // 卸载旧的 fallback 内容（作为 pending branch 显示）
-      if (!isArray(n1.children) && n1.children && typeof n1.children === 'object') {
-        const slots = n1.children as Record<string, VNode[]>;
-        const fallbackSlot = slots.fallback;
-        if (isArray(fallbackSlot) && fallbackSlot[0]) {
-          unmount(fallbackSlot[0], parentComponent, parentSuspense, true);
+      if (oldFallback && newFallback && isSameVNodeType(oldFallback, newFallback)) {
+        patch(oldFallback, newFallback, container, anchor, parentComponent, boundary, isSVG);
+        n2.el = newFallback.el;
+      } else {
+        if (oldFallback?.el) unmount(oldFallback, parentComponent, boundary, true);
+        if (newFallback) {
+          patch(null, newFallback, container, anchor, parentComponent, boundary, isSVG);
+          n2.el = newFallback.el;
         }
       }
 
-      // 挂载新的 active 内容
-      if (newDefault) {
-        patch(
-          null,
-          newDefault,
-          container,
-          anchor,
-          parentComponent,
-          boundary ?? parentSuspense,
-          isSVG,
-        );
-        n2.el = newDefault.el;
+      // 新一帧里等待已归零（例如异步子组件在两次渲染之间兑现了）⇒ 立即切回
+      if (!isBranchPending(newDefault, boundary)) {
+        // ⚠️ 切回之前要先把「挂着但没显示」的 default 更新成**这一帧的 vnode**。
+        //
+        // 为什么不能直接 `insert(pendingBranch.el)` 了事：
+        //   · 真实异步场景：pendingBranch 是上一帧的 vnode，这一帧父组件重渲染
+        //     生成了新的 vnode ⇒ 直接插旧的会让「父组件传下来的新 props」丢失；
+        //   · 合成场景（`vdom/tests/suspense.test.ts` 手写 vnode）：pendingBranch 与
+        //     newDefault 可能根本不是同一个 vnode ⇒ 插回去的是**过期的内容**。
+        // 正常 patch 一遍两者都覆盖：同类型原地更新（异步子组件自己已经画好，这里是
+        // 幂等的），不同类型则卸载重挂。
+        const pending = boundary.pendingBranch;
+        if (newDefault) {
+          if (pending && isSameVNodeType(pending, newDefault)) {
+            patch(pending, newDefault, container, anchor, parentComponent, boundary, isSVG);
+          } else {
+            if (pending?.el) unmount(pending, parentComponent, boundary, true);
+            patch(null, newDefault, container, anchor, parentComponent, boundary, isSVG);
+          }
+          boundary.pendingBranch = newDefault;
+        }
+        boundary.switchToDefault?.();
       }
-    } else if (!wasInFallback && isAsync && newFallback) {
-      // 过渡：resolved -> pending
-      // 卸载 active 内容并挂载 fallback
-      if (boundary) {
-        boundary.isInFallback = true;
-        boundary.pendingBranch = newDefault;
-      }
+      return;
+    }
 
-      // 卸载旧的 active 内容（清除前保存引用）
-      const oldActive = boundary?.activeBranch ?? null;
-      if (boundary) {
-        boundary.activeBranch = null;
-      }
-      if (oldActive) {
-        unmount(oldActive, parentComponent, parentSuspense, true);
-      }
+    // ── 显示 default ──
+    const oldActive = boundary.activeBranch;
+    boundary.activeBranch = newDefault;
 
-      // 挂载 fallback
-      patch(
-        null,
-        newFallback,
-        container,
-        anchor,
-        parentComponent,
-        boundary ?? parentSuspense,
-        isSVG,
-      );
-      n2.el = newFallback.el;
+    if (oldActive && newDefault && isSameVNodeType(oldActive, newDefault)) {
+      patch(oldActive, newDefault, container, anchor, parentComponent, boundary, isSVG);
     } else {
-      // 无状态过渡：正常 patch active 分支
-      const oldActive = n1.children as VNode[] | null;
-      const newActive = n2.children as VNode[] | null;
-
-      if (isArray(oldActive) && isArray(newActive)) {
-        const oldBranch = oldActive[0] ?? null;
-        const newBranch = newActive[0] ?? null;
-
-        if (oldBranch && newBranch && isSameVNodeType(oldBranch, newBranch)) {
-          patch(oldBranch, newBranch, container, anchor, parentComponent, parentSuspense, isSVG);
-        } else {
-          if (oldBranch) {
-            unmount(oldBranch, parentComponent, parentSuspense, true);
-          }
-          if (newBranch) {
-            patch(null, newBranch, container, anchor, parentComponent, parentSuspense, isSVG);
-          }
-        }
-
-        if (boundary) {
-          boundary.activeBranch = newBranch;
-        }
+      if (oldActive?.el) unmount(oldActive, parentComponent, boundary, true);
+      if (newDefault) {
+        patch(null, newDefault, container, anchor, parentComponent, boundary, isSVG);
       }
+    }
+
+    if (newDefault?.el) n2.el = newDefault.el;
+
+    // 新一帧里出现了异步子组件 ⇒ 切到 fallback
+    if (newFallback && isBranchPending(newDefault, boundary)) {
+      boundary.switchToFallback?.(newFallback);
     }
   }
 
@@ -360,6 +488,12 @@ export function createSuspensePatch<HN, HE extends HN>(
 
     const boundary = vnode.suspense as SuspenseBoundary | undefined;
 
+    // ★ 2026-10-29：置位后，迟到的 Promise 兑现回调一律忽略
+    // （否则 `switchToDefault` 会往一个已经卸载的容器里插节点）。
+    if (boundary) {
+      boundary.isUnmounted = true;
+    }
+
     // 卸载 active 分支
     if (boundary?.activeBranch) {
       safeUnmount(boundary.activeBranch);
@@ -370,21 +504,22 @@ export function createSuspensePatch<HN, HE extends HN>(
       safeUnmount(boundary.pendingBranch);
     }
 
-    // 同时卸载 vnode.children 中剩余的 children
-    // （可能已挂载的 fallback 内容）
-    const { fallbackBranch: unmountFallback } = resolveSuspenseChildren(vnode.children);
-    if (boundary?.isInFallback && unmountFallback) {
-      // Fallback 已挂载，卸载它
-      // （如果已通过上面的 activeBranch 跟踪，可能已被卸载）
-      if (unmountFallback.el) {
-        safeUnmount(unmountFallback);
-      }
+    // 卸载正在显示的 fallback
+    if (boundary?.fallbackBranch) {
+      safeUnmount(boundary.fallbackBranch);
+    }
+
+    // 兜底：children 里还有没被 boundary 跟踪到的分支
+    const { defaultBranch, fallbackBranch } = resolveSuspenseChildren(vnode.children);
+    for (const branch of [defaultBranch, fallbackBranch]) {
+      if (branch?.el) safeUnmount(branch);
     }
 
     // 清理 boundary
     if (boundary) {
       boundary.activeBranch = null;
       boundary.pendingBranch = null;
+      boundary.fallbackBranch = null;
       boundary.effects = [];
     }
 

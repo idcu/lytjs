@@ -132,4 +132,8 @@ export { registerDOMOperations, patchKeyedChildren, patchUnkeyedChildren } from 
 export type { DOMOperations } from './list-diff';
 
 // Suspense linker 注册（用于跨包边界链接）
-export { registerSuspenseLinker } from './patch-suspense';
+export {
+  registerSuspenseLinker,
+  registerSuspensePendingChild,
+  notifySuspenseChildResolved,
+} from './patch-suspense';

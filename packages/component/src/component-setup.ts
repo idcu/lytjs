@@ -19,6 +19,9 @@ import { initSlots } from './slots';
 import { setCurrentInstance, handleError } from './lifecycle';
 import { createAppContext, mergeOptions } from './component-options';
 import { finishComponentSetup } from './component-init';
+// ★ 2026-10-29：把「本组件正在等待」告诉所在 `<Suspense>` 边界。
+//   vdom 侧只暴露两个「窄接口」（参数是 vnode），component 不需要知道边界结构。
+import { registerSuspensePendingChild, notifySuspenseChildResolved } from '@lytjs/vdom';
 
 type SetupResult = RenderFunction | Record<string, unknown> | void;
 
@@ -152,6 +155,15 @@ export function setupComponent(instance: ComponentInternalInstance): void {
   if (isPromise(setupResult)) {
     // 异步 setup - 标记 vnode 为异步
     vnode.isAsyncPlaceholder = true;
+
+    // ★ 2026-10-29 新增（P0）：**主动登记**到所在 `<Suspense>` 边界。
+    //
+    // 此前 `<Suspense>` 判断「要不要显示 fallback」靠读 `isAsyncPlaceholder`，
+    // 而那行代码在**挂载子组件之前**执行 ⇒ 恒为 false ⇒ fallback 从未出现。
+    // 现在改成子组件自己上报：登记 → 边界 pendingCount +1 → 挂载结束后据此切 fallback。
+    //
+    // 不在任何 `<Suspense>` 内时返回 false（绝大多数组件），零成本。
+    registerSuspensePendingChild(vnode);
     // FIX: P1-15 异步 setup 超时定时器在组件卸载时清理，
     // 避免组件卸载后定时器仍然触发导致内存泄漏和无效操作
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -191,6 +203,10 @@ export function setupComponent(instance: ComponentInternalInstance): void {
         // `update` 尚未建立（还没走到 mount）时 `?.` 静默跳过 —— 那条路径由
         // 首次挂载时的 `update()` 自然渲染出完整内容。
         instance.update?.();
+
+        // ★ 2026-10-29：重渲染**之后**才通知边界 —— 此时 DOM 已经是「已就绪」的内容，
+        //   边界把这块 DOM 放回容器即可（顺序反了会先露出旧内容）。
+        notifySuspenseChildResolved(vnode);
       })
       .catch((err: Error) => {
         // FIX: P1-15 清理超时定时器
@@ -200,6 +216,9 @@ export function setupComponent(instance: ComponentInternalInstance): void {
         }
         vnode.isAsyncPlaceholder = false;
         handleError(err, instance, 'setup function');
+        // 失败也必须注销：否则边界永远停在 fallback（错误已由 handleError 上报，
+        // 这里只负责「不要再等它了」）。
+        notifySuspenseChildResolved(vnode);
       });
   } else {
     handleSetupResult(instance, setupResult);

@@ -181,6 +181,36 @@ export interface SuspenseBoundary {
   isInFallback: boolean;
   isHydrating: boolean;
   effects: Array<{ stop: () => void }>;
+
+  // ============================================================
+  // ★ 2026-10-29 新增（P0：fallback 从未出现）
+  // ============================================================
+
+  /**
+   * 当前**正在等待**的异步子组件数量。
+   *
+   * 为什么用计数而不是读 `defaultBranch.isAsyncPlaceholder`：
+   * 那个标记只在「default 分支的**根 vnode** 本身是异步组件」时才有意义。
+   * `<Suspense><div><Async/></div><Fallback/></Suspense>` 这种**嵌套**写法里，
+   * 根 vnode 是 `div`，标记永远是 false ⇒ fallback 永不出现。
+   *
+   * 计数由子组件的 `setupComponent` 在「setup 返回 Promise」时**主动登记**
+   * （`registerSuspensePendingChild`），兑现时注销
+   * （`notifySuspenseChildResolved`）—— 这样任意深度的异步子组件都能被算到。
+   */
+  pendingCount?: number;
+
+  /** 正在显示的 fallback 分支（切回 default 时要卸载它） */
+  fallbackBranch?: VNode | null;
+
+  /** 切到 fallback：把 default 的 DOM **摘下来**（不卸载实例）并挂上 fallback */
+  switchToFallback?: (fallback: VNode) => void;
+
+  /** 切回 default：卸载 fallback，把 default 的 DOM 放回原位 */
+  switchToDefault?: () => void;
+
+  /** 边界已被卸载（迟到的 Promise 兑现回调必须忽略） */
+  isUnmounted?: boolean;
 }
 
 // ============================================================
