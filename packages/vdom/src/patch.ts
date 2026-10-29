@@ -647,11 +647,36 @@ export function createRenderer<HN, HE extends HN>(
       return;
     }
 
+    // ============================================================
     // 卸载 children
-    if (vnode.shapeFlag & ShapeFlags.ARRAY_CHILDREN && isArray(children)) {
-      for (let i = 0; i < children.length; i++) {
-        unmount(children[i]!, parentComponent, parentSuspense, doRemove);
+    // ============================================================
+    //
+    // ★ 2026-10-30 修（P0）：**有 leave 钩子时推迟子树卸载**。
+    //
+    // 此前顺序是「先卸载 children（含移除 DOM）→ 再交给 leave 播动画」，于是动画期间
+    // 元素是个**空壳**：
+    //
+    //   <Transition name="fade"><div v-if="on"><p>CONTENT</p></div></Transition>
+    //   leave 期间 innerHTML === ''        ← 内容瞬间消失，用户看到"空盒子淡出"
+    //
+    // 实测（`_probe-leave`）：before=`<p class="inner">CONTENT</p>` → during=`''`。
+    //
+    // 现在：有 `leave` 时把子树卸载**挂到过渡结束的回调里**，动画播完才真正卸载 + 移除节点。
+    // 代价：动画期间子树里的组件实例**还没销毁**（`onUnmounted` 会推迟到动画结束），
+    // 这是「让内容看得见」必须付的代价 —— 与 Vue 的行为一致（Vue 也是延后移除）。
+    const childList = isArray(children) ? children : null;
+    const shouldDeferChildren =
+      doRemove && childList !== null && vnode.transition?.leave !== undefined;
+
+    const unmountChildrenNow = () => {
+      if (!childList) return;
+      for (let i = 0; i < childList.length; i++) {
+        unmount(childList[i]!, parentComponent, parentSuspense, doRemove);
       }
+    };
+
+    if (!shouldDeferChildren) {
+      unmountChildrenNow();
     }
 
     // FIX: P2-4 清理元素上的事件监听器
@@ -675,21 +700,22 @@ export function createRenderer<HN, HE extends HN>(
       if (el) {
         // ★ 2026-10-29 新增：过渡 leave。
         //
-        // 有 `leave` 钩子时**不立即移除**，而是把 `hostRemove(el)` 交给它，在过渡结束后
-        // 再调 —— 否则「动画刚开始播、元素已经被摘掉」，等于没有动画。
+        // 有 `leave` 钩子时**不立即移除**，而是把移除交给它，在过渡结束后再调 ——
+        // 否则「动画刚开始播、元素已经被摘掉」，等于没有动画。
         //
-        // 注意 children 已经在上方递归卸载完了：leave 期间元素是**空壳**。
-        // 这与 Vue 不同（Vue 会延迟卸载子树），但本仓的 unmount 语义是「实例立即销毁」，
-        // 让空壳播完动画是能在不改卸载语义的前提下做到的最好结果（已记在报告里）。
+        // ★ 2026-10-30：子树卸载也一并推迟到这里（见上方 `shouldDeferChildren`），
+        // 否则动画期间是空壳。
         const leaveHooks = vnode.transition;
         if (leaveHooks?.leave) {
-          let removed = false;
-          const removeOnce = () => {
-            if (removed) return;
-            removed = true;
+          let finished = false;
+          const finish = () => {
+            if (finished) return;
+            finished = true;
+            // 动画结束后：先真正卸载子树（会移除子节点），再把宿主元素摘掉
+            unmountChildrenNow();
             hostRemove(el);
           };
-          leaveHooks.leave(el, removeOnce);
+          leaveHooks.leave(el, finish);
         } else {
           hostRemove(el);
         }
