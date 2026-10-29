@@ -64,6 +64,60 @@ const NON_BINDING_WORDS = new Set([
   'with',
 ]);
 
+/**
+ * **JS 全局对象 / 函数**：模板里可以直接用，不能加 `_ctx.` 前缀。
+ *
+ * ⚠️ 2026-10-30 修（P0）：此前这个白名单只有「字面量 + 关键字」，**没有任何全局对象**
+ *   ⇒ 模板里写 `{{ Math.round(x) }}` / `{{ String(n) }}` / `{{ JSON.stringify(o) }}`
+ *   一律被改写成 `_ctx.Math.round(...)` / `_ctx.String(...)` ⇒ 运行时
+ *   `Cannot read properties of undefined (reading 'round')`（或 `_ctx.String is not a function`）。
+ *
+ *   实测（修前编译产物）：
+ *     {{ Math.round(x) }}   → toDisplayString(_ctx.Math.round(_ctx.x))
+ *     {{ new Date() }}      → new _ctx.Date()
+ *     {{ parseInt(s, 10) }} → _ctx.parseInt(_ctx.s, 10)
+ *
+ *   这是模板里最常见的写法之一，而失败信息指向的是**运行时的 `_ctx`**，
+ *   很难联想到「编译器把全局当成了组件的属性」。
+ *
+ *   清单与 Vue 的 `globalsAllowList` 对齐（宁可少列，也不要把用户的绑定误伤成全局：
+ *   用户如果在 `setup()` 里返回了同名的 `Math`，这里的白名单会让它取到全局 —— 与 Vue 行为一致）。
+ */
+const GLOBAL_ALLOW_LIST = new Set([
+  'Infinity',
+  'undefined',
+  'NaN',
+  'isFinite',
+  'isNaN',
+  'parseFloat',
+  'parseInt',
+  'decodeURI',
+  'decodeURIComponent',
+  'encodeURI',
+  'encodeURIComponent',
+  'Math',
+  'Number',
+  'Date',
+  'Array',
+  'Object',
+  'Boolean',
+  'String',
+  'RegExp',
+  'Map',
+  'Set',
+  'WeakMap',
+  'WeakSet',
+  'JSON',
+  'Intl',
+  'BigInt',
+  'Promise',
+  'Symbol',
+  'Reflect',
+  'Proxy',
+  'console',
+  'Error',
+]);
+
 const IDENT_START = /[A-Za-z_$]/;
 const IDENT_PART = /[\w$]/;
 
@@ -173,6 +227,8 @@ export function prefixIdentifiers(content: string, locals?: ReadonlySet<string>)
 
       const isLocal = state.locals.has(word);
       const isKeyword = NON_BINDING_WORDS.has(word);
+      // JS 全局对象 / 函数（`Math` / `String` / `JSON` …）：模板里直接用，不加前缀
+      const isGlobal = GLOBAL_ALLOW_LIST.has(word);
 
       // 箭头函数参数：`x => ...`（等号前可能有空白）
       let nextNonSpace = j;
@@ -213,6 +269,7 @@ export function prefixIdentifiers(content: string, locals?: ReadonlySet<string>)
         !isObjectKey &&
         !isLocal &&
         !isKeyword &&
+        !isGlobal &&
         !isArrowSingleParam &&
         !isDeclarationTarget &&
         !isDeclarationKeyword;
