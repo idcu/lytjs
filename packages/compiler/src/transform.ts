@@ -431,8 +431,15 @@ function containsCtxReference(node: unknown, seen = new Set<unknown>()): boolean
   }
 
   const record = node as Record<string, unknown>;
-  if (typeof record['content'] === 'string' && record['content'].includes('_ctx.')) return true;
-  if (typeof record['tag'] === 'string' && record['tag'].includes('_ctx.')) return true;
+  // ⚠️ 2026-10-30：必须同时认 `_ctx.` 与 `_ctx[` 两种形态。
+  //   组件名里含连字符（`<my-comp/>`）或 `is="…"` 时，tag 是**自己生成的
+  //   `_ctx["my-comp"]` 表达式**（方括号形式，见 transform-element 的
+  //   buildComponentLookupExpr）—— 只匹配点号会让这类子树被提升到模块级，
+  //   模块求值即 `ReferenceError: _ctx is not defined`（实测过）。
+  const hasCtxRef = (value: unknown): boolean =>
+    typeof value === 'string' && (value.includes('_ctx.') || value.includes('_ctx['));
+  if (hasCtxRef(record['content'])) return true;
+  if (hasCtxRef(record['tag'])) return true;
   // ⚠️ 组件 vnode 不能靠上面的字符串匹配发现：
   // 它的 `_ctx.` 前缀是 **codegen 阶段**才加的（见 genVNodeCall 的
   // `node.isComponent` 分支），此刻 `node.tag` 仍是裸名 `"Child"`。

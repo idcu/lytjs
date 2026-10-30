@@ -358,11 +358,27 @@ function buildElementCodegen(node: ElementNode, context: TransformContext): void
   // 根元素或具有动态子节点的元素应作为 Block
   const shouldBeBlock = !node.isStatic && (patchFlag !== undefined || hasDynamicChildren(node));
 
+  // ============================================================
+  // 组件 tag → 运行期取值表达式
+  // ============================================================
+  //
+  // ⚠️ 2026-10-30 修（P0）：`<my-comp />` 的 tag 是 `my-comp`，而组件 tag 会被
+  //   交给 `prefixIdentifiers()`（见 codegen 的 genVNodeCall）—— 那是个**表达式**
+  //   前缀器，按词边界切分 ⇒ 产出 `_ctx.my-_ctx.comp`：**语法错误**。
+  //   编译期不报错，运行时整个模板渲染为空（`<div id="app"></div>`），
+  //   控制台只有一条指向生成代码的 `编译产物执行失败`。
+  //
+  //   合法标识符（`A` / `MyComp`）继续交给 prefixIdentifiers（产物 `_ctx.A`）；
+  //   含连字符的名字**自己**生成 `_ctx["my-comp"]`，并标记 isComponent=false
+  //   —— 那里的 isComponent 只用来决定「要不要前缀 tag」，不参与其它判定。
+  const tagIsIdentifier = RE_JS_IDENTIFIER.test(tag);
+  const componentTagExpr = tagIsIdentifier ? tag : buildComponentLookupExpr(tag);
+
   const vnodeCall = createVNodeCall(
     dynamic
       ? dynamic.tag
       : isComponent
-        ? tag
+        ? componentTagExpr
         : isTemplateTag
           ? FRAGMENT_SENTINEL
           : JSON.stringify(tag),
@@ -376,7 +392,8 @@ function buildElementCodegen(node: ElementNode, context: TransformContext): void
     // ⚠️ 动态组件的 tag 是**已自带前缀的表达式**（见 resolveDynamicComponent），
     //   这里必须传 false —— 传 true 会让 genVNodeCall 再跑一遍 prefixIdentifiers，
     //   把 `_ctx` 前缀成 `_ctx._ctx`（实测过）。
-    isComponent && !dynamic,
+    //   同理，kebab 组件名（`my-comp`）的 tag 也已经是表达式了。
+    isComponent && !dynamic && tagIsIdentifier,
   );
 
   node.codegenNode = vnodeCall;
@@ -1072,7 +1089,15 @@ function resolveDynamicComponent(node: ElementNode): { tag: string } | undefined
     if (p.type === NodeTypes.ATTRIBUTE && p.name === 'is') {
       const literal = p.value?.content ?? '';
       if (!literal) continue;
-      return { tag: /^[A-Z]/.test(literal) ? literal : JSON.stringify(literal) };
+      // ⚠️ 2026-10-30 修（P0）：静态 `is="A"` 此前返回**裸标识符** `A`，且整棵子树
+      //   被 `hoistStatic` 提到模块顶层 ⇒ 模块求值即 `ReferenceError: A is not defined`，
+      //   整个模板渲染为空（错误指向生成的代码，不指向模板）。
+      //   现在与 `:is` 分支同一口径：组件名（大写开头 / 含连字符）走**运行期按名查 ctx**，
+      //   原生标签（`div` 等）保持字面量。
+      if (isComponentLikeName(literal)) {
+        return { tag: buildComponentLookupExpr(literal) };
+      }
+      return { tag: JSON.stringify(literal) };
     }
 
     if (p.type === NodeTypes.DIRECTIVE && p.name === 'bind' && getExpContent(p.arg) === 'is') {
@@ -1097,6 +1122,40 @@ function resolveDynamicComponent(node: ElementNode): { tag: string } | undefined
   }
 
   return undefined;
+}
+
+/**
+ * 合法的 JS 标识符（可以直接写进表达式、由 `prefixIdentifiers` 加 `_ctx.` 前缀）。
+ */
+const RE_JS_IDENTIFIER = /^[A-Za-z_$][\w$]*$/;
+
+/**
+ * 形如组件名的字面量：大写开头（`A` / `MyComp`）或含连字符（`my-comp`）。
+ *
+ * 与解析器的 `isComponentTag()` 同一口径 —— 那边决定 `tagType`，这边决定
+ * `is="…"` 的字面量该当组件还是当原生标签。
+ */
+function isComponentLikeName(name: string): boolean {
+  return /^[A-Z]/.test(name) || name.includes('-');
+}
+
+/**
+ * 组件名 → 运行期查 ctx 的**表达式**（已自带 `_ctx` 前缀，调用方不得再前缀）。
+ *
+ * 为什么要多级兜底：`components: { MyComp }` + 模板里写 `<my-comp>` 是 Vue 里
+ * 最常见的组合，注册名与模板名的大小写形态常常不同。顺序：
+ * 原名 → camelCase → PascalCase。
+ */
+function buildComponentLookupExpr(name: string): string {
+  const keys: string[] = [name];
+  const camel = name.replace(/-(\w)/g, (_, c: string) => c.toUpperCase());
+  if (camel !== name) keys.push(camel);
+  const pascal = camel.charAt(0).toUpperCase() + camel.slice(1);
+  if (!keys.includes(pascal)) keys.push(pascal);
+
+  const lookups = keys.map((k) => `_ctx[${JSON.stringify(k)}]`);
+  // 全部落空时退回字面量（渲染成同名原生元素），与 `:is` 分支的语义一致。
+  return `(${lookups.join(' || ')} || ${JSON.stringify(name)})`;
 }
 
 /**
