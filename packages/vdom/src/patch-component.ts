@@ -12,7 +12,7 @@ import { effect } from '@lytjs/reactivity';
 import { queuePreFlushCb } from '@lytjs/common-scheduler';
 import type { SuspenseBoundary } from './types';
 import type { RendererContext } from './patch-element';
-import { createVNode } from './vnode';
+import { createVNode, createTextVNode } from './vnode';
 
 // ============================================================
 // 组件递归深度限制
@@ -21,6 +21,27 @@ import { createVNode } from './vnode';
 // FIX: P1-L4 组件递归深度无限制 - 添加递归深度限制（100层）
 const MAX_RECURSION_DEPTH = 100;
 const componentRecursionDepthMap = new WeakMap<ComponentInternalInstance, number>();
+
+/**
+ * 多根组件（render 返回数组）的 children 预处理：**只**把裸字符串 / 数字换成文本 vnode。
+ *
+ * 为什么不做完整「规范化」：数组里可能有**嵌套数组**（槽函数返回 `[vnode]`，
+ * 组件再包一层 `[[vnode]]`），`createVNode` 的 `normalizeChildren` 会正确展平它们；
+ * 若在这里按「非 VNode 一律 String()」处理，就会得到 `[object Object]`。
+ *
+ * 只在真的改了内容时新建数组，避免无谓分配（也保持 `result` 的身份）。
+ */
+function normalizeFragmentScalars(children: unknown[]): unknown[] {
+  let changed = false;
+  const out = children.map((child) => {
+    if (typeof child === 'string' || typeof child === 'number') {
+      changed = true;
+      return createTextVNode(String(child));
+    }
+    return child;
+  });
+  return changed ? out : children;
+}
 
 // ============================================================
 // 组件 patch 工厂
@@ -151,8 +172,23 @@ export function createComponentPatch<HN, HE extends HN>(
         // 否则 `subTree` 是一个数组，后续 patch / unmount 会按单个 vnode 处理 ⇒ **渲染为空**。
         // 触发者：`Transition` / `Suspense` 的渲染函数是 `() => slots.default?.()`，
         // 而插槽契约就是 `{default:()=>[vnode]}` ⇒ 天然返回数组（此前它们一律渲染为空）。
+        //
+        // ★ 2026-10-30 补：包 Fragment 之前要把**裸字符串 / 数字**换成文本 vnode ——
+        //   `mountFragment` 直接对每个子项 `patch(null, child, …)`，而 `patch` 对
+        //   标量**无分支命中**，于是 `() => [h('div','A'), 'text', h('div','B')]`
+        //   里的文本被**静默丢弃**（实测 `textContent === 'AB'`）。
+        //   元素数组子节点走的是 `mountChildren`，那里早就有等价的一步。
+        //
+        //   ⚠️ 只转换标量：嵌套数组（槽函数返回 `[vnode]`，组件再包一层 `[[vnode]]`）
+        //   由 `createVNode` 的 `normalizeChildren` 展平 —— 在这里先「规范化」会把
+        //   数组当非法值 stringify 成 `[object Object]`（第一版就是这么写坏的，
+        //   signal 的作用域插槽用例立刻变红）。
         subTree = Array.isArray(result)
-          ? (createVNode(Fragment as never, null, result as never) as unknown as VNode)
+          ? (createVNode(
+              Fragment as never,
+              null,
+              normalizeFragmentScalars(result) as never,
+            ) as unknown as VNode)
           : (result as VNode);
       } catch (err) {
         // 通过父链的 errorCaptured 传播错误
@@ -328,8 +364,31 @@ export function createComponentPatch<HN, HE extends HN>(
       //
       // 只处理**根是元素**的情况：多根（Fragment）没有唯一的宿主元素，钩子无处可挂
       // （已记在报告 §29.5）。
-      if (vnode.transition && subTree.shapeFlag & ShapeFlags.ELEMENT) {
-        subTree.transition = vnode.transition;
+      //
+      // ★ 2026-10-30 补：**多根组件**（render 返回数组 ⇒ subTree 是 Fragment）此前
+      //   直接把钩子丢掉 ⇒ `<Transition><MultiRoot/></Transition>` 静默无动画。
+      //   现在把同一份钩子**分发给 Fragment 里每个能承载过渡的子节点**：
+      //   · 元素 → 挂上去（mountElement / unmount 会消费）；
+      //   · 组件 → 也挂上去，它自己的 mountComponent 会继续往下沉到它的根。
+      //   文本 / 注释节点没有 DOM 过渡语义，跳过（`v-if` 的注释占位、纯文本根都会出现）。
+      //
+      //   ⚠️ 残留：`mode="out-in"` 下 `finishLeave()` 是**每个元素各调一次**，
+      //   多根时第一个元素 leave 结束就会把排队的子节点扶正（其余根元素还在 leave）。
+      //   单根（绝大多数用法）不受影响 —— 见报告 §34.4。
+      if (vnode.transition) {
+        if (subTree.shapeFlag & ShapeFlags.ELEMENT) {
+          subTree.transition = vnode.transition;
+        } else if (subTree.type === Fragment && Array.isArray(subTree.children)) {
+          for (const kid of subTree.children as VNode[]) {
+            if (!kid || typeof kid !== 'object') continue;
+            const isElement = (kid.shapeFlag & ShapeFlags.ELEMENT) !== 0;
+            const isComponent =
+              (kid.shapeFlag &
+                (ShapeFlags.STATEFUL_COMPONENT | ShapeFlags.FUNCTIONAL_COMPONENT)) !==
+              0;
+            if (isElement || isComponent) kid.transition = vnode.transition;
+          }
+        }
       }
 
       if (!isMounted) {

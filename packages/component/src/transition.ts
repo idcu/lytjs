@@ -104,6 +104,16 @@ export const Transition: ComponentOptions = {
     let waiting: VNode | null = null;
     /** 是否正在等旧元素的 leave 结束 */
     let leaving = false;
+    /**
+     * 还有几个元素在播 leave（多根组件 / Fragment 会有 N 个）。
+     *
+     * ⚠️ 2026-10-30：`vnode.transition` 现在会分发给多根组件的**每个**根元素
+     * （见 `patch-component`），于是同一次切换里 `leave` 会被调 N 次。
+     * 若每个完成回调都直接 `finishLeave()`，最先结束的那个就会把排队的子节点扶正
+     * —— 另一个根元素还在播 ⇒ `out-in` 退化成「部分重叠」。
+     * 故只在**全部**播完（计数归零）时扶正。单根时计数 1→0，行为与之前一致。
+     */
+    let pendingLeaves = 0;
     /** 用于在 leave 结束后**触发一次重渲染**（否则新的子节点永远不会被挂上） */
     const version = ref(0);
 
@@ -141,9 +151,11 @@ export const Transition: ComponentOptions = {
         );
       },
       leave: (el, done) => {
+        pendingLeaves++;
         performLeaveTransition(el as Element, transitionProps as TransitionProps<Element>, () => {
           done();
-          finishLeave();
+          pendingLeaves--;
+          if (pendingLeaves <= 0) finishLeave();
         });
       },
     });
@@ -180,6 +192,8 @@ export const Transition: ComponentOptions = {
         }
         if (displayed && !isSameVNodeType(displayed, child)) {
           leaving = true;
+          // 新一轮 leave：计数从 0 起（真正的 `leave` 调用发生在随后的 patch 里）
+          pendingLeaves = 0;
           waiting = child;
           // 这一帧渲染空 ⇒ patch 会卸载 `displayed` ⇒ 它的 leave 钩子开播
           // ⇒ 播完后 `finishLeave` 把 `waiting` 扶正并重渲染
