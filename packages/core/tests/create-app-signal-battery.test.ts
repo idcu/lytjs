@@ -58,6 +58,10 @@ describe('Signal 模式：入口守卫', () => {
     await expect(app.mount(container)).rejects.toThrow(/requires rootComponent to be a valid/);
   });
 
+  // ⚠️ 显式放宽超时：本文件第一条真正**编译模板**的用例会触发 `@lytjs/compiler`
+  // 的冷启动动态 import（单独跑就要 ~2.6s，正好压在默认 5s 门槛上）。
+  // 2026-10-30 全量并行跑时它超时过一次（63 个测试文件抢 CPU），
+  // 而单独重跑必绿 —— 这是**冷启动成本**，不是挂死，所以给足预算。
   it('rendererMode: "vapor" 是 signal 的别名', async () => {
     const app = createApp({ template: '<div class="vapor">hi</div>' } as never, null, {
       rendererMode: 'vapor',
@@ -66,7 +70,7 @@ describe('Signal 模式：入口守卫', () => {
     await app.mount(container);
 
     expect(container.textContent).toContain('hi');
-  });
+  }, 20_000);
 });
 
 // ==================== Signal 模式：ctx 构建 ====================

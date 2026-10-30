@@ -344,18 +344,37 @@ export function createChildrenPatch<HN, HE extends HN>(
     fallbackAnchor: HN | null,
   ): void {
     // FIX: P0-04 传递 opsId 以支持多渲染器场景下的 DOM 操作隔离
-    (
-      listDiffPatchKeyedChildren as unknown as (
-        c1: VNode[],
-        c2: VNode[],
-        container: HN,
-        parentComponent: ComponentInternalInstance | null,
-        parentSuspense: unknown,
-        isSVG: boolean,
-        fallbackAnchor: HN | null,
-        opsId?: symbol,
-      ) => void
-    )(c1, c2, container, parentComponent, parentSuspense, isSVG, fallbackAnchor, ctx.opsId);
+    //
+    // ⚠️ 2026-10-30 修复：此前这里用 `as unknown as` 把函数断言成「第 8 个参数是
+    // opsId」，然后传了 8 个实参 —— 而真实签名是
+    // `(…, fallbackAnchor, host, opsId)`，于是 `ctx.opsId` 落进了 **host 形参**，
+    // 真正的 `opsId` 恒为 `undefined`。断言让 TypeScript 没能发现这个错位。
+    // 现在按真实签名传参（`list-diff` 新增了「只传 opsId」的重载，不再需要断言）。
+    const opsId = ctx.opsId;
+    if (opsId !== undefined) {
+      listDiffPatchKeyedChildren(
+        c1,
+        c2,
+        container,
+        parentComponent,
+        parentSuspense,
+        isSVG,
+        fallbackAnchor,
+        opsId,
+      );
+      return;
+    }
+    // 兜底：`ctx.opsId` 理论上在 createRenderer 返回前就已写入；若某个自定义渲染器
+    // 没走 `registerDOMOperations`，退回 legacy 签名（取最后注册的 ops）。
+    listDiffPatchKeyedChildren(
+      c1,
+      c2,
+      container,
+      parentComponent,
+      parentSuspense,
+      isSVG,
+      fallbackAnchor,
+    );
   }
 
   // ============================================================

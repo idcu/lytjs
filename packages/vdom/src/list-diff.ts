@@ -234,6 +234,30 @@ export function patchKeyedChildren<HN, HE extends HN>(
 ): void;
 
 /**
+ * 只传 `opsId`、不传 `host` 的形态。
+ *
+ * 渲染器内部（`patch-children`）已把自己的 `patch` / `unmount` / `move` 通过
+ * `registerDOMOperations()` 注册进本模块，拿得到 `ctx.opsId` 但拿不到 `RendererHost`
+ * —— 此时只需 `opsId` 就能精确路由到自己的那一份操作。
+ *
+ * ⚠️ 2026-10-30 补：此前这个重载**不存在**，调用方只能把 `opsId` 硬塞进 `host` 形参
+ * （`as unknown as` 断言绕过了类型检查），于是真正的 `opsId` 恒为 `undefined`：
+ * `getDOMOps()` 走「取最后一个注册」的兼容分支 ⇒ 多渲染器下 diff 的
+ * move/unmount 落到**别的渲染器**的 host 上（实测：DOM 里旧节点不被移除、
+ * 新节点直接叠上去），并且每次 keyed diff 都打一条 `without opsId` 告警。
+ */
+export function patchKeyedChildren<HN>(
+  c1: VNode[],
+  c2: VNode[],
+  container: HN,
+  parentComponent: ComponentInternalInstance | null,
+  parentSuspense: unknown,
+  isSVG: boolean,
+  fallbackAnchor: HN | null,
+  opsId: symbol,
+): void;
+
+/**
  * @deprecated Use the overload with RendererHost parameter instead.
  * 使用注册的 DOMOperations 的 legacy 签名。
  */
@@ -255,9 +279,15 @@ export function patchKeyedChildren<HN, HE extends HN>(
   parentSuspense: unknown,
   isSVG: boolean,
   fallbackAnchor: HN | null | undefined,
-  hostOrUndefined?: RendererHost<HN, HE>,
+  hostOrOpsId?: RendererHost<HN, HE> | symbol,
   opsId?: symbol,
 ): void {
+  // 第 8 个实参既可能是 `RendererHost`（泛型重载），也可能是 `opsId`（只有注册表
+  // 的调用方）。两者在运行期可用 `typeof` 区分（symbol vs object），
+  // 这样**不需要**调用方用 `as unknown as` 把参数塞错位置 —— 那个断言正是
+  // 上一版 `opsId` 恒为 `undefined` 的成因。
+  const host = typeof hostOrOpsId === 'symbol' ? undefined : hostOrOpsId;
+  const resolvedOpsId = typeof hostOrOpsId === 'symbol' ? hostOrOpsId : opsId;
   // FIX: P1-7 VDOM-NEW-06 - VDOM_MAX_LIST_DIFF_SIZE 强制执行
   // 超过阈值时使用简单 diff 策略（全量卸载+挂载），避免复杂 LIS 算法导致性能问题
   const totalLength = c1.length + c2.length;
@@ -272,7 +302,7 @@ export function patchKeyedChildren<HN, HE extends HN>(
     // 之前无论 hostOrUndefined 是否存在都通过 hostToOps 包装（冗余的间接层），
     // 现在直接使用 domOpsToResolved(getDOMOps(opsId))，因为简单策略
     // 只需要 patch/unmount 操作，不需要 host 的低级操作。
-    const ops = domOpsToResolved(getDOMOps(opsId));
+    const ops = domOpsToResolved(getDOMOps(resolvedOpsId));
     // 卸载所有旧节点
     for (let i = 0; i < c1.length; i++) {
       ops.unmount(c1[i]!, parentComponent, parentSuspense, true);
@@ -293,10 +323,10 @@ export function patchKeyedChildren<HN, HE extends HN>(
   }
 
   // 判断使用 RendererHost 还是回退到注册的 DOMOperations
-  const useHost = hostOrUndefined !== undefined;
+  const useHost = host !== undefined;
   const ops: ResolvedOps = useHost
     ? hostToOps(
-        hostOrUndefined,
+        host,
         // 这些 patch/unmount/move 函数在此不直接可用；
         // we need to use the registered ops for the actual patch/unmount/move calls
         // since the host only provides low-level node operations.
@@ -304,11 +334,11 @@ export function patchKeyedChildren<HN, HE extends HN>(
         // low-level operations into VNode-level patch/unmount/move.
         // 因此当提供 host 时，我们仍然依赖 registeredDOMOps 进行 VNode 级操作。
         (n1, n2, cont, anchor, pc, ps, svg) =>
-          getDOMOps(opsId).patch(n1, n2, cont, anchor, pc, ps, svg),
-        (vnode, pc, ps, doRemove) => getDOMOps(opsId).unmount(vnode, pc, ps, doRemove),
-        (vnode, cont, anchor, pc, ps) => getDOMOps(opsId).move(vnode, cont, anchor, pc, ps),
+          getDOMOps(resolvedOpsId).patch(n1, n2, cont, anchor, pc, ps, svg),
+        (vnode, pc, ps, doRemove) => getDOMOps(resolvedOpsId).unmount(vnode, pc, ps, doRemove),
+        (vnode, cont, anchor, pc, ps) => getDOMOps(resolvedOpsId).move(vnode, cont, anchor, pc, ps),
       )
-    : domOpsToResolved(getDOMOps(opsId));
+    : domOpsToResolved(getDOMOps(resolvedOpsId));
 
   let i = 0;
   const l2 = c2.length;

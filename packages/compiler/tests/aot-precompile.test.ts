@@ -50,8 +50,10 @@ describe('precompileTemplate —— 真 AOT（构建期产出可导入模块源�
     const vnode = mod.render({}, {});
     expect(vnode).toBeTruthy();
     expect(vnode!.type).toBe('div');
-    // 动态 import 走真实 ESM 加载，全量套件高负载下会 >5s（默认超时）⇒ 显式放宽
-  }, 30000);
+    // 动态 import 走真实 ESM 加载：产物 `import '@lytjs/core'` ⇒ vite 要现场
+    // transform 整条 core 依赖链。单跑 ~5.4s，全量 50 个测试文件并行时
+    // **30s 也不够**（2026-10-30 实测超时一次），故按「模块 transform 成本」给足预算。
+  }, 120_000);
 
   it('自定义 runtimeModuleName 生效（helper 从指定包导入）', () => {
     const { code } = precompileTemplate('<span>x</span>', {
