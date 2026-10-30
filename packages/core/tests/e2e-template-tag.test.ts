@@ -142,14 +142,18 @@ describe('具名 / 作用域插槽', () => {
   // ⚠️ 2026-10-28 更新：`<template #name>` 已经**实现**（见 e2e-named-slots.test.ts）。
   // 本文件此前断言「必须告警」—— 那是「实现之前不许沉默」的临时哨兵，
   // 实现之后它如约变红，逼着把哨兵换成真实断言。现在只保留「仍未实现的形态」的告警。
-  it('组件标签上的 v-slot 仍告警（该形态未实现）', () => {
+  it('组件标签上的 v-slot **已实现**：不再告警，且产出插槽对象', () => {
+    // ⚠️ 2026-10-30 契约变更：此前这里断言「必须告警（该形态未实现）」——
+    // 那是「实现之前不许沉默」的临时哨兵。现在 `<Child v-slot="{ x }">` 真正编译成
+    // `{ "default": ({ x }) => [...] }`，哨兵如约变红，换成真实行为断言。
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    compile('<div><Child v-slot="{ x }"><b>{{ x }}</b></Child></div>');
+    const { code } = compile('<div><Child v-slot="{ x }"><b>{{ x }}</b></Child></div>');
 
     const said = warnSpy.mock.calls.map((c) => String(c[0])).join('\n');
-    expect(said).toContain('v-slot');
-    expect(said).toContain('<template #name>');
+    expect(said).not.toContain('v-slot');
+    expect(code).toContain('({ x }) =>');
+    expect(code).toContain('toDisplayString(x)');
   });
 
   it('普通子节点不得触发告警（避免噪声）', () => {

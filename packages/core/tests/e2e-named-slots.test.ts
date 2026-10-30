@@ -170,15 +170,18 @@ describe('作用域插槽（模板写法）', () => {
   });
 });
 
-describe('仍未实现的形态：组件标签上的 v-slot', () => {
-  it('`<Child v-slot="{ x }">` 仍告警，且提示改用 `<template #name>`', () => {
+describe('组件标签上的 v-slot（§33 起已实现）', () => {
+  it('`<Child v-slot="{ x }">` 不再告警，且作用域参数不加前缀', () => {
+    // ⚠️ 2026-10-30 契约变更：此前这里断言「仍告警」—— 实现之后哨兵如约变红。
+    // 详细行为判据见 `e2e-v-slot-on-component.test.ts`。
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    compile('<div><Child v-slot="{ x }"><b>{{ x }}</b></Child></div>');
+    const { code } = compile('<div><Child v-slot="{ x }"><b>{{ x }}</b></Child></div>');
 
     const said = warnSpy.mock.calls.map((c) => String(c[0])).join('\n');
-    expect(said).toContain('v-slot');
-    expect(said).toContain('<template #name>');
+    expect(said).not.toContain('v-slot');
+    expect(code).toContain('({ x }) =>');
+    expect(code).toContain('toDisplayString(x)');
   });
 
   it('`<template #header>` 不再告警（已实现）', () => {

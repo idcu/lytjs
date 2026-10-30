@@ -14,7 +14,6 @@
  */
 
 import { NodeTypes, ElementTypes, PatchFlags } from '../constants';
-import { warn } from '@lytjs/common-error';
 import type {
   ElementNode,
   AttributeNode,
@@ -133,14 +132,33 @@ function buildElementCodegen(node: ElementNode, context: TransformContext): void
   //   为什么不是「顺手实现」：需要 AST 的 JS_FUNCTION_EXPRESSION 节点 + codegen 支持
   //   + 作用域参数登记为局部绑定（否则 `#default="{ item }"` 里的 `item` 会被改写成
   //   `_ctx.item`），是编译器的一个独立特性，不适合夹在缺陷修复里做半套。
-  if (isComponent) {
-    // ⚠️ 只在 **vnode 模式**告警：signal / vapor 的 codegen 已经支持具名插槽
-    //   （产物是 `mountComponent(_ctx.Card, {}, el, { header: () => [...] })`），
-    //   在那些模式里发「尚未实现」是**假警报**（实测会把 slots demo 的用例吓成红）。
-    // ⚠️ 2026-10-28：`<template #name>` 已经实现（见 buildSlotsExpression），
-    //   只剩「v-slot 直接写在组件标签上」这一种形态没做（`<Child v-slot="{x}">`）。
-    if ((context.rendererMode ?? 'vnode') === 'vnode') {
-      warnUnsupportedSlotSyntax(children, node);
+  // ============================================================
+  // ★ 2026-10-30：`v-slot` 直接写在**组件标签自身**上（`<Child v-slot="{ item }">…</Child>`）
+  // ============================================================
+  //
+  // 语义（与 Vue 一致）：组件的**全部**子节点都进这个插槽；不带参数时是 `default`。
+  // 此前这一形态是「语法能写、语义不存在」—— 指令被静默丢弃，子节点当普通 children 传下去，
+  // 于是 `v-slot:header` 的内容进了 default、`v-slot="{ item }"` 里的 `item` 被改写成
+  // `_ctx.item`（运行时 undefined）⇒ 渲染出空，**且不报错**。
+  //
+  // ⚠️ 必须在 `hasDynamicProps` 之前把它从 props 里摘掉：它是**指令**，
+  //   留着会让该 vnode 被打上 `FULL_PROPS(16)`（每次全量比对 props），而它根本不产生 prop。
+  let ownSlot: { name: string; param: string } | undefined;
+  // ⚠️ **只在 vnode 模式**摘：signal / vapor 的 codegen **自己**会读 props 里的
+  //   `v-slot` 指令来生成 `mountComponent(…, { default: (p) => [...] })`。
+  //   无条件摘掉会让那两个模式的插槽作用域参数整块消失
+  //   （实测：compiler 里两条 signal 用例立刻变红）。
+  if (isComponent && (context.rendererMode ?? 'vnode') === 'vnode') {
+    const slotIdx = props.findIndex(
+      (p) => p !== undefined && p.type === NodeTypes.DIRECTIVE && p.name === 'slot',
+    );
+    if (slotIdx !== -1) {
+      const dir = props[slotIdx] as DirectiveNode;
+      ownSlot = {
+        name: getExpContent(dir.arg) || 'default',
+        param: getExpContent(dir.exp) || '',
+      };
+      props.splice(slotIdx, 1);
     }
   }
 
@@ -204,7 +222,7 @@ function buildElementCodegen(node: ElementNode, context: TransformContext): void
   //   children 就不是「vnode 数组」而是「插槽对象」，两者语义完全不同。
   const slotsExpression =
     isComponent && (context.rendererMode ?? 'vnode') === 'vnode'
-      ? buildSlotsExpression(children, context)
+      ? buildSlotsExpression(children, context, ownSlot)
       : undefined;
 
   if (slotsExpression) {
@@ -870,29 +888,6 @@ function handleVText(
 }
 
 /**
- * 检测组件子节点里的**具名 / 作用域插槽语法**并告警（该特性尚未实现）。
- *
- * 语法已经能被正确解析（`#header` → `DirectiveNode{ name: 'slot', arg: 'header' }`），
- * 但 transform 层完全忽略它 —— 于是 `<template #header>` 被当成普通 `<template>` 元素，
- * 插槽内容既不进 `header` 也不进 `default`，且**不报错**。
- *
- * 这是「语法能写、语义不存在」的典型形态：比语法错误更难发现，因为模板本身是合法的。
- */
-function warnUnsupportedSlotSyntax(children: TemplateChildNode[], node: ElementNode): void {
-  void children;
-  // 只针对「v-slot 写在**组件标签自身**上」的形态（`<Child v-slot="{ x }">`）。
-  // `<template #name>` 已由 buildSlotsExpression 支持，不再告警。
-  const own = node.props.find(
-    (p) => p !== undefined && p.type === NodeTypes.DIRECTIVE && p.name === 'slot',
-  );
-  if (!own) return;
-  warn(
-    `组件标签上的 v-slot（<${node.tag} v-slot="…">）尚未实现：` +
-      `该插槽的内容不会被传给子组件。请改用 <template #name>…</template> 包裹。`,
-  );
-}
-
-/**
  * 单个子节点 → 合法的 codegen 节点。
  *
  * ⚠️ 2026-10-28 抽出：这段映射原本内联在「多子节点」分支里，写具名插槽时需要同一套
@@ -960,7 +955,27 @@ function extractParamNames(param: string | undefined): string[] {
 function buildSlotsExpression(
   children: TemplateChildNode[],
   context: TransformContext,
+  ownSlot?: { name: string; param: string },
 ): JSObjectExpression | undefined {
+  // ── `<Child v-slot="{ item }">…</Child>`：全部子节点进这一个槽 ──
+  if (ownSlot) {
+    // 作用域参数登记为局部名，否则 `{{ item }}` 会被改写成 `_ctx.item`
+    for (const name of extractParamNames(ownSlot.param)) {
+      context.addIdentifiers(name);
+    }
+    const nodes: JSChildNode[] = [];
+    for (const child of children) {
+      const mapped = childToJSNode(child, context);
+      if (mapped) nodes.push(mapped);
+    }
+    return createObjectExpression([
+      createObjectProperty(
+        createSimpleExpression(JSON.stringify(ownSlot.name), true),
+        createFunctionExpression(ownSlot.param ? [ownSlot.param] : [], nodes, false, true),
+      ),
+    ]);
+  }
+
   const slotTemplates: { name: string; params: string[]; node: ElementNode }[] = [];
   const defaultChildren: TemplateChildNode[] = [];
 
