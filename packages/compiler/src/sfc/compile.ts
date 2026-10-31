@@ -5,6 +5,7 @@ import { compile } from '../index';
 import type { CompilerOptions } from '../types';
 import type { SFCDescriptor } from './parse';
 import { getCustomBlockProcessor } from './custom-blocks';
+import { compileScriptSetup } from './script-setup';
 
 // ============================================================
 // 编译选项和结果类型
@@ -198,26 +199,40 @@ function generateModuleCode(opts: ModuleCodeOptions): string {
     lines.push('');
   }
 
-  // Script setup content (if present, goes before the main script)
-  if (opts.scriptSetupContent.trim()) {
-    lines.push('// <script setup>');
-    lines.push(opts.scriptSetupContent.trim());
-    lines.push('');
+  // ============================================================
+  // `<script setup>`（2026-11-01 新增）
+  // ============================================================
+  //
+  // 此前 `<script setup>` 的正文被**原样**拼进模块，而模板产物引用的是 `_ctx.msg`。
+  // `msg` 只是模块作用域的局部常量 ⇒ `_ctx.msg` 恒为 undefined ⇒ **整页空白且不报错**。
+  //
+  // 现在把正文改写成 `setup(__props, { emit: __emit })` 的函数体，并 `return` 出所有顶层绑定，
+  // 使 `_ctx.xxx` 能解析到（本框架的 ctx 代理会回落到 props / setupState）。
+  const hasScriptSetup = opts.scriptSetupContent.trim().length > 0;
+  const setupInfo = hasScriptSetup ? compileScriptSetup(opts.scriptSetupContent) : null;
+
+  if (setupInfo && setupInfo.errors.length > 0) {
+    // 不产出半成品：把错误直接写进产物，并抛错让构建期暴露
+    const msg = setupInfo.errors.map((e) => `  · ${e}`).join('\n');
+    throw new Error(`[lytjs/sfc] ${opts.filename} 的 <script setup> 无法编译：\n${msg}`);
   }
 
-  // Script content
+  if (setupInfo) {
+    for (const imp of setupInfo.imports) {
+      lines.push(imp);
+    }
+    if (setupInfo.imports.length > 0) lines.push('');
+  }
+
+  // Script content（普通 <script>）
   //
-  // ⚠️ 2026-10-27 修（P0）：`export default {...}` 直接输出的话，后面的 render 函数
-  // 是一个**游离的函数声明** —— 既没挂到组件上，也没有任何引用。消费方 import 到的
-  // 组件没有 render，模板等于不存在（且不报错）。
-  // 这里把 `export default X` 改写成 `const __sfc__ = X`，再在末尾挂 render / scopeId
-  // 后统一导出。没有 script 块时直接生成 `export default { render }`。
+  // `export default {...}` 改写成 `const __options__ = {...}`，便于后面合并/挂载 render。
   let componentVar: string | undefined;
   if (opts.scriptContent.trim()) {
     let body = opts.scriptContent.trim();
     if (/export\s+default\s+/.test(body)) {
-      body = body.replace(/export\s+default\s+/, 'const __sfc__ = ');
-      componentVar = '__sfc__';
+      body = body.replace(/export\s+default\s+/, 'const __options__ = ');
+      componentVar = '__options__';
     }
     lines.push('// <script>');
     lines.push(body);
@@ -238,14 +253,52 @@ function generateModuleCode(opts: ModuleCodeOptions): string {
     lines.push('');
   }
 
-  // 把 render / scopeId 挂到组件并导出
+  // ============================================================
+  // 组装并导出
+  // ============================================================
+  if (setupInfo) {
+    // `<script>` 与 `<script setup>` 并存：展开 options 再覆盖 setup / props / emits
+    if (componentVar && /\bsetup\s*[:(]/.test(opts.scriptContent)) {
+      throw new Error(
+        `[lytjs/sfc] ${opts.filename}：<script> 与 <script setup> 都声明了 setup()，无法合并。` +
+          `请只保留 <script setup>。`,
+      );
+    }
+
+    const fields: string[] = [];
+    if (componentVar) fields.push('...__options__');
+    if (setupInfo.propsDecl) fields.push(`props: ${setupInfo.propsDecl}`);
+    if (setupInfo.emitsDecl) fields.push(`emits: ${setupInfo.emitsDecl}`);
+
+    lines.push('// <script setup>');
+    lines.push('export default {');
+    for (const f of fields) lines.push(`  ${f},`);
+
+    lines.push('  setup(__props, { emit: __emit }) {');
+    if (setupInfo.propsDecl) lines.push('    const props = __props;');
+    if (setupInfo.emitsDecl) lines.push('    const emit = __emit;');
+    if (setupInfo.setupBody) {
+      for (const l of setupInfo.setupBody.split('\n')) lines.push(`    ${l}`);
+    }
+    const ret = setupInfo.bindings.length > 0 ? `{ ${setupInfo.bindings.join(', ')} }` : '{}';
+    lines.push(`    return ${ret};`);
+    lines.push('  },');
+
+    if (opts.renderFnCode) lines.push('  render,');
+    if (opts.scopedId) lines.push('  __scopeId,');
+    lines.push('};');
+    lines.push('');
+    return lines.join('\n');
+  }
+
+  // 只有 <script>：沿用原逻辑（挂 render / scopeId 到 __options__）
   if (opts.renderFnCode) {
     if (componentVar) {
       lines.push(`${componentVar}.render = render;`);
       if (opts.scopedId) {
         lines.push(`${componentVar}.__scopeId = __scopeId;`);
       }
-      lines.push('export default __sfc__;');
+      lines.push('export default __options__;');
       lines.push('');
     } else if (!opts.scriptContent.trim()) {
       const fields = ['render'];
@@ -253,8 +306,7 @@ function generateModuleCode(opts: ModuleCodeOptions): string {
       lines.push(`export default { ${fields.join(', ')} };`);
       lines.push('');
     } else {
-      // 有 script 但没有 `export default`（例如只写了具名导出 / `<script setup>` 形态）：
-      // 无法安全地挂载，保留原样并显式说明，避免"看起来成功了"。
+      // 有 script 但没有 `export default`（只写了具名导出）：无法安全挂载，显式说明
       lines.push('// ⚠️ 本 SFC 的 script 块没有 `export default`，render 函数未自动挂载；');
       lines.push('//    请在消费侧手动 `Component.render = render`。');
       lines.push('');

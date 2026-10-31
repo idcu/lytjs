@@ -20,6 +20,9 @@
  * 退出码：0 = 全部通过；1 = 有失败。
  */
 import { JSDOM } from 'jsdom';
+import { writeFileSync, mkdirSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join as joinPath } from 'node:path';
 
 const dom = new JSDOM('<!doctype html><html><body></body></html>');
 globalThis.window = dom.window;
@@ -62,6 +65,7 @@ const edgePkg = await import(url('../packages/ecosystem/packages/runtime-edge/di
 const ssrPkg = await import(
   url('../packages/ecosystem/packages/ssr-kit/packages/ssr/dist/index.mjs')
 );
+const sfcPkg = await import(url('../packages/compiler/dist/sfc.mjs'));
 
 const tick = (ms = 50) => new Promise((r) => setTimeout(r, ms));
 const mkRoot = () => {
@@ -326,6 +330,91 @@ const call = async (method, reqUrl, headers = {}) => {
   await call('GET', '/api/ok', { authorization: 'Bearer good' });
   const limited = await call('GET', '/api/ok', { authorization: 'Bearer good' });
   check('超限返回 429', limited.status === 429, `status=${limited.status}`);
+}
+
+// ── SFC <script setup> ───────────────────────────────────────
+console.log('   [SFC]');
+{
+  // 编译 → 落盘 → 真 import → 真挂载。只断言产物字符串是不够的：
+  // 这条链路历史上就坏在「产物看起来对、运行时 _ctx 全是 undefined」。
+  const dir = joinPath(tmpdir(), 'lytjs-sfc-check');
+  mkdirSync(dir, { recursive: true });
+  const CORE_URL = url('../packages/core/dist/index.mjs');
+
+  const build = (source, name) => {
+    const d = sfcPkg.parseSFC(source, { filename: `${name}.vue` });
+    const code = sfcPkg
+      .compileSFC(d, { filename: `${name}.vue` })
+      .code.replace(/from '@lytjs\/core'/g, `from '${CORE_URL}'`);
+    const file = joinPath(dir, `${name}.mjs`);
+    writeFileSync(file, code, 'utf-8');
+    return import(`file://${file}`);
+  };
+
+  const Basic = (
+    await build(
+      `<template><div class="box">{{ msg }} / {{ count }}</div></template>
+<script setup>
+import { ref } from '@lytjs/core'
+const msg = 'hello'
+const count = ref(1)
+</script>`,
+      'Basic',
+    )
+  ).default;
+  {
+    const root = mkRoot();
+    await createApp(Basic).mount(root);
+    await tick();
+    check(
+      '<script setup> 的绑定能在模板里渲染',
+      root.innerHTML.includes('hello / 1'),
+      root.innerHTML.slice(0, 120),
+    );
+  }
+
+  const WithProps = (
+    await build(
+      `<template><p>{{ title }}-{{ props.title }}</p></template>
+<script setup>
+const props = defineProps({ title: String })
+</script>`,
+      'WithProps',
+    )
+  ).default;
+  {
+    const root = mkRoot();
+    await createApp(WithProps, { title: 'T' }).mount(root);
+    await tick();
+    check(
+      '<script setup> + defineProps 生效',
+      root.innerHTML.includes('T-T'),
+      root.innerHTML.slice(0, 120),
+    );
+  }
+
+  const WithEmits = (
+    await build(
+      `<template><button class="b" @click="emit('go', 7)">x</button></template>
+<script setup>
+const emit = defineEmits(['go'])
+</script>`,
+      'WithEmits',
+    )
+  ).default;
+  {
+    const root = mkRoot();
+    const got = [];
+    await createApp({
+      components: { WithEmits },
+      template: '<WithEmits @go="onGo" />',
+      setup: () => ({ onGo: (v) => got.push(v) }),
+    }).mount(root);
+    await tick();
+    root.querySelector('.b')?.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+    await tick();
+    check('<script setup> + defineEmits 生效', got[0] === 7, JSON.stringify(got));
+  }
 }
 
 // ── 自定义指令 ────────────────────────────────────────────────
