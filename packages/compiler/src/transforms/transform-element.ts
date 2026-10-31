@@ -139,6 +139,15 @@ function buildElementCodegen(node: ElementNode, context: TransformContext): void
   //   于是「内容能看见、但组件根本没挂」：props 不透传、事件不接、`is` 变了也不重建。
   //   这是「看起来能用」的最坏形态。
   const dynamic = resolveDynamicComponent(node);
+  // 动态 tag 的产物里会调用该 helper，必须在 transform 阶段登记（否则产物里没有它）
+  if (dynamic) {
+    context.helper('RESOLVE_DYNAMIC_COMPONENT');
+    // ⚠️ 2026-11-01：**动态组件不能被静态提升**。
+    //   产物 `createElementVNode(resolveDynamicComponent("A"), null)` 里没有 `_ctx.`，
+    //   `hoistStatic` 会把它提到模块顶层 ⇒ 求值时没有「当前实例」⇒ 解析失败，
+    //   退回原生标签（实测渲染成 `<a></a>`）。这里显式标记为非静态。
+    node.isStatic = false;
+  }
   const isComponent = node.tagType === ElementTypes.COMPONENT || dynamic !== undefined;
 
   if (dynamic) {
@@ -1201,7 +1210,9 @@ function resolveDynamicComponent(node: ElementNode): { tag: string } | undefined
       //   现在与 `:is` 分支同一口径：组件名（大写开头 / 含连字符）走**运行期按名查 ctx**，
       //   原生标签（`div` 等）保持字面量。
       if (isComponentLikeName(literal)) {
-        return { tag: buildComponentLookupExpr(literal) };
+        // ⚠️ 2026-11-01：与 `:is` 同口径 —— 走运行期解析（查注册表，兼容 a / A / my-comp），
+        //   解析不到再退回原生标签。此前是 `_ctx["A"] || "A"`，只查 ctx。
+        return { tag: `resolveDynamicComponent(${JSON.stringify(literal)})` };
       }
       return { tag: JSON.stringify(literal) };
     }
@@ -1220,9 +1231,12 @@ function resolveDynamicComponent(node: ElementNode): { tag: string } | undefined
         //   `_ctx._ctx[_ctx.tag]`）。这里先自己前缀好，再包成 `isStatic: true` 的
         //   简单表达式 —— codegen 对静态表达式**原样输出**。
         const prefixed = prefixIdentifiers(exp);
-        return {
-          tag: `(typeof ${prefixed} === 'string' ? (_ctx[${prefixed}] || ${prefixed}) : ${prefixed})`,
-        };
+        // ⚠️ 2026-11-01 修（P0）：此前是 `_ctx[name] || name` —— **只查 ctx，不查组件注册表**。
+        //   `components: { A }` + `<component :is="'a'" />` 查不到 'a'，
+        //   于是当成原生标签渲染成 `<a></a>`（实测页面上只剩一个空链接）。
+        //   改走运行期 `resolveDynamicComponent()`：先按注册表解析（兼容 a / A / my-comp），
+        //   解析不到再退回原生标签。
+        return { tag: `resolveDynamicComponent(${prefixed})` };
       }
     }
   }

@@ -448,7 +448,14 @@ function containsCtxReference(node: unknown, seen = new Set<unknown>()): boolean
   //   buildComponentLookupExpr）—— 只匹配点号会让这类子树被提升到模块级，
   //   模块求值即 `ReferenceError: _ctx is not defined`（实测过）。
   const hasCtxRef = (value: unknown): boolean =>
-    typeof value === 'string' && (value.includes('_ctx.') || value.includes('_ctx['));
+    typeof value === 'string' &&
+    (value.includes('_ctx.') ||
+      value.includes('_ctx[') ||
+      // ⚠️ 2026-11-01：`resolveDynamicComponent(...)` 需要**渲染期的当前实例**
+      //   才能查组件注册表。它不含 `_ctx.`，所以此前会被判成"纯静态"提到模块顶层，
+      //   求值时没有实例 ⇒ 解析失败退回原生标签（实测 `<component is="A">` 渲染成 `<a>`）。
+      //   凡含该调用的一律视为运行期引用。
+      value.includes('resolveDynamicComponent('));
   if (hasCtxRef(record['content'])) return true;
   if (hasCtxRef(record['tag'])) return true;
   // ⚠️ 组件 vnode 不能靠上面的字符串匹配发现：

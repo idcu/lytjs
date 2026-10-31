@@ -68,3 +68,22 @@ describe('组件标签上的属性名', () => {
     expect(gen('<Inner attr-text="x" />')).toContain('"text": "x"');
   });
 });
+
+describe('动态组件 <component :is>', () => {
+  it('字符串形式必须走 resolveDynamicComponent（查注册表），不能只查 ctx', () => {
+    const code = gen('<component :is="which" />');
+    expect(code).toContain('resolveDynamicComponent(_ctx.which)');
+    // 旧产物：`_ctx[_ctx.which] || _ctx.which` —— 只查 ctx，组件名查不到就退化成原生标签
+    expect(code).not.toContain('_ctx[_ctx.which]');
+  });
+
+  it('helper 必须出现在 preamble 的 import 里', () => {
+    const out = compile('<component :is="which" />', { mode: 'module' });
+    expect(out.preamble ?? '').toContain('resolveDynamicComponent');
+  });
+
+  it('静态 is="A" 也走 resolveDynamicComponent（与 :is 同口径）', () => {
+    const code = gen('<component is="A" />');
+    expect(code).toContain('resolveDynamicComponent("A")');
+  });
+});

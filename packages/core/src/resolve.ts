@@ -133,6 +133,27 @@ const HTML_ELEMENTS = new Set([
 /**
  * 解析组件：从当前组件实例的 components 选项和全局注册中查找
  */
+/**
+ * 按名字在注册表里查找组件，**兼容三种书写形态**。
+ *
+ * ⚠️ 2026-11-01 修（P0）：此前只做 `map[name]` 精确匹配，于是
+ *
+ *   `components: { A: … }` + `<component :is="'a'" />` → 查不到 'a'，
+ *   于是把 'a' 当成**原生标签**渲染成 `<a></a>`（实测），页面上只剩一个空链接。
+ *
+ * 现在依次尝试：原名 → camelCase → PascalCase。
+ * （`my-comp` → `myComp` → `MyComp`，与 Vue 的解析规则一致。）
+ */
+function findRegistered<T>(map: Record<string, T> | undefined, name: string): T | undefined {
+  if (!map) return undefined;
+  if (map[name]) return map[name];
+  const camel = name.replace(/-(\w)/g, (_, c: string) => c.toUpperCase());
+  if (map[camel]) return map[camel];
+  const pascal = camel.charAt(0).toUpperCase() + camel.slice(1);
+  if (map[pascal]) return map[pascal];
+  return undefined;
+}
+
 export function resolveComponent(name: string): Component | undefined {
   const instance = getCurrentInstance();
   if (!instance) {
@@ -146,16 +167,18 @@ export function resolveComponent(name: string): Component | undefined {
   }
 
   // 1. 先从当前组件的 components 选项中查找
-  const components = (instance.type as Record<string, unknown>)?.components;
-  if (components && (components as Record<string, Component>)[name]) {
-    return (components as Record<string, Component>)[name];
-  }
+  const components = (instance.type as Record<string, unknown>)?.components as
+    | Record<string, Component>
+    | undefined;
+  const local = findRegistered(components, name);
+  if (local) return local;
 
   // 2. 再从全局注册中查找（appContext.components）
-  const globalComponents = instance.appContext?.components;
-  if (globalComponents && globalComponents[name]) {
-    return globalComponents[name] as Component;
-  }
+  const global = findRegistered(
+    instance.appContext?.components as Record<string, Component> | undefined,
+    name,
+  );
+  if (global) return global;
 
   if (__DEV__) {
     if (!HTML_ELEMENTS.has(name)) {

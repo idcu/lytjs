@@ -44,6 +44,11 @@ globalThis.cancelAnimationFrame = (id) => clearTimeout(id);
 
 const url = (p) => new URL(p, import.meta.url).href;
 const { createApp, h, ref: C_ref } = await import(url('../packages/core/dist/index.mjs'));
+const {
+  KeepAlive: KEEPALIVE,
+  Teleport: TELEPORT,
+  defineAsyncComponent: ASYNC,
+} = await import(url('../packages/core/dist/index.mjs'));
 const { defineComponent: defineComponentForSsr } = await import(
   url('../packages/component/dist/index.mjs')
 );
@@ -330,6 +335,79 @@ const call = async (method, reqUrl, headers = {}) => {
   await call('GET', '/api/ok', { authorization: 'Bearer good' });
   const limited = await call('GET', '/api/ok', { authorization: 'Bearer good' });
   check('超限返回 429', limited.status === 429, `status=${limited.status}`);
+}
+
+// ── 进阶特性（回归：动态组件 / KeepAlive / Teleport / 异步组件）──────
+console.log('   [进阶]');
+{
+  // 动态组件用**小写字符串**（很常见的 tab 切换写法）
+  const root = mkRoot();
+  const TabA = { template: '<span class="ta">TABA</span>' };
+  const app = createApp({
+    components: { TabA },
+    setup: () => ({ which: C_ref('tab-a') }),
+    template: '<component :is="which" />',
+  });
+  await app.mount(root);
+  await tick();
+  check(
+    '动态组件字符串名（tab-a → TabA）',
+    root.innerHTML.includes('TABA'),
+    root.innerHTML.slice(0, 80),
+  );
+}
+{
+  // KeepAlive：切走再切回，状态保留且不重复挂载
+  const root = mkRoot();
+  let mounts = 0;
+  const A = {
+    setup() {
+      mounts++;
+      const n = C_ref(0);
+      return () => h('span', { onClick: () => n.value++ }, 'A' + n.value);
+    },
+  };
+  const B = { setup: () => () => h('span', null, 'B') };
+  const which = C_ref('A');
+  const app = createApp({
+    components: { KeepAlive: KEEPALIVE, A, B },
+    setup: () => ({ which }),
+    template: '<KeepAlive><component :is="which" /></KeepAlive>',
+  });
+  await app.mount(root);
+  await tick();
+  which.value = 'B';
+  await tick();
+  which.value = 'A';
+  await tick();
+  check(
+    'KeepAlive 切回后状态保留',
+    root.textContent === 'A0' && mounts === 1,
+    `${root.textContent} mounts=${mounts}`,
+  );
+}
+{
+  // Teleport 到 body
+  const root = mkRoot();
+  const app = createApp({
+    components: { Teleport: TELEPORT },
+    template: '<div><Teleport to="body"><span class="tp">TEL</span></Teleport></div>',
+  });
+  await app.mount(root);
+  await tick();
+  check(
+    'Teleport 渲染到 body',
+    !!document.body.querySelector('.tp') && !root.querySelector('.tp'),
+    document.body.querySelector('.tp') ? 'ok' : 'missing',
+  );
+}
+{
+  // 异步组件
+  const root = mkRoot();
+  const AsyncComp = ASYNC(() => Promise.resolve({ template: '<b class="ac">ASYNC</b>' }));
+  await createApp({ components: { AsyncComp }, template: '<AsyncComp />' }).mount(root);
+  await tick(180);
+  check('异步组件渲染', root.innerHTML.includes('ASYNC'), root.innerHTML.slice(0, 80));
 }
 
 // ── 模板常见写法（回归：都曾静默错）───────────────────────────
