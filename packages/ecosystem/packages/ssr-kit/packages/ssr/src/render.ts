@@ -6,7 +6,7 @@
 
 import { Fragment } from '@lytjs/vdom';
 import type { VNode } from '@lytjs/vdom';
-import { createComponentInstance, setupComponent } from '@lytjs/component';
+import { createComponentInstance, setupComponent, getTemplateCompiler } from '@lytjs/component';
 import { isString, isNumber, isArray, isObject, isFunction } from '@lytjs/common-is';
 
 /**
@@ -131,7 +131,40 @@ export function renderToString(
  * 其次 options.render。
  */
 function renderComponentNode(node: VNode): string {
-  const type = node.type as { name?: string; render?: unknown };
+  const type = node.type as { name?: string; render?: unknown; template?: unknown };
+  const name = type.name ?? 'anonymous';
+
+  // ⚠️ 2026-10-31 修（P0）：**空页 + HTTP 200 是最难排查的失败方式**。
+  //   此前只装了 `@lytjs/ssr`（没装 `@lytjs/core`）时，`template` 组件会走到
+  //   `resolveTemplateRender` 的「无编译器 ⇒ 返回 () => null」分支 ⇒ SSR 输出空串、
+  //   状态码仍是 200，线上表现为"白屏但不报错"。
+  //   现在：**明确抛错**并给出修法，让问题在构建/启动阶段就暴露。
+  if (typeof type.template === 'string' && !getTemplateCompiler()) {
+    throw new Error(
+      `[lytjs/ssr] 组件 "${name}" 提供了 template，但当前进程没有注入模板编译器。\n` +
+        `  继续渲染只会得到空白页（HTTP 200），因此这里直接失败。\n` +
+        `  修法（任选其一）：\n` +
+        `    ① 在服务端入口 import '@lytjs/core'（它会注入运行时编译器）；\n` +
+        `    ② 给该组件提供 setup() 返回的 render 函数（AOT / 手写 render）。`,
+    );
+  }
+
+  // `async setup` 在 setupComponent 阶段就不会产出 render（返回的是 Promise），
+  // 之后只会落到「没有渲染函数 ⇒ 告警 + 渲染插槽」分支，输出空页。
+  // 这里**在渲染前**就判定并抛出，避免"200 空页"。
+  const setupFn = (type as { setup?: unknown }).setup;
+  const isAsyncSetup =
+    typeof setupFn === 'function' &&
+    Object.prototype.toString.call(setupFn) === '[object AsyncFunction]';
+  if (isAsyncSetup && !type.render) {
+    throw new Error(
+      `[lytjs/ssr] 组件 "${name}" 使用了 async setup。\n` +
+        `  renderToString() 是同步 API，无法等待 Promise —— 继续渲染只会得到空白页。\n` +
+        `  修法（任选其一）：\n` +
+        `    ① 用 useSuspense() 把异步数据挂到边界上，并在服务端 await 后再渲染；\n` +
+        `    ② 在 SSR 之前预取数据，把 async setup 改为同步 setup。`,
+    );
+  }
 
   const instance = createComponentInstance(node, null);
   setupComponent(instance);
@@ -141,7 +174,7 @@ function renderComponentNode(node: VNode): string {
     // 不静默输出空串：明确告警并退化为渲染默认插槽内容
     if (typeof console !== 'undefined') {
       console.warn(
-        `[lytjs/ssr] 组件 "${type.name ?? 'anonymous'}" 没有可用的渲染函数，` +
+        `[lytjs/ssr] 组件 "${name}" 没有可用的渲染函数，` +
           'SSR 需要 setup 返回渲染函数或提供 options.render；已退化为渲染其默认插槽。',
       );
     }
@@ -152,6 +185,20 @@ function renderComponentNode(node: VNode): string {
   }
 
   const subTree = renderFn.call(instance.ctx, instance.ctx);
+
+  // ⚠️ 2026-10-31 修（P0）：`async setup` 返回 Promise，此前被当成 vnode 交给
+  //   renderToString ⇒ 类型不认识 ⇒ 输出空串。`renderToString` 是**同步** API，
+  //   无法 await，所以这里必须明确失败，而不是渲染半成品。
+  if (subTree && typeof (subTree as { then?: unknown }).then === 'function') {
+    throw new Error(
+      `[lytjs/ssr] 组件 "${name}" 的 setup 返回了 Promise（async setup）。\n` +
+        `  renderToString() 是同步 API，无法等待它 —— 继续渲染只会得到空白页。\n` +
+        `  修法（任选其一）：\n` +
+        `    ① 用 useSuspense() 把异步数据挂到边界上，并在服务端 await 后再渲染；\n` +
+        `    ② 在 SSR 之前预取数据，把 async setup 改为同步 setup。`,
+    );
+  }
+
   instance.subTree = subTree as typeof instance.subTree;
   return renderToString(subTree as VNode | VNode[] | string | number | null | undefined);
 }

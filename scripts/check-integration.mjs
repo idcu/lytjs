@@ -41,6 +41,9 @@ globalThis.cancelAnimationFrame = (id) => clearTimeout(id);
 
 const url = (p) => new URL(p, import.meta.url).href;
 const { createApp, h } = await import(url('../packages/core/dist/index.mjs'));
+const { defineComponent: defineComponentForSsr } = await import(
+  url('../packages/component/dist/index.mjs')
+);
 const UI = await import(url('../packages/ecosystem/packages/ui/dist/index.mjs'));
 const { createServer, createRouter } = await import(
   url('../packages/ecosystem/packages/web-framework/packages/http-server/dist/index.mjs')
@@ -56,6 +59,9 @@ const { createRateLimitMiddleware } = await import(
 );
 const pluginPkg = await import(url('../packages/ecosystem/packages/plugin/dist/index.mjs'));
 const edgePkg = await import(url('../packages/ecosystem/packages/runtime-edge/dist/index.mjs'));
+const ssrPkg = await import(
+  url('../packages/ecosystem/packages/ssr-kit/packages/ssr/dist/index.mjs')
+);
 
 const tick = (ms = 50) => new Promise((r) => setTimeout(r, ms));
 const mkRoot = () => {
@@ -71,6 +77,60 @@ const check = (name, ok, detail) => {
 };
 
 console.log('\n🔍 集成门禁 check-integration\n');
+
+// ── SSR（必须最先跑：此时还没有任何 createApp 调用 ⇒ 编译器未注入）────
+console.log('   [SSR]');
+{
+  const { defineComponent: defineRaw } = await import(url('../packages/component/dist/index.mjs'));
+  const TplNoCompiler = defineRaw({ name: 'TplNoCompiler', template: '<div>hi</div>' });
+  let threw = null;
+  try {
+    ssrPkg.renderToString(h(TplNoCompiler));
+  } catch (e) {
+    threw = e.message;
+  }
+  check(
+    '无编译器时 template 组件抛错（不再是 200 空页）',
+    !!threw && threw.includes('没有注入模板编译器'),
+    threw ? threw.split('\n')[0] : '未抛错（输出空串）',
+  );
+}
+{
+  // 真实用法：服务端入口会创建 app，这一步注入编译器
+  createApp({ render: () => null });
+  const Tpl = defineComponentForSsr({
+    template: '<div class="x">{{ msg }}</div>',
+    data: () => ({ msg: 'hi' }),
+  });
+  let out = '';
+  let err = null;
+  try {
+    out = ssrPkg.renderToString(h(Tpl));
+  } catch (e) {
+    err = e.message;
+  }
+  check('有编译器时 template 组件正常 SSR', !err && out.includes('hi'), err || out);
+}
+{
+  const AsyncComp = defineComponentForSsr({
+    name: 'AsyncComp',
+    async setup() {
+      await new Promise((r) => setTimeout(r, 5));
+      return () => h('div', null, 'x');
+    },
+  });
+  let threw = null;
+  try {
+    ssrPkg.renderToString(h(AsyncComp));
+  } catch (e) {
+    threw = e.message;
+  }
+  check(
+    'async setup 抛错而非空串',
+    !!threw && threw.includes('async setup'),
+    threw ? threw.split('\n')[0] : '未抛错',
+  );
+}
 
 // ── UI ────────────────────────────────────────────────────────
 console.log('   [UI]');

@@ -95,6 +95,15 @@ const GATES = [
     desc: '治理接线：keel CI 三关卡（keel-lint / test-lint / verify-hooks）必须在 .github/workflows/keel.yml 里 —— 防判据自测被静默移除（2026-10-11）',
   },
   {
+    name: 'check-ui-styles',
+    tier: 'fast',
+    cmd: ['tsx', 'scripts/check-ui-styles.ts'],
+    approx: '~0.4s',
+    desc:
+      '★ UI 样式覆盖：每个组件至少有一个自己发出的类名在 styles/index.css 里有规则' +
+      ' —— 评估时 18 个组件零命中（Modal/Drawer 变裸 div、Message 出现在页面底部）（2026-10-31）',
+  },
+  {
     name: 'check-dist-freshness',
     tier: 'fast',
     cmd: ['tsx', 'scripts/check-dist-freshness.ts'],
