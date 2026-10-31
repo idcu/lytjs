@@ -5,7 +5,8 @@ import { NodeTypes, TextModes } from './constants';
 import { warn } from '@lytjs/common-error';
 import type { TextNode, TemplateChildNode, ParentNode, ParserContext } from './types';
 
-import { advanceBy, RE_DOCTYPE } from './parser-base';
+import { advanceBy, getCursor, getSelection, RE_DOCTYPE } from './parser-base';
+import { createText } from './ast';
 
 import { parseComment } from './parser-comment';
 import { parseInterpolation, parseText } from './parser-text';
@@ -35,6 +36,19 @@ export function parseChildren(context: ParserContext, parent: ParentNode, mode: 
       } else if (s.startsWith('<')) {
         if (s[1] === '/') {
           break;
+        }
+        // ⚠️ 2026-10-31 修（P0）：`<![CDATA[ ... ]]>` 是**文本**，不是 DOCTYPE。
+        //   此前被 `startsWith('<!')` 收走，RE_DOCTYPE 匹配失败后直接跳到行尾
+        //   ⇒ CDATA 里的内容整段静默消失（实测 `<![CDATA[x>y]]>` 编译成空 div）。
+        if (s.startsWith('<![CDATA[')) {
+          const cdataStart = getCursor(context);
+          const closeIdx = s.indexOf(']]>');
+          const inner = closeIdx === -1 ? s.slice(9) : s.slice(9, closeIdx);
+          advanceBy(context, closeIdx === -1 ? s.length : closeIdx + 3);
+          if (inner) {
+            nodes.push(createText(inner, getSelection(context, cdataStart)));
+          }
+          continue;
         }
         if (s.startsWith('<!DOCTYPE') || s.startsWith('<!')) {
           const match = s.match(RE_DOCTYPE);

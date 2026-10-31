@@ -38,6 +38,14 @@ export class HttpError extends Error {
 export interface ServerOptions {
   /** 请求体上限（字节），默认 1 MiB。超限返回 413 */
   bodyLimit?: number;
+  /**
+   * 可选的 Router 实例。
+   *
+   * ⚠️ 2026-10-31 修（P0）：此前构造函数**无条件** `new Router()`，外部传入的
+   *   `router` 被静默忽略 ⇒ `createServer({ router })` 之后所有请求都 404，
+   *   且没有任何提示。现在外部传入即采用（不传仍内部新建，兼容原用法）。
+   */
+  router?: Router;
 }
 
 /** 读取请求体（带上限），并按 content-type 解析 */
@@ -80,6 +88,40 @@ async function readRequestBody(
     parsed = obj;
   }
   return { raw, parsed };
+}
+
+/**
+ * 把 Fetch 风格 `Response` 归一化成宿主的普通响应对象 `{ status, headers, body }`。
+ *
+ * ⚠️ 2026-10-31：中间件（cors / auth / rate-limit）返回的是 Fetch `Response`，
+ * 而宿主内部用的是 `{status, headers, body}` 普通对象（见 types.ts）。
+ * 两者不能直接互赋：`Headers` 不是普通对象、`body` 是流。这里做一次显式转换。
+ */
+type FetchLikeResponse = {
+  status: number;
+  headers: { forEach(cb: (value: string, key: string) => void): void };
+  text(): Promise<string>;
+};
+
+async function fetchResponseToPlain(source: FetchLikeResponse): Promise<Response> {
+  const headers: Record<string, string> = {};
+  source.headers.forEach((value, key) => {
+    headers[key.toLowerCase()] = value;
+  });
+
+  let body: unknown;
+  try {
+    const text = await source.text();
+    if (text) {
+      const contentType = headers['content-type'] ?? '';
+      body = contentType.includes('application/json') ? JSON.parse(text) : text;
+    }
+  } catch {
+    // 流已被消费 / 解析失败：保留空体，状态码与响应头仍然有效
+    body = undefined;
+  }
+
+  return { status: source.status, headers, body };
 }
 
 /**
@@ -163,7 +205,8 @@ export class Server {
    * 构造函数
    */
   constructor(options: ServerOptions = {}) {
-    this.router = new Router();
+    // 外部 router 优先（此前无条件 new Router() ⇒ 传进来的 router 被静默丢弃）
+    this.router = options.router ?? new Router();
     this.bodyLimit = options.bodyLimit ?? DEFAULT_BODY_LIMIT;
   }
 
@@ -341,6 +384,12 @@ export class Server {
     const ctx: Context = {
       request,
       response,
+      // ⚠️ 2026-10-31 修（P0）：`@lytjs/middleware-rate-limit` 的默认 keyGenerator 读的是
+      //   `ctx.clientIp / ctx.ip / ctx.socket.remoteAddress`，而宿主此前只在
+      //   `ctx.request.ip` 上放了来源地址 ⇒ 取不到 → 抛错 → 每个请求 500。
+      //   这里把**服务端可信来源**（TCP 连接地址，客户端无法伪造）同时挂到顶层。
+      clientIp: request.ip,
+      ip: request.ip,
     };
 
     const match = this.router.match(method, path);
@@ -388,7 +437,38 @@ export class Server {
       index++;
       const middleware = this.middlewares[index];
       if (middleware) {
-        await middleware(ctx, next);
+        // ⚠️ 2026-10-31 修（P0）：Fetch 风格中间件（cors / auth / rate-limit）以
+        //   **返回 Response** 作为最终响应；此前这里把返回值丢弃 ⇒
+        //   CORS 头全丢、auth 的 401 变成 200 空体、rate-limit 的 429 变成 200 空体。
+        //   现在把 Fetch Response 归一化成宿主的 `{status, headers, body}` 并接管响应。
+        //
+        // 规范签名的返回类型是 `void`，但 Fetch 风格中间件会**返回 Response**，
+        // 故这里按 unknown 收，再结构化判断。
+        const result = (await middleware(ctx, next)) as unknown as
+          | (FetchLikeResponse & { headers: FetchLikeResponse['headers'] })
+          | { status: number; headers: Record<string, string | string[]>; body?: unknown }
+          | undefined;
+        if (result) {
+          if (
+            typeof result.status === 'number' &&
+            typeof (result as FetchLikeResponse).headers?.forEach === 'function' &&
+            typeof (result as FetchLikeResponse).text === 'function'
+          ) {
+            // Fetch `Response`
+            ctx.response = await fetchResponseToPlain(result as FetchLikeResponse);
+          } else if (
+            typeof result.status === 'number' &&
+            result.headers &&
+            typeof result.headers === 'object'
+          ) {
+            // 普通对象形态 `{ status, headers, body }`（middleware-rate-limit 的 429 走这条）
+            ctx.response = {
+              status: result.status,
+              headers: { ...(result.headers as Record<string, string | string[]>) },
+              body: (result as { body?: unknown }).body,
+            };
+          }
+        }
       } else {
         await handler();
       }

@@ -312,12 +312,23 @@ function traverseNode(
   switch (node.type) {
     case NodeTypes.ROOT:
     case NodeTypes.ELEMENT: {
-      const children = (node as RootNode | ElementNode).children;
+      const container = node as RootNode | ElementNode;
+      // ⚠️ 2026-10-31 修（P0）：**遍历快照，而不是活数组**。
+      //   子节点的 exit 回调可能就地改写 `node.children`（v-if 链的
+      //   `siblings.splice(chainStart, 1, conditional)` 就是典型）。
+      //   此前直接 `for (i < children.length)` 迭代活数组：链尾 exit 把
+      //   `[p-if, p-else, span]` 压成 `[conditional, span]` 后，循环的 `i`
+      //   已经跑到 2 ⇒ `children[2]` 为 undefined ⇒ **span 永远不被遍历**、
+      //   拿不到 codegenNode，最终被 childToJSNode 静默丢弃。
+      //   改为快照后，后续兄弟仍会被访问；`context.childIndex` 取实时下标，
+      //   保持与 `siblings.indexOf(node)` 的语义一致。
+      const children = [...container.children];
       for (let i = 0; i < children.length; i++) {
         const child = children[i];
         if (child) {
           context.parent = node as ParentNode;
-          context.childIndex = i;
+          const liveIndex = container.children.indexOf(child);
+          context.childIndex = liveIndex === -1 ? i : liveIndex;
           traverseNode(child, context, options);
         }
       }

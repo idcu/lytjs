@@ -94,6 +94,33 @@ const GATES = [
     approx: '~0.3s',
     desc: '治理接线：keel CI 三关卡（keel-lint / test-lint / verify-hooks）必须在 .github/workflows/keel.yml 里 —— 防判据自测被静默移除（2026-10-11）',
   },
+  {
+    name: 'check-dist-freshness',
+    tier: 'fast',
+    cmd: ['tsx', 'scripts/check-dist-freshness.ts'],
+    approx: '~0.5s',
+    desc:
+      '★ 产物新鲜度：dist 必须比 src 新 —— vitest 的 47 条 alias 指向 dist，' +
+      'dist 过期时「测试全绿」证明的是旧产物（2026-10-31）',
+  },
+  {
+    name: 'check-integration',
+    tier: 'slow',
+    cmd: ['node', 'scripts/check-integration.mjs'],
+    approx: '~3s',
+    desc:
+      '★ 集成链路：UI（Input/Select/Tabs/Form）+ HTTP（CORS/401/429/JSON body）+ 生态（plugin install / edge Response）' +
+      ' —— 这些链路都曾在「单测全绿」时静默失效（2026-10-31）',
+  },
+  {
+    name: 'check-runtime-render',
+    tier: 'slow',
+    cmd: ['node', 'scripts/check-runtime-render.mjs'],
+    approx: '~2s',
+    desc:
+      '★ 执行编译产物：在裸 Node（无 __DEV__ / 无 vitest define）里挂载真实模板并断言 DOM —— ' +
+      '本仓此前没有一条门禁执行过产物，导致 v-html 的 ReferenceError 长期不可见（2026-10-31）',
+  },
 
   // ── 慢档：全仓级 / 需要 dist ────────────────────────────────
   {

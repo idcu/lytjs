@@ -239,6 +239,9 @@ function renderTemplateToHTML(compiledCode: string, ctx: Record<string, unknown>
       'normalizeClass',
       'normalizeStyle',
       'renderComponentVNode',
+      // ⚠️ 2026-10-31 修（P0）：产物可能引用构建期常量 `__DEV__`（v-html 警告分支），
+      //   `new Function` 作用域里没有它 ⇒ ReferenceError。见 core 同源修复。
+      '__DEV__',
       `${compiledCode}\n; return render(_ctx);`,
     ) as (
       context: Record<string, unknown>,
@@ -246,6 +249,7 @@ function renderTemplateToHTML(compiledCode: string, ctx: Record<string, unknown>
       normClass: (v: unknown) => string,
       normStyle: (v: unknown) => string,
       renderComp: (c: unknown, p: unknown, s: unknown) => unknown,
+      dev: boolean,
     ) => unknown;
 
     // 产物是 new Function 执行的、不能 import，故把运行时依赖**注入**：
@@ -257,6 +261,7 @@ function renderTemplateToHTML(compiledCode: string, ctx: Record<string, unknown>
       normalizeClass,
       normalizeStyle,
       renderComponentVNode,
+      __DEV__,
     );
     if (typeof result === 'string') return result;
     if (result === null || result === undefined) return '';

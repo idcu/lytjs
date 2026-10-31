@@ -39,6 +39,16 @@ export function parseElement(context: ParserContext): ElementNode | undefined {
 
   const tag = element.tag;
 
+  // ⚠️ 2026-10-31 修（P0）：void 元素（img / br / input / hr / …）**没有子节点、也没有结束标签**。
+  //   此前只有 `isSelfClosing`（`<img />`）会提前返回，而 `<img src="x">` 会继续走
+  //   parseChildren ⇒ 把后续兄弟节点**吞成自己的子节点**：
+  //     `<div><img src="x"><p>after</p></div>` 里的 <p> 整段消失（SSR 下更彻底）。
+  //   判据：`esbuild` 探针 + `tests/void-elements.test.ts`。
+  if (VOID_ELEMENTS.has(tag)) {
+    element.loc = getSelection(context, start);
+    return element;
+  }
+
   let textMode: number = TextModes.DATA;
   if (tag === 'textarea' || tag === 'title' || tag === 'xmp') {
     textMode = TextModes.RCDATA;

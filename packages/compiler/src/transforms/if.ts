@@ -38,6 +38,12 @@ export function transformIf(
   const ifDir = findDirective(element, 'if');
   if (!ifDir && !findDirective(element, 'else-if') && !findDirective(element, 'else')) return;
 
+  // ⚠️ 2026-10-31 修（P0）：`v-for` 与 `v-if` 同元素时**本函数不参与**。
+  //   否则条件链会覆盖掉 for.ts 生成的 `renderList(...)`，产物变成裸
+  //   `(i > 1 ? li : null)` —— `i` 不在渲染函数作用域里 ⇒ 运行期 ReferenceError。
+  //   语义拍板：v-for 优先、v-if 逐项过滤，由 for.ts 的 ifCondition 分支实现。
+  if (findDirective(element, 'for')) return;
+
   const parent = context.parent;
   if (!parent) return;
 

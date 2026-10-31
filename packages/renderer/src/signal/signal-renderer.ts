@@ -151,6 +151,7 @@ export function createSignalRenderer(
           createVNode,
           Text,
           claimTextSlots,
+          __DEV__,
         );
 
         // 执行渲染函数
@@ -281,6 +282,9 @@ function makeCreateRenderFactory(): (
     'createVNode',
     'Text',
     'claimTextSlots',
+    // ⚠️ 2026-10-31 修（P0）：产物里的 `v-html` 会引用构建期常量 `__DEV__`。
+    //   `new Function` 的作用域里没有它 ⇒ 运行期 ReferenceError。见 core 同源修复。
+    '__DEV__',
   ];
 
   // 使用 new Function 创建执行器

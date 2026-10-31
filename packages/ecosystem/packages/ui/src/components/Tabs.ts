@@ -111,6 +111,29 @@ export const Tabs = defineComponent({
         }));
     };
 
+    /**
+     * ⚠️ 2026-10-31 修（P0）：`<TabPane>` 的 children 在模板里是**插槽对象/函数**
+     * （`{ default: () => [...] }`），而不是 vnode 数组。此前直接把它塞给
+     * `createVNode('div', …, children)` ⇒ mountElement 只认 ARRAY/TEXT，
+     * 对象被静默丢弃、函数被 `String()` 成源码 ⇒ **tab 内容整片不显示**。
+     * 这里统一归一化成 vnode 数组。
+     */
+    const normalizeSlotChildren = (input: unknown): VNode[] => {
+      if (input == null) return [];
+      if (Array.isArray(input)) return input as VNode[];
+      if (typeof input === 'function') {
+        return normalizeSlotChildren((input as () => unknown)());
+      }
+      if (typeof input === 'object') {
+        const slotsObj = input as Record<string, unknown>;
+        if (typeof slotsObj.default === 'function') {
+          return normalizeSlotChildren((slotsObj.default as () => unknown)());
+        }
+        return [];
+      }
+      return [createTextVNode(String(input))];
+    };
+
     const getEnabledPanes = (panes: TabPane[]) => {
       return panes.filter((pane) => !pane.props.disabled);
     };
@@ -408,7 +431,7 @@ export const Tabs = defineComponent({
               id: panelId,
               role: 'tabpanel',
             }),
-            content.children,
+            content ? normalizeSlotChildren(content.children) : [],
           )
         : createVNode('div', { style: 'display: none;', id: panelId }, []);
 

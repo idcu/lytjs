@@ -44,7 +44,17 @@ describe('prefixIdentifiers', () => {
     it('字符串字面量内容不被改写', () => {
       expect(prefixIdentifiers(`'hello world'`)).toBe(`'hello world'`);
       expect(prefixIdentifiers(`"a.b"`)).toBe(`"a.b"`);
-      expect(prefixIdentifiers('`tpl ${ x }`')).toBe('`tpl ${ x }`');
+      // ⚠️ 2026-10-31 行为变更：此前断言 `` `tpl ${ x }` `` 原样返回 —— 那是**把缺陷
+      //   写成了断言**：模板串里的 `${}` 是表达式，不前缀化就会在运行期抛
+      //   `ReferenceError: x is not defined`（实测 `<div>{{ `hi ${name}` }}</div>`）。
+      //   正确产物：字面量部分原样保留，`${}` 内部按表达式前缀化。
+      expect(prefixIdentifiers('`tpl ${ x }`')).toBe('`tpl ${ _ctx.x }`');
+      expect(prefixIdentifiers('`a${ b + c }d`')).toBe('`a${ _ctx.b + _ctx.c }d`');
+      // 嵌套对象字面量 / 字符串里的 `}` 不能提前收尾
+      expect(prefixIdentifiers('`${ { a: b } }`')).toBe('`${ { a: _ctx.b } }`');
+      expect(prefixIdentifiers('`${ fn("}") }`')).toBe('`${ _ctx.fn("}") }`');
+      // v-for 别名在模板串里同样不加前缀
+      expect(prefixIdentifiers('`${ item.name }`', new Set(['item']))).toBe('`${ item.name }`');
     });
 
     it('对象 key 不变，简写值要前缀化', () => {

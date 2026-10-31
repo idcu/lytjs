@@ -121,6 +121,25 @@ const GLOBAL_ALLOW_LIST = new Set([
 const IDENT_START = /[A-Za-z_$]/;
 const IDENT_PART = /[\w$]/;
 
+/**
+ * 从 `start`（指向引号/反引号本身）跳过一整个字符串字面量，返回其后的下标。
+ * 只处理转义与同类引号闭合，不解析 `${}` 嵌套（调用方在模板串分支里另有处理）。
+ */
+function skipStringLiteral(src: string, start: number): number {
+  const quote = src[start];
+  let i = start + 1;
+  while (i < src.length) {
+    const c = src[i];
+    if (c === '\\') {
+      i += 2;
+      continue;
+    }
+    if (c === quote) return i + 1;
+    i++;
+  }
+  return i;
+}
+
 interface WalkState {
   /** 已发现的局部名（括号内箭头函数的参数会动态加入） */
   locals: Set<string>;
@@ -165,8 +184,8 @@ export function prefixIdentifiers(content: string, locals?: ReadonlySet<string>)
   while (i < content.length) {
     const ch = content[i] as string;
 
-    // 字符串字面量（单引号 / 双引号 / 模板串）—— 原样跳过
-    if (ch === '"' || ch === "'" || ch === '`') {
+    // 字符串字面量（单引号 / 双引号）—— 原样跳过
+    if (ch === '"' || ch === "'") {
       const quote = ch;
       out += ch;
       i++;
@@ -181,6 +200,57 @@ export function prefixIdentifiers(content: string, locals?: ReadonlySet<string>)
         }
         i++;
         if (c === quote) break;
+      }
+      continue;
+    }
+
+    // ⚠️ 2026-10-31 修（P0）：模板串（反引号）里的 `${ ... }` 是**表达式**，必须前缀化。
+    //   此前反引号被当作普通引号整段原样拷贝 ⇒ `` `hi ${name}` `` 里的 `name`
+    //   不会被加上 `_ctx.`，运行期抛 `ReferenceError: name is not defined`。
+    //   现在：字面量部分原样保留，`${}` 内部递归走 prefixIdentifiers。
+    if (ch === '`') {
+      out += ch;
+      i++;
+      while (i < content.length) {
+        const c = content[i] as string;
+        if (c === '\\') {
+          out += c;
+          i++;
+          if (i < content.length) out += content[i];
+          i++;
+          continue;
+        }
+        if (c === '`') {
+          out += c;
+          i++;
+          break;
+        }
+        if (c === '$' && content[i + 1] === '{') {
+          const exprStart = i + 2;
+          let depth = 1;
+          let j = exprStart;
+          while (j < content.length && depth > 0) {
+            const d = content[j] as string;
+            if (d === '\\') {
+              j += 2;
+              continue;
+            }
+            if (d === '"' || d === "'" || d === '`') {
+              j = skipStringLiteral(content, j);
+              continue;
+            }
+            if (d === '{') depth++;
+            else if (d === '}') depth--;
+            j++;
+          }
+          const closed = depth === 0;
+          const inner = content.slice(exprStart, closed ? j - 1 : j);
+          out += '${' + prefixIdentifiers(inner, locals) + (closed ? '}' : '');
+          i = j;
+          continue;
+        }
+        out += c;
+        i++;
       }
       continue;
     }

@@ -50,7 +50,7 @@ export const TimePicker = defineComponent({
     onClose: { type: Function, default: undefined },
   },
 
-  setup(props: Record<string, unknown>) {
+  setup(props: Record<string, unknown>, { emit }) {
     const _props = props as unknown as TimePickerSetupProps;
     const isOpen = signal(false);
     const hours = signal(0);
@@ -130,9 +130,11 @@ export const TimePicker = defineComponent({
           formatTime(rangeStartHour(), rangeStartMinute(), rangeStartSecond()),
           formatTime(rangeEndHour(), rangeEndMinute(), rangeEndSecond()),
         ];
+        emit('update:modelValue', result);
         _props.onChange?.(result);
       } else {
         const result = formatTime(hours(), minutes(), seconds());
+        emit('update:modelValue', result);
         _props.onChange?.(result);
       }
       isOpen.set(false);
@@ -140,6 +142,7 @@ export const TimePicker = defineComponent({
 
     const handleClear = (e: Event) => {
       e.stopPropagation();
+      emit('update:modelValue', null);
       _props.onChange?.(null);
     };
 

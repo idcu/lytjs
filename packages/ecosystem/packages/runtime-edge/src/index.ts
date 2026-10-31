@@ -137,6 +137,16 @@ function createEdgeRouter(options: EdgeRouterOptions = {}): EdgeRouter {
  * 创建 JSON 响应
  */
 function jsonResponse(data: unknown, status = 200): EdgeResponse {
+  // ⚠️ 2026-10-31 修（P0）：此前返回的是**鸭子类型的普通对象**，
+  //   `instanceof Response === false` ⇒ 交给 Workers / Vercel / Deno 会失败
+  //   或被序列化成 `{}`。现在优先构造**真正的 Response**，仅在无全局 Response 的
+  //   环境（极简嵌入宿主）回退到流式对象。
+  if (typeof Response !== 'undefined') {
+    return new Response(JSON.stringify(data), {
+      status,
+      headers: { 'Content-Type': 'application/json' },
+    }) as unknown as EdgeResponse;
+  }
   return {
     status,
     statusText: 'OK',
@@ -154,6 +164,12 @@ function jsonResponse(data: unknown, status = 200): EdgeResponse {
  * 创建文本响应
  */
 function textResponse(text: string, status = 200): EdgeResponse {
+  if (typeof Response !== 'undefined') {
+    return new Response(text, {
+      status,
+      headers: { 'Content-Type': 'text/plain' },
+    }) as unknown as EdgeResponse;
+  }
   return {
     status,
     statusText: 'OK',
@@ -171,6 +187,12 @@ function textResponse(text: string, status = 200): EdgeResponse {
  * 创建 HTML 响应
  */
 function htmlResponse(html: string, status = 200): EdgeResponse {
+  if (typeof Response !== 'undefined') {
+    return new Response(html, {
+      status,
+      headers: { 'Content-Type': 'text/html' },
+    }) as unknown as EdgeResponse;
+  }
   return {
     status,
     statusText: 'OK',

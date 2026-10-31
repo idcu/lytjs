@@ -105,7 +105,15 @@ export class PluginRegistry {
 
     this.plugins.set(name, registered);
 
-    // 触发 after:register 事件
+    // ⚠️ 2026-10-31：**不在此处自动安装**。
+    //
+    //   `register()` 的既有契约是"只登记"（`@lytjs/core` 的 `app.use()` 依赖它：
+    //   先 register → 再自己调用 `plugin.install(app)` → 最后 `markInstalled()`）。
+    //   若这里自动安装，`app.use()` 会**装两次**（实测 core 的 5 条插件用例变红）。
+    //
+    //   因此本批改为：**补齐此前根本不存在的 `install()` 方法**（见上方），
+    //   独立使用 PluginRegistry 时必须显式 `await registry.install(name, ctx)`；
+    //   走 `app.use()` 时由 core 负责安装，语义不变。
     this.emit('after:register', { name, plugin });
 
     return { success: true, name };
@@ -190,6 +198,53 @@ export class PluginRegistry {
    */
   getAll(): RegisteredPlugin[] {
     return Array.from(this.plugins.values());
+  }
+
+  /**
+   * 真正执行插件的 `install()`。
+   *
+   * ⚠️ 2026-10-31 修（P0）：此前**全仓没有任何地方调用 `plugin.install`** ——
+   *   `register()` 只把插件塞进 Map 并把 `installed` 置 false，于是
+   *   "注册成功"≠"生效"，且没有任何报错。现在提供显式安装入口，
+   *   并由 `register()` 默认调用（可用 `{ autoInstall: false }` 关闭）。
+   *
+   * @param name - 已注册的插件名
+   * @param context - 传给 `install(context, options)` 的宿主上下文
+   * @returns 安装是否成功；插件没有 `install` 时返回 false
+   */
+  async install<TContext = unknown>(name: string, context?: TContext): Promise<boolean> {
+    const registered = this.plugins.get(name);
+    if (!registered) {
+      this.emit('error', { success: false, name, error: `Plugin "${name}" is not registered.` });
+      return false;
+    }
+    const installFn = registered.plugin.install as
+      | ((ctx?: TContext, options?: unknown) => unknown)
+      | undefined;
+    if (typeof installFn !== 'function') {
+      this.emit('error', {
+        success: false,
+        name,
+        error: `Plugin "${name}" has no install() function.`,
+      });
+      return false;
+    }
+    if (registered.installed) return true;
+
+    this.emit('before:install', { name, plugin: registered.plugin });
+    const outcome = installFn.call(registered.plugin, context, registered.options);
+    // 同步插件：立即落状态（避免调用方必须 await 才能看到 installed=true）
+    if (!outcome || typeof (outcome as Promise<unknown>).then !== 'function') {
+      registered.installed = true;
+      registered.installedAt = Date.now();
+      this.emit('after:install', { name, plugin: registered.plugin });
+      return true;
+    }
+    await (outcome as Promise<unknown>);
+    registered.installed = true;
+    registered.installedAt = Date.now();
+    this.emit('after:install', { name, plugin: registered.plugin });
+    return true;
   }
 
   /**

@@ -43,7 +43,13 @@ export const Input = defineComponent({
     tabIndex: { type: Number, default: undefined },
   },
 
-  setup(props: Record<string, unknown>) {
+  // ⚠️ 2026-10-31 修（P0）：此前 `setup` 里读 `p.onInput?.()`，但 `onInput` **没有**
+  //   在 props 里声明 ⇒ 按框架规则未声明项进 `attrs`，`p`（= instance.props）上恒为
+  //   undefined ⇒ **输入框打不了字、父组件也拿不到值**，且不报错。
+  //   改为走 `emit`（emit 会在 props **和 attrs** 里查处理器），并显式声明 emits。
+  emits: ['update:modelValue', 'input', 'change', 'focus', 'blur', 'clear'],
+
+  setup(props: Record<string, unknown>, { emit }) {
     const p = props as InputSetupProps;
     const passwordVisible = signal(false);
     const isFocused = signal(false);
@@ -77,28 +83,32 @@ export const Input = defineComponent({
 
     const handleInput = (e: Event) => {
       const target = e.target as HTMLInputElement;
-      p.onInput?.(target.value);
+      const value = target.value;
+      // v-model：编译器为 `v-model` 生成的是 `onUpdate:modelValue`
+      emit('update:modelValue', value);
+      emit('input', value);
     };
 
     const handleChange = (e: Event) => {
       const target = e.target as HTMLInputElement;
-      p.onChange?.(target.value);
+      emit('change', target.value);
     };
 
     const handleFocus = (e: FocusEvent) => {
       isFocused.set(true);
-      p.onFocus?.(e);
+      emit('focus', e);
     };
 
     const handleBlur = (e: FocusEvent) => {
       isFocused.set(false);
-      p.onBlur?.(e);
+      emit('blur', e);
     };
 
     const handleClear = () => {
-      p.onClear?.();
-      p.onInput?.('');
-      p.onChange?.('');
+      emit('clear');
+      emit('update:modelValue', '');
+      emit('input', '');
+      emit('change', '');
     };
 
     const togglePasswordVisibility = () => {

@@ -64,7 +64,10 @@ export const DatePicker = defineComponent({
     onClose: { type: Function, default: undefined },
   },
 
-  setup(props: Record<string, unknown>, { slots }: { slots: DatePickerSlots }) {
+  setup(
+    props: Record<string, unknown>,
+    { slots, emit }: { slots: DatePickerSlots; emit: (e: string, ...a: unknown[]) => void },
+  ) {
     const p = props as DatePickerSetupProps;
     const isOpen = signal(false);
     const currentYear = signal(new Date().getFullYear());
@@ -156,6 +159,7 @@ export const DatePicker = defineComponent({
       const dateType = p.type;
       if (dateType === 'date') {
         const result = formatDate(date, p.format);
+        emit('update:modelValue', result);
         p.onChange?.(result);
         isOpen.set(false);
       } else if (dateType === 'datetime') {
@@ -168,6 +172,7 @@ export const DatePicker = defineComponent({
           const start = rangeStart()!;
           const end = rangeEnd()!;
           const result = [formatDate(start, p.format), formatDate(end, p.format)];
+          emit('update:modelValue', result);
           p.onChange?.(result);
         } else {
           rangeStart.set(date);
@@ -186,6 +191,7 @@ export const DatePicker = defineComponent({
       newDate.setSeconds(currentSeconds());
 
       const result = formatDate(newDate, p.format);
+      emit('update:modelValue', result);
       p.onChange?.(result);
       isOpen.set(false);
     };
@@ -195,6 +201,7 @@ export const DatePicker = defineComponent({
       selectDate.set(null);
       rangeStart.set(null);
       rangeEnd.set(null);
+      emit('update:modelValue', null);
       p.onChange?.(null);
     };
 
@@ -212,6 +219,7 @@ export const DatePicker = defineComponent({
         rangeStart.set(start);
         rangeEnd.set(end);
         if (start && end) {
+          emit('update:modelValue', [formatDate(start, p.format), formatDate(end, p.format)]);
           p.onChange?.([formatDate(start, p.format), formatDate(end, p.format)]);
         }
       }

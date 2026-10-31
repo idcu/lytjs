@@ -37,7 +37,7 @@ export const RadioGroup = defineComponent({
     onChange: { type: Function, default: undefined },
   },
 
-  setup(props: Record<string, unknown>, { slots }) {
+  setup(props: Record<string, unknown>, { slots, emit }) {
     const _props = props as RadioGroupSetupProps;
 
     const getRadioGroupClass = () => {
@@ -73,6 +73,7 @@ export const RadioGroup = defineComponent({
     const handleGroupChange = (v: unknown): void => {
       const next = v as string | number | boolean;
       groupValue.set(next);
+      emit('update:modelValue', next);
       _props.onChange?.(next);
     };
 

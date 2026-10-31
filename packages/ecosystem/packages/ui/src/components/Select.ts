@@ -54,7 +54,7 @@ export const Select = defineComponent({
     onVisibleChange: { type: Function, default: undefined },
   },
 
-  setup(props: Record<string, unknown>) {
+  setup(props: Record<string, unknown>, { emit }) {
     const p = props as SelectSetupProps;
     const isOpen = signal(false);
     const selectedValue = signal<Set<string | number>>(new Set());
@@ -146,6 +146,7 @@ export const Select = defineComponent({
           newSelected.add(option.value);
         }
         selectedValue.set(newSelected);
+        emit('update:modelValue', Array.from(newSelected));
         p.onChange?.(Array.from(newSelected));
       } else {
         selectedValue.set(new Set([option.value]));
@@ -153,6 +154,7 @@ export const Select = defineComponent({
           isOpen.set(false);
           p.onVisibleChange?.(false);
         }
+        emit('update:modelValue', option.value);
         p.onChange?.(option.value);
 
         const prevEl = previousActiveElement();
@@ -166,6 +168,7 @@ export const Select = defineComponent({
       event.stopPropagation();
       selectedValue.set(new Set());
       p.onClear?.();
+      emit('update:modelValue', p.multiple ? [] : '');
       p.onChange?.(p.multiple ? [] : '');
     };
 

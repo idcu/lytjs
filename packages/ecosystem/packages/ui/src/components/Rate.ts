@@ -32,7 +32,7 @@ export const Rate = defineComponent({
     onChange: { type: Function, default: undefined },
   },
 
-  setup(props: Record<string, unknown>) {
+  setup(props: Record<string, unknown>, { emit }) {
     const p = props as RateSetupProps;
     const hoverValue = signal(0);
     const isHovering = signal(false);
@@ -93,6 +93,7 @@ export const Rate = defineComponent({
         }
       }
 
+      emit('update:modelValue', newValue);
       if (p.onChange) {
         p.onChange(newValue);
       }

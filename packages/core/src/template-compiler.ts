@@ -63,11 +63,18 @@ export function compileTemplateToRender(
     );
   }
 
-  const names = Object.keys(RUNTIME_HELPERS);
+  const names = Object.keys(RUNTIME_HELPERS).filter((n) => n !== '__DEV__');
   let factory: (...args: unknown[]) => CompiledRenderFn;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-implied-eval
-    factory = new Function(...names, `${body}\nreturn render;`) as typeof factory;
+    // ⚠️ 2026-10-31 修（P0）：产物里可能引用 `__DEV__`（`v-html` 的 XSS 警告分支，
+    //   见 compiler/src/transforms/transform-element.ts 的 createConditionalExpression），
+    //   而 `__DEV__` 是**构建期常量**：本包 dist 由 tsup `define:{__DEV__:'false'}`
+    //   压成字面量，`new Function` 的作用域里却**没有**它 ⇒ 运行期
+    //   `ReferenceError: __DEV__ is not defined`，整个应用挂载失败。
+    //   修法：把本模块的 `__DEV__`（构建期已替换）作为**最后一个参数**注入产物，
+    //   与包内其它代码同源（dist=false / vitest=true），不需要宿主再配 define。
+
+    factory = new Function(...names, '__DEV__', `${body}\nreturn render;`) as typeof factory;
   } catch (e) {
     throw new Error(
       `[LytJS] compileTemplateToRender: 产物语法错误：${(e as Error).message}\n` +
@@ -77,7 +84,7 @@ export function compileTemplateToRender(
 
   let render: CompiledRenderFn;
   try {
-    render = factory(...names.map((n) => (RUNTIME_HELPERS as Record<string, unknown>)[n]));
+    render = factory(...names.map((n) => (RUNTIME_HELPERS as Record<string, unknown>)[n]), __DEV__);
   } catch (e) {
     throw new Error(
       `[LytJS] compileTemplateToRender: 执行产物失败：${(e as Error).message}\n` +

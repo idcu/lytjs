@@ -154,7 +154,26 @@ export function createCorsMiddleware(config: CorsConfig = {}): Middleware {
         }
       });
 
-      return new Response(downstream.body, {
+      // ⚠️ 2026-10-31 修（P0）：下游可能是宿主的**普通对象**响应
+      //   （`{status, headers, body: {ok:true}}`）。`new Response(obj)` 会把 body
+      //   强制转成字符串 ⇒ 实测响应体变成字面量 `"[object Object]"`，
+      //   所有 JSON 接口在开启 CORS 后全部损坏。这里显式序列化非字符串 body。
+      const rawBody = (downstream as { body?: unknown }).body;
+      const isPlainBody =
+        rawBody !== undefined &&
+        rawBody !== null &&
+        typeof rawBody !== 'string' &&
+        !(typeof ReadableStream !== 'undefined' && rawBody instanceof ReadableStream) &&
+        !(typeof ArrayBuffer !== 'undefined' && rawBody instanceof ArrayBuffer);
+      const responseBody = isPlainBody
+        ? JSON.stringify(rawBody)
+        : (rawBody as BodyInit | null | undefined);
+
+      if (isPlainBody && !mergedHeaders.has('content-type')) {
+        mergedHeaders.set('content-type', 'application/json');
+      }
+
+      return new Response(responseBody, {
         status: downstream.status,
         statusText: downstream.statusText,
         headers: mergedHeaders,

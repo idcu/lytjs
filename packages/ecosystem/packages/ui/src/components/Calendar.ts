@@ -57,7 +57,7 @@ export const Calendar = defineComponent({
     onDateClick: { type: Function, default: undefined },
   },
 
-  setup(props: Record<string, unknown>) {
+  setup(props: Record<string, unknown>, { emit }) {
     const p = props as CalendarSetupProps;
     const currentDate = signal<Date>(p.modelValue instanceof Date ? p.modelValue : new Date());
     const currentView = signal<string>(p.view);
@@ -120,6 +120,7 @@ export const Calendar = defineComponent({
     };
 
     const emitChange = (date: Date) => {
+      emit('update:modelValue', date);
       if (p.onChange) {
         p.onChange(date);
       }

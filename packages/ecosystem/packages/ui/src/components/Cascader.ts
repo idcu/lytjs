@@ -48,7 +48,10 @@ export const Cascader = defineComponent({
     onClear: { type: Function, default: undefined },
   },
 
-  setup(props: Record<string, unknown>, { slots }: { slots: CascaderSlots }) {
+  setup(
+    props: Record<string, unknown>,
+    { slots, emit }: { slots: CascaderSlots; emit: (e: string, ...a: unknown[]) => void },
+  ) {
     const p = props as CascaderSetupProps;
     const isDropdownOpen = signal(false);
     const activePath = signal<(string | number)[]>([]);
@@ -80,6 +83,7 @@ export const Cascader = defineComponent({
       activePath.set([]);
       isDropdownOpen.set(false);
       p.onClear?.();
+      emit('update:modelValue', []);
       p.onChange?.([]);
     };
 
@@ -90,6 +94,7 @@ export const Cascader = defineComponent({
       newSelected.splice(index, 1);
       selectedValues.set(newSelected);
       p.onRemoveTag?.(newSelected);
+      emit('update:modelValue', newSelected);
       p.onChange?.(newSelected);
     };
 
@@ -108,10 +113,12 @@ export const Cascader = defineComponent({
             ? selectedValues().filter((item) => item.join('-') !== newPath.join('-'))
             : [...selectedValues(), newPath];
           selectedValues.set(newSelected);
+          emit('update:modelValue', newSelected);
           p.onChange?.(newSelected);
         } else {
           selectedValues.set([newPath]);
           isDropdownOpen.set(false);
+          emit('update:modelValue', newPath);
           p.onChange?.(newPath);
         }
       } else if (nextOptions.length === 0 && p.load) {

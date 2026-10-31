@@ -8,7 +8,7 @@
  *       成熟度表见 `src/component-status.ts`（单一真相源）。
  */
 
-import { defineComponent } from '@lytjs/component';
+import { defineComponent, provide, inject } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
 import type {
@@ -18,6 +18,9 @@ import type {
   FormItemSetupProps,
   FormItemSlots,
 } from './types';
+
+/** Form → FormItem 的校验结果通道（见 Form setup 里的 provide） */
+const FORM_ERRORS_KEY = Symbol('lyt-form-errors');
 import { mergeA11yProps } from '@lytjs/common-a11y';
 
 export interface FormLocale {
@@ -73,6 +76,13 @@ export const Form = defineComponent({
     const errors = signal<Record<string, string>>({});
     const validating = signal<Record<string, boolean>>({});
     const locale = (p.locale || DEFAULT_LOCALE) as FormLocale;
+
+    // ⚠️ 2026-10-31 修（P0）：校验结果此前**只存在 Form 自己的闭包里**，
+    //   FormItem 读的是 `p.error`（父组件手传），Form 从不注入 ⇒
+    //   `validate()` 跑完、`errors` 里有值，但**页面上一个红字都不出现**，
+    //   用户以为提交成功了。现在把 errors signal 通过 provide 下发，
+    //   FormItem 按自己的 `prop` 取对应字段的错误。
+    provide(FORM_ERRORS_KEY, errors);
 
     const validateField = async (field: string): Promise<boolean> => {
       const rules = p.rules[field];
@@ -239,7 +249,6 @@ function validateType(value: unknown, type: string): boolean {
 
 export const FormItem = defineComponent({
   name: 'LytFormItem',
-
   props: {
     label: { type: String, default: '' },
     prop: { type: String, default: '' },
@@ -255,10 +264,19 @@ export const FormItem = defineComponent({
   setup(props: Record<string, unknown>, { slots }: { slots: FormItemSlots }) {
     const p = props as FormItemSetupProps;
 
+    // 从 Form 注入的 errors signal 里取本字段的错误（`prop` 即字段名）
+    const injectedErrors = inject(FORM_ERRORS_KEY, null) as (() => Record<string, string>) | null;
+    const displayError = (): string => {
+      if (p.error) return p.error;
+      if (!injectedErrors || !p.prop) return '';
+      return injectedErrors()[p.prop] ?? '';
+    };
+
     return () => {
+      const errorText = displayError();
       const itemClass = [
         'lyt-form-item',
-        p.error ? 'lyt-form-item--error' : '',
+        errorText ? 'lyt-form-item--error' : '',
         p.validateStatus ? `lyt-form-item--${p.validateStatus}` : '',
       ]
         .filter(Boolean)
@@ -289,7 +307,7 @@ export const FormItem = defineComponent({
         children.push(createVNode('div', { class: 'lyt-form-item__content' }, slotContent));
       }
 
-      if (p.error) {
+      if (errorText) {
         children.push(
           createVNode(
             'div',
@@ -298,7 +316,7 @@ export const FormItem = defineComponent({
               role: 'alert',
               'aria-live': 'polite',
             },
-            [createVNode('span', {}, String(p.error))],
+            [createVNode('span', {}, String(errorText))],
           ),
         );
       }

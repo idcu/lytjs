@@ -10,7 +10,12 @@ import type {
   VNodeCall,
   JSCallExpression,
 } from '../types';
-import { createSimpleExpression, createCallExpression, createCompoundExpression } from '../ast';
+import {
+  createSimpleExpression,
+  createCallExpression,
+  createCompoundExpression,
+  createConditionalExpression,
+} from '../ast';
 import { getExpContent, findDirective } from './helpers';
 import { transformElement } from './transform-element';
 import { warn } from '@lytjs/common-error';
@@ -148,6 +153,20 @@ export function transformFor(
       ? parentRef.children.indexOf(selfRef)
       : -1;
 
+  // ⚠️ 2026-10-31 修（P0）：`v-for` 与 `v-if` **同元素**时，此前由 if.ts 抢先构建
+  //   条件链 ⇒ 产物变成 `(i > 1 ? li : null)`，`renderList` 整个消失，
+  //   而 `i` 在渲染函数作用域里并不存在 ⇒ 运行期 `ReferenceError: i is not defined`。
+  //   现在语义拍板为「v-for 优先、v-if 逐项过滤」（即 Vue 2 / 用户直觉的写法）：
+  //   由本函数把 `v-if` 收进 renderList 的回调里，生成
+  //   `renderList(3, (i) => { return (i > 1) ? li : null })`。
+  //   配套：if.ts 遇到带 v-for 的元素会直接返回，不再参与条件链。
+  const ifDirective = findDirective(element, 'if');
+  const ifCondition = ifDirective?.exp ? getExpContent(ifDirective.exp) : undefined;
+  if (ifDirective) {
+    // 该指令由本函数消费（见下方 conditional），从 props 移除避免重复处理
+    element.props = element.props.filter((p) => p !== ifDirective);
+  }
+
   // 注册 v-for 别名为局部标识符：它 children 里的表达式不能加 `_ctx.` 前缀
   const localNames = collectForAliasNames(itemVar, indexVar, destructureExpr);
   for (const name of localNames) context.addIdentifiers(name);
@@ -207,8 +226,17 @@ export function transformFor(
         createSimpleExpression(`const ${destructureExpr} = ${itemVar};`, false, forExp.loc, false),
       );
     }
+    // v-if 与 v-for 同元素：条件必须**在回调内部**求值（此时别名 i 才在作用域内）
+    const renderItemExpr: unknown = ifCondition
+      ? createConditionalExpression(
+          createSimpleExpression(ifCondition, false, forExp.loc, false),
+          renderItemAsChild as unknown as Parameters<typeof createConditionalExpression>[1],
+          createSimpleExpression('null', true, forExp.loc, true),
+          true,
+        )
+      : renderItemAsChild;
     bodyParts.push(' return ');
-    bodyParts.push(renderItemAsChild);
+    bodyParts.push(renderItemExpr as TemplateChildNode);
 
     const renderListCall = createCallExpression('RENDER_LIST', [
       createSimpleExpression(right, false, forExp.loc, false),

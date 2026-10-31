@@ -39,7 +39,7 @@ export const CheckboxGroup = defineComponent({
     onChange: { type: Function, default: undefined },
   },
 
-  setup(props: Record<string, unknown>, { slots }) {
+  setup(props: Record<string, unknown>, { slots, emit }) {
     const _props = props as CheckboxGroupSetupProps;
 
     const getCheckboxGroupClass = () => {
@@ -76,6 +76,7 @@ export const CheckboxGroup = defineComponent({
     );
     const handleGroupChange = (v: unknown): void => {
       groupValue.set(v as GroupValue);
+      emit('update:modelValue', v as GroupValue);
       _props.onChange?.(v as GroupValue);
     };
 

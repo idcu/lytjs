@@ -143,15 +143,50 @@ function createHostNodeFromVNode<HN, HE extends HN>(
     const el = adapter.createElement(type);
 
     // 设置属性
+    //
+    // ⚠️ 2026-10-31 修（P0）：此前**只处理字符串值**（`isString(value)`），
+    //   数字 / 布尔 / 对象 / 事件处理器全部被静默丢弃 —— 实测 `data-n: 42`
+    //   不写入、`onClick` 不绑定、`disabled: true` 无效。现在按类型分派。
     if (vnode.props) {
       for (const [key, value] of Object.entries(vnode.props)) {
-        if (key === 'style' && isString(value)) {
-          adapter.setStyle(el, value);
-        } else if (key === 'class' && isString(value)) {
-          adapter.addClass(el, value);
-        } else if (isString(value)) {
-          adapter.setAttribute(el, key, value);
+        if (value === null || value === undefined) continue;
+
+        if (key === 'style') {
+          if (isString(value)) adapter.setStyle(el, value);
+          else if (isObject(value)) {
+            adapter.setStyle(
+              el,
+              Object.entries(value as Record<string, unknown>)
+                .map(([k, v]) => `${k}: ${String(v)}`)
+                .join('; '),
+            );
+          }
+          continue;
         }
+
+        if (key === 'class') {
+          if (isString(value)) adapter.addClass(el, value);
+          else if (Array.isArray(value)) adapter.addClass(el, value.filter(Boolean).join(' '));
+          continue;
+        }
+
+        // 事件：`onClick` → `click`
+        if (typeof value === 'function' && /^on[A-Z]/.test(key)) {
+          adapter.addEventListener(
+            el,
+            key.slice(2).toLowerCase(),
+            value as (...a: unknown[]) => void,
+          );
+          continue;
+        }
+
+        // 布尔属性：`true` 写成空串（HTML 语义），`false` 不写
+        if (typeof value === 'boolean') {
+          if (value) adapter.setAttribute(el, key, '');
+          continue;
+        }
+
+        adapter.setAttribute(el, key, typeof value === 'string' ? value : String(value));
       }
     }
 
