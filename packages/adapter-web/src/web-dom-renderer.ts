@@ -304,6 +304,7 @@ export function createDOMRenderer(
       | 'invokeUpdatedHook'
       | 'invokeBeforeUnmountHook'
       | 'invokeUnmountedHook'
+      | 'setRenderingInstance'
     >
   >,
 ): DOMRenderer {
@@ -391,6 +392,11 @@ export function createDOMRenderer(
       : {}),
     ...(extraOptions?.invokeUnmountedHook
       ? { invokeUnmountedHook: extraOptions.invokeUnmountedHook }
+      : {}),
+    // ⚠️ 2026-10-31：渲染期设置 currentInstance（指令/组件解析依赖它）。
+    //   这里与上方 Pick 是一对，**新增回调必须两处同改** —— 漏一处就会被静默丢弃。
+    ...(extraOptions?.setRenderingInstance
+      ? { setRenderingInstance: extraOptions.setRenderingInstance }
       : {}),
   };
 

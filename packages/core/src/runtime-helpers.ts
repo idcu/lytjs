@@ -58,3 +58,9 @@ export { normalizeClass, normalizeStyle, sanitizeHTML, withModifiers } from '@ly
 
 // —— 插槽渲染（@lytjs/component）——
 export { renderSlot } from '@lytjs/component';
+
+// —— 自定义指令（2026-10-31）——
+// 编译器产物的契约：`withDirectives(vnode, [[resolveDirective("focus"), value, arg, modifiers]])`。
+// 这两个名字此前**不在注入表里** ⇒ 即使编译器产了码，`new Function` 执行时也是 undefined。
+export { withDirectives } from './directives';
+export { resolveDirective, resolveComponent, resolveDynamicComponent } from './resolve';

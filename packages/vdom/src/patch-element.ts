@@ -10,6 +10,7 @@ import { ShapeFlags, PatchFlags } from '@lytjs/common-vnode';
 import { hasChanged, EMPTY_OBJ, isFunction } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
 import type { SuspenseBoundary } from './types';
+import { invokeDirectiveHook } from './directives';
 
 // ============================================================
 // RendererContext - 子模块共享的渲染器上下文接口
@@ -59,6 +60,8 @@ export interface RendererContext<HN, HE extends HN> {
   invokeUpdatedHook: ((instance: ComponentInternalInstance) => void) | undefined;
   invokeBeforeUnmountHook: ((instance: ComponentInternalInstance) => void) | undefined;
   invokeUnmountedHook: ((instance: ComponentInternalInstance) => void) | undefined;
+  /** 渲染期把当前实例交给上层（见 RendererOptions.setRenderingInstance） */
+  setRenderingInstance: ((instance: ComponentInternalInstance | null) => void) | undefined;
 
   // VNode el helpers
   setVNodeEl: (vnode: VNode, el: HN | null) => void;
@@ -297,10 +300,16 @@ export function createElementPatch<HN, HE extends HN>(
     }
     // 其余情况（无子节点 / 注释占位）无需处理
 
+    // ★ 2026-10-31 新增：自定义指令 beforeMount（在插入文档**之前**，与 Vue 一致）
+    invokeDirectiveHook(vnode, 'beforeMount');
+
     // 插入到容器中（已认领的节点本就在原位，无需再插 —— 否则会变成两份）
     if (!claimed) {
       insert(el, container, anchor);
     }
+
+    // ★ 2026-10-31 新增：自定义指令 mounted（必须在 insert 之后 —— 指令常要量尺寸/取焦点）
+    invokeDirectiveHook(vnode, 'mounted');
 
     // ============================================================
     // ★ 2026-10-29 新增：过渡 enter（`<Transition>` 写在子 vnode 上的钩子）
@@ -423,6 +432,9 @@ export function createElementPatch<HN, HE extends HN>(
     const el = n1.el as unknown as HE;
     setVNodeEl(n2, n1.el as unknown as HN | null);
 
+    // ★ 2026-10-31 新增：自定义指令 beforeUpdate（binding.oldValue 取自 n1）
+    invokeDirectiveHook(n2, 'beforeUpdate', n1);
+
     // Patch props
     const oldProps = n1.props ?? EMPTY_OBJ;
     const newProps = n2.props ?? EMPTY_OBJ;
@@ -475,6 +487,9 @@ export function createElementPatch<HN, HE extends HN>(
       // 回退路径：全量 diff children
       ctx.patchChildren(n1, n2, el, parentComponent, parentSuspense, isSVG);
     }
+
+    // ★ 2026-10-31 新增：自定义指令 updated（props 与 children 都 patch 完之后）
+    invokeDirectiveHook(n2, 'updated', n1);
   }
 
   return {

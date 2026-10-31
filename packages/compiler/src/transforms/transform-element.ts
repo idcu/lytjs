@@ -45,6 +45,31 @@ import { prefixIdentifiers } from '../prefix-identifiers';
 import { capitalize } from '@lytjs/common-string';
 
 /**
+ * 已由**专用 transform** 消费的指令名。
+ *
+ * 不在此集合里的指令一律视为**自定义指令**，走 `withDirectives` 包裹。
+ * `if / else-if / else / for / slot / once / memo` 由各自的 transform 处理
+ * （且通常在 `transformElement` 之前就从 `props` 里移除了）。
+ */
+const BUILTIN_DIRECTIVES = new Set([
+  'bind',
+  'on',
+  'model',
+  'show',
+  'html',
+  'text',
+  'cloak',
+  'pre',
+  'if',
+  'else-if',
+  'else',
+  'for',
+  'slot',
+  'once',
+  'memo',
+]);
+
+/**
  * 类型守卫：检查 TemplateChildNode 是否有 codegenNode（JSChildNode）。
  * 用于安全地缩小类型范围，而非使用 `as unknown as JSChildNode`。
  */
@@ -397,6 +422,66 @@ function buildElementCodegen(node: ElementNode, context: TransformContext): void
   );
 
   node.codegenNode = vnodeCall;
+
+  // ============================================================
+  // 自定义指令 → withDirectives 包裹（2026-10-31 新增）
+  // ============================================================
+  //
+  // 此前 `handleDirective` 的 `default:` 分支只做 `context.directives.add(name)`，
+  // **不产任何码** ⇒ `<div v-focus>` 编译成普通 div，运行期没有任何钩子被调用。
+  //
+  // 现在按 Vue 的契约产出：
+  //   withDirectives(createElementVNode("div", …), [[resolveDirective("focus"), value, arg, mods]])
+  // 运行时（vdom）在 mount / patch / unmount 三处消费 `_directives`。
+  const customDirectives = node.props.filter(
+    (p): p is DirectiveNode => p.type === NodeTypes.DIRECTIVE && !BUILTIN_DIRECTIVES.has(p.name),
+  );
+  if (customDirectives.length > 0) {
+    context.helper('WITH_DIRECTIVES');
+    context.helper('RESOLVE_DIRECTIVE');
+    const entries = customDirectives.map((d) => {
+      const dirRef = createCallExpression(
+        'RESOLVE_DIRECTIVE',
+        [createSimpleExpression(JSON.stringify(d.name), true, d.loc, true)],
+        d.loc,
+      );
+      // 值：`v-foo="expr"` → 表达式；`v-foo`（无值）→ undefined
+      const valueExpr = (d.exp ??
+        createSimpleExpression('void 0', true, d.loc, true)) as JSChildNode;
+      // 参数：`v-foo:bar` 是**字符串字面量**（isStatic），`v-foo:[x]` 才是表达式
+      let argExpr: JSChildNode;
+      if (!d.arg) {
+        argExpr = createSimpleExpression('void 0', true, d.loc, true);
+      } else if ((d.arg as SimpleExpressionNode).isStatic) {
+        argExpr = createSimpleExpression(
+          JSON.stringify((d.arg as SimpleExpressionNode).content),
+          true,
+          d.loc,
+          true,
+        );
+      } else {
+        argExpr = d.arg as unknown as JSChildNode;
+      }
+      // 修饰符：`v-foo.prevent.stop` → { prevent: true, stop: true }
+      const modsExpr: JSChildNode =
+        d.modifiers && d.modifiers.length > 0
+          ? createSimpleExpression(
+              JSON.stringify(Object.fromEntries(d.modifiers.map((m) => [m, true]))),
+              true,
+              d.loc,
+              true,
+            )
+          : createSimpleExpression('void 0', true, d.loc, true);
+
+      return createArrayExpression([dirRef, valueExpr, argExpr, modsExpr], d.loc);
+    });
+
+    node.codegenNode = createCallExpression(
+      'WITH_DIRECTIVES',
+      [vnodeCall, createArrayExpression(entries, node.loc)],
+      node.loc,
+    ) as unknown as typeof node.codegenNode;
+  }
 
   if (shouldBeBlock) {
     context.helper('CREATE_BLOCK');

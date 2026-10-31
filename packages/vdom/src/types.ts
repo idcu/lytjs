@@ -153,6 +153,15 @@ export interface RendererOptions<HN = unknown, HE extends HN = HN> {
   invokeBeforeUnmountHook?(instance: ComponentInternalInstance): void;
   /** 可选回调：组件**卸载完成**后调用（对应 `onUnmounted` / `unmounted`） */
   invokeUnmountedHook?(instance: ComponentInternalInstance): void;
+  /**
+   * 可选回调：渲染函数执行期间把「当前实例」交给上层。
+   *
+   * ⚠️ 2026-10-31 新增：`resolveComponent` / `resolveDirective` 依赖
+   * `getCurrentInstance()`，而它此前**只在 setup 期间**被设置 ⇒ 渲染期调用
+   * 一律返回 undefined（`<div v-focus>` 的指令因此永远解析不到）。
+   * 由 `@lytjs/core` 注入 `setCurrentInstance`。
+   */
+  setRenderingInstance?(instance: ComponentInternalInstance | null): void;
 }
 
 // ============================================================

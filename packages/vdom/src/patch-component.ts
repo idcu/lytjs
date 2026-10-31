@@ -163,11 +163,20 @@ export function createComponentPatch<HN, HE extends HN>(
       //    下方有专门分支处理（此前这里声明为 `VNode`，把 null 当成不可能 ⇒ 见该分支注释）。
       let subTree: VNode | null;
       try {
-        const result = renderFn.call(component!.ctx, component!.ctx) as
-          | VNode
-          | VNode[]
-          | null
-          | undefined;
+        // ⚠️ 2026-10-31 新增：渲染期把「当前实例」交回上层（core 注入 setCurrentInstance）。
+        //   否则 `resolveComponent` / `resolveDirective` 在渲染期一律拿到 null，
+        //   `<div v-focus>` 的指令对象解析成 undefined，指令**永远不会执行**。
+        let result: VNode | VNode[] | null | undefined;
+        ctx.setRenderingInstance?.(component as ComponentInternalInstance);
+        try {
+          result = renderFn.call(component!.ctx, component!.ctx) as
+            | VNode
+            | VNode[]
+            | null
+            | undefined;
+        } finally {
+          ctx.setRenderingInstance?.(null);
+        }
         // ⚠️ 2026-10-01 修复：渲染函数返回**数组**（多根组件）时必须**包一层 Fragment**。
         // 否则 `subTree` 是一个数组，后续 patch / unmount 会按单个 vnode 处理 ⇒ **渲染为空**。
         // 触发者：`Transition` / `Suspense` 的渲染函数是 `() => slots.default?.()`，
@@ -387,6 +396,27 @@ export function createComponentPatch<HN, HE extends HN>(
                 (ShapeFlags.STATEFUL_COMPONENT | ShapeFlags.FUNCTIONAL_COMPONENT)) !==
               0;
             if (isElement || isComponent) kid.transition = vnode.transition;
+          }
+        }
+      }
+
+      // ⚠️ 2026-10-31 新增：**组件标签上的自定义指令**。
+      //   编译器为 `<Child v-focus />` 生成 `withDirectives(createBlock(Child, …), [[…]])`，
+      //   但指令钩子只能作用在**真实元素**上（`el.focus()` 之类）。
+      //   这里把指令转移到子组件的**根元素 vnode**（单根场景）—— 与 Vue 的
+      //   `renderComponentRoot` 里 `subTree.dirs = vnode.dirs` 同一做法。
+      //   多根（Fragment）组件暂不转移：没有唯一的 el 可承载，会显式告警。
+      {
+        const parentDirs = (vnode as { _directives?: unknown[] })._directives;
+        if (parentDirs && parentDirs.length > 0) {
+          const rootVNode = subTree as { type?: unknown; _directives?: unknown[] } | null;
+          if (rootVNode && typeof rootVNode.type === 'string') {
+            if (!rootVNode._directives) rootVNode._directives = parentDirs;
+          } else if (__DEV__) {
+            warn(
+              `组件 "<${String((component.type as { name?: string }).name ?? 'anonymous')}>" 上的自定义指令` +
+                `无法应用：多根组件没有唯一的根元素。请把指令写在根元素上。`,
+            );
           }
         }
       }

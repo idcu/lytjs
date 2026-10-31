@@ -40,7 +40,7 @@ globalThis.requestAnimationFrame = (cb) => setTimeout(() => cb(Date.now()), 0);
 globalThis.cancelAnimationFrame = (id) => clearTimeout(id);
 
 const url = (p) => new URL(p, import.meta.url).href;
-const { createApp, h } = await import(url('../packages/core/dist/index.mjs'));
+const { createApp, h, ref: C_ref } = await import(url('../packages/core/dist/index.mjs'));
 const { defineComponent: defineComponentForSsr } = await import(
   url('../packages/component/dist/index.mjs')
 );
@@ -326,6 +326,83 @@ const call = async (method, reqUrl, headers = {}) => {
   await call('GET', '/api/ok', { authorization: 'Bearer good' });
   const limited = await call('GET', '/api/ok', { authorization: 'Bearer good' });
   check('超限返回 429', limited.status === 429, `status=${limited.status}`);
+}
+
+// ── 自定义指令 ────────────────────────────────────────────────
+console.log('   [指令]');
+{
+  const root = mkRoot();
+  const calls = [];
+  const app = createApp({ template: '<div class="box" v-focus></div>' });
+  app.directive('focus', {
+    mounted(el, b) {
+      calls.push(['mounted', el.className, b.value, b.arg, b.modifiers]);
+    },
+  });
+  await app.mount(root);
+  await tick();
+  check(
+    '指令 mounted 被调用且拿到真实元素',
+    calls.length === 1 && calls[0][1] === 'box',
+    JSON.stringify(calls),
+  );
+}
+{
+  const root = mkRoot();
+  const calls = [];
+  const app = createApp({
+    template: '<div v-demo:arg.foo="msg"></div>',
+    data: () => ({ msg: 'V' }),
+  });
+  app.directive('demo', { mounted: (el, b) => calls.push([b.value, b.arg, b.modifiers]) });
+  await app.mount(root);
+  await tick();
+  check(
+    '指令 binding 的 value / arg / modifiers 正确',
+    calls[0]?.[0] === 'V' && calls[0]?.[1] === 'arg' && calls[0]?.[2]?.foo === true,
+    JSON.stringify(calls[0]),
+  );
+}
+{
+  const root = mkRoot();
+  const calls = [];
+  const n = C_ref(1);
+  const app = createApp({ setup: () => ({ n }), template: '<div v-demo="n">{{ n }}</div>' });
+  app.directive('demo', { updated: (el, b) => calls.push([b.value, b.oldValue]) });
+  await app.mount(root);
+  await tick();
+  n.value = 2;
+  await tick(120);
+  check(
+    '指令 updated 带 oldValue',
+    calls.length >= 1 && calls[calls.length - 1][0] === 2 && calls[calls.length - 1][1] === 1,
+    JSON.stringify(calls),
+  );
+}
+{
+  const root = mkRoot();
+  const calls = [];
+  const on = C_ref(true);
+  const app = createApp({
+    setup: () => ({ on }),
+    template: '<div><p v-if="on" v-demo>x</p></div>',
+  });
+  app.directive('demo', { unmounted: () => calls.push('unmounted') });
+  await app.mount(root);
+  await tick();
+  on.value = false;
+  await tick(160);
+  check('指令 unmounted 被调用', calls.includes('unmounted'), JSON.stringify(calls));
+}
+{
+  const root = mkRoot();
+  const calls = [];
+  const Child = { name: 'Child', template: '<span>c</span>' };
+  const app = createApp({ template: '<Child v-demo />', components: { Child } });
+  app.directive('demo', { mounted: () => calls.push('mounted') });
+  await app.mount(root);
+  await tick();
+  check('组件标签上的指令（转移到根元素）', calls.length === 1, JSON.stringify(calls));
 }
 
 // ── 生态 ──────────────────────────────────────────────────────

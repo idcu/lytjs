@@ -61,7 +61,8 @@ export function withDirectives(vnode: VNode, directives: DirectiveArguments): VN
   // 处理 deep 选项：递归将指令应用到子 VNode
   for (const dirEntry of dirVNode._directives) {
     const dirObj = dirEntry as unknown as DirectiveEntry;
-    if (dirObj.dir.deep) {
+    // 防御：`resolveDirective()` 可能返回 undefined（未注册 / 渲染期无实例）
+    if (dirObj.dir && dirObj.dir.deep) {
       applyDirectiveDeep(dirVNode, [
         dirObj.dir,
         dirObj.value,

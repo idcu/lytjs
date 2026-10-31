@@ -595,6 +595,12 @@ export function createApp(
       invokeUnmountedHook(inst: ComponentInternalInstance) {
         callUnmountedHook(inst);
       },
+      // ⚠️ 2026-10-31 新增：渲染期设置 currentInstance。
+      //   否则 `resolveDirective()` / `resolveComponent()` 在渲染函数里恒拿到 null
+      //   ⇒ 自定义指令解析成 undefined（写了等于没写）。
+      setRenderingInstance(inst: ComponentInternalInstance | null) {
+        setCurrentInstance(inst);
+      },
     }) as {
       mount: (vnode: VNode, container: Node) => void;
       hydrate?: (vnode: VNode, container: Node) => void;

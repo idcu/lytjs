@@ -19,6 +19,7 @@ import { warn } from '@lytjs/common-error';
 import { shallowEqual } from '@lytjs/common-object';
 import type { RendererHost } from '@lytjs/host-contract';
 import type { RendererOptions, SuspenseBoundary } from './types';
+import { invokeDirectiveHook } from './directives';
 import { registerDOMOperations } from './list-diff';
 import type { DOMOperations } from './list-diff';
 
@@ -70,6 +71,8 @@ interface InternalRendererOptions<HN, HE extends HN> {
   invokeUpdatedHook: ((instance: ComponentInternalInstance) => void) | undefined;
   invokeBeforeUnmountHook: ((instance: ComponentInternalInstance) => void) | undefined;
   invokeUnmountedHook: ((instance: ComponentInternalInstance) => void) | undefined;
+  /** 渲染期把当前实例交给上层（见 RendererOptions.setRenderingInstance） */
+  setRenderingInstance: ((instance: ComponentInternalInstance | null) => void) | undefined;
 }
 
 /**
@@ -104,6 +107,7 @@ function hostToOptions<HN, HE extends HN>(
     invokeUpdatedHook: undefined,
     invokeBeforeUnmountHook: undefined,
     invokeUnmountedHook: undefined,
+    setRenderingInstance: undefined,
   };
 }
 
@@ -137,6 +141,7 @@ function optionsToInternal<HN, HE extends HN>(
     invokeUpdatedHook: options.invokeUpdatedHook,
     invokeBeforeUnmountHook: options.invokeBeforeUnmountHook,
     invokeUnmountedHook: options.invokeUnmountedHook,
+    setRenderingInstance: options.setRenderingInstance,
   };
 }
 
@@ -312,6 +317,7 @@ export function createRenderer<HN, HE extends HN>(
     invokeUpdatedHook,
     invokeBeforeUnmountHook,
     invokeUnmountedHook,
+    setRenderingInstance,
   } = internal;
 
   // 辅助函数：将宿主节点赋值给 vnode.el（VNode.el 在 common-vnode 中类型为 Node | null，
@@ -361,6 +367,7 @@ export function createRenderer<HN, HE extends HN>(
   ctx.invokeUpdatedHook = invokeUpdatedHook;
   ctx.invokeBeforeUnmountHook = invokeBeforeUnmountHook;
   ctx.invokeUnmountedHook = invokeUnmountedHook;
+  ctx.setRenderingInstance = setRenderingInstance;
   ctx.setVNodeEl = setVNodeEl;
   ctx.getVNodeEl = getVNodeEl;
 
@@ -675,6 +682,9 @@ export function createRenderer<HN, HE extends HN>(
       }
     };
 
+    // ★ 2026-10-31 新增：自定义指令 beforeUnmount（子树卸载之前）
+    invokeDirectiveHook(vnode, 'beforeUnmount');
+
     if (!shouldDeferChildren) {
       unmountChildrenNow();
     }
@@ -721,6 +731,11 @@ export function createRenderer<HN, HE extends HN>(
         }
       }
     }
+
+    // ★ 2026-10-31 新增：自定义指令 unmounted
+    //   注意：有 leave 过渡时元素移除被推迟到动画结束，这里仍按「逻辑卸载」时机触发
+    //   （与 Vue 的 unmounted 时机一致：vnode 生命周期结束，而非 DOM 消失）。
+    invokeDirectiveHook(vnode, 'unmounted');
   }
 
   // ============================================================

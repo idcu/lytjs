@@ -83,6 +83,9 @@ export const helperNameMap: Record<string, string> = {
   RESOLVE_COMPONENT: 'resolveComponent',
   RESOLVE_DYNAMIC_COMPONENT: 'resolveDynamicComponent',
   RESOLVE_DIRECTIVE: 'resolveDirective',
+  // ⚠️ 2026-10-31：自定义指令此前只登记不产码（见 transform-element 的 default 分支），
+  //   补上包裹用的 helper 名，使产物能生成 `withDirectives(vnode, [[resolveDirective("x"), …]])`
+  WITH_DIRECTIVES: 'withDirectives',
   RENDER_LIST: 'renderList',
   RENDER_SLOT: 'renderSlot',
   CREATE_SLOTS: 'createSlots',

@@ -260,35 +260,20 @@ function parseDirective(
     }
   }
 
-  if (
-    name === 'bind' ||
-    name === 'on' ||
-    name === 'model' ||
-    name === 'if' ||
-    name === 'for' ||
-    name === 'each' ||
-    name === 'show' ||
-    name === 'text' ||
-    name === 'html' ||
-    name === 'slot' ||
-    name === 'once' ||
-    name === 'memo' ||
-    name === 'pre' ||
-    name === 'cloak' ||
-    name === 'else-if' ||
-    name === 'else'
-  ) {
+  // ⚠️ 2026-10-31 修（P0）：此前**只有内置指令**才解析 `="value"`，自定义指令被跳过 ⇒
+  //   `v-focus="a.b"` 的 exp 恒为 undefined，且残留的 `="a.b"` 会被当成**普通属性**
+  //   写进 props（实测产物：`{ "=\"a.b\"": true }`）。
+  //   指令的值与名字无关，所有指令都要解析。
+  advanceSpaces(context);
+
+  if (context.source.startsWith('=')) {
+    advanceBy(context, 1);
     advanceSpaces(context);
 
-    if (context.source.startsWith('=')) {
-      advanceBy(context, 1);
-      advanceSpaces(context);
+    const valueStart = getCursor(context);
+    const valueContent = parseQuotedValue(context);
 
-      const valueStart = getCursor(context);
-      const valueContent = parseQuotedValue(context);
-
-      exp = createSimpleExpression(valueContent, false, getSelection(context, valueStart), false);
-    }
+    exp = createSimpleExpression(valueContent, false, getSelection(context, valueStart), false);
   }
 
   return createDirective(name, arg, exp, modifiers, getSelection(context, start));
