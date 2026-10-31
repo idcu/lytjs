@@ -656,6 +656,27 @@ function handleVBind(
  * 若改走它会让 `.once/.capture/.passive` 退化）。
  * 两处若将来要合一，请以本函数的语义为准（含选项对象分支）。
  */
+/**
+ * 把 `v-on` 的表达式规范化成**事件处理器**。
+ *
+ * ⚠️ 2026-11-01 修（P0）：此前表达式被原样当成 handler 值，于是
+ *
+ *   `@click="n++"`            → `onClick: _ctx.n++`      ← **渲染期**就自增，点击无反应
+ *   `@input="foo($event)"`    → `onInput: _ctx.foo(_ctx.$event)` ← 渲染期调用 + $event 恒 undefined
+ *
+ * 三种形态必须区分：
+ *   · 函数引用（`foo` / `foo.bar`）        → 原样（运行时按引用调用）
+ *   · 函数表达式（`() => …` / `function`） → 原样
+ *   · 其余（语句 / 赋值 / 调用）            → 包成 `$event => (…)`
+ */
+function normalizeHandlerExp(exp: string): string {
+  const trimmed = exp.trim();
+  if (/^[A-Za-z_$][\w$]*(\.[A-Za-z_$][\w$]*)*$/.test(trimmed)) return trimmed;
+  if (/^(async\s+)?(\(|function\b)/.test(trimmed)) return trimmed;
+  if (/^(async\s+)?[A-Za-z_$][\w$]*\s*=>/.test(trimmed)) return trimmed;
+  return `$event => (${trimmed})`;
+}
+
 function handleVOn(
   prop: DirectiveNode,
   _node: ElementNode,
@@ -668,7 +689,7 @@ function handleVOn(
   if (argContent !== undefined) {
     const handler =
       expContent !== undefined
-        ? createSimpleExpression(expContent, false, prop.loc, false)
+        ? createSimpleExpression(normalizeHandlerExp(expContent), false, prop.loc, false)
         : createSimpleExpression('undefined', true, prop.loc, true);
 
     // FIX: P1-30 处理事件修饰符：守卫型走 withModifiers，选项型走事件选项对象

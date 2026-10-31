@@ -2,7 +2,7 @@
 // Attribute and directive parsing: parseAttribute, parseDirective, parseQuotedValue, etc.
 
 import {
-  type ElementTypes,
+  ElementTypes,
   BARE_DIRECTIVE_NAMES,
   BARE_DIRECTIVE_CONFLICTS,
   BARE_DIRECTIVE_VALUE_PATTERNS,
@@ -63,6 +63,19 @@ function tryParseBareDirective(
     }
 
     return createAttribute(escapedName, value, getSelection(context, start));
+  }
+
+  // ⚠️ 2026-11-01 修（P0）：**裸指令名只对原生元素生效**。
+  //
+  //   此前 `<Inner text="S" />` 会被识别成 `v-text`，产物是
+  //   `{ "textContent": _ctx.S }` —— 组件的 `text` prop 被静默改成 textContent，
+  //   父组件传值、子组件永远收不到（实测 `<Inner text="S">` 渲染为空，
+  //   而 `:text="v"` 正常）。`model` / `show` / `html` 同理。
+  //
+  //   组件标签上的属性一律是 **prop**（与 Vue 一致）；需要原生语义时用
+  //   `attr-text="…"` 转义前缀（见上方分支）。
+  if (_tagType !== ElementTypes.ELEMENT) {
+    return undefined;
   }
 
   // 检查是否为裸指令名

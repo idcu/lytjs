@@ -465,6 +465,23 @@ function flattenChildren(children: unknown[]): unknown[] {
  * 规范化 children 并设置 vnode 的 shapeFlag
  * FIX: P2-6 VDOM-NEW-13 - 支持 Fragment children 扁平化
  */
+/**
+ * 把 Fragment children 里的标量（string / number）转成文本 vnode，
+ * 并丢弃 null / undefined / boolean（与 Vue 的 children 归一化一致）。
+ */
+function normalizeFragmentScalars(children: unknown[]): unknown[] {
+  const out: unknown[] = [];
+  for (const child of children) {
+    if (child === null || child === undefined || typeof child === 'boolean') continue;
+    if (typeof child === 'string' || typeof child === 'number') {
+      out.push(createTextVNode(String(child)));
+    } else {
+      out.push(child);
+    }
+  }
+  return out;
+}
+
 export function normalizeChildren(vnode: VNode, children: VNodeChildren): void {
   let type: number = 0;
 
@@ -479,7 +496,19 @@ export function normalizeChildren(vnode: VNode, children: VNodeChildren): void {
     // 其余情况保持原样。
     if (vnode.type === Fragment || children.some(isArray)) {
       const flattened = flattenChildren(children);
-      vnode.children = flattened as VNodeChildren;
+      // ⚠️ 2026-11-01 修（P0）：**Fragment 的裸字符串/数字子节点会被静默丢弃**。
+      //
+      //   实测 `h(Fragment, null, ['H'])` 渲染出 `<!----><!---->`（两个注释占位、没有 H），
+      //   而元素数组子节点走 `mountChildren` 里有等价的标量分支、一直正常 ——
+      //   于是「具名插槽里只写文本」这种最常见的写法整块消失：
+      //     <Card><template #head>标题</template>正文</Card>
+      //   编译器为 head 产出 `createBlock(Fragment, null, ["标题"])`，正好命中这一条。
+      //
+      //   在**创建期**就归一成文本 vnode（与 Vue 的 normalizeChildren 一致），
+      //   而不是让每个消费方各自兜底。
+      vnode.children = (
+        vnode.type === Fragment ? normalizeFragmentScalars(flattened) : flattened
+      ) as VNodeChildren;
       type = ShapeFlags.ARRAY_CHILDREN;
     } else {
       type = ShapeFlags.ARRAY_CHILDREN;

@@ -116,6 +116,10 @@ const GLOBAL_ALLOW_LIST = new Set([
   'Proxy',
   'console',
   'Error',
+  // ⚠️ 2026-11-01 新增：`$event` 是**事件处理器的形参**（由 `@click="fn($event)"` 包装成
+  //   `$event => (fn($event))` 时产生）。不在此表里就会被前缀成 `_ctx.$event` ——
+  //   恒为 undefined，且整条表达式在**渲染期**就被求值（而不是事件触发时）。
+  '$event',
 ]);
 
 const IDENT_START = /[A-Za-z_$]/;

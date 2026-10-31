@@ -332,6 +332,91 @@ const call = async (method, reqUrl, headers = {}) => {
   check('超限返回 429', limited.status === 429, `status=${limited.status}`);
 }
 
+// ── 模板常见写法（回归：都曾静默错）───────────────────────────
+console.log('   [模板]');
+{
+  // 内联事件：渲染期不得求值，点击才生效
+  const root = mkRoot();
+  const n = C_ref(0);
+  const app = createApp({
+    setup: () => ({ n }),
+    template: '<button class="b" @click="n++">+</button>',
+  });
+  await app.mount(root);
+  await tick();
+  const beforeClick = n.value;
+  root.querySelector('.b')?.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+  await tick();
+  check(
+    '内联事件 n++ 只在点击时生效',
+    beforeClick === 0 && n.value === 1,
+    `${beforeClick}->${n.value}`,
+  );
+}
+{
+  // $event 表达式
+  const root = mkRoot();
+  const got = [];
+  const app = createApp({
+    setup: () => ({ got: (v) => got.push(v) }),
+    template: '<input class="i" @input="got($event.target.value)">',
+  });
+  await app.mount(root);
+  await tick();
+  const input = root.querySelector('.i');
+  input.value = 'EV';
+  input.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+  await tick();
+  check('$event 表达式可用', got[0] === 'EV', JSON.stringify(got));
+}
+{
+  // 组件标签上的静态属性必须是 prop
+  const root = mkRoot();
+  const Inner = { props: { text: String }, template: '<i>{{ text }}</i>' };
+  await createApp({ components: { Inner }, template: '<Inner text="S" />' }).mount(root);
+  await tick();
+  check('组件标签上的 text 作为 prop 传入', root.innerHTML.includes('S'), root.innerHTML);
+}
+{
+  // 具名插槽（文本内容）
+  const root = mkRoot();
+  const Card = {
+    template: '<div><header><slot name="head" /></header><main><slot /></main></div>',
+  };
+  await createApp({
+    components: { Card },
+    template: '<Card><template #head>H</template>BODY</Card>',
+  }).mount(root);
+  await tick();
+  check(
+    '具名插槽的纯文本内容能渲染',
+    root.innerHTML.includes('H') && root.innerHTML.includes('BODY'),
+    root.innerHTML,
+  );
+}
+{
+  // 组件 v-model
+  const root = mkRoot();
+  const MyInput = {
+    props: { modelValue: { type: String, default: '' } },
+    emits: ['update:modelValue'],
+    template:
+      '<input class="mi" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
+  };
+  const val = C_ref('a');
+  await createApp({
+    setup: () => ({ val }),
+    components: { MyInput },
+    template: '<MyInput v-model="val" />',
+  }).mount(root);
+  await tick();
+  const input = root.querySelector('.mi');
+  input.value = 'abc';
+  input.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+  await tick();
+  check('组件 v-model 双向绑定', val.value === 'abc', `val=${val.value}`);
+}
+
 // ── SFC <script setup> ───────────────────────────────────────
 console.log('   [SFC]');
 {
