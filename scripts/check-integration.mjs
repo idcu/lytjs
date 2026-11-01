@@ -344,6 +344,65 @@ const call = async (method, reqUrl, headers = {}) => {
   check('超限返回 429', limited.status === 429, `status=${limited.status}`);
 }
 
+// ── 静态站点生成（SSG）──────────────────────────────────────
+console.log('   [SSG]');
+{
+  const Page = (t) => ({ template: `<div class="page">${t}</div>` });
+  let out = null;
+  let err = null;
+  try {
+    out = ssrPkg.generateStaticPages(
+      [
+        { path: '/', component: h(Page('HOME')), head: { title: '首页' } },
+        { path: '/about', component: h(Page('ABOUT')) },
+      ],
+      { baseUrl: 'https://example.com' },
+    );
+  } catch (e) {
+    err = e.message;
+  }
+  check('generateStaticPages 可运行', !err && out && out.size === 2, err || `size=${out?.size}`);
+  const keys = out ? [...out.keys()] : [];
+  check(
+    '路径映射为 <path>/index.html',
+    keys.includes('/index.html') && keys.includes('/about/index.html'),
+    keys.join(','),
+  );
+  const home = out ? String(out.get('/index.html')) : '';
+  check('产出是完整 HTML 文档', /<html/i.test(home) && home.includes('HOME'), home.slice(0, 80));
+  check('页面 title 生效', home.includes('首页'), home.slice(0, 160));
+}
+{
+  // layout 必须真的包住页面
+  const Page = { template: '<div class="inner">INNER</div>' };
+  const layout = { template: '<main><slot /></main>' };
+  const out = ssrPkg.generateStaticPages(
+    [{ path: '/', component: h(Page), layout: h(layout) }],
+    {},
+  );
+  const html = String([...out.values()][0]);
+  check('SSG layout 生效', html.includes('<main') && html.includes('INNER'), html.slice(-160));
+}
+{
+  // 重复路径必须被 validatePages 检出（否则后者静默覆盖前者）
+  const Page = (t) => ({ template: `<div>${t}</div>` });
+  const dup = ssrPkg.validatePages([
+    { path: '/', component: h(Page('A')) },
+    { path: '/', component: h(Page('B')) },
+  ]);
+  const slash = ssrPkg.validatePages([
+    { path: '/about', component: h(Page('A')) },
+    { path: '/about/', component: h(Page('B')) },
+  ]);
+  const ok = ssrPkg.validatePages([
+    { path: '/', component: h(Page('A')) },
+    { path: '/b', component: h(Page('B')) },
+  ]);
+  check('validatePages 检出重复路径', dup.length > 0, JSON.stringify(dup));
+  check('validatePages 归一化尾斜杠', slash.length > 0, JSON.stringify(slash));
+  check('validatePages 不误报', ok.length === 0, JSON.stringify(ok));
+}
+
 // ── 流式渲染 / 虚拟列表 ──────────────────────────────────────
 console.log('   [Stream]');
 {

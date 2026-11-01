@@ -4,7 +4,7 @@
  * 预渲染页面配置为静态 HTML 文件
  */
 
-import type { VNode } from '@lytjs/vdom';
+import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString } from '@lytjs/common-is';
 import { escapeAttrValue } from '@lytjs/common-string';
 import { renderToHtml } from './render';
@@ -179,9 +179,29 @@ function renderPage(page: SSGPage, options: Required<SSGOptions>): string {
   }
 
   // 如果有布局，将组件包裹在布局中
-  const content = layout
-    ? renderToHtml(component, { title, lang: options.lang, head: extraHead })
-    : renderToHtml(component, { title, lang: options.lang, head: extraHead });
+  //
+  // ⚠️ 2026-11-01 修（P0）：此前这个三元的两支**完全相同** ——
+  //   `layout ? renderToHtml(component, …) : renderToHtml(component, …)`
+  //   ⇒ `page.layout` 被接受、类型上有、文档里写了，**但完全不生效**
+  //   （实测：给了 layout，产物里既没有 `<main>` 也没有页面内容以外的东西）。
+  //
+  // 现在按布局的 vnode 类型分别包裹：
+  //   · 元素布局（`type` 是字符串）→ 组件作为**子节点**；
+  //   · 组件布局 → 组件作为**默认插槽**（布局里写 `<slot />` 就是出口）。
+  let content: string;
+  if (!layout) {
+    content = renderToHtml(component, { title, lang: options.lang, head: extraHead });
+  } else {
+    // 插槽对象不是 createVNode 的重载之一（那是组件 children 的运行时形态），
+    // 这里用 never 断言绕过重载检查，运行时行为与模板产物一致。
+    const wrapped =
+      typeof layout.type === 'string'
+        ? createVNode(layout.type, layout.props ?? null, [component])
+        : createVNode(layout.type, layout.props ?? null, {
+            default: () => [component],
+          } as never);
+    content = renderToHtml(wrapped, { title, lang: options.lang, head: extraHead });
+  }
 
   return content;
 }
@@ -377,6 +397,25 @@ export function validatePages(pages: SSGPage[]): string[] {
     // 检查路径合法性
     if (isString(pagePath) && !pagePath.startsWith('/')) {
       errors.push(`页面 "${pagePath}": path 必须以 / 开头`);
+    }
+  }
+
+  // ⚠️ 2026-11-01 新增：**重复路径检测**。
+  //
+  //   `generateStaticPages` 用 `Map.set(filePath, html)` 收集结果 ——
+  //   两个页面映射到同一个 filePath 时，**后者静默覆盖前者**，
+  //   最终少一个页面、且没有任何提示（实测：两条 `/` 只产出 1 个文件）。
+  //   归一化后再比（`/about` 与 `/about/` 是同一个文件）。
+  const seen = new Map<string, number>();
+  for (let i = 0; i < pages.length; i++) {
+    const p = pages[i];
+    if (!p || !isString(p.path) || !p.path) continue;
+    const key = pathToFilePath(normalizePath(p.path));
+    const prev = seen.get(key);
+    if (prev !== undefined) {
+      errors.push(`页面 ${i}: path "${p.path}" 与页面 ${prev} 重复（都会写到 ${key}）`);
+    } else {
+      seen.set(key, i);
     }
   }
 
