@@ -60,9 +60,42 @@ export function h(
 // 实现
 export function h(
   type: string | Component | typeof Fragment | typeof Text | typeof Comment,
-  props?: Record<string, unknown> | null,
+  propsOrChildren?: Record<string, unknown> | VNodeChildren | null,
   ...children: VNodeChildren[]
 ): VNode {
+  // ⚠️ 2026-11-01 修（P0）：支持 `h(type, children)` 重载。
+  //
+  // 此前第二个参数**一律当 props**，于是最常见的写法
+  //     h('div', [h('span', null, 'X')])
+  // 会把数组当 props 遍历 ⇒ `patchProp(el, '0', …)` ⇒
+  //     DOMException: "0" did not match the Name production
+  // （实测直接抛错，整棵树渲染不出来）。`h('div', 'txt')` 同病。
+  //
+  // 判定规则与 Vue 一致：第二参是**数组 / 字符串 / 数字 / VNode** 时视为 children。
+  const isVNodeLike =
+    typeof propsOrChildren === 'object' &&
+    propsOrChildren !== null &&
+    (propsOrChildren as { __v_isVNode?: boolean }).__v_isVNode === true;
+
+  const secondArgIsChildren =
+    children.length === 0 &&
+    propsOrChildren != null &&
+    (Array.isArray(propsOrChildren) ||
+      typeof propsOrChildren === 'string' ||
+      typeof propsOrChildren === 'number' ||
+      isVNodeLike);
+
+  let props: Record<string, unknown> | null | undefined;
+  let childArgs: VNodeChildren[];
+
+  if (secondArgIsChildren) {
+    props = EMPTY_OBJ;
+    childArgs = [propsOrChildren as VNodeChildren];
+  } else {
+    props = propsOrChildren as Record<string, unknown> | null | undefined;
+    childArgs = children;
+  }
+
   if (props == null) {
     props = EMPTY_OBJ;
   }
@@ -72,11 +105,11 @@ export function h(
   // 这意味着如果 children 中包含非 VNode 的数组（如 props 数组），
   // 这些数组也会被展平。调用方应确保 children 中只包含 VNode 或原始值。
   const flatChildren =
-    children.length > 1
-      ? children.flat(Infinity)
-      : Array.isArray(children[0])
-        ? children[0].flat(Infinity)
-        : children[0];
+    childArgs.length > 1
+      ? childArgs.flat(Infinity)
+      : Array.isArray(childArgs[0])
+        ? childArgs[0].flat(Infinity)
+        : childArgs[0];
 
   // 类型断言说明：flat(Infinity) 返回 unknown[]，但 VNodeChildren 类型为
   // VNodeChild | VNodeChildren[]，两者在运行时结构一致。

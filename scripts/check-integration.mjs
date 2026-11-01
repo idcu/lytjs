@@ -72,6 +72,7 @@ const ssrPkg = await import(
   url('../packages/ecosystem/packages/ssr-kit/packages/ssr/dist/index.mjs')
 );
 const sfcPkg = await import(url('../packages/compiler/dist/sfc.mjs'));
+const storePkg = await import(url('../packages/ecosystem/packages/store/dist/index.mjs'));
 
 const tick = (ms = 50) => new Promise((r) => setTimeout(r, ms));
 const mkRoot = () => {
@@ -336,6 +337,85 @@ const call = async (method, reqUrl, headers = {}) => {
   await call('GET', '/api/ok', { authorization: 'Bearer good' });
   const limited = await call('GET', '/api/ok', { authorization: 'Bearer good' });
   check('超限返回 429', limited.status === 429, `status=${limited.status}`);
+}
+
+// ── 状态管理（store）─────────────────────────────────────────
+console.log('   [Store]');
+{
+  const root = mkRoot();
+  const pinia = storePkg.createPinia();
+  const useCounter = storePkg.defineStore('counter', {
+    state: () => ({ n: 0 }),
+    getters: { double: (st) => st.n * 2 },
+    actions: {
+      inc() {
+        this.n++;
+      },
+    },
+  });
+  let store;
+  const app = createApp({
+    setup() {
+      store = useCounter();
+      return () =>
+        h('div', [
+          h('span', { class: 'n' }, String(store.n)),
+          h('span', { class: 'd' }, String(store.double)),
+        ]);
+    },
+  });
+  app.use(pinia);
+  await app.mount(root);
+  await tick();
+  check('store 初始 state/getter', root.querySelector('.n')?.textContent === '0', root.innerHTML);
+  store.inc();
+  await tick();
+  check(
+    'store action 触发响应式更新',
+    root.querySelector('.n')?.textContent === '1' && root.querySelector('.d')?.textContent === '2',
+    root.innerHTML,
+  );
+}
+{
+  const root = mkRoot();
+  const pinia = storePkg.createPinia();
+  const useS = storePkg.defineStore('shared', {
+    state: () => ({ n: 0 }),
+    actions: {
+      inc() {
+        this.n++;
+      },
+    },
+  });
+  let st;
+  const A = {
+    setup: () => {
+      const s = useS();
+      return () => h('b', { class: 'a' }, String(s.n));
+    },
+  };
+  const B = {
+    setup: () => {
+      const s = useS();
+      return () => h('i', { class: 'b' }, String(s.n));
+    },
+  };
+  const app = createApp({
+    setup: () => {
+      st = useS();
+      return () => h('div', [h(A), h(B)]);
+    },
+  });
+  app.use(pinia);
+  await app.mount(root);
+  await tick();
+  st.inc();
+  await tick();
+  check(
+    '两个组件共享同一 store',
+    root.querySelector('.a')?.textContent === '1' && root.querySelector('.b')?.textContent === '1',
+    root.innerHTML,
+  );
 }
 
 // ── 异步 setup + Suspense ─────────────────────────────────────
