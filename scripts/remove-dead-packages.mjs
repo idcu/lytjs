@@ -75,7 +75,7 @@ const dirByName = new Map();
 })(join(ROOT, 'packages'), 0);
 
 const changes = []; // { file, kind, detail }
-const writes = []; // { file, next }
+const writes = []; // { file, before, next }
 
 /** 该文件是否位于某个待删包内（这些文件会随目录一起消失，不用改） */
 const inDeadDir = (file) => {
@@ -119,7 +119,7 @@ function handlePackageJson(file) {
   }
   if (removed.length === 0) return;
   changes.push({ file, kind: 'package.json', detail: removed.join(', ') });
-  writes.push({ file, next: JSON.stringify(json, null, 2) + '\n' });
+  writes.push({ file, before: raw, next: JSON.stringify(json, null, 2) + '\n' });
 }
 
 /** 处理 JS/TS 配置：删掉含死包名的整行（别名 / external 列表项） */
@@ -150,7 +150,7 @@ function handleConfigLines(file) {
   }
   if (removed.length === 0) return;
   changes.push({ file, kind: 'config', detail: `${removed.length} 行` });
-  writes.push({ file, next: kept.join('\n') });
+  writes.push({ file, before: raw, next: kept.join('\n') });
 }
 
 /** 收集候选文件 */
@@ -214,6 +214,21 @@ for (const file of targets) {
 if (residual === 0) console.log('  （无）');
 
 if (DRY) {
+  // ⚠️ 2026-11-01 教训：只打印"哪些文件会变"**验证不了改动是否合法**。
+  //   上一版 dry-run 报了 26 个文件，但真正的编辑规则把
+  //   `{ name: '@lytjs/x', path: '…' }` 改成了 `{ name: path: '…' }`（语法错误），
+  //   dry-run 完全没提示 —— 因为它是按行正则删的，不关心语义。
+  //   现在强制打印**每处改动的前后对照**，人工扫一眼就能发现这类破坏。
+  console.log('\n=== 改动预览（前 → 后）===');
+  for (const w of writes) {
+    const beforeLines = w.before.split('\n');
+    const afterLines = w.next.split('\n');
+    const removedLines = beforeLines.filter((l) => !afterLines.includes(l) && l.trim());
+    if (removedLines.length === 0) continue;
+    console.log(`\n--- ${w.file.replace(ROOT + '/', '')} ---`);
+    for (const l of removedLines.slice(0, 6)) console.log(`  - ${l.trim().slice(0, 120)}`);
+    if (removedLines.length > 6) console.log(`  … 另 ${removedLines.length - 6} 行`);
+  }
   console.log('\n[dry-run] 未改动任何文件。去掉 --dry-run 执行。');
   process.exit(0);
 }
