@@ -177,18 +177,16 @@ function collectChunks(vnode: VNode, suspenseBoundaryIndex: number[] = []): stri
     return chunks;
   }
 
-  // 处理组件类型
-  if (isFunction(node.type)) {
-    chunks.push(renderToString(node));
-    return chunks;
-  }
-
-  // 处理元素类型
-  if (isString(node.type)) {
-    chunks.push(renderToString(node));
-    return chunks;
-  }
-
+  // ⚠️ 2026-11-01 修（P0）：**其余类型一律交给 renderToString**。
+  //
+  // 此前只认 `isFunction(type)` 与 `isString(type)` 两支，于是
+  // **普通对象形式的组件**（`{ template }` / `defineComponent({...})` —— 也就是绝大多数写法）
+  // 从所有分支落空 ⇒ `chunks` 为空 ⇒ 流式输出**完全空白**（实测：
+  // `renderToString` 得到 `<div class="wrap">…`，`renderToStream` 得到 `''`）。
+  //
+  // 元素、函数组件、对象组件、以及任何自定义 vnode 类型，最终都应该由
+  // `renderToString` 统一处理 —— 它是唯一的渲染真相，这里只负责分块。
+  chunks.push(renderToString(node));
   return chunks;
 }
 
@@ -585,17 +583,12 @@ async function renderToStringAsync(
     return renderToString(node);
   }
 
-  // 处理组件类型（可能返回 Promise）
-  if (isFunction(node.type)) {
-    return renderToString(node);
-  }
-
-  // 处理元素类型
-  if (isString(node.type)) {
-    return renderToString(node);
-  }
-
-  return '';
+  // ⚠️ 2026-11-01 修（P0）：与 collectChunks 同一个坑 —— 只认 function / string 两种 type，
+  //   **普通对象形式的组件**（`{ template }` / `defineComponent({...})`）从所有分支落空
+  //   ⇒ 返回空串 ⇒ `renderToStreamEnhanced` 的流里什么都没有。
+  //
+  //   这里的 async 只体现在「子树可能异步」，单节点渲染仍应交给 renderToString（唯一真相）。
+  return renderToString(node);
 }
 
 /**

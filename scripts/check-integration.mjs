@@ -344,6 +344,60 @@ const call = async (method, reqUrl, headers = {}) => {
   check('超限返回 429', limited.status === 429, `status=${limited.status}`);
 }
 
+// ── 流式渲染 / 虚拟列表 ──────────────────────────────────────
+console.log('   [Stream]');
+{
+  const readAll = async (stream) => {
+    const reader = stream.getReader();
+    const dec = new TextDecoder();
+    let out = '';
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      out += dec.decode(value, { stream: true });
+    }
+    return out;
+  };
+  const App = { template: '<div class="wrap"><h1>T</h1><p>B</p></div>' };
+  const sync = ssrPkg.renderToString(h(App));
+  let streamed = '';
+  let err = null;
+  try {
+    streamed = await readAll(ssrPkg.renderToStream(h(App)));
+  } catch (e) {
+    err = e.message;
+  }
+  check('renderToStream 输出非空', !err && streamed.length > 0, err || streamed.slice(0, 80));
+  check(
+    '流式与同步输出一致',
+    streamed.replace(/\s+/g, '') === sync.replace(/\s+/g, ''),
+    `sync=${sync} stream=${streamed}`,
+  );
+  let enhanced = '';
+  try {
+    const r = await ssrPkg.renderToStreamEnhanced(h(App));
+    enhanced = await readAll(r.stream);
+  } catch (e) {
+    enhanced = 'ERR:' + e.message;
+  }
+  check('renderToStreamEnhanced 输出非空', enhanced.includes('T'), enhanced.slice(0, 80));
+}
+{
+  // VirtualList：1000 条只渲染窗口内的
+  const root = mkRoot();
+  const data = Array.from({ length: 1000 }, (_, i) => ({ id: i, label: 'item-' + i }));
+  const app = createApp({
+    components: { VirtualList: ssrPkg.VirtualList },
+    setup: () => ({ data }),
+    template:
+      '<VirtualList :data="data" :itemHeight="50" :height="400"><template #default="{ item }"><div class="row">{{ item.label }}</div></template></VirtualList>',
+  });
+  await app.mount(root);
+  await tick(120);
+  const rows = root.querySelectorAll('.row').length;
+  check('VirtualList 只渲染窗口内条目', rows > 0 && rows < 100, `rows=${rows}`);
+}
+
 // ── SSR + hydrate ────────────────────────────────────────────
 console.log('   [Hydrate]');
 {
