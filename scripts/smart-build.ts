@@ -27,6 +27,15 @@ const ROOT = join(__dirname, '..');
 const args = process.argv.slice(2);
 const CONTINUE_ON_ERROR = args.includes('--continue-on-error');
 const SKIP_BUILT = args.includes('--skip-built');
+/**
+ * 跳过 tsup 的 clean 步骤（`LYTJS_BUILD_NO_CLEAN=1` 或 `--no-clean`）。
+ *
+ * ⚠️ 2026-11-01 新增：某些受限环境（沙箱 / 受管 CI）会拦截"批量删除文件"，
+ *   而 tsup 的 clean 会一次性 unlink 掉整个 dist（几十个文件）⇒ 构建在
+ *   `DTS Build start` 阶段直接失败，报的却是 `[safe-delete] ... CONFIRM_REQUIRED`，
+ *   看起来像仓库坏了。跳过 clean 即可正常构建（产物会被覆盖写）。
+ */
+const NO_CLEAN = args.includes('--no-clean') || process.env.LYTJS_BUILD_NO_CLEAN === '1';
 const FILTER = args.find((a) => a.startsWith('--filter='))?.split('=')[1];
 
 // 正确的构建顺序 - 按依赖关系严格排序（与 final-publish.ts 保持一致）
@@ -138,7 +147,7 @@ function buildPackage(pkg: PackageInfo): boolean {
 
   try {
     // 使用根目录的 node_modules 运行 tsup，确保找到所有依赖
-    execSync(`node ${tsupPath}`, {
+    execSync(`node ${tsupPath}${NO_CLEAN ? ' --clean false' : ''}`, {
       cwd: pkgPath,
       stdio: 'inherit',
       env: {
