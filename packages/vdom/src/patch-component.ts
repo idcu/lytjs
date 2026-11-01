@@ -145,10 +145,26 @@ export function createComponentPatch<HN, HE extends HN>(
     componentRecursionDepthMap.set(component, currentDepth + 1);
 
     // 调用 render 函数获取 subTree：优先使用 instance.render（来自 setup 函数的返回值）
-    const renderFn =
+    //
+    // ⚠️ 2026-11-01 修（P0）：**每次 update 都要重新取 render**，不能在这里捕获一次。
+    //
+    //   `async setup` 在首帧时 `instance.render` 还是 undefined（Promise 未兑现），
+    //   此前这里直接 `return`（只 warn 一句）⇒ 渲染 effect 从未建立 ⇒
+    //   `instance.update` 也不存在 ⇒ Promise 兑现后 `handleSetupResult` 填好了 render，
+    //   却**没有任何东西会重跑** ⇒ 组件永远渲染成空（实测：不套 Suspense 也是空）。
+    //
+    //   现在：没有 render 时不再 return，而是继续建立 effect（首帧渲染 null）；
+    //   update 里每次按当前 `component.render` 取值 —— 兑现后 update() 就能拿到真 render。
+    const resolveRenderFn = ():
+      | ((ctx: Record<string, unknown>) => VNode | VNode[] | null | undefined)
+      | undefined =>
       (component as unknown as { render?: (ctx: Record<string, unknown>) => VNode }).render ??
       (component.type as ComponentInternalRuntimeProps).render;
-    if (!renderFn) {
+
+    const renderFn = resolveRenderFn();
+    if (!renderFn && !vnode.isAsyncPlaceholder) {
+      // 非异步组件却没有 render：真缺陷，保持原有语义（告警 + 不建立 effect）。
+      // ⚠️ 只有 `async setup` 的组件（`isAsyncPlaceholder`）才走「先建 effect、兑现后再渲染」。
       warn(
         `Component "${(component.type as ComponentInternalRuntimeProps).name || 'anonymous'}" has no render function.`,
       );
@@ -169,11 +185,17 @@ export function createComponentPatch<HN, HE extends HN>(
         let result: VNode | VNode[] | null | undefined;
         ctx.setRenderingInstance?.(component as ComponentInternalInstance);
         try {
-          result = renderFn.call(component!.ctx, component!.ctx) as
-            | VNode
-            | VNode[]
-            | null
-            | undefined;
+          const currentRender = resolveRenderFn();
+          if (!currentRender) {
+            // 异步 setup 尚未兑现：首帧渲染空，等 `instance.update()` 再来
+            result = null;
+          } else {
+            result = currentRender.call(component!.ctx, component!.ctx) as
+              | VNode
+              | VNode[]
+              | null
+              | undefined;
+          }
         } finally {
           ctx.setRenderingInstance?.(null);
         }

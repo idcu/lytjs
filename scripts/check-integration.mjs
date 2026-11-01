@@ -48,6 +48,7 @@ const {
   KeepAlive: KEEPALIVE,
   Teleport: TELEPORT,
   defineAsyncComponent: ASYNC,
+  Suspense: SUSPENSE,
 } = await import(url('../packages/core/dist/index.mjs'));
 const { defineComponent: defineComponentForSsr } = await import(
   url('../packages/component/dist/index.mjs')
@@ -335,6 +336,43 @@ const call = async (method, reqUrl, headers = {}) => {
   await call('GET', '/api/ok', { authorization: 'Bearer good' });
   const limited = await call('GET', '/api/ok', { authorization: 'Bearer good' });
   check('超限返回 429', limited.status === 429, `status=${limited.status}`);
+}
+
+// ── 异步 setup + Suspense ─────────────────────────────────────
+console.log('   [Suspense]');
+{
+  // 不套 Suspense：async setup 兑现后也要能渲染出来
+  const root = mkRoot();
+  const Async = {
+    name: 'AsyncPlain',
+    async setup() {
+      await tick(40);
+      return () => h('b', { class: 'a1' }, 'READY1');
+    },
+  };
+  await createApp({ components: { Async }, template: '<Async />' }).mount(root);
+  await tick(200);
+  check('async setup（无 Suspense）兑现后渲染', root.innerHTML.includes('READY1'), root.innerHTML);
+}
+{
+  // 套 Suspense + fallback：先 fallback，兑现后切回 default
+  const root = mkRoot();
+  const Async = {
+    name: 'AsyncSus',
+    async setup() {
+      await tick(40);
+      return () => h('b', { class: 'a2' }, 'READY2');
+    },
+  };
+  const app = createApp({
+    components: { Suspense: SUSPENSE, Async },
+    template: '<Suspense><Async /><template #fallback>LOADING</template></Suspense>',
+  });
+  await app.mount(root);
+  const sawFallback = root.innerHTML.includes('LOADING');
+  await tick(220);
+  check('Suspense 先显示 fallback', sawFallback, 'fallback 未出现');
+  check('Suspense 兑现后切回内容', root.innerHTML.includes('READY2'), root.innerHTML);
 }
 
 // ── 进阶特性（回归：动态组件 / KeepAlive / Teleport / 异步组件）──────
