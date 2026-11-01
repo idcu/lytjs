@@ -74,25 +74,28 @@ describe('@lytjs/runtime-edge', () => {
     it('should create JSON response', () => {
       const response = jsonResponse({ data: 'test' });
       expect(response.status).toBe(200);
-      expect(response.headers['Content-Type']).toBe('application/json');
+      // ⚠️ 2026-11-02 修：`jsonResponse` 已改为返回**真正的 `Response`**
+      //   （2026-10-31 的 P0 修复：鸭子类型对象在 Workers / Deno 上会被序列化成 `{}`），
+      //   它的 `headers` 是 `Headers` 实例 —— 只能用 `.get()`，取属性永远是 `undefined`。
+      expect(response.headers.get('content-type')).toBe('application/json');
     });
 
     it('should create text response', () => {
       const response = textResponse('test');
       expect(response.status).toBe(200);
-      expect(response.headers['Content-Type']).toBe('text/plain');
+      expect(response.headers.get('content-type')).toBe('text/plain');
     });
 
     it('should create HTML response', () => {
       const response = htmlResponse('<html></html>');
       expect(response.status).toBe(200);
-      expect(response.headers['Content-Type']).toBe('text/html');
+      expect(response.headers.get('content-type')).toBe('text/html');
     });
 
     it('should create redirect response', () => {
       const response = redirectResponse('http://example.com');
       expect(response.status).toBe(302);
-      expect(response.headers['Location']).toBe('http://example.com');
+      expect(response.headers.get('location')).toBe('http://example.com');
     });
   });
 });

@@ -210,6 +210,16 @@ function htmlResponse(html: string, status = 200): EdgeResponse {
  * 创建重定向响应
  */
 function redirectResponse(location: string, status = 302): EdgeResponse {
+  // ⚠️ 2026-11-02 修（P0）：**这里被漏掉了**。
+  //   2026-10-31 把 json / text / html 三个 helper 改成返回**真正的 `Response`**
+  //   （鸭子类型对象交给 Workers / Vercel / Deno 会失败或被序列化成 `{}`），
+  //   但 redirect 这一支没跟上 —— 同一个文件里三种修了、一种漏了。
+  if (typeof Response !== 'undefined') {
+    return new Response(null, {
+      status,
+      headers: { Location: location },
+    }) as unknown as EdgeResponse;
+  }
   return {
     status,
     statusText: 'Found',

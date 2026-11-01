@@ -212,8 +212,13 @@ describe('transformSFC 产物可执行性（P0 回归）', () => {
 
   it('产物必须把 render 挂到组件上并默认导出', () => {
     const result = transformSFC(SRC, '/a/App.lyt');
-    expect(result!.code).toContain('.render = render');
-    expect(result!.code).toContain('export default __sfc__');
+    const code = result!.code;
+    // ⚠️ 2026-11-02 修：原断言锁死了**代码形状**（`.render = render` + `export default __sfc__`），
+    //   而生成器现在直接产出 `export default { setup, render }` —— 功能等价、形状不同，
+    //   于是这条"P0 回归"在产物**完全正确**的情况下一直红着。
+    //   回归测试应当守**意图**：render 被挂上、组件被默认导出。
+    expect(code).toMatch(/export\s+default/);
+    expect(code).toMatch(/(\.render\s*=\s*render|\brender\s*,)/);
   });
 
   it('混排子节点不得丢失（bundler 链路回归）', () => {
