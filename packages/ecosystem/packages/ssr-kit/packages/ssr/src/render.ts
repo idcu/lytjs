@@ -200,6 +200,42 @@ function renderComponentNode(node: VNode): string {
     );
   }
 
+  // ⚠️ 2026-11-01 修（P0）：**SSR 此前完全不做 attrs 透传**。
+  //
+  //   `<Inner title="T" class="extra" data-x="1" />` 的 SSR 产物是
+  //   `<div class="inner">T</div>` —— `class` 与 `data-x` **整条丢失**；
+  //   而客户端产物是 `<div class="inner extra" data-x="1">T</div>`。
+  //   ⇒ 首屏 HTML 与客户端首帧**不一致**，hydrate 必然错位（样式丢失、属性丢失）。
+  //
+  //   规则与客户端（patch-component 的 inheritAttrs 处理）保持一致：
+  //   `class` / `style` **合并**，其余属性透传到根元素；`inheritAttrs: false` 时只继承 class/style。
+  const attrs = instance.attrs as Record<string, unknown> | undefined;
+  if (
+    attrs &&
+    Object.keys(attrs).length > 0 &&
+    subTree &&
+    typeof subTree === 'object' &&
+    !Array.isArray(subTree)
+  ) {
+    const inheritAll = (type as { inheritAttrs?: boolean }).inheritAttrs !== false;
+    const rootVNode = subTree as VNode;
+    const existing = (rootVNode.props ?? {}) as Record<string, unknown>;
+    const effectiveAttrs: Record<string, unknown> = inheritAll
+      ? attrs
+      : Object.fromEntries(Object.entries(attrs).filter(([k]) => k === 'class' || k === 'style'));
+
+    if (Object.keys(effectiveAttrs).length > 0) {
+      const merged: Record<string, unknown> = { ...existing, ...effectiveAttrs };
+      if (existing['class'] != null && effectiveAttrs['class'] != null) {
+        merged['class'] = [existing['class'], effectiveAttrs['class']];
+      }
+      if (existing['style'] != null && effectiveAttrs['style'] != null) {
+        merged['style'] = [existing['style'], effectiveAttrs['style']];
+      }
+      rootVNode.props = merged;
+    }
+  }
+
   instance.subTree = subTree as typeof instance.subTree;
   return renderToString(subTree as VNode | VNode[] | string | number | null | undefined);
 }
@@ -207,6 +243,57 @@ function renderComponentNode(node: VNode): string {
 /**
  * 渲染属性为 HTML 属性字符串
  */
+/**
+ * 把 class 的任意合法形态归一成字符串（字符串 / 数组 / 对象 / 嵌套数组）。
+ * 与客户端的 `normalizeClass` 语义一致 —— SSR 与客户端必须产出同样的 class。
+ */
+function normalizeClassValue(value: unknown): string {
+  if (value == null || value === false) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number') return String(value);
+  if (Array.isArray(value)) {
+    return value
+      .map((v) => normalizeClassValue(v))
+      .filter(Boolean)
+      .join(' ');
+  }
+  if (isObject(value)) {
+    return Object.entries(value as Record<string, unknown>)
+      .filter(([, v]) => v)
+      .map(([k]) => k)
+      .join(' ');
+  }
+  return String(value);
+}
+
+/**
+ * 把 style 的任意合法形态归一成 CSS 文本（字符串 / 数组 / 对象）。
+ */
+function normalizeStyleValue(value: unknown): string {
+  if (value == null) return '';
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) {
+    return value
+      .map((v) => normalizeStyleValue(v))
+      .filter(Boolean)
+      .join('; ');
+  }
+  if (isObject(value)) {
+    return (
+      Object.entries(value as Record<string, unknown>)
+        .filter(([, v]) => v != null && v !== '')
+        // ⚠️ CSS 属性名必须转成 kebab-case：`fontSize` → `font-size`。
+        //   此前直接输出 `fontSize: 12px`（浏览器不认），与客户端产物也不一致。
+        .map(
+          ([k, v]) =>
+            `${k.startsWith('--') ? k : k.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${String(v)}`,
+        )
+        .join('; ')
+    );
+  }
+  return String(value);
+}
+
 function renderAttributes(props: Record<string, unknown>): string {
   const attrs: string[] = [];
 
@@ -219,12 +306,10 @@ function renderAttributes(props: Record<string, unknown>): string {
     // 处理 class
     if (key === 'class' || key === 'className') {
       if (value) {
-        const classValue = isObject(value)
-          ? Object.entries(value)
-              .filter(([, v]) => v)
-              .map(([k]) => k)
-              .join(' ')
-          : String(value);
+        // ⚠️ 2026-11-01 修（P0）：必须支持**数组**形态。
+        //   attrs 透传时 class 会被合并成 `[原有, 传入]`（与客户端一致），
+        //   而此前 `String(value)` 会把它变成 `"0 1"` —— 实测 SSR 产物 `class="0 1"`。
+        const classValue = normalizeClassValue(value);
         if (classValue) {
           attrs.push(` class="${escapeHtml(classValue)}"`);
         }
@@ -235,11 +320,8 @@ function renderAttributes(props: Record<string, unknown>): string {
     // 处理 style
     if (key === 'style') {
       if (value) {
-        const styleValue = isObject(value)
-          ? Object.entries(value)
-              .map(([k, v]) => `${k}:${v}`)
-              .join(';')
-          : String(value);
+        // 同样必须支持数组（attrs 透传时 style 也会被合并成 `[原有, 传入]`）
+        const styleValue = normalizeStyleValue(value);
         if (styleValue) {
           attrs.push(` style="${escapeHtml(styleValue)}"`);
         }

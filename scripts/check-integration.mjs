@@ -344,6 +344,62 @@ const call = async (method, reqUrl, headers = {}) => {
   check('超限返回 429', limited.status === 429, `status=${limited.status}`);
 }
 
+// ── 安全 / 属性透传 ─────────────────────────────────────────
+console.log('   [安全]');
+{
+  // 状态序列化必须能安全内联进 <script>
+  const evil = { html: '</script><img src=x onerror=alert(1)>' };
+  const out = ssrPkg.safeSerializeState(evil);
+  check('safeSerializeState 转义 </script>', !out.includes('</script'), out.slice(0, 100));
+  let back = null;
+  try {
+    back = ssrPkg.safeDeserializeState(out);
+  } catch (e) {
+    back = 'ERR:' + e.message;
+  }
+  check('转义后仍能无损还原', back && back.html === evil.html, JSON.stringify(back).slice(0, 80));
+  check(
+    '反序列化不污染 Object.prototype',
+    (() => {
+      try {
+        ssrPkg.safeDeserializeState('{"__proto__":{"polluted":1}}');
+      } catch {
+        /* ignore */
+      }
+      return {}.polluted === undefined;
+    })(),
+  );
+}
+
+// ── 组件属性透传（SSR 与客户端必须一致）────────────────────
+console.log('   [透传]');
+{
+  const Inner = { props: { title: String }, template: '<div class="inner">{{ title }}</div>' };
+  const tpl = '<Inner title="T" class="extra" data-x="1" />';
+  const App = { components: { Inner }, template: tpl };
+
+  const ssrHtml = ssrPkg.renderToString(h(App));
+  check('SSR 透传 class 且与自身合并', ssrHtml.includes('inner extra'), ssrHtml);
+
+  const root = mkRoot();
+  await createApp(App).mount(root);
+  await tick();
+  const cliHtml = root.innerHTML;
+  check(
+    '客户端透传 class 不覆盖自身',
+    cliHtml.includes('inner') && cliHtml.includes('extra'),
+    cliHtml,
+  );
+  check('客户端透传其余属性', cliHtml.includes('data-x'), cliHtml);
+
+  const norm = (s) => s.replace(/\s+/g, ' ').trim();
+  check(
+    'SSR 与客户端 class 一致',
+    norm(ssrHtml).includes('class="inner extra"') && norm(cliHtml).includes('class="inner extra"'),
+    `ssr=${ssrHtml} cli=${cliHtml}`,
+  );
+}
+
 // ── 静态站点生成（SSG）──────────────────────────────────────
 console.log('   [SSG]');
 {

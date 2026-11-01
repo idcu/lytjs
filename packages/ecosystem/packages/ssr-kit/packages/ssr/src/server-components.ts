@@ -256,7 +256,7 @@ export function safeSerializeState(state: unknown): string {
   //      修：改用**祖先链**判断（只在当前这条链上出现过才算循环）。
   const ancestors: unknown[] = [];
 
-  return JSON.stringify(state, function (this: unknown, key: string, value: unknown) {
+  const json = JSON.stringify(state, function (this: unknown, key: string, value: unknown) {
     const raw = (this as Record<string, unknown> | undefined)?.[key];
     if (raw instanceof Date) {
       return { __type: 'Date', value: raw.toISOString() };
@@ -292,6 +292,21 @@ export function safeSerializeState(state: unknown): string {
 
     return value;
   });
+
+  // ⚠️ 2026-11-01 修（**安全**）：**必须**把 `<` 转义成 `\u003C` 再交出去。
+  //
+  //   本函数的产物会被内联进 HTML 的 `<script>` 里（`window.__STATE__ = …`）。
+  //   若状态里含 `</script>`，浏览器会在那里**提前闭合脚本标签**，后面的内容变成
+  //   可执行 HTML ⇒ 典型的 XSS。实测修复前：
+  //     safeSerializeState({ html: '</script><img src=x onerror=alert(1)>' })
+  //     → '{"html":"</script><img src=x onerror=alert(1)>"}'   ← 原样输出
+  //
+  //   `\u003C` 在 JSON 字符串里是合法转义，`JSON.parse` 后仍是 `<`，往返无损；
+  //   同时顺带干掉 `<!--` 注释劫持。U+2028 / U+2029 在旧引擎里也是非法行终止符，一并转义。
+  return json
+    .replace(/</g, '\\u003C')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
 }
 
 /**

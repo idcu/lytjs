@@ -311,7 +311,23 @@ export function createComponentPatch<HN, HE extends HN>(
             // inheritAttrs !== false: 合并所有 attrs
             // 只有当 existingProps 不为空或需要合并时才创建新对象
             if (Object.keys(existingProps).length > 0 || attrsKeys.length > 0) {
-              subTree.props = Object.assign({}, existingProps, attrs);
+              // ⚠️ 2026-11-01 修（P0）：`class` / `style` 必须**合并**，不能覆盖。
+              //
+              //   此前是裸 `Object.assign({}, existingProps, attrs)` ⇒ 父组件传的
+              //   `<Child class="extra" />` 会把子组件根元素**自己的** `class="inner"`
+              //   整个顶掉（实测客户端渲染出 `class="extra"`，`inner` 消失）。
+              //   样式因此错乱，而且 SSR/客户端还可能不一致。
+              //
+              //   与 Vue 一致：class / style 拼接成数组（`normalizeClass` / `patchStyle`
+              //   都支持数组），其余属性仍然后者覆盖前者。
+              const merged = Object.assign({}, existingProps, attrs);
+              if (existingProps['class'] != null && attrs['class'] != null) {
+                merged['class'] = [existingProps['class'], attrs['class']];
+              }
+              if (existingProps['style'] != null && attrs['style'] != null) {
+                merged['style'] = [existingProps['style'], attrs['style']];
+              }
+              subTree.props = merged;
             } else {
               subTree.props = attrs;
             }
@@ -325,8 +341,19 @@ export function createComponentPatch<HN, HE extends HN>(
               // 只有当需要合并时才创建新对象
               if (Object.keys(existingProps).length > 0) {
                 const rootProps = Object.assign({}, existingProps);
-                if (hasClass) rootProps.class = attrs.class;
-                if (hasStyle) rootProps.style = attrs.style;
+                // 同样必须合并而不是覆盖（`inheritAttrs: false` 时 class/style 仍会继承）
+                if (hasClass) {
+                  rootProps.class =
+                    existingProps['class'] != null
+                      ? [existingProps['class'], attrs.class]
+                      : attrs.class;
+                }
+                if (hasStyle) {
+                  rootProps.style =
+                    existingProps['style'] != null
+                      ? [existingProps['style'], attrs.style]
+                      : attrs.style;
+                }
                 subTree.props = rootProps;
               } else {
                 // existingProps 为空，直接创建包含 class/style 的对象
