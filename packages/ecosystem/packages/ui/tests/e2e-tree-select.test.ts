@@ -7,18 +7,16 @@
  * `TreeSelect`（385 行）已随包发布，覆盖率实测仅 ~8%（268 条语句未覆盖）——
  * 开合 / 展开收起 / 选择 / 清除 / 过滤五条主路径均未被真挂载验证过。
  *
- * ⚠️ 已登记的设计怪癖（按真实行为断言，修复走单独决策，勿顺手改）：
- *  A) `multiple` prop 只落到根类名 `is-multiple`（:175），没有任何多选交互
- *     —— handleSelect 始终 emit 单值。声明了 API 却没有实现。
- *  B) 点击含 children 的**父节点也会触发选择**（:243 onClick 直接绑
- *     handleSelect）——主流 TreeSelect 父节点点击只展开不选中。
- *  C) 过滤不会自动展开：`filteredData`（:93）虽保留命中节点的父链，
- *     但 renderNode 仍按 expandedKeys 决定子级渲染 ⇒ 搜深层节点时若父级
- *     未展开，命中项不可见。
- *  D) `selectedLabel` signal（:73）在 handleSelect 里 set 却从未被渲染读取
- *     （渲染用 selectedNode() 从 value 反查）——死代码。
- *  E) value 是受控 prop：非受控静态 value 下选择后 selectedNode() 仍按旧
- *     value 反查，展示不变。交互断言必须走受控挂载。
+ * ⚠️ 登记怪癖的处置（ADR 0010 二分，2026-10-15）：
+ *  A)【已修】`multiple` 曾只落 is-multiple 类名、零多选行为（声明 API 无实现）
+ *     ⇒ 实现多选：value 支持数组、点击切换选中、多选不收下拉、清除回空数组。
+ *  B)【取舍→owner】点击含 children 的父节点也会触发选择——Ant Design /
+ *     Element Plus 父节点默认可选中，指不出违背的契约 ⇒ 维持现状待决。
+ *  C)【已修】过滤曾不自动展开，父级未展开时深层命中不可见 ⇒ 过滤期间
+ *     强制展开命中父链（renderNode 以 filterQuery 非空判展开）。
+ *  D)【已修】`selectedLabel` signal 只写不读（死代码）⇒ 已删除。
+ *  E)【取舍→owner】value 是受控 prop（`update:value` 契约成立且工作正常），
+ *     非受控静态 value 下选择后展示不变是受控模式固有语义 ⇒ 维持现状待决。
  */
 
 import { describe, it, expect, afterEach, vi } from 'vitest';
@@ -50,8 +48,9 @@ const DATA: TreeSelectNode[] = [
 ];
 
 /**
- * 受控挂载：signal 驱动 value，onChange 回写（怪癖 E）。
+ * 受控挂载：signal 驱动 value，onChange 回写（受控语义，见头注 E）。
  * userOnChange 先收原始回调参数供断言，再回写 value 驱动重渲染。
+ * value 支持数组（多选）。
  */
 async function mountTreeSelect(
   props: Record<string, unknown> = {},
@@ -60,9 +59,11 @@ async function mountTreeSelect(
   const host = document.createElement('div');
   document.body.appendChild(host);
   hosts.push(host);
-  const value = signal<string | number>((props.value as string | number) ?? '');
+  const value = signal<string | number | (string | number)[]>(
+    (props.value as string | number | (string | number)[]) ?? '',
+  );
   const userOnChange = props.onChange as
-    | ((v: string | number, n: TreeSelectNode) => void)
+    | ((v: string | number | (string | number)[], n: TreeSelectNode) => void)
     | undefined;
   await createApp({
     setup() {
@@ -71,7 +72,7 @@ async function mountTreeSelect(
           data,
           ...props,
           value: value(),
-          onChange: (v: string | number, n: TreeSelectNode) => {
+          onChange: (v: string | number | (string | number)[], n: TreeSelectNode) => {
             userOnChange?.(v, n);
             value.set(v);
           },
@@ -346,7 +347,7 @@ describe('TreeSelect — 过滤', () => {
     expect(texts.some((t) => t?.includes('重庆'))).toBe(false);
   });
 
-  it('过滤不自动展开（怪癖 C）：父级未展开时命中子节点不可见', async () => {
+  it('过滤自动展开命中父链（修复怪癖 C）：父级未展开时深层命中仍可见', async () => {
     const host = await mountTreeSelect({ filterable: true }); // 无 defaultExpandAll
     await open(host);
     const input = q(host, '.lyt-tree-select-search input') as HTMLInputElement;
@@ -355,7 +356,8 @@ describe('TreeSelect — 过滤', () => {
     await tick();
     const texts = qa(host, '.lyt-tree-node').map((n) => n.textContent);
     expect(texts.some((t) => t?.includes('浙江'))).toBe(true); // 父链在
-    expect(texts.some((t) => t?.includes('杭州'))).toBe(false); // 但命中项未展开 ⇒ 不可见
+    expect(texts.some((t) => t?.includes('杭州'))).toBe(true); // 命中项被强制展开 ⇒ 可见
+    expect(texts.some((t) => t?.includes('江苏'))).toBe(false); // 不命中分支仍剔除
   });
 
   it('清空搜索词恢复完整数据；过滤大小写不敏感', async () => {
@@ -373,14 +375,74 @@ describe('TreeSelect — 过滤', () => {
   });
 });
 
-describe('TreeSelect — multiple 怪癖', () => {
-  it('multiple=true 只落 is-multiple 类名，选择行为仍是单选（怪癖 A）', async () => {
+describe('TreeSelect — 多选（修复怪癖 A）', () => {
+  it('多次点击累加选中：onChange 收到数组、下拉保持展开、标签拼接展示', async () => {
     const onChange = vi.fn();
-    const host = await mountTreeSelect({ multiple: true, onChange, defaultExpandAll: true });
+    const host = await mountTreeSelect({
+      multiple: true,
+      value: [],
+      onChange,
+      defaultExpandAll: true,
+    });
     expect(q(host, '.lyt-tree-select')!.className).toContain('is-multiple');
     await open(host);
     await clickNode(host, 5); // 重庆
-    // 声明了 multiple 却 emit 单值而非数组
-    expect(onChange).toHaveBeenCalledWith('cq', expect.objectContaining({ label: '重庆' }));
+    expect(onChange).toHaveBeenLastCalledWith(['cq'], expect.objectContaining({ label: '重庆' }));
+    expect(q(host, '.lyt-tree-select-dropdown')).toBeTruthy(); // 多选不收起
+    expect(q(host, '.lyt-tree-select-value')!.textContent).toBe('重庆');
+    await clickNode(host, 1); // 杭州
+    expect(onChange).toHaveBeenLastCalledWith(
+      ['cq', 'hz'],
+      expect.objectContaining({ label: '杭州' }),
+    );
+    expect(q(host, '.lyt-tree-select-value')!.textContent).toBe('重庆、杭州');
+  });
+
+  it('再点已选节点取消选中：回空数组、is-selected 移除、恢复 placeholder', async () => {
+    const onChange = vi.fn();
+    const host = await mountTreeSelect({
+      multiple: true,
+      value: ['cq'],
+      onChange,
+      defaultExpandAll: true,
+    });
+    await open(host);
+    expect(q(host, '.lyt-tree-node.is-selected')!.textContent).toContain('重庆');
+    const idx = qa(host, '.lyt-tree-node').findIndex((n) => n.textContent?.includes('重庆'));
+    await clickNode(host, idx);
+    expect(onChange).toHaveBeenLastCalledWith([], expect.objectContaining({ label: '重庆' }));
+    expect(q(host, '.lyt-tree-select-value')!.textContent).toBe('请选择');
+    expect(q(host, '.lyt-tree-node.is-selected')).toBeNull();
+  });
+
+  it('多选清除：onChange 收到空数组并恢复 placeholder', async () => {
+    const onChange = vi.fn();
+    const host = await mountTreeSelect({
+      multiple: true,
+      value: ['hz', 'cq'],
+      clearable: true,
+      onChange,
+    });
+    expect(q(host, '.lyt-tree-select-value')!.textContent).toBe('杭州、重庆');
+    q(host, '.lyt-tree-select-clear')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await tick();
+    expect(onChange).toHaveBeenCalledWith([], null);
+    expect(q(host, '.lyt-tree-select-value')!.textContent).toBe('请选择');
+    expect(q(host, '.lyt-tree-select-clear')).toBeNull();
+  });
+
+  it('多选 disabled 节点不可勾选', async () => {
+    const onChange = vi.fn();
+    const host = await mountTreeSelect({
+      multiple: true,
+      value: [],
+      onChange,
+      defaultExpandAll: true,
+    });
+    await open(host);
+    const idx = qa(host, '.lyt-tree-node').findIndex((n) => n.textContent?.includes('南京'));
+    await clickNode(host, idx);
+    expect(onChange).not.toHaveBeenCalled();
+    expect(q(host, '.lyt-tree-select-value')!.textContent).toBe('请选择');
   });
 });

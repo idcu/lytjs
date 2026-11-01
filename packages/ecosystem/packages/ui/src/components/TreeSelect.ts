@@ -23,7 +23,8 @@ export interface TreeSelectNode {
 
 export interface TreeSelectSetupProps {
   data: TreeSelectNode[];
-  value: string | number;
+  /** 单选为标量；multiple 时为数组 */
+  value: string | number | (string | number)[];
   placeholder: string;
   multiple: boolean;
   clearable: boolean;
@@ -37,7 +38,9 @@ export interface TreeSelectSetupProps {
   id: string;
   ariaLabel: string;
   ariaDescribedBy: string;
-  onChange: ((value: string | number, node: TreeSelectNode) => void) | undefined;
+  onChange:
+    | ((value: string | number | (string | number)[], node: TreeSelectNode) => void)
+    | undefined;
 }
 
 type NodeDict = Record<string, unknown>;
@@ -47,7 +50,10 @@ export const TreeSelect = defineComponent({
 
   props: {
     data: { type: Array as () => TreeSelectNode[], default: () => [] },
-    value: { type: [String, Number] as unknown as PropType<string | number>, default: '' },
+    value: {
+      type: [String, Number, Array] as unknown as PropType<string | number | (string | number)[]>,
+      default: '',
+    },
     placeholder: { type: String, default: '请选择' },
     multiple: { type: Boolean, default: false },
     clearable: { type: Boolean, default: false },
@@ -74,7 +80,10 @@ export const TreeSelect = defineComponent({
     const expandedKeys = signal<(string | number)[]>(
       _props.defaultExpandAll ? getAllNodeKeys(_props.data) : _props.defaultExpandedKeys,
     );
-    const selectedLabel = signal('');
+
+    /** 多选当前值（非数组入参按空集处理） */
+    const multiValues = (): (string | number)[] =>
+      Array.isArray(_props.value) ? _props.value : [];
 
     function getAllNodeKeys(nodes: TreeSelectNode[]): (string | number)[] {
       const keys: (string | number)[] = [];
@@ -123,22 +132,25 @@ export const TreeSelect = defineComponent({
       return filterNodes(_props.data);
     };
 
-    const selectedNode = (): TreeSelectNode | null => {
-      const findNode = (nodes: TreeSelectNode[]): TreeSelectNode | null => {
-        for (const node of nodes) {
-          const nodeDict = node as unknown as NodeDict;
-          const nodeValue = nodeDict[_props.nodeKey];
-          if (nodeValue === _props.value) {
-            return node;
-          }
-          if (node.children && node.children.length > 0) {
-            const found = findNode(node.children);
-            if (found) return found;
-          }
+    const findNodeByValue = (
+      nodes: TreeSelectNode[],
+      value: string | number,
+    ): TreeSelectNode | null => {
+      for (const node of nodes) {
+        const nodeDict = node as unknown as NodeDict;
+        if (nodeDict[_props.nodeKey] === value) return node;
+        if (node.children && node.children.length > 0) {
+          const found = findNodeByValue(node.children, value);
+          if (found) return found;
         }
-        return null;
-      };
-      return findNode(_props.data);
+      }
+      return null;
+    };
+
+    const selectedNode = (): TreeSelectNode | null => {
+      const v = _props.value;
+      if (typeof v !== 'string' && typeof v !== 'number') return null;
+      return findNodeByValue(_props.data, v);
     };
 
     const handleToggle = () => {
@@ -146,6 +158,11 @@ export const TreeSelect = defineComponent({
     };
 
     const handleClear = () => {
+      if (_props.multiple) {
+        emit('update:value', []);
+        _props.onChange?.([], null as unknown as TreeSelectNode);
+        return;
+      }
       emit('update:value', '');
       _props.onChange?.('' as unknown as string | number, null as unknown as TreeSelectNode);
     };
@@ -154,9 +171,18 @@ export const TreeSelect = defineComponent({
       if (node.disabled) return;
       const nodeDict = node as unknown as NodeDict;
       const nodeValue = nodeDict[_props.nodeKey] as string | number;
+      if (_props.multiple) {
+        // 多选：切换选中态并保持下拉展开，便于连续勾选
+        const current = multiValues();
+        const next = current.includes(nodeValue)
+          ? current.filter((v) => v !== nodeValue)
+          : [...current, nodeValue];
+        emit('update:value', next);
+        _props.onChange?.(next, node);
+        return;
+      }
       emit('update:value', nodeValue);
       _props.onChange?.(nodeValue, node);
-      selectedLabel.set(node.label);
       visible.set(false);
     };
 
@@ -174,8 +200,7 @@ export const TreeSelect = defineComponent({
 
     const getTreeSelectClass = () => {
       const classes = ['lyt-tree-select'];
-      // ★ 2026-10-04：`multiple` 声明了却从未使用 ⇒ 多选态在外观上无从体现。
-      //   `is-multiple` 供样式区分多选（单选是一行文本，多选是标签列表）。
+      // `is-multiple` 供样式区分多选（单选是一行文本，多选是标签列表）
       if (_props.multiple) classes.push('is-multiple');
       if (visible()) classes.push('is-visible');
       if (_props.class) classes.push(_props.class);
@@ -193,8 +218,11 @@ export const TreeSelect = defineComponent({
       const keys = expandedKeys();
       const nodeDict = node as unknown as NodeDict;
       const nodeKey = nodeDict[_props.nodeKey] as string | number;
-      const isExpanded = keys.includes(nodeKey);
-      const isSelected = nodeKey === _props.value;
+      // 过滤期间强制展开命中父链，否则深层命中项不可见
+      const isExpanded = filterQuery().length > 0 || keys.includes(nodeKey);
+      const isSelected = _props.multiple
+        ? multiValues().includes(nodeKey)
+        : nodeKey === _props.value;
       const hasChildren = node.children && node.children.length > 0;
 
       const nodeChildren: VNode[] = [];
@@ -273,18 +301,27 @@ export const TreeSelect = defineComponent({
         controls: undefined,
       });
 
-      const currentNode = selectedNode();
+      const currentNode = _props.multiple ? null : selectedNode();
+      const multiLabels = _props.multiple
+        ? multiValues()
+            .map((v) => findNodeByValue(_props.data, v)?.label)
+            .filter((l): l is string => Boolean(l))
+        : [];
+      const displayText = _props.multiple
+        ? multiLabels.length > 0
+          ? multiLabels.join('、')
+          : _props.placeholder
+        : currentNode
+          ? currentNode.label
+          : _props.placeholder;
       triggerChildren.push(
-        createVNode(
-          'span',
-          { class: 'lyt-tree-select-value' },
-          currentNode
-            ? [createVNode('span', {}, currentNode.label)]
-            : [createVNode('span', {}, _props.placeholder)],
-        ),
+        createVNode('span', { class: 'lyt-tree-select-value' }, [
+          createVNode('span', {}, displayText),
+        ]),
       );
 
-      if (_props.clearable && currentNode) {
+      const hasValue = _props.multiple ? multiLabels.length > 0 : currentNode !== null;
+      if (_props.clearable && hasValue) {
         const clearBtnProps = getButtonA11yProps({ ariaLabel: '清除' });
         triggerChildren.push(
           createVNode(

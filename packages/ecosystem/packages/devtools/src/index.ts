@@ -208,6 +208,12 @@ export type {
 
 export type { VDOMNodeInfo } from './vdomInspector';
 
+// ⚠️ 2026-11-01 新增：`safeStringify` 此前只被内部（componentTree / debugEnhancer）使用，
+//   **没有转出**。而它正是"调试时安全地打印一个可能含循环引用 / 函数 / BigInt 的对象"
+//   最需要的工具 —— 用户自己写 `JSON.stringify(state)` 会直接抛 `Converting circular structure`。
+//   包只暴露 `.` 入口（无深路径），不转出就等于没有。
+export { safeStringify } from './safe-stringify';
+
 // ★ 2026-10-17 修复：VDOM 检查器的**函数**此前一个都没转出（只转出了类型）——
 //   而 `DevTools` 的 VDOM 标签页文案明确写着「Use registerVDOMRoot() to register your
 //   VDOM roots.」⇒ 用户照着做会 `import` 失败（`package.json` 只暴露 `.`，无深路径入口，

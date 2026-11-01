@@ -78,6 +78,7 @@ const ssrPkg = await import(
 );
 const sfcPkg = await import(url('../packages/compiler/dist/sfc.mjs'));
 const storePkg = await import(url('../packages/ecosystem/packages/store/dist/index.mjs'));
+const devtoolsPkg = await import(url('../packages/ecosystem/packages/devtools/dist/index.mjs'));
 
 const tick = (ms = 50) => new Promise((r) => setTimeout(r, ms));
 const mkRoot = () => {
@@ -368,6 +369,71 @@ console.log('   [安全]');
       }
       return {}.polluted === undefined;
     })(),
+  );
+}
+
+// ── DevTools ────────────────────────────────────────────────
+console.log('   [DevTools]');
+{
+  // safeStringify 必须转出（包只暴露 `.` 入口，不转出等于没有）
+  check(
+    '导出 safeStringify',
+    typeof devtoolsPkg.safeStringify === 'function',
+    typeof devtoolsPkg.safeStringify,
+  );
+  const circular = { a: 1 };
+  circular.self = circular;
+  let out = '';
+  try {
+    out = devtoolsPkg.safeStringify(circular);
+  } catch (e) {
+    out = 'ERR:' + e.message;
+  }
+  check('safeStringify 处理循环引用', out.includes('[Circular]'), out.slice(0, 80));
+}
+{
+  let api = null;
+  let err = null;
+  try {
+    api = devtoolsPkg.installDevTools({ enabled: true });
+  } catch (e) {
+    err = e.message;
+  }
+  check('installDevTools 可调用', !err && !!api, err || typeof api);
+}
+{
+  let ev = null;
+  let err = null;
+  try {
+    const id = devtoolsPkg.beginTimelineEvent('probe', { a: 1 });
+    ev = devtoolsPkg.endTimelineEvent(id);
+  } catch (e) {
+    err = e.message;
+  }
+  check(
+    '时间线事件可开始/结束且带 duration',
+    !err && ev && typeof ev.duration === 'number',
+    err || JSON.stringify(ev).slice(0, 80),
+  );
+}
+{
+  // 组件树：必须先 registerRootComponent（文档约定）
+  let tree = [];
+  try {
+    devtoolsPkg.registerRootComponent({
+      name: 'App',
+      props: {},
+      children: [{ name: 'Child', props: {}, children: [] }],
+    });
+    tree = devtoolsPkg.getComponentTree();
+    devtoolsPkg.unregisterRootComponent?.();
+  } catch {
+    tree = [];
+  }
+  check(
+    '组件树（注册根组件后）',
+    tree.length === 1 && tree[0].name === 'App',
+    JSON.stringify(tree).slice(0, 120),
   );
 }
 
