@@ -556,6 +556,78 @@ console.log('   [SSG]');
   check('validatePages 不误报', ok.length === 0, JSON.stringify(ok));
 }
 
+// ── 异步 SSR ────────────────────────────────────────────────
+console.log('   [异步SSR]');
+{
+  const Async = {
+    name: 'AsyncPage',
+    async setup() {
+      await tick(20);
+      return () => h('b', { class: 'as' }, 'READY');
+    },
+  };
+  let out = '';
+  let err = null;
+  try {
+    out = await ssrPkg.renderToStringAsync(h(Async));
+  } catch (e) {
+    err = e.message;
+  }
+  check('renderToStringAsync 真正等待 async setup', !err && out.includes('READY'), err || out);
+
+  let syncErr = null;
+  try {
+    ssrPkg.renderToString(h(Async));
+  } catch (e) {
+    syncErr = e.message;
+  }
+  check(
+    '同步 renderToString 仍明确抛错（语义不混用）',
+    !!syncErr && /async setup/.test(syncErr),
+    (syncErr || '').slice(0, 60),
+  );
+}
+{
+  // 嵌套异步组件
+  const Inner = {
+    async setup() {
+      await tick(10);
+      return () => h('i', null, 'IN');
+    },
+  };
+  const Outer = {
+    components: { Inner },
+    async setup() {
+      await tick(10);
+      return () => h('div', null, [h(Inner)]);
+    },
+  };
+  let out = '';
+  let err = null;
+  try {
+    out = await ssrPkg.renderToStringAsync(h(Outer));
+  } catch (e) {
+    err = e.message;
+  }
+  check('嵌套异步组件逐层等待', !err && out.includes('IN'), err || out);
+}
+{
+  // 异步路径的 attrs 透传（与同步路径同规则）
+  const Async2 = {
+    name: 'A2',
+    props: { t: String },
+    async setup() {
+      return () => h('span', { class: 'inner' }, 'X');
+    },
+  };
+  const out = await ssrPkg.renderToStringAsync(h(Async2, { class: 'extra', 'data-x': '1' }));
+  check(
+    '异步路径 attrs 透传',
+    out.includes('inner') && out.includes('extra') && out.includes('data-x'),
+    out,
+  );
+}
+
 // ── 流式渲染 / 虚拟列表 ──────────────────────────────────────
 console.log('   [Stream]');
 {

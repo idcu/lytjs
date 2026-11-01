@@ -6,7 +6,7 @@
 
 import type { VNode } from '@lytjs/vdom';
 import { isString, isNumber, isArray, isObject, isFunction } from '@lytjs/common-is';
-import { renderToString } from './render';
+import { renderToString, renderToStringAsync } from './render';
 
 /** 流式渲染配置选项 */
 export interface StreamRenderOptions {
@@ -435,7 +435,10 @@ export function renderToStreamAsync(
         }
 
         // 渲染 HTML
-        const html = await renderToStringAsync(vnode, prefetchData);
+        // ⚠️ 2026-11-01：改用 render.ts 里**真正会 await async setup** 的实现。
+        //   此前这里调的是本文件内的同名私有函数，它只是"把同步渲染包了层 Promise" ——
+        //   遇到 async setup 依旧抛错，等于异步流式渲染根本没法用。
+        const html = await renderToStringAsync(vnode);
         const byteChunks = splitIntoByteChunks(html, chunkSize);
 
         onShellReady?.();
@@ -531,64 +534,6 @@ async function collectAndPrefetchData(
   }
 
   return result;
-}
-
-/**
- * 异步渲染 VNode 为 HTML 字符串（支持预取数据）
- *
- * @description
- * 递归渲染 VNode 树，遇到返回 Promise 的组件时等待解析。
- * 支持使用预取的数据进行渲染。
- *
- * @param vnode - VNode 树
- * @param prefetchData - 预取的数据
- * @returns HTML 字符串
- */
-async function renderToStringAsync(
-  vnode: VNode | VNode[] | string | number | null | undefined,
-  prefetchData?: Record<string, unknown>,
-): Promise<string> {
-  // 处理 null/undefined
-  if (vnode === null || vnode === undefined) {
-    return '';
-  }
-
-  // 处理字符串
-  if (isString(vnode)) {
-    return renderToString(vnode);
-  }
-
-  // 处理数字
-  if (isNumber(vnode)) {
-    return String(vnode);
-  }
-
-  // 处理数组
-  if (isArray(vnode)) {
-    const results = await Promise.all(
-      vnode.map((child) => renderToStringAsync(child as VNode, prefetchData)),
-    );
-    return results.join('');
-  }
-
-  // 处理非对象
-  if (!isObject(vnode)) {
-    return '';
-  }
-
-  const node = vnode as VNode;
-
-  // 处理文本节点
-  if (node.type === 'text' || typeof node.type === 'symbol') {
-    return renderToString(node);
-  }
-
-  // ⚠️ 2026-11-01 修（P0）：与 collectChunks 同一个坑 —— 只认 function / string 两种 type，
-  //   **普通对象形式的组件**（`{ template }` / `defineComponent({...})`）从所有分支落空
-  //   ⇒ 返回空串 ⇒ `renderToStreamEnhanced` 的流里什么都没有。
-  //
-  //   这里的 async 只体现在「子树可能异步」，单节点渲染仍应交给 renderToString（唯一真相）。
-  return renderToString(node);
 }
 
 /**

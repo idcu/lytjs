@@ -88,23 +88,7 @@ export function renderToString(
     const props = node.props || {};
 
     // 自闭合标签
-    const voidTags = [
-      'area',
-      'base',
-      'br',
-      'col',
-      'embed',
-      'hr',
-      'img',
-      'input',
-      'link',
-      'meta',
-      'param',
-      'source',
-      'track',
-      'wbr',
-    ];
-    if (voidTags.includes(tag)) {
+    if (VOID_TAGS.includes(tag)) {
       return `<${tag}${renderAttributes(props)}>`;
     }
 
@@ -117,6 +101,124 @@ export function renderToString(
   }
 
   return '';
+}
+
+/**
+ * **异步**渲染：真正等待 `async setup` 的 SSR。
+ *
+ * ## 为什么需要它
+ *
+ * `renderToString()` 是同步 API，遇到 `async setup` 只能**抛错**（否则输出空页 + HTTP 200，
+ * 是最难排查的失败方式）。但"服务端取数据"本身就是异步的 —— 之前那条错误信息里写的
+ * 「用 useSuspense() 挂到边界上，并在服务端 await 后再渲染」**根本没有对应的 API**，
+ * 用户照着改也做不到。
+ *
+ * 本函数补上这条路：
+ * - 元素 / 文本 / Fragment 复用同步渲染（这些层级没有异步）；
+ * - 组件：`setupComponent` 后若 `instance.asyncDep` 存在则 **await 它**，
+ *   Promise 兑现时 `setupComponent` 内部的 `.then` 已经把 `instance.render` 填好
+ *   （它先于我们注册，所以 await 返回时必然已完成）；
+ * - 嵌套的异步组件同样逐层 await。
+ *
+ * 同步的 `renderToString` **行为不变**（继续明确抛错）—— 二者语义不同，不该混用。
+ */
+export async function renderToStringAsync(
+  vnode: VNode | VNode[] | string | number | null | undefined,
+): Promise<string> {
+  if (vnode === null || vnode === undefined) return '';
+  if (isString(vnode)) return escapeHtml(vnode);
+  if (isNumber(vnode)) return String(vnode);
+
+  if (isArray(vnode)) {
+    const parts: string[] = [];
+    for (const child of vnode) parts.push(await renderToStringAsync(child));
+    return parts.join('');
+  }
+
+  if (!isObject(vnode)) return '';
+  const node = vnode as VNode;
+
+  if (node.type === Fragment) {
+    if (!isArray(node.children)) return '';
+    const parts: string[] = [];
+    for (const child of node.children as VNode[]) parts.push(await renderToStringAsync(child));
+    return parts.join('');
+  }
+
+  if (node.type === 'text' || typeof node.type === 'symbol') {
+    return escapeHtml(String(node.children || ''));
+  }
+
+  // 元素：外壳同步拼，children 异步递归
+  if (isString(node.type)) {
+    const tag = node.type;
+    const props = node.props || {};
+    if (VOID_TAGS.includes(tag)) return `<${tag}${renderAttributes(props)}>`;
+    const inner = await renderToStringAsync(
+      node.children as VNode | VNode[] | string | number | null | undefined,
+    );
+    return `<${tag}${renderAttributes(props)}>${inner}</${tag}>`;
+  }
+
+  return renderComponentNodeAsync(node);
+}
+
+/**
+ * 组件节点的异步渲染（`renderToStringAsync` 的组件分支）。
+ */
+async function renderComponentNodeAsync(node: VNode): Promise<string> {
+  const type = node.type as {
+    name?: string;
+    render?: unknown;
+    template?: unknown;
+    inheritAttrs?: boolean;
+  };
+  const name = type.name ?? 'anonymous';
+
+  // ⚠️ **函数式组件**：`type` 是函数时，同步渲染是直接调用它（`component(props, ctx)`），
+  //   不走 setup 实例。异步路径必须保持同一语义，否则 `() => null` 这类函数组件会
+  //   走到"没有渲染函数"的报错（实测 3 条 stream 用例因此失败）。
+  if (typeof type === 'function') {
+    const fn = type as unknown as (props: unknown, ctx: unknown) => unknown;
+    const result = fn((node.props as Record<string, unknown>) ?? {}, {
+      slots: (node.children as Record<string, unknown>) ?? {},
+    });
+    return renderToStringAsync(result as VNode | VNode[] | string | number | null | undefined);
+  }
+
+  if (typeof type.template === 'string' && !getTemplateCompiler()) {
+    throw new Error(
+      `[lytjs/ssr] 组件 "${name}" 提供了 template，但当前进程没有注入模板编译器。\n` +
+        `  修法：在服务端入口**调用一次** createApp()，或显式 installTemplateCompiler()。`,
+    );
+  }
+
+  const instance = createComponentInstance(node, null);
+  setupComponent(instance);
+
+  // ★ 关键：真正等待 async setup
+  if (instance.asyncDep) {
+    try {
+      await instance.asyncDep;
+    } catch (err) {
+      throw new Error(
+        `[lytjs/ssr] 组件 "${name}" 的 async setup 失败：${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
+
+  const renderFn = instance.render ?? (type.render as typeof instance.render);
+  if (typeof renderFn !== 'function') {
+    throw new Error(
+      `[lytjs/ssr] 组件 "${name}" 没有可用的渲染函数（setup 未返回 render，也没有 options.render）。`,
+    );
+  }
+
+  const subTree = renderFn.call(instance.ctx, instance.ctx);
+  applyAttrsToRoot(instance, subTree, type);
+  instance.subTree = subTree as typeof instance.subTree;
+
+  return renderToStringAsync(subTree as VNode | VNode[] | string | number | null | undefined);
 }
 
 /**
@@ -209,32 +311,7 @@ function renderComponentNode(node: VNode): string {
   //
   //   规则与客户端（patch-component 的 inheritAttrs 处理）保持一致：
   //   `class` / `style` **合并**，其余属性透传到根元素；`inheritAttrs: false` 时只继承 class/style。
-  const attrs = instance.attrs as Record<string, unknown> | undefined;
-  if (
-    attrs &&
-    Object.keys(attrs).length > 0 &&
-    subTree &&
-    typeof subTree === 'object' &&
-    !Array.isArray(subTree)
-  ) {
-    const inheritAll = (type as { inheritAttrs?: boolean }).inheritAttrs !== false;
-    const rootVNode = subTree as VNode;
-    const existing = (rootVNode.props ?? {}) as Record<string, unknown>;
-    const effectiveAttrs: Record<string, unknown> = inheritAll
-      ? attrs
-      : Object.fromEntries(Object.entries(attrs).filter(([k]) => k === 'class' || k === 'style'));
-
-    if (Object.keys(effectiveAttrs).length > 0) {
-      const merged: Record<string, unknown> = { ...existing, ...effectiveAttrs };
-      if (existing['class'] != null && effectiveAttrs['class'] != null) {
-        merged['class'] = [existing['class'], effectiveAttrs['class']];
-      }
-      if (existing['style'] != null && effectiveAttrs['style'] != null) {
-        merged['style'] = [existing['style'], effectiveAttrs['style']];
-      }
-      rootVNode.props = merged;
-    }
-  }
+  applyAttrsToRoot(instance, subTree, type as { inheritAttrs?: boolean });
 
   instance.subTree = subTree as typeof instance.subTree;
   return renderToString(subTree as VNode | VNode[] | string | number | null | undefined);
@@ -292,6 +369,64 @@ function normalizeStyleValue(value: unknown): string {
     );
   }
   return String(value);
+}
+
+/** HTML 自闭合标签 */
+const VOID_TAGS = [
+  'area',
+  'base',
+  'br',
+  'col',
+  'embed',
+  'hr',
+  'img',
+  'input',
+  'link',
+  'meta',
+  'param',
+  'source',
+  'track',
+  'wbr',
+];
+
+/**
+ * 把组件的 attrs 透传到渲染结果的**根 vnode** 上。
+ * `class` / `style` 合并，其余属性覆盖；`inheritAttrs: false` 时只继承 class/style。
+ * 同步与异步两条渲染路径共用这一份实现。
+ */
+function applyAttrsToRoot(
+  instance: { attrs?: Record<string, unknown> },
+  subTree: unknown,
+  type: { inheritAttrs?: boolean },
+): void {
+  const attrs = instance.attrs;
+  if (
+    !attrs ||
+    Object.keys(attrs).length === 0 ||
+    !subTree ||
+    typeof subTree !== 'object' ||
+    Array.isArray(subTree)
+  ) {
+    return;
+  }
+
+  const inheritAll = type.inheritAttrs !== false;
+  const rootVNode = subTree as VNode;
+  const existing = (rootVNode.props ?? {}) as Record<string, unknown>;
+  const effectiveAttrs: Record<string, unknown> = inheritAll
+    ? attrs
+    : Object.fromEntries(Object.entries(attrs).filter(([k]) => k === 'class' || k === 'style'));
+
+  if (Object.keys(effectiveAttrs).length === 0) return;
+
+  const merged: Record<string, unknown> = { ...existing, ...effectiveAttrs };
+  if (existing['class'] != null && effectiveAttrs['class'] != null) {
+    merged['class'] = [existing['class'], effectiveAttrs['class']];
+  }
+  if (existing['style'] != null && effectiveAttrs['style'] != null) {
+    merged['style'] = [existing['style'], effectiveAttrs['style']];
+  }
+  rootVNode.props = merged;
 }
 
 function renderAttributes(props: Record<string, unknown>): string {

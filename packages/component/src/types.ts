@@ -175,6 +175,14 @@ export interface ComponentRenderState {
   render?: RenderFunction;
   effects?: Array<{ stop(): void }>;
   update?: () => void;
+  /**
+   * `async setup` 返回的 Promise（同步 setup 时为 undefined）。
+   *
+   * ⚠️ 2026-11-01 新增：此前 Promise 只在 `setupComponent` 内部被 `.then` 掉，
+   *   **外部拿不到** ⇒ 任何"等服务端数据就绪再渲染"的调用方（如 SSR 的
+   *   `renderToStringAsync`）只能靠猜时间，没法真正 await。
+   */
+  asyncDep?: Promise<unknown>;
 }
 
 /** 组件上下文状态：props、slots、attrs、emit、provides 等 */

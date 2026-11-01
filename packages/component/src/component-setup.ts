@@ -176,6 +176,9 @@ export function setupComponent(instance: ComponentInternalInstance): void {
         );
       }),
     ]);
+    // 暴露给外部（SSR 等需要真正 await 的调用方）
+    instance.asyncDep = timedSetupResult;
+
     timedSetupResult
       .then((resolvedResult) => {
         // 清理超时定时器

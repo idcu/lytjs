@@ -5,7 +5,7 @@
  */
 
 // 渲染函数
-export { renderToString, renderToHtml } from './render';
+export { renderToString, renderToStringAsync, renderToHtml } from './render';
 
 // 虚拟列表组件
 export { VirtualList } from './virtualList';
