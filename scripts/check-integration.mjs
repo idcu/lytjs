@@ -371,6 +371,37 @@ console.log('   [安全]');
   );
 }
 
+// ── 水合标记 ────────────────────────────────────────────────
+console.log('   [水合标记]');
+{
+  const el = ssrPkg.renderToString(ssrPkg.createHydrationMarkers(h('div', { class: 'x' }, 'hi')));
+  check('元素树打标记', /data-hydrate="/.test(el), el);
+}
+{
+  // 组件树（最常见用法）：标记要落到组件根元素上
+  const App = { template: '<div class="x">hi</div>' };
+  const html = ssrPkg.renderToString(ssrPkg.createHydrationMarkers(h(App)));
+  check('组件树打标记（落到根元素）', /data-hydrate="/.test(html), html);
+}
+{
+  const App = { template: '<div class="x">hi</div>' };
+  const html = ssrPkg.renderToString(
+    ssrPkg.createHydrationMarkers(h(App, { hydrateStrategy: 'idle' })),
+  );
+  check('策略写入 data-hydrate-strategy', /data-hydrate-strategy="idle"/.test(html), html);
+  check('控制属性不泄漏成 DOM 属性', !/hydrateStrategy="/.test(html), html);
+}
+{
+  const A = { template: '<div>a</div>' };
+  const html = ssrPkg.renderToString(ssrPkg.createHydrationMarkers(h('div', null, [h(A), h(A)])));
+  const ids = [...html.matchAll(/data-hydrate="([^"]+)"/g)].map((m) => m[1]);
+  check(
+    '多个组件 id 唯一',
+    ids.length >= 2 && new Set(ids).size === ids.length,
+    JSON.stringify(ids),
+  );
+}
+
 // ── 组件属性透传（SSR 与客户端必须一致）────────────────────
 console.log('   [透传]');
 {

@@ -67,7 +67,13 @@ function isElementVNode(vnode: VNode): boolean {
  * 判断 VNode 是否为组件类型
  */
 function isComponentVNode(vnode: VNode): boolean {
-  return isObject(vnode) && isFunction((vnode as VNode).type);
+  if (!isObject(vnode)) return false;
+  const type = (vnode as VNode).type as unknown;
+  // ⚠️ 2026-11-01 修（P0）：**对象形式的组件也算组件**。
+  //   此前只认 `isFunction(type)` ⇒ `h({ template: '…' })` / `defineComponent({...})`
+  //   这类最常见的写法**根本进不了组件分支** ⇒ 静默返回原样、一个标记都不打。
+  //   元素是 string、Text/Comment/Fragment 是 symbol，都不会命中这里。
+  return isFunction(type) || (isObject(type) && type !== null);
 }
 
 /**
@@ -131,6 +137,9 @@ export function createHydrationMarkers(vnode: VNode): VNode {
     if (strategy && isValidStrategy(strategy)) {
       props[HYDRATE_STRATEGY_ATTR] = strategy;
     }
+    // `hydrateStrategy` 是**控制属性**，不是 DOM 属性 —— 否则会原样渲染成
+    // `<div hydrateStrategy="idle">`（实测），既不合法也没意义。
+    delete props['hydrateStrategy'];
 
     // 递归处理子节点
     // 说明：运行时确实存在"单个 VNode 作为 children"的形态（见 vdom 的
@@ -150,22 +159,43 @@ export function createHydrationMarkers(vnode: VNode): VNode {
     return { ...node, props, children: processedChildren } as VNode;
   }
 
-  // 处理组件节点 - 递归但不添加标记
+  // 处理组件节点
+  //
+  // ⚠️ 2026-11-01 修（P0）：**组件 vnode 也要打标记**。
+  //
+  //   此前注释写着"递归但不添加标记" ⇒ `createHydrationMarkers(h(App))`（最常见的用法，
+  //   App 是组件）**静默返回原样**，产物里一个 `data-hydrate` 都没有，
+  //   用户会以为"标记生效了、只是策略没触发"。
+  //
+  //   现在把标记写进组件 vnode 的 props：attrs 透传会把它带到组件的**根元素**上
+  //   （客户端见 patch-component 的 inheritAttrs，SSR 见 render.ts 的 renderComponentNode）。
+  //   两边都已在 2026-11-01 补齐透传，所以这条链路是通的。
   if (isComponentVNode(node)) {
+    const id = generateComponentId();
+    const props = { ...getVNodeProps(node) };
+    props[HYDRATE_ATTR] = id;
+    const strategy = props['hydrateStrategy'] as HydrationStrategy | undefined;
+    if (strategy && isValidStrategy(strategy)) {
+      props[HYDRATE_STRATEGY_ATTR] = strategy;
+    }
+    delete props['hydrateStrategy'];
+
     const children = getVNodeChildren(node);
     if (isArray(children)) {
       return {
         ...node,
+        props,
         children: children.map((child) => createHydrationMarkers(child as VNode)),
       } as VNode;
     }
     if (isObject(children) && !isString(children) && !isNumber(children)) {
       return {
         ...node,
+        props,
         children: createHydrationMarkers(children as unknown as VNode) as unknown as VNodeChildren,
       } as VNode;
     }
-    return node;
+    return { ...node, props } as VNode;
   }
 
   return node;
