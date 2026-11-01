@@ -11,7 +11,7 @@
 export * from './runtime';
 
 // ② 覆盖：带模板编译器注入的 createApp
-export { createApp } from './create-app-with-compiler';
+export { createApp, installTemplateCompiler } from './create-app-with-compiler';
 
 // ③ 编译器专属
 export { compile } from '@lytjs/compiler';

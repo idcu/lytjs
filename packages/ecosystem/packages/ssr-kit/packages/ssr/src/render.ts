@@ -144,7 +144,8 @@ function renderComponentNode(node: VNode): string {
       `[lytjs/ssr] 组件 "${name}" 提供了 template，但当前进程没有注入模板编译器。\n` +
         `  继续渲染只会得到空白页（HTTP 200），因此这里直接失败。\n` +
         `  修法（任选其一）：\n` +
-        `    ① 在服务端入口 import '@lytjs/core'（它会注入运行时编译器）；\n` +
+        `    ① 在服务端入口**调用一次** createApp()，或显式 installTemplateCompiler()\n` +
+        `       —— 注意：只 import '@lytjs/core' 不够，编译器是**调用时**注入的；\n` +
         `    ② 给该组件提供 setup() 返回的 render 函数（AOT / 手写 render）。`,
     );
   }

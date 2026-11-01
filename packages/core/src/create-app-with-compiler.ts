@@ -28,6 +28,26 @@ import type { App, AppOptions, Component } from './types';
 let compilerInstalled = false;
 
 /**
+ * **显式**注入运行时模板编译器（幂等）。
+ *
+ * ⚠️ 2026-11-01 新增：`createApp()` 会顺带注入，但「只做 SSR、从不创建 app」的进程
+ * （例如纯 `renderToString` 的服务端）拿不到这个副作用 ⇒ 渲染 `template` 组件时抛错。
+ * 此前错误信息写的是"import '@lytjs/core' 即可"——**不准确**，import 不注入，调用才注入。
+ *
+ * 现在提供显式入口：
+ * ```ts
+ * import { installTemplateCompiler } from '@lytjs/core';
+ * installTemplateCompiler();          // 服务端入口调用一次
+ * ```
+ */
+export function installTemplateCompiler(): void {
+  if (!compilerInstalled) {
+    setTemplateCompiler(compileTemplateToRender);
+    compilerInstalled = true;
+  }
+}
+
+/**
  * 带运行时模板编译能力的 `createApp`。
  *
  * 与 `@lytjs/core/runtime` 的同名函数**行为完全一致**，唯一差别是：
@@ -39,10 +59,7 @@ export function createApp(
   rootProps: Record<string, unknown> | null = null,
   options?: AppOptions,
 ): App {
-  if (!compilerInstalled) {
-    setTemplateCompiler(compileTemplateToRender);
-    compilerInstalled = true;
-  }
+  installTemplateCompiler();
   return baseCreateApp(rootComponent, rootProps, options);
 }
 

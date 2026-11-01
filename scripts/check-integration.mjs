@@ -43,7 +43,12 @@ globalThis.requestAnimationFrame = (cb) => setTimeout(() => cb(Date.now()), 0);
 globalThis.cancelAnimationFrame = (id) => clearTimeout(id);
 
 const url = (p) => new URL(p, import.meta.url).href;
-const { createApp, h, ref: C_ref } = await import(url('../packages/core/dist/index.mjs'));
+const {
+  createApp,
+  h,
+  ref: C_ref,
+  installTemplateCompiler: installCompiler,
+} = await import(url('../packages/core/dist/index.mjs'));
 const {
   KeepAlive: KEEPALIVE,
   Teleport: TELEPORT,
@@ -337,6 +342,58 @@ const call = async (method, reqUrl, headers = {}) => {
   await call('GET', '/api/ok', { authorization: 'Bearer good' });
   const limited = await call('GET', '/api/ok', { authorization: 'Bearer good' });
   check('超限返回 429', limited.status === 429, `status=${limited.status}`);
+}
+
+// ── SSR + hydrate ────────────────────────────────────────────
+console.log('   [Hydrate]');
+{
+  // 服务端只渲染、从不创建 app 的进程：必须能显式注入编译器
+  check(
+    'core 导出 installTemplateCompiler',
+    typeof installCompiler === 'function',
+    typeof installCompiler,
+  );
+}
+{
+  const App = {
+    setup() {
+      const n = C_ref(0);
+      return () =>
+        h('div', [
+          h('span', { class: 'n' }, String(n.value)),
+          h('button', { class: 'b', onClick: () => n.value++ }, '+'),
+        ]);
+    },
+  };
+  const html = ssrPkg.renderToString(h(App));
+  const root = mkRoot();
+  root.innerHTML = html;
+  const beforeNode = root.querySelector('.n');
+  await createApp(App).mount(root, { hydrate: true });
+  await tick();
+  check(
+    'hydrate 后 DOM 未复制',
+    root.querySelectorAll('.n').length === 1,
+    String(root.querySelectorAll('.n').length),
+  );
+  check('hydrate 复用同一节点', root.querySelector('.n') === beforeNode, 'reuse');
+  root.querySelector('.b')?.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+  await tick();
+  check('hydrate 后事件可用并更新', root.querySelector('.n')?.textContent === '1', root.innerHTML);
+}
+{
+  // 列表不重复
+  const App = {
+    setup: () => ({ list: C_ref(['a', 'b', 'c']) }),
+    template: '<ul><li v-for="i in list" :key="i">{{ i }}</li></ul>',
+  };
+  const html = ssrPkg.renderToString(h(App));
+  const root = mkRoot();
+  root.innerHTML = html;
+  await createApp(App).mount(root, { hydrate: true });
+  await tick();
+  const lis = [...root.querySelectorAll('li')].map((e) => e.textContent);
+  check('hydrate 列表不重复', lis.join(',') === 'a,b,c', lis.join(','));
 }
 
 // ── 状态管理（store）─────────────────────────────────────────
