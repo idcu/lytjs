@@ -113,6 +113,15 @@ const GATES = [
       'dist 过期时「测试全绿」证明的是旧产物（2026-10-31）',
   },
   {
+    name: 'check-package-exports',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-package-exports.mjs'],
+    approx: '~1s',
+    desc:
+      '发布产物体检：每个包的 main/module/types/exports 指向的文件存在、有类型声明、' +
+      '能被 require 且导出非空（单测走源码 alias，发现不了"消费者 import 不到"，2026-11-01 新增）',
+  },
+  {
     name: 'check-integration',
     tier: 'slow',
     cmd: ['node', 'scripts/check-integration.mjs'],
