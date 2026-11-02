@@ -26,12 +26,32 @@
  * 实测 87.4 → 90.2 KB（minimal-app）/ 85.4 → 87.9 KB（runtime-app）。
  * 预算随之从 89 500 / 87 500 上调到 **94 000 / 92 000**（仍留 ~2 KB 余量）。
  *
- * ⚠️ **真正的欠账不在这里**：`minimal-app` 与 `runtime-app` 只差 2 KB，
- * 而 `runtime-app` 本该完全不含编译器。原因是 `@lytjs/renderer` 的
- * `signal/signal-renderer.ts`、`vapor/vapor-app.ts`、`vapor/vapor-ssr.ts`
- * **静态** import 了 `@lytjs/compiler`，而 renderer 从 core 的 `createApp` 可达
- * ⇒ 编译器被拖进每个应用的产物。把这三处改成**按需动态加载**预计能省下几十 KB，
- * 这是下一批的工作（改动面在 renderer 的模板编译调用点，需单独立项）。
+ * ## ⚠️ 更正（2026-11-03）：上面那句「runtime 入口本该不含编译器」是**误判**
+ *
+ * 我一度以为只要把 renderer 里对 `@lytjs/compiler` 的**静态** import 改成动态，
+ * 就能让 `runtime-app` 掉到 ~35 KB。**实测不成立**，原因有两条：
+ *
+ * 1. **编译器对每个 `createApp` 用户都可达**，与入口无关。实测依赖链（esbuild
+ *    metafile 的 BFS）：
+ *      `@lytjs/core/runtime` → `core/web-component` → `@lytjs/core-vnode`
+ *                            → `@lytjs/renderer` → `vapor/vapor-ssr` → `@lytjs/compiler`
+ *    以及 `create-app` 里对 renderer 的**动态** import 也会把它带进来。
+ *    即使把 `core-vnode` 里 `export { compile }` 那行删掉、把 `vapor-ssr` 改成
+ *    `await import('@lytjs/compiler')`，本脚本口径下的数字**反而变大**
+ *    （87.9 → 92.8 KB：不开代码分割时动态 import 会被**内联**，还多出包装开销）。
+ *    ⇒ 已回退这两处改动，不留无收益的 API 变更。
+ *
+ * 2. **本脚本的口径（`splitting: false`）不代表用户实际体验**。
+ *    真实构建（Vite / webpack / Rollup）默认**按动态 import 切分**。实测开分割后：
+ *      minimal-app 首屏 chunk **7.4 KB**（共 5 个 chunk，合计 95.2 KB）
+ *      runtime-app 首屏 chunk **6.1 KB**（共 6 个 chunk，合计 92.7 KB）
+ *    ⇒ 编译器落在**懒加载 chunk** 里，首屏并不下载它。架构上是可接受的。
+ *
+ * 为此本脚本新增 `[切分模式]` 一节，专门盯**首屏 chunk**——这才是用户感知的数字，
+ * 也能挡住「某次改动把编译器拖进首屏」这类回归。
+ *
+ * 若将来真要让 `runtime` 入口彻底不含编译器，唯一的路是把 vapor/signal 的模板编译
+ * 从 renderer 的**主入口**里拆出去（独立子路径），属于结构性改造，需单独立项。
  *
  * ## 2026-10-29 的一次**主动**上调（+2.2 KB），理由写在下面
  *
@@ -140,6 +160,42 @@ export { count, double };`,
   },
 ];
 
+/**
+ * 「切分模式」用例：**只量首屏 chunk**。
+ *
+ * 为什么需要：上面那组是 `splitting: false`，会把所有动态 import **内联**进单一产物 ——
+ * 那是个「最坏情况」口径，不代表用户实际体验（Vite/webpack/Rollup 默认按动态 import
+ * 切分）。用户真正先下载的是**入口 chunk**，所以这一组盯的是它。
+ *
+ * 实测（2026-11-03）：minimal-app 首屏 7.4 KB / runtime-app 首屏 6.1 KB，
+ * 编译器落在懒加载 chunk 里 —— 这正是「runtime 入口不含编译器」在工程上的真实含义。
+ *
+ * 预算故意给得紧（~12 KB）：它能挡住「某次改动把编译器/渲染引擎拖进首屏」这类回归，
+ * 而对「懒加载 chunk 变大」不敏感 —— 后者不增加首屏成本，不该被这里拦住。
+ */
+const SPLIT_CASES: Case[] = [
+  {
+    name: 'first-screen',
+    scenario: '`createApp` 起步用法的**首屏 chunk**（开代码分割；编译器应在懒加载 chunk 里）',
+    contents: `import { createApp, h, ref, computed } from '@lytjs/core';
+const count = ref(0);
+const double = computed(() => count.value * 2);
+export const app = createApp({ render: () => h('div', null, [String(count.value), String(double.value)]) });
+export { count, double };`,
+    budget: 8_200,
+  },
+  {
+    name: 'first-screen-runtime',
+    scenario: '`@lytjs/core/runtime` 起步用法的**首屏 chunk**（开代码分割）',
+    contents: `import { createApp, h, ref, computed } from '@lytjs/core/runtime';
+const count = ref(0);
+const double = computed(() => count.value * 2);
+export const app = createApp({ render: () => h('div', null, [String(count.value), String(double.value)]) });
+export { count, double };`,
+    budget: 6_800,
+  },
+];
+
 interface Result {
   name: string;
   raw: number;
@@ -147,6 +203,8 @@ interface Result {
   budget: number;
   over: boolean;
   shrinkable: boolean;
+  /** 首屏 chunk 是否包含编译器（只对切分模式有意义） */
+  containsCompiler?: boolean;
 }
 
 const results: Result[] = [];
@@ -175,6 +233,55 @@ for (const c of CASES) {
   });
 }
 
+// ── 切分模式：只量首屏 chunk ──────────────────────────────
+const splitResults: Result[] = [];
+
+for (const c of SPLIT_CASES) {
+  const out = await build({
+    stdin: { contents: c.contents, resolveDir: ROOT, loader: 'ts' },
+    bundle: true,
+    minify: true,
+    format: 'esm',
+    platform: 'browser',
+    splitting: true,
+    outdir: 'out',
+    write: false,
+    logLevel: 'error',
+    metafile: true,
+  });
+
+  // 入口 chunk = 文件名里带 `stdin` 的那个（esbuild 用入口文件名命名）
+  const entryChunk =
+    out.outputFiles.find((f) => /(^|\/)stdin\.js$/.test(f.path)) ?? out.outputFiles[0];
+  const code = entryChunk?.contents ?? new Uint8Array();
+  const gzip = gzipSync(code).length;
+
+  // ★ 内容断言（比体积更直接）：首屏 chunk 里**不得**包含编译器。
+  //   体积只能间接说明问题；这条直接看「这个 chunk 由哪些模块组成」。
+  //   它挡住的是「某次改动把编译器从懒加载 chunk 挪回首屏」这类回归 ——
+  //   那会让首屏从 ~7 KB 变成 ~50 KB，而总量几乎不变（总量里本来就有）。
+  let containsCompiler = false;
+  if (out.metafile) {
+    const entryKey = Object.keys(out.metafile.outputs).find((k) =>
+      /(^|\/)stdin\.js$/.test(k),
+    );
+    const entryMeta = entryKey ? out.metafile.outputs[entryKey] : undefined;
+    containsCompiler = Object.keys(entryMeta?.inputs ?? {}).some((p) =>
+      p.includes('compiler/dist'),
+    );
+  }
+
+  splitResults.push({
+    name: c.name,
+    raw: code.length,
+    gzip,
+    budget: c.budget,
+    over: gzip > c.budget || containsCompiler,
+    shrinkable: gzip < c.budget * 0.9,
+    containsCompiler,
+  });
+}
+
 const kb = (n: number): string => `${(n / 1024).toFixed(1)} KB`;
 
 console.log('\n📦 真实产物体积 check-bundle-size');
@@ -189,8 +296,26 @@ for (let i = 0; i < results.length; i++) {
   if (VERBOSE) console.log(`     raw ${kb(r.raw)} → gzip ${kb(r.gzip)}`);
 }
 
-const over = results.filter((r) => r.over);
-const shrinkable = results.filter((r) => r.shrinkable);
+// ── 切分模式报告 ──────────────────────────────────────────
+console.log('\n   [切分模式] 只量首屏 chunk（用户真正先下载的那一块）：\n');
+for (let i = 0; i < splitResults.length; i++) {
+  const r = splitResults[i]!;
+  const c = SPLIT_CASES[i]!;
+  const mark = r.over ? '❌' : '✅';
+  console.log(`${mark} ${r.name.padEnd(14)} ${kb(r.gzip).padStart(9)}  (预算 ${kb(r.budget)})`);
+  console.log(`   ↳ ${c.scenario}`);
+  if (r.containsCompiler !== undefined) {
+    console.log(
+      r.containsCompiler
+        ? '   ❌ 首屏 chunk 里包含编译器（应落在懒加载 chunk）'
+        : '   ✅ 首屏 chunk 不含编译器（在懒加载 chunk 里）',
+    );
+  }
+  if (VERBOSE) console.log(`     raw ${kb(r.raw)} → gzip ${kb(r.gzip)}`);
+}
+
+const over = [...results, ...splitResults].filter((r) => r.over);
+const shrinkable = [...results, ...splitResults].filter((r) => r.shrinkable);
 
 if (shrinkable.length > 0) {
   console.log('\nℹ️  预算可收紧（实际 < 预算的 90%）：');
