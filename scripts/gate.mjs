@@ -122,6 +122,16 @@ const GATES = [
       '能被 require 且导出非空（单测走源码 alias，发现不了"消费者 import 不到"，2026-11-01 新增）',
   },
   {
+    name: 'check-consumer-demo',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-consumer-demo.mjs'],
+    approx: '~2s',
+    desc:
+      '消费者视角端到端：只用公开 API（dist 导入）写一个真实小应用 —— ' +
+      'SSR → 客户端挂载 → v-for / v-if / 子组件 props+emit / 点击响应式 → ' +
+      'SSR 与客户端初始结构一致（hydrate 前提）。单测走源码 alias，测不到"装起来能不能用"',
+  },
+  {
     name: 'check-integration',
     tier: 'slow',
     cmd: ['node', 'scripts/check-integration.mjs'],
