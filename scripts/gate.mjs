@@ -167,6 +167,18 @@ const GATES = [
       '（2026-11-02：该缺口会让 Transition 离开钩子抛错、元素永不移除）',
   },
   {
+    name: 'check-render-cost',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-render-cost.mjs'],
+    approx: '~3s',
+    desc:
+      '★ 渲染成本：统计 **DOM 操作次数**（不是耗时，避免 flaky），锁住算法复杂度 —— ' +
+      '追加 1 项必须 ≤5 次操作且与列表长度无关（O(1)，不是 O(N)）、改文本 0 次结构操作、' +
+      '倒序 ≤2N、N=400 与 N=200 追加成本同量级。含阳性对照（计数器有效）与负向对照' +
+      '（全换 key 必然 O(N)，证明阈值有区分力）。' +
+      '（2026-11-02 停用 block 快速路径时**没有任何成本度量**，此门禁补上这个缺口）',
+  },
+  {
     name: 'check-integration',
     tier: 'slow',
     cmd: ['node', 'scripts/check-integration.mjs'],

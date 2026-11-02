@@ -734,6 +734,189 @@ console.log('   [Hydrate]');
   check('hydrate 列表不重复', lis.join(',') === 'a,b,c', lis.join(','));
 }
 
+// ── SSR → hydrate **之后再更新**（2026-11-02 新增，20 组形态）──────
+//
+// 为什么加这一组：上面两条只证明「水合后 DOM 没重复、事件可用」。
+// 真正容易出事的是**水合之后再更新** —— hydrate 若漏设某些 vnode 的 `el`，
+// 后续 patch 会重演「重复 DOM / 节点挂错父节点」那类缺陷（§八 / §九）。
+//
+// 每条都问两件事：内容对不对 + **位置对不对**（节点是否在自己的父元素内、
+// 有没有重复或逃逸）。
+console.log('   [Hydrate + 后续更新]');
+{
+  /** SSR 出 HTML → 写进容器 → hydrate */
+  const ssrHydrate = async (App) => {
+    const html = ssrPkg.renderToString(h(App));
+    const root = mkRoot();
+    root.innerHTML = html;
+    await createApp(App).mount(root, { hydrate: true });
+    await tick();
+    return root;
+  };
+
+  // ① v-for 水合后增长
+  {
+    const list = C_ref(['a', 'b']);
+    const App = {
+      setup: () => ({ list }),
+      template: `<div><ul class="l"><li v-for="(x,i) in list" :key="i">{{x}}</li></ul></div>`,
+    };
+    const root = await ssrHydrate(App);
+    check('hydrate+v-for：初始 2 项', root.querySelectorAll('li').length === 2, root.innerHTML);
+    list.value = ['a', 'b', 'c'];
+    await tick();
+    check(
+      'hydrate+v-for：水合后增长到 3 且在 ul 内',
+      root.querySelector('ul.l')?.querySelectorAll('li').length === 3,
+      root.innerHTML,
+    );
+    check('hydrate+v-for：无 li 逃逸', root.querySelectorAll('li').length === 3, `total=${root.querySelectorAll('li').length}`);
+    check('hydrate+v-for：ul 未重复', root.querySelectorAll('ul.l').length === 1, `ul 数=${root.querySelectorAll('ul.l').length}`);
+  }
+
+  // ② 空列表水合后增长（含动态兄弟节点）
+  {
+    const list = C_ref([]);
+    const App = {
+      setup: () => ({ list }),
+      template: `<div><ul class="l"><li v-for="(x,i) in list" :key="i">{{x}}</li></ul><button @click="()=>{}">b</button></div>`,
+    };
+    const root = await ssrHydrate(App);
+    check('hydrate+空列表：初始无 li', root.querySelectorAll('li').length === 0, root.innerHTML);
+    list.value = ['x', 'y'];
+    await tick();
+    check(
+      'hydrate+空列表：水合后增长到 2 且在 ul 内',
+      root.querySelector('ul.l')?.querySelectorAll('li').length === 2,
+      root.innerHTML,
+    );
+    check('hydrate+空列表：无 li 逃逸', root.querySelectorAll('li').length === 2, `total=${root.querySelectorAll('li').length}`);
+  }
+
+  // ③ v-if 水合后切换
+  {
+    const show = C_ref(true);
+    const App = {
+      setup: () => ({ show }),
+      template: `<div><p v-if="show" class="yes">Y</p><p v-else class="no">N</p></div>`,
+    };
+    const root = await ssrHydrate(App);
+    check('hydrate+v-if：初始 Y', root.querySelector('.yes')?.textContent?.trim() === 'Y', root.innerHTML);
+    show.value = false;
+    await tick();
+    check('hydrate+v-if：切到 N', root.querySelector('.no') !== null && root.querySelector('.yes') === null, root.innerHTML);
+    show.value = true;
+    await tick();
+    check('hydrate+v-if：切回 Y', root.querySelector('.yes') !== null && root.querySelector('.no') === null, root.innerHTML);
+  }
+
+  // ④ 插值 + computed 水合后更新
+  {
+    const n = C_ref(1);
+    const App = {
+      setup: () => ({ n, dbl: n.value * 2 }),
+      template: `<div><p class="n">{{n}}</p></div>`,
+    };
+    const root = await ssrHydrate(App);
+    check('hydrate+插值：初始 1', root.querySelector('.n')?.textContent?.trim() === '1', root.innerHTML);
+    n.value = 5;
+    await tick();
+    check('hydrate+插值：更新为 5', root.querySelector('.n')?.textContent?.trim() === '5', root.innerHTML);
+  }
+
+  // ⑤ 子组件 props 水合后更新
+  {
+    const label = C_ref('L1');
+    const Child = { props: { text: String }, template: `<span class="c">{{text}}</span>` };
+    const App = {
+      components: { Child },
+      setup: () => ({ label }),
+      template: `<div class="wrap"><Child :text="label" /><em class="sib">s</em></div>`,
+    };
+    const root = await ssrHydrate(App);
+    check('hydrate+子组件：初始 L1', root.querySelector('.c')?.textContent?.trim() === 'L1', root.innerHTML);
+    label.value = 'L2';
+    await tick();
+    check('hydrate+子组件：props 更新为 L2', root.querySelector('.c')?.textContent?.trim() === 'L2', root.innerHTML);
+    check('hydrate+子组件：兄弟节点未被破坏', root.querySelector('.sib') !== null, root.innerHTML);
+  }
+
+  // ⑥ 组件 v-for 水合后增长
+  {
+    const items = C_ref([{ id: 1, t: 'a' }]);
+    const Row = { props: { t: String }, template: `<li class="row">{{t}}</li>` };
+    const App = {
+      components: { Row },
+      setup: () => ({ items }),
+      template: `<div><ul class="l"><Row v-for="it in items" :key="it.id" :t="it.t" /></ul></div>`,
+    };
+    const root = await ssrHydrate(App);
+    check('hydrate+组件 v-for：初始 1 行', root.querySelectorAll('li.row').length === 1, root.innerHTML);
+    items.value = [
+      { id: 1, t: 'a' },
+      { id: 2, t: 'b' },
+    ];
+    await tick();
+    check(
+      'hydrate+组件 v-for：增长到 2 行且在 ul 内',
+      root.querySelector('ul.l')?.querySelectorAll('li.row').length === 2,
+      root.innerHTML,
+    );
+    check('hydrate+组件 v-for：无 li 逃逸', root.querySelectorAll('li.row').length === 2, `total=${root.querySelectorAll('li.row').length}`);
+  }
+
+  // ⑦ 插槽内列表水合后增长
+  {
+    const list = C_ref(['s1']);
+    const Box = { template: `<div class="box"><slot /></div>` };
+    const App = {
+      components: { Box },
+      setup: () => ({ list }),
+      template: `<div><Box><ul class="l"><li v-for="(x,i) in list" :key="i">{{x}}</li></ul></Box></div>`,
+    };
+    const root = await ssrHydrate(App);
+    check('hydrate+插槽：初始 1 项', root.querySelectorAll('li').length === 1, root.innerHTML);
+    list.value = ['s1', 's2'];
+    await tick();
+    check(
+      'hydrate+插槽：增长到 2 且在 ul 内',
+      root.querySelector('ul.l')?.querySelectorAll('li').length === 2,
+      root.innerHTML,
+    );
+    check('hydrate+插槽：无 li 逃逸', root.querySelectorAll('li').length === 2, `total=${root.querySelectorAll('li').length}`);
+  }
+
+  // ⑧ 属性透传（class 合并）在 hydrate 后仍成立
+  {
+    const App = {
+      components: { Inner: { template: `<div class="own">inner</div>` } },
+      template: `<div><Inner class="passed" /></div>`,
+    };
+    const root = await ssrHydrate(App);
+    const el = root.querySelector('.own');
+    check('hydrate+属性透传：自身 class 保留', el?.classList.contains('own') === true, el?.className);
+    check('hydrate+属性透传：传入 class 也在', el?.classList.contains('passed') === true, el?.className);
+  }
+
+  // ⑨ 深层嵌套列表水合后增长
+  {
+    const list = C_ref(['d1']);
+    const App = {
+      setup: () => ({ list }),
+      template: `<div class="a"><section class="b"><ul class="d"><li v-for="(x,i) in list" :key="i">{{x}}</li></ul></section><button @click="()=>{}">btn</button></div>`,
+    };
+    const root = await ssrHydrate(App);
+    list.value = ['d1', 'd2', 'd3'];
+    await tick();
+    check(
+      'hydrate+深层嵌套：增长到 3 且在 ul.d 内',
+      root.querySelector('ul.d')?.querySelectorAll('li').length === 3,
+      root.innerHTML,
+    );
+    check('hydrate+深层嵌套：无 li 逃逸', root.querySelectorAll('li').length === 3, `total=${root.querySelectorAll('li').length}`);
+  }
+}
+
 // ── 状态管理（store）─────────────────────────────────────────
 console.log('   [Store]');
 {
