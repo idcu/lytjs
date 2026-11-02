@@ -144,6 +144,17 @@ const GATES = [
       '而此前没有任何门禁覆盖 examples/）',
   },
   {
+    name: 'check-render-shapes',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-render-shapes.mjs'],
+    approx: '~3s',
+    desc:
+      '★ 模板形态电池：用真实用户会写的模板组合（v-for 与动态兄弟 / 多列表 / ' +
+      '嵌套列表 / v-if 与 v-for 混合 / 列表增删重排 / 组件与插槽内列表 / computed 列表）' +
+      '逐条驱动**多次更新**，既断言内容也断言**节点位置**。' +
+      '（2026-11-02：单特性都测过但组合没测，导致两个 P0 在 8432 用例 + 12 门禁下存活）',
+  },
+  {
     name: 'check-integration',
     tier: 'slow',
     cmd: ['node', 'scripts/check-integration.mjs'],

@@ -523,7 +523,16 @@ describe('createElementPatch', () => {
       expect(ctx.setElementText).not.toHaveBeenCalled();
     });
 
-    it('Block Tree 快速路径：有 dynamicChildren 时应调用 patchBlockChildren', () => {
+    // ⚠️ 2026-11-02 改写：这条原本断言「有 dynamicChildren 时必须调用
+    //   patchBlockChildren」——那是**锁死实现形状**的断言（检查走了哪条内部路径），
+    //   不是行为断言。而那条快速路径本身连出两个 P0：
+    //     ① v-for 位序变化 ⇒ 列表项挂到错误的父节点；
+    //     ② 被跳过的静态子节点丢失 `el` ⇒ 下次结构变化时 DOM 重复。
+    //   现已停用快速路径（`patchBlockChildren` 退化为 `patchChildren` 的安全别名）。
+    //
+    //   现在这条测试守的是**新契约**：无论有没有 dynamicChildren，都必须走全量 diff。
+    //   真正的行为验证在 scripts/check-render-shapes.mjs（63 条形态断言）。
+    it('有 dynamicChildren 时也必须走全量 patchChildren（快速路径已停用）', () => {
       const n1 = createElementVNode('div', { id: 'a' }, null, ShapeFlags.ELEMENT);
       n1.el = document.createElement('div');
       n1.dynamicChildren = [createElementVNode('span')];
@@ -532,15 +541,8 @@ describe('createElementPatch', () => {
 
       api.patchElement(n1, n2, null, null, false);
 
-      expect(ctx.patchBlockChildren).toHaveBeenCalledWith(
-        n1,
-        n2,
-        expect.anything(),
-        null,
-        null,
-        false,
-      );
-      expect(ctx.patchChildren).not.toHaveBeenCalled();
+      expect(ctx.patchChildren).toHaveBeenCalledWith(n1, n2, expect.anything(), null, null, false);
+      expect(ctx.patchBlockChildren).not.toHaveBeenCalled();
     });
 
     it('回退路径：无 dynamicChildren 时应调用 patchChildren', () => {

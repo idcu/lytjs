@@ -476,17 +476,49 @@ export function createElementPatch<HN, HE extends HN>(
       diffProps(el, oldProps, newProps);
     }
 
-    // Patch children — Block Tree 快速路径
-    const oldDynamicChildren = n1.dynamicChildren;
-    const newDynamicChildren = n2.dynamicChildren;
-
-    if (oldDynamicChildren && newDynamicChildren && oldDynamicChildren.length > 0) {
-      // Block Tree 优化路径：仅 diff dynamicChildren
-      ctx.patchBlockChildren(n1, n2, el, parentComponent, parentSuspense, isSVG);
-    } else {
-      // 回退路径：全量 diff children
-      ctx.patchChildren(n1, n2, el, parentComponent, parentSuspense, isSVG);
-    }
+    // ============================================================
+    // Patch children —— **始终走全量 diff**
+    // ============================================================
+    //
+    // ## 为什么不再用 Block Tree 快速路径（2026-11-02 停用）
+    //
+    // 此前这里是：
+    //
+    //   if (oldDynamicChildren && newDynamicChildren && oldDynamicChildren.length > 0) {
+    //     ctx.patchBlockChildren(n1, n2, el, ...);   // 只 diff dynamicChildren
+    //   } else {
+    //     ctx.patchChildren(n1, n2, el, ...);        // 全量
+    //   }
+    //
+    // 这条「只 diff dynamicChildren、跳过静态子树」的优化**维护不住一个前提**：
+    // 新一代 vnode 树里**每个子节点都必须持有有效的 `el`**，否则下一次更新会误判。
+    //
+    // 实测撞出两个 P0（都在 8432 个用例 + 12 项门禁下存活）：
+    //
+    // ① **位序错位**（2026-11-02 修复）：v-for 的每个列表项都是 block，会被收集进
+    //    **外层** block 的 dynamicChildren，列表长度一变位序就变：
+    //      首帧 [button] → 更新帧 [li, button]
+    //    按索引配对 ⇒ 卸载 button、把 li 挂到 `container`（= 被 patch 元素的容器，
+    //    不是它自己的父元素）⇒ `<li>` 跑到 `<ul>` **外面**。
+    //
+    // ② **静态子节点丢失 `el` ⇒ DOM 重复**（2026-11-02 本轮）：快速路径只 patch
+    //    dynamicChildren，被跳过的静态子节点（如 `<ul>`）在新一代 vnode 上**从未
+    //    得到 `el`**（仍为 null）。下一次更新若结构变化而走全量 diff，
+    //    `patch()` 见 `n1.el === null` 就按「需要挂载」处理，且**不卸载旧节点** ⇒
+    //    新挂一个、旧的留在原地：
+    //      `<div><p>3</p><ul class="l"></ul><span>6</span><ul class="l"><li>a</li></ul></div>`
+    //    实测触发形态极普通：`<p>{{n}}</p><ul><li v-for></ul><span>{{n*2}}</span>`
+    //    先改 n 再改列表即可。
+    //
+    // 而且这个 `el` 缺口是**递归的**：即便把一层的 `el` 搬过去，静态子树内部的
+    // 后代 vnode 依然缺 `el`，下次 patch 到那一层照样重复 DOM。要彻底修，就得
+    // 「深度复制整棵静态子树的 el」——那就把优化本身抵消掉了。
+    //
+    // ⇒ 结论：这个优化的**收益无法验证**（仓库没有性能门禁），而缺陷已经两次
+    //    击穿全部门禁。按「正确性优先」停用：始终全量 diff children。
+    //    `dynamicChildren` 仍由 block 收集（其它地方可能读取），只是不再用于
+    //    跳过静态子树。
+    ctx.patchChildren(n1, n2, el, parentComponent, parentSuspense, isSVG);
 
     // ★ 2026-10-31 新增：自定义指令 updated（props 与 children 都 patch 完之后）
     invokeDirectiveHook(n2, 'updated', n1);

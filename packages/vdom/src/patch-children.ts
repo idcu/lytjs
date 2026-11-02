@@ -128,48 +128,41 @@ export function createChildrenPatch<HN, HE extends HN>(
   const { setElementText, patch, unmount } = ctx;
 
   // ============================================================
-  // patchBlockChildren — Block Tree 快速路径
+  // patchBlockChildren — 已停用的快速路径（保留为安全别名）
   // ============================================================
+  //
+  // 注：原来的 `isStaticVNode` / `patchStaticVNode` 两个局部辅助函数
+  //     只被这条快速路径使用，随快速路径一起删除（`utils.ts` 里另有一个
+  //     同名的导出函数，与这里无关）。
 
   /**
-   * FIX: P2-5 VDOM-NEW-12 - 静态提升优化
-   * 检查 vnode 是否为静态节点（无需 diff 的节点）
-   */
-  function isStaticVNode(vnode: VNode | null | undefined): boolean {
-    if (!vnode) return false;
-    // 检查静态标记
-    return !!(vnode.isStatic || vnode.isStaticRoot);
-  }
-
-  /**
-   * FIX: P2-5 VDOM-NEW-12 - 静态提升优化
-   * 直接复用静态 vnode，跳过 diff 过程
-   */
-  function patchStaticVNode(
-    n1: VNode,
-    n2: VNode,
-    _container: HN,
-    _parentComponent: ComponentInternalInstance | null,
-    _parentSuspense: SuspenseBoundary | null,
-    _isSVG: boolean,
-  ): boolean {
-    // 如果两个节点都是静态节点且类型相同，直接复用
-    if (isStaticVNode(n1) && isStaticVNode(n2) && isSameVNodeType(n1, n2)) {
-      // 静态节点：复用 DOM 元素，只更新 vnode 引用
-      n2.el = n1.el;
-      n2.anchor = n1.anchor;
-      return true; // 表示已处理，跳过 diff
-    }
-    return false; // 需要正常 diff
-  }
-
-  /**
-   * 仅遍历 dynamicChildren 进行 patch。
-   * dynamicChildren 中的每个节点按索引一一对应（顺序稳定），
-   * 跳过所有静态子树的 diff。
+   * Block Tree 快速路径 —— **已停用，保留为安全别名**（2026-11-02）
    *
-   * ⚠️ **前提是「位序稳定」**。本函数用**索引**把新旧动态子节点配对，
-   * 一旦数量或位序变化，配对就完全错位。见下方 `canFastPath` 的说明。
+   * ## 为什么停用
+   *
+   * 原实现按**索引**配对 `oldDynamicChildren[i]` / `newDynamicChildren[i]`，
+   * 只 diff 动态子节点、跳过静态子树。它有两个维护不住的前提：
+   *
+   * 1. **位序稳定**：v-for 的每个列表项都是 block，会被收集进**外层** block，
+   *    列表长度一变位序就变 ⇒ 索引配对错位 ⇒ 节点挂到错误的父节点。
+   *    （实测：`<ul><li v-for>` 从空变非空后，li 跑到 ul 外面）
+   *
+   * 2. **被跳过的静态子节点仍持有有效 `el`**：实际不成立 —— 跳过就意味着新一代
+   *    vnode 上的 `el` 仍是 null。下一次结构变化走全量 diff 时，`patch()` 见
+   *    `n1.el === null` 会按「需要挂载」处理且不卸载旧节点 ⇒ **DOM 重复**。
+   *    这个缺口还是递归的：静态子树内部的后代同样缺 `el`。
+   *
+   * 两个缺陷都在 8432 个用例 + 12 项门禁下存活，且触发形态极普通。
+   * 优化收益没有任何门禁度量，而缺陷已两次击穿全部防线
+   * ⇒ 按「正确性优先」停用。
+   *
+   * ## 现在它做什么
+   *
+   * 直接转全量 `patchChildren`。保留这个名字是为了：
+   *   · 不破坏 `ChildrenPatchAPI` 的既有形状（`patch.ts` 会转挂它）；
+   *   · 让任何**未来的**调用者即使调用它也是安全的 —— 不会再踩同一个坑。
+   *
+   * ⚠️ 不要再把它改回「只 diff dynamicChildren」。
    */
   function patchBlockChildren(
     n1: VNode,
@@ -179,76 +172,7 @@ export function createChildrenPatch<HN, HE extends HN>(
     parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
   ): void {
-    // FIX: P1-08 dynamicChildren 非空断言改为条件检查，
-    // 避免在 dynamicChildren 为 null/undefined 时抛出运行时错误
-    const oldDynamicChildren = n1.dynamicChildren;
-    const newDynamicChildren = n2.dynamicChildren;
-
-    if (!oldDynamicChildren || !newDynamicChildren) return;
-
-    // ============================================================
-    // ★ 2026-11-02 修复（P0）：block 快速路径的「位序稳定」前置校验
-    // ============================================================
-    //
-    // ## 缺陷
-    //
-    // 本函数按**索引位置**把 `oldDynamicChildren[i]` 与 `newDynamicChildren[i]`
-    // 当作「同一个节点的新旧两代」来 patch。但 v-for 的产物（每个列表项都是
-    // `openBlock() + createBlock()` 造出来的 block）会被收集进**外层 block** 的
-    // `dynamicChildren`，于是**列表长度一变，整个数组的位序就变了**：
-    //
-    //   首帧   wrap.dynamicChildren = [button]          （列表为空，无 li）
-    //   更新帧 wrap.dynamicChildren = [li, button]      （列表有了 1 项）
-    //
-    // 结果 i=0 把 `button` 和 `li` 配成一对 ⇒ 类型不同 ⇒ 卸载 button，
-    // 再 `patch(null, li, container, …)`，而这里的 `container` 是**被 patch 元素
-    // 的容器**（即 `wrap`），不是 `ul` ⇒ `li` 被挂到 `ul` 的**兄弟位置**。
-    // 同时 button 在 i=1 被重新挂载。
-    //
-    // 实测症状（`<ul><li v-for>` 从空变非空）：
-    //   `<div class="wrap"><h1>…</h1><ul></ul><li>a</li><button>…</button></div>`
-    //   —— li 跑到了 ul 外面，且列表项越多错得越离谱。
-    //
-    // 为什么此前没被发现：只要模板里**没有别的动态子节点**（比如没有 `@click`），
-    // 首帧 dynamicChildren 就是空数组，`patchElement` 会走 `patchChildren`
-    // 全量 diff 分支，恰好绕开这里。一旦旁边有个绑定事件的按钮，就必现。
-    //
-    // ## 修法
-    //
-    // 位序稳定才走快速路径；否则**退回全量 children diff**（正确性优先，
-    // 代价只是静态子树也参与一次比较）。判定条件：
-    //   · 两代长度相同
-    //   · 每一位都 `isSameVNodeType`（已同时比较 `type` 与 `key`）
-    //
-    // 长度不同 ⇒ 列表增删；`isSameVNodeType` 为假 ⇒ 类型变化或 key 重排。
-    // 两种情况都必须交给 keyed diff 处理。
-    const canFastPath =
-      oldDynamicChildren.length === newDynamicChildren.length &&
-      oldDynamicChildren.every((oldVNode, i) => {
-        const newVNode = newDynamicChildren[i];
-        return !!oldVNode && !!newVNode && isSameVNodeType(oldVNode, newVNode);
-      });
-
-    if (!canFastPath) {
-      // 退回全量 diff：`patchChildren` 会按 children 的真实形态
-      // （数组 / 文本 / 空）选正确分支，并把 v-for 交给 keyed diff。
-      patchChildren(n1, n2, container, parentComponent, parentSuspense, isSVG);
-      return;
-    }
-
-    // 走到这里：长度相同且逐位同类型同 key ⇒ 索引配对是安全的。
-    for (let i = 0; i < newDynamicChildren.length; i++) {
-      const oldVNode = oldDynamicChildren[i];
-      const newVNode = newDynamicChildren[i]!;
-
-      // FIX: P2-5 VDOM-NEW-12 - 静态提升优化：检查是否可以直接复用静态节点
-      if (patchStaticVNode(oldVNode, newVNode, container, parentComponent, parentSuspense, isSVG)) {
-        continue; // 静态节点已复用，跳过 diff
-      }
-
-      // 同类型节点：走 patch 更新路径
-      patch(oldVNode, newVNode, container, null, parentComponent, parentSuspense, isSVG);
-    }
+    patchChildren(n1, n2, container, parentComponent, parentSuspense, isSVG);
   }
 
   // ============================================================
