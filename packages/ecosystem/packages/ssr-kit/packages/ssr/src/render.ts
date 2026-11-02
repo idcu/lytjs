@@ -13,6 +13,7 @@ import {
   setCurrentInstance,
   getCurrentInstance,
 } from '@lytjs/component';
+import type { ComponentInternalInstance } from '@lytjs/component';
 import { isString, isNumber, isArray, isObject, isFunction } from '@lytjs/common-is';
 
 /**
@@ -33,6 +34,28 @@ function escapeHtml(str: string): string {
 export function renderToString(
   vnode: VNode | VNode[] | string | number | null | undefined,
 ): string {
+  return renderToStringInternal(vnode, null);
+}
+
+/**
+ * 同步渲染的内部实现 —— 多一个 `parent` 参数，用来**建立组件父链**。
+ *
+ * ⚠️ 2026-11-03 修（P0）：此前递归渲染**从不传 parent**，
+ *   `createComponentInstance(node, null)` 让每个组件都成为"根" ⇒ 父链根本不存在。
+ *   实测后果（`scripts/check-ssr-isolation.mjs` 第 [8] 组）：
+ *
+ *   · `provide` / `inject` **在 SSR 里完全不生效**
+ *     （对象形式 / 函数形式 / `this` 形式 / `setup()` 里调用 —— 4 种写法全返回默认值）
+ *   · `onErrorCaptured` 永远收不到子组件的错误
+ *   · 任何依赖 `instance.parent` 的功能（KeepAlive 停用、Suspense 边界）在 SSR 上都是死的
+ *
+ *   客户端之所以正常，是因为 `mountComponent` 递归时把 parent 传了下去。
+ *   SSR 是另一套递归，漏了同一件事 —— 典型的「两端不一致」。
+ */
+function renderToStringInternal(
+  vnode: VNode | VNode[] | string | number | null | undefined,
+  parent: ComponentInternalInstance | null,
+): string {
   // 处理 null/undefined
   if (vnode === null || vnode === undefined) {
     return '';
@@ -50,7 +73,7 @@ export function renderToString(
 
   // 处理数组
   if (isArray(vnode)) {
-    return vnode.map((child) => renderToString(child)).join('');
+    return vnode.map((child) => renderToStringInternal(child, parent)).join('');
   }
 
   // 处理 VNode 对象
@@ -66,7 +89,7 @@ export function renderToString(
   //   Fragment 必须**展开 children**，而不是当文本转义。
   if (node.type === Fragment) {
     if (!isArray(node.children)) return '';
-    return (node.children as VNode[]).map((child) => renderToString(child)).join('');
+    return (node.children as VNode[]).map((child) => renderToStringInternal(child, parent)).join('');
   }
 
   // 处理文本节点（Text 的 type 也是 symbol）
@@ -80,12 +103,15 @@ export function renderToString(
     const result = component((node.props as Record<string, unknown>) ?? {}, {
       slots: (node.children as Record<string, unknown>) ?? {},
     });
-    return renderToString(result as VNode | VNode[] | string | number | null | undefined);
+    return renderToStringInternal(
+      result as VNode | VNode[] | string | number | null | undefined,
+      parent,
+    );
   }
 
   // 处理选项式组件（defineComponent 返回的是选项对象，因此 type 为 object）
   if (isObject(node.type)) {
-    return renderComponentNode(node);
+    return renderComponentNode(node, parent);
   }
 
   // 处理元素
@@ -106,7 +132,10 @@ export function renderToString(
     const children =
       typeof rawHtml === 'string'
         ? rawHtml
-        : renderToString(node.children as VNode | VNode[] | string | number | null | undefined);
+        : renderToStringInternal(
+            node.children as VNode | VNode[] | string | number | null | undefined,
+            parent,
+          );
 
     return `<${tag}${renderAttributes(props)}>${children}</${tag}>`;
   }
@@ -136,13 +165,24 @@ export function renderToString(
 export async function renderToStringAsync(
   vnode: VNode | VNode[] | string | number | null | undefined,
 ): Promise<string> {
+  return renderToStringAsyncInternal(vnode, null);
+}
+
+/**
+ * 异步渲染的内部实现（多一个 `parent`，与同步路径同理 —— 见
+ * `renderToStringInternal` 处关于「SSR 缺父链」的完整说明）。
+ */
+async function renderToStringAsyncInternal(
+  vnode: VNode | VNode[] | string | number | null | undefined,
+  parent: ComponentInternalInstance | null,
+): Promise<string> {
   if (vnode === null || vnode === undefined) return '';
   if (isString(vnode)) return escapeHtml(vnode);
   if (isNumber(vnode)) return String(vnode);
 
   if (isArray(vnode)) {
     const parts: string[] = [];
-    for (const child of vnode) parts.push(await renderToStringAsync(child));
+    for (const child of vnode) parts.push(await renderToStringAsyncInternal(child, parent));
     return parts.join('');
   }
 
@@ -152,7 +192,8 @@ export async function renderToStringAsync(
   if (node.type === Fragment) {
     if (!isArray(node.children)) return '';
     const parts: string[] = [];
-    for (const child of node.children as VNode[]) parts.push(await renderToStringAsync(child));
+    for (const child of node.children as VNode[])
+      parts.push(await renderToStringAsyncInternal(child, parent));
     return parts.join('');
   }
 
@@ -174,19 +215,23 @@ export async function renderToStringAsync(
     const inner =
       typeof rawHtml === 'string'
         ? rawHtml
-        : await renderToStringAsync(
+        : await renderToStringAsyncInternal(
             node.children as VNode | VNode[] | string | number | null | undefined,
+            parent,
           );
     return `<${tag}${renderAttributes(props)}>${inner}</${tag}>`;
   }
 
-  return renderComponentNodeAsync(node);
+  return renderComponentNodeAsync(node, parent);
 }
 
 /**
  * 组件节点的异步渲染（`renderToStringAsync` 的组件分支）。
  */
-async function renderComponentNodeAsync(node: VNode): Promise<string> {
+async function renderComponentNodeAsync(
+  node: VNode,
+  parent: ComponentInternalInstance | null,
+): Promise<string> {
   const type = node.type as {
     name?: string;
     render?: unknown;
@@ -203,7 +248,10 @@ async function renderComponentNodeAsync(node: VNode): Promise<string> {
     const result = fn((node.props as Record<string, unknown>) ?? {}, {
       slots: (node.children as Record<string, unknown>) ?? {},
     });
-    return renderToStringAsync(result as VNode | VNode[] | string | number | null | undefined);
+    return renderToStringAsyncInternal(
+      result as VNode | VNode[] | string | number | null | undefined,
+      parent,
+    );
   }
 
   if (typeof type.template === 'string' && !getTemplateCompiler()) {
@@ -213,7 +261,7 @@ async function renderComponentNodeAsync(node: VNode): Promise<string> {
     );
   }
 
-  const instance = createComponentInstance(node, null);
+  const instance = createComponentInstance(node, parent);
   setupComponent(instance);
   assertSetupSucceeded(instance, name);
 
@@ -281,8 +329,9 @@ async function renderComponentNodeAsync(node: VNode): Promise<string> {
   //
   //   放在 `finally` 里：即使子树的递归渲染抛错，也不留下半渲染实例的副作用。
   try {
-    return await renderToStringAsync(
+    return await renderToStringAsyncInternal(
       subTree as VNode | VNode[] | string | number | null | undefined,
+      instance,
     );
   } finally {
     instance.scope?.stop();
@@ -333,7 +382,7 @@ function assertSetupSucceeded(instance: { setupError?: Error }, name: string): v
  * 渲染函数契约遵循本框架约定：优先 instance.render（setup 返回的函数），
  * 其次 options.render。
  */
-function renderComponentNode(node: VNode): string {
+function renderComponentNode(node: VNode, parent: ComponentInternalInstance | null): string {
   const type = node.type as { name?: string; render?: unknown; template?: unknown };
   const name = type.name ?? 'anonymous';
 
@@ -370,7 +419,7 @@ function renderComponentNode(node: VNode): string {
     );
   }
 
-  const instance = createComponentInstance(node, null);
+  const instance = createComponentInstance(node, parent);
   setupComponent(instance);
   assertSetupSucceeded(instance, name);
 
@@ -386,7 +435,7 @@ function renderComponentNode(node: VNode): string {
     const slots = instance.slots as Record<string, unknown> | undefined;
     const defaultSlot = slots?.default as (() => unknown) | undefined;
     const children = typeof defaultSlot === 'function' ? defaultSlot() : node.children;
-    return renderToString(children as VNode | VNode[] | null | undefined);
+    return renderToStringInternal(children as VNode | VNode[] | null | undefined, instance);
   }
 
   // ★ 2026-11-02 修（P0）：同步路径同样必须设置当前实例 ——
@@ -429,7 +478,10 @@ function renderComponentNode(node: VNode): string {
   // ★ 2026-11-03（P0）：与异步路径同理 —— SSR 实例永不被 unmount，
   //   必须在渲染完成后主动 `scope.stop()`，否则每个请求泄漏一份副作用。
   try {
-    return renderToString(subTree as VNode | VNode[] | string | number | null | undefined);
+    return renderToStringInternal(
+      subTree as VNode | VNode[] | string | number | null | undefined,
+      instance,
+    );
   } finally {
     instance.scope?.stop();
   }

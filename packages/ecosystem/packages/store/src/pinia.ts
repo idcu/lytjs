@@ -100,3 +100,39 @@ export function createPinia(): Pinia {
 
 // DEV flag for development warnings
 const __DEV__ = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production';
+
+/**
+ * 在指定的 pinia 作用域里同步执行 `fn`，结束后**恢复**原来的 activePinia。
+ *
+ * ## 为什么需要它
+ *
+ * `setActivePinia()` 是一个**模块级全局**。在 SSR 里它天然不安全：
+ *
+ * ```ts
+ * // 请求 A
+ * setActivePinia(piniaA);
+ * const html = await renderToStringAsync(h(App));   // 内部 await 期间…
+ * // 请求 B（同一个事件循环）
+ * setActivePinia(piniaB);                            // ← A 的 activePinia 被覆盖
+ * // A 继续执行，useStore() 拿到的是 piniaB
+ * ```
+ *
+ * 实测（`scripts/check-ssr-isolation.mjs` 第 [3] 组）：并发时请求 A 渲染出了 B 的数据。
+ *
+ * `runWithPinia` 把「设置 → 执行 → 恢复」做成一个同步窗口，适合**同步**渲染路径；
+ * 异步渲染请**显式传 pinia**（`useStore(pinia)`）—— 那是唯一与并发无关的用法。
+ *
+ * @example
+ * ```ts
+ * const html = runWithPinia(pinia, () => renderToString(h(App)));
+ * ```
+ */
+export function runWithPinia<T>(pinia: PiniaInstance, fn: () => T): T {
+  const prev = activePinia;
+  activePinia = pinia;
+  try {
+    return fn();
+  } finally {
+    activePinia = prev;
+  }
+}

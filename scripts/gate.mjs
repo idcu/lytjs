@@ -217,6 +217,19 @@ const GATES = [
       '异步组件 loader 失败零上报、SSR setup 抛错输出空串（200 空页）',
   },
   {
+    name: 'check-ssr-isolation',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-ssr-isolation.mjs'],
+    approx: '~3s',
+    desc:
+      '★ SSR 请求隔离：SSR 进程长期存活并服务所有用户，任何**进程级可变状态**都会变成' +
+      '跨用户数据泄漏，而单请求场景下一切正常。' +
+      '2026-11-03 首次运行抓到两个 P0：① @lytjs/store 的三张表是模块级单例、' +
+      '**完全忽略 useStore(pinia) 的 pinia 参数** ⇒ 每请求 createPinia() 也拿到同一个 store，' +
+      '匿名请求直接渲染出上一个用户的令牌；② SSR 递归渲染**从不传 parent** ⇒ ' +
+      'provide/inject 在 SSR 里完全不生效（4 种写法全返回默认值）',
+  },
+  {
     name: 'check-lifecycle-release',
     tier: 'fast',
     cmd: ['node', 'scripts/check-lifecycle-release.mjs'],

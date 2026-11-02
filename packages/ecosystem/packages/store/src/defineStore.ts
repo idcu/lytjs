@@ -19,9 +19,89 @@ import type {
 import { signal, computedSignal as computed, batch, reactive } from '@lytjs/reactivity';
 import { getActivePinia } from './pinia';
 
-const storeCache = new Map<string, Store>();
-const subscriptions = new Map<string, Set<SubscriptionCallback<Record<string, unknown>>>>();
-const actionCallbacks = new Map<string, Set<ActionCallback>>();
+/**
+ * 一个 pinia 实例的「store 注册表」。
+ *
+ * ## 为什么必须按 pinia 隔离（2026-11-03 修 P0）
+ *
+ * 此前这三张表是**模块级单例**，只按 store id 作键，**完全忽略 `useStore(pinia)` 传入的
+ * pinia 参数**：
+ *
+ * ```ts
+ * const storeCache = new Map<string, Store>();
+ * ...
+ * if (storeCache.has(id)) return storeCache.get(id);   // ← 不看 pinia
+ * ```
+ *
+ * 后果（实测，`scripts/check-ssr-isolation.mjs`）：
+ *
+ * ```
+ * 请求 A（已登录）: user=ALICE token=SECRET-A-TOKEN
+ * 请求 B（匿名）  : user=ALICE token=SECRET-A-TOKEN   ← 直接渲染出 A 的令牌
+ * ```
+ *
+ * 即使每个请求都老老实实 `createPinia()`，拿到的也是**同一个 store 对象**。
+ * 这是 SSR 上的**跨用户数据泄漏**，不只是"状态没重置"。
+ *
+ * ## 设计
+ *
+ * - 每个 pinia 一个注册表，存在 `WeakMap` 里 ⇒ pinia 被回收时注册表随之回收
+ *   （SSR 每请求一个 pinia，不能有强引用把它钉住，否则换成了内存泄漏）
+ * - 没传 pinia（也没有 activePinia）时落到 `fallbackRegistry`，保持单例语义
+ *   （纯客户端用法不受影响）
+ */
+interface StoreRegistry {
+  stores: Map<string, Store>;
+  subscriptions: Map<string, Set<SubscriptionCallback<Record<string, unknown>>>>;
+  actionCallbacks: Map<string, Set<ActionCallback>>;
+}
+
+const createRegistry = (): StoreRegistry => ({
+  stores: new Map(),
+  subscriptions: new Map(),
+  actionCallbacks: new Map(),
+});
+
+/** 每个 pinia 实例一个注册表（弱引用，随 pinia 一起回收） */
+const registries = new WeakMap<object, StoreRegistry>();
+
+/** 没有 pinia 时的兜底（纯客户端 / 测试里不建 pinia 的用法） */
+const fallbackRegistry = createRegistry();
+
+/** 取（或创建）某个 pinia 对应的注册表 */
+/**
+ * 已经就「没有 pinia」告过警的 store id（只提示一次，避免刷屏）。
+ *
+ * ⚠️ 这条告警针对的是一个**静默的安全隐患**：`useStore()` 既没收到 pinia、
+ * 也没有 `activePinia` 时，会落到**进程级**的 `fallbackRegistry` ——
+ * 所有调用方共享同一个 store 实例。在 SSR 上这等于**跨请求共享用户数据**
+ * （实测见 `scripts/check-ssr-isolation.mjs` 第 [2] 组）。
+ *
+ * 纯客户端用单例是合理默认，所以这里不抛错；但在服务端必须能被发现。
+ */
+const warnedNoPinia = new Set<string>();
+
+function warnNoPiniaOnce(id: string): void {
+  if (warnedNoPinia.has(id)) return;
+  warnedNoPinia.add(id);
+  // eslint-disable-next-line no-console
+  console.warn(
+    `[@lytjs/store] useStore("${id}") 没有可用的 pinia：将使用**进程级**的默认 store。\n` +
+      `  · 纯客户端：这是合理的单例语义，可以忽略。\n` +
+      `  · SSR：**所有请求会共享同一个 store 实例**，用户数据会在请求之间泄漏。\n` +
+      `    修法：每请求 createPinia() 并 setActivePinia(pinia)，或显式 useStore(pinia)。`,
+  );
+}
+
+function registryFor(pinia: Pinia | undefined | null): StoreRegistry {
+  if (!pinia) return fallbackRegistry;
+  let r = registries.get(pinia as unknown as object);
+  if (!r) {
+    r = createRegistry();
+    registries.set(pinia as unknown as object, r);
+  }
+  return r;
+}
 
 export function defineStore<Id extends string, S extends StateTree, G, A>(
   id: Id,
@@ -51,20 +131,23 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
       if (!pinia) {
         pinia = getActivePinia();
       }
-      if (storeCache.has(cacheKey)) {
-        return storeCache.get(cacheKey) as unknown as SS &
+      // ★ 2026-11-03：注册表按 pinia 隔离（此前只按 id ⇒ SSR 跨请求串数据）
+      if (!pinia) warnNoPiniaOnce(id);
+      const registry = registryFor(pinia);
+      if (registry.stores.has(cacheKey)) {
+        return registry.stores.get(cacheKey) as unknown as SS &
           Store<Id, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>;
       }
 
-      if (!subscriptions.has(cacheKey)) {
-        subscriptions.set(cacheKey, new Set());
+      if (!registry.subscriptions.has(cacheKey)) {
+        registry.subscriptions.set(cacheKey, new Set());
       }
-      if (!actionCallbacks.has(cacheKey)) {
-        actionCallbacks.set(cacheKey, new Set());
+      if (!registry.actionCallbacks.has(cacheKey)) {
+        registry.actionCallbacks.set(cacheKey, new Set());
       }
 
-      const subs = subscriptions.get(cacheKey)!;
-      const actionCbs = actionCallbacks.get(cacheKey)!;
+      const subs = registry.subscriptions.get(cacheKey)!;
+      const actionCbs = registry.actionCallbacks.get(cacheKey)!;
 
       const storeObj = setup();
 
@@ -207,9 +290,9 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
       };
 
       (store as any).$dispose = () => {
-        storeCache.delete(cacheKey);
-        subscriptions.delete(cacheKey);
-        actionCallbacks.delete(cacheKey);
+        registry.stores.delete(cacheKey);
+        registry.subscriptions.delete(cacheKey);
+        registry.actionCallbacks.delete(cacheKey);
       };
 
       if (pinia) {
@@ -217,25 +300,28 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
         pinia.state.value = { ...currentState, [id]: store.$state };
       }
 
-      storeCache.set(cacheKey, store as unknown as Store);
+      registry.stores.set(cacheKey, store as unknown as Store);
       return store;
     };
   } else {
     const options = optionsOrSetup;
     return function useStore(pinia = getActivePinia()): Store<Id, S, G, A> {
-      if (storeCache.has(id)) {
-        return storeCache.get(id) as Store<Id, S, G, A>;
+      // ★ 2026-11-03：注册表按 pinia 隔离（此前只按 id ⇒ SSR 跨请求串数据）
+      if (!pinia) warnNoPiniaOnce(id);
+      const registry = registryFor(pinia);
+      if (registry.stores.has(id)) {
+        return registry.stores.get(id) as Store<Id, S, G, A>;
       }
 
-      if (!subscriptions.has(id)) {
-        subscriptions.set(id, new Set());
+      if (!registry.subscriptions.has(id)) {
+        registry.subscriptions.set(id, new Set());
       }
-      if (!actionCallbacks.has(id)) {
-        actionCallbacks.set(id, new Set());
+      if (!registry.actionCallbacks.has(id)) {
+        registry.actionCallbacks.set(id, new Set());
       }
 
-      const subs = subscriptions.get(id)!;
-      const actions = actionCallbacks.get(id)!;
+      const subs = registry.subscriptions.get(id)!;
+      const actions = registry.actionCallbacks.get(id)!;
 
       // $patch 期间抑制「逐键 direct 通知」：一次 $patch 只发一条 patch 事件
       // （Pinia 语义；否则订阅者按事件持久化时会被重复写入，mutation.type 也失真）
@@ -449,9 +535,9 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
 
       Object.defineProperty(store, '$dispose', {
         value: function () {
-          storeCache.delete(id);
-          subscriptions.delete(id);
-          actionCallbacks.delete(id);
+          registry.stores.delete(id);
+          registry.subscriptions.delete(id);
+          registry.actionCallbacks.delete(id);
         },
         enumerable: true,
         configurable: true,
@@ -466,14 +552,32 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
         pinia.state.value = { ...currentState, [id]: state as S };
       }
 
-      storeCache.set(id, store);
+      registry.stores.set(id, store);
       return store;
     };
   }
 }
 
+/**
+ * 清空 store 缓存。
+ *
+ * 语义（2026-11-03 起）：清空**兜底注册表**（不传 pinia 的那份）+ **当前 activePinia**
+ * 的注册表。
+ *
+ * ⚠️ 不再「清空所有 pinia」：注册表存在 `WeakMap` 里，**刻意不持有强引用**
+ * —— 否则 SSR 每请求一个 pinia 时会变成内存泄漏。每个 pinia 的注册表随它自己
+ * 被 GC 时回收，本来就不需要手动清。
+ */
 export function clearStoreCache(): void {
-  storeCache.clear();
-  subscriptions.clear();
-  actionCallbacks.clear();
+  const clear = (r: StoreRegistry): void => {
+    r.stores.clear();
+    r.subscriptions.clear();
+    r.actionCallbacks.clear();
+  };
+  clear(fallbackRegistry);
+  const active = getActivePinia();
+  if (active) {
+    const r = registries.get(active as unknown as object);
+    if (r) clear(r);
+  }
 }

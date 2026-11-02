@@ -8,7 +8,7 @@
 
 // Core
 export { defineStore, clearStoreCache } from './defineStore';
-export { createPinia, getActivePinia, setActivePinia } from './pinia';
+export { createPinia, getActivePinia, setActivePinia, runWithPinia } from './pinia';
 
 // Utilities
 export { storeToRefs } from './storeToRefs';
