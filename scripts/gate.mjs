@@ -179,6 +179,18 @@ const GATES = [
       '（2026-11-02 停用 block 快速路径时**没有任何成本度量**，此门禁补上这个缺口）',
   },
   {
+    name: 'check-ssr-client-parity',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-ssr-client-parity.mjs'],
+    approx: '~3s',
+    desc:
+      '★ SSR ↔ 客户端一致性：同一组件分别走 renderToString 与 createApp().mount()，' +
+      '断言两端 HTML **语义等价**（只归一化空白/属性顺序/布尔属性/style 尾分号）。' +
+      '「两端不一致」是反复出现的缺陷族（属性透传、组件分发、redirectResponse 漏改），' +
+      '单点断言覆盖不住。首次运行抓到 3 个真缺陷：v-html 被当属性转义、' +
+      '<component :is> 把组件名当标签、静态模板 attrs 在实例间累积',
+  },
+  {
     name: 'check-integration',
     tier: 'slow',
     cmd: ['node', 'scripts/check-integration.mjs'],

@@ -6,7 +6,13 @@
 
 import { Fragment } from '@lytjs/vdom';
 import type { VNode } from '@lytjs/vdom';
-import { createComponentInstance, setupComponent, getTemplateCompiler } from '@lytjs/component';
+import {
+  createComponentInstance,
+  setupComponent,
+  getTemplateCompiler,
+  setCurrentInstance,
+  getCurrentInstance,
+} from '@lytjs/component';
 import { isString, isNumber, isArray, isObject, isFunction } from '@lytjs/common-is';
 
 /**
@@ -93,9 +99,14 @@ export function renderToString(
     }
 
     // 渲染子元素
-    const children = renderToString(
-      node.children as VNode | VNode[] | string | number | null | undefined,
-    );
+    // ★ 2026-11-02 修（P0）：`v-html` 在编译产物里是 **`innerHTML` prop**，
+    //   此前 SSR 不认识它 ⇒ 被当成普通属性转义输出（内容丢失 + 非法属性）。
+    //   与异步路径同一处修法：原样输出为子内容。
+    const rawHtml = props['innerHTML'];
+    const children =
+      typeof rawHtml === 'string'
+        ? rawHtml
+        : renderToString(node.children as VNode | VNode[] | string | number | null | undefined);
 
     return `<${tag}${renderAttributes(props)}>${children}</${tag}>`;
   }
@@ -154,9 +165,18 @@ export async function renderToStringAsync(
     const tag = node.type;
     const props = node.props || {};
     if (VOID_TAGS.includes(tag)) return `<${tag}${renderAttributes(props)}>`;
-    const inner = await renderToStringAsync(
-      node.children as VNode | VNode[] | string | number | null | undefined,
-    );
+    // ★ 2026-11-02 修（P0）：`v-html` 在编译产物里是 **`innerHTML` prop**，
+    //   此前 SSR 不认识它 ⇒ 被 `renderAttributes` 当成普通属性转义输出，
+    //   实测产物 `<div class="h" innerHTML="&lt;b&gt;bold&lt;/b&gt;"></div>`
+    //   （内容没渲染出来，还多了一个非法属性），与客户端完全不一致。
+    //   现在：`innerHTML` 作为**原样子内容**输出（sanitize 已在编译产物里做过）。
+    const rawHtml = props['innerHTML'];
+    const inner =
+      typeof rawHtml === 'string'
+        ? rawHtml
+        : await renderToStringAsync(
+            node.children as VNode | VNode[] | string | number | null | undefined,
+          );
     return `<${tag}${renderAttributes(props)}>${inner}</${tag}>`;
   }
 
@@ -214,8 +234,38 @@ async function renderComponentNodeAsync(node: VNode): Promise<string> {
     );
   }
 
-  const subTree = renderFn.call(instance.ctx, instance.ctx);
-  applyAttrsToRoot(instance, subTree, type);
+  // ============================================================
+  // ★ 2026-11-02 修（P0）：渲染期间必须设置「当前实例」
+  // ============================================================
+  //
+  // ## 缺陷
+  //
+  // `<component :is="which" />` 的编译产物是
+  //   `createElementVNode(resolveDynamicComponent(_ctx.which), null)`
+  // 而 `resolveDynamicComponent` → `resolveComponent` **依赖 `getCurrentInstance()`**
+  // 才能查到 `type.components` / `appContext.components`。
+  //
+  // SSR 此前直接 `renderFn.call(...)`，**没有设置当前实例** ⇒ `resolveComponent`
+  // 返回 undefined ⇒ 退化成原始字符串 ⇒ 把组件名当成 HTML 标签输出：
+  //
+  //   SSR:  <div><A></A></div>          ← 把组件名当标签，组件根本没渲染
+  //   客户端: <div><span class="ca">A</span></div>
+  //
+  // 这同时也是 hydrate 的必然错位源（两端结构不同）。
+  //
+  // ## 修法
+  //
+  // 与客户端渲染一致：渲染函数调用期间 `setCurrentInstance(instance)`，
+  // 结束后恢复上一个值（SSR 是递归的，必须恢复而不是置 null）。
+  const prevInstance = getCurrentInstance();
+  let subTree: unknown;
+  setCurrentInstance(instance);
+  try {
+    subTree = renderFn.call(instance.ctx, instance.ctx);
+  } finally {
+    setCurrentInstance(prevInstance);
+  }
+  subTree = applyAttrsToRoot(instance, subTree, type);
   instance.subTree = subTree as typeof instance.subTree;
 
   return renderToStringAsync(subTree as VNode | VNode[] | string | number | null | undefined);
@@ -287,7 +337,17 @@ function renderComponentNode(node: VNode): string {
     return renderToString(children as VNode | VNode[] | null | undefined);
   }
 
-  const subTree = renderFn.call(instance.ctx, instance.ctx);
+  // ★ 2026-11-02 修（P0）：同步路径同样必须设置当前实例 ——
+  //   否则 `resolveDynamicComponent` / `resolveComponent` 在 SSR 下恒失败，
+  //   `<component :is>` 会把组件名当 HTML 标签输出。详见异步路径处的完整说明。
+  const prevInstance = getCurrentInstance();
+  let subTree: unknown;
+  setCurrentInstance(instance);
+  try {
+    subTree = renderFn.call(instance.ctx, instance.ctx);
+  } finally {
+    setCurrentInstance(prevInstance);
+  }
 
   // ⚠️ 2026-10-31 修（P0）：`async setup` 返回 Promise，此前被当成 vnode 交给
   //   renderToString ⇒ 类型不认识 ⇒ 输出空串。`renderToString` 是**同步** API，
@@ -311,7 +371,7 @@ function renderComponentNode(node: VNode): string {
   //
   //   规则与客户端（patch-component 的 inheritAttrs 处理）保持一致：
   //   `class` / `style` **合并**，其余属性透传到根元素；`inheritAttrs: false` 时只继承 class/style。
-  applyAttrsToRoot(instance, subTree, type as { inheritAttrs?: boolean });
+  subTree = applyAttrsToRoot(instance, subTree, type as { inheritAttrs?: boolean });
 
   instance.subTree = subTree as typeof instance.subTree;
   return renderToString(subTree as VNode | VNode[] | string | number | null | undefined);
@@ -393,12 +453,28 @@ const VOID_TAGS = [
  * 把组件的 attrs 透传到渲染结果的**根 vnode** 上。
  * `class` / `style` 合并，其余属性覆盖；`inheritAttrs: false` 时只继承 class/style。
  * 同步与异步两条渲染路径共用这一份实现。
+ *
+ * ⚠️ **返回新的 vnode，不原地修改**（2026-11-02 修，P0）。
+ *
+ * 编译器会把**完全静态的模板**提升成模块级常量：
+ *
+ *   const _hoisted_1 = createElementVNode("div", { class: "own" }, "inner")
+ *   function render() { return _hoisted_1 }   // 每次返回**同一个对象**
+ *
+ * 此前这里是 `rootVNode.props = merged` —— 原地改那个共享对象，于是：
+ *   · SSR 渲染一次后，提升对象上就永久带着这次的 attrs；
+ *   · 同一个模板的**下一个实例**（或客户端的同模板组件）再合并一次 ⇒ attrs 累积：
+ *       第 1 次 → class="own passed"
+ *       第 2 次 → class="own passed passed"
+ *
+ * 实测正是「SSR 先跑一遍、客户端再跑一遍」的差分场景里 `passed` 出现两次。
+ * 客户端侧的同族缺陷已在 `vdom/patch-component.ts` 一并修掉（改为 cloneVNode）。
  */
 function applyAttrsToRoot(
   instance: { attrs?: Record<string, unknown> },
   subTree: unknown,
   type: { inheritAttrs?: boolean },
-): void {
+): unknown {
   const attrs = instance.attrs;
   if (
     !attrs ||
@@ -407,7 +483,7 @@ function applyAttrsToRoot(
     typeof subTree !== 'object' ||
     Array.isArray(subTree)
   ) {
-    return;
+    return subTree;
   }
 
   const inheritAll = type.inheritAttrs !== false;
@@ -417,7 +493,7 @@ function applyAttrsToRoot(
     ? attrs
     : Object.fromEntries(Object.entries(attrs).filter(([k]) => k === 'class' || k === 'style'));
 
-  if (Object.keys(effectiveAttrs).length === 0) return;
+  if (Object.keys(effectiveAttrs).length === 0) return subTree;
 
   const merged: Record<string, unknown> = { ...existing, ...effectiveAttrs };
   if (existing['class'] != null && effectiveAttrs['class'] != null) {
@@ -426,7 +502,10 @@ function applyAttrsToRoot(
   if (existing['style'] != null && effectiveAttrs['style'] != null) {
     merged['style'] = [existing['style'], effectiveAttrs['style']];
   }
-  rootVNode.props = merged;
+
+  // 浅拷贝 vnode（保留 type/children/shapeFlag 等），只替换 props。
+  // el/anchor 一并清空：SSR 不需要，但避免把"上一次渲染的节点引用"带进新产物。
+  return { ...rootVNode, props: merged, el: null, anchor: null } as VNode;
 }
 
 function renderAttributes(props: Record<string, unknown>): string {
@@ -435,6 +514,15 @@ function renderAttributes(props: Record<string, unknown>): string {
   for (const [key, value] of Object.entries(props)) {
     // 跳过事件处理器和内部属性
     if (key.startsWith('on') || key === 'key' || key === 'ref') {
+      continue;
+    }
+
+    // ★ 2026-11-02：`innerHTML` 不是属性，而是「原样子内容」的载体
+    //   （`v-html` 的编译产物就是 `innerHTML: sanitizeHTML(expr)`）。
+    //   必须在这里跳过，否则会被当普通属性转义输出：
+    //     `<div class="h" innerHTML="&lt;b&gt;bold&lt;/b&gt;"></div>`
+    //   真正的内容由调用方（renderToString / renderToStringAsync）写进标签内。
+    if (key === 'innerHTML') {
       continue;
     }
 

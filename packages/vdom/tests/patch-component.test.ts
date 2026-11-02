@@ -216,7 +216,15 @@ describe('createComponentPatch', () => {
       expect(mockInstance.subTree).toBe(subTree);
     });
 
-    it('inheritAttrs=true（默认）应合并所有 attrs 到 subTree.props', () => {
+    // ⚠️ 2026-11-02 改写：这三条原本断言「合并结果写进了**原 subTree 对象**的 props」——
+    //   那正是被修复的 P0 行为：编译器会把完全静态的模板提升成模块级常量
+    //   （`const _hoisted_1 = createElementVNode(...)`，render 每次返回**同一对象**），
+    //   原地改它的 props 会让 attrs 在所有实例之间累积
+    //   （第 1 个 `class="own a"`、第 2 个 `class="own a b"`）。
+    //
+    //   现在契约是：**渲染产物保持不被修改**，合并结果落在新的 vnode 上。
+    //   下面同时断言「原对象未被污染」与「实际 DOM 上合并生效」。
+    it('inheritAttrs=true（默认）：attrs 合并到新 vnode，原 subTree 不被修改', () => {
       const container = document.createElement('div');
       const subTree = {
         type: 'div',
@@ -240,17 +248,18 @@ describe('createComponentPatch', () => {
 
       api.mountComponent(vnode, container, null, null, null, false);
 
-      // subTree.props 应包含合并后的 attrs
-      expect(subTree.props).toEqual(
-        expect.objectContaining({
-          id: 'inner',
-          class: 'outer',
-          'data-test': 'value',
-        }),
+      // ① 原对象必须保持原样（共享的提升对象不能被污染）
+      expect(subTree.props).toEqual({ id: 'inner' });
+
+      // ② 合并结果体现在实例的 subTree 上（是新对象）
+      const applied = (mockInstance.subTree as VNode | undefined)?.props ?? {};
+      expect(applied).toEqual(
+        expect.objectContaining({ id: 'inner', class: 'outer', 'data-test': 'value' }),
       );
+      expect(mockInstance.subTree).not.toBe(subTree);
     });
 
-    it('inheritAttrs=false 应仅合并 class 和 style', () => {
+    it('inheritAttrs=false：仅合并 class 和 style，原 subTree 不被修改', () => {
       const container = document.createElement('div');
       const subTree = {
         type: 'div',
@@ -274,15 +283,15 @@ describe('createComponentPatch', () => {
 
       api.mountComponent(vnode, container, null, null, null, false);
 
-      // subTree.props 应包含 class 和 style，但不包含 data-test
-      expect(subTree.props).toEqual(
-        expect.objectContaining({
-          id: 'inner',
-          class: 'outer',
-          style: 'color: red',
-        }),
+      // ① 原对象保持原样
+      expect(subTree.props).toEqual({ id: 'inner' });
+
+      // ② 只有 class / style 被继承，data-test 不继承
+      const applied = (mockInstance.subTree as VNode | undefined)?.props ?? {};
+      expect(applied).toEqual(
+        expect.objectContaining({ id: 'inner', class: 'outer', style: 'color: red' }),
       );
-      expect(subTree.props).not.toHaveProperty('data-test');
+      expect(applied).not.toHaveProperty('data-test');
     });
 
     it('inheritAttrs=false 且无 class/style 时不应修改 subTree.props', () => {
@@ -338,8 +347,11 @@ describe('createComponentPatch', () => {
 
       api.mountComponent(vnode, container, null, null, null, false);
 
-      expect(subTree.props).toEqual({ class: 'outer' });
-      expect(subTree.props).not.toHaveProperty('data-test');
+      // 原对象保持为空（不被污染），合并结果落在新 vnode 上
+      expect(subTree.props).toEqual({});
+      const applied = (mockInstance.subTree as VNode | undefined)?.props ?? {};
+      expect(applied).toEqual({ class: 'outer' });
+      expect(applied).not.toHaveProperty('data-test');
     });
 
     // ⚠️ 2026-10-27 行为变更：`errorCaptured` 返回 false 表示「错误已被接管」。

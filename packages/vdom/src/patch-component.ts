@@ -12,7 +12,7 @@ import { effect } from '@lytjs/reactivity';
 import { queuePreFlushCb } from '@lytjs/common-scheduler';
 import type { SuspenseBoundary } from './types';
 import type { RendererContext } from './patch-element';
-import { createVNode, createTextVNode } from './vnode';
+import { createVNode, createTextVNode, cloneVNode } from './vnode';
 
 // ============================================================
 // 组件递归深度限制
@@ -174,6 +174,44 @@ export function createComponentPatch<HN, HE extends HN>(
     let isMounted = false;
     let initialSubTree: VNode | null = null;
 
+    // ============================================================
+    // ★ 2026-11-02 修（P0）：attrs 合并必须**克隆**，不能原地改
+    // ============================================================
+    //
+    // ## 缺陷
+    //
+    // 编译器会把**完全静态的模板**提升成模块级常量：
+    //
+    //   const _hoisted_1 = createElementVNode("div", { class: "own" }, "inner")
+    //   function render() { return _hoisted_1 }   // 每次返回**同一个对象**
+    //
+    // 而 attrs 合并此前写的是 `subTree.props = merged` —— **原地修改那个共享对象**。
+    // 于是 attrs 会在所有实例之间**累积**：
+    //
+    //   第 1 个 <Inner class="a" />   →  class="own a"
+    //   第 2 个 <Inner class="b" />   →  class="own a b"   ← 继承了上一个实例的 a
+    //   再挂一次同模板             →  class="own a b b"   ← 还在继续累加
+    //
+    // 实测（两个实例）：`class="own a"` / `class="own a b"`。
+    // 受影响面很大：任何「整模板静态」的组件（wrapper / card / icon）都是这个形态。
+    //
+    // ## 修法
+    //
+    // 与 Vue 一致：`cloneVNode(subTree, props)` 生成**新 vnode** 再合并，
+    // 共享的提升对象保持不变。
+    //
+    // 另外必须把 `el` / `anchor` 清空 —— 提升后的对象会被上一次挂载写上 `el`，
+    // 直接复制过来会让新实例指向**别人的 DOM 节点**。
+    const cloneSubTreeWithProps = (
+      vnode: VNode,
+      props: Record<string, unknown>,
+    ): VNode => {
+      const cloned = cloneVNode(vnode, props);
+      cloned.el = null;
+      cloned.anchor = null;
+      return cloned;
+    };
+
     const update = () => {
       // ⚠️ 声明为 `VNode | null`：`render()` 可以合法地返回 null/undefined（空渲染），
       //    下方有专门分支处理（此前这里声明为 `VNode`，把 null 当成不可能 ⇒ 见该分支注释）。
@@ -327,9 +365,9 @@ export function createComponentPatch<HN, HE extends HN>(
               if (existingProps['style'] != null && attrs['style'] != null) {
                 merged['style'] = [existingProps['style'], attrs['style']];
               }
-              subTree.props = merged;
+              subTree = cloneSubTreeWithProps(subTree, merged);
             } else {
-              subTree.props = attrs;
+              subTree = cloneSubTreeWithProps(subTree, attrs);
             }
           } else {
             // inheritAttrs === false: 仅合并 class 和 style（Vue 3 行为）
@@ -354,13 +392,13 @@ export function createComponentPatch<HN, HE extends HN>(
                       ? [existingProps['style'], attrs.style]
                       : attrs.style;
                 }
-                subTree.props = rootProps;
+                subTree = cloneSubTreeWithProps(subTree, rootProps);
               } else {
                 // existingProps 为空，直接创建包含 class/style 的对象
-                subTree.props = {
+                subTree = cloneSubTreeWithProps(subTree, {
                   ...(hasClass && { class: attrs.class }),
                   ...(hasStyle && { style: attrs.style }),
-                };
+                });
               }
             }
           }
