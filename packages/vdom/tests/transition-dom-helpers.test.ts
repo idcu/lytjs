@@ -140,3 +140,58 @@ describe('transition · 状态与清理', () => {
     setTransitionPrefix('v'); // 还原，避免影响后续用例
   });
 });
+
+// ============================================================
+// 2026-11-02 新增：宿主能力缺失（无 getComputedStyle）
+// ============================================================
+//
+// ## 缺陷
+//
+// `getTransitionInfoDOM` 原先直接调用**裸** `getComputedStyle(el)`。该函数是
+// **浏览器全局**，并非所有运行环境都有（Worker / 精简 jsdom / 自定义宿主）。
+// 缺失时抛 `ReferenceError: getComputedStyle is not defined`。
+//
+// 致命之处在于**抛错的时机**：它发生在 `<Transition>` 的**离开钩子**里，
+// 于是后续的 `doneFn()` 永远不会执行 ⇒ 元素停在
+// `<p class="v-leave-active v-leave-to">` 上、**永不移除**（实测）。
+//
+// ## 约定
+//
+// 拿不到计算样式 ⇒ 视为「无过渡 / 无动画」⇒ 调用方立即完成。
+// 这是唯一不会卡死的行为。
+
+describe('transition · 宿主缺少 getComputedStyle', () => {
+  const original = globalThis.getComputedStyle;
+
+  afterEach(() => {
+    globalThis.getComputedStyle = original;
+  });
+
+  it('getTransitionInfoDOM 不抛错，并按「无过渡/无动画」返回', () => {
+    // @ts-expect-error 故意删除全局，模拟不支持该 API 的宿主
+    delete globalThis.getComputedStyle;
+
+    const el = document.createElement('p');
+    document.body.appendChild(el);
+
+    let info: ReturnType<typeof getTransitionInfoDOM> | null = null;
+    expect(() => {
+      info = getTransitionInfoDOM(el, 'leave');
+    }).not.toThrow();
+
+    expect(info).not.toBeNull();
+    expect(info!.hasTransition).toBe(false);
+    expect(info!.hasAnimation).toBe(false);
+    expect(info!.duration).toBe(0);
+  });
+
+  it('恢复全局后仍能正常读到过渡信息', () => {
+    const el = document.createElement('p');
+    el.style.transitionDuration = '0.25s';
+    document.body.appendChild(el);
+
+    const info = getTransitionInfoDOM(el, 'enter');
+    expect(info.hasTransition).toBe(true);
+    expect(info.duration).toBeGreaterThan(0);
+  });
+});

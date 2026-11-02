@@ -131,13 +131,37 @@ function getStylePropAsArray(styles: CSSStyleDeclaration, prop: string): string[
 }
 
 /**
+ * 安全获取计算样式。
+ *
+ * ★ 2026-11-02：`getComputedStyle` 是**浏览器全局**，并非所有运行环境都有
+ * （Worker / 精简 jsdom / 某些自定义宿主）。此前直接调用，缺失时抛
+ * `ReferenceError: getComputedStyle is not defined`，且错误发生在离开钩子里
+ * ⇒ 元素永远停在 `*-leave-active *-leave-to` 上、**永不移除**（实测）。
+ *
+ * 语义约定：拿不到计算样式 ⇒ 视为「无过渡 / 无动画」⇒ 调用方立即完成，
+ * 这是唯一不会卡死的行为。
+ */
+function safeGetComputedStyle(el: Element): CSSStyleDeclaration | null {
+  if (typeof getComputedStyle !== 'function') return null;
+  try {
+    return getComputedStyle(el);
+  } catch {
+    return null;
+  }
+}
+
+/**
  * DOM 回退：获取过渡信息。
  */
 export function getTransitionInfoDOM(
   el: Element,
   _type: 'enter' | 'leave',
 ): TransitionDurationInfo {
-  const styles = getComputedStyle(el);
+  const styles = safeGetComputedStyle(el);
+  if (!styles) {
+    // 宿主没有 getComputedStyle ⇒ 按「无过渡 / 无动画」处理（立即完成）
+    return { duration: 0, hasTransition: false, hasAnimation: false };
+  }
   const transitionDelays = getStylePropAsArray(styles, 'transitionDelay');
   const transitionDurations = getStylePropAsArray(styles, 'transitionDuration');
   const animationDelays = getStylePropAsArray(styles, 'animationDelay');
@@ -682,7 +706,9 @@ export function waitForTransitionEndDOM(
 
   // FIX: P0-6 修复 DOM 回退版变量声明顺序问题
   // 将 pendingAnimations 声明移到 onEnd 之前，避免 onEnd 引用尚未声明的变量
-  const animations = getStylePropAsArray(getComputedStyle(el), 'animationName');
+  // ★ 2026-11-02：改用 safeGetComputedStyle —— 宿主没有该全局时不能抛错
+  const computed = safeGetComputedStyle(el);
+  const animations = computed ? getStylePropAsArray(computed, 'animationName') : [];
   const pendingAnimations = new Set(animations);
 
   const onEnd = (event: Event) => {

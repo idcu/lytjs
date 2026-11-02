@@ -111,14 +111,25 @@ function applyFLIPToDOMElement(
 
   child.classList.add(moveClass);
 
-  const styles = getComputedStyle(child);
-  const transitionDurations = styles
-    .getPropertyValue('transitionDuration')
-    .split(',')
-    .map((v) => v.trim());
-  const hasTransition = transitionDurations.some((d) => d !== '0s');
-
-  if (!hasTransition) {
+  // ============================================================
+  // ★ 2026-11-02 修复：此处原有三个同族缺陷
+  //   （`transition.ts` 的 `getTransitionInfoDOM` 在 2026-10-15 已修过同样的问题，
+  //    但**这里漏改了** —— 同一形态第二次出现）
+  //
+  //   ① 裸 `getComputedStyle(el)`：宿主没有该全局时抛 ReferenceError
+  //      （Worker / 精简 jsdom / 自定义宿主），整个 move 流程中断。
+  //   ② `getPropertyValue('transitionDuration')` 用的是 **camelCase**：
+  //      `CSSStyleDeclaration.getPropertyValue` 只认 kebab-case ⇒ 恒返回 `''`。
+  //   ③ 用**字符串**比较 `d !== '0s'` 判「有无过渡」：
+  //      `''` / `'auto'` / `'0.0s'` / `'0ms'` 全被当成「有」⇒ 恒为 true。
+  //
+  //   实测后果：**完全没写 CSS 过渡**的列表重排，也会挂 transitionend 监听 +
+  //   一个 **3 秒** 定时器，并且返回 `true`（声称"已应用动画"）。
+  //
+  //   修法：统一复用 `getTransitionInfoDOM`（kebab-case + 数值判定 + 缺全局防护）。
+  // ============================================================
+  const info = getTransitionInfoDOM(child, 'enter');
+  if (!info.hasTransition && !info.hasAnimation) {
     child.classList.remove(moveClass);
     return false;
   }
@@ -138,12 +149,8 @@ function applyFLIPToDOMElement(
   child.addEventListener('transitionend', onMoveEnd);
   child.addEventListener('animationend', onMoveEnd);
 
-  const durationStr = transitionDurations.reduce((max, d) => {
-    if (d.endsWith('ms')) return Math.max(max, parseFloat(d));
-    if (d.endsWith('s')) return Math.max(max, parseFloat(d) * 1000);
-    return max;
-  }, 0);
-  const duration = durationStr > 0 ? durationStr + 50 : 3000;
+  // 时长已由 getTransitionInfoDOM 统一解析（kebab-case + 数值判定）
+  const duration = info.duration > 0 ? info.duration + 50 : 3000;
   setTimeout(cleanup, duration);
 
   return true;

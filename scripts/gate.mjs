@@ -155,6 +155,18 @@ const GATES = [
       '（2026-11-02：单特性都测过但组合没测，导致两个 P0 在 8432 用例 + 12 门禁下存活）',
   },
   {
+    name: 'check-component-shapes',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-component-shapes.mjs'],
+    approx: '~4s',
+    desc:
+      '★ 组件级形态电池：KeepAlive / Teleport / Transition / TransitionGroup / ' +
+      'Suspense / 异步组件 / 动态组件 / v-model / provide-inject / 具名插槽 / ' +
+      '组件 v-for keyed 重排 —— 每个都单独测过，但「和 v-if / v-for / 状态更新组合」' +
+      '的形态才是用户真正会写的。末尾含「宿主缺少 getComputedStyle」的健壮性断言' +
+      '（2026-11-02：该缺口会让 Transition 离开钩子抛错、元素永不移除）',
+  },
+  {
     name: 'check-integration',
     tier: 'slow',
     cmd: ['node', 'scripts/check-integration.mjs'],
