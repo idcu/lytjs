@@ -379,6 +379,10 @@ function runSetup(instance: ComponentInternalInstance): SetupResult {
     return result;
   } catch (err) {
     handleError(err as Error, instance, 'setup function');
+    // ★ 2026-11-03：**记录**下来。客户端靠 `render = () => null` 降级（整棵树还能用），
+    //   但 SSR 必须能区分「组件主动不渲染」和「组件根本没起来」——
+    //   后者继续渲染只会得到空串（HTTP 200 空页），见 `ssr/src/render.ts` 的检查。
+    instance.setupError = err instanceof Error ? err : new Error(String(err));
     // 设置空操作渲染函数，防止静默空渲染
     instance.render = () => null as unknown as VNode;
     return undefined;

@@ -34,6 +34,7 @@
   "dependencies": {
     "@lytjs/common-error": "workspace:*",
     "@lytjs/common-events": "workspace:*",
+    "@lytjs/common-is": "workspace:*",
     "@lytjs/shared-types": "workspace:*"
   },
   "devDependencies": {

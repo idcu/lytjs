@@ -9,7 +9,7 @@ import type { VNode, VNodeChildren } from '@lytjs/vdom';
 // FIX: DTS build error - 统一从vdom 导入
 import { ShapeFlags, createVNode, createCommentVNode } from '@lytjs/vdom';
 import { isFunction } from '@lytjs/common-is';
-import { getCurrentInstance, onBeforeUnmount } from './lifecycle';
+import { getCurrentInstance, onBeforeUnmount, handleError } from './lifecycle';
 import { forceComponentUpdate } from './force-update';
 
 // ==================== 类型定义 ====================
@@ -286,6 +286,24 @@ export function defineAsyncComponent(
             state.isError = true;
             state.isLoading = false;
             state.attempts++;
+
+            // ★ 2026-11-03 修（P0）：**loader 失败必须上报**。
+            //
+            //   此前这里只改 state（`isError` / `error`）并触发重渲染，
+            //   **没有任何一处收到这个错误**：没有 `onErrorCaptured`、
+            //   没有 `app.errorHandler`、控制台一行没有。
+            //   实测（`scripts/check-error-paths.mjs` 第 [10] 组）：
+            //   loader reject 后页面只剩 `<!-- Async component error -->` 注释，
+            //   captured=0、console=0 —— 完全静默。
+            //
+            //   这在生产里是**常见**故障：动态 import 的 chunk 404 / 网络断开 /
+            //   部署后旧 chunk 被清理。用户只看到一块空白，监控毫无信号。
+            //
+            //   `handleError` 的传播顺序：errorCaptured → app.errorHandler →
+            //   都无人处理时用 `error()` 留痕（不是 dev-only 的 warn）。
+            //   注意 `onError` 的语义不变：它仍拥有「重试 / 放弃」的决定权，
+            //   上报只是**告知**，不改变流程。
+            handleError(error, instance, 'async component loader');
 
             if (onError) {
               // `onError` 拥有**决定权**：调用 `retry()` / `fail()`。

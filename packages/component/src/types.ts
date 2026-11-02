@@ -201,6 +201,17 @@ export interface ComponentRenderState {
    *   `renderToStringAsync`）只能靠猜时间，没法真正 await。
    */
   asyncDep?: Promise<unknown>;
+  /**
+   * `setup()` 抛出的错误（正常时为 undefined）。
+   *
+   * ⚠️ 2026-11-03 新增。此前 `runSetup` 的 catch 只做两件事：`handleError(...)` +
+   *   `instance.render = () => null`，**错误本身没有被记录**。客户端这样处理是对的
+   *   （降级为"这个组件不渲染"，整棵树还能用）；但 **SSR 会把"不渲染"直接变成空串**，
+   *   服务端于是返回 `200 + 空页` —— 正是本仓反复列为最难排查的失败方式。
+   *
+   *   SSR 侧据此判断「这个组件是不是根本没起来」，从而明确抛错而不是静默输出空页。
+   */
+  setupError?: Error;
 }
 
 /** 组件上下文状态：props、slots、attrs、emit、provides 等 */

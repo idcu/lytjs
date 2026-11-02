@@ -191,6 +191,32 @@ const GATES = [
       '<component :is> 把组件名当标签、静态模板 attrs 在实例间累积',
   },
   {
+    name: 'check-package-deps',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-package-deps.mjs'],
+    approx: '~2s',
+    desc:
+      '★ 包依赖声明完整性：src 里的**运行时** import 必须写进 package.json，' +
+      '否则 tsup 会把它打包进产物 ⇒ 运行时出现**两份模块实例**，' +
+      'nextTick 队列 / setErrorHandler / 任何 let 单例全部不共享，且失效是静默的。' +
+      '两层判据：① AST 解析出的运行时导入必须已声明（类型导入只提示）；' +
+      '② 产物里不得出现单例包（scheduler / reactivity）的实现。' +
+      '2026-11-03：@lytjs/common-scheduler 未在 vdom 声明 ⇒ 被内联，' +
+      '导致「给 scheduler 打的修复完全不生效」，排查了很久',
+  },
+  {
+    name: 'check-error-paths',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-error-paths.mjs'],
+    approx: '~3s',
+    desc:
+      '★ 错误路径：setup / render / 生命周期 / 事件 / watch / computed / 异步 loader / ' +
+      'SSR 各条路径逐条验证「错误被谁接住、会不会静默、出错后还能不能用」。' +
+      '这类缺陷的共同点是**所有正常路径的测试都照常通过**。' +
+      '2026-11-03 首次运行抓到 3 个：调度器把未处理错误整个丢掉（生产构建无异常无日志）、' +
+      '异步组件 loader 失败零上报、SSR setup 抛错输出空串（200 空页）',
+  },
+  {
     name: 'check-lifecycle-release',
     tier: 'fast',
     cmd: ['node', 'scripts/check-lifecycle-release.mjs'],

@@ -215,6 +215,7 @@ async function renderComponentNodeAsync(node: VNode): Promise<string> {
 
   const instance = createComponentInstance(node, null);
   setupComponent(instance);
+  assertSetupSucceeded(instance, name);
 
   // ★ 关键：真正等待 async setup
   if (instance.asyncDep) {
@@ -289,6 +290,39 @@ async function renderComponentNodeAsync(node: VNode): Promise<string> {
 }
 
 /**
+ * `setup()` 抛错时必须**明确失败**，不能静默输出空页。
+ *
+ * ## 为什么
+ *
+ * 客户端里 `setup` 抛错的处理是「降级」：`handleError(...)` + `instance.render = () => null`
+ * ⇒ 这个组件不渲染，整棵树照常工作。这个取舍是对的（一个坏组件不该白屏整站）。
+ *
+ * 但**同样的行为放到 SSR 上就变成了灾难**：组件不渲染 ⇒ 该位置输出空串 ⇒
+ * 服务端返回 `200 + 空页`。而本仓已经在两处专门为此抛错：
+ *   · 组件写了 `template` 但进程没注入编译器
+ *   · 同步 `renderToString` 遇到 `async setup`
+ * 两者都注明「继续渲染只会得到空白页（HTTP 200），因此这里直接失败」。
+ * `setup` 抛错属于同一类，此前却漏了 —— 实测（`scripts/check-error-paths.mjs`）
+ * 输出 `""`、无异常，只在控制台留一行（线上没人看）。
+ *
+ * ## 语义
+ *
+ * 抛出的是**新错误**，`message` 里带上组件名与原始错误消息，`cause` 指向原始错误
+ * （Node 16.9+ / 现代浏览器支持），方便上层做错误页时保留堆栈。
+ */
+function assertSetupSucceeded(instance: { setupError?: Error }, name: string): void {
+  const err = instance.setupError;
+  if (!err) return;
+  const wrapped = new Error(
+    `[lytjs/ssr] 组件 "${name}" 的 setup() 抛错，无法渲染。\n` +
+      `  继续渲染只会得到空白页（HTTP 200），因此这里直接失败。\n` +
+      `  原始错误：${err.message}`,
+  );
+  (wrapped as Error & { cause?: unknown }).cause = err;
+  throw wrapped;
+}
+
+/**
  * 渲染选项式组件节点
  *
  * 修复说明：旧实现对组件一律 `return ''`，而 defineComponent 返回的是选项对象，
@@ -338,6 +372,7 @@ function renderComponentNode(node: VNode): string {
 
   const instance = createComponentInstance(node, null);
   setupComponent(instance);
+  assertSetupSucceeded(instance, name);
 
   const renderFn = instance.render ?? (type.render as typeof instance.render);
   if (typeof renderFn !== 'function') {

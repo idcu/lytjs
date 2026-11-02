@@ -41,6 +41,50 @@ export function setErrorHandler(handler: ((error: Error, info: string) => void) 
   globalErrorHandler = handler;
 }
 
+/**
+ * 上报一个「逃出调度队列」的错误。
+ *
+ * ## 为什么需要这个函数
+ *
+ * 三条 flush 路径（pre-flush / job / post-flush）都必须 `try/catch` ——
+ * 一个任务失败不能中断整个队列。但此前的 catch 体是：
+ *
+ * ```ts
+ * if (globalErrorHandler) globalErrorHandler(e, '…');
+ * if (__DEV__) { console.error('…', e); }
+ * ```
+ *
+ * 而 `setErrorHandler()` **全仓从未被调用过**（`globalErrorHandler` 恒为 null），
+ * 且 `if (__DEV__)` 在发布产物里被整块 tree-shake 掉 —— 实测 dist 里连
+ * `'job execution failed'` 这个字符串都不存在。
+ *
+ * ⇒ **生产构建下，任何未处理的渲染错误被完全丢弃**：没有异常、没有日志、
+ *   `window.onerror` 也不会触发，监控系统收不到任何信号。用户只看到页面少了一块。
+ *
+ * 这正是本仓反复出现、也反复被列为最难排查的失败方式（「静默」）。
+ *
+ * ## 因此这里的规则
+ *
+ * 1. 有 `globalErrorHandler` ⇒ 交给它（并容忍它自己抛错）
+ * 2. 否则 ⇒ **无条件** `console.error`。**不要**加 `if (__DEV__)`：
+ *    错误是否可见，不应该取决于构建模式。
+ */
+function reportUnhandledError(e: unknown, info: string): void {
+  const err = e instanceof Error ? e : new Error(String(e));
+
+  if (globalErrorHandler) {
+    try {
+      globalErrorHandler(err, info);
+      return;
+    } catch (handlerErr) {
+      // 处理器自身抛错：两个错误都要留下，否则又是一次静默
+      console.error(`[LytJS] 全局错误处理器自身抛错（原错误来自 ${info}）：`, handlerErr);
+    }
+  }
+
+  console.error(`[LytJS] 未处理的错误（${info}）：`, err);
+}
+
 // ============================================================
 // 调度器状态
 // ============================================================
@@ -178,10 +222,7 @@ export function flushJobs(): void {
         try {
           cb();
         } catch (e) {
-          if (globalErrorHandler) globalErrorHandler(e as Error, 'pre-flush callback');
-          if (__DEV__) {
-            console.error('[LytJS] pre-flush callback failed:', e);
-          }
+          reportUnhandledError(e, 'pre-flush callback');
         }
       }
       preFlushCbs.length = 0;
@@ -196,10 +237,7 @@ export function flushJobs(): void {
         try {
           cb();
         } catch (e) {
-          if (globalErrorHandler) globalErrorHandler(e as Error, 'post-flush callback');
-          if (__DEV__) {
-            console.error('[LytJS] post-flush callback failed:', e);
-          }
+          reportUnhandledError(e, 'post-flush callback');
         }
       }
       postFlushCbs.length = 0;
@@ -258,10 +296,7 @@ function flushQueueByPriority(): void {
         try {
           job!();
         } catch (e) {
-          if (globalErrorHandler) globalErrorHandler(e as Error, 'job execution');
-          if (__DEV__) {
-            console.error('[LytJS] job execution failed:', e);
-          }
+          reportUnhandledError(e, 'job execution');
         }
         // 不递增 i，因为 splice 后下一个元素移到了当前位置
       } else {
