@@ -13,6 +13,26 @@
  *   - `@lytjs/core/runtime` 的 `createApp`（不含编译器）    → **80.7 KB gzip**
  *   - 只用 `@lytjs/vdom` 的 `createVNode` + `h`             → **1.6 KB gzip**
  *
+ * ## 2026-11-03 的一次**主动**上调（+2.6 / +2.4 KB），理由写在下面
+ *
+ * 这一批不是单个改动，而是 2026-11-02 ~ 11-03 连续几轮**修正确性缺陷**的累积：
+ *
+ *   · `patch-component` 改用 `cloneVNode` 合并 attrs（修「静态模板的 attrs 在实例
+ *     之间累积」—— 第 2 个实例会继承上一个的 class）；
+ *   · 过渡引擎新增 `safeGetComputedStyle`（修「宿主缺少 getComputedStyle 时
+ *     `<Transition>` 的离开钩子抛错、元素永不移除」）；
+ *   · 编译器新增提升引用的可达性分析（修「生成代码里有未被引用的提升声明」）。
+ *
+ * 实测 87.4 → 90.2 KB（minimal-app）/ 85.4 → 87.9 KB（runtime-app）。
+ * 预算随之从 89 500 / 87 500 上调到 **94 000 / 92 000**（仍留 ~2 KB 余量）。
+ *
+ * ⚠️ **真正的欠账不在这里**：`minimal-app` 与 `runtime-app` 只差 2 KB，
+ * 而 `runtime-app` 本该完全不含编译器。原因是 `@lytjs/renderer` 的
+ * `signal/signal-renderer.ts`、`vapor/vapor-app.ts`、`vapor/vapor-ssr.ts`
+ * **静态** import 了 `@lytjs/compiler`，而 renderer 从 core 的 `createApp` 可达
+ * ⇒ 编译器被拖进每个应用的产物。把这三处改成**按需动态加载**预计能省下几十 KB，
+ * 这是下一批的工作（改动面在 renderer 的模板编译调用点，需单独立项）。
+ *
  * ## 2026-10-29 的一次**主动**上调（+2.2 KB），理由写在下面
  *
  * 修「`<Transition>` 根本不播动画」（报告 §27）时，过渡引擎（`vdom/transition.ts`
@@ -105,7 +125,7 @@ const count = ref(0);
 const double = computed(() => count.value * 2);
 export const app = createApp({ render: () => h('div', null, [String(count.value), String(double.value)]) });
 export { count, double };`,
-    budget: 89_500,
+    budget: 94_000,
   },
   {
     name: 'runtime-app',
@@ -116,7 +136,7 @@ const count = ref(0);
 const double = computed(() => count.value * 2);
 export const app = createApp({ render: () => h('div', null, [String(count.value), String(double.value)]) });
 export { count, double };`,
-    budget: 87_500,
+    budget: 92_000,
   },
 ];
 

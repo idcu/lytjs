@@ -58,11 +58,35 @@ export function generate(ast: RootNode, options: CodegenOptions = {}): CodegenRe
   const preamble = genHelperImports(ast.helpers, options.runtimeModuleName);
 
   // 生成提升的变量声明
+  //
+  // ★ 2026-11-03 修：只输出**正文真的引用到了**的提升。
+  //
+  //   此前是「`ast.hoists` 里有几条就输出几条」，但提升引用只在**部分**场景下
+  //   真的被写进 render 正文 —— 例如 `<div><span>a</span><p>{{x}}</p></div>`
+  //   的产物是：
+  //
+  //     const _hoisted_1 = createElementVNode("span", null, "a")   ← 声明了
+  //     return (openBlock(), createBlock("div", null, [
+  //       createElementVNode("span", null, "a"),                    ← 又造了一遍
+  //       (openBlock(), createBlock("p", null, toDisplayString(_ctx.x), 1))
+  //     ]))
+  //
+  //   `_hoisted_1` **从未被引用** ⇒ 模块级死代码：多一次 vnode 分配、
+  //   多一行噪音，而且会让人误以为「静态提升生效了」。
+  //
+  //   现在按「引用可达性」过滤：从 `codegenNode` 出发收集实际出现的
+  //   `_hoisted_N`，并处理提升之间的传递引用。编号保持不变（不重排），
+  //   输出顺序也不变，因此不影响 source map。
   if (ast.hoists && ast.hoists.length > 0) {
+    const usedHoists = collectUsedHoistIndices(ast);
     for (let i = 0; i < ast.hoists.length; i++) {
       const hoistedNode = ast.hoists[i];
       // FIX: P1-3 COMPILER-NEW-04 - 跳过死代码（空语句序列）
       if (isDeadCode(hoistedNode as JSChildNode)) {
+        continue;
+      }
+      // 未被正文引用 ⇒ 不输出（否则是纯开销）
+      if (!usedHoists.has(i)) {
         continue;
       }
       context.push(`const _hoisted_${i + 1} = `);
@@ -101,6 +125,59 @@ export function generate(ast: RootNode, options: CodegenOptions = {}): CodegenRe
     ast,
     map: sourceMapGen ? sourceMapGen.toJSON() : undefined,
   };
+}
+
+// ============================================================
+// 提升引用的可达性分析（2026-11-03 新增）
+// ============================================================
+
+/**
+ * 收集 render 正文**实际引用到**的 `_hoisted_N`（返回 0-based 索引集合）。
+ *
+ * 为什么要它：`ast.hoists` 是「静态提升表」，但提升引用不一定真的被写进正文。
+ * 无条件输出全部声明会产生模块级死代码（见 `generate` 里的说明）。
+ *
+ * 处理**传递引用**：某个提升节点自身也可能引用另一个提升（历史上出现过
+ * `_hoisted_1 = div(…, span(…))` 与 `_hoisted_2 = span(…)` 两份并存的形态），
+ * 所以要迭代到不动点。
+ */
+function collectUsedHoistIndices(ast: RootNode): Set<number> {
+  const used = new Set<number>();
+  const seen = new WeakSet<object>();
+
+  const scan = (node: unknown): void => {
+    if (node == null || typeof node !== 'object') return;
+    if (Array.isArray(node)) {
+      for (const child of node) scan(child);
+      return;
+    }
+    if (seen.has(node as object)) return;
+    seen.add(node as object);
+
+    const n = node as { type?: number; content?: unknown };
+    if (n.type === NodeTypes.SIMPLE_EXPRESSION && typeof n.content === 'string') {
+      const m = /^_hoisted_(\d+)$/.exec(n.content);
+      if (m) used.add(Number(m[1]) - 1);
+    }
+    for (const value of Object.values(node as Record<string, unknown>)) {
+      if (value && typeof value === 'object') scan(value);
+    }
+  };
+
+  scan(ast.codegenNode);
+
+  // 传递引用：被保留的提升节点自身引用到的其它提升也要保留
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const idx of [...used]) {
+      const before = used.size;
+      scan(ast.hoists?.[idx]);
+      if (used.size !== before) changed = true;
+    }
+  }
+
+  return used;
 }
 
 // ============================================================

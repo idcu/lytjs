@@ -361,6 +361,80 @@ console.log('\n   [静态模板的 attrs 隔离]');
   );
 }
 
+{
+  // 两个静态实例 + v-if 卸载其一：不得误删另一个
+  const Static = { template: `<div class="own">inner</div>` };
+  const showA = ref(true);
+  const root = document.createElement('div');
+  document.body.appendChild(root);
+  await createApp({
+    components: { Static },
+    setup: () => ({ showA }),
+    template: `<div><span class="mark">M</span><Static v-if="showA" /><Static /></div>`,
+  }).mount(root);
+  await tick();
+  check('静态实例卸载：初始 2 个', root.querySelectorAll('.own').length === 2, root.innerHTML);
+  showA.value = false;
+  await tick();
+  check('静态实例卸载：卸载后剩 1 个（未误删另一个）', root.querySelectorAll('.own').length === 1, root.innerHTML);
+  check('静态实例卸载：兄弟标记仍在', root.querySelector('.mark') !== null, root.innerHTML);
+}
+{
+  // 静态组件放在 v-for 里：增删时 class 互不污染
+  const Static = { template: `<div class="own">inner</div>` };
+  const list = ref(['a', 'b']);
+  const root = document.createElement('div');
+  document.body.appendChild(root);
+  await createApp({
+    components: { Static },
+    setup: () => ({ list }),
+    template: `<div><ul class="l"><li v-for="x in list" :key="x"><Static :class="x" /></li></ul></div>`,
+  }).mount(root);
+  await tick();
+  list.value = ['a', 'b', 'c'];
+  await tick();
+  const cls = [...root.querySelectorAll('.own')].map((e) => e.className).join('|');
+  check('静态组件在 v-for 中：增长后 class 互不污染', cls === 'own a|own b|own c', cls);
+  check('静态组件在 v-for 中：无 li 逃逸', root.querySelectorAll('li').length === 3, `total=${root.querySelectorAll('li').length}`);
+  list.value = ['b'];
+  await tick();
+  check('静态组件在 v-for 中：缩减后 class 正确', root.querySelector('.own')?.className === 'own b', root.querySelector('.own')?.className);
+}
+{
+  // 两个不同父组件各自使用同一静态组件
+  const Static = { template: `<div class="own">inner</div>` };
+  const P1 = { components: { Static }, template: `<section class="p1"><Static class="x" /></section>` };
+  const P2 = { components: { Static }, template: `<section class="p2"><Static class="y" /></section>` };
+  const root = document.createElement('div');
+  document.body.appendChild(root);
+  await createApp({ components: { P1, P2 }, template: `<div><P1 /><P2 /></div>` }).mount(root);
+  await tick();
+  check('两个父组件：P1 内 class 正确', root.querySelector('.p1 .own')?.className === 'own x', root.querySelector('.p1 .own')?.className);
+  check('两个父组件：P2 内 class 正确（不被 P1 污染）', root.querySelector('.p2 .own')?.className === 'own y', root.querySelector('.p2 .own')?.className);
+}
+{
+  // 两个组件**模板字符串完全相同**：共用一个编译产物，但状态必须独立
+  const SAME = `<button class="b" @click="inc">{{n}}</button>`;
+  const mk = (start) => ({
+    setup() {
+      const n = ref(start);
+      return { n, inc: () => n.value++ };
+    },
+    template: SAME,
+  });
+  const root = document.createElement('div');
+  document.body.appendChild(root);
+  await createApp({ components: { C1: mk(0), C2: mk(100) }, template: `<div><C1 /><C2 /></div>` }).mount(root);
+  await tick();
+  const click = (el) => el?.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+  click(root.querySelectorAll('.b')[0]);
+  await tick();
+  click(root.querySelectorAll('.b')[1]);
+  await tick();
+  const vals = [...root.querySelectorAll('.b')].map((e) => e.textContent?.trim()).join(',');
+  check('同模板字符串的两个组件：状态彼此独立', vals === '1,101', vals);
+}
+
 // ── 汇总 ──
 console.log('');
 if (fail === 0) {
