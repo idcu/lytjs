@@ -2,6 +2,7 @@
 // All type definitions for @lytjs/component
 
 import type { VNode } from '@lytjs/vdom';
+import type { EffectScope } from '@lytjs/reactivity';
 import type { BaseAppContext } from '@lytjs/shared-types';
 import type {
   SlotFunction,
@@ -174,6 +175,23 @@ export interface ComponentRenderState {
   subTree: VNode | null;
   render?: RenderFunction;
   effects?: Array<{ stop(): void }>;
+  /**
+   * 组件自己的 effect scope：`setup()` 里创建的 effect / watch / watchEffect /
+   * computed 全部收集在这里，卸载时一次性 `stop()`。
+   *
+   * ⚠️ 2026-11-03 新增（P0）。此前**没有任何 scope**：`runSetup` 只是
+   * `setCurrentInstance(instance); setup(...)`，而 setup 里 `watch(...)` 创建的
+   * effect 落在**当前活跃 scope**（顶层调用时根本没有 scope）⇒ 无人持有、无人停止。
+   * 实测后果（`scripts/check-lifecycle-release.mjs`）：
+   *   · `app.unmount()` 后 `onUnmounted` 正常触发（4/4）、DOM 也清空，
+   *     但 `watch` 回调**照样继续跑**（改一次状态 → 4 个已卸载组件的回调全被调用）；
+   *   · watcher 持有组件实例引用 ⇒ 实例 → subTree → 已脱离文档的 DOM 全部无法回收；
+   *   · 反复挂载/卸载会线性累积（实测 20 轮 → 20 个残留监听器）。
+   *
+   * `detached: true`：子组件的 scope 不挂到父 scope 上 —— 子组件的销毁由渲染器
+   * 递归 unmount 负责（KeepAlive 停用时**不能**被父级连带停掉）。
+   */
+  scope?: EffectScope;
   update?: () => void;
   /**
    * `async setup` 返回的 Promise（同步 setup 时为 undefined）。

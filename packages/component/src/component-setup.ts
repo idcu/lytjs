@@ -3,7 +3,7 @@
 
 import { isFunction, isObject, hasOwn, NOOP, EMPTY_OBJ, isPromise } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
-import { proxyRefs, signal } from '@lytjs/reactivity';
+import { proxyRefs, signal, effectScope } from '@lytjs/reactivity';
 import type {
   ComponentOptions,
   ComponentInternalInstance,
@@ -110,6 +110,11 @@ export function createComponentInstance(
       appContext,
       attrs: {},
       accessCache: null as Record<string, number> | null,
+      // ★ 2026-11-03 新增（P0）：组件自己的 effect scope。
+      //   detached = true —— 子组件的销毁由渲染器递归 unmount 负责；
+      //   若挂到父 scope 上，父组件重渲染/停用会连带停掉仍在使用的子组件
+      //   （KeepAlive 停用的组件必须保持"活"）。
+      scope: effectScope(true),
     };
 
     // 创建绑定到此实例的 emit 函数
@@ -187,7 +192,14 @@ export function setupComponent(instance: ComponentInternalInstance): void {
           timeoutId = undefined;
         }
         if (instance.isUnmounted) return;
-        handleSetupResult(instance, resolvedResult as SetupResult);
+        // ★ 2026-11-03：同样放进组件 scope —— `async setup` 里 `await` 之后的代码
+        //   已经脱离了 `scope.run` 的同步栈（Promise 续体），这里至少保证
+        //   「resolve 阶段同步创建的 effect」能被收集到组件 scope 里。
+        if (instance.scope) {
+          instance.scope.run(() => handleSetupResult(instance, resolvedResult as SetupResult));
+        } else {
+          handleSetupResult(instance, resolvedResult as SetupResult);
+        }
         vnode.isAsyncPlaceholder = false;
 
         // ★ FIX（2026-10-02）：async setup 解析后**必须触发一次重渲染**。
@@ -347,8 +359,23 @@ function runSetup(instance: ComponentInternalInstance): SetupResult {
 
   try {
     const setupContext = createSetupContext(instance);
-    // ★ 传**稳定代理**而非 instance.props 本体（见 getStableProps 的说明）
-    const result = setup(getStableProps(instance), setupContext);
+    // ★ 2026-11-03 修（P0）：**在组件自己的 effect scope 里执行 setup**。
+    //
+    //   此前这里就是裸的 `setup(props, ctx)`，而 setup 里 `watch()` / `watchEffect()`
+    //   创建的 effect 会落到"当前活跃 scope" —— 顶层调用时根本没有 scope ⇒
+    //   **无人持有、无人停止**。卸载时 `onUnmounted` 照常触发、DOM 也清空，
+    //   但那些 effect 仍然活着（实测：卸载 4 个组件后改一次状态，4 个回调全被调用），
+    //   而且它们持有组件实例引用 ⇒ 实例 → subTree → 已脱离文档的 DOM 全部无法回收。
+    //
+    //   放进 scope 后：`watch` / `watchEffect` / `effect` / `computed` 都会被
+    //   `recordEffectScope` 收集，`callUnmountedHook` 里 `scope.stop()` 一次性释放；
+    //   用户在 setup 里写的 `onScopeDispose(fn)` 也终于有了宿主 scope。
+    //
+    //   `scope` 缺失时（单测里手工构造的部分实例）退回直接调用，保持向后兼容。
+    const props = getStableProps(instance);
+    const result = instance.scope
+      ? instance.scope.run(() => setup(props, setupContext))
+      : setup(props, setupContext);
     return result;
   } catch (err) {
     handleError(err as Error, instance, 'setup function');

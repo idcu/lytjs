@@ -191,6 +191,18 @@ const GATES = [
       '<component :is> 把组件名当标签、静态模板 attrs 在实例间累积',
   },
   {
+    name: 'check-lifecycle-release',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-lifecycle-release.mjs'],
+    approx: '~3s',
+    desc:
+      '★ 生命周期资源释放：卸载后 setup 里创建的 watch / watchEffect / 渲染 effect ' +
+      '必须停止、监听器与定时器必须清理。这类缺陷**不会让任何行为断言变红** —— ' +
+      'DOM 会正确移除、onUnmounted 会正确触发，坏掉的是看不见的那一半。' +
+      '2026-11-03 实测：组件实例从来没有 effect scope ⇒ 20 轮挂载/卸载后改一次状态，' +
+      '20 个已卸载组件的回调全被调用（泄漏正好 +N）',
+  },
+  {
     name: 'check-integration',
     tier: 'slow',
     cmd: ['node', 'scripts/check-integration.mjs'],

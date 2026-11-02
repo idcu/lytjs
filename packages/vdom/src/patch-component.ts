@@ -574,9 +574,26 @@ export function createComponentPatch<HN, HE extends HN>(
     //
     // 调度器与 `watchEffect` 的默认 `flush: 'pre'` 保持一致（同一个 `queuePreFlushCb`），
     // 所以「多次改数据只重渲染一次」的批处理行为不变；区别只在于**我们拿到了 runner**。
-    renderEffect = effect(update, {
-      scheduler: () => queuePreFlushCb(() => renderEffect?.()),
-    });
+    //
+    // ★ 2026-11-03 修（P0）：把渲染 effect **建在组件的 effect scope 里**。
+    //
+    //   此前它是裸 `effect(...)`，落在"当前活跃 scope"（挂载时通常没有）⇒ 无人持有。
+    //   组件卸载时 `onUnmounted` 会触发、DOM 会被移除，但**渲染 effect 仍然活着**：
+    //   · 它持有 `component` / `subTree` 引用 ⇒ 整棵 vnode 树 + 已脱离文档的 DOM 泄漏；
+    //   · 状态再变时会再次执行 `update()`，对一个已卸载组件跑 patch。
+    //
+    //   放进 scope 后由 `callUnmountedHook` 里的 `scope.stop()` 一并释放 ——
+    //   与 setup 里创建的 watch / watchEffect 共用同一个释放点，不会漏。
+    //   注意 KeepAlive 的**停用**（deactivate）不会 stop scope，所以缓存组件
+    //   重新激活时渲染 effect 依然是活的。
+    const createRenderEffect = (): void => {
+      renderEffect = effect(update, {
+        scheduler: () => queuePreFlushCb(() => renderEffect?.()),
+      });
+    };
+    const componentScope = (component as unknown as { scope?: { run<T>(fn: () => T): T } }).scope;
+    if (componentScope) componentScope.run(createRenderEffect);
+    else createRenderEffect();
   }
 
   return {

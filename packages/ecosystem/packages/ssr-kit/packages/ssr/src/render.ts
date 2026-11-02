@@ -268,7 +268,24 @@ async function renderComponentNodeAsync(node: VNode): Promise<string> {
   subTree = applyAttrsToRoot(instance, subTree, type);
   instance.subTree = subTree as typeof instance.subTree;
 
-  return renderToStringAsync(subTree as VNode | VNode[] | string | number | null | undefined);
+  // ★ 2026-11-03 新增（P0）：**SSR 必须主动释放组件副作用**。
+  //
+  //   服务端每次渲染都会 `createComponentInstance()` 造一个新实例，而这些实例
+  //   **永远不会被 unmount**（没有 KeepAlive、没有 app.unmount）。客户端靠
+  //   `unmount → callUnmountedHook → scope.stop()` 释放，SSR 没有任何等价时机。
+  //
+  //   实测（修复前）：同一组件渲染 50 次后改一次共享状态 ⇒ **50 个回调全部被调用**
+  //   （`scripts/check-lifecycle-release.mjs` 的 [12] 组）。长跑服务器上这会随
+  //   请求量线性增长：每个请求泄漏的 watcher 都持有自己的组件实例 → subTree。
+  //
+  //   放在 `finally` 里：即使子树的递归渲染抛错，也不留下半渲染实例的副作用。
+  try {
+    return await renderToStringAsync(
+      subTree as VNode | VNode[] | string | number | null | undefined,
+    );
+  } finally {
+    instance.scope?.stop();
+  }
 }
 
 /**
@@ -374,7 +391,13 @@ function renderComponentNode(node: VNode): string {
   subTree = applyAttrsToRoot(instance, subTree, type as { inheritAttrs?: boolean });
 
   instance.subTree = subTree as typeof instance.subTree;
-  return renderToString(subTree as VNode | VNode[] | string | number | null | undefined);
+  // ★ 2026-11-03（P0）：与异步路径同理 —— SSR 实例永不被 unmount，
+  //   必须在渲染完成后主动 `scope.stop()`，否则每个请求泄漏一份副作用。
+  try {
+    return renderToString(subTree as VNode | VNode[] | string | number | null | undefined);
+  } finally {
+    instance.scope?.stop();
+  }
 }
 
 /**

@@ -398,6 +398,20 @@ export function callUnmountedHook(instance: ComponentInternalInstance): void {
   callLifecycleHook(instance, 'unmounted');
   callOptionsHook(instance, unmounted, 'unmounted');
   instance.isUnmounted = true;
+
+  // ★ 2026-11-03 新增（P0）：**停止组件自己的 effect scope**。
+  //
+  //   放在最后：`unmounted` 钩子里可能还要读/写响应式状态（例如把"已卸载"上报给
+  //   外部 store），此时副作用仍应是活的；钩子跑完再统一释放。
+  //
+  //   停掉的东西包括 setup 里创建的 `watch` / `watchEffect` / `effect` /
+  //   `computed`，以及 `onScopeDispose` 注册的回调。
+  //
+  //   此前**完全没有人停**：卸载后 watcher 回调继续执行，并持有组件实例引用
+  //   ⇒ 实例 → subTree → 已脱离文档的 DOM 全部泄漏（实测 20 轮挂载/卸载线性累积）。
+  //
+  //   `stop()` 是幂等的，重复调用安全（KeepAlive 的淘汰路径也会走这里）。
+  instance.scope?.stop();
 }
 
 /**
