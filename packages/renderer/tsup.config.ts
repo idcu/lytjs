@@ -10,6 +10,10 @@ export default defineConfig({
     //   （`@lytjs/renderer/server` / `@lytjs/renderer/client`），必须有对应入口。
     'server/index': 'src/server/server-components.ts',
     'client/index': 'src/client/server-components-client.ts',
+    // ★ 2026-11-02：**同步** Signal 渲染器子路径。
+    //   包根的 `createSignalRenderer` 是 async 懒加载包装，需要同步实例的调用方
+    //   此前只能相对穿透到 src（示例因此不可移植）。本入口把同步版暴露为包 API。
+    'signal/index': 'src/signal/index.ts',
   },
   format: ['esm', 'cjs'],
   dts: {

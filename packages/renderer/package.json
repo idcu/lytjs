@@ -41,6 +41,11 @@
       "types": "./dist/client/index.d.ts",
       "import": "./dist/client/index.mjs",
       "require": "./dist/client/index.cjs"
+    },
+    "./signal": {
+      "types": "./dist/signal/index.d.ts",
+      "import": "./dist/signal/index.mjs",
+      "require": "./dist/signal/index.cjs"
     }
   },
   "files": [

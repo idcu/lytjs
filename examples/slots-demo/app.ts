@@ -6,13 +6,14 @@
 
 import { ref } from '@lytjs/reactivity';
 import { createVNode } from '@lytjs/vdom';
-// ⚠️ 2026-11-02 修正：此前这里用 `../../packages/renderer/src/signal/signal-renderer`
-//   穿透到包**源码**，理由是「@lytjs/renderer 的 dist 导出与 src 不一致」。
-//   该理由已不成立：`createSignalRenderer` / `SignalRenderer` 均已从
-//   `@lytjs/renderer` 正式导出（可用 `node -e "import('@lytjs/renderer')"` 复验）。
-//   示例应走**包名**——否则用户复制过去必然跑不起来。
-import { createSignalRenderer } from '@lytjs/renderer';
-import type { SignalRenderer } from '@lytjs/renderer';
+// ⚠️ 2026-11-02：必须走 `@lytjs/renderer/signal`（**同步**版）。
+//   包根 `@lytjs/renderer` 的 `createSignalRenderer` 是 async 懒加载包装，
+//   直接用它拿到的是 Promise ⇒ 后续 `renderer.render(...)` 会报
+//   `renderer.render is not a function`。
+//   此前这里用相对路径穿透 `packages/renderer/src/signal/signal-renderer`，
+//   示例因此不可移植；现已把同步版正式暴露为子路径导出。
+import { createSignalRenderer } from '@lytjs/renderer/signal';
+import type { SignalRenderer } from '@lytjs/renderer/signal';
 
 /** 具名插槽 + 默认插槽的卡片组件 */
 const Card = {
