@@ -498,6 +498,118 @@ def check_doc_consistency():
     return False, "DESIGN.md 里找不到 §9.3 的脚本代码块"
 
 
+def check_locale_isolation(base):
+    """判死 locale 泄漏：段 3 的 LC_ALL 不得泄漏成持久变量影响段 4。
+
+    两个判据（行为 + 结构）：
+    ① 行为：在 UTF-8 locale 下跑合法基线，段 4 不得把小写 kebab-case 文件名
+       误报为「命名含大写」。若段 4 用 `[A-Z]` 且段 3 泄漏被消除，
+       bash 3.2 UTF-8 下 glob 按 collation 展开会匹配小写 → 假阳性。
+    ② 结构：脚本里不得出现 `LC_ALL=C <var>=...;` 形式的泄漏赋值
+       （LC_ALL 必须作为命令前缀，如 `LC_ALL=C xrun`）。
+    见坑 bash3-utf8-varname-eats-byte / 设计稿 §9.1-8。
+    """
+    bash = shutil.which("bash") or "bash"
+    # ① 行为：UTF-8 locale 下合法基线不应有「命名含大写」
+    env = dict(os.environ)
+    env["LC_ALL"] = "zh_CN.UTF-8"
+    env["LANG"] = "zh_CN.UTF-8"
+    p = subprocess.run([bash, LINT, "keel"], cwd=base,
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+    out = p.stdout.decode("utf-8", "replace")
+    false_upper = [l for l in out.splitlines() if "命名含大写" in l]
+    if false_upper:
+        return False, ("UTF-8 locale 下段 4 误报 %d 条「命名含大写」——"
+                       "段 4 glob 非 locale 无关或段 3 泄漏已失: %s"
+                       % (len(false_upper), false_upper[0][:80]))
+    # ② 结构：不得有泄漏形式 `LC_ALL=C VAR=...;`（排除注释行）
+    src = open(LINT, encoding="utf-8").read()
+    code_lines = [l for l in src.splitlines() if not l.lstrip().startswith("#")]
+    code = "\n".join(code_lines)
+    leaks = re.findall(r"LC_ALL=C\s+[A-Za-z_][A-Za-z0-9_]*=", code)
+    if leaks:
+        return False, "脚本含 %d 处 LC_ALL 泄漏赋值（应为命令前缀）: %s" % (len(leaks), leaks[0])
+    return True, "UTF-8/C 双 locale 下段 4 无误报；无 LC_ALL 泄漏赋值"
+
+
+def check_prose_numbers():
+    """门面散文里的版本号与自测数字必须与真源一致（ADR 0018）。
+
+    为什么需要它：徽章与 §9.3 代码块有机器守（§9.1-17 / DOC 检查），但
+    README / DESIGN.md **散文**里的 `--ref vX.Y.Z`、"N/N 自测比分"、"N 用例"
+    没有任何判据——2026-11-02 评估实测漂了 12 处（39/39、41 例、42/42、v3.4.6），
+    正是 Lint Leakage 在自家文档上的复现。手改只能补这一版，判据才能拦住下一版。
+
+    真源：用例数 = len(CASES)（总分母 +1 元检查）；版本 = keel/INDEX.md 的 keel-version。
+    目标：仓根 README.md + DESIGN.md（存在才查）——只守门面，docs/、pitfalls/
+    等历史叙述密集区不在覆盖内。
+    豁免：行内带 vX.Y.Z（≠当前版本）的比分/用例断言视为历史叙述，不判——
+    写作约定由此成立：**讲历史必须带当时版本号**。
+    """
+    idx = os.path.join(os.path.dirname(HERE), "INDEX.md")
+    ver = None
+    if os.path.isfile(idx):
+        m = re.search(r"(?m)^keel-version:\s*(\d+\.\d+\.\d+)",
+                      open(idx, encoding="utf-8").read())
+        ver = m.group(1) if m else None
+    cases_n = len(CASES)      # 全集，不受 --only 子集影响
+    total = cases_n + 1       # +1 = NOISE 元检查
+    targets = []
+    rd = os.path.join(os.path.dirname(os.path.dirname(HERE)), "README.md")
+    if os.path.isfile(rd):
+        targets.append(rd)
+    doc = find_doc()
+    if doc:
+        targets.append(doc)
+    if not targets or not ver:
+        return None, "缺 README/DESIGN 或 keel-version（非发行仓布局，跳过）"
+
+    bad = []
+    for path in targets:
+        in_fence = False
+        for ln, line in enumerate(open(path, encoding="utf-8"), 1):
+            if line.lstrip().startswith("```"):
+                in_fence = not in_fence
+                continue
+            # 规则①②只扫非围栏区：代码块里的版本形态多为示例（frontmatter 的
+            # keel-version: 2.1.0、脚本注释里的历史版本），不是"现在的断言"
+            if not in_fence:
+                # 规则①（无豁免）：--ref 示例永远该指向当前版本
+                for m in re.finditer(r"--ref[ =]v?(\d+\.\d+\.\d+)", line):
+                    if m.group(1) != ver:
+                        bad.append("%s:%d --ref 指向 v%s ≠ 当前 %s"
+                                   % (os.path.basename(path), ln, m.group(1), ver))
+                # 历史叙述豁免（规则②③④）：行内带任一 vX.Y.Z（≠当前版本）即在讲过去
+                if any(v != ver for v in re.findall(r"v(\d+\.\d+\.\d+)", line)):
+                    continue
+                # 规则②：keel-version 的散文断言（冒号形态是 frontmatter，不算散文）
+                m = re.search(r"(?<!-)keel-version(?![:\w])[^\n0-9]{0,12}(\d+\.\d+\.\d+)", line)
+                if m and m.group(1) != ver:
+                    bad.append("%s:%d keel-version 散文写 %s ≠ 当前 %s"
+                               % (os.path.basename(path), ln, m.group(1), ver))
+            else:
+                # 块内的历史叙述同样豁免（如 §9.3 脚本注释里的旧版本号）
+                if any(v != ver for v in re.findall(r"v(\d+\.\d+\.\d+)", line)):
+                    continue
+            # 规则③④全区域扫：比分承诺写在代码块注释里也是承诺（实测漂过
+            # README「# 5. 自测：必须 42/42」与 DESIGN「# 41 例 + 元检查」）
+            if not re.search(r"自测|用例|test-lint", line):
+                continue
+            for m in re.finditer(r"(?<![\d.])(\d+)/(\d+)(?![\d.])", line):
+                if (int(m.group(1)), int(m.group(2))) != (total, total):
+                    bad.append("%s:%d 自测比分 %s/%s ≠ 当前 %d/%d"
+                               % (os.path.basename(path), ln,
+                                  m.group(1), m.group(2), total, total))
+            for m in re.finditer(r"(?<![\d.])(\d+)\s+(?:用例|例)(?![\d/])", line):
+                if int(m.group(1)) != cases_n:
+                    bad.append("%s:%d 用例数散文写 %s ≠ 当前 %d"
+                               % (os.path.basename(path), ln, m.group(1), cases_n))
+    if bad:
+        return False, "%d 处漂移，例：%s" % (len(bad), bad[0])
+    return True, "README/DESIGN 散文数字与真源一致（版本 %s · %d 用例 + 1 元检查）" \
+                 % (ver, cases_n)
+
+
 @case("33", "frontmatter 行内注释（YAML 语义）", "§6.1", [], rc=0)
 def c33(d):
     sub(d, "keel/pitfalls/db/connection-pool-exhausted.md",
@@ -653,6 +765,19 @@ def main():
     else:
         print("[%s] DOC  脚本与文档一致性          %s" % ("PASS" if doc_ok else "FAIL", doc_msg))
         if not doc_ok:
+            bad += 1
+    # LOCALE（坑 bash3-utf8-varname-eats-byte）：段 3 LC_ALL 不得泄漏，段 4 须 locale 无关
+    loc_ok, loc_msg = check_locale_isolation(base)
+    print("[%s] LOCALE 段 3/4 locale 隔离          %s" % ("PASS" if loc_ok else "FAIL", loc_msg))
+    if not loc_ok:
+        bad += 1
+    # PROSE（ADR 0018）：门面散文数字与真源一致——与 DOC 同族，不进用例分母
+    prose_ok, prose_msg = check_prose_numbers()
+    if prose_ok is None:
+        print("[SKIP] PROSE 散文数字与真源一致      %s" % prose_msg)
+    else:
+        print("[%s] PROSE 散文数字与真源一致      %s" % ("PASS" if prose_ok else "FAIL", prose_msg))
+        if not prose_ok:
             bad += 1
 
     print("=" * 76)

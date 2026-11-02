@@ -24,7 +24,7 @@ names=$(grep -oE 'pitfall:[[:space:]]*[A-Za-z0-9][A-Za-z0-9._-]*\.md' "$MSG" \
 bumped=0
 for n in $names; do
   case "$n" in
-    *[A-Z]*|*..*|.*) echo "⚠️  keel: 跳过非 kebab-case 的坑文件名: $n"; continue ;;
+    *[ABCDEFGHIJKLMNOPQRSTUVWXYZ]*|*..*|.*) echo "⚠️  keel: 跳过非 kebab-case 的坑文件名: $n"; continue ;;
   esac
   f=$(find "$KEEL_DIR/pitfalls" -name "$n" -print -quit 2>/dev/null)
   if [ -z "$f" ]; then

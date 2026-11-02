@@ -346,10 +346,14 @@ if [ "$HOTN" -gt 0 ]; then
   done < "$tmp/sizes"
 fi
 
-# 单行上限：LC_ALL=C 保证 awk 的 length() 按字节而非字符计
+# 单行上限：LC_ALL=C 保证 awk 的 length() 按字节而非字符计。
+# **注意隔离**：LC_ALL 必须作为 xrun 的命令前缀（临时作用域），不能写成
+# `LC_ALL=C XLIST=...; xrun`——后者是独立赋值，会泄漏成持久 shell 变量，
+# 让后续段 4 的 `*[A-Z]*` glob 在 UTF-8 locale 下"碰巧正确"（隐式依赖）。
+# 段 4 的大小写判断已改用字母表（locale 无关），双保险。
 # 批量版：一次 awk 扫全部文件（原来每文件 1 次 awk = 24 次 fork）
 if [ "$HOTN" -gt 0 ]; then
-  LC_ALL=C XLIST="$HOTLIST"; xrun awk -v L="$MAX_LINE" '
+  XLIST="$HOTLIST"; LC_ALL=C xrun awk -v L="$MAX_LINE" '
     { if (length($0) > L) printf "❌ 单行超限 %d>%d 字节: %s:%d\n", length($0), L, FILENAME, FNR }
   ' > "$longf" 2>/dev/null
 fi
@@ -493,7 +497,10 @@ while IFS= read -r f; do
   case "$base" in
     _template*|INDEX.md|CONSTITUTION.md|ARCHITECTURE.md|GLOSSARY.md|NOW.md|NOW-*.md) continue ;;
   esac
-  case "$base" in *[A-Z]*)     fail_msg "命名含大写（应 kebab-case）: $rel" ;; esac
+  # 大小写判断展开字母表，不用 `[A-Z]`——bash 3.2 在 UTF-8 locale 下 glob
+  # `[A-Z]` 按 collation 展开（≈[a-zA-Z]），会把所有小写文件名误报为含大写。
+  # 字母表在 C/POSIX/UTF-8 三种 locale 下行为一致（见坑 bash3-utf8-varname-eats-byte）。
+  case "$base" in *[ABCDEFGHIJKLMNOPQRSTUVWXYZ]*) fail_msg "命名含大写（应 kebab-case）: $rel" ;; esac
   case "$base" in *"_"*|*" "*) fail_msg "命名含下划线/空格（应 kebab-case）: $rel" ;; esac
   case "$base" in *[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*) fail_msg "热区文件名含日期: $rel" ;; esac
 done < <(hot_files)
