@@ -45,6 +45,19 @@ export interface Cache {
   get<T>(key: string): Promise<T | undefined>;
 
   /**
+   * 获取**完整条目**（含 `expiresAt` / `tags`）。
+   *
+   * ⚠️ 2026-11-03 新增。`MultiLayerCache.get()` 命中下层后要**回写上层**，
+   *   而回写必须带上原来的 TTL 与 tags —— 否则：
+   *   · TTL 被换成默认 1 小时 ⇒ 已过期的数据被"续命"
+   *   · **tags 丢失 ⇒ `invalidateTag()` 清不掉上层那份副本** ⇒ 一直返回陈旧数据
+   *     （实测见 `scripts/check-cache.mjs` 第 [4] 组）
+   *
+   * 可选实现：自定义层不实现时退化为 `get()` + 默认 TTL、无 tags。
+   */
+  getEntry?<T>(key: string): Promise<CacheEntry<T> | undefined>;
+
+  /**
    * 设置缓存值
    */
   set<T>(key: string, value: T, options?: CacheOptions): Promise<void>;
@@ -195,15 +208,63 @@ export class MemoryCache implements Cache {
     return entry.value as T;
   }
 
+  /**
+   * 读取完整条目（含过期判定），供 `MultiLayerCache` 回写时保留 TTL / tags。
+   * 注意：**不**计入 hits / misses —— 统计口径仍以 `get()` 为准。
+   */
+  async getEntry<T>(key: string): Promise<CacheEntry<T> | undefined> {
+    const entry = this.cache.get(key);
+    if (!entry) return undefined;
+    if (entry.expiresAt < Date.now()) {
+      await this.delete(key);
+      return undefined;
+    }
+    return entry as CacheEntry<T>;
+  }
+
   async set<T>(key: string, value: T, options: CacheOptions = {}): Promise<void> {
     const now = Date.now();
     const ttl = options.ttl ?? this.defaultTTL;
     const tags = options.tags ?? [];
     const size = this.calculateSize(value);
 
-    // 检查是否超出最大大小
-    if (this.stats.totalSize + size > this.maxSize) {
+    // ★ 2026-11-03 修（P0）：**覆盖同一个 key 时先扣掉旧条目的 size**。
+    //
+    //   此前是 `this.stats.totalSize += size` 无条件累加，而 `this.cache.set(key, entry)`
+    //   会覆盖旧条目 ⇒ 旧 size 永远留在统计里。实测：1KB 的值覆盖 10 次，
+    //   totalSize 从 1002 涨到 11022（缓存里其实只有 1 条）。
+    //
+    //   后果不是"统计不准"这么轻：一旦 totalSize 被撑大，之后**每次 set 都会触发
+    //   evictOldest()** ⇒ 刚写进去的条目立刻被淘汰 ⇒ 缓存**永久失效**，
+    //   而调用方完全看不出来（get 一直 miss，只是变慢）。
+    const existing = this.cache.get(key);
+    if (existing) {
+      if (existing.size) this.stats.totalSize -= existing.size;
+      // 旧条目的 tag 索引由 delete 之外的路径维护，这里显式清理
+      for (const tag of existing.tags) {
+        const keys = this.tagIndex.get(tag);
+        if (keys) {
+          keys.delete(key);
+          if (keys.size === 0) this.tagIndex.delete(tag);
+        }
+      }
+    }
+
+    // ★ 单条就超过总预算 ⇒ **不缓存**。
+    //   否则它会把其它条目全部挤掉、自己又超限，等于把缓存变成"每次都 miss"。
+    //   （实测：maxSize=100 时写入 1KB 的条目，totalSize 直接变成 1002。）
+    if (size > this.maxSize) {
+      if (existing) this.cache.delete(key);
+      this.stats.size = this.cache.size;
+      return;
+    }
+
+    // ★ 淘汰到装得下为止（此前只淘汰一条，装不下也照写）
+    while (this.stats.totalSize + size > this.maxSize && this.cache.size > 0) {
+      const before = this.stats.totalSize;
       this.evictOldest();
+      // 防御：淘汰没有实际减少 totalSize 时退出，避免死循环
+      if (this.stats.totalSize >= before) break;
     }
 
     const entry: CacheEntry = {
@@ -369,15 +430,35 @@ export class MultiLayerCache implements Cache {
   }
 
   async get<T>(key: string): Promise<T | undefined> {
-    for (const layer of this.layersInternal) {
-      const value = await layer.get<T>(key);
-      if (value !== undefined) {
-        // 回写上层缓存
-        for (let i = 0; i < this.layersInternal.indexOf(layer); i++) {
-          await this.layersInternal[i]!.set(key, value);
+    for (let i = 0; i < this.layersInternal.length; i++) {
+      const layer = this.layersInternal[i]!;
+
+      // ★ 2026-11-03 修（P0）：优先取**完整条目**，回写时带上原来的 TTL 与 tags。
+      //
+      //   此前是 `layer.get(key)` 拿到值就直接 `set(key, value)` 回写 —— 两个后果：
+      //   ① TTL 被换成默认值（1 小时）⇒ 下层即将过期的数据被"续命"
+      //   ② **tags 丢失 ⇒ `invalidateTag()` 清不掉上层那份副本** ⇒ 一直返回陈旧数据
+      //      实测：远端写入 `{ttl:50, tags:['t1']}`，回写到上层后
+      //      `invalidateTag('t1')` 只清掉了远端，上层 `has('k')` 仍是 true。
+      const entry = layer.getEntry ? await layer.getEntry<T>(key) : undefined;
+      const value = entry ? entry.value : await layer.get<T>(key);
+      if (value === undefined) continue;
+
+      // 回写上层缓存（保留原条目的 TTL / tags）
+      if (i > 0) {
+        const options: CacheOptions = {};
+        if (entry) {
+          const remaining = entry.expiresAt - Date.now();
+          // 已经过期的数据不往上写
+          if (remaining <= 0) return value;
+          options.ttl = remaining;
+          options.tags = entry.tags;
         }
-        return value;
+        for (let j = 0; j < i; j++) {
+          await this.layersInternal[j]!.set(key, value, options);
+        }
       }
+      return value;
     }
     return undefined;
   }

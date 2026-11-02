@@ -217,6 +217,19 @@ const GATES = [
       '异步组件 loader 失败零上报、SSR setup 抛错输出空串（200 空页）',
   },
   {
+    name: 'check-cache',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-cache.mjs'],
+    approx: '~2s',
+    desc:
+      '★ 缓存正确性（@lytjs/cache）：缓存是最容易「看起来在工作」的组件 —— get/set 都能跑通、' +
+      '单测全绿，但价值全在**边界**上（容量 / 过期 / 失效 / 多层回写）。这些边界出错不会抛异常，' +
+      '只会静默地让缓存永久失效或返回已被 invalidate 的陈旧数据。' +
+      '2026-11-03 首次运行抓到：覆盖同一 key 时 totalSize 只增不减（1KB×10 次 ⇒ 11022，' +
+      '进而每次 set 都触发淘汰 ⇒ 缓存永久失效）、单条超 maxSize 不拒绝、多层回写丢 tags ⇒ ' +
+      'invalidateTag 清不掉上层副本',
+  },
+  {
     name: 'check-ssr-isolation',
     tier: 'fast',
     cmd: ['node', 'scripts/check-ssr-isolation.mjs'],
