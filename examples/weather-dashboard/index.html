@@ -580,8 +580,68 @@
     </div>
 
     <script type="module">
-      import { signal, computed, effect, watch } from '@lytjs/reactivity';
-      import { createFormManager } from '@lytjs/plugin-form';
+      // ⚠️ 2026-11-02：用 `ref`（读写都走 `.value`）。
+      //   本示例全程用 `x.value` 读写状态，那是 `ref` 的语义；
+      //   `signal()` 的读法是**函数调用** `x()`、写法是 `x.set(v)`，
+      //   对 signal 写 `x.value = v` 只是加了个普通属性，`x()` 仍返回旧值（静默失效）。
+      import { ref, computed, effect, watch } from '@lytjs/reactivity';
+
+      // ── 本地表单校验 ────────────────────────────────────────────
+      // ⚠️ 2026-11-02：`@lytjs/plugin-form` 已于 2026-09-21 迁出主仓到独立仓库
+      //   `lytjs-plugins`（见 packages/plugins/README.md）。主仓内 import 它会
+      //   直接 `Failed to resolve import`。
+      //   这里给一个**最小等价实现**，只覆盖本示例用到的规则，
+      //   保证示例自包含可运行；生产项目请从 npm 安装真正的 plugin-form。
+      function createFormManager({ fields }) {
+        const values = {};
+        const errors = {};
+        for (const [key, cfg] of Object.entries(fields)) {
+          values[key] = cfg.initialValue ?? '';
+          errors[key] = [];
+        }
+
+        const checkRule = (rule, raw) => {
+          const val = String(raw ?? '');
+          switch (rule.type) {
+            case 'required':
+              return val.trim() ? null : rule.message;
+            case 'minLength':
+              return val.length >= rule.value ? null : rule.message;
+            case 'maxLength':
+              return val.length <= rule.value ? null : rule.message;
+            case 'phone':
+              return /^1[3-9]\d{9}$/.test(val) ? null : rule.message;
+            default:
+              return null;
+          }
+        };
+
+        return {
+          getValue: (key) => values[key],
+          setValue: (key, v) => {
+            values[key] = v;
+          },
+          getErrors: (key) => errors[key] ?? [],
+          async validateField(key) {
+            const msgs = [];
+            for (const rule of fields[key]?.rules ?? []) {
+              const msg = checkRule(rule, values[key]);
+              if (msg) {
+                msgs.push(msg);
+                break;
+              }
+            }
+            errors[key] = msgs;
+            return msgs.length === 0;
+          },
+          reset() {
+            for (const key of Object.keys(values)) {
+              values[key] = fields[key].initialValue ?? '';
+              errors[key] = [];
+            }
+          },
+        };
+      }
 
       const formManager = createFormManager({
         fields: {
@@ -595,10 +655,10 @@
         },
       });
 
-      const searchHistory = signal([]);
-      const isSearching = signal(false);
-      const currentCity = signal('北京');
-      const weatherData = signal({
+      const searchHistory = ref([]);
+      const isSearching = ref(false);
+      const currentCity = ref('北京');
+      const weatherData = ref({
         temp: 25,
         desc: '晴',
         humidity: 65,
@@ -767,8 +827,8 @@
       console.log('天气仪表盘初始化完成！');
       console.log('使用的 LytJS 技术：');
       console.log('- @lytjs/reactivity: 响应式状态管理');
-      console.log('- @lytjs/plugin-form: 表单验证');
-      console.log('- @lytjs/plugin-animation: 动画效果');
+      console.log('- 本地表单校验（原 @lytjs/plugin-form 已迁出主仓，见文件内注释）');
+      console.log('- CSS transition: 动画效果');
     </script>
   </body>
 </html>

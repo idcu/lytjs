@@ -968,6 +968,88 @@ console.log('   [模板]');
   await tick();
   check('组件标签上的 text 作为 prop 传入', root.innerHTML.includes('S'), root.innerHTML);
 }
+
+// ── v-for 列表与动态兄弟节点（回归：2026-11-02 修复的 P0）──────
+//
+// 缺陷：`patchBlockChildren` 按索引配对 `dynamicChildren`。v-for 的每个列表项
+// 都是 block，会被收集进**外层 block**，于是列表长度一变位序就变：
+//   首帧   [button]        更新帧 [li, button]
+// i=0 把 button 与 li 配成一对 ⇒ 卸载 button + 把 li 挂到 wrap（ul 的父节点）。
+// 症状：`<ul><li v-for></ul>` 从空变非空后，li 出现在 ul **外面**。
+//
+// 此前全仓 8432 个用例 + 11 项门禁都没抓到，因为只有在「v-for 列表**旁边**还有
+// 别的动态子节点（如绑定事件的按钮）」时才走到那条路径。
+console.log('   [v-for 位序]');
+{
+  const root = mkRoot();
+  const items = C_ref([]);
+  const app = createApp({
+    setup: () => ({
+      items,
+      add: () => {
+        items.value = [...items.value, 'x' + items.value.length];
+      },
+    }),
+    template: `
+      <div class="wrap">
+        <h1>t</h1>
+        <ul class="list"><li v-for="(it, i) in items" :key="i" class="li">{{ it }}</li></ul>
+        <button class="add" @click="add">add</button>
+      </div>
+    `,
+  });
+  await app.mount(root);
+  await tick();
+
+  // 首帧：列表为空，ul 内无 li
+  check('v-for 初始为空时 ul 内无 li', root.querySelectorAll('li').length === 0, root.innerHTML);
+
+  // 点击一次 → 列表从空变 1 项（正是触发缺陷的形态）
+  root.querySelector('.add')?.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+  await tick();
+
+  const ul = root.querySelector('ul.list');
+  check(
+    'v-for 空→1：li 在 ul 内（不是 ul 的兄弟）',
+    ul?.querySelectorAll('li').length === 1,
+    root.innerHTML.slice(0, 220),
+  );
+  check(
+    'v-for 空→1：页面上没有逃逸到 ul 外的 li',
+    root.querySelectorAll('li').length === 1,
+    `total=${root.querySelectorAll('li').length}`,
+  );
+  check(
+    'v-for 空→1：兄弟按钮未被误卸载/重挂到别处',
+    root.querySelector('.wrap > button.add') !== null,
+    root.innerHTML.slice(0, 220),
+  );
+
+  // 再点两次 → 3 项，顺序必须正确
+  root.querySelector('.add')?.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+  await tick();
+  root.querySelector('.add')?.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+  await tick();
+
+  const texts = [...root.querySelectorAll('ul.list li')].map((el) => el.textContent?.trim());
+  check('v-for 增至 3 项：全部在 ul 内且顺序正确', JSON.stringify(texts) === '["x0","x1","x2"]', JSON.stringify(texts));
+  check(
+    'v-for 增至 3 项：无 li 逃逸',
+    root.querySelectorAll('li').length === 3,
+    `total=${root.querySelectorAll('li').length}`,
+  );
+
+  // 清空 → ul 保留、li 全消失、兄弟节点不受影响
+  items.value = [];
+  await tick();
+  check(
+    'v-for 清空：li 全移除但 ul 与兄弟按钮保留',
+    root.querySelectorAll('li').length === 0 &&
+      root.querySelector('ul.list') !== null &&
+      root.querySelector('.wrap > button.add') !== null,
+    root.innerHTML.slice(0, 220),
+  );
+}
 {
   // 具名插槽（文本内容）
   const root = mkRoot();

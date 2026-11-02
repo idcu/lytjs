@@ -1,9 +1,11 @@
-// 实测踩出来的三个要点：
-// 1) 支持 template 字符串的 createApp 来自 **@lytjs/core-signal**（不是 @lytjs/core）
-// 2) **mount() 是异步的**，建议 await（不 await 会得到空白页且不报错）
+// LytJS Hello World 示例
+//
+// 要点：
+// 1) 从 @lytjs/core 导入 createApp / ref / computed（主入口自带模板编译器）
+// 2) mount() 返回 Promise，建议 .then() 或 await（不 await 会得到空白页且不报错）
 // 3) 模板表达式只支持「简单属性路径」：`@click="count = count + 1"` 会编译报错，
 //    请在 setup 里定义方法再绑定（见下方 inc）。
-import { createApp, ref, computed } from '@lytjs/core-signal';
+import { createApp, ref, computed } from '@lytjs/core';
 
 const host = document.getElementById('app');
 

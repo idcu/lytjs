@@ -132,6 +132,18 @@ const GATES = [
       'SSR 与客户端初始结构一致（hydrate 前提）。单测走源码 alias，测不到"装起来能不能用"',
   },
   {
+    name: 'check-examples',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-examples.mjs'],
+    approx: '~0.3s',
+    desc:
+      '★ 示例可用性：examples/ 里所有 @lytjs/* 裸导入必须能在本仓解析，' +
+      '且不得用相对路径穿透到包源码。' +
+      '（实测 2026-11-02：28 个示例文件里 15 个有问题、10 个「高」，' +
+      '含 8 个已迁出主仓的 @lytjs/plugin-* ⇒ 打开即 Failed to resolve import，' +
+      '而此前没有任何门禁覆盖 examples/）',
+  },
+  {
     name: 'check-integration',
     tier: 'slow',
     cmd: ['node', 'scripts/check-integration.mjs'],

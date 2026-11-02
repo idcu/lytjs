@@ -1,5 +1,10 @@
-// 踩点 1：支持 template 字符串的 createApp 来自 **@lytjs/core-signal**（不是 @lytjs/core）
-import { createApp, ref, computed } from '@lytjs/core-signal';
+// LytJS 第一个页面示例
+//
+// 要点：
+// 1) 从 @lytjs/core 导入 createApp / ref / computed（主入口自带模板编译器）
+// 2) 模板表达式只支持「简单属性路径」。
+//    @click="count = count + 1" 会编译报错 ⇒ 请在 setup 里定义方法
+import { createApp, ref, computed } from '@lytjs/core';
 
 const host = document.getElementById('app');
 

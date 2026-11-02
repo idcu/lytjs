@@ -2,19 +2,28 @@
  * SSR 完整示例 - 服务端渲染 + 流式渲染 + hydration
  *
  * 这个示例展示：
- * 1. 服务端组件
- * 2. 流式SSR渲染
- * 3. 客户端hydration
- * 4. 数据预取和状态序列化
+ * 1. 使用 createVNode / h 构建组件树
+ * 2. 流式 SSR 渲染（renderToStream）
+ * 3. 数据预取和状态序列化
+ *
+ * 运行方式（在仓库根目录）：
+ *   npx tsx examples/ssr-complete-example.ts
+ *
+ * 前置条件：已构建 @lytjs/core 和 @lytjs/ssr 的 dist 产物
  */
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console */
 
-import { renderToStream } from '../../src/stream';
+// ⚠️ 关键：纯 SSR 进程不调 createApp()，需要手动注入模板编译器。
+//    如果组件只用 render() / createVNode 而不用 template，则不需要注入。
+//    本示例的组件全部用 createVNode 构建视图，所以不需要模板编译器。
+//
+// ⚠️ 注意：`h` 由 @lytjs/core 导出，**不在** @lytjs/vdom 里。
+//    @lytjs/vdom 只导出 `createVNode`（以及 Fragment/Text/Comment 等）。
 import { createVNode } from '@lytjs/vdom';
+import { renderToStream, renderToString } from '@lytjs/ssr';
 
 // 服务端数据预取函数
 async function fetchUser(userId: string) {
-  // 模拟数据库/API调用
   await new Promise((resolve) => setTimeout(resolve, 100));
   return {
     id: userId,
@@ -33,7 +42,7 @@ async function fetchPosts(userId: string) {
   ];
 }
 
-// 组件定义
+// ── 组件定义（使用 createVNode 构建视图，不需要模板编译器） ──────
 
 function Avatar(props: { src: string; name: string }) {
   return createVNode('div', { class: 'avatar' }, [
@@ -65,6 +74,7 @@ function Sidebar() {
   ]);
 }
 
+// UserProfile 接收预取好的 user 和 posts 数据（通过 props 传入）
 function UserProfile(props: { user: any; posts: any[] }) {
   return createVNode('div', { class: 'profile-page' }, [
     createVNode('div', { class: 'profile-header' }, [
@@ -89,42 +99,49 @@ function UserProfile(props: { user: any; posts: any[] }) {
   ]);
 }
 
-// 页面组件
-function ProfilePage(props: { userId: string }) {
+// 页面组件：接收预取好的数据，传递给子组件
+function ProfilePage(props: { user: any; posts: any[] }) {
   return createVNode('div', { class: 'app-layout' }, [
     createVNode(Sidebar),
     createVNode('main', { class: 'main-content' }, [
       createVNode('header', { class: 'app-header' }, [createVNode('h1', {}, 'LytJS 博客平台')]),
-      createVNode(UserProfile, { userId: props.userId }),
+      createVNode(UserProfile, { user: props.user, posts: props.posts }),
     ]),
   ]);
 }
 
-// 服务端渲染入口
+// ── 服务端渲染入口 ──────────────────────────────────────────
+
 async function renderProfilePageSSR(userId: string) {
   // 并行预取数据
   const [user, posts] = await Promise.all([fetchUser(userId), fetchPosts(userId)]);
 
-  const app = createVNode(ProfilePage, { userId });
+  // 用预取好的数据构建组件树
+  const app = createVNode(ProfilePage, { user, posts });
+
+  // 同步渲染（验证基本可用性）
+  const html = renderToString(app);
+  console.log('  renderToString 输出前 200 字符:', html.slice(0, 200));
 
   // 流式渲染
   const stream = renderToStream(app, {
     timeout: 5000,
     maxBytesPerSecond: 1024 * 1024,
     errorFallback: '<div class="error-fallback">页面加载出错</div>',
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error('SSR Error:', error);
     },
   });
 
-  // 注入初始状态
+  // 序列化初始状态（用于客户端 hydration）
   const initialState = { user, posts };
   const stateScript = `<script>window.__INITIAL_STATE__ = ${JSON.stringify(initialState)}</script>`;
 
-  // 返回完整HTML
   return {
+    html,
     stream,
     initialState,
+    stateScript,
     htmlTemplate: `
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -159,7 +176,8 @@ async function renderProfilePageSSR(userId: string) {
   };
 }
 
-// 模拟服务器路由处理
+// ── 模拟服务器路由处理 ──────────────────────────────────────
+
 async function handleRequest(path: string) {
   console.log(`[${new Date().toISOString()}] SSR Request: ${path}`);
 
@@ -170,30 +188,50 @@ async function handleRequest(path: string) {
   }
 
   return {
+    html: '<div class="error-fallback">页面未找到</div>',
     stream: null,
-    htmlTemplate: `<div class="error-fallback">页面未找到</div>`,
+    htmlTemplate: '<div class="error-fallback">页面未找到</div>',
   };
 }
 
-// 运行示例
+// ── 运行示例 ────────────────────────────────────────────────
+
 async function main() {
-  console.log('🧪 LytJS SSR 完整示例 - 服务端渲染\n');
+  console.log('LytJS SSR 完整示例 - 服务端渲染\n');
 
   const result = await handleRequest('/profile/user123');
 
-  if (result.stream) {
-    console.log('✅ SSR 渲染成功');
-    console.log('📦 初始状态已序列化');
-    console.log('⚡ 支持流式渲染和错误恢复');
-    console.log('\n📄 页面结构预览:');
-    console.log('   - 侧边栏导航');
-    console.log('   - 用户个人资料');
-    console.log('   - 博客列表');
+  if (result.html) {
+    console.log('renderToString 渲染成功');
+    console.log('初始状态已序列化:', JSON.stringify(result.initialState).slice(0, 80) + '...');
+    console.log('\n页面结构预览:');
+    console.log('  - 侧边栏导航');
+    console.log('  - 用户个人资料:', result.initialState.user.name);
+    console.log('  - 博客列表:', result.initialState.posts.length, '篇文章');
   }
 }
 
-if (typeof require !== 'undefined' && require.main === module) {
-  main().catch(console.error);
+// 主模块检测：本文件在 `"type": "module"` 的包里被当作 ESM 处理，
+// `require` 未定义，因此不能沿用 CJS 的 `require.main === module` 写法
+// （否则守卫恒为 false，main() 静默不执行）。
+import { realpathSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+
+function isMainModule(): boolean {
+  const entry = process.argv[1];
+  if (!entry) return false;
+  try {
+    return import.meta.url === pathToFileURL(realpathSync(entry)).href;
+  } catch {
+    return false;
+  }
+}
+
+if (isMainModule()) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
 }
 
 export { renderProfilePageSSR, handleRequest, ProfilePage, UserProfile };

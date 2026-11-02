@@ -6,11 +6,13 @@
 
 import { ref } from '@lytjs/reactivity';
 import { createVNode } from '@lytjs/vdom';
-// 注意：`createSignalRenderer` 必须从 **src** 导入（与 renderer 的测试同源）：
-// `@lytjs/renderer` 这个别名在 vitest 里指向 dist（构建产物），其导出与 src 不一致
-// （曾出现过 `renderer.render is not a function`）。
-import { createSignalRenderer } from '../../packages/renderer/src/signal/signal-renderer';
-import type { SignalRenderer } from '../../packages/renderer/src/signal/signal-renderer';
+// ⚠️ 2026-11-02 修正：此前这里用 `../../packages/renderer/src/signal/signal-renderer`
+//   穿透到包**源码**，理由是「@lytjs/renderer 的 dist 导出与 src 不一致」。
+//   该理由已不成立：`createSignalRenderer` / `SignalRenderer` 均已从
+//   `@lytjs/renderer` 正式导出（可用 `node -e "import('@lytjs/renderer')"` 复验）。
+//   示例应走**包名**——否则用户复制过去必然跑不起来。
+import { createSignalRenderer } from '@lytjs/renderer';
+import type { SignalRenderer } from '@lytjs/renderer';
 
 /** 具名插槽 + 默认插槽的卡片组件 */
 const Card = {

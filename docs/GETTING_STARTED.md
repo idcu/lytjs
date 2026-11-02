@@ -184,7 +184,13 @@ console.log(store.double);  // 2
 | `@lytjs/compiler` | `@lytjs/compiler` | `compile`, `compileTemplateToRender` |
 | `@lytjs/ssr` | `@lytjs/ssr` | `renderToString`, `renderToStringAsync`, `renderToStream`, `generateStaticPages` |
 | `@lytjs/store` | `@lytjs/store` | `defineStore`, `createPinia`, `storeToRefs` |
-| `@lytjs/vdom` | `@lytjs/vdom` | `h`, `Fragment`, `Text`, `Comment`, `Teleport`, `Suspense` |
+| `@lytjs/vdom` | `@lytjs/vdom` | `createVNode`, `Fragment`, `Text`, `Comment`, `Teleport`, `Suspense` |
+
+> ⚠️ **`h` 不在 `@lytjs/vdom` 里**。`@lytjs/vdom` 只导出 `createVNode`；
+> `h` 由 `@lytjs/core` 导出。若组件只用 `createVNode` 构建视图（不写 `template`），
+> 可以只依赖 `@lytjs/vdom` + `@lytjs/ssr`，**不必**引入 82KB 的 core 主入口。
+> 从 `@lytjs/vdom` 取 `h` 会在运行时报 `does not provide an export named 'h'`
+> （2026-11-02 实测踩到）。
 
 ## 已知注意事项
 

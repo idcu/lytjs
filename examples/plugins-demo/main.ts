@@ -1,225 +1,150 @@
 /**
- * LytJS 官方插件使用示例
+ * LytJS 插件系统示例
  *
- * 演示 theme、logger、auth、storage、i18n 插件的基本用法
+ * ⚠️ 2026-11-02 重写说明：
+ *   本示例此前 import 了 6 个 `@lytjs/plugin-*` 包（theme / logger / auth /
+ *   storage / i18n / chart），而这些包已于 2026-09-21 **迁出主仓**到独立仓库
+ *   `lytjs-plugins`（见 packages/plugins/README.md）。主仓内已无这些包，
+ *   该示例在浏览器里打开就是 `Failed to resolve import`。
+ *
+ *   现改为演示主仓**真实可用**的插件 API：`definePlugin` + `app.use()`。
+ *   这正是 `@lytjs/plugin-*` 那些包内部使用的同一套机制。
+ *
+ * 运行：在 examples/ 下用 Vite（`pnpm dev`）或任意支持 bare-specifier 解析的
+ *       dev server 打开 plugins-demo/index.html。
  */
 /* eslint-disable @typescript-eslint/no-explicit-any, no-console */
 
-// 导入插件
-import { createThemeManager } from '@lytjs/plugin-theme';
-import { createLogger } from '@lytjs/plugin-logger';
-import { createAuth } from '@lytjs/plugin-auth';
-import { createStorage } from '@lytjs/plugin-storage';
-import { createI18n } from '@lytjs/plugin-i18n';
-import { createChart } from '@lytjs/plugin-chart';
+import { createApp, ref, definePlugin } from '@lytjs/core';
 
-// 初始化插件实例
-const themeManager = createThemeManager();
-const logger = createLogger();
-const auth = createAuth();
-const storage = createStorage();
-const i18n = createI18n({
-  locale: 'zh-CN',
-  fallbackLocale: 'en-US',
-  messages: {
-    'zh-CN': {
-      greeting: '欢迎',
-      personalGreeting: '你好，{name}！',
-      changeLang: '切换语言',
+// ─────────────────────────────────────────────────────────────
+// 1. 定义插件：主题插件
+//
+// definePlugin 的关键能力是**带 schema 的配置校验**：
+//   · 用户传入的选项会先按 schema 校验 + 填默认值，再交给 install()
+//   · 配置不合法会在安装时抛错，而不是等到运行时才炸
+// ─────────────────────────────────────────────────────────────
+const themePlugin = definePlugin<{ defaultTheme: 'light' | 'dark' }>({
+  name: 'demo-theme',
+  version: '1.0.0',
+  description: '主题切换插件（演示 definePlugin + schema 校验）',
+  schema: {
+    type: 'object',
+    object: {
+      properties: {
+        defaultTheme: {
+          type: 'string',
+          string: { enum: ['light', 'dark'] },
+          default: 'light',
+        },
+      },
     },
-    'en-US': {
-      greeting: 'Welcome',
-      personalGreeting: 'Hello, {name}!',
-      changeLang: 'Change Language',
-    },
+  },
+  install(app: any, options) {
+    // options 已经过 schema 校验，defaultTheme 一定有值
+    const current = ref<'light' | 'dark'>(options.defaultTheme);
+
+    const apply = (theme: 'light' | 'dark') => {
+      current.value = theme;
+      document.body.dataset.theme = theme;
+    };
+
+    apply(current.value);
+
+    // 挂到 globalProperties —— 组件实例代理会解析 `$theme`
+    app.config.globalProperties.$theme = {
+      current,
+      set: apply,
+      toggle: () => apply(current.value === 'light' ? 'dark' : 'light'),
+    };
+
+    console.log(`[theme] 已安装，默认主题 = ${options.defaultTheme}`);
   },
 });
 
-// 主题插件演示
-document.getElementById('theme-light')?.addEventListener('click', () => {
-  themeManager.setTheme('light');
-  updateThemeDisplay();
+// ─────────────────────────────────────────────────────────────
+// 2. 定义插件：日志插件
+// ─────────────────────────────────────────────────────────────
+const loggerPlugin = definePlugin<{ level: 'debug' | 'info' | 'warn' | 'error' }>({
+  name: 'demo-logger',
+  version: '1.0.0',
+  description: '日志插件（演示 app.use 时传入选项）',
+  schema: {
+    type: 'object',
+    object: {
+      properties: {
+        level: {
+          type: 'string',
+          string: { enum: ['debug', 'info', 'warn', 'error'] },
+          default: 'info',
+        },
+      },
+    },
+  },
+  install(app: any, options) {
+    const logs = ref<string[]>([]);
+    const order = ['debug', 'info', 'warn', 'error'];
+    const minIndex = order.indexOf(options.level);
+
+    const push = (level: string, msg: string) => {
+      if (order.indexOf(level) < minIndex) return;
+      const line = `[${level}] ${msg}`;
+      logs.value = [...logs.value, line];
+      console.log(line);
+    };
+
+    app.config.globalProperties.$logger = {
+      logs,
+      debug: (m: string) => push('debug', m),
+      info: (m: string) => push('info', m),
+      warn: (m: string) => push('warn', m),
+      error: (m: string) => push('error', m),
+      clear: () => {
+        logs.value = [];
+      },
+    };
+
+    console.log(`[logger] 已安装，级别 = ${options.level}`);
+  },
 });
 
-document.getElementById('theme-dark')?.addEventListener('click', () => {
-  themeManager.setTheme('dark');
-  updateThemeDisplay();
-});
+// ─────────────────────────────────────────────────────────────
+// 3. 应用
+// ─────────────────────────────────────────────────────────────
+const App = {
+  name: 'PluginsDemo',
+  template: `
+    <div class="container">
+      <h1>LytJS 插件系统示例</h1>
 
-document.getElementById('theme-toggle')?.addEventListener('click', () => {
-  themeManager.toggleTheme();
-  updateThemeDisplay();
-});
+      <section class="section">
+        <h2>主题插件</h2>
+        <p>当前主题：<strong class="theme-name">{{ $theme.current.value }}</strong></p>
+        <button class="btn-light" @click="$theme.set('light')">浅色</button>
+        <button class="btn-dark" @click="$theme.set('dark')">深色</button>
+        <button class="btn-toggle" @click="$theme.toggle()">切换</button>
+      </section>
 
-function updateThemeDisplay() {
-  const themeSpan = document.getElementById('current-theme');
-  if (themeSpan) {
-    themeSpan.textContent = themeManager.currentTheme;
-  }
-}
+      <section class="section">
+        <h2>日志插件</h2>
+        <button class="btn-info" @click="$logger.info('这是一条 info 日志')">info</button>
+        <button class="btn-warn" @click="$logger.warn('这是一条 warn 日志')">warn</button>
+        <button class="btn-error" @click="$logger.error('这是一条 error 日志')">error</button>
+        <button class="btn-clear" @click="$logger.clear()">清空</button>
+        <ul class="log-list">
+          <li v-for="(line, i) in $logger.logs.value" :key="i">{{ line }}</li>
+        </ul>
+      </section>
+    </div>
+  `,
+};
 
-// 日志插件演示
-document.getElementById('log-info')?.addEventListener('click', () => {
-  logger.info('这是一条信息日志', { timestamp: new Date().toISOString() }, 'demo');
-  logger.logs.forEach((log) => console.log(log));
-});
+const app = createApp(App);
 
-document.getElementById('log-warn')?.addEventListener('click', () => {
-  logger.warn('这是一条警告日志', { level: 'warning' }, 'demo');
-});
+// ── 安装插件：选项会先过 schema 校验 ──────────────────────
+app.use(themePlugin, { defaultTheme: 'light' });
+app.use(loggerPlugin, { level: 'info' });
 
-document.getElementById('log-error')?.addEventListener('click', () => {
-  logger.error('这是一条错误日志', { error: true }, 'demo');
-});
+app.mount('#app');
 
-document.getElementById('log-clear')?.addEventListener('click', () => {
-  logger.clear();
-  alert('日志已清空');
-});
-
-// 认证插件演示
-document.getElementById('auth-login')?.addEventListener('click', () => {
-  const user = {
-    id: '1',
-    username: 'admin',
-    roles: ['admin', 'user'],
-    permissions: ['read', 'write', 'delete'],
-  };
-  auth.login(user);
-  updateAuthDisplay();
-});
-
-document.getElementById('auth-logout')?.addEventListener('click', () => {
-  auth.logout();
-  updateAuthDisplay();
-});
-
-document.getElementById('auth-check')?.addEventListener('click', () => {
-  const hasAdminRole = auth.hasRole('admin');
-  const hasWritePermission = auth.hasPermission('write');
-  alert(
-    `认证状态: ${auth.isAuthenticated ? '已登录' : '未登录'}\n` +
-      `是否有 admin 角色: ${hasAdminRole}\n` +
-      `是否有 write 权限: ${hasWritePermission}`,
-  );
-});
-
-function updateAuthDisplay() {
-  const statusSpan = document.getElementById('auth-status');
-  if (statusSpan) {
-    if (auth.isAuthenticated) {
-      statusSpan.textContent = `已登录: ${auth.user?.username}`;
-    } else {
-      statusSpan.textContent = '未登录';
-    }
-  }
-}
-
-// 存储插件演示
-document.getElementById('storage-set')?.addEventListener('click', () => {
-  const keyInput = document.getElementById('storage-key') as HTMLInputElement;
-  const valueInput = document.getElementById('storage-value') as HTMLInputElement;
-
-  if (keyInput && valueInput && keyInput.value) {
-    storage.set(keyInput.value, valueInput.value);
-    alert('保存成功');
-    updateStorageDisplay();
-  }
-});
-
-document.getElementById('storage-get')?.addEventListener('click', () => {
-  const keyInput = document.getElementById('storage-key') as HTMLInputElement;
-  if (keyInput && keyInput.value) {
-    const value = storage.get(keyInput.value);
-    const displaySpan = document.getElementById('storage-display');
-    if (displaySpan) {
-      displaySpan.textContent = value ? `值: ${value}` : '键不存在';
-    }
-  }
-});
-
-document.getElementById('storage-clear')?.addEventListener('click', () => {
-  storage.clear();
-  updateStorageDisplay();
-  alert('存储已清空');
-});
-
-function updateStorageDisplay() {
-  const keys = storage.keys();
-  const displaySpan = document.getElementById('storage-display');
-  if (displaySpan) {
-    displaySpan.textContent = keys.length > 0 ? `键列表: ${keys.join(', ')}` : '空';
-  }
-}
-
-// 国际化插件演示
-function updateI18nDisplay() {
-  const greetingEl = document.getElementById('i18n-greeting');
-  if (greetingEl) {
-    greetingEl.textContent = i18n.t('greeting');
-  }
-}
-
-document.getElementById('lang-zh')?.addEventListener('click', () => {
-  i18n.setLocale('zh-CN');
-  updateI18nDisplay();
-});
-
-document.getElementById('lang-en')?.addEventListener('click', () => {
-  i18n.setLocale('en-US');
-  updateI18nDisplay();
-});
-
-document.getElementById('i18n-greet')?.addEventListener('click', () => {
-  const nameInput = document.getElementById('i18n-name') as HTMLInputElement;
-  const resultEl = document.getElementById('i18n-result');
-  if (nameInput && resultEl) {
-    const name = nameInput.value || 'Guest';
-    resultEl.textContent = i18n.t('personalGreeting', { name });
-  }
-});
-
-// 初始化
-updateThemeDisplay();
-updateAuthDisplay();
-updateStorageDisplay();
-updateI18nDisplay();
-
-logger.info('LytJS 插件示例初始化完成');
-
-// 图表插件演示
-const canvas = document.getElementById('chart-canvas') as HTMLCanvasElement;
-let currentChart: any = null;
-
-// 示例数据
-const sampleData = [
-  { label: '一月', value: 120 },
-  { label: '二月', value: 200 },
-  { label: '三月', value: 150 },
-  { label: '四月', value: 80 },
-  { label: '五月', value: 270 },
-];
-
-function renderChart(type: string) {
-  if (currentChart) {
-    currentChart.destroy();
-  }
-
-  const config = {
-    type: type,
-    title: `${type === 'bar' ? '柱状' : type === 'line' ? '折线' : type === 'pie' ? '饼' : '环形'}图示例`,
-    datasets: [{ data: sampleData }],
-    width: 600,
-    height: 350,
-  };
-
-  currentChart = createChart(canvas, config);
-}
-
-document.getElementById('chart-bar')?.addEventListener('click', () => renderChart('bar'));
-document.getElementById('chart-line')?.addEventListener('click', () => renderChart('line'));
-document.getElementById('chart-pie')?.addEventListener('click', () => renderChart('pie'));
-document.getElementById('chart-doughnut')?.addEventListener('click', () => renderChart('doughnut'));
-
-// 默认渲染柱状图
-renderChart('bar');
+console.log('LytJS 插件示例初始化完成');

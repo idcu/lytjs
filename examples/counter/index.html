@@ -71,6 +71,11 @@
       .btn-danger:hover {
         background: #e64c4c;
       }
+      .doubled {
+        margin-top: 15px;
+        font-size: 1.2em;
+        color: #999;
+      }
       .back {
         margin-top: 20px;
         color: #667eea;
@@ -87,92 +92,48 @@
     </style>
   </head>
   <body>
-    <div class="container">
-      <h1>🔢 Counter 计数器</h1>
-      <div class="counter" id="count">0</div>
-      <div class="buttons">
-        <button class="btn-secondary" id="decrement">-</button>
-        <button class="btn-primary" id="increment">+</button>
-        <button class="btn-danger" id="reset">重置</button>
-      </div>
-      <div class="info">
-        使用 @lytjs/store 管理状态<br />
-        支持响应式更新和 actions
-      </div>
-      <br />
-      <a href="../index.html" class="back">← 返回示例列表</a>
-    </div>
+    <!-- 框架挂载点 -->
+    <div id="app"></div>
 
     <script type="module">
-      import { createPinia, defineStore } from '@lytjs/store';
-      import { signal } from '@lytjs/reactivity';
+      import { createApp, ref, computed } from '@lytjs/core';
 
-      // 创建 Pinia 实例
-      const pinia = createPinia();
+      // ── 计数器组件 ──────────────────────────────────
+      // 使用 ref 管理状态、computed 派生值、模板声明视图
+      // 所有 DOM 更新由框架响应式系统自动完成
+      const App = {
+        name: 'CounterApp',
+        setup() {
+          const count = ref(0);
+          const doubled = computed(() => count.value * 2);
 
-      // 定义 Counter Store
-      const useCounterStore = defineStore('counter', {
-        state: () => ({
-          count: 0,
-        }),
-        getters: {
-          doubleCount: (state) => state.count * 2,
+          const increment = () => { count.value++; };
+          const decrement = () => { count.value--; };
+          const reset = () => { count.value = 0; };
+
+          return { count, doubled, increment, decrement, reset };
         },
-        actions: {
-          increment() {
-            this.count++;
-          },
-          decrement() {
-            this.count--;
-          },
-          reset() {
-            this.count = 0;
-          },
-        },
-      });
+        template: `
+          <div class="container">
+            <h1>Counter 计数器</h1>
+            <div class="counter">{{ count }}</div>
+            <div class="buttons">
+              <button class="btn-secondary" @click="decrement">-</button>
+              <button class="btn-primary" @click="increment">+</button>
+              <button class="btn-danger" @click="reset">重置</button>
+            </div>
+            <p class="doubled">Doubled: {{ doubled }}</p>
+            <div class="info">
+              使用 ref + computed + template<br />
+              响应式更新由框架自动处理
+            </div>
+            <br />
+            <a href="../index.html" class="back">← 返回示例列表</a>
+          </div>
+        `,
+      };
 
-      // 使用 Store
-      const counter = useCounterStore(pinia);
-
-      // 获取 DOM 元素
-      const countEl = document.getElementById('count');
-      const incrementBtn = document.getElementById('increment');
-      const decrementBtn = document.getElementById('decrement');
-      const resetBtn = document.getElementById('reset');
-
-      // 更新视图
-      function updateView() {
-        countEl.textContent = counter.count;
-        countEl.style.transform = 'scale(1.2)';
-        setTimeout(() => {
-          countEl.style.transform = 'scale(1)';
-        }, 150);
-      }
-
-      // 订阅状态变化
-      counter.$subscribe((mutation, state) => {
-        console.log('State changed:', mutation, state);
-        updateView();
-      });
-
-      // 绑定事件
-      incrementBtn.addEventListener('click', () => {
-        counter.increment();
-      });
-
-      decrementBtn.addEventListener('click', () => {
-        counter.decrement();
-      });
-
-      resetBtn.addEventListener('click', () => {
-        counter.reset();
-      });
-
-      // 初始化视图
-      updateView();
-
-      console.log('Counter Store:', counter);
-      console.log('Double Count:', counter.doubleCount);
+      createApp(App).mount('#app');
     </script>
   </body>
 </html>
