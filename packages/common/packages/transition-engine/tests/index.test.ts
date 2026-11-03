@@ -44,7 +44,8 @@ function createMockHost(): RendererHost<object, object> {
     removeStyle: vi.fn(),
     getComputedStyle: vi.fn(() => ({ getPropertyValue: () => '' })),
     forceReflow: vi.fn(),
-    addEventListener: vi.fn(),
+    // 契约：addEventListener 返回「摘除监听」的函数
+    addEventListener: vi.fn(() => vi.fn()),
     removeEventListener: vi.fn(),
     getBoundingClientRect: vi.fn(() => ({
       left: 0,

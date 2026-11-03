@@ -37,9 +37,21 @@ engine.flip(el, () => {
   // 更新元素位置
 });
 
-// 销毁引擎
+// 取消进行中的过渡（会清掉 from / active / to 类名，并调用 *Cancelled 钩子）
+engine.cancelTransition(el);
+
+// 销毁引擎（撤掉所有挂起的定时器与 transitionend / animationend 监听）
 engine.dispose();
 ```
+
+### 收敛语义
+
+- 过渡的结束以 `transitionend` / `animationend` 为准，`duration + 50ms` 作为兜底；
+  子元素冒泡上来的事件不算（`target` 必须是被过渡的元素）。
+- 时长为 0 或没有过渡声明 ⇒ **立即完成**（不会等 `timeout`）。
+- `onAfterEnter` / `onAfterLeave` 抛错**不会**阻断 `done()` —— 否则调用方等不到结束、
+  元素永不移除；错误会打到 `console.error`，状态机照常收敛。
+- 取消过渡不调用 `done`（元素不因此被移除），但会调用 `onEnterCancelled` / `onLeaveCancelled`。
 
 ## API
 

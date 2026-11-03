@@ -102,8 +102,14 @@ const DEFAULT_OPTIONS: Required<TransitionEngineOptions> = {
   enableFLIP: true,
 };
 
-/** 过渡清理函数映射 */
-const transitionCleanupMap = new WeakMap<object, (() => void) | null>();
+/**
+ * 过渡清理函数映射（**实例级**）。
+ *
+ * ⚠️ 2026-11-03：此前是**模块级** WeakMap —— 两个引擎实例操作同一个元素时
+ *   （测试、多根渲染、Teleport 目标共享）会互相覆盖清理函数，
+ *   取消/完成时只清掉后注册的那一份，前一份的定时器与监听永久残留。
+ *   现在挂到实例上，`dispose()` 也能统一清理。
+ */
 
 // ============================================================
 // TransitionEngine
@@ -127,6 +133,12 @@ export class TransitionEngine<HN extends object = object, HE extends HN = HN> {
 
   /** 活跃的过渡状态映射（el → state） */
   private stateMap = new WeakMap<HE, RuntimeTransitionState>();
+
+  /** 元素 → 清理函数（清定时器 + 摘监听） */
+  private cleanupMap = new WeakMap<HE, () => void>();
+
+  /** 所有尚未执行的清理函数（`dispose()` 时统一跑一遍） */
+  private activeCleanups = new Set<() => void>();
 
   /**
    * 创建过渡引擎实例。
@@ -217,12 +229,17 @@ export class TransitionEngine<HN extends object = object, HE extends HN = HN> {
     } else {
       // CSS 过渡：等待 transitionend/animationend
       const info = this.host.getTransitionInfo(el, 'enter');
-      if (info.hasTransition || info.hasAnimation) {
-        if (info.duration > 0) {
-          this.host.setTimeout(() => this.finishEnter(el, classes, props), info.duration + 50);
-        } else {
-          this.waitForTransitionEnd(el, info, () => this.finishEnter(el, classes, props));
-        }
+      if ((info.hasTransition || info.hasAnimation) && info.duration > 0) {
+        // 以 transitionend/animationend 为准（真正的结束时刻），
+        // 并用 duration + 50ms 兜底 —— 事件不触发时不会永久挂起。
+        this.waitForTransitionEnd(el, info, () => this.finishEnter(el, classes, props));
+      } else if (info.hasTransition || info.hasAnimation) {
+        // ⚠️ 2026-11-03 修（P1）：有过渡声明但**时长为 0**（`transition: none`、
+        //   `prefers-reduced-motion`、被样式覆盖成 0s）时，此前会走 waitForTransitionEnd，
+        //   而 0 时长通常**不会**派发 transitionend ⇒ 等满 5 秒超时才完成，
+        //   元素在这 5 秒里一直卡在「进入中」。
+        //   没有可观测的动画 ⇒ 立即完成。
+        this.finishEnter(el, classes, props);
       } else {
         // 无 CSS 过渡，立即完成
         this.finishEnter(el, classes, props);
@@ -239,26 +256,29 @@ export class TransitionEngine<HN extends object = object, HE extends HN = HN> {
     props: TransitionProps<HE>,
   ): void {
     const state = this.stateMap.get(el);
-    if (!state || state.cancelled) return;
+    // 幂等：已被取消 / 已收敛 / 定时器与事件双触发，都只允许收敛一次
+    if (!state || state.cancelled || state.phase !== 'entering') return;
+
+    this.clearCleanup(el);
 
     this.host.removeClass(el, classes.active);
     this.host.removeClass(el, classes.to);
 
-    if (props.onAfterEnter) {
-      props.onAfterEnter(el);
-    }
-
-    state.phase = 'idle';
-    // ★ 2026-10-17 修复（P1）：此前这里直接 `state.doneCallback = null` —— **从未调用**它
-    //   （全文件 grep `doneCallback` 只有写入与置空，**没有任何调用点**）⇒ 泛型路径
-    //   （真实渲染器走的 `performEnterTransition(host, el, props, done)` → `engine.performEnter`）
-    //   的 `done` **永不触发** ⇒ 调用方永远等不到过渡结束（离开的元素不会被移除）。
-    //   DOM 回退是**另一套内联实现**，它确实调了 `doneFn()`，所以此前只在泛型路径暴露。
     const done = state.doneCallback;
+    state.phase = 'idle';
     state.doneCallback = null;
+    // ⚠️ 2026-11-03：释放 props 引用 —— 否则元素存活期间一直持有整份 props
+    //   （里面可能闭包了大对象），且 `getState()` 能读到过期配置。
+    state.props = undefined;
 
-    // 清理
-    transitionCleanupMap.delete(el);
+    // ⚠️ 2026-11-03 修（P0）：此前 `onAfterEnter` 抛错会**阻断后面的 `done()`** ——
+    //   调用方（渲染器）等不到过渡结束 ⇒ 元素永不移除、组件永远处于「进入中」，
+    //   而控制台只有一条用户钩子的错。现在钩子错误被隔离，`done()` 一定执行。
+    try {
+      props.onAfterEnter?.(el);
+    } catch (error) {
+      this.reportHookError('onAfterEnter', error);
+    }
 
     done?.();
   }
@@ -311,12 +331,11 @@ export class TransitionEngine<HN extends object = object, HE extends HN = HN> {
     } else {
       // CSS 过渡
       const info = this.host.getTransitionInfo(el, 'leave');
-      if (info.hasTransition || info.hasAnimation) {
-        if (info.duration > 0) {
-          this.host.setTimeout(() => this.finishLeave(el, classes, props), info.duration + 50);
-        } else {
-          this.waitForTransitionEnd(el, info, () => this.finishLeave(el, classes, props));
-        }
+      if ((info.hasTransition || info.hasAnimation) && info.duration > 0) {
+        this.waitForTransitionEnd(el, info, () => this.finishLeave(el, classes, props));
+      } else if (info.hasTransition || info.hasAnimation) {
+        // 同 performEnter：0 时长直接完成，不进 5 秒超时
+        this.finishLeave(el, classes, props);
       } else {
         this.finishLeave(el, classes, props);
       }
@@ -332,22 +351,24 @@ export class TransitionEngine<HN extends object = object, HE extends HN = HN> {
     props: TransitionProps<HE>,
   ): void {
     const state = this.stateMap.get(el);
-    if (!state || state.cancelled) return;
+    if (!state || state.cancelled || state.phase !== 'leaving') return;
+
+    this.clearCleanup(el);
 
     this.host.removeClass(el, classes.active);
     this.host.removeClass(el, classes.to);
 
-    if (props.onAfterLeave) {
-      props.onAfterLeave(el);
-    }
-
-    state.phase = 'idle';
-    // ★ 2026-10-17 修复（P1）：同 `finishEnter` —— `doneCallback` 此前被置空而**从未调用**，
-    //   ⇒ 泛型路径的 leave 完成回调永不触发（渲染器不会移除离开的元素）。
     const done = state.doneCallback;
+    state.phase = 'idle';
     state.doneCallback = null;
+    state.props = undefined;
 
-    transitionCleanupMap.delete(el);
+    // 同 finishEnter：钩子抛错不能阻断 done()（否则离开的元素永不移除）
+    try {
+      props.onAfterLeave?.(el);
+    } catch (error) {
+      this.reportHookError('onAfterLeave', error);
+    }
 
     done?.();
   }
@@ -365,31 +386,30 @@ export class TransitionEngine<HN extends object = object, HE extends HN = HN> {
     const state = this.stateMap.get(el);
     if (!state || state.phase === 'idle') return;
 
+    const phase = state.phase;
+    const props = (state.props ?? {}) as TransitionProps<HE>;
+
     state.cancelled = true;
-
-    // FIX: P0-10 根据 phase 调用对应的取消钩子（onEnterCancelled / onLeaveCancelled）
-    // FIX: DTS build error - 使用类型断言访问 props
-    const props = state.props as
-      | { onEnterCancelled?: (el: HE) => void; onLeaveCancelled?: (el: HE) => void }
-      | undefined;
-    if (props) {
-      if (state.phase === 'entering' && props.onEnterCancelled) {
-        props.onEnterCancelled(el);
-      } else if (state.phase === 'leaving' && props.onLeaveCancelled) {
-        props.onLeaveCancelled(el);
-      }
-    }
-
-    // 执行清理函数
-    const cleanup = transitionCleanupMap.get(el);
-    if (cleanup) {
-      cleanup();
-      transitionCleanupMap.delete(el);
-    }
-
     state.phase = 'idle';
     state.doneCallback = null;
     state.props = undefined;
+
+    this.clearCleanup(el);
+
+    // ⚠️ 2026-11-03 修（P1）：此前取消只把状态置 idle，**不移除过渡类** ——
+    //   元素会永久带着 `v-enter-active` / `v-enter-to`（`transition: all .3s` 之类），
+    //   之后任何样式变化都会触发一次「幽灵过渡」，视觉上停在进入中的样子。
+    const classes = this.resolveTransitionClasses(props, phase === 'entering' ? 'enter' : 'leave');
+    for (const cls of [classes.from, classes.active, classes.to]) {
+      this.host.removeClass(el, cls);
+    }
+
+    try {
+      if (phase === 'entering') props.onEnterCancelled?.(el);
+      else props.onLeaveCancelled?.(el);
+    } catch (error) {
+      this.reportHookError(phase === 'entering' ? 'onEnterCancelled' : 'onLeaveCancelled', error);
+    }
   }
 
   // ==========================================================
@@ -541,12 +561,10 @@ export class TransitionEngine<HN extends object = object, HE extends HN = HN> {
     const timer = this.host.setTimeout(finish, timeout);
 
     // 创建事件处理函数
-    // FIX: P1-15 创建类型适配的包装函数，将 onEnd 签名转换为 HostEventHandler
-    // FIX: P2-v11-23 添加运行时验证，确保 onEnd 接收到的事件对象具有有效的 target 属性
     const onEnd = (event: unknown) => {
-      // 运行时验证事件对象
       if (event == null || typeof event !== 'object') return;
       const hostEvent = event as { target: unknown; type: string };
+      // 只认元素自身的事件（子元素的 transitionend 会冒泡上来）
       if (hostEvent.target !== el) return;
 
       this.host.clearTimeout(timer);
@@ -554,16 +572,40 @@ export class TransitionEngine<HN extends object = object, HE extends HN = HN> {
     };
     const hostEventHandler: HostEventHandler = (event: HostEvent) => onEnd(event);
 
-    // 通过 host 添加事件监听
     const disposeTransition = this.host.addEventListener(el, 'transitionend', hostEventHandler);
     const disposeAnimation = this.host.addEventListener(el, 'animationend', hostEventHandler);
 
-    // 存储清理函数
-    transitionCleanupMap.set(el, () => {
+    this.registerCleanup(el, () => {
       this.host.clearTimeout(timer);
-      disposeTransition();
-      disposeAnimation();
+      // 防御：宿主实现可能不返回 dispose（契约上应该返回），不能让清理函数抛错
+      if (typeof disposeTransition === 'function') disposeTransition();
+      if (typeof disposeAnimation === 'function') disposeAnimation();
     });
+  }
+
+  // ==========================================================
+  // 清理
+  // ==========================================================
+
+  /** 注册「这个元素上还有未完成的定时器 / 监听」 */
+  private registerCleanup(el: HE, cleanup: () => void): void {
+    this.clearCleanup(el);
+    this.cleanupMap.set(el, cleanup);
+    this.activeCleanups.add(cleanup);
+  }
+
+  /** 执行并移除某元素的清理函数 */
+  private clearCleanup(el: HE): void {
+    const cleanup = this.cleanupMap.get(el);
+    if (!cleanup) return;
+    this.cleanupMap.delete(el);
+    this.activeCleanups.delete(cleanup);
+    cleanup();
+  }
+
+  /** 用户钩子抛错：留痕但不影响状态机收敛 */
+  private reportHookError(hook: string, error: unknown): void {
+    console.error(`[lytjs/transition] ${hook} 钩子抛错（已隔离，过渡继续收敛）:`, error);
   }
 
   // ==========================================================
@@ -574,6 +616,17 @@ export class TransitionEngine<HN extends object = object, HE extends HN = HN> {
    * 销毁过渡引擎，清理所有内部状态。
    */
   dispose(): void {
+    // ⚠️ 2026-11-03：此前只重置 stateMap —— 挂起的定时器仍会到点执行，
+    //   元素上的 transitionend / animationend 监听也没摘（引擎已销毁却还在收事件）。
+    for (const cleanup of [...this.activeCleanups]) {
+      try {
+        cleanup();
+      } catch {
+        /* 清理函数自身出错不影响其它清理 */
+      }
+    }
+    this.activeCleanups.clear();
+    this.cleanupMap = new WeakMap<HE, () => void>();
     this.stateMap = new WeakMap<HE, RuntimeTransitionState>();
   }
 }

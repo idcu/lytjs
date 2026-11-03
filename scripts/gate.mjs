@@ -369,6 +369,21 @@ const GATES = [
       '另修：参数不解码、query 参与匹配、静态路径被动态路由抢走、方法不匹配 404 而非 405',
   },
   {
+    name: 'check-transition-engine',
+    tier: 'fast',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-transition-engine.mjs'],
+    approx: '~1s',
+    desc:
+      '★ 过渡引擎（@lytjs/common-transition-engine）：过渡是最容易「看起来在工作」的一层 ——' +
+      '元素该出现的出现了、该消失的消失了，但 `done` 没被调用时元素只是**没被移除**' +
+      '（还在 DOM 里，只是不可见），单测只断言类名加没加，抓不到。' +
+      '2026-11-03 抓到 4 个：① 用户钩子抛错**阻断 done()** ⇒ 元素永不移除、phase 停在 entering；' +
+      '② 取消过渡**不清类名** ⇒ 元素永久带 `-active`；' +
+      '③ 时长 0 的过渡要等满 5 秒超时；④ dispose 只重置状态表（定时器照跑、监听不摘）。' +
+      '另修：收敛后 props 不释放、清理表是模块级 WeakMap（两个引擎互相覆盖）',
+  },
+  {
     name: 'check-vitest-alias-dist',
     tier: 'fast',
     cmd: ['tsx', 'scripts/check-vitest-alias-dist.ts'],
