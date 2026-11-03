@@ -321,6 +321,22 @@ const GATES = [
 
   // ── 慢档：全仓级 / 需要 dist ────────────────────────────────
   {
+    name: 'check-hmr',
+    tier: 'fast',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-hmr.mjs'],
+    approx: '~1s',
+    desc:
+      '★ HMR 客户端（@lytjs/hmr）：HMR 是开发内循环里被按得最频繁的键，而它的缺陷' +
+      '**看起来都像生效了**（页面确实刷新了）。2026-11-03 抓到 5 个：' +
+      '① disconnect() 断不掉（onclose 里无条件 2s 重连）；' +
+      '② 重复 connect 产生多条重连链（旧 socket 的 onclose 再排定时器）⇒ socket 数量爆炸；' +
+      '③ dispose 从不执行（handleUpdate 只调 accept）⇒ 改 N 次就积 N 份旧副作用；' +
+      '④ accept() 覆盖 dispose() 的注册；' +
+      '⑤ 模块路径按字符串全等匹配 ⇒ 推送带 ./ 或 ?t= 时**每次热更新都退化成整页刷新**。' +
+      '另：handler.error 是死字段、无 window/WebSocket 环境直接抛',
+  },
+  {
     name: 'check-vitest-alias-dist',
     tier: 'fast',
     cmd: ['tsx', 'scripts/check-vitest-alias-dist.ts'],
