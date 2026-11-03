@@ -8,10 +8,11 @@
  *       成熟度表见 `src/component-status.ts`（单一真相源）。
  */
 
-import { defineComponent, Teleport } from '@lytjs/component';
+import { defineComponent, Teleport, onMounted, onUnmounted } from '@lytjs/component';
 import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
 import { signal, watch } from '@lytjs/reactivity';
 import { getDialogA11yProps, getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
+import { createOverlayFocus } from './overlay-focus';
 import type { ModalSetupProps, ModalSlots } from './types';
 
 export const Modal = defineComponent({
@@ -60,6 +61,34 @@ export const Modal = defineComponent({
     const isClosing = signal(false);
     const isFullscreen = signal(p.fullscreen);
 
+    // ★ 2026-11-04：对话框根元素（焦点陷阱的容器）。渲染时才存在，故用可变引用。
+    let dialogEl: HTMLElement | null = null;
+
+    /**
+     * 焦点 / Escape 控制器。
+     *
+     * ⚠️ 2026-11-04 修（P0）：此前 Modal **完全没有焦点管理** ——
+     *   打开后 `document.activeElement` 仍是触发器（焦点留在页面上），
+     *   Tab 会走到对话框**背后**的页面，键盘用户进不去对话框；
+     *   而 Escape 处理挂在对话框元素的 `onKeydown` 上 ⇒ 焦点不在里面 ⇒ **永不生效**。
+     */
+    const overlayFocus = createOverlayFocus(() => dialogEl, {
+      onEscape: () => {
+        // `closeOnPressEscape` 是公开 prop，必须在这里生效（否则等于被删掉）
+        if (p.closeOnPressEscape) void close();
+      },
+    });
+
+    // 初始就是打开状态时，`watch` 不会触发（值没有变化）⇒ 这里补一次
+    onMounted(() => {
+      if (p.modelValue) overlayFocus.activate();
+    });
+
+    onUnmounted(() => {
+      // 卸载时若陷阱还开着，监听会一直挂在 document 上（直到进程退出）
+      overlayFocus.deactivate();
+    });
+
     // ★ 2026-10-04 新增：`lockScroll` / `onBeforeOpen` / `onOpen`
     //   此前声明了却从未使用 ⇒ 传了毫无效果（静默失效）。
     //   语义与同包的 `Dialog` / `Drawer` 对齐：`onBeforeOpen` 返回 `false`
@@ -82,8 +111,11 @@ export const Modal = defineComponent({
           }
           if (p.lockScroll) setScrollLocked(true);
           p.onOpen?.();
-        } else if (scrollLocked) {
-          setScrollLocked(false);
+          // DOM 就位后再建立陷阱（渲染是异步的，这里延一个宏任务）
+          overlayFocus.activate();
+        } else {
+          if (scrollLocked) setScrollLocked(false);
+          overlayFocus.deactivate();
         }
       },
     );
@@ -246,7 +278,14 @@ export const Modal = defineComponent({
 
       const modalWidth = typeof p.width === 'number' ? `${p.width}px` : (p.width as string);
       // ★ 2026-10-04：`top` 声明了却从未使用 ⇒ 弹层顶部偏移不可定制。
-      const topOffset = p.top ? `top: ${String(p.top)}px;` : '';
+      // ⚠️ 2026-11-04 修（P1）：默认值是 `'15vh'`（**自带单位**），而这里无条件拼 `px`
+      //   ⇒ 生成 `top: 15vhpx` —— 非法 CSS，浏览器整条声明丢弃（实测 style 里只剩
+      //   `width: 50%`）⇒ 默认顶部偏移从未生效，而且没有任何报错。
+      //   只有「纯数字」才补 `px`（`top: 20` / `top: '20'` 都当 px 处理）。
+      const rawTop = String(p.top ?? '').trim();
+      const topOffset = rawTop
+        ? `top: ${/^-?\d+(\.\d+)?$/.test(rawTop) ? `${rawTop}px` : rawTop};`
+        : '';
       const modalStyle = isFullscreen() ? topOffset : `width: ${modalWidth};${topOffset}`;
 
       const modalA11yProps = getDialogA11yProps({
@@ -268,7 +307,11 @@ export const Modal = defineComponent({
           'div',
           {
             class: 'lyt-modal__overlay',
-            'aria-hidden': true,
+            // ⚠️ 2026-11-04 修（P0）：此前这里是 `'aria-hidden': true` —— 而遮罩层
+            //   **包着** `role="dialog"` 的对话框 ⇒ 整棵子树被移出无障碍树，
+            //   读屏软件**完全看不到对话框内容**（连「对话框」都不会播报）。
+            //   `aria-hidden` 只能挂在**装饰性**的兄弟节点上（Dialog / Drawer 的遮罩
+            //   就是兄弟节点，那才是正确写法）；容器节点上不能挂。
             onClick: handleModalClick,
           },
           [
@@ -277,6 +320,9 @@ export const Modal = defineComponent({
               mergeA11yProps(modalA11yProps, {
                 class: modalClass,
                 style: modalStyle,
+                ref: (el: unknown) => {
+                  dialogEl = (el as HTMLElement | null) ?? null;
+                },
                 onKeydown: handleKeydown,
                 // ⚠️ 2026-10-27 修（P0）：此前内容区**没有** stopPropagation，
                 //   而遮罩层挂了 onClick=close ⇒ 点正文、点输入框、点按钮都会把弹层关掉

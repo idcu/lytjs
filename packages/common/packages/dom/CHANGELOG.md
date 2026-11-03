@@ -1,5 +1,15 @@
 # @lytjs/common-dom 更新日志
 
+## [未发布] - 2026-11-04
+
+### 🐞 修复
+
+- **`aria-*` 的空串不再写入 DOM**：`ariaLabel` / `ariaDescribedBy` 这类 prop 的默认值是 `''`，
+  而组件里普遍写 `'aria-describedby': p.ariaDescribedBy` ⇒ **每个实例**都渲染出
+  `aria-describedby=""`（**非法的 IDREF 列表**，规范要求至少一个 id）。
+  在 `patchAttr` 这一层兜底：`aria-*` 收到 `''` 视为「没设」。
+  （`@lytjs/common-a11y` 的生成器也做了过滤，但组件手写的属性表绕过了生成器 —— 两层都要有。）
+
 ## [6.9.6] - 2026-06-06
 
 ### 🚀 版本升级

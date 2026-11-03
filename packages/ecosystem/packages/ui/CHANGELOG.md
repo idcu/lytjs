@@ -2,6 +2,34 @@
 
 ## [Unreleased]
 
+### 🐞 修复（对话框的无障碍契约：焦点 / Escape / aria 树）
+
+三个弹层各自实现了一套焦点与键盘处理，**三套都是错的、错法还各不相同** ——
+而它们视觉上完全正常（弹窗出现了、鼠标能点），只有键盘 / 读屏用户用不了。
+
+- **`Modal` 的遮罩层 `aria-hidden="true"` 包着 `role="dialog"`**（P0）：整棵子树被移出
+  无障碍树，读屏软件**完全看不到对话框内容**（连「对话框」都不会播报）。
+  `aria-hidden` 只能挂在**装饰性兄弟节点**上（`Dialog` / `Drawer` 的遮罩就是兄弟节点，
+  那才是正确写法），不能挂在容器上。
+- **三个弹层打开后焦点都不进入**：`activeElement` 仍是触发按钮 / `body`，
+  Tab 会走到对话框**背后**的页面。
+- **`Modal` / `Dialog` 的 Escape 永不生效**：处理函数挂在元素上，而焦点从未进入该元素
+  ⇒ 事件收不到。（`Drawer` 用的是 `window` 监听，所以它的 Escape 反而"能关"。）
+- **关闭后焦点不回到触发元素**：`activeElement` 落在被移除的节点 / `body`。
+- **`Drawer` 的 Escape 是 `window.addEventListener`、在 setup 里注册且从不移除**：
+  卸载后仍响应；**N 个抽屉按一次 Escape 全部关闭**（没有「最上层」概念）。
+- **`Modal` 的 `top` 默认 `'15vh'` 被拼成 `top: 15vhpx`**：非法 CSS，浏览器整条丢弃
+  ⇒ 默认顶部偏移从未生效（实测 `style` 里只剩 `width: 50%`），而且没有任何报错。
+
+### ✨ 新增
+
+- 新增内部模块 `components/overlay-focus.ts`：三个弹层共用的焦点 / Escape 控制器
+  （document 级监听 + **只关最上层** + 焦点陷阱 + 卸载清理 + 关闭恢复焦点）。
+  底层就是 `@lytjs/common-a11y` 的 `focusTrap` —— 这个工具此前**一次都没被调用过**。
+- `Dialog` 的内联焦点陷阱（`getFocusableElements` / `handleTabKey` / `effect`）迁移到
+  统一控制器：原来那套用 `offsetParent !== null` 判可见，而 `position: fixed` 元素的
+  `offsetParent` 恒为 `null` ⇒ 固定定位对话框里**所有**元素都被判为不可见，列表为空。
+
 ### 🐞 修复（Pagination 受控行为 3 个 + v-model）
 
 - **`current` prop 变化被忽略**：内部 `signal(p.current)` 只在创建时取一次值 ⇒

@@ -1,5 +1,41 @@
 # @lytjs/common-a11y 更新日志
 
+## [未发布] - 2026-11-04
+
+### 🐞 修复（`focusTrap` 的 5 个缺陷 —— 它此前**一次都没被调用过**）
+
+- **可聚焦列表只在创建时算一次**：对话框内容几乎总是后到的（loading → 表单、异步数据、
+  条件按钮）⇒ 后加入的元素「不在陷阱里」，Tab 到它时既不是 first 也不是 last ⇒
+  **焦点逃出对话框**，而视觉上它还是模态的。现在每次用到时重算。
+- **容器内没有可聚焦元素时静默失败**：`container.focus()` 对不可聚焦元素是**空操作**
+  ⇒ 焦点仍停在对话框外（键盘用户被挡在门外）。现在临时加 `tabindex="-1"`，解除时摘掉。
+- **解除时不恢复焦点**：关闭对话框后 `activeElement` 落在被移除的节点 / `body`，
+  键盘用户的位置丢失、Tab 从头开始。现在默认还给「激活前的元素」。
+- **Escape 只摘监听、不通知调用方**：调用方无从得知用户想关闭 ⇒ 陷阱没了、对话框还在，
+  焦点可以自由跑到背后的页面上。新增 `onEscape` 回调；提供它时 `escapeDeactivates`
+  默认变为 `false`（由调用方在真正关闭后 cleanup）。
+- **两个陷阱会互相抢焦点**：A 的 `focusin` 发现焦点在容器外就拉回 A，这又触发 B 的
+  `focusin`，B 再拉回自己…… 实测 `RangeError: Maximum call stack size exceeded`。
+  嵌套弹层（弹窗里再开确认框）本来就会同时存在两个陷阱。现在只有**最上层**的陷阱
+  处理 `Tab` / `Escape` / `focusin`，上层关闭后自动交还给下层。
+
+### 🐞 修复（可聚焦判定漏掉「隐藏」这一整类）
+
+- `isFocusable` 此前只检查元素**自身**的 `aria-hidden` ⇒ `hidden` 属性、`inert`、
+  内联 `display:none` / `visibility:hidden`、**祖先**的 `aria-hidden="true"` 全部漏掉。
+  这些元素在浏览器里 `.focus()` 是空操作，却会被算进「可聚焦列表」⇒ 一旦排在最前，
+  初始焦点就落空。新增 `isHiddenFromAccessibility()`（沿祖先链检查，只读属性与内联样式，
+  不依赖布局 API，无 DOM 布局的环境同样成立）。
+- 与 2026-10-19 那次 `input[type=hidden]` 的修复是**同一个缺陷族**：当时只补了那一个特例。
+
+### 🐞 修复（13 个生成器输出空串 aria 属性）
+
+- `ariaLabel` / `ariaDescribedBy` 的 props 默认值是 `''`，生成器把它原样写进属性表 ⇒
+  **每个实例**都渲染出 `aria-label=""` / `aria-describedby=""`。
+  后者是**非法的 IDREF 列表**（规范要求至少一个 id），前者也不是「无标签」的正确表达。
+  现在统一走 `compactA11y()`：只丢 `undefined` / `null` / `''`，
+  `false` 与 `0` 必须保留（`aria-checked="false"`、`aria-valuenow="0"` 都是有意义的值）。
+
 ## [6.9.6] - 2026-06-06
 
 ### 🚀 版本升级

@@ -17,17 +17,20 @@
  * ⚠️ 已登记的设计怪癖（按真实行为断言，修复走单独决策，勿顺手改）：
  *  A) 初始 `modelValue=true` 不走 watch（:71 无 immediate）⇒ `onOpen` 不调、
  *     `lockScroll` 不锁；但聚焦 effect（:155）会执行 —— 打开副作用不对称。
- *  B) 组件**从不 emit `update:modelValue`**：ESC/遮罩/× 关闭只改内部
- *     `visible` 并调 `onClose` ⇒ 关闭后外部 `modelValue` 仍为 true，
- *     想重开必须先 false 再 true（受控脱钩）。
+ *  B) 【已修 2026-10-27】组件曾**从不 emit `update:modelValue`**（关闭只改内部
+ *     `visible`）⇒ 受控用法下外部 `modelValue` 仍是 true，想重开必须先 false 再 true。
+ *     现已回写；本文件的挂载辅助也补上了 `onUpdate:modelValue`（此前漏了，
+ *     导致「关闭路径」在测试里表现为「父组件毫无反应」）。
  *  C) `header` 插槽分支不渲染关闭按钮（仅 title 分支有，:216）。
  *  D) `appendToBody` 未出现在 props 声明块（:28-50）⇒ 被 initProps 过滤、
  *     `p.appendToBody` 恒 undefined（:313）—— Teleport 分支死代码，
  *     传了静默无效（dialog 始终挂在宿主内）。
- *  E) 聚焦 effect（:155）的 setTimeout 回调从未执行（实测：打开时
- *     getFocusableElements 调用 0 次、focus() 调用 0 次，而
- *     previousActiveElement 已捕获、returnFocus 正常）⇒ 打开自动聚焦
- *     与 Tab 焦点陷阱实测均不生效；returnFocusOnClose 生效。
+ *  E) 【已修 2026-11-04】打开自动聚焦与 Tab 焦点陷阱曾**完全不生效**。
+ *     根因不在 Dialog：`patchElement` 从不调用 `setRef`，而 Dialog 根元素
+ *     「占位 div → 对话框 div」走的是 patch 路径 ⇒ ref 回调从未触发 ⇒
+ *     `dialogRef()` 恒 null ⇒ 焦点管理全是死代码。
+ *     现在焦点由 `@lytjs/common-a11y` 的 `focusTrap` 统一管理（打开进入、
+ *     Tab 回绕、关闭归还），用例已改为断言**正确行为**。
  */
 
 import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
@@ -70,7 +73,16 @@ async function mountDialog(
   const mv = signal<boolean>(Boolean(props.modelValue ?? false));
   await createApp({
     setup() {
-      return () => h(Dialog as never, { ...props, modelValue: mv() }, slots as never);
+      // ⚠️ 2026-11-04：必须接上 `onUpdate:modelValue`，否则「点 × / ESC / 遮罩关闭」
+      //   在父组件看来**什么都没发生**（`mv` 仍是 true）—— 这不是组件行为，
+      //   而是测试脚手架没模拟 `v-model`。缺了它，关闭路径的焦点归还也永远不会触发
+      //   （`overlayFocus.deactivate()` 挂在 `modelValue` 的 watch 上）。
+      return () =>
+        h(
+          Dialog as never,
+          { ...props, modelValue: mv(), 'onUpdate:modelValue': (v: boolean) => mv.set(v) },
+          slots as never,
+        );
     },
   } as never).mount(host);
   await tick(30);
@@ -79,8 +91,11 @@ async function mountDialog(
 
 const q = (host: HTMLElement | Document, sel: string): HTMLElement | null =>
   host.querySelector(sel) as HTMLElement | null;
-const pressKey = (target: HTMLElement, key: string, shiftKey = false): void => {
-  target.dispatchEvent(new KeyboardEvent('keydown', { key, shiftKey, bubbles: true }));
+const pressKey = (target: HTMLElement, key: string, shiftKey = false): KeyboardEvent => {
+  // 返回事件本身：断言「是否被 preventDefault」需要它（`dispatchEvent` 只返回 boolean）
+  const event = new KeyboardEvent('keydown', { key, shiftKey, bubbles: true, cancelable: true });
+  target.dispatchEvent(event);
+  return event;
 };
 
 describe('Dialog — 渲染与 a11y', () => {
@@ -322,23 +337,21 @@ describe('Dialog — 打开与关闭', () => {
     expect(document.body.style.overflow).toBe('');
   });
 
-  it('无 update:modelValue emit：× 关闭后 modelValue 仍为 true，重开需先 false（怪癖 B）', async () => {
+  it('× 关闭后 emit update:modelValue=false：外部 modelValue 跟随，可直接重开', async () => {
     const { host, mv } = await mountDialog({ title: 't' });
     mv.set(true);
-    await tick(30);
+    await tick(40);
     q(host, '.lyt-dialog__close')!.click();
-    await tick(30);
+    await tick(40);
     expect(q(host, '.lyt-dialog')).toBeNull();
-    // 外部 modelValue 仍是 true：再 set(true) 无变化 ⇒ watch 不触发 ⇒ 不会重开
+    // ★ 2026-11-04：此前这里断言的是「外部 modelValue 仍为 true」（旧怪癖 B），
+    //   而 2026-10-27 就已改成回写 `v-model` —— 旧断言之所以还过，是因为测试
+    //   脚手架**没有接 `onUpdate:modelValue`**，把真实能力测成了缺陷。
+    expect(mv()).toBe(false);
+    // 直接重开即可，不需要先 false 再 true
     mv.set(true);
-    await tick(30);
-    expect(q(host, '.lyt-dialog')).toBeNull();
-    // 先 false 再 true 才重开
-    mv.set(false);
-    await tick(20);
-    mv.set(true);
-    await tick(30);
-    expect(q(host, '.lyt-dialog')).toBeTruthy();
+    await tick(40);
+    expect(q(host, '.lyt-dialog')).not.toBeNull();
   });
 
   it('modelValue true→false（外部主动关）：dialog 消失、overflow 恢复、onClose 不调', async () => {
@@ -398,8 +411,8 @@ describe('Dialog — 内置 footer 按钮', () => {
   });
 });
 
-describe('Dialog — 焦点管理（jsdom offsetParent shim；怪癖 E 实测）', () => {
-  it('打开后焦点不自动移动（怪癖 E）；但 previousActiveElement 已捕获，关闭归还焦点', async () => {
+describe('Dialog — 焦点管理', () => {
+  it('打开后焦点进入对话框；关闭后归还给打开前的元素', async () => {
     const outer = document.createElement('button');
     outer.textContent = '外部按钮';
     document.body.appendChild(outer);
@@ -408,16 +421,23 @@ describe('Dialog — 焦点管理（jsdom offsetParent shim；怪癖 E 实测）
 
     const { host, mv } = await mountDialog({ title: 't' });
     mv.set(true);
-    await tick(50);
-    // 怪癖 E：自动聚焦的 setTimeout 回调从未执行 ⇒ 焦点原地不动
-    expect(document.activeElement).toBe(outer);
+    await tick(60);
 
-    // 手动聚焦进弹窗，关闭后归还到 outer（returnFocusOnClose 默认 true）
+    // ★ 2026-11-04 修：此前这里断言的是「焦点原地不动」（旧「怪癖 E」）。
+    //   根因不在 Dialog 自己的焦点代码，而在 `patchElement` **从不调用 setRef** ——
+    //   Dialog 的根元素在「关闭态」是占位 `<div style="display:none">`、打开后仍是
+    //   `<div>`，同 tag ⇒ 走 patch 而不是 mount ⇒ `ref` 回调从未触发 ⇒
+    //   `dialogRef()` 恒为 null ⇒ 整套焦点管理是**死代码**。
+    //   现在 ref 在 patch 路径上也会设置，焦点正常进入对话框。
+    const dialog = q(host, '.lyt-dialog')!;
+    expect(dialog.contains(document.activeElement)).toBe(true);
+
+    // 关闭后归还到 outer（returnFocusOnClose 默认 true）
     const closeBtn = q(host, '.lyt-dialog__close')!;
     closeBtn.focus();
     expect(document.activeElement).toBe(closeBtn);
     closeBtn.click();
-    await tick(30);
+    await tick(60);
     expect(document.activeElement).toBe(outer);
   });
 
@@ -429,15 +449,15 @@ describe('Dialog — 焦点管理（jsdom offsetParent shim；怪癖 E 实测）
 
     const { host, mv } = await mountDialog({ title: 't', returnFocusOnClose: false });
     mv.set(true);
-    await tick(50);
+    await tick(60);
     const closeBtn = q(host, '.lyt-dialog__close')!;
     closeBtn.focus();
     closeBtn.click();
-    await tick(30);
+    await tick(60);
     expect(document.activeElement).not.toBe(outer); // 不归还（焦点随 DOM 移除落到 body）
   });
 
-  it('initialFocus 同样不生效（怪癖 E：同一断点）', async () => {
+  it('initialFocus 生效：焦点落在指定选择器上', async () => {
     const { host, mv } = await mountDialog({ title: 't', initialFocus: '.target-btn' }, {
       default: () => [
         h('button', { class: 'other-btn' }, '其他'),
@@ -445,19 +465,25 @@ describe('Dialog — 焦点管理（jsdom offsetParent shim；怪癖 E 实测）
       ],
     } as never);
     mv.set(true);
-    await tick(50);
-    expect(document.activeElement).not.toBe(q(host, '.target-btn'));
+    await tick(60);
+    // 此前：`dialogRef` 恒 null ⇒ initialFocus 分支根本没执行
+    expect(document.activeElement).toBe(q(host, '.target-btn'));
   });
 
-  it('Tab 键循环不生效（怪癖 E）：焦点不被拦截', async () => {
+  it('Tab 焦点陷阱生效：从最后一个元素 Tab 回绕到第一个', async () => {
     const onConfirm = vi.fn();
     const { host, mv } = await mountDialog({ title: 't', onConfirm });
     mv.set(true);
-    await tick(50);
+    await tick(60);
+
     const confirmBtn = q(host, '.lyt-dialog__confirm-btn')!;
+    const closeBtn = q(host, '.lyt-dialog__close')!;
     confirmBtn.focus();
-    pressKey(confirmBtn, 'Tab');
-    // 真实行为：handleTabKey 取不到 dialogRef ⇒ 不 preventDefault 也不移焦
     expect(document.activeElement).toBe(confirmBtn);
+
+    // 此前：Tab 只在包裹层的 onKeydown 里处理，而 `dialogRef` 恒 null ⇒ 不拦截
+    const event = pressKey(confirmBtn, 'Tab');
+    expect(event.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(closeBtn);
   });
 });

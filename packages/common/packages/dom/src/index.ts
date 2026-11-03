@@ -234,7 +234,17 @@ export function patchStyle(el: Element, prev: unknown, next: unknown): void {
  * Includes safety checks via isSafeAttribute.
  */
 export function patchAttr(el: Element, key: string, value: unknown, _isSVG: boolean): void {
-  if (value == null) {
+  // ⚠️ 2026-11-04 新增：`aria-*` 的空串等同于「没设」，直接不写。
+  //
+  // 为什么在**这里**拦：`ariaLabel` / `ariaDescribedBy` 这类 prop 的默认值都是 `''`，
+  // 而组件里普遍写 `'aria-describedby': p.ariaDescribedBy` —— 于是**每个实例**都渲染出
+  // `aria-describedby=""`。它是**非法的 IDREF 列表**（规范要求至少一个 id），
+  // `aria-label=""` 也不是「无标签」的正确表达（正确做法是不设该属性）。
+  // 39 个组件、每个实例都在输出这两个空属性（实测 2026-11-04）。
+  //
+  // 在生成器（`@lytjs/common-a11y`）里也做了过滤，但组件手写的属性表绕过了生成器 ——
+  // 所以在属性写入这一层再兜一次，新增组件不会再漏。
+  if (value == null || (value === '' && key.startsWith('aria-'))) {
     el.removeAttribute(key);
   } else if (value === false) {
     // ⚠️ `aria-*` 的 `false` **必须**序列化为字符串 `"false"`，不能像 HTML 布尔属性那样移除：

@@ -412,6 +412,24 @@ const GATES = [
       '+ v-model:current 静默无效（从不 emit update:current）。判据覆盖 8 个有内部状态的组件',
   },
   {
+    name: 'check-dialog-a11y',
+    tier: 'fast',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-dialog-a11y.mjs'],
+    approx: '~3s',
+    desc:
+      '★ 对话框的无障碍契约（Modal / Dialog / Drawer）：这三个弹层各自实现了一套焦点与键盘处理，' +
+      '而三套都是错的、错法还各不相同 —— 视觉上完全正常（弹窗出现了、鼠标能点），' +
+      '只有键盘 / 读屏用户用不了，所以单测与肉眼验收都发现不了。2026-11-04 抓到：' +
+      '① Modal 的遮罩 aria-hidden="true" **包着** role=dialog ⇒ 整棵子树移出无障碍树；' +
+      '② 三个弹层打开后焦点都不进入；③ Modal/Dialog 的 Escape 挂在元素上、焦点不在里面 ⇒ 永不生效；' +
+      '④ 关闭后焦点不回触发元素；⑤ Drawer 的 Escape 是**永不移除**的 window 监听 ⇒ 卸载后仍响应、' +
+      'N 个抽屉一次全关；⑥ Modal 的 top 默认 15vh 被拼成 15vhpx（非法 CSS）；' +
+      '⑦ aria-label="" / aria-describedby="" 铺满 39 个组件；' +
+      '⑧ patchElement **从不设置 ref** ⇒ 组件根元素 ref 永不触发（Dialog 的焦点管理是死代码）；' +
+      '⑨ 两个焦点陷阱的 focusin 互相拉回 ⇒ 爆栈。判据含 focusTrap 单元级 4 组',
+  },
+  {
     name: 'check-vitest-alias-dist',
     tier: 'fast',
     cmd: ['tsx', 'scripts/check-vitest-alias-dist.ts'],

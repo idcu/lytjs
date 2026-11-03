@@ -520,6 +520,26 @@ export function createElementPatch<HN, HE extends HN>(
     //    跳过静态子树。
     ctx.patchChildren(n1, n2, el, parentComponent, parentSuspense, isSVG);
 
+    // ★ 2026-11-04 修（P0）：`ref` 此前**只在 `mountElement` 里设置** —— 走 patch 路径时
+    //   永远不设。而 patch 路径恰恰是最常见的那条：
+    //
+    //   · 组件根元素在「关闭态」是占位 `<div style="display:none">`、打开后仍是 `<div>`
+    //     ⇒ 同 tag ⇒ `patchElement` ⇒ **打开后的元素永远拿不到 ref**；
+    //   · 给一个已存在的元素**后来才加** ref（`v-if` 切换、条件 ref）同样走这里。
+    //
+    //   实测（2026-11-04）：`@lytjs/ui` 的 `Dialog` 把焦点陷阱容器挂在根元素 ref 上，
+    //   而根元素正是「占位 div → 对话框 div」的 patch 路径 ⇒ **ref 从未触发过**，
+    //   整套焦点管理（初始焦点、焦点陷阱、关闭恢复焦点）是**死代码**。
+    //   这类缺陷没有任何报错：`ref` 回调不调用，使用者只看到「ref 是 null」。
+    if (n1.ref !== n2.ref) {
+      if (n1.ref && parentComponent) {
+        setRef(null as unknown as HN, n1.ref, parentComponent);
+      }
+      if (n2.ref && parentComponent) {
+        setRef(el, n2.ref, parentComponent);
+      }
+    }
+
     // ★ 2026-10-31 新增：自定义指令 updated（props 与 children 都 patch 完之后）
     invokeDirectiveHook(n2, 'updated', n1);
   }

@@ -324,6 +324,24 @@ const treeData = [
 | labelWidth    | 标签宽度     | string | '100px' |
 | labelPosition | 标签位置     | string | 'right' |
 
+## 无障碍（键盘与读屏）
+
+弹层类组件（`Modal` / `Dialog` / `Drawer`）遵循以下契约，**无需额外配置**：
+
+- 打开后焦点**自动进入**弹层（第一个可聚焦元素；`Dialog` 可用 `initialFocus` 指定）；
+- `Tab` / `Shift+Tab` 在弹层内**循环**，不会走到背后的页面；
+- `Escape` 关闭 —— 与焦点位置无关（document 级监听），且**只关最上层**
+  （弹窗里再开一个确认框时，按一次 Escape 只关确认框）；
+- 关闭后焦点**回到打开前的元素**（`Dialog` 可用 `returnFocusOnClose={false}` 关闭该行为）；
+- 卸载时解除全部监听与焦点陷阱。
+
+`role="dialog"` 的元素**不能**被 `aria-hidden="true"` 的容器包住 —— 那会把整个对话框
+从无障碍树里移除，读屏软件完全看不到内容。装饰性的遮罩层必须是与对话框**平级**的兄弟节点。
+
+表单项（`Switch` / `Checkbox` / `Slider` / `Select` …）通过 `@lytjs/common-a11y`
+生成 `role` / `aria-*`，并随状态更新（`aria-checked` / `aria-valuenow` / `aria-expanded`…）。
+**不输出空串属性**：`aria-label=""` 与 `aria-describedby=""` 都是非法的。
+
 ## 主题
 
 ### 主题配置

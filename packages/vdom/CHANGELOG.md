@@ -1,5 +1,18 @@
 # @lytjs/vdom
 
+## [未发布] - 2026-11-04
+
+### 🐞 修复（P0：`ref` 在 patch 路径上永不触发）
+
+- **`patchElement` 从不设置 `ref`**：`ref` 只在 `mountElement` 里处理，而「元素已存在、
+  只是 vnode 变了」走的是 patch。最常见的两条路径都中招：
+  · 组件根元素在「关闭态」是占位 `<div style="display:none">`、打开后仍是 `<div>` ⇒
+    同 tag ⇒ patch ⇒ **打开后的元素永远拿不到 ref**；
+  · 给已存在的元素**后来才加** ref（`v-if` 切换、条件 ref）。
+- 实测后果：`@lytjs/ui` 的 `Dialog` 把焦点陷阱容器挂在根元素 ref 上 ⇒ `dialogRef()` 恒为
+  `null` ⇒ **整套焦点管理（初始焦点 / 焦点陷阱 / 关闭恢复）是死代码**，而且没有任何报错。
+- 现在 `patchElement` 在 `n1.ref !== n2.ref` 时先给旧 ref 传 `null`、再给新 ref 传元素。
+
 ## [6.9.6] - 2026-06-06
 
 ### 🚀 版本升级

@@ -8,10 +8,11 @@
  *       成熟度表见 `src/component-status.ts`（单一真相源）。
  */
 
-import { defineComponent, Teleport } from '@lytjs/component';
+import { defineComponent, Teleport, onMounted, onUnmounted } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal, watch } from '@lytjs/reactivity';
 import { getDialogA11yProps, getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
+import { createOverlayFocus } from './overlay-focus';
 import type { DrawerSetupProps, DrawerSlots } from './types';
 
 export const Drawer = defineComponent({
@@ -64,6 +65,33 @@ export const Drawer = defineComponent({
       scrollLocked = locked;
     };
 
+    // ★ 2026-11-04：抽屉根元素 + 焦点控制器
+    let drawerEl: HTMLElement | null = null;
+
+    /**
+     * ⚠️ 2026-11-04 修（P0）：此前 Drawer 的 Escape 是
+     *   `window.addEventListener('keydown', ...)`，在 **setup 里注册、从不移除**：
+     *   ① 卸载后监听还在（`modelValue` 由外部持有 ⇒ 卸载后的抽屉仍会被 Escape 改回 false）；
+     *   ② 多个抽屉同时打开时，**一次 Escape 全部关闭**（没有「最上层」概念）；
+     *   ③ 打开后焦点不进入抽屉，Tab 会走到背后的页面。
+     *   现在统一走 `createOverlayFocus`：document 级监听 + 最上层判定 + 焦点陷阱 + 卸载清理。
+     */
+    const overlayFocus = createOverlayFocus(() => drawerEl, {
+      onEscape: () => {
+        // `closeOnPressEscape` 是公开 prop，必须在这里生效（否则等于被删掉）
+        if (p.closeOnPressEscape) void close();
+      },
+    });
+
+    // 初始就是打开状态时，`watch` 不会触发（值没有变化）⇒ 这里补一次
+    onMounted(() => {
+      if (p.modelValue) overlayFocus.activate();
+    });
+
+    onUnmounted(() => {
+      overlayFocus.deactivate();
+    });
+
     watch(
       () => p.modelValue,
       async (newVal) => {
@@ -74,8 +102,10 @@ export const Drawer = defineComponent({
           }
           if (p.lockScroll) setScrollLocked(true);
           p.onOpen?.();
-        } else if (scrollLocked) {
-          setScrollLocked(false);
+          overlayFocus.activate();
+        } else {
+          if (scrollLocked) setScrollLocked(false);
+          overlayFocus.deactivate();
         }
       },
     );
@@ -99,16 +129,6 @@ export const Drawer = defineComponent({
     const handleModalClick = () => {
       if (p.closeOnClickModal) close();
     };
-
-    const handleKeydown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && p.closeOnPressEscape && p.modelValue) {
-        close();
-      }
-    };
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('keydown', handleKeydown);
-    }
 
     const getDrawerClass = () => {
       const classes = ['lyt-drawer'];
@@ -248,7 +268,12 @@ export const Drawer = defineComponent({
 
       const root = createVNode(
         'div',
-        mergeA11yProps(a11yProps, { class: getDrawerClass() }),
+        mergeA11yProps(a11yProps, {
+          class: getDrawerClass(),
+          ref: (el: unknown) => {
+            drawerEl = (el as HTMLElement | null) ?? null;
+          },
+        }),
         children,
       );
       // ★ 2026-10-04：`appendToBody` 声明了却从未使用 ⇒ 弹层无法挂到 `body` 下，

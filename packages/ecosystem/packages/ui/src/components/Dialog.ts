@@ -11,20 +11,12 @@
  *       成熟度表见 `src/component-status.ts`（单一真相源）。
  */
 
-import { defineComponent, Teleport } from '@lytjs/component';
+import { defineComponent, Teleport, onMounted, onUnmounted } from '@lytjs/component';
 import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
-import { signal, watch, effect } from '@lytjs/reactivity';
+import { signal, watch } from '@lytjs/reactivity';
 import { getDialogA11yProps, getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
+import { createOverlayFocus } from './overlay-focus';
 import type { DialogSetupProps, DialogSlots } from './types';
-
-const FOCUSABLE_SELECTORS = [
-  'a[href]',
-  'button:not([disabled])',
-  'input:not([disabled])',
-  'select:not([disabled])',
-  'textarea:not([disabled])',
-  '[tabindex]:not([tabindex="-1"])',
-].join(', ');
 
 export const Dialog = defineComponent({
   name: 'LytDialog',
@@ -65,8 +57,8 @@ export const Dialog = defineComponent({
   ) {
     const p = props as DialogSetupProps;
     const visible = signal(p.modelValue);
-    const dialogRef = signal<HTMLElement | null>(null);
-    const previousActiveElement = signal<HTMLElement | null>(null);
+    // ★ 2026-11-04：控制器要拿的是「当前 DOM 元素」，用可变引用比 signal 直接
+    let dialogEl: HTMLElement | null = null;
 
     // ★ 2026-10-04 新增：`lockScroll` 与 `onBeforeOpen` 此前声明了却从未使用
     //   ⇒ 传了毫无效果（静默失效）。
@@ -92,9 +84,11 @@ export const Dialog = defineComponent({
           visible.set(true);
           if (p.lockScroll) setScrollLocked(true);
           p.onOpen?.();
+          overlayFocus.activate();
         } else {
           visible.set(false);
           if (scrollLocked) setScrollLocked(false);
+          overlayFocus.deactivate();
         }
       },
     );
@@ -122,82 +116,48 @@ export const Dialog = defineComponent({
       if (scrollLocked) setScrollLocked(false);
       p.onClose?.();
 
-      if (p.returnFocusOnClose) {
-        const prevEl = previousActiveElement();
-        if (prevEl && prevEl.focus) {
-          prevEl.focus();
-        }
-      }
+      // 焦点恢复由 `overlayFocus.deactivate()` 完成（它在 `focusTrap` 的 cleanup 里，
+      // 且只在「陷阱确实建立过」时才执行）—— 这里不再手动恢复，避免两处各恢复一次。
     };
 
     const handleKeydown = (e: KeyboardEvent) => {
-      if (p.closeOnPressEscape && e.key === 'Escape') {
-        e.preventDefault();
-        handleClose();
-      }
+      // ⚠️ 2026-11-04：Escape 交给 `overlayFocus`（document 级 + 只关最上层）统一处理。
+      //   此前这里也处理一次 ⇒ 焦点在对话框内时**一次 Escape 触发两次 handleClose**
+      //   （`onBeforeClose` 是异步的时候两次都能通过守卫，回调被调两遍）。
+      //   这里只负责把事件转给使用者的 `onKeydown`。
       p.onKeydown?.(e);
     };
 
-    const getFocusableElements = (container: HTMLElement): HTMLElement[] => {
-      return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS)).filter(
-        (el) => {
-          return el.offsetParent !== null && !el.hasAttribute('aria-hidden');
-        },
-      );
-    };
+    // ★ 2026-11-04：内联焦点陷阱 → 统一控制器
+    //
+    // ⚠️ 此前这里是自己写的一套：`getFocusableElements` + `handleTabKey` + `effect`。
+    //   问题在于：
+    //   ① Tab 只在包裹层的 `onKeydown` 里处理 —— 焦点一旦离开包裹层（点遮罩、程序化
+    //      focus）就彻底失效，Tab 可以走到背后的页面；
+    //   ② 可聚焦列表用 `el.offsetParent !== null` 判可见，而 `position: fixed` 元素的
+    //      `offsetParent` 恒为 `null` ⇒ 固定定位对话框里的**所有**元素都被判为不可见，
+    //      列表为空 ⇒ 初始焦点落空；
+    //   ③ 容器内没有可聚焦元素时直接 `return`，容器也不会被临时 `tabindex=-1`，
+    //      `focus()` 是空操作 ⇒ 焦点停在对话框外。
+    //   现在与 Modal / Drawer 共用 `createOverlayFocus`（内部就是 `@lytjs/common-a11y`
+    //   的 `focusTrap` —— 这个工具此前**一次都没被调用过**）。
+    const overlayFocus = createOverlayFocus(() => dialogEl, {
+      onEscape: () => {
+        if (p.closeOnPressEscape) void handleClose();
+      },
+      // 只有**显式**传 false 才不归还（`undefined` 按默认 true 处理 ——
+      // `Boolean(undefined)` 会把「没传」误判成「不归还」）
+      restoreFocus: p.returnFocusOnClose !== false,
+      initialFocus: p.initialFocus as string | HTMLElement | undefined,
+    });
 
-    const handleTabKey = (e: KeyboardEvent) => {
-      const dialog = dialogRef();
-      if (!dialog) return;
+    // 初始就是打开状态时，`watch` 不会触发（值没有变化）⇒ 这里补一次
+    onMounted(() => {
+      if (p.modelValue) overlayFocus.activate();
+    });
 
-      const focusableElements = getFocusableElements(dialog);
-      if (focusableElements.length === 0) return;
-
-      const firstElement = focusableElements[0]!;
-      const lastElement = focusableElements[focusableElements.length - 1]!;
-
-      if (e.shiftKey) {
-        if (document.activeElement === firstElement) {
-          e.preventDefault();
-          lastElement.focus();
-        }
-      } else {
-        if (document.activeElement === lastElement) {
-          e.preventDefault();
-          firstElement.focus();
-        }
-      }
-    };
-
-    effect(() => {
-      if (visible()) {
-        previousActiveElement.set(document.activeElement as HTMLElement);
-
-        setTimeout(() => {
-          const dialog = dialogRef();
-          if (dialog) {
-            if (p.initialFocus) {
-              const initialEl =
-                typeof p.initialFocus === 'string'
-                  ? dialog.querySelector<HTMLElement>(p.initialFocus)
-                  : (p.initialFocus as HTMLElement);
-              if (initialEl && initialEl.focus) {
-                initialEl.focus();
-              } else {
-                const focusableElements = getFocusableElements(dialog);
-                if (focusableElements.length > 0) {
-                  (focusableElements[0] as HTMLElement).focus();
-                }
-              }
-            } else {
-              const focusableElements = getFocusableElements(dialog);
-              if (focusableElements.length > 0) {
-                (focusableElements[0] as HTMLElement).focus();
-              }
-            }
-          }
-        }, 0);
-      }
+    onUnmounted(() => {
+      overlayFocus.deactivate();
     });
 
     return () => {
@@ -334,14 +294,9 @@ export const Dialog = defineComponent({
           'div',
           {
             class: 'lyt-dialog__wrapper',
-            onKeydown: (e: KeyboardEvent) => {
-              if (e.key === 'Tab') {
-                handleTabKey(e);
-              }
-              handleKeydown(e);
-            },
+            onKeydown: handleKeydown,
             ref: (el: HTMLElement | null) => {
-              dialogRef.set(el);
+              dialogEl = el;
             },
           },
           [
