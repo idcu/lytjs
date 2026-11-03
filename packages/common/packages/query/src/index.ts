@@ -26,6 +26,24 @@ export interface ParsedURL {
  * @param options - 解析选项
  * @returns 解析后的键值对对象
  */
+
+/**
+ * 解码一个查询串组件（键或值）。
+ *
+ * ⚠️ 2026-11-03 修（P1）：`+` 在 `application/x-www-form-urlencoded` 里表示**空格**
+ * （WHATWG URL 标准，`URLSearchParams` / `querystring.parse` / 所有服务端框架一致）。
+ * 此前只做 `decodeURIComponent` ⇒ `?q=a+b` 解析成 `"a+b"`，搜索「a b」永远搜不到，
+ * 而客户端发出来的正是 `a+b`。真正的加号由发送方编码为 `%2B`，这里不受影响。
+ */
+function decodeQueryComponent(value: string): string {
+  try {
+    return decodeURIComponent(value.replace(/\+/g, ' '));
+  } catch {
+    // 畸形转义（`%zz`）保留原串，不因一个参数让整个解析抛错
+    return value;
+  }
+}
+
 export function parseQueryString(
   search: string,
   options?: { supportArrays?: boolean },
@@ -62,16 +80,8 @@ export function parseQueryString(
         key = pair.slice(0, eqIndex);
         value = pair.slice(eqIndex + 1);
       }
-      try {
-        key = decodeURIComponent(key);
-      } catch {
-        // keep key as-is if decode fails
-      }
-      try {
-        value = decodeURIComponent(value);
-      } catch {
-        // keep value as-is if decode fails
-      }
+      key = decodeQueryComponent(key);
+      value = decodeQueryComponent(value);
 
       if (result[key]) {
         if (Array.isArray(result[key])) {
@@ -101,16 +111,8 @@ export function parseQueryString(
       key = pair.slice(0, eqIndex);
       value = pair.slice(eqIndex + 1);
     }
-    try {
-      key = decodeURIComponent(key);
-    } catch {
-      // keep key as-is if decode fails
-    }
-    try {
-      value = decodeURIComponent(value);
-    } catch {
-      // keep value as-is if decode fails
-    }
+    key = decodeQueryComponent(key);
+    value = decodeQueryComponent(value);
     result[key] = value;
   }
   return result;

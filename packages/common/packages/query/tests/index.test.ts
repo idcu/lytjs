@@ -335,3 +335,27 @@ describe('parseQueryString 接受整条 URL（P0 回归）', () => {
     expect(parseQueryString('?a=1')).toEqual({ a: '1' });
   });
 });
+
+// ⚠️ 2026-11-03 新增（P1 回归）：`+` 在 form 编码里表示**空格**
+//
+// 浏览器把搜索框里的 "a b" 编码成 `?q=a+b`（`application/x-www-form-urlencoded`），
+// 而 `decodeURIComponent('a+b')` 仍是 `"a+b"` ⇒ 搜索「a b」永远搜不到。
+// 真正的加号由发送方编码为 `%2B`，因此这里替换 `+` 不会误伤。
+describe('query 中的 + 号（P1 回归）', () => {
+  it('+ 应解码为空格', () => {
+    expect(parseQueryString('q=a+b')).toEqual({ q: 'a b' });
+    expect(parseQueryStringWithArrays('q=a+b&r=c+d')).toEqual({ q: 'a b', r: 'c d' });
+  });
+
+  it('%2B 应解码为加号本身', () => {
+    expect(parseQueryString('q=a%2Bb')).toEqual({ q: 'a+b' });
+  });
+
+  it('键里的 + 同样解码为空格', () => {
+    expect(parseQueryString('a+b=1')).toEqual({ 'a b': '1' });
+  });
+
+  it('畸形转义不抛错（保留原串）', () => {
+    expect(parseQueryString('q=%zz')).toEqual({ q: '%zz' });
+  });
+});

@@ -350,15 +350,20 @@ export class Server {
    * @param res - Node.js 响应对象
    */
   private async handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    // ⚠️ 2026-11-03 修（P1）：ctx 提到 try 之外创建 —— 出错时要把它身上**已经写好的
+    //   响应头**（CORS / 限流 / 请求 id）一起带进错误响应。此前 `sendError` 只拿到 res，
+    //   于是「鉴权中间件抛 401」「请求体超限 413」这类错误响应**没有任何 CORS 头**，
+    //   浏览器侧只能看到一个 opaque error，控制台里连状态码都读不到。
+    const ctx = this.createContext(req);
     try {
-      await this.dispatch(req, res);
+      await this.dispatch(req, res, ctx);
     } catch (err) {
-      this.sendError(res, err);
+      this.sendError(res, err, ctx.response.headers);
     }
   }
 
-  /** 实际分发逻辑 */
-  private async dispatch(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  /** 由 Node 请求对象构造 ctx（路由参数由 `dispatch` 填入） */
+  private createContext(req: IncomingMessage): Context {
     const url = req.url || '/';
     const path = url.split('?')[0] || '/';
     const method = (req.method || 'GET') as HttpMethod;
@@ -381,7 +386,7 @@ export class Server {
       headers: {},
     };
 
-    const ctx: Context = {
+    return {
       request,
       response,
       // ⚠️ 2026-10-31 修（P0）：`@lytjs/middleware-rate-limit` 的默认 keyGenerator 读的是
@@ -391,6 +396,17 @@ export class Server {
       clientIp: request.ip,
       ip: request.ip,
     };
+  }
+
+  /** 实际分发逻辑（`ctx` 可省略：外部直接驱动 dispatch 时按 req 现造一个） */
+  private async dispatch(
+    req: IncomingMessage,
+    res: ServerResponse,
+    ctx: Context = this.createContext(req),
+  ): Promise<void> {
+    const { request, response } = ctx;
+    const method = request.method;
+    const path = request.path;
 
     const match = this.router.match(method, path);
 
@@ -408,22 +424,40 @@ export class Server {
     }
 
     // 解析请求体（仅在处理器确实需要时才有开销：GET/HEAD/OPTIONS 直接返回）
-    const body = await readRequestBody(req, this.bodyLimit);
+    //
+    // ⚠️ 2026-11-03 修（P1）：解析失败（413 超限 / 400 非法 JSON）此前是**直接抛**，
+    //   于是整条中间件链被跳过 ⇒ 413 / 400 响应拿不到 CORS 头。现在先记下错误，
+    //   照常跑完中间件（让它们把该写的头写上），再由终态 handler 抛出。
+    let body: Awaited<ReturnType<typeof readRequestBody>>;
+    let bodyError: unknown;
+    try {
+      body = await readRequestBody(req, this.bodyLimit);
+    } catch (err) {
+      bodyError = err;
+    }
     if (body) {
       ctx.request.rawBody = body.raw;
       ctx.request.body = body.parsed;
     }
 
-    // 终态：命中路由 → 路由处理器；未命中 → 404
+    // 终态：命中路由 → 路由处理器；未命中 → 405 / 404
     const handler = async () => {
+      if (bodyError) throw bodyError;
       if (match) {
         await match.handler(ctx);
         return;
       }
-      if (ctx.response) {
-        ctx.response.status = 404;
-        ctx.response.body = { error: '未找到' };
+      // ⚠️ 2026-11-03 新增：路径存在但方法不对时回 405 + `Allow`。
+      //   此前一律 404 —— 客户端只能看到「不存在」，排查时得逐个方法试。
+      const allowed = this.router.allowedMethods(path);
+      if (allowed.length > 0) {
+        response.status = 405;
+        response.headers.allow = allowed.join(', ');
+        response.body = { error: '方法不允许' };
+        return;
       }
+      response.status = 404;
+      response.body = { error: '未找到' };
     };
 
     // 洋葱圈：index 从 -1 起递增 ⇒ **注册顺序即执行顺序**
@@ -455,7 +489,14 @@ export class Server {
             typeof (result as FetchLikeResponse).text === 'function'
           ) {
             // Fetch `Response`
-            ctx.response = await fetchResponseToPlain(result as FetchLikeResponse);
+            const converted = await fetchResponseToPlain(result as FetchLikeResponse);
+            // ⚠️ 2026-11-03 修（P1）：此前是**整体替换** `ctx.response` ⇒ 上游中间件
+            //   已经写好的头（`x-request-id` / `access-control-*` / `vary`）被一并丢弃，
+            //   只剩这个 Response 自带的头。现在合并，返回方优先。
+            ctx.response = {
+              ...converted,
+              headers: { ...ctx.response.headers, ...converted.headers },
+            };
           } else if (
             typeof result.status === 'number' &&
             result.headers &&
@@ -463,8 +504,12 @@ export class Server {
           ) {
             // 普通对象形态 `{ status, headers, body }`（middleware-rate-limit 的 429 走这条）
             ctx.response = {
+              ...ctx.response,
               status: result.status,
-              headers: { ...(result.headers as Record<string, string | string[]>) },
+              headers: {
+                ...ctx.response.headers,
+                ...(result.headers as Record<string, string | string[]>),
+              },
               body: (result as { body?: unknown }).body,
             };
           }
@@ -477,12 +522,21 @@ export class Server {
     await next();
 
     if (ctx.response) {
-      this.sendResponse(res, ctx.response);
+      this.sendResponse(res, ctx.response, method);
     }
   }
 
-  /** 统一错误响应：`HttpError` 按状态码返回；其余记 500 且不泄漏内部信息 */
-  private sendError(res: ServerResponse, err: unknown): void {
+  /**
+   * 统一错误响应：`HttpError` 按状态码返回；其余记 500 且不泄漏内部信息。
+   *
+   * `headers` 是出错时 ctx 上已经写好的响应头 —— 必须一并发出，否则 CORS / 请求 id
+   * 在**错误路径**上全部消失（正常路径有、错误路径没有，是排查时最费时的一类）。
+   */
+  private sendError(
+    res: ServerResponse,
+    err: unknown,
+    headers: Record<string, string | string[] | undefined> = {},
+  ): void {
     const status = err instanceof HttpError ? err.status : 500;
     const message = err instanceof Error ? err.message : String(err);
 
@@ -496,9 +550,20 @@ export class Server {
       console.error('[http-server] 未处理的错误:', err);
     }
 
+    const existing = new Set<string>();
+    for (const [key, value] of Object.entries(headers)) {
+      if (value === undefined) continue;
+      res.setHeader(key, Array.isArray(value) ? value.map(String) : String(value));
+      existing.add(key.toLowerCase());
+    }
+
     res.statusCode = status;
-    res.setHeader('content-type', 'application/json');
-    res.end(JSON.stringify({ error: status >= 500 ? '服务器内部错误' : message }));
+    if (!existing.has('content-type')) {
+      res.setHeader('content-type', 'application/json');
+    }
+    const body = JSON.stringify({ error: status >= 500 ? '服务器内部错误' : message });
+    res.setHeader('content-length', Buffer.byteLength(body));
+    res.end(body);
   }
 
   /**
@@ -506,35 +571,61 @@ export class Server {
    *
    * @param res - Node.js 响应对象
    * @param response - 响应对象
+   * @param method - 请求方法（`HEAD` 只发头不发体）
    */
-  private sendResponse(res: ServerResponse, response: Response): void {
+  private sendResponse(res: ServerResponse, response: Response, method?: HttpMethod): void {
     res.statusCode = response.status;
 
+    // ⚠️ 2026-11-03 修（P0 ×2）：
+    //   ① 数组值此前是**逐项** `setHeader` —— 后一次调用直接覆盖前一次，
+    //      于是 `set-cookie: ['access=…', 'refresh=…']` 到客户端只剩最后一条
+    //      （登录态只种了一个 cookie，刷新令牌永远丢），`vary` / `link` 同理。
+    //      正确做法是把整个数组交给 `setHeader`（Node 会逐条发出）。
+    //   ② 下面判断「用户是否自己设了 content-type」用的是**精确小写键**，
+    //      处理器写 `'Content-Type'` 时判定为「没设」⇒ 被覆盖成 `text/plain`，
+    //      一个 JSON 字符串响应到浏览器就成了纯文本（`res.json()` 直接抛）。
+    //      现在统一按**小写集合**判定。
+    const present = new Set<string>();
     for (const [key, value] of Object.entries(response.headers)) {
+      if (value === undefined) continue;
+      present.add(key.toLowerCase());
       if (Array.isArray(value)) {
-        for (const v of value) {
-          res.setHeader(key, v as string | number | string[]);
-        }
+        res.setHeader(key, value.map(String));
       } else {
-        res.setHeader(key, value as string | number | string[]);
+        res.setHeader(key, value as string | number);
       }
     }
 
-    if (response.body !== undefined) {
-      const body =
-        typeof response.body === 'string' ? response.body : JSON.stringify(response.body);
+    // 无体状态码（1xx / 204 / 304）不允许带体，也不应带 content-length
+    const bodyForbidden =
+      response.status < 200 || response.status === 204 || response.status === 304;
 
-      if (!response.headers['content-type']) {
-        res.setHeader(
-          'content-type',
-          typeof response.body === 'string' ? 'text/plain' : 'application/json',
-        );
-      }
-
-      res.end(body);
-    } else {
+    if (response.body === undefined || bodyForbidden) {
+      if (bodyForbidden) res.removeHeader('content-length');
       res.end();
+      return;
     }
+
+    const body =
+      typeof response.body === 'string' ? response.body : (JSON.stringify(response.body) ?? '');
+
+    if (!present.has('content-type')) {
+      res.setHeader(
+        'content-type',
+        typeof response.body === 'string' ? 'text/plain' : 'application/json',
+      );
+    }
+    if (!present.has('content-length') && !present.has('transfer-encoding')) {
+      res.setHeader('content-length', Buffer.byteLength(body));
+    }
+
+    // HEAD：头部与 GET 完全一致，但不发体（RFC 9110 §9.3.2）
+    if (method === 'HEAD') {
+      res.end();
+      return;
+    }
+
+    res.end(body);
   }
 }
 

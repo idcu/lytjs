@@ -269,6 +269,24 @@ const GATES = [
       '20 个已卸载组件的回调全被调用（泄漏正好 +N）',
   },
   {
+    name: 'check-http-protocol',
+    tier: 'fast',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-http-protocol.mjs'],
+    approx: '~2s',
+    desc:
+      '★ HTTP 协议层（@lytjs/http-server）：这是整个后端的入口，缺陷共同点是' +
+      '**不抛异常、不影响单测**。2026-11-03 首次运行抓到 8 个：' +
+      '① 数组响应头逐项 setHeader ⇒ 两条 Set-Cookie 只剩一条（登录只种上一个 cookie）；' +
+      '② 判断 content-type 用精确小写键 ⇒ 处理器写 `Content-Type` 被覆盖成 text/plain；' +
+      '③ HEAD 不走 GET 回落 ⇒ 健康检查/CDN 全部 404；' +
+      '④ 路径参数不解码 ⇒ params.id 是 %E4%B8%AD%E6%96%87；' +
+      '⑤ 路由优先级按**总和**打分 ⇒ /a/b/* 输给 /a/:x/:y，通配符永不命中；' +
+      '⑥ body 解析错误直接抛 ⇒ 413/400 无 CORS；' +
+      '⑦ 错误响应丢掉 ctx 上已写的头 ⇒ 401/500 无 CORS 无 request-id；' +
+      '⑧ 方法不匹配一律 404 ⇒ 无 405/Allow。另修 query 里 + 未解成空格',
+  },
+  {
     name: 'check-integration',
     tier: 'slow',
     cmd: ['node', 'scripts/check-integration.mjs'],
