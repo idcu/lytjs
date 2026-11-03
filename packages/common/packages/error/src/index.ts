@@ -484,12 +484,22 @@ export const createComponentError = (
 // devMode 作为设置函数（setDevMode）的兼容接口保留，但内部统一读写 __DEV__。
 // 测试中通过 setDevMode(true/false) 切换即可。
 
-declare const __DEV__: boolean;
+declare const __DEV__: boolean | undefined;
+
+/**
+ * 运行时开关（`setDevMode` 写入）。
+ *
+ * ⚠️ 2026-11-04：此前 `setDevMode()` 只写 `globalThis.__DEV__`，而 `warn()` 读的是
+ *   **词法作用域里的编译期常量** `__DEV__` —— 两者根本不是同一个东西，
+ *   所以 `setDevMode(true)` 从来没让任何一条警告出现过（关掉也同理）。
+ */
+let runtimeDevMode: boolean | undefined;
 
 /**
  * 设置开发模式（兼容接口，内部统一设置 globalThis.__DEV__）
  */
 export function setDevMode(enabled: boolean): void {
+  runtimeDevMode = enabled;
   if (typeof globalThis !== 'undefined') {
     (globalThis as Record<string, unknown>).__DEV__ = enabled;
   }
@@ -497,16 +507,52 @@ export function setDevMode(enabled: boolean): void {
 
 /**
  * 获取当前开发模式状态
+ *
+ * 判定顺序（运行时优先，因为那是使用者的显式意图）：
+ *
+ * 1. `setDevMode()` 设置的值；
+ * 2. `globalThis.__DEV__`（宿主注入）；
+ * 3. **编译期常量** `__DEV__`（应用侧 `define` 注入；存在时 bundler 可静态求值 / DCE）；
+ * 4. `process.env.NODE_ENV !== 'production'`（Node / Vite / webpack 都会注入）；
+ * 5. 都无法判断 ⇒ `false`（生产优先，宁可少说不可乱说）。
+ *
+ * ⚠️ 2026-11-04 修（P0）：此前 `warn` / `warnOnce` 直接写 `if (!__DEV__) return;`，
+ *   而本包的构建把 `__DEV__` **编译成了 `false`** ⇒ 产物里这两个函数是
+ *
+ *     function warn(message) { return; }
+ *
+ *   —— **整个框架的诊断通道在发布产物里是死的**。实测：`warn('x')` 输出 0 次，
+ *   而 `error()` 正常。全仓 243 个 `warn` / `warnOnce` 调用点、91 个文件，
+ *   在消费产物时一条都不会打印。
+ *
+ *   代价是 8 条「DEV 警告」用例长期是红的（`@lytjs/common-dom` 4 条、
+ *   `@lytjs/vdom` 4 条），因为它们的 `warn` 来自本包的**产物** ——
+ *   看起来像「测试写错了」，实际是产品缺陷。
  */
 export function getDevMode(): boolean {
-  return typeof __DEV__ !== 'undefined' ? __DEV__ : false;
+  if (typeof runtimeDevMode === 'boolean') return runtimeDevMode;
+
+  const g = globalThis as { __DEV__?: unknown };
+  if (typeof g.__DEV__ === 'boolean') return g.__DEV__;
+
+  // 编译期常量：被 `define` 替换成字面量时这里能取到；没被替换时
+  // `typeof` 对未声明的标识符是安全的（不会 ReferenceError）。
+  // （`typeof undefined === 'boolean'` 为 false ⇒ 不需要再单独判 `!== 'undefined'`）
+  if (typeof __DEV__ === 'boolean') return __DEV__;
+
+  // 打包器（Vite / webpack / esbuild --define）会把 `process.env.NODE_ENV` 静态替换掉，
+  // 于是生产构建里整条分支会被 DCE。
+  if (typeof process !== 'undefined' && process.env) return process.env.NODE_ENV !== 'production';
+
+  return false;
 }
 
 /**
  * 输出警告信息（仅在开发模式下）
  */
 export function warn(message: string): void {
-  if (!__DEV__) return;
+  // 必须走 `getDevMode()`：直接读 `__DEV__` 会在产物里被折叠成 `if (!false)` ⇒ 整个函数是 `return;`
+  if (!getDevMode()) return;
   console.warn(`[LytJS]: ${message}`);
 }
 
@@ -519,7 +565,7 @@ const warnedMessages = new Set<string>();
  * 使用 FIFO 策略：达到上限时删除最早的条目，避免已抑制的警告重新出现
  */
 export function warnOnce(message: string): void {
-  if (!__DEV__) return;
+  if (!getDevMode()) return;
   if (warnedMessages.has(message)) return;
   // FIFO eviction: 当达到上限时，删除最早添加的条目
   if (warnedMessages.size >= ERROR_MAX_WARNED_MESSAGES) {
@@ -537,7 +583,7 @@ export function warnOnce(message: string): void {
  * 在生产环境中仍然输出错误，开发模式下附加额外调试信息
  */
 export function error(message: string): void {
-  if (!__DEV__) {
+  if (!getDevMode()) {
     console.error(`[LytJS]: ${message}`);
     return;
   }
@@ -573,7 +619,11 @@ export function safeExec<T>(fn: () => T, defaultValue: T, context?: string): T {
     return fn();
   } catch (err) {
     // FIX: P2-41 错误日志不完整：添加上下文信息
-    if (__DEV__ && context) {
+    //
+    // ⚠️ 2026-11-04：去掉外层 `if (__DEV__)`。`warn()` 自己就带开发模式判定，
+    //   双重大门只会带来一个陷阱：本包**不再**用 `define` 替换 `__DEV__`（那样会把
+    //   `warn` 编译成 `return;`），于是裸 `if (__DEV__)` 在产物里会变成 ReferenceError。
+    if (context) {
       warn(`safeExec failed in "${context}": ${err instanceof Error ? err.message : String(err)}`);
     }
     return defaultValue;
@@ -697,12 +747,11 @@ export function safeExecWithRecovery<T>(
 
       lastError = enhancedError;
 
-      if (__DEV__) {
-        warn(
-          `safeExecWithRecovery failed (attempt ${attempt + 1}/${maxRetries + 1})` +
-            `${context ? ` in "${context}"` : ''}: ${enhancedError.message}`,
-        );
-      }
+      // `warn()` 自带开发模式判定（见 safeExec 处的说明）
+      warn(
+        `safeExecWithRecovery failed (attempt ${attempt + 1}/${maxRetries + 1})` +
+          `${context ? ` in "${context}"` : ''}: ${enhancedError.message}`,
+      );
 
       // 调用错误回调
       if (onError) {
@@ -771,12 +820,11 @@ export async function safeExecWithRecoveryAsync<T>(
             : 'No more retries available, using default value',
       });
 
-      if (__DEV__) {
-        warn(
-          `safeExecWithRecoveryAsync failed (attempt ${attempt + 1}/${maxRetries + 1})` +
-            `${context ? ` in "${context}"` : ''}: ${enhancedError.message}`,
-        );
-      }
+      // `warn()` 自带开发模式判定（见 safeExec 处的说明）
+      warn(
+        `safeExecWithRecoveryAsync failed (attempt ${attempt + 1}/${maxRetries + 1})` +
+          `${context ? ` in "${context}"` : ''}: ${enhancedError.message}`,
+      );
 
       // 调用错误回调
       if (onError) {

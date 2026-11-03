@@ -72,14 +72,30 @@ pnpm add @lytjs/core
 > ⚠️ **注意版本**：npm 上发布的是 **6.9.6**，本仓库当前为 `v7.0.0-dev`，**两者不是同一份代码**。
 > 想看本仓库的最新能力，请**从仓库跑**，见 [小白上手（基于仓库）](./docs/getting-started/for-beginners.md)。
 >
-> ℹ️ 历史提示（本仓 2026-09-26 起已修复）：npm 上的旧版本产物会残留 `__DEV__`，需构建工具替换。
-> 本仓已给相关包补齐构建期替换 ⇒ **不再需要手配 `define`**（代价：DEV 警告恒为关闭）。若仍想配置，以 Vite 为例：
+> ℹ️ 关于 `__DEV__`（2026-11-04 更新）：
+>
+> - 产物里**不再残留** `__DEV__` 标识符 ⇒ 不配置也不会 `ReferenceError`。
+> - **开发期警告默认跟随 `NODE_ENV`**：`NODE_ENV !== 'production'` 时输出，
+>   production 时静默。也就是说 Node / Vite / webpack 的常规配置下**开箱即用**。
+> - 想显式控制，任选其一（优先级从高到低）：
 >
 > ```js
+> // ① 运行时开关（推荐给「想在生产包里临时看告警」的场景）
+> import { setDevMode } from '@lytjs/common-error';
+> setDevMode(true);
+>
+> // ② 宿主注入全局
+> globalThis.__DEV__ = true;
+>
+> // ③ 构建期常量（Vite / esbuild 的 define，对依赖产物同样生效，可被 DCE）
 > export default {
->   define: { __DEV__: 'true', __PROD__: 'false', __TEST__: 'false' },
+>   define: { __DEV__: 'true' },
 > };
 > ```
+>
+> ⚠️ 已知缺口：仍有一部分警告调用点被 `if (__DEV__)` 双门包住，在**各包自己的产物**里
+> 会被整段删除（那些包的构建把 `__DEV__` 编译成 `false`）。彻底解决需要 dev/prod 双产物，
+> 见评估报告 §29.6。
 
 ```typescript
 import { createApp, ref, computed } from '@lytjs/core';

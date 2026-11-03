@@ -430,6 +430,21 @@ const GATES = [
       '⑨ 两个焦点陷阱的 focusin 互相拉回 ⇒ 爆栈。判据含 focusTrap 单元级 4 组',
   },
   {
+    name: 'check-dev-warnings',
+    tier: 'fast',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-dev-warnings.mjs'],
+    approx: '~0.3s',
+    desc:
+      '★ 开发期诊断通道（@lytjs/common-error 的 warn / warnOnce）：全仓 250 个调用点、91 个文件' +
+      '（prop 冲突、无效 prop、循环 mixin、不安全属性被拦截、v-html 非字符串……）都走它。' +
+      '而它的构建把 __DEV__ 编译成了 false ⇒ 产物里是 `function warn(message) { return; }`，' +
+      '**整个诊断通道在发布产物里是死的**（实测 warn 输出 0 次、error 正常）。' +
+      '这类缺陷不会让任何行为断言变红，唯一症状是 8 条「应当告警」的用例长期红着' +
+      '（common-dom 4 条 / vdom 4 条），看起来像「测试写错了」。判据含 dist 形态守卫、' +
+      'tsup 不得再烘焙常量、production 反向对照、setDevMode 生效、safeExec 端到端',
+  },
+  {
     name: 'check-vitest-alias-dist',
     tier: 'fast',
     cmd: ['tsx', 'scripts/check-vitest-alias-dist.ts'],

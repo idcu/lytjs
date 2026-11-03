@@ -79,10 +79,16 @@
  *
  * ## 三个数字分别锁住什么
  *
- * - **barrel-only 8.9 KB**：锁「顶层副作用不能拖垮 tree-shaking」。
+ * - **barrel-only 9.5 KB**：锁「顶层副作用不能拖垮 tree-shaking」。
  *   整改前，`create-app.ts` 模块顶层那句 `setTemplateCompiler(...)` 是一条有副作用的
  *   顶层语句 ⇒ 打包器无法删除 ⇒ 只 import 一个 `ref` 也会把 createApp + renderer +
- *   compiler 全部拖进来（实测 82 KB）。现在注入挪进函数体，这条降到 8.9 KB。
+ *   compiler 全部拖进来（实测 82 KB）。现在注入挪进函数体，这条降到 9.5 KB。
+ *
+ *   ⚠️ 2026-11-04 预算 9.5 → 9.7 KB：`@lytjs/common-error` 的 `warn` 从
+ *   `function warn(message) { return; }`（构建把 `__DEV__` 编译成 `false`）
+ *   改成运行时判定 `getDevMode()`，**整个框架的诊断通道才重新活过来**。
+ *   代价是 barrel-only +32 字节 gzip（实测 9 532）。原来的 9 500 预算只剩 32 字节余量，
+ *   任何无关改动都会误报，因此给到 9 700。
  * - **minimal-app vs runtime-app**：锁「两个入口的分工」。
  *   ⚠️ 目前两者只差 2 KB，因为 `@lytjs/renderer` 的 `signal-renderer.ts` **静态** import 了
  *   编译器，而 renderer 从 core 的 `createApp` 动态可达。这项留作下一批（见评估报告）。
@@ -135,7 +141,7 @@ export { createVNode, h };`,
 const count = ref(0);
 const double = computed(() => count.value * 2);
 export { count, double, h };`,
-    budget: 9_500,
+    budget: 9_700,
   },
   {
     name: 'minimal-app',
@@ -262,9 +268,7 @@ for (const c of SPLIT_CASES) {
   //   那会让首屏从 ~7 KB 变成 ~50 KB，而总量几乎不变（总量里本来就有）。
   let containsCompiler = false;
   if (out.metafile) {
-    const entryKey = Object.keys(out.metafile.outputs).find((k) =>
-      /(^|\/)stdin\.js$/.test(k),
-    );
+    const entryKey = Object.keys(out.metafile.outputs).find((k) => /(^|\/)stdin\.js$/.test(k));
     const entryMeta = entryKey ? out.metafile.outputs[entryKey] : undefined;
     containsCompiler = Object.keys(entryMeta?.inputs ?? {}).some((p) =>
       p.includes('compiler/dist'),
