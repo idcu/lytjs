@@ -337,6 +337,23 @@ const GATES = [
       '另：handler.error 是死字段、无 window/WebSocket 环境直接抛',
   },
   {
+    name: 'check-scaffold',
+    tier: 'fast',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-scaffold.mjs'],
+    approx: '~2s',
+    desc:
+      '★ 脚手架产物自洽性（lyt create）：这是用户接触框架的前五分钟，生成目录自相矛盾' +
+      '时用户看到的不是「一个 bug」而是「这框架不能用」。已有测试是**源码级正则**，' +
+      '防不住「模板字符串写对了但生成出来的项目不成立」。本门禁**真的生成 6 个模板**再交叉校验。' +
+      '2026-11-03 抓到 7 个：store/full 漏声明 @lytjs/reactivity、' +
+      'entry-server 只有 named 导出而 server.ts 只读 .default（SSR 全 500）、' +
+      'index.html 缺 <!--app-html-->（SSR 输出被丢弃）、preview 用 node 跑 .ts、' +
+      '/vite.svg 从不生成、tsconfig 不含 server.ts、' +
+      '开发模式创建 Vite 却从不挂载 vite.middlewares（白屏 + HMR 不通）。' +
+      '另修生成代码里的目录穿越',
+  },
+  {
     name: 'check-vitest-alias-dist',
     tier: 'fast',
     cmd: ['tsx', 'scripts/check-vitest-alias-dist.ts'],

@@ -10,7 +10,7 @@ import { runCli } from './commands/run';
 
 export { runCli } from './commands/run';
 
-export { create, listTemplates } from './commands/create';
+export { create, generateProjectFiles, listTemplates } from './commands/create';
 export { dev } from './commands/dev';
 export { build } from './commands/build';
 export { test } from './commands/test';

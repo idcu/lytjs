@@ -36,6 +36,18 @@ lyt create my-app --template full
 
 查看全部模板：`lyt templates`
 
+生成的项目开箱即可 `npm run dev`（不需要任何构建期插件：模板字符串由 `@lytjs/core`
+在运行时编译）。`ssr` 模板额外提供：
+
+```bash
+npm run dev        # Vite 中间件 + SSR，支持 HMR
+npm run build      # 客户端 → dist/client，服务端 → dist/server
+npm run preview    # 用 tsx 启动 server.ts（node 不能直接跑 .ts）
+```
+
+SSR 服务器的约定：`src/entry-server.ts` 同时导出命名 `render` 与 `export default { render }`，
+`index.html` 里必须有 `<!--app-html-->` 占位符（`server.ts` 用它注入渲染结果）。
+
 ### `dev`
 
 启动开发服务器。
