@@ -354,6 +354,21 @@ const GATES = [
       '另修生成代码里的目录穿越',
   },
   {
+    name: 'check-api-routes',
+    tier: 'fast',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-api-routes.mjs'],
+    approx: '~1s',
+    desc:
+      '★ 文件路由（@lytjs/api）：按目录生成接口 —— 文件名→路由、方法词→HTTP 方法、' +
+      '_middleware→鉴权。缺陷形态是**静默 404 / 静默不鉴权**：2026-11-03 抓到 6 个 ——' +
+      '① `_middleware` 从未执行（用户以为有鉴权，实际一次都没跑）；' +
+      '② `_middleware.ts` 被注册成路由；③ 忽略规则子串匹配 ⇒ `distribution.ts` 被 `dist` 误伤；' +
+      '④ 文件名无方法词时只登记 GET ⇒ `export const POST` 永不生效（POST 404 / GET 500）；' +
+      '⑤ 构造后首次扫描不等待 ⇒ 启动瞬间 404；⑥ 500 回传 `error.message`（泄漏路径/SQL）。' +
+      '另修：参数不解码、query 参与匹配、静态路径被动态路由抢走、方法不匹配 404 而非 405',
+  },
+  {
     name: 'check-vitest-alias-dist',
     tier: 'fast',
     cmd: ['tsx', 'scripts/check-vitest-alias-dist.ts'],

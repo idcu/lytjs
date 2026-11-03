@@ -18,8 +18,15 @@ export interface ApiRouteConfig {
   isDynamic: boolean;
   /** 动态路由参数名 */
   params?: string[];
-  /** 中间件路径 */
+  /** 中间件路径（root → leaf） */
   middlewarePaths?: string[];
+  /**
+   * 方法是否由**模块导出**决定（文件名为 `posts.ts` 而不是 `posts.post.ts`）。
+   *
+   * 此时 `methods` 只是默认值 `['GET']`，实际可用方法要看模块导出了哪些
+   * `GET` / `POST` / … 或 `default` / `handler`。
+   */
+  dynamicMethods?: boolean;
 }
 
 /** API 路由器配置选项 */
@@ -113,6 +120,15 @@ export interface ApiRouter {
 
   /** 重新扫描文件系统 */
   refresh(): Promise<void>;
+
+  /**
+   * 等待**首次**扫描完成。
+   *
+   * ⚠️ 2026-11-03 新增：`createApiRouter()` 是同步返回的，而扫描是异步的。
+   *   此前 `handleRequest` 不等扫描完成 ⇒ 服务刚起来时头几个请求会 404（随后又"自己好了"）。
+   *   现在 `handleRequest` 内部会 await 它；手动调 `match()` 的场景请先 `await router.ready()`。
+   */
+  ready(): Promise<void>;
 
   /** 处理 API 请求 */
   handleRequest(method: HttpMethod, path: string, context: ApiRequestContext): Promise<ApiResponse>;
