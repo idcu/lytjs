@@ -34,7 +34,7 @@ function resolveLookupKey<T>(
 export function createProviderRecord(
   actualKey: string | symbol,
   valueOrConfig: unknown,
-  resolveAlias: (token: InjectionToken<unknown> | string | symbol) => unknown = () => undefined,
+  _resolveAlias: (token: InjectionToken<unknown> | string | symbol) => unknown = () => undefined,
 ): ProviderRecord {
   if (isProviderConfig(valueOrConfig)) {
     const config = valueOrConfig as ProviderConfig;
@@ -44,12 +44,18 @@ export function createProviderRecord(
       return { value: config.provide, lifecycle };
     }
 
+    // ★ 2026-11-03 修（P0）：**保留工厂本身，不在 provide 时求值**。
+    //   此前这里是 `{ value: config.useFactory() }` ⇒ `transient` 永远不生效
+    //   （判据是 `typeof value === 'function'`，而 value 已是求值结果）。
     if (config.useFactory) {
-      return { value: config.useFactory(), lifecycle };
+      return { value: undefined, lifecycle, factory: config.useFactory };
     }
 
+    // ★ 2026-11-03 修（P0）：别名**读时解析**。
+    //   此前 `resolveAlias(config.useExisting)` 在所有公开调用点都没传 resolver
+    //   ⇒ 别名恒为 undefined ⇒ 注入时报 "No provider found"。
     if (config.useExisting) {
-      return { value: resolveAlias(config.useExisting) as () => unknown, lifecycle };
+      return { value: undefined, lifecycle, alias: resolveKey(config.useExisting) };
     }
 
     throw new InjectionError(
@@ -59,6 +65,30 @@ export function createProviderRecord(
   }
 
   return { value: valueOrConfig, lifecycle: 'singleton' };
+}
+
+/**
+ * 把一个 ProviderRecord 物化成**值**（用于「值型存储」的适配层，如组件实例的 `provides`）。
+ *
+ * 与 `materializeRecord` 的区别：这里没有 Provider 节点，别名通过调用方给的
+ * `resolveAlias` 解析（组件适配层传 `inject` 即可走完整的实例链）。
+ *
+ * 语义：工厂在这里**求值一次并缓存**（适配层的存储是值，不是记录）。
+ */
+export function resolveProviderValue(
+  record: ProviderRecord,
+  resolveAlias: (key: string | symbol) => unknown = () => undefined,
+): unknown {
+  if (record.alias !== undefined) {
+    return resolveAlias(record.alias);
+  }
+  if (record.factory) {
+    const value = record.factory();
+    record.value = value;
+    record.factory = undefined;
+    return value;
+  }
+  return record.value;
 }
 
 /**
@@ -94,27 +124,68 @@ export function injectFromNode(
   key: string | symbol,
   options?: EnhancedInjectOptions,
 ): unknown {
+  return lookupInChain(node, key, options, new Set());
+}
+
+/**
+ * 把一条 ProviderRecord 物化成注入值。
+ *
+ * - `alias`：读时解析 —— 从**声明该别名的节点**开始沿链查找（这样「先声明别名、
+ *   后提供目标」也能工作），并带环路检测（`a → b → a` 会明确抛错而不是死递归）
+ * - `factory` + `transient`：每次求值
+ * - `factory` + singleton/scoped：首次求值后缓存（写回 record，后续直接命中）
+ * - 其它：直接返回 `value`
+ */
+function materializeRecord(
+  owner: ProviderNode,
+  record: ProviderRecord,
+  seen: Set<string | symbol>,
+): unknown {
+  if (record.alias !== undefined) {
+    if (seen.has(record.alias)) {
+      throw new InjectionError(record.alias, 'Circular provider alias detected');
+    }
+    seen.add(record.alias);
+    return lookupInChain(owner, record.alias, undefined, seen);
+  }
+
+  if (record.factory) {
+    if (record.lifecycle === 'transient') {
+      return record.factory();
+    }
+    // singleton / scoped：求值一次并缓存
+    record.value = record.factory();
+    record.factory = undefined;
+    return record.value;
+  }
+
+  // 向后兼容：手工构造的 transient 记录把工厂放在 `value` 里
+  // （`node.providers.set(k, { value: () => ..., lifecycle: 'transient' })`）。
+  // `ProviderRecord` 是公开类型，这种写法在既有用例/用户代码里存在，不能直接删。
+  if (record.lifecycle === 'transient' && typeof record.value === 'function') {
+    return (record.value as () => unknown)();
+  }
+
+  return record.value;
+}
+
+function lookupInChain(
+  node: ProviderNode,
+  key: string | symbol,
+  options: EnhancedInjectOptions | undefined,
+  seen: Set<string | symbol>,
+): unknown {
   // 检查当前节点
   if (!options?.skipSelf) {
     const record = node.providers.get(key);
-    if (record) {
-      if (typeof record.value === 'function' && record.lifecycle === 'transient') {
-        return (record.value as () => unknown)();
-      }
-      return record.value;
-    }
+    if (record) return materializeRecord(node, record, seen);
   }
 
   // 向上查找父节点
   let current = node.parent;
   while (current) {
     const record = current.providers.get(key);
-    if (record) {
-      if (typeof record.value === 'function' && record.lifecycle === 'transient') {
-        return (record.value as () => unknown)();
-      }
-      return record.value;
-    }
+    if (record) return materializeRecord(current, record, seen);
     current = current.parent;
   }
 

@@ -22,6 +22,7 @@ import {
   exitProviderScope,
   injectValue,
   createProviderRecord,
+  resolveProviderValue,
 } from '@lytjs/di';
 import type {
   ProviderLifecycle,
@@ -64,12 +65,15 @@ export function provide<T>(
   // 解析 key
   const actualKey = isInjectionToken(key) ? key.__token : key;
 
-  // 解析配置（useExisting 延迟解析到本适配器的 inject）
-  const record = createProviderRecord(
-    actualKey,
-    valueOrConfig,
-    (token) => () => inject(token as never) as unknown,
-  );
+  // 解析配置（useExisting 通过本适配器的 inject 走完整实例链）
+  const record = createProviderRecord(actualKey, valueOrConfig);
+  // ★ 2026-11-03 修（P0）：`instance.provides` 存的是**值**，不是记录 ⇒ 必须物化。
+  //   此前直接取 `record.value`，而记录里 `useFactory` / `useExisting` 的 value 是
+  //   `undefined`（工厂是懒的、别名是读时解析的）⇒ 组件级 `provideSingleton` /
+  //   `provideAll({ useFactory })` 注入到 `undefined`（实测）。
+  //   物化后：工厂在此求值一次。组件层 `provideTransient` 仍是**已知缺口**
+  //   （值型存储无法表达"每次注入新建"，见 `di-battery.test.ts` 的 `it.fails` 那条）。
+  const materializedValue = resolveProviderValue(record, (token) => inject(token as never));
 
   // 存储到适当的位置
   if (instance) {
@@ -79,7 +83,7 @@ export function provide<T>(
         instance.provides as Record<string | symbol, unknown>,
       ) as Record<string | symbol, unknown>;
     }
-    instance.provides[actualKey as string | symbol] = record.value;
+    instance.provides[actualKey as string | symbol] = materializedValue;
   } else if (providerNode) {
     // Provider 节点级别
     providerNode.providers.set(actualKey, record);

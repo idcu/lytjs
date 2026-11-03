@@ -92,6 +92,9 @@ describe('DI 适配层', () => {
     const child = enterProviderScope();
     expect(child.parent).toBe(root);
     exitProviderScope();
-    expect(getCurrentProviderNode()).toBe(root);
+    // ⚠️ 2026-11-03 改写：原断言是「退出后 current 是 root」——那正是缺陷。
+    //   root 是**进程级**全局根节点，作用域外停在它上面会让 `provideValue()`
+    //   直接写进进程级根 ⇒ SSR 跨请求泄漏。正确契约：回到进入前的 null。
+    expect(getCurrentProviderNode()).toBeNull();
   });
 });

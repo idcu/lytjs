@@ -40,4 +40,5 @@ export {
   provideValue,
   injectFromNode,
   injectValue,
+  resolveProviderValue,
 } from './resolver';

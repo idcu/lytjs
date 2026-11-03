@@ -17,17 +17,29 @@ export interface ProviderScope {
 /** 作用域工厂类型 */
 export type ProviderScopeFactory = () => ProviderScope;
 
-/** 无操作作用域工厂（默认实现） */
-let noopActive = true;
+/**
+ * 无操作作用域工厂（默认实现）。
+ *
+ * ⚠️ 2026-11-03 修（P0）：此前 `active` 来自**模块级**的 `let noopActive = true`，
+ *   并且是在创建时**值拷贝**进对象。两个后果（实测）：
+ *
+ *   ① `stop()` 把模块级 `noopActive` 置 false ⇒ **之后创建的每一个 scope 一出生就是
+ *      `active: false`** —— 一个 scope 的销毁污染了整个进程后续所有 scope；
+ *   ② `active` 是值拷贝，`stop()` 之后**本 scope 的 `active` 仍是 true**（标志不翻转）。
+ *
+ *   现在每个 scope 持有自己的 `active` 闭包变量，用 getter 暴露。
+ */
 function createNoopScope(): ProviderScope {
-  const scope: ProviderScope = {
-    active: noopActive,
+  let active = true;
+  return {
+    get active() {
+      return active;
+    },
     run: (fn) => fn(),
     stop: () => {
-      noopActive = false;
+      active = false;
     },
   };
-  return scope;
 }
 
 let scopeFactory: ProviderScopeFactory = () => createNoopScope();

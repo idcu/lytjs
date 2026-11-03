@@ -69,7 +69,10 @@ describe('Provider 树生命周期', () => {
     exitProviderScope();
     expect(getCurrentProviderNode()).toBe(child);
     exitProviderScope();
-    expect(getCurrentProviderNode()).toBe(root);
+    // ⚠️ 2026-11-03 改写：此前断言「退出后 current 是 root」——那正是缺陷。
+    //   全局根节点是**进程级**的，作用域外停在 root 上 ⇒ `provideValue()` 会直接
+    //   写进进程级根 ⇒ SSR 下跨请求泄漏。作用域全部退出后 current 必须回到 null。
+    expect(getCurrentProviderNode()).toBeNull();
   });
 });
 
@@ -200,18 +203,22 @@ describe('withProviderScope', () => {
 
   it('应在 scope 结束时退出回父节点', () => {
     const child = withProviderScope(() => getCurrentProviderNode());
-    expect(getCurrentProviderNode()).toBe(child?.parent);
-    // 退出后 current 不再是 scope 子节点
+    // ⚠️ 2026-11-03 改写：原断言是 `toBe(child?.parent)`，而 child.parent 是
+    //   **进程级全局根节点** ⇒ 等价于「作用域外 current 停在 root」。
+    //   正确契约：进入前是 null，退出后回到 null。
+    expect(getCurrentProviderNode()).toBeNull();
     expect(getCurrentProviderNode()).not.toBe(child);
   });
 
   it('应支持嵌套 withProviderScope', () => {
     const outer = withProviderScope(() => {
       const inner = withProviderScope(() => getCurrentProviderNode());
-      // 内层退出后回到外层节点
+      // 内层退出后回到外层节点（这一条是对的：inner.parent 就是 outer 节点）
       expect(getCurrentProviderNode()).toBe(inner?.parent);
       return getCurrentProviderNode();
     });
-    expect(getCurrentProviderNode()).toBe(outer?.parent);
+    // ⚠️ 2026-11-03 改写：外层退出后必须回到 null，而不是停在进程级根节点。
+    expect(getCurrentProviderNode()).toBeNull();
+    expect(outer).not.toBeNull();
   });
 });

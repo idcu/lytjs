@@ -217,6 +217,20 @@ const GATES = [
       '异步组件 loader 失败零上报、SSR setup 抛错输出空串（200 空页）',
   },
   {
+    name: 'check-di',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-di.mjs'],
+    approx: '~2s',
+    desc:
+      '★ 依赖注入内核（@lytjs/di）：只有 498 行、原本只有 1 个测试文件，' +
+      '但它是 @lytjs/component 的 provide/inject 内核。它有两个"危险属性"：' +
+      'currentProviderNode 是**模块级全局**、getProviderRoot() 是**进程级单例**。' +
+      '2026-11-03 抓到 5 个缺陷：退出作用域后 current 停在进程级 root（⇒ 作用域外 ' +
+      'provideValue 写进全局根 ⇒ SSR 跨请求泄漏）、noop scope 的 active 用模块级变量 ' +
+      '（一个 stop 污染后续所有 scope）、useExisting 恒解析为 undefined、' +
+      'useFactory 提前求值导致 transient 永不生效、resetProviderScope 不 stop 作用域',
+  },
+  {
     name: 'check-cache',
     tier: 'fast',
     cmd: ['node', 'scripts/check-cache.mjs'],
