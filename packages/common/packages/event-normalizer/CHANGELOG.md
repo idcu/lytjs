@@ -1,5 +1,15 @@
 # @lytjs/common-event-normalizer 更新日志
 
+## [未发布] - 2026-11-03
+
+### 🐞 修复（与 adapter-web 的 patchEvent 保持同一语义）
+
+- **修饰符更新不生效**：handler 闭包捕获的是创建时的 `parsed`，于是「只换 value +
+  更新 invoker.parsed」的优化**完全不生效** —— `@click` 改成 `@click.stop` 后 `.stop` 不执行。
+  现在 handler 在**调用时**读 `invoker.parsed`。
+- **`.once` 更新 handler 后永不触发**：监听已被宿主摘掉但缓存仍在。现在 `.once` 的更新走重绑。
+- **`.self` 判断顺序错误**：移到 stop/prevent 之前（子元素点击应完全忽略，不阻止冒泡）。
+
 ## [6.9.6] - 2026-06-06
 
 ### 🚀 版本升级

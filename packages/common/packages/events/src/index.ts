@@ -30,7 +30,11 @@ export const EVENT_MODIFIER_RE = /\.(stop|prevent|capture|once|self|passive)(?=\
  */
 export function normalizeEventName(rawName: string): string {
   let name = rawName.startsWith('@') ? rawName.slice(1) : rawName;
-  if (name.startsWith('on') && name.length > 2 && /^[A-Za-z]$/.test(name[2]!)) {
+  // ⚠️ 2026-11-03 修（P1）：此前第三位只要是字母就剥掉 `on` ——
+  //   于是原生事件 `online` / `onLine` 被规范成 **`line`**，
+  //   `@online`（网络恢复）永远不会触发，且没有任何报错。
+  //   只在小写 `on` + **大写**字母时才认为是「onXxx」形式（`onClick` / `onMouseenter`）。
+  if (name.startsWith('on') && name.length > 2 && /^[A-Z]$/.test(name[2]!)) {
     name = name.slice(2);
   }
   return name.replace(EVENT_MODIFIER_RE, '').toLowerCase();

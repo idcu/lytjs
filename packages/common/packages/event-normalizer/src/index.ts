@@ -256,9 +256,51 @@ export class EventNormalizer<HN extends object = object, HE extends HN = HN> {
 
     const existingInvoker = invokers[eventKey];
 
-    if (nextValue && existingInvoker) {
-      // 情况 1：有新值 + 有旧 invoker → 直接替换 value
+    /**
+     * 是否需要重新绑定。
+     *
+     * ⚠️ 2026-11-03 修（P1）：此前只要 key 相同就只换 `value` —— 于是
+     *   ① 修饰符从 `@click` 变成 `@click.stop` / 加 `.capture` 后**不生效**；
+     *   ② `.once` 触发后监听已被宿主摘掉，缓存里却还留着 invoker ⇒
+     *      下一次更新只换 value，**再也不会触发**。
+     */
+    const needsRebind =
+      existingInvoker !== undefined &&
+      (existingInvoker.parsed.name !== parsed.name ||
+        existingInvoker.parsed.modifiers.capture !== parsed.modifiers.capture ||
+        existingInvoker.parsed.modifiers.passive !== parsed.modifiers.passive ||
+        existingInvoker.parsed.modifiers.once !== parsed.modifiers.once ||
+        // `.once` 的监听可能已被消费：更新 handler 时重新武装
+        parsed.modifiers.once);
+
+    if (nextValue && existingInvoker && !needsRebind) {
+      // 情况 1：有新值 + 旧 invoker 且绑定参数没变 → 直接替换 value
       existingInvoker.value = nextValue;
+      existingInvoker.parsed = parsed;
+    } else if (nextValue && existingInvoker) {
+      // 情况 1b：绑定参数变了 → 先摘旧的再绑新的
+      const oldOptions = this.buildHostEventOptions(existingInvoker.parsed.modifiers);
+      this.host.removeEventListener(
+        el,
+        existingInvoker.parsed.name,
+        existingInvoker.handler,
+        oldOptions,
+      );
+      existingInvoker.dispose();
+      invokers[eventKey] = undefined;
+
+      const invoker = this.createInvoker(el, parsed, nextValue);
+      invokers[eventKey] = invoker;
+      const hostDispose = this.host.addEventListener(
+        el,
+        parsed.name,
+        invoker.handler,
+        this.buildHostEventOptions(parsed.modifiers),
+      );
+      invoker.dispose = () => {
+        hostDispose();
+        (invoker as { value?: HostEventHandler | null }).value = null;
+      };
     } else if (nextValue && !existingInvoker) {
       // 情况 2：有新值 + 无旧 invoker → 创建并绑定
       const invoker = this.createInvoker(el, parsed, nextValue);
@@ -325,26 +367,13 @@ export class EventNormalizer<HN extends object = object, HE extends HN = HN> {
     let currentValue: HostEventHandler | null = initialValue;
     let disposed = false;
 
-    const handler: HostEventHandler = (event: HostEvent) => {
-      if (disposed) return;
-
-      // 处理修饰符
-      if (parsed.modifiers.stop) {
-        event.stopPropagation();
-      }
-      if (parsed.modifiers.prevent) {
-        event.preventDefault();
-      }
-      if (parsed.modifiers.self && event.target !== event.currentTarget) {
-        return;
-      }
-
-      if (currentValue) {
-        currentValue(event);
-      }
-    };
-
-    const invoker: EventInvoker<HE> = {
+    /**
+     * ⚠️ 2026-11-03 修（P1）：修饰符必须**调用时**从 `invoker.parsed` 读取。
+     *   此前 handler 闭包捕获的是 `createInvoker` 的入参 `parsed` —— 于是
+     *   `patchEvent` 里「只换 value + 更新 invoker.parsed」的优化**完全不生效**：
+     *   从 `@click` 改成 `@click.stop` 后，`.stop` 永远不会执行。
+     */
+    const invoker = {
       get value() {
         return currentValue;
       },
@@ -353,11 +382,31 @@ export class EventNormalizer<HN extends object = object, HE extends HN = HN> {
       },
       parsed,
       el,
-      handler,
+      handler: (() => {}) as HostEventHandler,
       dispose: () => {
         disposed = true;
         currentValue = null;
       },
+    } as EventInvoker<HE>;
+
+    invoker.handler = (event: HostEvent) => {
+      if (disposed) return;
+      const modifiers = invoker.parsed.modifiers;
+
+      // `.self` 必须在 stop/prevent **之前**判断（子元素上的事件应完全忽略）
+      if (modifiers.self && event.target !== event.currentTarget) {
+        return;
+      }
+      if (modifiers.stop) {
+        event.stopPropagation();
+      }
+      if (modifiers.prevent) {
+        event.preventDefault();
+      }
+
+      if (currentValue) {
+        currentValue(event);
+      }
     };
 
     return invoker;

@@ -384,6 +384,21 @@ const GATES = [
       '另修：收敛后 props 不释放、清理表是模块级 WeakMap（两个引擎互相覆盖）',
   },
   {
+    name: 'check-event-semantics',
+    tier: 'fast',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-event-semantics.mjs'],
+    approx: '~1s',
+    desc:
+      '★ 事件修饰符语义（两套实现必须一致）：同一语义有两份实现 —— adapter-web 的 patchEvent' +
+      '（DOM）与 common-event-normalizer（RendererHost）。两者都靠「invoker 缓存 + 只换 value」' +
+      '省掉重复 addEventListener，代价是**缓存的假设必须与真实监听状态一致**，否则全是静默不触发。' +
+      '2026-11-03 抓到 5 个：① normalizeEventName(online) → **line**（@online 永不触发）；' +
+      '② .once 更新 handler 后**永不触发**；③ 修饰符更新（→ .stop）不生效；' +
+      '④ .self 在 stop 之后判断（子元素点击仍被阻止冒泡）；' +
+      '⑤ 值对象 {once:true} → {handler} 后 once 未取消。判据用**同一张场景表跑两套实现**',
+  },
+  {
     name: 'check-vitest-alias-dist',
     tier: 'fast',
     cmd: ['tsx', 'scripts/check-vitest-alias-dist.ts'],

@@ -37,6 +37,14 @@ export interface EventInvoker extends EventListener {
   value: ((...args: unknown[]) => void) | null;
   /** @internal 解析后的事件修饰符 */
   _parsed?: ParsedEvent;
+  /**
+   * @internal 实际传给 addEventListener 的选项。
+   *
+   * ⚠️ 2026-11-03：`once` / `capture` / `passive` 有两个来源（prop 名的修饰符 +
+   *   值对象 `{ handler, once: true }`），只看 `_parsed` 会漏掉值对象那一半 ——
+   *   于是 `{once:true}` 改成 `{handler}` 时以为「没变」，监听却早已被浏览器摘掉。
+   */
+  _options?: { capture: boolean; once: boolean; passive: boolean };
 }
 
 // ============================================================
@@ -86,6 +94,7 @@ function releaseInvoker(invoker: EventInvoker): void {
     // 重置 invoker 状态：清除 value、_parsed 和闭包捕获的上下文
     invoker.value = null;
     invoker._parsed = undefined;
+    invoker._options = undefined;
     // FIX: P2-v11-33 断开 invoker 闭包中可能引用的 DOM 元素，
     // 避免通过池化对象意外访问已卸载的元素
     // 注意：invoker 本身是一个函数（EventListener），其闭包引用了 parsed 和 currentValue，
@@ -134,12 +143,14 @@ export function createInvoker(initialValue: (...args: unknown[]) => void): Event
 
   // 创建新的 invoker
   const invoker = ((e: Event) => {
-    // 处理修饰符
     const parsed = invoker._parsed;
     if (parsed) {
+      // ⚠️ 2026-11-03 修（P1）：`.self` 必须在 stop/prevent **之前**判断。
+      //   此前顺序是 stop → prevent → self，于是 `@click.self.stop` 在**子元素**上点击时
+      //   仍然执行了 stopPropagation ⇒ 外层收不到事件（而 self 的语义是「完全忽略这次事件」）。
+      if (parsed.self && e.target !== e.currentTarget) return;
       if (parsed.stop) e.stopPropagation();
       if (parsed.prevent) e.preventDefault();
-      if (parsed.self && e.target !== e.currentTarget) return;
     }
     if (invoker.value) {
       invoker.value(e);
@@ -173,6 +184,7 @@ export function patchEvent(
 
   const eventKey = getEventKey(normalizeEventName(rawName));
   const parsed = parseEventModifier(rawName);
+  const fromValueOptions = extractEventOptions(nextValue);
 
   // FIX: P1-24 - 获取或创建 WeakMap 缓存
   let invokers = veiCache.get(el);
@@ -182,22 +194,67 @@ export function patchEvent(
   }
 
   const existingInvoker = invokers[eventKey] as EventInvoker | undefined;
+  const nextOptions = {
+    capture: parsed.capture || fromValueOptions.capture,
+    once: parsed.once || fromValueOptions.once,
+    passive: parsed.passive || fromValueOptions.passive,
+  };
 
-  if (actualNextValue && existingInvoker) {
-    // 情况 1：有新值 + 有旧 invoker → 直接替换 value
+  /**
+   * 是否需要**重新绑定**（而不是只换 value）。
+   *
+   * ⚠️ 2026-11-03 修（P1）：此前只要 key 相同就只换 `value` —— 于是
+   *   ① 修饰符从 `@click` 变成 `@click.stop` / 加 `.capture` 后**不生效**；
+   *   ② `.once` 触发后监听已被浏览器摘掉，但缓存里还留着 invoker ⇒
+   *      下一次更新只换 value，**再也不会触发**（点击彻底失效）。
+   */
+  const existingOptions = existingInvoker?._options ?? {
+    capture: Boolean(existingInvoker?._parsed?.capture),
+    once: Boolean(existingInvoker?._parsed?.once),
+    passive: Boolean(existingInvoker?._parsed?.passive),
+  };
+
+  const needsRebind =
+    existingInvoker !== undefined &&
+    (existingInvoker._parsed === undefined ||
+      existingInvoker._parsed.name !== parsed.name ||
+      existingOptions.capture !== nextOptions.capture ||
+      existingOptions.passive !== nextOptions.passive ||
+      existingOptions.once !== nextOptions.once ||
+      // `.once` 的监听可能已被消费掉：更新 handler 时重新武装
+      nextOptions.once);
+
+  if (actualNextValue && existingInvoker && !needsRebind) {
+    // 情况 1：有新值 + 旧 invoker 且绑定参数没变 → 直接替换 value
+    // （stop / prevent / self 是**调用时**读取的，更新 _parsed 即可生效）
     existingInvoker.value = actualNextValue;
+    existingInvoker._parsed = parsed;
+  } else if (actualNextValue && existingInvoker) {
+    // 情况 1b：绑定参数变了 → 先摘旧的再绑新的
+    const removeOptions = existingInvoker._options
+      ? buildEventListenerOptions(existingInvoker._parsed ?? parsed, existingInvoker._options)
+      : buildEventListenerOptions(existingInvoker._parsed ?? parsed);
+    el.removeEventListener(
+      existingInvoker._parsed?.name ?? parsed.name,
+      existingInvoker,
+      removeOptions,
+    );
+    releaseInvoker(existingInvoker);
+    invokers[eventKey] = undefined;
+
+    const invoker = createInvoker(actualNextValue);
+    invoker._parsed = parsed;
+    invoker._options = nextOptions;
+    invokers[eventKey] = invoker;
+    el.addEventListener(parsed.name, invoker, buildEventListenerOptions(parsed, fromValueOptions));
   } else if (actualNextValue && !existingInvoker) {
     // 情况 2：有新值 + 无旧 invoker → 创建并绑定
     const invoker = createInvoker(actualNextValue);
     invoker._parsed = parsed;
+    invoker._options = nextOptions;
     invokers[eventKey] = invoker;
 
-    // 构建 AddEventListenerOptions（prop 名 + 值对象两处来源取并集）
-    const options: AddEventListenerOptions | boolean | undefined = buildEventListenerOptions(
-      parsed,
-      extractEventOptions(nextValue),
-    );
-    el.addEventListener(parsed.name, invoker, options);
+    el.addEventListener(parsed.name, invoker, buildEventListenerOptions(parsed, fromValueOptions));
   } else if (!actualNextValue && existingInvoker) {
     // 情况 3：无新值 + 有旧 invoker → 移除
     // FIX: P2-v11-34 传递完整的 options 对象给 removeEventListener，
