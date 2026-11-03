@@ -13,7 +13,7 @@ pnpm add @lytjs/runtime-edge
 ### 边缘路由器
 
 ```typescript
-import { createEdgeRouter } from '@lytjs/runtime-edge';
+import { createEdgeRouter, jsonResponse, textResponse } from '@lytjs/runtime-edge';
 
 const router = createEdgeRouter({
   basePath: '/api',
@@ -26,12 +26,23 @@ router.get('/users', (req, ctx) => {
   });
 });
 
+// 路径参数（第三个实参，已做百分号解码）
+router.get('/users/:id', (req, ctx, params) => jsonResponse({ id: params.id }));
+
 export default {
   async fetch(request, env, ctx) {
+    // 返回的一定是真正的 Response：404 / 405 / 500 与「handler 返回普通对象」都会被归一化
     return router.handle(request, ctx);
   },
 };
 ```
+
+### 路由匹配规则
+
+- 逐段比较优先级：**静态 > 参数（`:id`）> 通配符（`*`）**，不是分数求和
+  ⇒ `/a/b/*` 胜过 `/a/:x/:y`。
+- `basePath` 与请求路径都会归一化（尾斜杠、重复斜杠）。
+- 路径存在但方法不匹配回 `405` + `Allow`；`HEAD` 回落 `GET`。
 
 ### 边缘缓存
 

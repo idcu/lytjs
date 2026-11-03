@@ -1,5 +1,11 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { describe, it, expect, beforeEach } from 'vitest';
+/**
+ * @lytjs/runtime-edge 测试
+ *
+ * 2026-11-03：原来的 3 条路由用例都是「形状断言」（`toBeDefined()`），
+ * 恰好让两类缺陷存活了下来：① 404/500 返回的不是 `Response`；② 路由只有精确匹配。
+ * 这里改为断言**行为**（状态码 / 响应体 / `instanceof Response` / params 内容）。
+ */
+import { describe, it, expect } from 'vitest';
 import {
   createEdgeRouter,
   createEdgeCache,
@@ -7,95 +13,238 @@ import {
   textResponse,
   htmlResponse,
   redirectResponse,
+  normalizePath,
+  toResponse,
 } from '../src';
 
+const req = (url: string, method = 'GET') => ({ url, method, headers: {} });
+
 describe('@lytjs/runtime-edge', () => {
-  describe('createEdgeRouter', () => {
-    it('should create edge router instance', () => {
+  describe('createEdgeRouter：匹配', () => {
+    it('注册并命中 GET 路由', async () => {
       const router = createEdgeRouter();
-      expect(router).toBeDefined();
+      router.get('/test', () => jsonResponse({ success: true }));
+
+      const res = await router.handle(req('http://localhost/test'));
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ success: true });
     });
 
-    it('should register and match GET routes', async () => {
+    it('未注册路径返回 404，且必须是真正的 Response', async () => {
       const router = createEdgeRouter();
-      const handler = async () => jsonResponse({ success: true });
-      router.get('/test', handler);
+      const res = await router.handle(req('http://localhost/non-existent'));
 
-      const match = router.match({
-        url: 'http://localhost/test',
-        method: 'GET',
-        headers: {},
-      });
-      expect(match).toBeDefined();
+      expect(res).toBeInstanceOf(Response);
+      expect(res.status).toBe(404);
+      expect(await res.text()).toBe('Not Found');
     });
 
-    it('should return 404 for non-existent routes', async () => {
+    it('支持 :param 并做百分号解码', async () => {
       const router = createEdgeRouter();
-      const response = await router.handle({
-        url: 'http://localhost/non-existent',
-        method: 'GET',
-        headers: {},
+      router.get('/users/:id', (_r, _c, params) => jsonResponse({ id: params?.id }));
+
+      const res = await router.handle(req('http://localhost/users/%E4%B8%AD%E6%96%87'));
+      expect(await res.json()).toEqual({ id: '中文' });
+    });
+
+    it('静态段胜过参数段', async () => {
+      const router = createEdgeRouter();
+      router.get('/users/:id', () => jsonResponse({ route: 'param' }));
+      router.get('/users/me', () => jsonResponse({ route: 'static' }));
+
+      const res = await router.handle(req('http://localhost/users/me'));
+      expect(await res.json()).toEqual({ route: 'static' });
+    });
+
+    it('通配符吞掉剩余段，且胜过参数路由', async () => {
+      const router = createEdgeRouter();
+      router.get('/a/:x/:y', () => jsonResponse({ route: 'params' }));
+      router.get('/a/b/*', (_r, _c, params) =>
+        jsonResponse({ route: 'wildcard', rest: params?.['*'] }),
+      );
+
+      const res = await router.handle(req('http://localhost/a/b/c/d'));
+      expect(await res.json()).toEqual({ route: 'wildcard', rest: 'c/d' });
+    });
+
+    it('basePath 带尾斜杠也能拼出正确路径', async () => {
+      const router = createEdgeRouter({ basePath: '/api/' });
+      router.get('/users', () => jsonResponse({ ok: 1 }));
+
+      expect((await router.handle(req('http://x/api/users'))).status).toBe(200);
+    });
+
+    it('容忍请求尾斜杠', async () => {
+      const router = createEdgeRouter();
+      router.get('/users', () => jsonResponse({ ok: 1 }));
+
+      expect((await router.handle(req('http://x/users/'))).status).toBe(200);
+    });
+
+    it('相对 URL 不抛错', async () => {
+      const router = createEdgeRouter();
+      router.get('/users', () => jsonResponse({ ok: 1 }));
+
+      expect((await router.handle(req('/users'))).status).toBe(200);
+    });
+
+    it('方法不匹配返回 405 + Allow', async () => {
+      const router = createEdgeRouter();
+      router.post('/only', () => jsonResponse({}));
+
+      const res = await router.handle(req('http://x/only'));
+      expect(res.status).toBe(405);
+      expect(res.headers.get('allow')).toBe('POST');
+    });
+
+    it('HEAD 回落到 GET', async () => {
+      const router = createEdgeRouter();
+      router.get('/health', () => jsonResponse({ ok: true }));
+
+      expect((await router.handle(req('http://x/health', 'HEAD'))).status).toBe(200);
+    });
+
+    it('并发请求的 params 互不串扰', async () => {
+      const router = createEdgeRouter();
+      router.get('/users/:id', async (_r, _c, params) => {
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        return jsonResponse({ id: params?.id });
       });
-      expect(response.status).toBe(404);
+
+      const [a, b] = await Promise.all([
+        router.handle(req('http://x/users/A')),
+        router.handle(req('http://x/users/B')),
+      ]);
+      expect(await a.json()).toEqual({ id: 'A' });
+      expect(await b.json()).toEqual({ id: 'B' });
+    });
+
+    it('allowedMethods 给出该路径允许的方法', () => {
+      const router = createEdgeRouter();
+      router.get('/res', () => jsonResponse({}));
+      router.post('/res', () => jsonResponse({}));
+
+      expect(router.allowedMethods('/res').sort()).toEqual(['GET', 'HEAD', 'POST']);
+      expect(router.allowedMethods('/nope')).toEqual([]);
+    });
+  });
+
+  describe('createEdgeRouter：返回值归一化', () => {
+    it('handler 返回普通对象时转成真正的 Response', async () => {
+      const router = createEdgeRouter();
+      router.get('/plain', () => ({ status: 200, headers: { 'x-plain': '1' }, body: { ok: 1 } }));
+
+      const res = await router.handle(req('http://x/plain'));
+      expect(res).toBeInstanceOf(Response);
+      expect(await res.json()).toEqual({ ok: 1 });
+      expect(res.headers.get('x-plain')).toBe('1');
+    });
+
+    it('handler 抛错返回 500 且不泄漏内部信息', async () => {
+      const router = createEdgeRouter();
+      router.get('/boom', () => {
+        throw new Error('SECRET');
+      });
+
+      const res = await router.handle(req('http://x/boom'));
+      expect(res.status).toBe(500);
+      expect(await res.text()).toBe('Internal Server Error');
+    });
+
+    it('toResponse 对 204 不传 body（Response 构造约束）', () => {
+      const res = toResponse({ status: 204, body: 'ignored' });
+      expect(res.status).toBe(204);
+      expect(res.body).toBeNull();
+    });
+  });
+
+  describe('normalizePath', () => {
+    it('补前导斜杠、折叠重复斜杠、去尾斜杠', () => {
+      expect(normalizePath('users')).toBe('/users');
+      expect(normalizePath('//api//users//')).toBe('/api/users');
+      expect(normalizePath('/')).toBe('/');
+      expect(normalizePath('')).toBe('/');
     });
   });
 
   describe('createEdgeCache', () => {
-    it('should create cache instance', () => {
-      const cache = createEdgeCache();
-      expect(cache).toBeDefined();
-    });
-
-    it('should set and get values', async () => {
+    it('设置与读取', async () => {
       const cache = createEdgeCache();
       await cache.set('key', 'value');
-      const value = await cache.get('key');
-      expect(value).toBe('value');
+      expect(await cache.get('key')).toBe('value');
     });
 
-    it('should delete values', async () => {
+    it('删除与清空', async () => {
       const cache = createEdgeCache();
       await cache.set('key', 'value');
       await cache.delete('key');
-      const value = await cache.get('key');
-      expect(value).toBeNull();
+      expect(await cache.get('key')).toBeNull();
+
+      await cache.set('k1', 'v1');
+      await cache.set('k2', 'v2');
+      await cache.clear();
+      expect(await cache.has('k1')).toBe(false);
+      expect(await cache.size()).toBe(0);
     });
 
-    it('should clear all values', async () => {
+    it('超过 maxSize 时淘汰最旧条目', async () => {
+      const cache = createEdgeCache({ maxSize: 3 });
+      for (let i = 0; i < 5; i++) await cache.set(`k${i}`, i);
+
+      expect(await cache.size()).toBe(3);
+      expect(await cache.has('k0')).toBe(false);
+      expect(await cache.get('k4')).toBe(4);
+    });
+
+    it('覆盖同一 key 不增加条目数', async () => {
       const cache = createEdgeCache();
-      await cache.set('key1', 'value1');
-      await cache.set('key2', 'value2');
-      await cache.clear();
-      expect(await cache.has('key1')).toBe(false);
+      for (let i = 0; i < 5; i++) await cache.set('same', i);
+
+      expect(await cache.size()).toBe(1);
+      expect(await cache.get('same')).toBe(4);
+    });
+
+    it('过期后不可读', async () => {
+      const cache = createEdgeCache();
+      await cache.set('short', 'v', { ttl: 1 });
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      expect(await cache.get('short')).toBeNull();
+      expect(await cache.has('short')).toBe(false);
     });
   });
 
-  describe('response helpers', () => {
-    it('should create JSON response', () => {
+  describe('响应辅助工具', () => {
+    it('jsonResponse 返回真正的 Response', async () => {
       const response = jsonResponse({ data: 'test' });
-      expect(response.status).toBe(200);
-      // ⚠️ 2026-11-02 修：`jsonResponse` 已改为返回**真正的 `Response`**
-      //   （2026-10-31 的 P0 修复：鸭子类型对象在 Workers / Deno 上会被序列化成 `{}`），
-      //   它的 `headers` 是 `Headers` 实例 —— 只能用 `.get()`，取属性永远是 `undefined`。
+      expect(response).toBeInstanceOf(Response);
       expect(response.headers.get('content-type')).toBe('application/json');
+      expect(await response.json()).toEqual({ data: 'test' });
     });
 
-    it('should create text response', () => {
+    it('textResponse 返回真正的 Response', () => {
       const response = textResponse('test');
-      expect(response.status).toBe(200);
+      expect(response).toBeInstanceOf(Response);
       expect(response.headers.get('content-type')).toBe('text/plain');
     });
 
-    it('should create HTML response', () => {
+    it('htmlResponse 返回真正的 Response', () => {
       const response = htmlResponse('<html></html>');
-      expect(response.status).toBe(200);
+      expect(response).toBeInstanceOf(Response);
       expect(response.headers.get('content-type')).toBe('text/html');
     });
 
-    it('should create redirect response', () => {
+    it('redirectResponse 返回真正的 Response', () => {
       const response = redirectResponse('http://example.com');
+      expect(response).toBeInstanceOf(Response);
       expect(response.status).toBe(302);
       expect(response.headers.get('location')).toBe('http://example.com');
+    });
+
+    it('textResponse 支持附加响应头（405 的 Allow 用这条）', () => {
+      const response = textResponse('nope', 405, { allow: 'GET' });
+      expect(response.status).toBe(405);
+      expect(response.headers.get('allow')).toBe('GET');
     });
   });
 });

@@ -287,6 +287,20 @@ const GATES = [
       '⑧ 方法不匹配一律 404 ⇒ 无 405/Allow。另修 query 里 + 未解成空格',
   },
   {
+    name: 'check-edge-runtime',
+    tier: 'fast',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-edge-runtime.mjs'],
+    approx: '~1s',
+    desc:
+      '★ 边缘运行时（@lytjs/runtime-edge）：Workers / Deno / Vercel 只接受**真正的 Response**，' +
+      '返回鸭子类型对象时本地单测全绿、线上直接 TypeError 或序列化成 {}。' +
+      '同一缺陷族已出现三次（10-31 改 json/text/html、11-02 补 redirect、11-03 补路由器的 ' +
+      '404/500 与 handle 的透传）。本轮抓到 7 个：404/500 不是 Response 且无 body、' +
+      'handle 透传 handler 返回值、相对 URL 抛未捕获 TypeError、basePath 拼出 //、' +
+      '无 :param / *、不容忍尾斜杠、缓存无上限。含并发 params 隔离与 405/Allow 判据',
+  },
+  {
     name: 'check-integration',
     tier: 'slow',
     cmd: ['node', 'scripts/check-integration.mjs'],
