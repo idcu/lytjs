@@ -399,6 +399,19 @@ const GATES = [
       '⑤ 值对象 {once:true} → {handler} 后 once 未取消。判据用**同一张场景表跑两套实现**',
   },
   {
+    name: 'check-controlled-props',
+    tier: 'fast',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-controlled-props.mjs'],
+    approx: '~2s',
+    desc:
+      '★ 受控组件（prop → 视图）一致性：这些组件内部都有自己的 signal，初值来自 props。' +
+      '只取初值、不跟随 props 就变成「受控组件不受控」：父组件把 current 重置为 1 时分页器' +
+      '仍停在第 5 页、改 pageSize 页码数量不变、current 越界时**一个 --active 都没有**。' +
+      '三种都不报错、只让视图与数据不一致。2026-11-03 抓到 3 个（全在 Pagination）' +
+      '+ v-model:current 静默无效（从不 emit update:current）。判据覆盖 8 个有内部状态的组件',
+  },
+  {
     name: 'check-vitest-alias-dist',
     tier: 'fast',
     cmd: ['tsx', 'scripts/check-vitest-alias-dist.ts'],

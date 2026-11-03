@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### 🐞 修复（Pagination 受控行为 3 个 + v-model）
+
+- **`current` prop 变化被忽略**：内部 `signal(p.current)` 只在创建时取一次值 ⇒
+  父组件把页码重置为 1（筛选条件变化）时，分页器**仍停在第 5 页**。
+  现在 `watch` props 并同步内部 signal。
+- **`pageSize` prop 变化被忽略**：每页条数变了，页码数量不变。同上。
+- **`current` 越界时不夹取**：`current=10 / total=30`（只有 3 页）时页码区
+  **一个 `--active` 都没有**、「下一页」仍可点。现在渲染时夹到 `[1, totalPages]`。
+- **`v-model:current` 静默无效**：组件从不 `emit('update:current')`。
+  现在点击页码 / 切换每页条数都会 emit（`update:current` / `update:pageSize`）。
+
 ### 🔧 迁出核查
 
 - 依赖清理：移除 `src` / `tests` / `examples` 中完全未引用的 `@lytjs/common-env` / `@lytjs/common-dom` 运行时依赖（同步清理 tsup external / vitest alias / tsconfig paths）

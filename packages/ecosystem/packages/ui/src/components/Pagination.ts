@@ -10,7 +10,7 @@
 
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
-import { signal } from '@lytjs/reactivity';
+import { signal, watch } from '@lytjs/reactivity';
 import { getButtonA11yProps, getFormControlA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 
 export interface PaginationSetupProps {
@@ -48,19 +48,50 @@ export const Pagination = defineComponent({
     onSizeChange: { type: Function, default: undefined },
   },
 
-  setup(props: Record<string, unknown>) {
+  setup(
+    props: Record<string, unknown>,
+    { emit }: { emit: (event: string, ...args: unknown[]) => void },
+  ) {
     const p = props as unknown as PaginationSetupProps;
     const currentPage = signal(p.current);
     const currentPageSize = signal(p.pageSize);
+
+    // ⚠️ 2026-11-03 修（P1）：**受控组件的 prop 变化必须跟随**。
+    //   此前 `signal(p.current)` 只在创建时取一次值，之后父组件把 `current` 重置为 1
+    //   （例如筛选条件变化）时，分页器**仍停在第 5 页** —— 视图与状态不一致，
+    //   而且没有任何报错。`pageSize` 同理（外部改每页条数，页码数量不变）。
+    watch(
+      () => p.current,
+      (v) => {
+        if (typeof v === 'number' && v !== currentPage()) currentPage.set(v);
+      },
+    );
+    watch(
+      () => p.pageSize,
+      (v) => {
+        if (typeof v === 'number' && v !== currentPageSize()) currentPageSize.set(v);
+      },
+    );
 
     const totalPages = (): number => {
       return Math.ceil(p.total / currentPageSize());
     };
 
+    /**
+     * 渲染用的「有效页码」：把越界的 `current` 夹到 `[1, totalPages]`。
+     *
+     * ⚠️ 2026-11-03 修（P1）：此前 `current=10 / total=30 / pageSize=10`（只有 3 页）时，
+     *   页码区一个 `--active` 都没有 —— 用户看到「没有任何一页被选中」。
+     */
+    const effectiveCurrent = (): number => {
+      const last = Math.max(1, totalPages());
+      return Math.min(Math.max(1, currentPage()), last);
+    };
+
     const getPageRange = (): number[] => {
       const pages: number[] = [];
       const total = totalPages();
-      const current = currentPage();
+      const current = effectiveCurrent();
       let start = Math.max(1, current - 2);
       let end = Math.min(total, current + 2);
 
@@ -80,23 +111,27 @@ export const Pagination = defineComponent({
     };
 
     const handlePageChange = (page: number) => {
-      if (page < 1 || page > totalPages() || page === currentPage()) return;
+      if (page < 1 || page > totalPages() || page === effectiveCurrent()) return;
       currentPage.set(page);
+      // 受控用法：`v-model:current` 依赖这个事件（此前**从不 emit** ⇒ v-model 静默无效）
+      emit('update:current', page);
       p.onChange?.(page, currentPageSize());
     };
 
     const handlePrev = () => {
-      handlePageChange(currentPage() - 1);
+      handlePageChange(effectiveCurrent() - 1);
     };
 
     const handleNext = () => {
-      handlePageChange(currentPage() + 1);
+      handlePageChange(effectiveCurrent() + 1);
     };
 
     const handlePageSizeChange = (e: Event) => {
       const size = Number((e.target as HTMLSelectElement).value);
       currentPageSize.set(size);
       currentPage.set(1);
+      emit('update:pageSize', size);
+      emit('update:current', 1);
       p.onSizeChange?.(size);
       p.onChange?.(1, size);
     };
@@ -137,14 +172,14 @@ export const Pagination = defineComponent({
       if (p.layout.includes('prev')) {
         const prevProps = getButtonA11yProps({
           ariaLabel: '上一页',
-          disabled: currentPage() === 1,
+          disabled: effectiveCurrent() === 1,
         });
         children.push(
           createVNode(
             'button',
             mergeA11yProps(prevProps, {
               class: ['lyt-pagination__btn', 'lyt-pagination__prev'],
-              disabled: currentPage() === 1,
+              disabled: effectiveCurrent() === 1,
               onClick: handlePrev,
             }),
             [createVNode('span', {}, '上一页')],
@@ -182,7 +217,7 @@ export const Pagination = defineComponent({
         for (const page of pageRange) {
           const pageBtnProps = getButtonA11yProps({
             ariaLabel: `第${page}页`,
-            disabled: page === currentPage(),
+            disabled: page === effectiveCurrent(),
           });
           pagerChildren.push(
             createVNode(
@@ -190,11 +225,11 @@ export const Pagination = defineComponent({
               mergeA11yProps(pageBtnProps, {
                 class: [
                   'lyt-pagination__btn',
-                  page === currentPage() ? 'lyt-pagination__btn--active' : '',
+                  page === effectiveCurrent() ? 'lyt-pagination__btn--active' : '',
                 ]
                   .filter(Boolean)
                   .join(' '),
-                'aria-current': page === currentPage() ? 'page' : undefined,
+                'aria-current': page === effectiveCurrent() ? 'page' : undefined,
                 onClick: () => handlePageChange(page),
               }),
               [createVNode('span', {}, String(page))],
@@ -231,14 +266,14 @@ export const Pagination = defineComponent({
       if (p.layout.includes('next')) {
         const nextProps = getButtonA11yProps({
           ariaLabel: '下一页',
-          disabled: currentPage() === totalPages(),
+          disabled: effectiveCurrent() >= totalPages(),
         });
         children.push(
           createVNode(
             'button',
             mergeA11yProps(nextProps, {
               class: ['lyt-pagination__btn', 'lyt-pagination__next'],
-              disabled: currentPage() === totalPages(),
+              disabled: effectiveCurrent() >= totalPages(),
               onClick: handleNext,
             }),
             [createVNode('span', {}, '下一页')],
