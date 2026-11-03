@@ -1446,6 +1446,9 @@ importers:
       '@lytjs/common-events':
         specifier: workspace:*
         version: link:../../../../../common/packages/events
+      '@lytjs/common-is':
+        specifier: workspace:*
+        version: link:../../../../../common/packages/is
       '@lytjs/shared-types':
         specifier: workspace:*
         version: link:../../../../../shared-types
@@ -1534,6 +1537,9 @@ importers:
 
   packages/ecosystem/packages/web-framework/packages/router:
     dependencies:
+      '@lytjs/common-error':
+        specifier: workspace:*
+        version: link:../../../../../common/packages/error
       '@lytjs/component':
         specifier: workspace:*
         version: link:../../../../../component
@@ -1756,6 +1762,9 @@ importers:
       '@lytjs/common-object':
         specifier: workspace:*
         version: link:../common/packages/object
+      '@lytjs/common-scheduler':
+        specifier: workspace:*
+        version: link:../common/packages/scheduler
       '@lytjs/common-string':
         specifier: workspace:*
         version: link:../common/packages/string
