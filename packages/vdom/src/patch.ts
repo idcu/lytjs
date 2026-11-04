@@ -57,6 +57,8 @@ interface InternalRendererOptions<HN, HE extends HN> {
   getTagName: ((el: HE) => string) | undefined;
   /** 水合用：取子节点列表（认领时按序扫描） */
   getChildNodes: ((node: HN) => HN[]) | undefined;
+  /** 水合用：取元素属性名（小写），用于清理 SSR 独有属性 */
+  getAttributeNames: ((el: HE) => string[]) | undefined;
   setupChildComponent:
     | ((vnode: VNode, parent: ComponentInternalInstance | null) => void)
     | undefined;
@@ -100,6 +102,9 @@ function hostToOptions<HN, HE extends HN>(
     getChildNodes: host.getChildNodes
       ? (node) => host.getChildNodes!(node as unknown as HE)
       : undefined,
+    getAttributeNames: host.getAttributeNames
+      ? (el) => host.getAttributeNames!(el as unknown as HE)
+      : undefined,
     setupChildComponent: undefined,
     normalizeProps: undefined,
     initSlots: undefined,
@@ -134,6 +139,9 @@ function optionsToInternal<HN, HE extends HN>(
     getNodeType: options.getNodeType ? (node) => options.getNodeType!(node) : undefined,
     getTagName: options.getTagName ? (el) => options.getTagName!(el) : undefined,
     getChildNodes: options.getChildNodes ? (node) => options.getChildNodes!(node) : undefined,
+    getAttributeNames: options.getAttributeNames
+      ? (el) => options.getAttributeNames!(el)
+      : undefined,
     setupChildComponent: options.setupChildComponent,
     normalizeProps: options.normalizeProps,
     initSlots: options.initSlots,
@@ -310,6 +318,7 @@ export function createRenderer<HN, HE extends HN>(
     getNodeType,
     getTagName,
     getChildNodes,
+    getAttributeNames,
     setupChildComponent,
     normalizeProps,
     initSlots,
@@ -352,6 +361,7 @@ export function createRenderer<HN, HE extends HN>(
   ctx.getNodeType = getNodeType;
   ctx.getTagName = getTagName;
   ctx.getChildNodes = getChildNodes;
+  ctx.getAttributeNames = getAttributeNames;
   // ── 水合状态 ────────────────────────────────────────────────────────
   // `hydrate()` 入口置 true，首屏挂载期间 mountElement / mountTextNode /
   // mountCommentNode 改为「认领」容器内既有节点而非新建。

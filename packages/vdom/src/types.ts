@@ -113,6 +113,17 @@ export interface RendererOptions<HN = unknown, HE extends HN = HN> {
    * 必须靠它列出子节点后按序扫描。同样是「契约与宿主都实现了、渲染器此前未接」。
    */
   getChildNodes?(node: HN): HN[];
+  /**
+   * 取元素上的属性名列表（**小写**），用于水合时清掉「服务端有、客户端没有」的属性。
+   *
+   * ⚠️ 2026-11-04 新增。`WebRendererHost` 早已实现同名方法（`web-host-extended.ts`），
+   * 但渲染器此前没接 ⇒ 水合后的元素会**残留 SSR 独有的属性**
+   * （实测：SSR 渲染 `<div id="srv" title="T" data-x="1">`、客户端 vnode 无属性，
+   *  水合后这三个属性全部还在）⇒ 水合结果与「客户端直接渲染」不一致。
+   *
+   * 宿主不提供时跳过清理（退化为旧行为）。
+   */
+  getAttributeNames?(el: HE): string[];
   /** 可选回调：为子组件创建和 setup 组件实例。
    *  当提供时，mountComponent 会在 vnode.component 未设置时调用此回调。
    *  接收 vnode 和父组件实例。

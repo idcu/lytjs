@@ -1,5 +1,14 @@
 # @lytjs/host-contract 更新日志
 
+## [未发布] - 2026-11-04
+
+### ✨ 新增（可选能力，向后兼容）
+
+- `RendererHost.getAttributeNames?(el: HE): string[]`：取元素属性名（小写）。
+  水合时用它清理「服务端有、客户端 vnode 没有」的属性。
+  此前同名方法只存在于 `@lytjs/adapter-web` 的**扩展宿主**上、契约里没声明
+  ⇒ 渲染器拿不到 ⇒ 水合后 `id` / `title` / `data-*` 全部残留。
+
 ## [6.9.6] - 2026-06-06
 
 ### 🚀 版本升级

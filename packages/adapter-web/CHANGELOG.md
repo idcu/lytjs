@@ -1,5 +1,16 @@
 # @lytjs/adapter-web 更新日志
 
+## [未发布] - 2026-11-04
+
+### 🐞 修复（水合属性清理拿不到宿主能力）
+
+- **`WebRendererHost` 补上 `getAttributeNames()`**：同名方法此前只存在于
+  `createExtendedWebHost()` 的扩展宿主上，而 `web-dom-renderer` 用的是基类
+  ⇒ 渲染器取不到 ⇒ 水合后「服务端有、客户端没有」的属性（`id` / `title` / `data-*`）
+  全部残留。
+- **`web-dom-renderer` 把它转发进 `RendererOptions`**：水合的三项内省能力
+  （`getNodeType` / `getTagName` / `getChildNodes`）此前已逐个转发，本次补第 4 项。
+
 ## [未发布] - 2026-11-03
 
 ### 🐞 修复（事件修饰符 4 个「静默不触发」）

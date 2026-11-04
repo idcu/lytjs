@@ -375,6 +375,10 @@ export function createDOMRenderer(
     getChildNodes(node: Node): Node[] {
       return host.getChildNodes(node as Element);
     },
+    // 水合时清理「服务端有、客户端没有」的属性需要它（`WebRendererHost` 已实现）
+    getAttributeNames(el: Element): string[] {
+      return host.getAttributeNames(el);
+    },
     ...(extraOptions?.setupChildComponent
       ? { setupChildComponent: extraOptions.setupChildComponent }
       : {}),

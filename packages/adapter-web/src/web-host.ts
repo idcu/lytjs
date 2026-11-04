@@ -453,6 +453,17 @@ export class WebRendererHost implements RendererHost<Node, Element> {
   }
 
   /**
+   * 获取元素上的属性名列表（用于 hydration 时清理 SSR 独有属性）。
+   *
+   * ⚠️ 2026-11-04 新增：同名方法此前只存在于 `createExtendedWebHost()` 的扩展宿主上，
+   * 而 `web-dom-renderer` 用的是**这个**基类 ⇒ 渲染器拿不到 ⇒ 水合后
+   * `id` / `title` / `data-*` 这类「服务端有、客户端没有」的属性会一直留着。
+   */
+  getAttributeNames(el: Element): string[] {
+    return Array.from(el.getAttributeNames());
+  }
+
+  /**
    * 获取节点类型（用于 hydration 判断）。
    */
   getNodeType(node: Node): number {

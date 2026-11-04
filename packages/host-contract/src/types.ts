@@ -303,6 +303,15 @@ export interface RendererHost<HN = unknown, HE extends HN = HN> {
   getChildNodes?(el: HE): HN[];
 
   /**
+   * 获取元素上的属性名列表（小写，用于 hydration 时清理 SSR 独有属性）。
+   *
+   * ⚠️ 2026-11-04 新增：`WebRendererHost` 早已实现同名方法，但契约里没声明
+   * ⇒ 渲染器拿不到 ⇒ 水合后元素会残留「服务端有、客户端没有」的属性
+   * （实测 SSR 的 `id` / `title` / `data-*` 在水合后仍在）。
+   */
+  getAttributeNames?(el: HE): string[];
+
+  /**
    * 获取节点类型（用于 hydration 判断）。
    *
    * Web: Node.ELEMENT_NODE(1) / Node.TEXT_NODE(3) / Node.COMMENT_NODE(8)

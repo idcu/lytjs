@@ -37,6 +37,8 @@ export interface RendererContext<HN, HE extends HN> {
   getNodeType: ((node: HN) => number) | undefined;
   /** 水合用：取元素标签名（小写） */
   getTagName: ((el: HE) => string) | undefined;
+  /** 水合用：取元素属性名（小写），用于清理 SSR 独有属性 */
+  getAttributeNames: ((el: HE) => string[]) | undefined;
   /** 水合模式开关：`hydrate()` 入口置 true，首屏挂载期间复用既有 DOM */
   hydrating: boolean;
   /**
@@ -248,6 +250,57 @@ export function createElementPatch<HN, HE extends HN>(
     return null;
   }
 
+  /**
+   * 找「下一个尚未被认领的节点」—— 水合时新建节点的**正确插入锚点**。
+   *
+   * ⚠️ 2026-11-04 修（P1）：此前新建节点一律 `insert(el, container, anchor)`，
+   *   而水合时 `anchor` 是 `null` ⇒ **追加到末尾**。于是
+   *   「SSR 没有、客户端有」的节点会跑到兄弟节点后面：
+   *
+   *     SSR:   `<div><i>I</i></div>`
+   *     客户端 vnode: `<div><span>N</span><i>I</i></div>`
+   *     水合后: `<div><i>I</i><span>N</span></div>`   ← 顺序错
+   *
+   *   正确锚点是「第一个还没被认领的既有节点」：插在它前面，顺序就对了。
+   */
+  function nextUnclaimedChild(container: HN): HN | null {
+    const { getChildNodes, hydrateUsed } = ctx;
+    if (!getChildNodes) return null;
+    for (const node of getChildNodes(container)) {
+      if (!hydrateUsed.has(node)) return node;
+    }
+    return null;
+  }
+
+  /**
+   * 水合时清理「服务端有、客户端 vnode 没有」的属性。
+   *
+   * ⚠️ 2026-11-04 修（P1）：`mountElement` 应用 props 时是 `patchProp(el, key, null, v)` ——
+   *   只能**加**不能**减**。于是 SSR 渲染出的 `id` / `title` / `data-*` 在客户端
+   *   vnode 里已经没有了，却会一直留在 DOM 上 ⇒ 水合结果 ≠ 客户端直接渲染的结果。
+   *
+   * 保留 `value` / `checked`：它们是**表单状态**（用户可能已经改过），
+   * 删属性会让输入框/复选框被重置，比「多一个属性」严重得多。
+   */
+  function cleanupHydratedAttributes(el: HE, props: Record<string, unknown>): void {
+    const { getAttributeNames } = ctx;
+    if (!getAttributeNames) return;
+
+    const expected = new Set<string>();
+    for (const key of Object.keys(props)) {
+      if (key === 'key' || key === 'ref' || key.startsWith('on')) continue;
+      expected.add(key.toLowerCase());
+    }
+    // 表单状态不参与清理（见上方说明）
+    const keep = new Set(['value', 'checked', 'selected']);
+
+    for (const name of getAttributeNames(el)) {
+      const lower = name.toLowerCase();
+      if (expected.has(lower) || keep.has(lower)) continue;
+      patchProp(el, lower, null, null);
+    }
+  }
+
   // ============================================================
   // mountElement
   // ============================================================
@@ -272,6 +325,8 @@ export function createElementPatch<HN, HE extends HN>(
     const claimed = ctx.hydrating
       ? claimExisting(container, NODE_TYPE_ELEMENT, tag.toLowerCase())
       : null;
+    // 新建节点（SSR 里没有）要插在「下一个未认领的既有节点」之前，否则顺序会错
+    const insertAnchor = ctx.hydrating && !claimed ? nextUnclaimedChild(container) : anchor;
     const el = (claimed ?? createElement(tag)) as HE;
     // 无论认领还是新建，都登记为「已占用」—— 否则当客户端比 SSR 多出节点时，
     // 后续兄弟 vnode 会把这里**新建**的节点误认成自己的（两个 vnode 共享一个 DOM 节点）
@@ -284,6 +339,10 @@ export function createElementPatch<HN, HE extends HN>(
       if (key === 'key' || key === 'ref') continue;
       patchProp(el, key, null, props[key]);
     }
+    // 水合：清掉「服务端有、客户端没有」的属性（`patchProp(null → v)` 只能加不能减）
+    if (ctx.hydrating && claimed) {
+      cleanupHydratedAttributes(el, props);
+    }
 
     // 挂载 children
     if (vnode.shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
@@ -295,6 +354,27 @@ export function createElementPatch<HN, HE extends HN>(
       // 子 vnode 若是**带子节点的元素**（数组 children）就会把锚点带进元素内部 ⇒ 抛错；
       // 而**纯文本子节点**走 `setElementText` 不用 anchor ⇒ 正常（这解释了形态差异）。
       mountChildren(vnode, el, null, isSVG, parentComponent, parentSuspense);
+
+      // ⚠️ 2026-11-04 修（P1）：水合时「服务端有、客户端 vnode 没有」的子节点会被留下
+      //   （`claimExisting` 只认领、不删除）。实测：
+      //     SSR:   `<div><span class="only-server">S</span><i>I</i></div>`
+      //     客户端: `<div><i>I</i></div>`
+      //     水合后 `<div><span class="only-server">S</span><i>I</i></div>` ← 脏内容留在页面上
+      //   现在把「本次水合中从未被认领」的子节点删掉，让 DOM 收敛到客户端 vnode。
+      const childNodes = ctx.getChildNodes;
+      if (ctx.hydrating && claimed && childNodes) {
+        let removed = 0;
+        for (const child of childNodes(el)) {
+          if (ctx.hydrateUsed.has(child)) continue;
+          ctx.remove(child);
+          removed++;
+        }
+        // 不包 `if (__DEV__)`：`warn()` 自己就带运行时判定（见 @lytjs/common-error 的 getDevMode），
+        // 而本包的构建把 `__DEV__` 烘成 false ⇒ 包起来等于**把告警删掉**。
+        if (removed > 0) {
+          warn(`Hydration mismatch: removed ${removed} extra node(s) in <${tag}>.`);
+        }
+      }
     } else if (vnode.shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       setElementText(el, String(vnode.children ?? ''));
     }
@@ -305,7 +385,11 @@ export function createElementPatch<HN, HE extends HN>(
 
     // 插入到容器中（已认领的节点本就在原位，无需再插 —— 否则会变成两份）
     if (!claimed) {
-      insert(el, container, anchor);
+      insert(el, container, insertAnchor);
+      if (ctx.hydrating) {
+        // 同 `removed` 那条：不包 `if (__DEV__)`，否则产物里没有这条告警
+        warn(`Hydration mismatch: <${tag}> not found in server HTML.`);
+      }
     }
 
     // ★ 2026-10-31 新增：自定义指令 mounted（必须在 insert 之后 —— 指令常要量尺寸/取焦点）
@@ -351,7 +435,8 @@ export function createElementPatch<HN, HE extends HN>(
     const node = createText(text);
     if (ctx.hydrating) ctx.hydrateUsed.add(node);
     setVNodeEl(vnode, node);
-    insert(node, container, anchor);
+    // 水合：新建的文本节点同样要插在「下一个未认领的既有节点」之前（否则顺序错）
+    insert(node, container, ctx.hydrating ? nextUnclaimedChild(container) : anchor);
   }
 
   // ============================================================
@@ -374,7 +459,8 @@ export function createElementPatch<HN, HE extends HN>(
     setVNodeEl(vnode, node);
     // FIX: P2-17 添加 null 检查，避免 node 为 null 时的不安全类型断言
     vnode.anchor = node != null ? (node as unknown as Node | null) : null;
-    insert(node, container, anchor);
+    // 水合：注释节点同理（`v-if` 占位）
+    insert(node, container, ctx.hydrating ? nextUnclaimedChild(container) : anchor);
   }
 
   // ============================================================

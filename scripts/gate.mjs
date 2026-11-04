@@ -445,6 +445,22 @@ const GATES = [
       'tsup 不得再烘焙常量、production 反向对照、setDevMode 生效、safeExec 端到端',
   },
   {
+    name: 'check-hydration',
+    tier: 'fast',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-hydration.mjs'],
+    approx: '~3s',
+    desc:
+      '★ 水合（hydration）：核心判据是 **`hydrate(ssrHtml)` 的 DOM === `mount()` 的 DOM** ——' +
+      '水合是「服务端先送 HTML、客户端再接管」的那一步，两个失败模式都不报错：' +
+      '① 接管失败（事件没绑上）⇒ 页面看着完全正常、点了没反应；' +
+      '② 接管了但结果不对（多出服务端独有节点 / 少了客户端新增节点 / 顺序错 / 属性残留）' +
+      '⇒ 下一次更新时 vnode 与真实 DOM 结构对不上。2026-11-04 抓到 5 个：' +
+      '新增节点被追加到末尾、服务端独有节点不清理（脏内容留在页面上）、' +
+      '服务端独有属性不清理（id/title/data-*）、缩进 HTML 的空白文本节点不清理、' +
+      '以上全部静默。另含节点复用、表单 value、事件+响应式接管、Teleport/KeepAlive',
+  },
+  {
     name: 'check-vitest-alias-dist',
     tier: 'fast',
     cmd: ['tsx', 'scripts/check-vitest-alias-dist.ts'],

@@ -2,6 +2,38 @@
 
 ## [未发布] - 2026-11-04
 
+### 🐞 修复（水合：`hydrate()` 之后的 DOM 与「客户端直接渲染」不一致）
+
+水合是「服务端先送 HTML、客户端再接管」的那一步。以下 5 个缺陷**全都不报错**，
+但会让 `hydrate(ssrHtml)` 的结果与 `mount()` 的结果不一样 —— 而 vnode 与真实 DOM
+结构一旦对不上，**下一次更新**就会错位。
+
+- **客户端新增的节点被追加到末尾**：水合时 `anchor` 是 `null` ⇒ 新建节点直接 append。
+  实测 `SSR=<div><i>I</i></div>` + 客户端 `<div><span>N</span><i>I</i></div>`
+  ⇒ 水合后 `<div><i>I</i><span>N</span></div>`。现在插在「**下一个尚未被认领的节点**」之前。
+- **服务端独有的子节点不被清理**：`claimExisting` 只认领、不删除 ⇒
+  `SSR` 里多出来的 `<span class="only-server">S</span>` 会一直留在页面上（脏内容）。
+  现在认领元素的 children 挂载完后，删除「本次水合中从未被认领」的子节点。
+- **服务端独有的属性不被清理**：应用 props 走的是 `patchProp(el, key, null, v)` ——
+  只能加不能减 ⇒ SSR 的 `id` / `title` / `data-*` 在水合后仍然存在。
+  现在按 `getAttributeNames` 做一次差集清理（**保留** `value` / `checked` / `selected`，
+  它们是表单状态，删属性会把用户输入重置）。
+- **缩进/换行的 SSR HTML 留下空白文本节点**：既不认领也不清理 ⇒
+  `<div>` 的 `childNodes` 从 2 涨到 5；更糟的是**第一个文本 vnode 会认领缩进用的空白节点**
+  （`'\n  '` 被改写成正文）。现在文本/注释节点新建时同样用「下一个未认领节点」作锚点，
+  空白节点随后被统一清理。
+- **以上全部静默**：现在 dev 下会对 mismatch 告警
+  （`Hydration mismatch: <tag> not found in server HTML.` /
+  `Hydration mismatch: removed N extra node(s) in <tag>.`）。
+  ⚠️ 告警**不能**包在 `if (__DEV__)` 里 —— 本包的构建把 `__DEV__` 烘成 `false`，
+  包起来等于把告警删掉（`warn()` 自己已有运行时判定）。
+
+### 🩹 契约
+
+- `RendererOptions` / `RendererHost` 新增可选 `getAttributeNames?(el)`（属性清理需要）。
+
+## [未发布] - 2026-11-04
+
 ### 🐞 修复（P0：`ref` 在 patch 路径上永不触发）
 
 - **`patchElement` 从不设置 `ref`**：`ref` 只在 `mountElement` 里处理，而「元素已存在、
