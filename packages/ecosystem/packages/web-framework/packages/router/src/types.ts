@@ -54,6 +54,14 @@ export interface RouteRecordNormalized {
   path: string;
   name: RouteRecordName | null;
   meta: RouteMeta;
+  /**
+   * 记录级重定向（`{ path: '/old', redirect: '/new' }`）。
+   *
+   * ⚠️ 2026-11-04：`RouteRecordRaw` 里**一直**声明着这个字段，但
+   *   `normalizeRouteRecord` 从不拷贝、`navigate` 也从不读 ⇒ **重定向完全没实现**，
+   *   用户写了 `redirect` 之后导航停在原路径（既不报错也不告警）。
+   */
+  redirect?: string | RouteLocationRaw | ((to: RouteLocationNormalized) => RouteLocationRaw);
   children: RouteRecordNormalized[];
   aliasOf?: RouteRecordNormalized;
   beforeEnter?: NavigationGuard | undefined;

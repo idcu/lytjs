@@ -16,11 +16,12 @@ import type {
 } from './types';
 import { NavigationFailureType, locationQueryToSearchParams } from './types';
 import { signal } from '@lytjs/reactivity';
-import { error } from '@lytjs/common-error';
+import { error, warn } from '@lytjs/common-error';
 import {
   normalizeRouteRecord,
   flattenMatchers,
   matchPath,
+  comparePriority,
   type RouteRecordMatcher,
 } from './matcher';
 import { resolveLocation, isSameRouteLocation } from './location';
@@ -75,14 +76,26 @@ export function createRouter(options: RouterOptions): Router {
     meta: Record<string | number | symbol, unknown>;
   } {
     let bestMatch: RouteRecordMatcher | null = null;
-    let bestScore = -1;
+    let bestPriority: number[] | null = null;
     let bestParams: Record<string, string | string[]> = {};
 
     for (const matcher of flatMatchers) {
       const result = matchPath(path, matcher.tokens, options.strict);
+      if (!result.matched) continue;
 
-      if (result.matched && result.score > bestScore) {
-        bestScore = result.score;
+      // ⚠️ 2026-11-04 修（P1）：此前比的是 `result.score`（**权重总和**），
+      //   于是 `/a/b/*`(3+3+0=6) 输给 `/a/:x/:y`(3+2+2=7) —— 通配符路由永不命中。
+      //   现在逐段字典序比较（与 http-server / runtime-edge 同一套规则）。
+      const better =
+        bestPriority === null ||
+        comparePriority(result.priority, bestPriority) > 0 ||
+        // 打平时**更深（子）优先**：默认子路由（`path: ''`）与父路由的 token 序列相同，
+        // 否则父路由永远抢走命中 ⇒ `<RouterView>` 永远渲染不出默认子组件。
+        (comparePriority(result.priority, bestPriority) === 0 &&
+          matcher.depth > (bestMatch?.depth ?? 0));
+
+      if (better) {
+        bestPriority = result.priority;
         bestMatch = matcher;
         bestParams = result.params;
       }
@@ -140,6 +153,13 @@ export function createRouter(options: RouterOptions): Router {
     to: RouteLocationRaw,
     replace: boolean = false,
     isRedirect: boolean = false,
+    /**
+     * 强制跑完整管线（跳过「重复导航」判定）。
+     *
+     * 初始导航（`app.use(router)`）需要它：那时 `currentRoute` 还是占位值，
+     * 但如果首屏恰好就是 `/`，重复判定会把整条守卫链跳过。
+     */
+    force: boolean = false,
   ): Promise<NavigationFailure | void> {
     // ⚠️ 2026-10-27 修（P0）：无条件重定向（`beforeEach(() => '/x')` 且 /x 又重定向回来）
     //   此前没有任何深度上限 ⇒ 实测 256MB 堆 **OOM 进程崩溃**。
@@ -180,6 +200,14 @@ export function createRouter(options: RouterOptions): Router {
       const { matched, params, meta } = resolveRoute(targetPath);
 
       if (matched.length === 0) {
+        // ⚠️ 2026-11-04 新增：此前**完全静默** —— `push('/typo')` 之后路由停在原页面，
+        //   用户看到的是「点了没反应」，而控制台一个字都没有。
+        //   不改成「导航到空匹配」是有意的（那会让 `push` 的返回值语义变化）；
+        //   这里至少把「为什么没动」和「怎么支持 404」讲清楚。
+        warn(
+          `[router] 没有匹配 "${targetPath}" 的路由，本次导航被忽略（仍停在 "${currentRoute().path}"）。` +
+            `如需 404 页面，请添加 catch-all 路由：{ path: '/*', component: NotFound }。`,
+        );
         return {
           type: NavigationFailureType.aborted,
           from: currentRoute(),
@@ -205,8 +233,27 @@ export function createRouter(options: RouterOptions): Router {
         meta,
       };
 
+      // ⚠️ 2026-11-04 修（P0）：**记录级重定向此前完全没实现**。
+      //   `RouteRecordRaw.redirect` 在类型里一直声明着，但 `normalizeRouteRecord` 不拷贝、
+      //   这里也不读 ⇒ 用户写 `{ path: '/old', redirect: '/new' }` 之后导航停在 `/old`
+      //   （既不报错也不告警）。现在支持三种写法：
+      //     · 字符串 / location 对象：`redirect: '/new'`
+      //     · 函数：`redirect: (to) => ({ name: 'x', query: { from: to.path } })`
+      //   重定向在**守卫之前**处理（与 Vue Router 一致）：目标路由的守卫照常执行。
+      const redirectOption = lastMatched?.record?.redirect;
+      if (redirectOption) {
+        const redirectTarget =
+          typeof redirectOption === 'function' ? redirectOption(targetLocation) : redirectOption;
+        await navigate(redirectTarget, replace, true);
+        return {
+          type: NavigationFailureType.redirected,
+          from: currentRoute(),
+          to: targetLocation,
+        };
+      }
+
       // Check for same route navigation
-      if (isSameRouteLocation(currentRoute(), targetLocation)) {
+      if (!force && isSameRouteLocation(currentRoute(), targetLocation)) {
         return {
           type: NavigationFailureType.duplicated,
           from: currentRoute(),
@@ -469,17 +516,61 @@ export function createRouter(options: RouterOptions): Router {
         app.provide('__lytjs_router__', router);
       }
 
-      // Initial navigation
+      // ⚠️ 2026-11-04 修（P0）：**初始导航此前完全绕过守卫链**。
+      //
+      //   旧实现只做「resolveRoute + currentRoute.set」：不跑 beforeEach、不处理
+      //   `redirect`、也不判定 404。实测：`createMemoryHistory('/private')` +
+      //   `beforeEach` 里把 `/private` 重定向到 `/login`，`app.use(router)` 之后
+      //   仍停在 `/private` —— **鉴权守卫在首次进入（深链 / 刷新 / 直接打开）时被绕过**，
+      //   而这正是它最该生效的时刻。且 `isReady()` 在守卫跑之前就 resolve 了。
+      //
+      //   现在：初始导航走**同一条 navigate 管线**（守卫 / 重定向 / 404 判定 / afterEach），
+      //   `isReady()` 在它落定之后才 resolve（与 Vue Router 一致）。
+      //   代价与 Vue 相同：`currentRoute` 在首帧是占位值，需要「首屏就绪」的宿主
+      //   应 `await router.isReady()` 再挂载。
       const initialLocation = options.history.location;
-      const { matched, params, meta } = resolveRoute(initialLocation.path);
-      currentRoute.set({
-        ...initialLocation,
-        params,
-        matched: matched.map((m) => m.record),
-        meta: { ...meta, ...initialLocation.meta },
-      });
+      const initialTarget =
+        (initialLocation as { fullPath?: string }).fullPath ?? initialLocation.path ?? '/';
 
-      readyResolve?.();
+      /**
+       * 初始导航有两条路：
+       *
+       * · **快路径（同步）**：没有任何守卫 / 重定向时，解析结果就是最终结果 ——
+       *   直接落定，首帧即可渲染正确页面（`RouterView` 不必等一个 tick）。
+       *   这同时也是「install 之后立刻 push」不产生竞态的前提。
+       * · **慢路径（异步）**：只要存在 `beforeEach` / `beforeResolve` /
+       *   记录级 `beforeEnter` / `redirect`，就必须走完整管线 ——
+       *   否则守卫会被绕过（本轮修的那个 P0）。代价是首帧为占位路由。
+       */
+      const { matched: initialMatched } = resolveRoute(initialTarget.split('?')[0] || '/');
+      const needsPipeline =
+        beforeEachGuards.length > 0 ||
+        beforeResolveGuards.length > 0 ||
+        initialMatched.some((m) => m.record.beforeEnter || m.record.redirect);
+
+      if (!needsPipeline) {
+        const { params, meta } = resolveRoute(initialTarget.split('?')[0] || '/');
+        currentRoute.set({
+          ...initialLocation,
+          // ⚠️ 2026-11-04 修（P1）：此前这里**不写 `name`** —— `initialLocation` 里的
+          //   `name` 是 `null`，于是首帧的 `useRoute().name` 恒为 null（按名字判断
+          //   当前页面的代码全部失效），而 `navigate()` 那条路是写了的。
+          name: initialMatched[initialMatched.length - 1]?.record?.name ?? null,
+          params,
+          matched: initialMatched.map((m) => m.record),
+          meta: { ...meta, ...initialLocation.meta },
+        });
+        readyResolve?.();
+        return;
+      }
+
+      void navigate(initialTarget, true, false, true)
+        .catch((err) => {
+          error(`[router] 初始导航失败：${err instanceof Error ? err.message : String(err)}`);
+        })
+        .finally(() => {
+          readyResolve?.();
+        });
     },
 
     async isReady() {

@@ -201,6 +201,56 @@ import { createMemoryHistory } from '@lytjs/router';
 const history = createMemoryHistory();
 ```
 
+### 重定向与 404
+
+```typescript
+const router = createRouter({
+  history: createWebHistory(),
+  routes: [
+    // ① 记录级重定向：字符串 / location 对象 / 函数
+    { path: '/old', redirect: '/new' },
+    {
+      path: '/legacy/:id',
+      redirect: (to) => ({ name: 'user-detail', params: { id: to.params.id } }),
+    },
+
+    // ② 默认子路由：`path: ''` 命中**子**路由（不是父路由），常与 redirect 搭配
+    {
+      path: '/',
+      component: Layout,
+      children: [
+        { path: '', redirect: '/dashboard' },
+        { path: 'dashboard', name: 'dashboard', component: Dashboard },
+      ],
+    },
+
+    // ③ 404：必须显式写 catch-all —— 未匹配的路径**不会**被导航过去
+    { path: '/*', name: 'not-found', component: NotFound },
+  ],
+});
+```
+
+> ⚠️ **未匹配路径的处理**：`router.push('/typo')` 会**中止**本次导航并给出告警
+> （路由停在原页面），返回值是 `aborted`。想渲染 404 页面，必须像上面那样加一条
+> `path: '/*'` 的 catch-all 路由 —— 它会把剩余路径放进 `params['*']`。
+
+> ⚠️ **初始导航也会走守卫链**：`app.use(router)` 时的首次导航与手动 `push` 走同一条管线
+> （`beforeEach` / 重定向 / 404 判定 / `afterEach` 都会执行），`router.isReady()` 在它落定后
+> 才 resolve。没有任何守卫/重定向时，`install()` 会**同步**落定首帧路由（`RouterView`
+> 不必等一个 tick）；一旦有守卫，首帧是占位路由，需要「首屏就绪」的宿主应先
+> `await router.isReady()` 再挂载。
+
+### 路由匹配优先级
+
+逐段比较（**不是**权重求和）：`static(3) > param(2) > optional(1) > wildcard(0)`，
+「路由已结束」按 1 处理；完全打平时**更深（子）路由优先**（默认子路由依赖这一条）。
+
+```typescript
+// /a/b/d ⇒ 命中 /a/b/*（第 2 段 static 3 > param 2），而不是 /a/:x/:y
+{ path: '/a/b/*',   component: Wild }
+{ path: '/a/:x/:y', component: Params }
+```
+
 ### 路由守卫
 
 ```typescript

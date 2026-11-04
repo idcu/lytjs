@@ -450,6 +450,24 @@ const GATES = [
       'template 无编译器 —— 这 3 条此前在产物里被整段删除，用户只看到「功能没生效」）',
   },
   {
+    name: 'check-router-semantics',
+    tier: 'fast',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-router-semantics.mjs'],
+    approx: '~1s',
+    desc:
+      '★ 路由语义（@lytjs/router）：路由是 SPA 的主干，但它的缺陷几乎都是「页面能打开、只是不对」' +
+      '—— 守卫没跑、重定向没生效、默认子路由不渲染、参数没解码，全都不抛异常，' +
+      '肉眼验收时容易被当成「我配错了」。2026-11-04 首次运行抓到 6 个：' +
+      '① 优先级用**权重总和**排序 ⇒ /a/b/*(6) 输给 /a/:x/:y(7)，通配符路由永不命中（同一缺陷族第三次）；' +
+      '② `RouteRecordRaw.redirect` **从未被读取** ⇒ 重定向完全不生效；' +
+      '③ 默认子路由（path: ""）**永不命中**（与父路由同分且父先匹配）⇒ matched 深度 1、name 为 null；' +
+      '④ query 的 `+` 不解成空格（第二份 parseQuery 副本漂移）；' +
+      '⑤ 未匹配路径**完全静默**（push 后停在原页面，控制台无输出）；' +
+      '⑥ **初始导航绕过守卫链** ⇒ 鉴权守卫在深链/刷新时被绕过（最贵的一条）。' +
+      '判据 8 组 39 条，含五组对照（无守卫时保持同步首帧、重定向循环有上限、catch-all 可用等）',
+  },
+  {
     name: 'check-hydration',
     tier: 'fast',
     needsDist: true,

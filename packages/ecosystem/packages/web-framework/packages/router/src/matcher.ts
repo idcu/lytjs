@@ -71,7 +71,50 @@ export function tokenizePath(path: string): PathToken[] {
 // ===== Path Scoring =====
 
 /**
+ * 逐段权重（越大越具体）。
+ *
+ * ⚠️ 2026-11-04 修（P1）：此前**只用总和**排序（`scoreRoute`），于是
+ *   `/a/b/*`（3+3+0=6）输给 `/a/:x/:y`（3+2+2=7）—— 通配符路由注册了却**永不命中**。
+ *   这是同一缺陷族的**第三次**出现（2026-11-03 已在 `@lytjs/http-server` 与
+ *   `@lytjs/runtime-edge` 各修过一次），两处都用「逐段字典序」：
+ *
+ *     static(3) > param(2) > optional(1) > wildcard(0)，「路由已结束」按 1 处理
+ *
+ *   ⇒ 前几段先决出胜负，不会被后面的段数「凑总分」翻盘。
+ */
+export const TOKEN_WEIGHT = { static: 3, param: 2, optional: 1, wildcard: 0 } as const;
+/** 路由在该位置已经结束（没有 token 了） */
+const END_WEIGHT = 1;
+
+/** 把 token 列表摊平成权重序列（逐段比较用） */
+export function priorityOf(tokens: PathToken[]): number[] {
+  return tokens.map((token) => {
+    switch (token.type) {
+      case 'static':
+        return TOKEN_WEIGHT.static;
+      case 'param':
+        return token.optional ? TOKEN_WEIGHT.optional : TOKEN_WEIGHT.param;
+      case 'wildcard':
+        return TOKEN_WEIGHT.wildcard;
+    }
+  });
+}
+
+/** 字典序比较：>0 表示 a 更具体 */
+export function comparePriority(a: number[], b: number[]): number {
+  const len = Math.max(a.length, b.length);
+  for (let i = 0; i < len; i++) {
+    const av = a[i] ?? END_WEIGHT;
+    const bv = b[i] ?? END_WEIGHT;
+    if (av !== bv) return av - bv;
+  }
+  return 0;
+}
+
+/**
  * Score a route record for ranking (higher = more specific)
+ *
+ * ⚠️ 仅供展示 / 兼容：**不要再拿它排序**（求和会被「段数多」翻盘，见 `priorityOf`）。
  */
 export function scoreRoute(tokens: PathToken[]): number {
   let score = 0;
@@ -98,6 +141,8 @@ export interface PathMatchResult {
   params: RouteParams;
   path: string;
   score: number;
+  /** 逐段权重（排序用；`score` 只是总和，会被段数翻盘） */
+  priority: number[];
 }
 
 /**
@@ -165,6 +210,7 @@ export function matchPath(
     params,
     path: '/' + pathSegments.slice(0, i).join('/'),
     score: scoreRoute(tokens),
+    priority: priorityOf(tokens),
   };
 }
 
@@ -173,6 +219,14 @@ export function matchPath(
 export interface RouteRecordMatcher {
   record: RouteRecordNormalized;
   tokens: PathToken[];
+  /**
+   * 树深度（根路由 = 1）。
+   *
+   * 用于「默认子路由」的排序：`{ path: '/parent', children: [{ path: '' }] }` 里
+   * 父与子的 token 序列**完全相同**（子路径为空）⇒ 逐段比较打平。
+   * 此时**更深（子）优先** —— 否则父路由永远抢走命中，默认子路由永不渲染。
+   */
+  depth: number;
   score: number;
   children: RouteRecordMatcher[];
   parent?: RouteRecordMatcher;
@@ -197,6 +251,7 @@ export function normalizeRouteRecord(
     name: record.name ?? null,
     meta: record.meta ?? {},
     children: [],
+    redirect: record.redirect,
     beforeEnter: record.beforeEnter,
     props: record.props ?? false,
     component: record.component,
@@ -210,6 +265,7 @@ export function normalizeRouteRecord(
     record: normalized,
     tokens,
     score: scoreRoute(tokens),
+    depth: parent ? parent.depth + 1 : 1,
     children: [],
     parent,
   };
@@ -259,6 +315,26 @@ export function flattenMatchers(matchers: RouteRecordMatcher[]): RouteRecordMatc
 // ===== URL Utilities =====
 
 /**
+ * 解码一个 query 组件（键或值）。
+ *
+ * ⚠️ 2026-11-04 修（P1）：浏览器把搜索框里的 `a b` 编码成 `?q=a+b`
+ * （`application/x-www-form-urlencoded`），而 `decodeURIComponent('a+b')` 仍是 `"a+b"`
+ * ⇒ 搜索「a b」永远搜不到。真正的加号由发送方编码成 `%2B`，所以先换 `+` 不会误伤。
+ *
+ * 另：畸形转义（`%zz`）此前会**抛 URIError** 把整次导航打断，现在保留原串。
+ *
+ * （`@lytjs/common-query` 在 2026-11-03 修过同一处；router 自带一份 parseQuery 副本，
+ *   当时没同步 ⇒ 同语义两套实现又漂了一次。）
+ */
+function decodeQueryComponent(raw: string): string {
+  try {
+    return decodeURIComponent(raw.replace(/\+/g, ' '));
+  } catch {
+    return raw;
+  }
+}
+
+/**
  * Parse a query string into a LocationQuery object
  */
 export function parseQuery(queryString: string): LocationQuery {
@@ -271,8 +347,8 @@ export function parseQuery(queryString: string): LocationQuery {
   for (const pair of pairs) {
     if (!pair) continue;
     const [key, value] = pair.split('=');
-    const decodedKey = decodeURIComponent(key!);
-    const decodedValue = value !== undefined ? decodeURIComponent(value) : undefined;
+    const decodedKey = decodeQueryComponent(key!);
+    const decodedValue = value !== undefined ? decodeQueryComponent(value) : undefined;
 
     if (decodedKey in query) {
       const existing = query[decodedKey];
