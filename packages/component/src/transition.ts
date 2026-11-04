@@ -117,7 +117,11 @@ export const Transition: ComponentOptions = {
     /** 用于在 leave 结束后**触发一次重渲染**（否则新的子节点永远不会被挂上） */
     const version = ref(0);
 
-    if (__DEV__ && mode === 'in-out') {
+    // ⚠️ 2026-11-04：去掉外层 `if (__DEV__)` —— 本包的构建把 `__DEV__` 烘成 `false`，
+    //   包起来等于把这条告警**从产物里删掉**（`warn()` 自己已有运行时判定：
+    //   Node 按 NODE_ENV、浏览器按打包器替换后的 NODE_ENV，见 getDevMode）。
+    //   「某个 mode 没实现」属于**必须不静默**的一类：用户会以为它生效了。
+    if (mode === 'in-out') {
       warn(
         `<Transition mode="in-out"> 尚未实现：新元素会与旧元素**同时**过渡（等同默认行为）。` +
           `如需「旧的走完再进新的」，请用 mode="out-in"（已支持）。`,
@@ -233,7 +237,9 @@ function pickTransitionChild(children: unknown[]): VNode | null {
     if (!picked) picked = raw as VNode;
   }
 
-  if (__DEV__ && count > 1) {
+  // 同 `mode="in-out"`：不包 `if (__DEV__)`（包起来等于产物里没有这条告警）。
+  // 「多余子节点被静默丢弃」是用户最容易误判的一类问题。
+  if (count > 1) {
     warn(
       `<Transition> 只能作用于**单个**元素或组件，但收到了 ${count} 个子节点：` +
         `只有第一个会参与过渡，其余原样渲染且不会播动画。` +

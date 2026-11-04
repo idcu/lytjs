@@ -48,14 +48,16 @@ function resolveTemplateRender(type: Record<string, unknown>): RenderFunction {
   const template = type.template as string;
 
   if (!templateCompiler) {
-    if (__DEV__) {
-      warn(
-        `组件 "${(type.name as string) || '(anonymous)'}" 提供了 template，但没有可用的模板编译器。` +
-          `两种修法：① 从 '@lytjs/core'（而非 '@lytjs/core/runtime'）导入 createApp —— 它会自动注入编译器；` +
-          `② 若你确实要用手写 render / AOT 预编译，请去掉 template 选项；` +
-          `③ 或显式调用 setTemplateCompiler() 注入自己的实现。`,
-      );
-    }
+    // ⚠️ 2026-11-04：不包 `if (__DEV__)`。这条告警是「**功能没生效**」的唯一线索
+    //   （`@lytjs/core/runtime` 没有编译器 ⇒ template 被静默忽略、渲染为 null），
+    //   而本包的构建把 `__DEV__` 烘成 `false` ⇒ 包起来等于产物里没有这条告警，
+    //   用户只会看到一片空白。`warn()` 自带运行时判定（生产构建里仍然静默）。
+    warn(
+      `组件 "${(type.name as string) || '(anonymous)'}" 提供了 template，但没有可用的模板编译器。` +
+        `两种修法：① 从 '@lytjs/core'（而非 '@lytjs/core/runtime'）导入 createApp —— 它会自动注入编译器；` +
+        `② 若你确实要用手写 render / AOT 预编译，请去掉 template 选项；` +
+        `③ 或显式调用 setTemplateCompiler() 注入自己的实现。`,
+    );
     return (() => null as unknown as VNode) as RenderFunction;
   }
 

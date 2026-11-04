@@ -540,11 +540,23 @@ export function getDevMode(): boolean {
   // （`typeof undefined === 'boolean'` 为 false ⇒ 不需要再单独判 `!== 'undefined'`）
   if (typeof __DEV__ === 'boolean') return __DEV__;
 
-  // 打包器（Vite / webpack / esbuild --define）会把 `process.env.NODE_ENV` 静态替换掉，
-  // 于是生产构建里整条分支会被 DCE。
-  if (typeof process !== 'undefined' && process.env) return process.env.NODE_ENV !== 'production';
-
-  return false;
+  // ⚠️ 2026-11-04 修（P1）：这里**不能**用 `typeof process !== 'undefined'` 去守卫。
+  //
+  //   打包器（Vite / webpack / rollup / esbuild --define）会把 `process.env.NODE_ENV`
+  //   替换成**字面量**，而浏览器里 `process` 根本不存在 ⇒ 守卫会短路，
+  //   替换后的字面量永远用不上 ⇒ **浏览器开发模式也判成生产**（一条警告都不打印）。
+  //   实测：Vite dev 下 `warn('x')` 输出 0 次，而同一份代码在 Node 里正常。
+  //
+  //   现在直接读、用 try/catch 兜底：
+  //     · 有替换 ⇒ `"development" !== "production"` ⇒ 开发模式有诊断 ✓
+  //     · Node 原生 ⇒ 同上 ✓
+  //     · 没有 process（浏览器裸跑 / Deno / Workers）⇒ 抛错 ⇒ 落到 catch：
+  //       视为「非开发」（没有构建管线就没必要刷屏，且**绝不能**让 import 就崩）。
+  try {
+    return process.env.NODE_ENV !== 'production';
+  } catch {
+    return false;
+  }
 }
 
 /**

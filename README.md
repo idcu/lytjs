@@ -72,12 +72,12 @@ pnpm add @lytjs/core
 > ⚠️ **注意版本**：npm 上发布的是 **6.9.6**，本仓库当前为 `v7.0.0-dev`，**两者不是同一份代码**。
 > 想看本仓库的最新能力，请**从仓库跑**，见 [小白上手（基于仓库）](./docs/getting-started/for-beginners.md)。
 >
-> ℹ️ 关于 `__DEV__`（2026-11-04 更新）：
+> ℹ️ 关于 `__DEV__` 与开发期诊断（2026-11-04 更新）：
 >
 > - 产物里**不再残留** `__DEV__` 标识符 ⇒ 不配置也不会 `ReferenceError`。
-> - **开发期警告默认跟随 `NODE_ENV`**：`NODE_ENV !== 'production'` 时输出，
->   production 时静默。也就是说 Node / Vite / webpack 的常规配置下**开箱即用**。
-> - 想显式控制，任选其一（优先级从高到低）：
+> - **`warn()` / `warnOnce()` 自己决定要不要说话**：Node 读 `NODE_ENV`；
+>   浏览器读**打包器替换后的** `process.env.NODE_ENV`（Vite / webpack / rollup 都会替换），
+>   所以 dev 构建里有诊断、prod 构建里静默。想显式控制，任选其一（优先级从高到低）：
 >
 > ```js
 > // ① 运行时开关（推荐给「想在生产包里临时看告警」的场景）
@@ -87,15 +87,24 @@ pnpm add @lytjs/core
 > // ② 宿主注入全局
 > globalThis.__DEV__ = true;
 >
-> // ③ 构建期常量（Vite / esbuild 的 define，对依赖产物同样生效，可被 DCE）
+> // ③ 构建期常量（对**你自己的代码**生效；各包产物已预编译，不受影响）
 > export default {
 >   define: { __DEV__: 'true' },
 > };
 > ```
 >
-> ⚠️ 已知缺口：仍有一部分警告调用点被 `if (__DEV__)` 双门包住，在**各包自己的产物**里
-> 会被整段删除（那些包的构建把 `__DEV__` 编译成 `false`）。彻底解决需要 dev/prod 双产物，
-> 见评估报告 §29.6。
+> ⚠️ **已知缺口（重要）**：`warn()` 本身是活的，但仍有 **182 个调用点**被
+> `if (__DEV__)` 双门包住 —— 各包的构建把 `__DEV__` 编译成 `false`，
+> 这些告警在**产物里被整段删除**（源码 / 单测里正常，发布后静默）。
+>
+> 为什么不一次性放开全部：实测会让 `minimal-app` 从 92.1 KB 涨到 **99.7 KB（+8%）**，
+> 因为告警文案会全部留在生产包里（打包器无法 DCE 一个运行时判定）。
+> 目前的取舍是：**「功能没生效」类的 4 条**（`<Transition mode="in-out">` 未实现、
+> `<Transition>` 收到多个子节点、`template` 没有编译器（客户端 / SSR 各一条））
+>
+> - 水合 mismatch 已经放开，
+>   其余仍按构建期常量裁掉。彻底解决需要 **dev/prod 双产物**（`exports` 条件），
+>   见评估报告 §32 的完整取舍分析。
 
 ```typescript
 import { createApp, ref, computed } from '@lytjs/core';

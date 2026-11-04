@@ -256,7 +256,11 @@ function getTemplateRender(component: Record<string, unknown>): ((ctx: unknown) 
 
   const compiler = getTemplateCompiler();
   if (!compiler) {
-    if (__DEV__) {
+    // ⚠️ 2026-11-04：去掉外层 `if (__DEV__)` —— 本包的构建把它烘成 `false`，
+    //   包起来等于把这条告警**从产物里删掉**。而它是「SSR 白屏」的唯一线索：
+    //   组件用 `template` 写、服务端没有编译器 ⇒ 输出空串（HTTP 200），
+    //   线上表现为「页面白屏但不报错」。`warn()` 自己已有运行时判定。
+    {
       warn(
         `组件 "${(component.name as string) || '(anonymous)'}" 提供了 template，` +
           `但服务端没有可用的模板编译器，SSR 输出为空。` +

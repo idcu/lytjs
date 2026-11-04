@@ -287,6 +287,109 @@ globalThis.__LYT_DEV__ = getDevMode();`,
 }
 
 // ══════════════════════════════════════════════════════════
+section('[10] 浏览器开发模式：`getDevMode()` 不能因为「没有 process」就判成生产');
+{
+  // ⚠️ 2026-11-04 修（P1）：旧实现用 `typeof process !== 'undefined'` 守卫，
+  //   而浏览器里 process 不存在 ⇒ 守卫短路 ⇒ 打包器**替换后的 NODE_ENV 字面量**
+  //   永远用不上 ⇒ 浏览器开发模式一条警告都不打印（Node 里却正常）。
+  //   判据：真的用 esbuild 打一个「浏览器包」，在**没有 process** 的 vm 上下文里跑。
+  const { build } = await import('esbuild');
+  const vm = await import('node:vm');
+
+  const runInBrowserLike = async (env) => {
+    const out = await build({
+      stdin: {
+        contents: `import { warn } from '${join(PKG, 'dist/index.mjs')}';\nwarn('BROWSER_DEV_PROBE');`,
+        resolveDir: ROOT,
+        loader: 'js',
+      },
+      bundle: true,
+      format: 'iife',
+      globalName: 'LYT_PROBE',
+      platform: 'browser',
+      write: false,
+      logLevel: 'error',
+      define: { 'process.env.NODE_ENV': JSON.stringify(env) },
+    });
+    const code = out.outputFiles[0].text;
+    const calls = [];
+    // 全新的 vm 上下文里**没有 process**（浏览器就是这样）
+    vm.runInNewContext(code, {
+      console: { warn: (...args) => calls.push(args.map(String).join(' ')) },
+    });
+    return calls.filter((line) => line.includes('BROWSER_DEV_PROBE')).length;
+  };
+
+  let devCount = -1;
+  let prodCount = -1;
+  let devError = '';
+  try {
+    devCount = await runInBrowserLike('development');
+    prodCount = await runInBrowserLike('production');
+  } catch (error) {
+    devError = String(error?.message || error).slice(0, 400);
+  }
+
+  check(
+    '浏览器 dev 构建（NODE_ENV=development、无 process）⇒ warn 有输出',
+    devCount === 1,
+    devError || devCount,
+  );
+  check('浏览器 prod 构建（NODE_ENV=production）⇒ warn 静默', prodCount === 0, prodCount);
+}
+
+// ══════════════════════════════════════════════════════════
+section('[11] 「必须不静默」的告警不能被构建删掉（产物级守卫）');
+{
+  // 这 3 条是「功能没生效」的唯一线索：用户会以为它正常，实际什么都没发生。
+  // 它们此前被 `if (__DEV__)` 包住，而各包的构建把 `__DEV__` 烘成 `false`
+  // ⇒ 产物里整段删除 ⇒ 4 条 core 用例长期红着。
+  const cases = [
+    ['尚未实现：新元素会与旧元素', 'Transition mode="in-out" 未实现'],
+    ['只能作用于**单个**元素或组件', 'Transition 收到多个子节点'],
+    ['但没有可用的模板编译器', 'template 没有编译器'],
+  ];
+  const dist = readFileSync(join(ROOT, 'packages/component/dist/index.mjs'), 'utf-8');
+  // esbuild 默认把非 ASCII 转义成 `\uXXXX`（charset: ascii）⇒ 两种形态都要认
+  const asciiEscaped = (text) =>
+    Array.from(text)
+      .map((ch) =>
+        ch.charCodeAt(0) > 0x7f
+          ? `\\u${ch.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0')}`
+          : ch,
+      )
+      .join('');
+  for (const [needle, label] of cases) {
+    const hit = dist.includes(needle) || dist.includes(asciiEscaped(needle));
+    check(`component 产物里保留了「${label}」的告警`, hit);
+  }
+
+  // 第 4 条：renderer 的 SSR —— 用 template 写组件但服务端没有编译器时，
+  // 输出空串（HTTP 200）⇒ 白屏但不报错，这条告警是唯一线索。
+  const rendererDist = readFileSync(join(ROOT, 'packages/renderer/dist/index.mjs'), 'utf-8');
+  const ssrNeedle = '但服务端没有可用的模板编译器';
+  check(
+    'renderer 产物里保留了「SSR 无编译器 ⇒ 输出为空」的告警',
+    rendererDist.includes(ssrNeedle) || rendererDist.includes(asciiEscaped(ssrNeedle)),
+  );
+  const rendererSrc = readFileSync(join(ROOT, 'packages/renderer/src/ssr/ssr-island.ts'), 'utf-8');
+  check(
+    '源码里 SSR 模板告警不再被 `if (__DEV__)` 包住',
+    !/if \(__DEV__\) \{\s*\n\s*warn\(\s*\n\s*`组件 "\$\(component\.name/.test(rendererSrc),
+  );
+
+  const src = readFileSync(join(ROOT, 'packages/component/src/transition.ts'), 'utf-8');
+  check(
+    '源码里 mode="in-out" 不再被 `if (__DEV__)` 包住',
+    !/if \(__DEV__\s*&&\s*mode === 'in-out'\)/.test(src),
+  );
+  check(
+    '源码里「多个子节点」告警不再被 `if (__DEV__)` 包住',
+    !/if \(__DEV__\s*&&\s*count > 1\)/.test(src),
+  );
+}
+
+// ══════════════════════════════════════════════════════════
 // 信息性统计（不参与判定）：仍被 `if (__DEV__)` 双门包住的调用点。
 // 这些调用点在各自包的产物里被整段删除（那些包的 tsup 把 `__DEV__` 编译成 `false`），
 // 属于「已知缺口」——要彻底解决需要 dev/prod 双产物，见评估文档 §29.6。

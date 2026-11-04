@@ -99,6 +99,11 @@ export function createPinia(): Pinia {
 }
 
 // DEV flag for development warnings
+//
+// ⚠️ 2026-11-04：本文件**必须**自己声明这个常量，不能只依赖构建期的
+// `define: { __DEV__: 'false' }` —— esbuild 的 `define` 在「文件自己声明了同名绑定」时
+// **不会替换引用**（实测），所以这一行让本包的告警在产物里**是活的**（按 NODE_ENV 判定）。
+// 全仓其它包仍被 `define` 烘成 `false`（产物里整段删除），见 README 的「已知缺口」。
 const __DEV__ = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production';
 
 /**

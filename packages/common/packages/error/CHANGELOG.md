@@ -1,5 +1,20 @@
 # @lytjs/common-error 更新日志
 
+## [未发布] - 2026-11-04（第二轮：浏览器开发模式）
+
+### 🐞 修复（P1：浏览器 dev 里 `warn()` 一条都不打印）
+
+- **`getDevMode()` 用 `typeof process !== 'undefined'` 守卫**：浏览器里 `process` 不存在
+  ⇒ 守卫短路 ⇒ 打包器**替换后的 `process.env.NODE_ENV` 字面量**永远用不上 ⇒
+  浏览器开发模式判成「生产」，`warn()` 全部静默（Node 里却正常，所以一直没被发现）。
+  现在直接读、用 `try/catch` 兜底：
+  · 有替换（Vite / webpack / rollup）⇒ `"development" !== "production"` ⇒ 有诊断 ✓
+  · Node 原生 ⇒ 同上 ✓
+  · 没有 `process`（浏览器裸跑 / Deno / Workers）⇒ 捕获 ⇒ 视为非开发，
+    **绝不**让 `import` 就抛 ReferenceError。
+- 判据在门禁 `check-dev-warnings` 第 10 组：真的用 esbuild 打一个浏览器包，
+  在**没有 `process` 的 vm 上下文**里跑 —— dev 构建必须打印、prod 构建必须静默。
+
 ## [未发布] - 2026-11-04
 
 ### 🐞 修复（P0：整个框架的诊断通道在产物里是死的）

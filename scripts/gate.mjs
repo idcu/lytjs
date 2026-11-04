@@ -442,7 +442,12 @@ const GATES = [
       '**整个诊断通道在发布产物里是死的**（实测 warn 输出 0 次、error 正常）。' +
       '这类缺陷不会让任何行为断言变红，唯一症状是 8 条「应当告警」的用例长期红着' +
       '（common-dom 4 条 / vdom 4 条），看起来像「测试写错了」。判据含 dist 形态守卫、' +
-      'tsup 不得再烘焙常量、production 反向对照、setDevMode 生效、safeExec 端到端',
+      'tsup 不得再烘焙常量、production 反向对照、setDevMode 生效、safeExec 端到端。' +
+      '2026-11-04 第二轮补两组：① **浏览器开发模式**（旧 getDevMode 用 typeof process 守卫，' +
+      '而浏览器没有 process ⇒ 打包器替换后的 NODE_ENV 用不上 ⇒ 浏览器 dev 一条都不打印；' +
+      '判据是真用 esbuild 打浏览器包、在**无 process 的 vm 上下文**里跑）；' +
+      '② **「必须不静默」的告警不能被构建删掉**（Transition 的 in-out / 多子节点、' +
+      'template 无编译器 —— 这 3 条此前在产物里被整段删除，用户只看到「功能没生效」）',
   },
   {
     name: 'check-hydration',

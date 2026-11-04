@@ -99,6 +99,18 @@
  * 没有引入依赖。另外 `app.mount()` 新增一条「容器已有内容却没开 hydrate」的告警
  * （两个入口都会带上）。给到 95 000 / 93 000（各约 0.9 KB 余量）。
  *
+ * ## 2026-11-04（第三轮）：minimal-app 95 000 → 96 000 / runtime-app 93 000 → 94 000
+ *
+ * `@lytjs/component` 里 3 条「**必须不静默**」的告警去掉了 `if (__DEV__)` 外层门
+ * （`<Transition mode="in-out">` 未实现、`<Transition>` 收到多个子节点、
+ * `template` 没有编译器）—— 它们此前在产物里被整段删除，用户只会看到「功能没生效」
+ * 却没有任何线索。另有 `@lytjs/renderer` 的 SSR 一条（模板组件 + 无编译器 ⇒ 白屏）。
+ * 代价是这几条文案进入产物（+约 550 B gzip）。
+ *
+ * ⚠️ 没有把全部 182 个调用点都放开：实测会让 minimal-app 涨到 **99.7 KB（+7.6 KB，+8%）**，
+ * 而其中大部分在浏览器开发模式里仍然不打印（`__DEV__` 是构建期常量）。
+ * 详见评估报告 §32 的取舍分析。
+ *
  * - **minimal-app vs runtime-app**：锁「两个入口的分工」。
  *   ⚠️ 目前两者只差 2 KB，因为 `@lytjs/renderer` 的 `signal-renderer.ts` **静态** import 了
  *   编译器，而 renderer 从 core 的 `createApp` 动态可达。这项留作下一批（见评估报告）。
@@ -161,7 +173,7 @@ const count = ref(0);
 const double = computed(() => count.value * 2);
 export const app = createApp({ render: () => h('div', null, [String(count.value), String(double.value)]) });
 export { count, double };`,
-    budget: 95_000,
+    budget: 96_000,
   },
   {
     name: 'runtime-app',
@@ -172,7 +184,7 @@ const count = ref(0);
 const double = computed(() => count.value * 2);
 export const app = createApp({ render: () => h('div', null, [String(count.value), String(double.value)]) });
 export { count, double };`,
-    budget: 93_000,
+    budget: 94_000,
   },
 ];
 
