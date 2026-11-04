@@ -11,6 +11,19 @@ import { ConfigValidator } from './config-validator';
  * ⚠️ **不做隐式类型转换** —— `'1'` 不会自动变成 `1`（会由校验器判为类型错误）。
  * 需要转换请显式提供 `schema.transform`（例如 `transform: Number`）。
  */
+/** 按 path + code + message 去重（保留首次出现的顺序） */
+function dedupeErrors(errors: ConfigValidationError[]): ConfigValidationError[] {
+  const seen = new Set<string>();
+  const result: ConfigValidationError[] = [];
+  for (const error of errors) {
+    const key = `${error.path}|${error.code}|${error.message}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(error);
+  }
+  return result;
+}
+
 export class ConfigTransformer {
   private validator: ConfigValidator;
 
@@ -129,7 +142,11 @@ export class ConfigTransformer {
     return {
       config: transformed as T,
       success: errors.length === 0,
-      errors,
+      // ⚠️ 2026-11-04 修（P2）：同一个类型错误会被报**两次** ——
+      //   子属性的 `transform()` 自己校验一次，父对象最后的整体校验又走一遍
+      //   （`validateObject` 会重新校验每个属性）。实测 `{ port: 'x' }` ⇒ 2 条相同错误，
+      //   `errorCount` 因此虚高。按 path + code + message 去重。
+      errors: dedupeErrors(errors),
       warnings,
       transforms,
     };
@@ -170,6 +187,26 @@ export class ConfigTransformer {
       } else if (propertySchema.default !== undefined) {
         result[key] = propertySchema.default;
         transforms.push(`Applied default for "${key}": ${JSON.stringify(propertySchema.default)}`);
+      } else if (propertySchema.type === 'object' && propertySchema.object) {
+        // ⚠️ 2026-11-04 修（P1）：**嵌套对象此前完全被跳过** —— 只有属性自身有 `default`
+        //   时才赋值，否则直接看 `required`。于是
+        //     { api: { type:'object', object:{ properties:{ url:{ default:'/x' } } } } }
+        //   在输入 `{}` 时得到 `{}`（`api.url` 的默认值永远不生效），而 README 承诺
+        //   「自动应用默认值」。现在即使父值缺失也递归一次，让子字段的默认值落地。
+        const nested = this.transform({}, propertySchema, propertyPath);
+        const nestedValue = nested.config as Record<string, unknown> | undefined;
+        if (nestedValue && Object.keys(nestedValue).length > 0) {
+          result[key] = nestedValue;
+          errors.push(...nested.errors);
+          warnings.push(...nested.warnings);
+          transforms.push(...nested.transforms);
+        } else if (propertySchema.required) {
+          errors.push({
+            path: propertyPath,
+            code: 'required',
+            message: `Property "${key}" is required`,
+          });
+        }
       } else if (propertySchema.required) {
         errors.push({
           path: propertyPath,

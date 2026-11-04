@@ -14,6 +14,39 @@ import type {
  * 配置验证器
  * @description 根据 ConfigSchema 验证配置值
  */
+/**
+ * 把**扁平 JSON Schema 写法**规整成本包的规范形状。
+ *
+ * ```ts
+ * { type: 'object', properties: { a: {...} } }
+ * // ↓ 规整为
+ * { type: 'object', object: { properties: { a: {...} } } }
+ * ```
+ *
+ * 两种形状都支持（写错形状却「校验通过」是最坏的形态，见 `ConfigSchema.properties` 的注释）。
+ */
+export function normalizeFlatSchema(schema: ConfigSchema): ConfigSchema {
+  if (schema.type === 'object' && !schema.object && schema.properties) {
+    return {
+      ...schema,
+      object: {
+        properties: schema.properties,
+        required: Array.isArray(schema.required) ? (schema.required as string[]) : undefined,
+        additionalProperties: (schema as { additionalProperties?: boolean }).additionalProperties,
+      },
+    };
+  }
+
+  if (schema.type === 'array' && !schema.array && schema.items) {
+    return {
+      ...schema,
+      array: { items: schema.items },
+    };
+  }
+
+  return schema;
+}
+
 export class ConfigValidator {
   /** 自定义验证规则 */
   private rules: Array<
@@ -32,27 +65,32 @@ export class ConfigValidator {
    * @returns 验证报告
    */
   validate(value: unknown, schema: ConfigSchema, path: string = ''): ConfigValidationReport {
+    // ⚠️ 2026-11-04 修（P1）：兼容扁平 JSON Schema 写法。
+    //   规范形状是 `{ type:'object', object:{ properties } }`，但 JSON Schema 的惯例是
+    //   `properties` 在顶层。此前写错形状时 `objectSchema` 为 undefined ⇒ **直接 return**
+    //   ⇒ `valid: true`（一条规则都没跑，却报告「校验通过」）。
+    const normalized = normalizeFlatSchema(schema);
     const errors: ConfigValidationError[] = [];
     const context: ValidationContext = { path, root: value };
 
     // 处理 null/undefined
     if (value === null) {
-      if (!schema.nullable && schema.default === undefined) {
+      if (!normalized.nullable && normalized.default === undefined) {
         errors.push(this.createError(path, 'type_error', 'Value cannot be null'));
       }
       return { valid: errors.length === 0, errors, errorCount: errors.length, warningCount: 0 };
     }
 
     if (value === undefined) {
-      if (schema.required) {
+      if (normalized.required) {
         errors.push(this.createError(path, 'required', 'Value is required'));
       }
       return { valid: errors.length === 0, errors, errorCount: errors.length, warningCount: 0 };
     }
 
     // 执行自定义验证（最优先）
-    if (schema.validate) {
-      const result = schema.validate(value, context);
+    if (normalized.validate) {
+      const result = normalized.validate(value, context);
       if (!result.valid) {
         errors.push(
           this.createError(path, 'custom_error', result.message || 'Custom validation failed'),
@@ -61,35 +99,35 @@ export class ConfigValidator {
     }
 
     // 根据类型验证
-    switch (schema.type) {
+    switch (normalized.type) {
       case 'string':
-        errors.push(...this.validateString(value, schema as ConfigSchema<string>, path));
+        errors.push(...this.validateString(value, normalized as ConfigSchema<string>, path));
         break;
       case 'number':
-        errors.push(...this.validateNumber(value, schema as ConfigSchema<number>, path));
+        errors.push(...this.validateNumber(value, normalized as ConfigSchema<number>, path));
         break;
       case 'boolean':
-        errors.push(...this.validateBoolean(value, schema as ConfigSchema<boolean>, path));
+        errors.push(...this.validateBoolean(value, normalized as ConfigSchema<boolean>, path));
         break;
       case 'object':
         errors.push(
-          ...this.validateObject(value, schema as ConfigSchema<Record<string, unknown>>, path),
+          ...this.validateObject(value, normalized as ConfigSchema<Record<string, unknown>>, path),
         );
         break;
       case 'array':
-        errors.push(...this.validateArray(value, schema as ConfigSchema<unknown[]>, path));
+        errors.push(...this.validateArray(value, normalized as ConfigSchema<unknown[]>, path));
         break;
       case 'enum':
-        errors.push(...this.validateEnum(value, schema, path));
+        errors.push(...this.validateEnum(value, normalized, path));
         break;
       case 'union':
-        errors.push(...this.validateUnion(value, schema, path));
+        errors.push(...this.validateUnion(value, normalized, path));
         break;
     }
 
     // 执行自定义规则
     for (const rule of this.rules) {
-      const error = rule(value, schema, context);
+      const error = rule(value, normalized, context);
       if (error) {
         errors.push(error);
       }

@@ -39,6 +39,18 @@ export interface ConfigSchema<T = unknown> {
   /** 联合类型验证 */
   union?: UnionSchema;
 
+  /**
+   * 兼容**扁平 JSON Schema 写法**（`{ type: 'object', properties: {...} }`）。
+   *
+   * ⚠️ 2026-11-04 新增：本包规范写法是 `{ type: 'object', object: { properties } }`，
+   *   而 JSON Schema 的惯例是 `properties` 直接在顶层。实测写错形状时
+   *   `validateConfig()` **返回 `valid: true`**（什么都没校验）—— 这是最坏的形态：
+   *   配置看起来「校验通过」，实际一条规则都没跑。现在两种形状都接受。
+   */
+  properties?: Record<string, ConfigSchema>;
+  /** 兼容扁平写法的数组元素 schema（`{ type: 'array', items }`） */
+  items?: ConfigSchema;
+
   /** 自定义验证函数 */
   validate?: (value: T, context: ValidationContext) => ValidationResult;
   /** 转换函数（用于预处理用户输入） */

@@ -91,6 +91,34 @@ const report = transformConfig('50', schema);
 console.log(report.config); // 50
 ```
 
+### 读写的约定（2026-11-04）
+
+- **`get()` 返回的是拷贝**：改它不会影响内部状态，也不会触发监听器（要改请用 `set()`）。
+  `getAll()` 同样返回深拷贝。
+- **路径段安全**：`get` / `set` / `has` / `delete` 都拒绝 `__proto__` / `constructor` /
+  `prototype` 这三段（否则会把值写进 `Object.prototype`，污染进程内所有对象）。
+- **监听是完整的**：`set` / `delete` / `merge` / `setMultiple` 都会通知；
+  `delete` 与 `setMultiple(config, false)` 里**被移除的键**也会以 `undefined` 通知。
+
+### Schema 的两种写法
+
+```typescript
+// ① 本包规范写法（推荐）
+const schema: ConfigSchema<{ port: number }> = {
+  type: 'object',
+  object: { properties: { port: { type: 'number', required: true } } },
+};
+
+// ② 扁平 JSON Schema 写法（同样支持）
+const flat: ConfigSchema<{ port: number }> = {
+  type: 'object',
+  properties: { port: { type: 'number', required: true } },
+};
+```
+
+> ⚠️ 2026-11-04 之前，写法 ② 会被**静默忽略**：`validateConfig()` 返回 `valid: true`，
+> 实际一条规则都没跑。现在两种写法等价。
+
 ## 主要 API
 
 ### `ConfigManager`

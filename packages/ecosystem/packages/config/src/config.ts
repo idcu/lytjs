@@ -47,6 +47,34 @@ export type ConfigArray = ConfigValue[];
 // ============================================================
 
 /**
+ * 危险路径段：会走到**原型链**上而不是配置自己的属性上。
+ *
+ * ⚠️ 2026-11-04 修（P0 安全）：`set('__proto__.x', 1)` 此前会把 `x` 写进
+ *   `Object.prototype`（实测 `({}).x === 1`，**全局污染**，影响进程内所有对象）；
+ *   `set('constructor.prototype.x', 1)` 同样成立。
+ *   `get` / `has` 也会顺着原型链读到 `toString` 之类的内建成员
+ *   （`has('__proto__.toString') === true`）。
+ *
+ * 现在所有按路径读写的入口都先过 `isSafePath`：命中危险段就当作「路径不存在」，
+ * `set` / `delete` 额外给一条告警（静默拒绝会让用户以为写成功了）。
+ */
+const FORBIDDEN_PATH_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype']);
+
+/** 路径是否安全（不含原型链上的特殊段） */
+function isSafePath(keys: string[]): boolean {
+  return keys.every((key) => !FORBIDDEN_PATH_SEGMENTS.has(key));
+}
+
+/**
+ * 只认**自有属性**（不用 `in`，否则会顺着原型链命中 `toString` / `__proto__`）。
+ *
+ * 不用 `Object.hasOwn`：本包的 lib 目标是 es2020，`Object.hasOwn` 需要 es2022。
+ */
+function hasOwn(target: object, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(target, key);
+}
+
+/**
  * 配置管理器
  *
  * 提供配置存储、合并、变更监听等功能
@@ -97,16 +125,27 @@ export class ConfigManager {
    */
   get<T = ConfigValue>(path: string, defaultValue?: T): T | undefined {
     const keys = path.split('.');
+    if (!isSafePath(keys)) return defaultValue;
+
     let value: ConfigValue | undefined = this.config;
 
     for (const key of keys) {
-      if (isObject(value) && key in value) {
+      // ⚠️ 用 `Object.hasOwn` 而不是 `in`：`in` 会顺着原型链命中 `toString` / `__proto__`，
+      //   于是 `has('toString')` 返回 true、`get('constructor')` 返回函数。
+      if (isObject(value) && hasOwn(value, key)) {
         value = (value as ConfigObject)[key];
       } else {
         return defaultValue;
       }
     }
 
+    // ⚠️ 2026-11-04 修（P1）：此前直接返回**内部引用** ⇒
+    //   `const api = config.get('api'); api.baseURL = '/hacked'` 会改掉内部状态，
+    //   而且**一个监听器都不会触发**（配置静默漂移，谁都不知道）。
+    //   `getAll()` 早就返回深拷贝，这里对齐：对象/数组一律拷贝。
+    if (isObject(value) || Array.isArray(value)) {
+      return deepClone(value) as T;
+    }
     return value as T;
   }
 
@@ -124,6 +163,16 @@ export class ConfigManager {
     }
 
     const keys = path.split('.');
+
+    // ⚠️ 2026-11-04 修（P0）：危险路径段（`__proto__` / `constructor` / `prototype`）
+    //   会把值写进 `Object.prototype` —— 全局污染，影响进程内所有对象。
+    if (!isSafePath(keys)) {
+      console.warn(
+        `[ConfigManager] 拒绝写入危险路径 "${path}"（路径段不能是 __proto__ / constructor / prototype）`,
+      );
+      return false;
+    }
+
     const lastKey = keys.pop()!;
     let target: ConfigObject = this.config;
 
@@ -177,7 +226,35 @@ export class ConfigManager {
     }
 
     if (!merge) {
+      // ⚠️ 2026-11-04 修（P1）：此前直接 `this.config = {}` 再逐项 set ——
+      //   **被移除的键一个监听器都不触发**（用户的 `watch('api.baseURL')` 永远不知道它没了）。
+      //   现在先收集将被移除的叶子路径，替换后逐个以 `undefined` 通知。
+      const removedLeaves: string[] = [];
+      const collectLeaves = (obj: ConfigObject, prefix: string): void => {
+        for (const [key, value] of Object.entries(obj)) {
+          const full = prefix ? `${prefix}.${key}` : key;
+          if (isObject(value)) collectLeaves(value as ConfigObject, full);
+          else removedLeaves.push(full);
+        }
+      };
+      collectLeaves(this.config, '');
+
+      const oldLeaves = new Map<string, ConfigValue>();
+      for (const leaf of removedLeaves) {
+        oldLeaves.set(leaf, this.get(leaf));
+      }
+
       this.config = {};
+
+      Object.entries(config).forEach(([path, value]) => {
+        this.set(path, value);
+      });
+
+      // 替换后仍然不存在的键 ⇒ 视为被移除
+      for (const [leaf, oldValue] of oldLeaves) {
+        if (!this.has(leaf)) this.notify(leaf, undefined, oldValue);
+      }
+      return;
     }
 
     Object.entries(config).forEach(([path, value]) => {
@@ -193,10 +270,13 @@ export class ConfigManager {
    */
   has(path: string): boolean {
     const keys = path.split('.');
+    if (!isSafePath(keys)) return false;
+
     let value: ConfigValue | undefined = this.config;
 
     for (const key of keys) {
-      if (isObject(value) && key in value) {
+      // 同上：必须用自有属性判断，否则 `has('toString')` 为 true
+      if (isObject(value) && hasOwn(value, key)) {
         value = (value as ConfigObject)[key];
       } else {
         return false;
@@ -219,21 +299,42 @@ export class ConfigManager {
     }
 
     const keys = path.split('.');
+    if (!isSafePath(keys)) {
+      console.warn(
+        `[ConfigManager] 拒绝删除危险路径 "${path}"（路径段不能是 __proto__ / constructor / prototype）`,
+      );
+      return false;
+    }
+
     const lastKey = keys.pop()!;
     let target: ConfigValue | undefined = this.config;
 
     for (const key of keys) {
-      if (isObject(target) && key in target) {
+      if (isObject(target) && hasOwn(target, key)) {
         target = (target as ConfigObject)[key];
       } else {
         return false;
       }
     }
 
-    if (isObject(target) && lastKey in target) {
+    if (isObject(target) && hasOwn(target, lastKey)) {
       const oldValue = (target as ConfigObject)[lastKey];
+
+      // ⚠️ 2026-11-04 修（P1）：此前只 `notify(path, ...)`，而 `notify` 的父路径分支
+      //   需要调用方传入 `parentOldValues` —— 这里没传 ⇒ **父路径监听器收到 undefined 的旧值**，
+      //   而实测更糟：`delete('a.b')` 连 `a.b` 的监听器都没触发（`notify` 早退）。
+      //   现在与 `set()` 一样先快照父路径旧值，再删除并通知。
+      const parentOldValues = new Map<string, unknown>();
+      const parentParts = path.split('.');
+      while (parentParts.length > 1) {
+        parentParts.pop();
+        const parentPath = parentParts.join('.');
+        const parentVal = this.get(parentPath);
+        parentOldValues.set(parentPath, parentVal);
+      }
+
       delete (target as ConfigObject)[lastKey];
-      this.notify(path, undefined, oldValue);
+      this.notify(path, undefined, oldValue, parentOldValues);
       return true;
     }
 

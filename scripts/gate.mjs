@@ -450,6 +450,24 @@ const GATES = [
       'template 无编译器 —— 这 3 条此前在产物里被整段删除，用户只看到「功能没生效」）',
   },
   {
+    name: 'check-config-semantics',
+    tier: 'fast',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-config-semantics.mjs'],
+    approx: '~0.5s',
+    desc:
+      '★ 配置系统语义（@lytjs/config）：配置是「上线之后才发现错」的典型地带 —— ' +
+      '读到的值不对、默认值没生效、校验报告说 OK、监听器没收到通知，全都不抛异常。' +
+      '2026-11-04 首次运行抓到 7 个：① **set("__proto__.x") 污染 Object.prototype**（P0 安全，' +
+      '进程内所有对象都被污染；constructor.prototype 同样成立）；② get/has 顺原型链读' +
+      '（has("__proto__.toString") 为 true）；③ get() 返回内部引用 ⇒ 外部一改，内部状态静默漂移' +
+      '且 0 个监听器触发（getAll() 却是深拷贝）；④ delete() 不通知；⑤ setMultiple(merge=false) ' +
+      '不通知被移除的键；⑥ 扁平 JSON Schema 写法 { type:"object", properties } **静默通过**' +
+      '（一条规则都没跑却报 valid:true）；⑦ 嵌套对象的字段默认值整个分支被跳过。' +
+      '另修同一类型错误被报两次。判据 7 组 32 条，含对照（普通路径不受影响、实例隔离、' +
+      '未声明键被丢弃时有告警）',
+  },
+  {
     name: 'check-router-semantics',
     tier: 'fast',
     needsDist: true,
