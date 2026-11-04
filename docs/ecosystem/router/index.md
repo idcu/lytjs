@@ -171,6 +171,32 @@ const router = createRouter({
 | `parseQuery`     | `Function`             | 自定义查询字符串解析   |
 | `stringifyQuery` | `Function`             | 自定义查询字符串序列化 |
 
+#### 路由器实例方法
+
+```typescript
+// 解析任意路由描述为完整位置（含 matched / meta / fullPath）——
+// 与真实导航共用同一段实现，所以「链接里的 href」和「点下去会去哪」永远一致
+const loc = router.resolve({ name: 'user', params: { id: 7 }, query: { tab: 'info' } });
+loc.path; // '/user/7'
+loc.fullPath; // '/user/7?tab=info'
+loc.matched; // 命中链（未匹配时为 []，可据此渲染 404）
+
+// 路由表查询 / 动态增删
+router.getRoutes(); // 已注册的记录
+router.hasRoute('admin'); // 是否存在
+const remove = router.addRoute({ path: '/admin', name: 'admin', component: Admin });
+remove(); // addRoute 返回移除函数
+router.removeRoute('admin'); // 按名字移除（返回是否成功）
+router.clearRoutes(); // 清空
+```
+
+**别名**：`alias` 支持字符串或数组，相对别名相对父路径解析；按别名访问时
+`currentRoute().path` 是别名路径，而 `name` / `meta` / `component` 与主路径**同一条记录**。
+
+```typescript
+{ path: '/main', component: Main, name: 'main', alias: ['/alias', '/legacy-main'] }
+```
+
 #### `createWebHistory(base?)`
 
 创建 HTML5 History 模式。
@@ -271,6 +297,21 @@ router.beforeEach((to, from) => {
 router.afterEach((to, from) => {
   document.title = to.meta.title || 'LytJS App';
 });
+```
+
+### 链接高亮（RouterLink / useLink）
+
+`isActive` 按**匹配记录**判断（不是字符串前缀）：目标路由的 `matched` 链必须是当前
+`matched` 链的前缀。所以 `/user` 的链接在 `/username` 页面上**不会**高亮，
+而 `/admin` 的链接在 `/admin/users` 上会高亮（嵌套关系）。
+
+```typescript
+const { href, isActive, isExactActive, navigate } = useLink({
+  to: { name: 'user', params: { id: 1 } },
+});
+href(); // '/user/1'（命名路由同样可用）
+isActive(); // 当前路由「包含」目标路由
+isExactActive(); // 完全同一个路由（path + query + hash）
 ```
 
 ### 组合式函数

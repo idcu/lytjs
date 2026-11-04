@@ -11,6 +11,8 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { createRouter } from '../src/router';
 import { createMemoryHistory } from '../src/history';
 import { comparePriority, priorityOf, tokenizePath, parseQuery } from '../src/matcher';
+import { setCurrentRouter } from '../src/composables/useRouter';
+import { useLink } from '../src/composables/useLink';
 
 const mk = (routes: unknown[], path = '/') =>
   createRouter({ history: createMemoryHistory(path), routes: routes as never });
@@ -201,5 +203,98 @@ describe('未匹配路径', () => {
     await router.push('/a/b/c');
     expect(router.currentRoute().name).toBe('nf');
     expect(router.currentRoute().params['*']).toBe('a/b/c');
+  });
+});
+
+describe('链接语义（useLink）', () => {
+  it('★ 命名路由的 href（此前拼成当前页面）', async () => {
+    const router = mk([
+      { path: '/', component: { name: 'Home' } },
+      { path: '/user/:id', component: { name: 'User' }, name: 'user' },
+    ]);
+    setCurrentRouter(router as never);
+    await router.push('/');
+    const link = useLink({ to: { name: 'user', params: { id: 7 } } });
+    expect(link.href()).toBe('/user/7');
+  });
+
+  it('★ `/user` 链接在 `/username` 页面不高亮（此前按字符串前缀判 active）', async () => {
+    const router = mk([
+      { path: '/user', component: { name: 'U' } },
+      { path: '/username', component: { name: 'UN' } },
+    ]);
+    setCurrentRouter(router as never);
+    await router.push('/username');
+    expect(useLink({ to: '/user' }).isActive()).toBe(false);
+  });
+
+  it('嵌套路由：父路由在子路由页面上高亮，isExactActive 只对完全相同为真', async () => {
+    const router = mk([
+      {
+        path: '/admin',
+        component: { name: 'Admin' },
+        children: [{ path: 'users', component: { name: 'Users' }, name: 'adminUsers' }],
+      },
+    ]);
+    setCurrentRouter(router as never);
+    await router.push('/admin/users');
+    expect(useLink({ to: '/admin' }).isActive()).toBe(true);
+    expect(useLink({ to: '/admin' }).isExactActive()).toBe(false);
+    expect(useLink({ to: '/admin/users' }).isExactActive()).toBe(true);
+  });
+});
+
+describe('公开 API', () => {
+  it('resolve：命名路由 + 未匹配也返回位置', () => {
+    const router = mk([
+      { path: '/u/:id', component: { name: 'U' }, name: 'u', meta: { auth: true } },
+    ]);
+    const resolved = router.resolve({ name: 'u', params: { id: '3' }, query: { q: 'x' } });
+    expect(resolved.path).toBe('/u/3');
+    expect(resolved.fullPath).toBe('/u/3?q=x');
+    expect(resolved.params).toEqual({ id: '3' });
+    expect(resolved.meta).toEqual({ auth: true });
+
+    const miss = router.resolve('/nope');
+    expect(miss.path).toBe('/nope');
+    expect(miss.matched).toHaveLength(0);
+  });
+
+  it('getRoutes / hasRoute', () => {
+    const router = mk([
+      { path: '/a', component: { name: 'A' }, name: 'a' },
+      { path: '/b', component: { name: 'B' }, name: 'b' },
+    ]);
+    expect(router.getRoutes()).toHaveLength(2);
+    expect(router.hasRoute('a')).toBe(true);
+    expect(router.hasRoute('nope')).toBe(false);
+  });
+
+  it('★ alias：按别名访问命中同一条记录', async () => {
+    const router = mk([
+      { path: '/main', component: { name: 'Main' }, name: 'main', alias: '/alias' },
+    ]);
+    await router.push('/alias');
+    expect(router.currentRoute().name).toBe('main');
+    expect(router.currentRoute().path).toBe('/alias');
+    expect(router.currentRoute().matched).toHaveLength(1);
+  });
+
+  it('动态路由：addRoute 返回移除函数 / removeRoute / clearRoutes', async () => {
+    const router = mk([{ path: '/', component: { name: 'Home' }, name: 'home' }]);
+    const remove = router.addRoute({
+      path: '/admin',
+      component: { name: 'Admin' },
+      name: 'admin',
+    });
+    expect(router.hasRoute('admin')).toBe(true);
+    await router.push('/admin');
+    expect(router.currentRoute().name).toBe('admin');
+
+    remove();
+    expect(router.hasRoute('admin')).toBe(false);
+    expect(router.removeRoute('home')).toBe(true);
+    router.clearRoutes();
+    expect(router.getRoutes()).toHaveLength(0);
   });
 });

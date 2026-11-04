@@ -246,9 +246,22 @@ export function normalizeRouteRecord(
     ? parent.record.path + (record.path.startsWith('/') ? record.path : '/' + record.path)
     : record.path;
 
+  // 别名：解析成**绝对路径**（相对别名相对父路径），供 flattenMatchers 额外产出一条 matcher
+  const rawAliases = record.alias
+    ? Array.isArray(record.alias)
+      ? record.alias
+      : [record.alias]
+    : [];
+  const aliases = rawAliases.map((alias) =>
+    alias.startsWith('/')
+      ? alias
+      : (parent ? parent.record.path : '') + '/' + alias.replace(/^\/+/, ''),
+  );
+
   const normalized: RouteRecordNormalized = {
     path: fullPath,
     name: record.name ?? null,
+    ...(aliases.length > 0 ? { alias: aliases } : {}),
     meta: record.meta ?? {},
     children: [],
     redirect: record.redirect,
@@ -299,6 +312,15 @@ export function flattenMatchers(matchers: RouteRecordMatcher[]): RouteRecordMatc
     };
 
     result.push(matcherWithCombinedTokens);
+
+    // 别名：额外产出一条 matcher，**共享同一个 record**（所以 name / meta / component 都一致，
+    // 而 `currentRoute().path` 仍是用户实际访问的那个别名路径）。
+    for (const alias of matcher.record.alias ?? []) {
+      result.push({
+        ...matcher,
+        tokens: [...parentTokens, ...tokenizePath(alias)],
+      });
+    }
 
     for (const child of matcher.children) {
       walk(child, combinedTokens);

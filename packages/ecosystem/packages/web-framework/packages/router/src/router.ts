@@ -32,8 +32,40 @@ import { setCurrentRouter } from './composables/useRouter';
  */
 export function createRouter(options: RouterOptions): Router {
   // Build the matcher tree from route records
-  const matchers = options.routes.map((route) => normalizeRouteRecord(route));
-  const flatMatchers = flattenMatchers(matchers);
+  // ⚠️ 2026-11-04：改为 `let` —— 动态路由（addRoute / removeRoute / clearRoutes）要重建。
+  let matchers = options.routes.map((route) => normalizeRouteRecord(route));
+  let flatMatchers = flattenMatchers(matchers);
+
+  /** 重建扁平匹配表（增删路由后调用） */
+  function rebuildMatchers(): void {
+    flatMatchers = flattenMatchers(matchers);
+  }
+
+  /** 从树上摘掉一个 matcher（含其子树）并重建匹配表 */
+  function removeMatcher(target: RouteRecordMatcher): void {
+    const detach = (list: RouteRecordMatcher[]): boolean => {
+      const index = list.indexOf(target);
+      if (index > -1) {
+        list.splice(index, 1);
+        return true;
+      }
+      return false;
+    };
+
+    if (detach(matchers)) {
+      rebuildMatchers();
+      return;
+    }
+    // 在某个父节点的 children 里
+    for (const parent of flatMatchers) {
+      if (detach(parent.children)) {
+        const recordIndex = parent.record.children.indexOf(target.record);
+        if (recordIndex > -1) parent.record.children.splice(recordIndex, 1);
+        rebuildMatchers();
+        return;
+      }
+    }
+  }
 
   // Current route state
   const currentRoute = signal<RouteLocationNormalized>({
@@ -145,6 +177,51 @@ export function createRouter(options: RouterOptions): Router {
   /**
    * Navigate to a new route
    */
+  /**
+   * 把任意 `RouteLocationRaw` 解析成**完整**路由位置。
+   *
+   * ⚠️ 2026-11-04 新增：`navigate()` 与公开的 `resolve()` **必须**共用这一段 ——
+   *   此前 `useLink` 自己拼 href（且没传 `resolveName`），于是命名路由的链接指向
+   *   当前页面；两处逻辑一旦分叉，链接与真实导航就会不一致。
+   */
+  function buildLocation(to: RouteLocationRaw): {
+    location: RouteLocationNormalized;
+    matched: RouteRecordMatcher[];
+    unknownName: boolean;
+  } {
+    const resolved = resolveLocation(to, currentRoute(), { resolveName });
+
+    // 名字找不到对应路由：`resolveLocation` 会退化成「当前路径」，必须单独标记出来，
+    // 否则导航会变成「原地重复导航」（用户看到的是点了没反应）。
+    const requestedName = typeof to === 'string' ? null : (to.name ?? null);
+    const requestedParams = typeof to === 'string' ? undefined : to.params;
+    const unknownName = requestedName !== null && !resolveName(requestedName, requestedParams);
+
+    const targetPath = unknownName ? currentRoute().path : resolved.path;
+    const { matched, params, meta } = resolveRoute(targetPath);
+    const lastMatched = matched[matched.length - 1];
+
+    const queryString = Object.keys(resolved.query).length
+      ? '?' + locationQueryToSearchParams(resolved.query).toString()
+      : '';
+    const hashString = resolved.hash ? `#${resolved.hash}` : '';
+
+    return {
+      location: {
+        name: unknownName ? requestedName : (lastMatched?.record?.name ?? null),
+        path: targetPath,
+        fullPath: resolved.path + queryString + hashString,
+        query: resolved.query,
+        hash: resolved.hash,
+        params,
+        matched: matched.map((m) => m.record),
+        meta,
+      },
+      matched,
+      unknownName,
+    };
+  }
+
   /** 重定向嵌套深度（只统计守卫触发的重定向，用户主动导航不计数） */
   let redirectDepth = 0;
   const MAX_REDIRECT_DEPTH = 10;
@@ -179,16 +256,14 @@ export function createRouter(options: RouterOptions): Router {
     }
     try {
       // Check for duplicate navigation
-      const resolved = resolveLocation(to, currentRoute(), { resolveName });
-      const targetPath = resolved.path;
+      const built = buildLocation(to);
 
-      // Check for name-based navigation with unknown route name
-      if (
-        typeof to !== 'string' &&
-        to.name !== null &&
-        to.name !== undefined &&
-        !resolveName(to.name, to.params)
-      ) {
+      // 未知名字：无法解析，直接中止（与「路径未匹配」区分开，提示语也不同）
+      if (built.unknownName) {
+        warn(
+          `[router] 没有名为 "${String(built.location.name)}" 的路由，本次导航被忽略` +
+            `（仍停在 "${currentRoute().path}"）。`,
+        );
         return {
           type: NavigationFailureType.aborted,
           from: currentRoute(),
@@ -196,8 +271,9 @@ export function createRouter(options: RouterOptions): Router {
         };
       }
 
-      // Resolve the route
-      const { matched, params, meta } = resolveRoute(targetPath);
+      const targetLocation = built.location;
+      const matched = built.matched;
+      const targetPath = targetLocation.path;
 
       if (matched.length === 0) {
         // ⚠️ 2026-11-04 新增：此前**完全静默** —— `push('/typo')` 之后路由停在原页面，
@@ -215,24 +291,6 @@ export function createRouter(options: RouterOptions): Router {
         };
       }
 
-      // Build the target location
-      const lastMatched = matched[matched.length - 1];
-      const targetLocation: RouteLocationNormalized = {
-        name: lastMatched?.record?.name ?? null,
-        path: targetPath,
-        fullPath:
-          resolved.path +
-          (Object.keys(resolved.query).length
-            ? '?' + locationQueryToSearchParams(resolved.query).toString()
-            : '') +
-          (resolved.hash ? `#${resolved.hash}` : ''),
-        query: resolved.query,
-        hash: resolved.hash,
-        params,
-        matched: matched.map((m) => m.record),
-        meta,
-      };
-
       // ⚠️ 2026-11-04 修（P0）：**记录级重定向此前完全没实现**。
       //   `RouteRecordRaw.redirect` 在类型里一直声明着，但 `normalizeRouteRecord` 不拷贝、
       //   这里也不读 ⇒ 用户写 `{ path: '/old', redirect: '/new' }` 之后导航停在 `/old`
@@ -240,7 +298,7 @@ export function createRouter(options: RouterOptions): Router {
       //     · 字符串 / location 对象：`redirect: '/new'`
       //     · 函数：`redirect: (to) => ({ name: 'x', query: { from: to.path } })`
       //   重定向在**守卫之前**处理（与 Vue Router 一致）：目标路由的守卫照常执行。
-      const redirectOption = lastMatched?.record?.redirect;
+      const redirectOption = matched[matched.length - 1]?.record?.redirect;
       if (redirectOption) {
         const redirectTarget =
           typeof redirectOption === 'function' ? redirectOption(targetLocation) : redirectOption;
@@ -575,6 +633,60 @@ export function createRouter(options: RouterOptions): Router {
 
     async isReady() {
       return readyPromise;
+    },
+
+    /**
+     * 把任意路由描述解析成完整位置（含 matched / meta / fullPath）。
+     *
+     * 与 `navigate()` 共用同一段 `buildLocation`，因此**链接里的 href 与真实导航
+     * 永远一致**（此前 useLink 自己拼，命名路由会拼成当前路径）。
+     * 未匹配的路径也返回位置（`matched: []`），调用方可据此渲染 404。
+     */
+    resolve(to: RouteLocationRaw): RouteLocationNormalized {
+      return buildLocation(to).location;
+    },
+
+    getRoutes() {
+      // 别名 matcher 共享同一个 record ⇒ 去重（否则 getRoutes 里会出现重复条目）
+      return [...new Set(flatMatchers.map((m) => m.record))];
+    },
+
+    hasRoute(name) {
+      return flatMatchers.some((m) => m.record.name === name);
+    },
+
+    addRoute(record, parentName) {
+      const parent =
+        parentName !== undefined && parentName !== null
+          ? (matchers.find((m) => m.record.name === parentName) ??
+            flatMatchers.find((m) => m.record.name === parentName))
+          : undefined;
+
+      const matcher = normalizeRouteRecord(record as never, parent);
+      if (parent) {
+        parent.children.push(matcher);
+        parent.record.children.push(matcher.record);
+      } else {
+        matchers.push(matcher);
+      }
+      rebuildMatchers();
+
+      // 返回移除函数（与 Vue Router 一致）
+      return () => {
+        removeMatcher(matcher);
+      };
+    },
+
+    removeRoute(name) {
+      const target = matchers.find((m) => m.record.name === name);
+      if (!target) return false;
+      removeMatcher(target);
+      return true;
+    },
+
+    clearRoutes() {
+      matchers = [];
+      rebuildMatchers();
     },
   };
 

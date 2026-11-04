@@ -1,6 +1,16 @@
 export NODE_OPTIONS="--max-old-space-size=4096"
 
-pnpm exec lint-staged
+# ⚠️ 2026-11-04：优先用**本地**二进制，`pnpm exec` 只作兜底。
+#
+#   原因：`pnpm exec` 依赖全局 pnpm 可用，而 pnpm 自身有一次「原生二进制自校验」
+#   （`Cannot verify the identity of the @pnpm/exe.* native binary`）——它一坏，
+#   **所有提交都被卡死**，哪怕 lint-staged 本身完全正常。
+#   本钩子只需要 lint-staged，没有理由把「全局 pnpm 是否健康」绑进提交流程。
+if [ -x node_modules/.bin/lint-staged ]; then
+  node_modules/.bin/lint-staged
+else
+  pnpm exec lint-staged
+fi
 
 # keel 闭环（ADR 0017 链式挂载）：keel/ 下 md 有变更时跑一致性校验，0 fail 才放行
 bash keel/checks/hooks/pre-commit

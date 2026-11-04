@@ -63,6 +63,13 @@ export interface RouteRecordNormalized {
    */
   redirect?: string | RouteLocationRaw | ((to: RouteLocationNormalized) => RouteLocationRaw);
   children: RouteRecordNormalized[];
+  /**
+   * 已解析成绝对路径的别名列表（`alias: '/alias'` / `alias: ['/a', '/b']`）。
+   *
+   * ⚠️ 2026-11-04：`RouteRecordRaw.alias` 此前**从未被读取** —— 写了别名的路由
+   *   按别名访问会 404（而且未匹配路径当时是静默的，连提示都没有）。
+   */
+  alias?: string[];
   aliasOf?: RouteRecordNormalized;
   beforeEnter?: NavigationGuard | undefined;
   props:
@@ -169,6 +176,28 @@ export interface Router {
   install(app: App): void;
   isReady(): Promise<void>;
   resolveName(name: string | symbol, params?: RouteParams): { path: string } | null;
+
+  /**
+   * 把任意 `RouteLocationRaw` 解析成**完整**的路由位置（含 matched / meta / fullPath）。
+   *
+   * ⚠️ 2026-11-04 新增：此前公开 API 里**没有 resolve**，`useLink` 只能自己拼 href ——
+   *   而它没把 `resolveName` 传进去，于是 `<RouterLink :to="{ name: 'user' }">`
+   *   的 href 变成**当前页面**的路径（点了等于原地导航）。
+   *
+   * 未匹配的路径也返回一个位置（`matched: []`），便于调用方渲染 404 / 判断存在性。
+   */
+  resolve(to: RouteLocationRaw): RouteLocationNormalized;
+
+  /** 当前注册的所有路由记录（含别名条目） */
+  getRoutes(): RouteRecordNormalized[];
+  /** 是否存在指定名字的路由 */
+  hasRoute(name: RouteRecordName): boolean;
+  /** 动态添加路由；`parentName` 用于挂到某个已有路由下 */
+  addRoute(record: RouteRecordRaw, parentName?: RouteRecordName): () => void;
+  /** 按名字移除路由（返回是否移除成功） */
+  removeRoute(name: RouteRecordName): boolean;
+  /** 清空所有路由 */
+  clearRoutes(): void;
 }
 
 export type HistoryState = Record<string, unknown>;

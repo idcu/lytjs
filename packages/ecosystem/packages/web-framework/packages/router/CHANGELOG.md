@@ -2,6 +2,25 @@
 
 ## [Unreleased]
 
+### 🐞 修复（链接语义 2 个 + API 缺口）
+
+- **`<RouterLink :to="{ name: 'x' }">` 的 href 是当前页面**（P0）：`useLink` 自己调
+  `resolveLocation(to, route())` 但**没传 `resolveName`** ⇒ 命名路由解析不了，
+  退化成「返回当前路径」⇒ 点了等于原地导航。现在统一走 `router.resolve()`。
+- **`isActive` 用字符串前缀判断**（P1）：`/user` 的链接在 `/username` 页面上也高亮
+  （侧边栏错位），`/` 更是匹配所有路径。现在按 **matched 记录链**判断
+  （目标链是当前链的前缀，与 Vue Router 语义一致）。
+
+### ✨ 新增
+
+- `router.resolve(to)`：解析任意路由描述为完整位置（`path` / `fullPath` / `params` /
+  `matched` / `meta`）。**与 `navigate()` 共用 `buildLocation`**，链接与导航不会分叉。
+- `router.getRoutes()` / `hasRoute(name)` / `addRoute(record, parentName?)` /
+  `removeRoute(name)` / `clearRoutes()`：动态路由（`addRoute` 返回移除函数）。
+- `alias` 支持：`RouteRecordRaw.alias` 此前**从未被读取**（按别名访问 404）。
+  现在字符串 / 数组都支持，相对别名相对父路径解析；别名与主路径**共享同一条记录**。
+- 未知路由名的导航会给出告警（此前与「路径未匹配」一样静默中止）。
+
 ### 🐞 修复（6 个「页面能打开、只是不对」的缺陷）
 
 - **路由优先级用权重总和排序**（P1）：`/a/b/*`(3+3+0=6) 输给 `/a/:x/:y`(3+2+2=7)

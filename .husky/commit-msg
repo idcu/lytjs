@@ -1,1 +1,7 @@
-pnpm exec commitlint --edit "$1" && bash keel/checks/hooks/commit-msg "$1"
+# ⚠️ 2026-11-04：与 pre-commit 同因 —— 优先用**本地**二进制，
+#   避免「全局 pnpm 自校验失败」把提交彻底卡死（lint 本身是好的）。
+if [ -x node_modules/.bin/commitlint ]; then
+  node_modules/.bin/commitlint --edit "$1" && bash keel/checks/hooks/commit-msg "$1"
+else
+  pnpm exec commitlint --edit "$1" && bash keel/checks/hooks/commit-msg "$1"
+fi

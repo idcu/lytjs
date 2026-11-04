@@ -365,6 +365,129 @@ section('[8] 导航失败类型');
 }
 
 // ══════════════════════════════════════════════════════════
+section('[9] 链接语义（RouterLink / useLink）');
+{
+  const { setCurrentRouter, useLink } = await import(
+    join(ROOT, 'packages/ecosystem/packages/web-framework/packages/router/dist/index.mjs')
+  );
+  const router = mk([
+    { path: '/', component: { name: 'Home' } },
+    { path: '/user/:id', component: { name: 'User' }, name: 'user' },
+    { path: '/username', component: { name: 'Username' } },
+    {
+      path: '/admin',
+      component: { name: 'Admin' },
+      children: [{ path: 'users', component: { name: 'Users' }, name: 'adminUsers' }],
+    },
+  ]);
+  setCurrentRouter(router);
+
+  await router.push('/');
+  check(
+    '命名路由的 href（此前拼成**当前页面**）',
+    useLink({ to: { name: 'user', params: { id: 7 } } }).href() === '/user/7',
+    useLink({ to: { name: 'user', params: { id: 7 } } }).href(),
+  );
+  check(
+    '字符串 href（含 query / hash）',
+    useLink({ to: '/user/1?x=1#h' }).href() === '/user/1?x=1#h',
+    useLink({ to: '/user/1?x=1#h' }).href(),
+  );
+
+  await router.push('/username');
+  check(
+    '`/user` 链接在 `/username` 页面**不**高亮（此前按字符串前缀判成 active）',
+    useLink({ to: '/user' }).isActive() === false,
+  );
+
+  await router.push('/admin/users');
+  check('嵌套：在 /admin/users 时 /admin 高亮', useLink({ to: '/admin' }).isActive() === true);
+  check('嵌套：子路由自身高亮', useLink({ to: '/admin/users' }).isActive() === true);
+  check(
+    '嵌套：isExactActive 只对完全相同的路由为真',
+    useLink({ to: '/admin' }).isExactActive() === false,
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+section('[10] 公开 API：resolve / getRoutes / hasRoute / addRoute / removeRoute / alias');
+{
+  const router = mk([
+    { path: '/u/:id', component: { name: 'U' }, name: 'u', meta: { auth: true } },
+    { path: '/main', component: { name: 'Main' }, name: 'main', alias: '/alias' },
+  ]);
+
+  // ⚠️ 门禁自身要防御：API 缺失时**报红**，而不是崩在 `router.resolve is not a function`
+  //   上（否则负向对照只看到一条 TypeError，看不到「缺了哪几个」）。
+  const has = (name) => typeof router[name] === 'function';
+  const apis = ['resolve', 'getRoutes', 'hasRoute', 'addRoute', 'removeRoute', 'clearRoutes'];
+  const missing = apis.filter((name) => !has(name));
+  check(`公开 API 齐全（缺：${missing.join(', ') || '无'}）`, missing.length === 0, missing);
+
+  const resolved = has('resolve')
+    ? router.resolve({ name: 'u', params: { id: '3' }, query: { q: 'x' } })
+    : null;
+  check(
+    'resolve 命名路由：path / fullPath / params / meta',
+    resolved?.path === '/u/3' &&
+      resolved?.fullPath === '/u/3?q=x' &&
+      resolved?.params?.id === '3' &&
+      resolved?.meta?.auth === true,
+    resolved
+      ? { path: resolved.path, fullPath: resolved.fullPath, params: resolved.params }
+      : '无 resolve()',
+  );
+
+  const miss = has('resolve') ? router.resolve('/nope') : null;
+  check(
+    'resolve 未匹配路径也返回位置（matched 为空，便于渲染 404）',
+    miss?.matched?.length === 0 && miss?.path === '/nope',
+    miss ? [miss.path, miss.matched.length] : '无 resolve()',
+  );
+  const unknown = has('resolve') ? router.resolve({ name: 'nope' }) : null;
+  check(
+    'resolve 未知名字：matched 为空、name 保留',
+    unknown?.name === 'nope' && unknown?.matched?.length === 0,
+    unknown ? [unknown.name, unknown.matched.length] : '无 resolve()',
+  );
+
+  check(
+    'getRoutes() 返回注册记录',
+    has('getRoutes') && router.getRoutes().length === 2,
+    has('getRoutes') ? router.getRoutes().length : '无 getRoutes()',
+  );
+  check(
+    'hasRoute(name) 命中',
+    has('hasRoute') && router.hasRoute('u') === true && router.hasRoute('nope') === false,
+  );
+
+  // alias：类型里有、此前从未被读取
+  await router.push('/alias');
+  check(
+    'alias 可访问（name / matched 指向同一条记录）',
+    router.currentRoute().name === 'main' && router.currentRoute().matched.length === 1,
+    [router.currentRoute().name, router.currentRoute().matched.length],
+  );
+
+  // 动态路由
+  const removeAdmin = has('addRoute')
+    ? router.addRoute({ path: '/admin', component: { name: 'Admin' }, name: 'admin' })
+    : null;
+  let addedNavigable = false;
+  if (removeAdmin) {
+    await router.push('/admin');
+    addedNavigable = router.currentRoute().name === 'admin';
+  }
+  check('addRoute 后可导航', addedNavigable, router.currentRoute().path);
+  check('addRoute 后 hasRoute', has('hasRoute') && router.hasRoute('admin') === true);
+  if (removeAdmin) removeAdmin();
+  check('addRoute 返回的移除函数生效', has('hasRoute') && router.hasRoute('admin') === false);
+  check('removeRoute 返回是否移除成功', has('removeRoute') && router.removeRoute('main') === true);
+  if (has('clearRoutes')) router.clearRoutes();
+  check('clearRoutes 清空', has('getRoutes') && router.getRoutes().length === 0);
+}
+
+// ══════════════════════════════════════════════════════════
 console.log(`\n共 ${pass + fail} 条断言：✅ ${pass} / ❌ ${fail}`);
 if (fail > 0) {
   console.log('\n失败项：');
