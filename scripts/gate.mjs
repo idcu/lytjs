@@ -450,6 +450,23 @@ const GATES = [
       'template 无编译器 —— 这 3 条此前在产物里被整段删除，用户只看到「功能没生效」）',
   },
   {
+    name: 'check-web-cssvars',
+    tier: 'fast',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-web-cssvars.mjs'],
+    approx: '~1s',
+    desc:
+      '★ CSS 变量与主题（@lytjs/web）：主题切换是「看起来在工作」的典型 —— apply("dark") 之后' +
+      '页面确实变了，但**上一个主题独有的变量还留在内联样式里**（深色底 + 浅色边框），' +
+      '不抛异常、不看细节发现不了。另一半是跨环境：同一份组件在 SSR 与浏览器都跑，' +
+      '而入口直接写 document.documentElement ⇒ SSR 一调用就 500。2026-11-04 抓到 4 个：' +
+      '① ThemeManager.apply 不清理旧主题变量（light{bg,border} → dark{bg} 后 --border 仍是 gray）；' +
+      '② setCSSVar("name", value) 抛 `Cannot use "in" operator ...`（而 getCSSVar("name") 就是字符串，' +
+      '读写不对称）；③ SSR 下 setCSSVar/getCSSVar 抛 ReferenceError；' +
+      '④ observe(["a"]) 之后 subscribe("b") 永远收不到（检查范围被锁死）。' +
+      '判据 8 组 36 条（jsdom 真跑，含 SSR 无 document 与「非法形态给出可操作错误」对照）',
+  },
+  {
     name: 'check-config-semantics',
     tier: 'fast',
     needsDist: true,

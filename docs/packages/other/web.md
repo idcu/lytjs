@@ -38,6 +38,29 @@ const next = toggleCSSVar('--theme', 'light', 'dark');
 > 兼容说明：`setCSSVar(element, name, value, options)` 位置参数形式**仍可用但已标记 `@deprecated`**，
 > 推荐改用对象参数形式 `setCSSVar({ element, name, value, options })`。
 
+> **简写形式（2026-11-04 新增）**：`setCSSVar('primary', 'red')` 与
+> `getCSSVar('primary')` 对称 —— 读写都用字符串变量名。
+> 在此之前这个写法会抛 `Cannot use 'in' operator to search for 'element' in primary`。
+> 传入无法识别的形态（如数字）时，会得到一条说明「支持哪三种写法」的 `TypeError`。
+
+> **SSR / 无 DOM 环境**：写操作是 **no-op**、读操作返回 `fallback`（默认 `null`），
+> `ThemeManager` / `CSSVarObserver` 允许构造但不会生效。
+> 这样同一份组件可以在 SSR 与浏览器里都调用这些 API，不会因为
+> `document is not defined` 让 SSR 500。
+
+### ThemeManager
+
+```typescript
+const themes = new ThemeManager();
+themes.register('light', { bg: 'white', border: 'gray' });
+themes.register('dark', { bg: 'black' });
+themes.apply('dark');
+```
+
+> **切换主题会清理旧主题独有的变量**（2026-11-04 修复）：`light` 有 `border`、`dark` 没有，
+> 切到 `dark` 后 `--border` 会被移除。此前它会被残留下来（深色底 + 浅色边框）。
+> 未注册的主题名会返回 `false` 并给出告警（列出已注册主题）。
+
 ### CSSVarObserver
 
 `CSSVarObserver` 用于监听元素上 CSS 变量的变化（内部基于 `MutationObserver`）。

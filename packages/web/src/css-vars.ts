@@ -52,6 +52,26 @@ export interface CSSVarOptions {
  * normalizeVarName('--primary-color') // '--primary-color'
  * ```
  */
+/**
+ * 取「全局变量」的宿主元素（`<html>`）。
+ *
+ * ⚠️ 2026-11-04 修（P1）：此前所有入口直接写 `document.documentElement` ——
+ *   在**没有 DOM** 的环境（SSR / Node / Workers）里调用会抛
+ *   `ReferenceError: document is not defined`。而「同一份组件在 SSR 与浏览器都要跑」
+ *   是本仓的常规形态 ⇒ 一个在 `setup()` 里读主题变量的组件会让 SSR 直接 500。
+ *   现在统一走这个函数：没有 DOM 时返回 `null`，调用方各自退化成 no-op / 默认值。
+ *   （本包的 `resize-observer` 早就是这么判的，这里对齐。）
+ */
+function getRootElement(): HTMLElement | null {
+  if (typeof document === 'undefined' || !document.documentElement) return null;
+  return document.documentElement;
+}
+
+/** 是否有可用的 `getComputedStyle`（SSR 下没有） */
+function canComputeStyle(): boolean {
+  return typeof window !== 'undefined' && typeof window.getComputedStyle === 'function';
+}
+
 export function normalizeVarName(name: string): string {
   return name.startsWith('--') ? name : `--${name}`;
 }
@@ -115,6 +135,15 @@ export interface SetCSSVarGlobalOptions {
  */
 export function setCSSVar(params: SetCSSVarWithElementOptions): void;
 export function setCSSVar(params: SetCSSVarGlobalOptions): void;
+/**
+ * 简写形式：`setCSSVar('primary', 'red')` —— 与 `getCSSVar('primary')` **对称**。
+ *
+ * ⚠️ 2026-11-04 新增：此前只接受对象参数（或 `(element, name, value)`），
+ *   于是最常见的写法 `setCSSVar('primary', 'red')` 会抛
+ *   `TypeError: Cannot use 'in' operator to search for 'element' in primary`
+ *   —— 而读那边 `getCSSVar('primary')` 明明就是字符串。读写不对称，报错还看不懂。
+ */
+export function setCSSVar(name: string, value: CSSVarValue, options?: CSSVarOptions): void;
 /** @deprecated 使用对象参数形式 setCSSVar({ element, name, value }) 替代 */
 export function setCSSVar(
   element: HTMLElement,
@@ -123,36 +152,55 @@ export function setCSSVar(
   options?: CSSVarOptions,
 ): void;
 export function setCSSVar(
-  paramsOrElement: SetCSSVarWithElementOptions | SetCSSVarGlobalOptions | HTMLElement,
-  name?: string,
-  value?: CSSVarValue,
+  paramsOrElement: SetCSSVarWithElementOptions | SetCSSVarGlobalOptions | HTMLElement | string,
+  name?: string | CSSVarValue,
+  value?: CSSVarValue | CSSVarOptions,
   options?: CSSVarOptions,
 ): void {
-  let element: HTMLElement;
+  let element: HTMLElement | null;
   let varName: string;
   let varValue: CSSVarValue;
   let opts: CSSVarOptions | undefined;
 
-  if (paramsOrElement instanceof HTMLElement) {
+  if (typeof paramsOrElement === 'string') {
+    // 简写：setCSSVar('name', value, options?)
+    element = getRootElement();
+    varName = normalizeVarName(paramsOrElement);
+    varValue = name as CSSVarValue;
+    opts = (value as CSSVarOptions | undefined) ?? undefined;
+  } else if (typeof HTMLElement !== 'undefined' && paramsOrElement instanceof HTMLElement) {
     // 向后兼容的位置参数调用方式
     element = paramsOrElement;
-    varName = normalizeVarName(name!);
-    varValue = value;
+    varName = normalizeVarName(name as string);
+    varValue = value as CSSVarValue;
     opts = options;
-  } else if ('element' in paramsOrElement) {
+  } else if (
+    paramsOrElement &&
+    typeof paramsOrElement === 'object' &&
+    'element' in paramsOrElement
+  ) {
     // 对象参数：指定元素
-    element = paramsOrElement.element;
-    varName = normalizeVarName(paramsOrElement.name);
-    varValue = paramsOrElement.value;
-    opts = paramsOrElement.options;
-  } else {
+    const params = paramsOrElement as SetCSSVarWithElementOptions;
+    element = params.element;
+    varName = normalizeVarName(params.name);
+    varValue = params.value;
+    opts = params.options;
+  } else if (paramsOrElement && typeof paramsOrElement === 'object') {
     // 对象参数：全局设置
-    element = document.documentElement;
-    varName = normalizeVarName(paramsOrElement.name);
-    varValue = paramsOrElement.value;
-    opts = paramsOrElement.options;
+    const params = paramsOrElement as SetCSSVarGlobalOptions;
+    element = getRootElement();
+    varName = normalizeVarName(params.name);
+    varValue = params.value;
+    opts = params.options;
+  } else {
+    // 其余形态（number / boolean / null …）—— 给出**可操作**的错误，而不是 `in` 的 TypeError
+    throw new TypeError(
+      '[lytjs/web] setCSSVar() 的参数形态无法识别。支持：' +
+        "setCSSVar({ name, value })、setCSSVar(element, name, value)、setCSSVar('name', value)。",
+    );
   }
 
+  // 没有 DOM（SSR）⇒ 静默跳过：写样式本来就没有意义，不该让调用方崩
   if (!element) return;
 
   // 处理 null/undefined（移除变量）
@@ -196,12 +244,12 @@ export function getCSSVar(
   fallback?: string,
 ): string | null {
   // 处理重载签名
-  let element: HTMLElement;
+  let element: HTMLElement | null;
   let varName: string;
   let defaultValue: string | undefined;
 
   if (typeof elementOrName === 'string') {
-    element = document.documentElement;
+    element = getRootElement();
     varName = normalizeVarName(elementOrName);
     defaultValue = nameOrFallback;
   } else {
@@ -210,13 +258,15 @@ export function getCSSVar(
     defaultValue = fallback;
   }
 
+  // 没有 DOM（SSR）⇒ 返回默认值，不抛错
   if (!element) return defaultValue ?? null;
 
   // 首先尝试从元素的 style 属性获取
   const inlineValue = element.style.getPropertyValue(varName);
   if (inlineValue) return inlineValue;
 
-  // 然后从计算样式获取
+  // 然后从计算样式获取（SSR 没有 getComputedStyle ⇒ 跳过）
+  if (!canComputeStyle()) return defaultValue || null;
   const computedStyle = window.getComputedStyle(element);
   const value = computedStyle.getPropertyValue(varName).trim();
 
@@ -250,7 +300,7 @@ export function setCSSVars(
     element = elementOrVars;
     variables = vars ?? {};
   } else {
-    element = document.documentElement;
+    element = getRootElement() as HTMLElement;
     variables = elementOrVars;
   }
 
@@ -285,7 +335,7 @@ export function getCSSVars(
     element = elementOrNames;
     varNames = names ?? [];
   } else {
-    element = document.documentElement;
+    element = getRootElement() as HTMLElement;
     varNames = elementOrNames;
   }
 
@@ -314,7 +364,7 @@ export function removeCSSVar(elementOrName: HTMLElement | string, name?: string)
   let varName: string;
 
   if (typeof elementOrName === 'string') {
-    element = document.documentElement;
+    element = getRootElement() as HTMLElement;
     varName = normalizeVarName(elementOrName);
   } else {
     element = elementOrName;
@@ -344,7 +394,7 @@ export function removeCSSVars(elementOrNames: HTMLElement | string[], names?: st
     element = elementOrNames;
     varNames = names ?? [];
   } else {
-    element = document.documentElement;
+    element = getRootElement() as HTMLElement;
     varNames = elementOrNames;
   }
 
@@ -378,7 +428,7 @@ export function hasCSSVar(elementOrName: HTMLElement | string, name?: string): b
   let varName: string;
 
   if (typeof elementOrName === 'string') {
-    element = document.documentElement;
+    element = getRootElement() as HTMLElement;
     varName = normalizeVarName(elementOrName);
   } else {
     element = elementOrName;
@@ -390,7 +440,8 @@ export function hasCSSVar(elementOrName: HTMLElement | string, name?: string): b
   // 检查内联样式
   if (element.style.getPropertyValue(varName)) return true;
 
-  // 检查计算样式
+  // 检查计算样式（SSR 没有 ⇒ 只看内联）
+  if (!canComputeStyle()) return false;
   const computedStyle = window.getComputedStyle(element);
   return !!computedStyle.getPropertyValue(varName).trim();
 }
@@ -412,10 +463,18 @@ export function hasCSSVar(elementOrName: HTMLElement | string, name?: string): b
  * ```
  */
 export function getAllCSSVars(element?: HTMLElement): Record<string, string> {
-  const el = element ?? document.documentElement;
+  const el = element ?? getRootElement();
   if (!el) return {};
 
   const result: Record<string, string> = {};
+  if (!canComputeStyle()) {
+    // SSR：只返回内联变量
+    for (let i = 0; i < el.style.length; i++) {
+      const prop = el.style[i] as string;
+      if (prop.startsWith('--')) result[prop] = el.style.getPropertyValue(prop);
+    }
+    return result;
+  }
   const computedStyle = window.getComputedStyle(el);
 
   // 遍历所有计算样式属性
@@ -465,7 +524,7 @@ export function toggleCSSVar(
   let val2: string;
 
   if (typeof elementOrName === 'string') {
-    element = document.documentElement;
+    element = getRootElement() as HTMLElement;
     varName = normalizeVarName(elementOrName);
     val1 = nameOrValue1;
     val2 = value1OrValue2 as string;
@@ -496,7 +555,8 @@ export class CSSVarObserver {
   private element: HTMLElement;
 
   constructor(element?: HTMLElement) {
-    this.element = element ?? document.documentElement;
+    // SSR 下没有 document ⇒ 允许构造，但 observe()/apply() 会退化成 no-op
+    this.element = element ?? (getRootElement() as HTMLElement);
   }
 
   /**
@@ -561,7 +621,12 @@ export class CSSVarObserver {
   private static readonly MAX_LAST_VALUES_SIZE = 500;
 
   private checkChanges(targetNames?: string[]): void {
-    const namesToCheck = targetNames ?? Array.from(this.callbacks.keys());
+    // ⚠️ 2026-11-04 修（P2）：`observe(['a'])` 之后 `subscribe('b')` 的订阅**永远收不到**
+    //   —— 这里只检查 `targetNames`。现在把「已订阅的名字」并进来
+    //   （observe 的列表只是缩小检查范围，不应该让后订阅的名字彻底失效）。
+    const namesToCheck = targetNames
+      ? [...new Set([...targetNames, ...this.callbacks.keys()])]
+      : Array.from(this.callbacks.keys());
 
     // FIX: P2-v11-37 当 lastValues 超过最大条目数时，
     // 清理不在当前观察列表中的条目，防止内存泄漏
@@ -608,10 +673,12 @@ export interface ThemeConfig {
 export class ThemeManager {
   private themes = new Map<string, ThemeConfig>();
   private currentTheme: string | null = null;
-  private element: HTMLElement;
+  private element: HTMLElement | null;
+  /** 当前主题实际写进样式的变量名（用于切换时清理残留） */
+  private appliedVars = new Set<string>();
 
   constructor(element?: HTMLElement) {
-    this.element = element ?? document.documentElement;
+    this.element = element ?? (getRootElement() as HTMLElement);
   }
 
   /**
@@ -631,7 +698,32 @@ export class ThemeManager {
    */
   apply(name: string): boolean {
     const theme = this.themes.get(name);
-    if (!theme) return false;
+    if (!theme) {
+      // 静默返回 false 会让「主题名写错」变成「点了没反应」，至少留一条线索
+      if (typeof console !== 'undefined') {
+        console.warn(
+          `[lytjs/web] ThemeManager.apply(): 主题 "${name}" 未注册（已注册：${[...this.themes.keys()].join(', ') || '无'}）`,
+        );
+      }
+      return false;
+    }
+
+    // 没有 DOM（SSR）⇒ 只记录当前主题，不碰样式
+    if (!this.element) {
+      this.currentTheme = name;
+      return true;
+    }
+
+    // ⚠️ 2026-11-04 修（P1）：**切主题不清理旧主题的变量** ——
+    //   实测 light({bg,border}) → dark({bg}) 之后 `--border` 仍然是 light 的值，
+    //   页面留下「上个主题的边框色」。现在只移除「旧主题有、新主题没有」的变量。
+    const nextVars = new Set(Object.keys(theme).map(normalizeVarName));
+    for (const prevName of this.appliedVars) {
+      if (!nextVars.has(prevName)) {
+        this.element.style.removeProperty(prevName);
+      }
+    }
+    this.appliedVars = nextVars;
 
     setCSSVars(this.element, theme);
     this.currentTheme = name;
