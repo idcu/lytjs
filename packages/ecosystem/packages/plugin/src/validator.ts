@@ -163,7 +163,13 @@ export class PluginValidator {
   }
 
   /**
-   * 注册已知插件名称（用于跨插件验证）
+   * 注册已知插件名称（用于跨插件验证）。
+   *
+   * ⚠️ 2026-11-05 修：此前这个方法**只写不读** —— 名字进了集合，但没有任何验证规则
+   *   使用它（README 却宣传了它）。现在 `validateDependencies` 会据此检查
+   *   「依赖的插件是否在已知列表里」，未知依赖给一条 warning。
+   *   集合为空时（未调用过本方法）不产生任何提示，保持既有行为。
+   *
    * @param names - 插件名称列表
    */
   registerKnownPlugins(names: string[]): void {
@@ -330,7 +336,7 @@ export class PluginValidator {
    * 规则：验证依赖声明
    * @description 检查依赖格式和已知性
    */
-  private validateDependencies(plugin: PluginLike): ValidationIssue[] {
+  private validateDependencies(plugin: PluginLike, context: ValidationContext): ValidationIssue[] {
     const issues: ValidationIssue[] = [];
 
     if (!this.isEnhancedPlugin(plugin)) {
@@ -376,6 +382,34 @@ export class PluginValidator {
             level: 'error',
             rule: 'validate-dependencies',
             message: `Plugin "${plugin.name}" cannot depend on itself.`,
+          });
+        }
+      }
+    }
+
+    // ⚠️ 2026-11-05 修（P1）：**`registerKnownPlugins()` 此前是个空操作** ——
+    //   它把名字塞进 `this.knownPlugins`，`validate()` 也把集合传进 `ValidationContext`，
+    //   但**没有任何规则读过 `context.knownPlugins`**（全仓 grep 只有这三处）。
+    //   于是 README 宣传的「注册已知插件名称」对校验结果毫无影响：依赖了一个
+    //   根本不存在的插件也不会被提示。
+    //
+    //   现在：只要显式登记过已知插件，依赖名不在其中就给一条 warning
+    //   （不设为 error —— 已知列表是调用方自己维护的，漏登记不该阻断校验）。
+    if (context.knownPlugins.size > 0) {
+      const declared = [
+        ...(Array.isArray(dependencies) ? dependencies : []),
+        ...(Array.isArray(optionalDependencies) ? optionalDependencies : []),
+      ];
+      const seen = new Set<string>();
+      for (const dep of declared) {
+        if (!dep || typeof dep.name !== 'string' || dep.name === plugin.name) continue;
+        if (seen.has(dep.name)) continue;
+        seen.add(dep.name);
+        if (!context.knownPlugins.has(dep.name)) {
+          issues.push({
+            level: 'warning',
+            rule: 'validate-dependencies',
+            message: `Dependency "${dep.name}" is not in the known plugin list (see registerKnownPlugins()).`,
           });
         }
       }

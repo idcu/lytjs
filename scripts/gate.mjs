@@ -450,6 +450,26 @@ const GATES = [
       'template 无编译器 —— 这 3 条此前在产物里被整段删除，用户只看到「功能没生效」）',
   },
   {
+    name: 'check-plugin-semantics',
+    tier: 'fast',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-plugin-semantics.mjs'],
+    approx: '~1s',
+    desc:
+      '★ 插件系统语义（@lytjs/plugin）：插件有**两条安装入口** —— core 的 app.use() 和注册表自己的 ' +
+      'await registry.install(name)。两条路一旦分叉，症状全是「插件装上了但没生效」：生命周期钩子没跑、' +
+      '依赖没检查、版本范围判错导致直接拒绝安装，都不抛异常。2026-11-05 首次运行抓到 10 个：' +
+      '① 独立 install() **不跑 beforeInstall/afterInstall**，且 beforeInstall 返回 false 仍装上；' +
+      '② 独立 install() **不检查依赖**（声明了 missing-dep 照样装）；' +
+      '③ install() 失败**不发 error 事件**（before:install 已发、after:install 永不到来，配对泄漏）；' +
+      '④ 冲突检查**单向** ⇒ conflicts 的生效取决于注册顺序；' +
+      '⑤ 版本范围把 `^1.0` / `~1.2` / `1.2` / `*` 全判成「不满足」（而 app.use 会因此**拒绝安装**）；' +
+      '⑥ 反向：`>=1.0.0 <2.0.0` 对 3.0.0 判为满足（parseVersion 不锚定结尾）；⑦ `^0.2.3` 放行 0.3.0；' +
+      '⑧ resolveLoadOrder() 静默跳过缺失依赖；⑨ unregister() 不检查依赖方；' +
+      '⑩ registerKnownPlugins() 是**空操作**（名字进集合，没有任何规则读它，README 却宣传了它）。' +
+      '判据 9 组 65 条，含多组对照（可选依赖不阻断、重复 install 只装一次、register 不自动安装）',
+  },
+  {
     name: 'check-web-cssvars',
     tier: 'fast',
     needsDist: true,

@@ -1,7 +1,7 @@
 // packages/ecosystem/packages/plugin/src/registry.ts
 // 通用插件系统 - 插件注册表（零框架依赖）
 
-import { error } from '@lytjs/common-error';
+import { error, warn } from '@lytjs/common-error';
 import type {
   EnhancedPlugin,
   Plugin,
@@ -130,6 +130,18 @@ export class PluginRegistry {
       return false;
     }
 
+    // ⚠️ 2026-11-05 新增：**卸载被依赖的插件时给一条告警**。
+    //   此前完全静默 —— 卸掉 `base` 之后，声明了 `dependencies: [{name:'base'}]` 的插件
+    //   仍然在注册表里且标记为已安装，但它的依赖已经不存在了（后续调用会莫名其妙地失败）。
+    //   不自动级联卸载是有意的（可能还有别的使用方），但至少要说出来。
+    const dependents = this.findDependents(name);
+    if (dependents.length > 0) {
+      warn(
+        `[plugin] 卸载 "${name}" 时，${dependents.join(', ')} 仍声明依赖它 —— ` +
+          `这些插件之后可能无法正常工作（建议先卸载依赖方，或改用 optionalDependencies）。`,
+      );
+    }
+
     // 触发 before:unregister 事件
     this.emit('before:unregister', { name, plugin: registered.plugin });
 
@@ -205,12 +217,21 @@ export class PluginRegistry {
    *
    * ⚠️ 2026-10-31 修（P0）：此前**全仓没有任何地方调用 `plugin.install`** ——
    *   `register()` 只把插件塞进 Map 并把 `installed` 置 false，于是
-   *   "注册成功"≠"生效"，且没有任何报错。现在提供显式安装入口，
-   *   并由 `register()` 默认调用（可用 `{ autoInstall: false }` 关闭）。
+   *   "注册成功"≠"生效"，且没有任何报错。现在提供显式安装入口。
+   *
+   * ⚠️ 2026-11-05 修（文档）：本段此前写着「由 `register()` 默认调用（可用
+   *   `{ autoInstall: false }` 关闭）」—— **两句都是假的**：`register()` 从不自动安装
+   *   （`autoInstall` 这个选项在代码里根本不存在）。照着文档写的人会以为
+   *   `register()` 之后就生效了。现在按实际语义描述。
+   *
+   * 执行顺序（与 `app.use()` 对齐）：
+   * `检查依赖` → `beforeInstall`（返回 false 取消）→ `before:install` 事件 →
+   * `install()` → `installed = true` → `after:install` 事件 → `afterInstall`。
    *
    * @param name - 已注册的插件名
    * @param context - 传给 `install(context, options)` 的宿主上下文
-   * @returns 安装是否成功；插件没有 `install` 时返回 false
+   * @returns 安装是否成功；插件没有 `install`、依赖不满足、`beforeInstall` 返回 false 时返回 false
+   * @throws 插件自己的 `install()` 抛出的异常（会先补一条 `error` 事件再原样抛出）
    */
   async install<TContext = unknown>(name: string, context?: TContext): Promise<boolean> {
     const registered = this.plugins.get(name);
@@ -231,19 +252,91 @@ export class PluginRegistry {
     }
     if (registered.installed) return true;
 
-    this.emit('before:install', { name, plugin: registered.plugin });
-    const outcome = installFn.call(registered.plugin, context, registered.options);
-    // 同步插件：立即落状态（避免调用方必须 await 才能看到 installed=true）
-    if (!outcome || typeof (outcome as Promise<unknown>).then !== 'function') {
-      registered.installed = true;
-      registered.installedAt = Date.now();
-      this.emit('after:install', { name, plugin: registered.plugin });
-      return true;
+    // ⚠️ 2026-11-05 修（P0）：**依赖检查此前只存在于 `app.use()` 里** ——
+    //   独立使用注册表（`await registry.install(name)`）时，声明了 `dependencies`
+    //   却缺依赖的插件**照样装进去**，之后在运行时才因为「某个能力不存在」而崩。
+    //   两条安装路径（`app.use` / `registry.install`）必须同一套语义。
+    const depResult = this.checkDependencies(registered.plugin);
+    if (!depResult.satisfied) {
+      const details = [
+        ...depResult.missing.map(
+          (dep) => `缺少 "${dep.name}"${dep.version ? `@${dep.version}` : ''}`,
+        ),
+        ...(depResult.requiredVersionMismatch ?? []).map(
+          (dep) => `"${dep.name}" 需要 ${dep.expected}，实际 ${dep.actual ?? '未声明版本'}`,
+        ),
+      ];
+      const message = `Plugin "${name}" has unsatisfied dependencies: ${details.join('; ')}`;
+      this.emit('error', { success: false, name, error: message });
+      return false;
     }
-    await (outcome as Promise<unknown>);
+
+    // ⚠️ 2026-11-05 修（P0）：`beforeInstall` / `afterInstall` 两个生命周期钩子
+    //   **只有 `app.use()` 会调**，独立路径完全跳过 —— 同一个插件「走 core 装」和
+    //   「走 registry 装」行为不同，而 `beforeInstall` 返回 false 本该**取消安装**。
+    //   现在两条路径都跑（registry.install 是 async，因此还能 await 异步钩子，
+    //   这一点比 `app.use` 更强：core 遇到异步 beforeInstall 会直接抛错）。
+    const beforeInstall = registered.plugin.beforeInstall as
+      | ((ctx: TContext) => boolean | Promise<boolean>)
+      | undefined;
+    if (typeof beforeInstall === 'function') {
+      let decision: boolean | undefined;
+      try {
+        decision = await beforeInstall.call(registered.plugin, context as TContext);
+      } catch (err) {
+        this.emit('error', {
+          success: false,
+          name,
+          error: `Plugin "${name}" beforeInstall() failed: ${err instanceof Error ? err.message : String(err)}`,
+        });
+        return false;
+      }
+      if (decision === false) {
+        // 与 core 的差异（有意）：core 会顺手 `unregister`（它没有别的记录），
+        // 这里保留注册状态 —— 取消安装 ≠ 从注册表消失，调用方可以稍后重试。
+        return false;
+      }
+    }
+
+    this.emit('before:install', { name, plugin: registered.plugin });
+    try {
+      const outcome = installFn.call(registered.plugin, context, registered.options);
+      // 同步插件：立即落状态（避免调用方必须 await 才能看到 installed=true）
+      if (outcome && typeof (outcome as Promise<unknown>).then === 'function') {
+        await (outcome as Promise<unknown>);
+      }
+    } catch (err) {
+      // ⚠️ 2026-11-05 修（P1）：此前**不发任何事件**就往外抛 —— `before:install` 已经发过、
+      //   `after:install` 永远不会来，配对的事件监听器（devtools / 日志）就此泄漏状态。
+      //   现在先补一条 `error`，再把原异常抛给调用方（保持既有「install 失败会抛」的语义）。
+      this.emit('error', {
+        success: false,
+        name,
+        error: `Plugin "${name}" install() failed: ${err instanceof Error ? err.message : String(err)}`,
+      });
+      throw err;
+    }
+
     registered.installed = true;
     registered.installedAt = Date.now();
     this.emit('after:install', { name, plugin: registered.plugin });
+
+    const afterInstall = registered.plugin.afterInstall as
+      | ((ctx: TContext) => void | Promise<void>)
+      | undefined;
+    if (typeof afterInstall === 'function') {
+      try {
+        await afterInstall.call(registered.plugin, context as TContext);
+      } catch (err) {
+        // 已经装好了：钩子失败不改 `installed`，但必须留痕（否则「装完了但收尾没做」无人知晓）
+        this.emit('error', {
+          success: false,
+          name,
+          error: `Plugin "${name}" afterInstall() failed: ${err instanceof Error ? err.message : String(err)}`,
+        });
+      }
+    }
+
     return true;
   }
 
@@ -291,6 +384,7 @@ export class PluginRegistry {
       missing: [],
       missingOptional: [],
       versionMismatch: [],
+      requiredVersionMismatch: [],
     };
 
     if (!this.isEnhancedPlugin(plugin)) {
@@ -308,11 +402,14 @@ export class PluginRegistry {
           // 简单版本比较（支持前缀 ^, ~, >=, >, <, <=, =）
           if (!this.satisfiesVersion(registered.plugin.version, dep.version)) {
             result.satisfied = false;
-            result.versionMismatch.push({
+            const mismatch = {
               name: dep.name,
               expected: dep.version,
               actual: registered.plugin.version,
-            });
+            };
+            result.versionMismatch.push(mismatch);
+            // 必需依赖的版本不符会让 `satisfied=false`，单独留一份便于调用方拼提示
+            result.requiredVersionMismatch!.push(mismatch);
           }
         }
       }
@@ -349,6 +446,8 @@ export class PluginRegistry {
     const visited = new Set<string>();
     const visiting = new Set<string>();
     const result: EnhancedPlugin[] = [];
+    /** 声明了必需依赖、但该依赖没注册（此前**完全静默**，排序结果看着一切正常） */
+    const missing = new Set<string>();
 
     const visit = (name: string) => {
       if (visited.has(name)) return;
@@ -360,12 +459,15 @@ export class PluginRegistry {
 
       const registered = this.plugins.get(name);
       if (registered && this.isEnhancedPlugin(registered.plugin)) {
-        // 先访问依赖
-        if (registered.plugin.dependencies) {
-          for (const dep of registered.plugin.dependencies) {
-            if (this.plugins.has(dep.name)) {
-              visit(dep.name);
-            }
+        const requiredDeps = registered.plugin.dependencies ?? [];
+        const optionalDeps = registered.plugin.optionalDependencies ?? [];
+
+        // 先访问依赖：必需 + **已注册的可选**（可选依赖若在场，依赖方也应排在它后面）
+        for (const dep of [...requiredDeps, ...optionalDeps]) {
+          if (this.plugins.has(dep.name)) {
+            visit(dep.name);
+          } else if (requiredDeps.includes(dep)) {
+            missing.add(`${name} → ${dep.name}`);
           }
         }
       }
@@ -381,6 +483,16 @@ export class PluginRegistry {
     // 按注册顺序遍历
     for (const name of this.plugins.keys()) {
       visit(name);
+    }
+
+    // ⚠️ 2026-11-05 新增：缺依赖时**说出来**。此前 `resolveLoadOrder()` 会安静地跳过
+    //   未注册的依赖并返回一个「看起来完全正常」的顺序 —— 调用方按它逐个安装，
+    //   装到某个插件时才发现依赖根本不在（或者更糟：运行时才发现）。
+    if (missing.size > 0) {
+      warn(
+        `[plugin] resolveLoadOrder(): 以下必需依赖未注册，排序时已跳过 —— ` +
+          `${[...missing].join('; ')}。请先注册这些依赖，否则插件会在运行时缺少能力。`,
+      );
     }
 
     return result;
@@ -505,113 +617,175 @@ export class PluginRegistry {
   }
 
   /**
+   * 找出**声明了必需依赖** `name` 的其它插件（用于卸载告警）。
+   *
+   * 只看 `dependencies`，不看 `optionalDependencies` —— 可选项缺席是被允许的。
+   */
+  private findDependents(name: string): string[] {
+    const result: string[] = [];
+    for (const [otherName, registered] of this.plugins) {
+      if (otherName === name) continue;
+      if ((registered.plugin.dependencies ?? []).some((dep) => dep.name === name)) {
+        result.push(otherName);
+      }
+    }
+    return result;
+  }
+
+  /**
    * 检查插件冲突
    */
   private checkConflicts<TOptions = unknown, TContext = unknown>(
     plugin: EnhancedPlugin<TContext, TOptions>,
   ): string[] | null {
-    if (!plugin.conflicts || plugin.conflicts.length === 0) {
-      return null;
-    }
-
     const conflicts: string[] = [];
-    for (const conflictName of plugin.conflicts) {
+
+    // 正向：本插件声明与谁冲突
+    for (const conflictName of plugin.conflicts ?? []) {
       if (this.plugins.has(conflictName)) {
         conflicts.push(conflictName);
       }
     }
 
-    return conflicts.length > 0 ? conflicts : null;
+    // ⚠️ 2026-11-05 修（P1）：**反向**也要查。此前只查「本插件声明了谁」——
+    //   于是 `conflicts` 的生效与否取决于**注册顺序**：
+    //     先注册 a、再注册 b(conflicts:['a']) ⇒ 被拦下 ✓
+    //     先注册 b(conflicts:['a'])、再注册 a        ⇒ **放行** ✗（b 的声明被无视）
+    //   冲突是对称关系，不能只有后来者让步。
+    for (const [otherName, registered] of this.plugins) {
+      if (otherName === plugin.name) continue;
+      if ((registered.plugin.conflicts ?? []).includes(plugin.name)) {
+        conflicts.push(otherName);
+      }
+    }
+
+    return conflicts.length > 0 ? [...new Set(conflicts)] : null;
   }
 
   /**
-   * 简单的 semver 版本比较
-   * @description 支持 ^, ~, >=, >, <, <=, = 前缀
+   * 判断 `actual` 是否满足 `range`。
+   *
+   * ⚠️ 2026-11-05 重写（P0）：旧实现只认**三段式**版本号，且不支持区间交集 ——
+   *   于是下面这些**完全标准**的写法全被判成「不满足」：
+   *
+   *   | 依赖声明 | 实际版本 | 旧结果 | 现在 |
+   *   |---|---|---|---|
+   *   | `^1.0`   | 1.2.3 | ❌ 不满足 | ✅ |
+   *   | `~1.2`   | 1.2.3 | ❌ 不满足 | ✅ |
+   *   | `1.2`    | 1.2.3 | ❌ 不满足 | ✅ |
+   *   | `*`      | 1.2.3 | ❌ 不满足 | ✅ |
+   *   | `>=1.0.0 <2.0.0` | **3.0.0** | ✅ **放行（错）** | ❌ |
+   *
+   *   这条不是「体验问题」：`@lytjs/core` 的 `app.use()` 在依赖不满足时**直接抛错拒绝安装**，
+   *   所以写成 `^1.0` 的插件根本装不上，而错误信息看起来像「版本真的不兼容」。
+   *
+   * 支持：`*` / `x` / 空、精确、`=`、`^`、`~`、`>`、`>=`、`<`、`<=`、
+   * 缺省段（`1` / `1.2`）、空格分隔的**交集**（`>=1.0.0 <2.0.0`）、`||` 分隔的**并集**。
    */
   private satisfiesVersion(actual: string, expected: string): boolean {
     const actualVersion = this.parseVersion(actual);
     if (!actualVersion) return false;
 
-    // 解析期望版本范围
     const range = expected.trim();
-    let prefix = '';
-    let expectedVersion = range;
+    if (range === '' || range === '*' || range === 'x' || range === 'X') return true;
 
-    if (
-      range.startsWith('^') ||
-      range.startsWith('~') ||
-      range.startsWith('>') ||
-      range.startsWith('<') ||
-      range.startsWith('=')
-    ) {
-      const firstChar = range[0] as string;
-      prefix = firstChar;
-      expectedVersion = range.slice(1).trim();
-      // 处理 >= 和 <=
-      if (range.startsWith('>=') || range.startsWith('<=')) {
-        prefix = range.slice(0, 2);
-        expectedVersion = range.slice(2).trim();
+    // `||` 并集：任一分支满足即可
+    if (range.includes('||')) {
+      return range.split('||').some((part) => this.satisfiesVersion(actual, part.trim()));
+    }
+
+    // 空格分隔 = 交集（每个比较符都要满足）
+    const parts = range.split(/\s+/).filter(Boolean);
+    if (parts.length > 1) {
+      return parts.every((part) => this.satisfiesVersion(actual, part));
+    }
+
+    // 拆出比较符（注意 `>=` / `<=` 要排在 `>` / `<` 前面）
+    let prefix = '';
+    let rest = range;
+    for (const candidate of ['>=', '<=', '>', '<', '=', '^', '~']) {
+      if (rest.startsWith(candidate)) {
+        prefix = candidate;
+        rest = rest.slice(candidate.length).trim();
+        break;
       }
     }
 
-    const expectedParsed = this.parseVersion(expectedVersion);
+    const expectedParsed = this.parseVersion(rest);
     if (!expectedParsed) return false;
 
+    const cmp = this.compareVersions(actualVersion, expectedParsed);
+    const explicitParts = this.countVersionParts(rest);
+
     switch (prefix) {
-      case '':
-      case '=':
-        // 精确匹配
-        return (
-          actualVersion.major === expectedParsed.major &&
-          actualVersion.minor === expectedParsed.minor &&
-          actualVersion.patch === expectedParsed.patch
-        );
-
-      case '^':
-        // 兼容主版本（^1.2.3 允许 >=1.2.3 <2.0.0）
-        return (
-          actualVersion.major === expectedParsed.major &&
-          (actualVersion.minor > expectedParsed.minor ||
-            (actualVersion.minor === expectedParsed.minor &&
-              actualVersion.patch >= expectedParsed.patch))
-        );
-
-      case '~':
-        // 兼容次版本（~1.2.3 允许 >=1.2.3 <1.3.0）
-        return (
-          actualVersion.major === expectedParsed.major &&
-          actualVersion.minor === expectedParsed.minor &&
-          actualVersion.patch >= expectedParsed.patch
-        );
-
       case '>':
-        return this.compareVersions(actualVersion, expectedParsed) > 0;
-
+        return cmp > 0;
       case '>=':
-        return this.compareVersions(actualVersion, expectedParsed) >= 0;
-
+        return cmp >= 0;
       case '<':
-        return this.compareVersions(actualVersion, expectedParsed) < 0;
-
+        return cmp < 0;
       case '<=':
-        return this.compareVersions(actualVersion, expectedParsed) <= 0;
-
-      default:
-        return false;
+        return cmp <= 0;
+      case '=':
+        return cmp === 0;
+      case '^': {
+        if (cmp < 0) return false;
+        // ^1.2.3 ⇒ <2.0.0；^0.2.3 ⇒ <0.3.0；^0.0.3 ⇒ <0.0.4；^0.0 ⇒ <0.1.0
+        if (expectedParsed.major > 0) return actualVersion.major === expectedParsed.major;
+        if (expectedParsed.minor > 0) {
+          return actualVersion.major === 0 && actualVersion.minor === expectedParsed.minor;
+        }
+        if (explicitParts >= 3) {
+          return (
+            actualVersion.major === 0 &&
+            actualVersion.minor === 0 &&
+            actualVersion.patch === expectedParsed.patch
+          );
+        }
+        return actualVersion.major === 0 && actualVersion.minor === 0;
+      }
+      case '~': {
+        if (cmp < 0) return false;
+        // ~1.2.3 / ~1.2 ⇒ <1.3.0
+        return (
+          actualVersion.major === expectedParsed.major &&
+          actualVersion.minor === expectedParsed.minor
+        );
+      }
+      default: {
+        // 无比较符：三段 ⇒ 精确；缺省段 ⇒ x-range（`1.2` ⇒ 1.2.x，`1` ⇒ 1.x）
+        if (explicitParts >= 3) return cmp === 0;
+        if (explicitParts === 2) {
+          return (
+            actualVersion.major === expectedParsed.major &&
+            actualVersion.minor === expectedParsed.minor
+          );
+        }
+        return actualVersion.major === expectedParsed.major;
+      }
     }
   }
 
   /**
-   * 解析版本号字符串
+   * 解析版本号字符串（缺省段按 0 补齐：`1` ⇒ 1.0.0、`1.2` ⇒ 1.2.0）。
    */
   private parseVersion(version: string): { major: number; minor: number; patch: number } | null {
-    const match = version.match(/^(\d+)\.(\d+)\.(\d+)/);
+    const match = version.trim().match(/^v?(\d+)(?:\.(\d+))?(?:\.(\d+))?/);
     if (!match) return null;
     return {
       major: parseInt(match[1]!, 10),
-      minor: parseInt(match[2]!, 10),
-      patch: parseInt(match[3]!, 10),
+      minor: match[2] === undefined ? 0 : parseInt(match[2], 10),
+      patch: match[3] === undefined ? 0 : parseInt(match[3], 10),
     };
+  }
+
+  /** 版本字符串里**显式写了几段**（`1` ⇒ 1、`1.2` ⇒ 2、`1.2.3` ⇒ 3） */
+  private countVersionParts(version: string): number {
+    const match = version.trim().match(/^v?(\d+)(?:\.(\d+))?(?:\.(\d+))?/);
+    if (!match) return 0;
+    if (match[3] !== undefined) return 3;
+    if (match[2] !== undefined) return 2;
+    return 1;
   }
 
   /**

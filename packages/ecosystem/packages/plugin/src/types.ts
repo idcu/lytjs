@@ -137,8 +137,16 @@ export interface DependencyResult {
   missing: Array<{ name: string; version?: string }>;
   /** 缺少的可选依赖 */
   missingOptional: Array<{ name: string; version?: string }>;
-  /** 版本不兼容的依赖 */
+  /** 版本不兼容的依赖（**必需 + 可选**混在一起） */
   versionMismatch: Array<{ name: string; expected: string; actual?: string }>;
+  /**
+   * 仅**必需依赖**的版本不兼容项。
+   *
+   * ⚠️ 2026-11-05 新增：`versionMismatch` 把必需与可选的版本不符混在同一个数组里，
+   *   而 `satisfied` 只反映必需依赖 —— 于是调用方无法从 `versionMismatch` 判断
+   *   「该不该拦下安装」（可选项版本不符是允许的）。`PluginRegistry.install()` 用它拼错误信息。
+   */
+  requiredVersionMismatch?: Array<{ name: string; expected: string; actual?: string }>;
 }
 
 /** 插件生命周期事件类型 */
