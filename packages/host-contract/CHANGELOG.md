@@ -1,6 +1,13 @@
-# @lytjs/host-contract 更新日志
+## [未发布] - 2026-11-04（第二轮）
 
-## [未发布] - 2026-11-04
+### ✨ 新增（可选能力，向后兼容）
+
+- `RendererHost.getFormState?(el: HE, key: string): { live: unknown; initial: unknown } | undefined`：
+  读表单状态属性的「实时值」与「初始值」。
+  水合时用它区分「DOM 里的值是服务端渲染的」还是「用户在 JS 到达之前自己改的」——
+  后者必须**保留**，否则慢网络下用户已经敲进去的字会被抹掉。
+  初始值用 DOM 标准的 `defaultValue` / `defaultChecked` / `defaultSelected`
+  （它们反映的正是解析 HTML 时的值，即服务端渲染出来的那个）。
 
 ### ✨ 新增（可选能力，向后兼容）
 

@@ -17,6 +17,17 @@
  * 所以本门禁的核心判据只有一条：**`hydrate(ssrHtml)` 的 DOM === `mount()` 的 DOM**。
  * 另外单独断言「节点被复用」（否则等于重新挂载，水合的全部意义就没了）。
  *
+ * ## 2026-11-04 第二轮（收敛语义）抓到的 6 个缺陷
+ *
+ * | # | 缺陷 | 实测 |
+ * |---|---|---|
+ * | 6 | 认领是「全局搜索」而非「游标」 | SSR `p,span` + 客户端 `span,p` ⇒ 水合后仍是 `p,span`（顺序不收敛） |
+ * | 7 | 根内的 `<script type="application/json">` 被当多余节点删掉 | hydration data 丢失，无报错 |
+ * | 8 | 水合按 vnode 无条件写表单 props | 用户在 JS 到达前输入的文本被抹掉（`typed by user` → `server`） |
+ * | 9 | 多根（Fragment）根节点不做容器级收敛 | SSR 3 个根、客户端 2 个 ⇒ 第 3 个根一直留在页面上 |
+ * | 10 | 片段锚点被追加到容器末尾（且在收敛时被删） | 卸载时摘不到子节点；新节点插到片段外 |
+ * | 11 | `createHydrationFunctions` 静默产出「不可交互的页面」 | 点击后文本不变、改状态 DOM 不动，无任何提示 |
+ *
  * ## 2026-11-04 首次运行抓到的 5 个缺陷
  *
  * | # | 缺陷 | 实测 |
@@ -335,6 +346,258 @@ section('[7] v-if 切换 / Teleport / KeepAlive');
   const Inner = { render: () => h('p', {}, 'inner') };
   const C = { render: () => h('div', {}, [h(KeepAlive, null, [h(Inner)])]) };
   await sameAsMount('KeepAlive', C);
+}
+
+// ══════════════════════════════════════════════════════════
+section('[8] 游标语义：顺序不一致时必须收敛到客户端顺序');
+{
+  // 8.1 两个不同标签互换位置。旧实现是「在容器里搜索第一个匹配的节点」，
+  //     于是 <span> 会跨过 <p> 去认领后面那个 —— 两个都「命中」，DOM 顺序却还是 p,span。
+  const Client = { render: () => h('div', {}, [h('span', {}, 'S'), h('p', {}, 'P')]) };
+  const c = await hydrateWith(Client, '<div><p>P</p><span>S</span></div>');
+  check(
+    '标签互换：以客户端顺序为准（此前仍是服务端顺序）',
+    norm(c.innerHTML) === '<div><span>S</span><p>P</p></div>',
+    norm(c.innerHTML),
+  );
+  await sameAsMount('标签互换', Client, '<div><p>P</p><span>S</span></div>');
+}
+{
+  // 8.2 同标签兄弟前插：旧的「搜索」实现会认领后面那个，文本被改对但节点身份错位
+  const Client = { render: () => h('div', {}, [h('b', {}, 'NEW'), h('b', {}, 'OLD')]) };
+  const c = await hydrateWith(Client, '<div><b>OLD</b></div>');
+  check(
+    '同标签前插：顺序与内容都对',
+    norm(c.innerHTML) === '<div><b>NEW</b><b>OLD</b></div>',
+    norm(c.innerHTML),
+  );
+}
+{
+  // 8.3 keyed 列表逆序：**文本/属性**必须收敛到客户端（节点身份按位置配对 —— 见评估 §31.6）
+  const mk = (order) => ({
+    render: () =>
+      h(
+        'ul',
+        {},
+        order.map((k) => h('li', { key: k, 'data-k': String(k) }, String(k))),
+      ),
+  });
+  const c = await hydrateWith(
+    mk([3, 2, 1]),
+    '<ul><li data-k="1">1</li><li data-k="2">2</li><li data-k="3">3</li></ul>',
+  );
+  check(
+    'keyed 逆序：内容按客户端顺序落位',
+    norm(c.innerHTML) ===
+      '<ul><li data-k="3">3</li><li data-k="2">2</li><li data-k="1">1</li></ul>',
+    norm(c.innerHTML),
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+section('[9] 服务端资源节点：不能被当成「多余节点」删掉');
+{
+  // 9.1 SSG 常把序列化状态塞在根节点里 —— 上一轮的收敛逻辑把它删了（丢数据、无报错）
+  const Client = { render: () => h('div', { id: 'root' }, [h('p', {}, 'x')]) };
+  const ssrHtml =
+    '<div id="root"><p>x</p><script type="application/json">{"token":"abc"}</script></div>';
+  const c = await hydrateWith(Client, ssrHtml);
+  const script = c.querySelector('script[type="application/json"]');
+  check('根内的 <script type="application/json"> 被保留', script !== null, c.innerHTML);
+  check(
+    '保留的 hydration data 内容可读（不是空壳）',
+    script !== null && JSON.parse(script.textContent).token === 'abc',
+    script?.textContent,
+  );
+}
+{
+  const Client = { render: () => h('div', {}, [h('p', {}, 'x')]) };
+  const c = await hydrateWith(Client, '<div><style>.a{color:red}</style><p>x</p></div>');
+  check('根内的 <style> 被保留', c.querySelector('style') !== null, c.innerHTML);
+  const c2 = await hydrateWith(Client, '<div><noscript>需要 JS</noscript><p>x</p></div>');
+  check('根内的 <noscript> 被保留', c2.querySelector('noscript') !== null, c2.innerHTML);
+}
+{
+  // 对照：普通的多余元素**必须**仍然被删 —— 否则「一律不删」也能通过上面几条
+  const Client = { render: () => h('div', {}, [h('p', {}, 'x')]) };
+  const c = await hydrateWith(Client, '<div><span class="stale">stale</span><p>x</p></div>');
+  check(
+    '对照：普通多余元素仍被删除',
+    norm(c.innerHTML) === '<div><p>x</p></div>',
+    norm(c.innerHTML),
+  );
+  const c2 = await hydrateWith(Client, '<div><!--stale--><p>x</p></div>');
+  check('对照：多余注释仍被清理', !c2.innerHTML.includes('stale'), c2.innerHTML);
+}
+
+// ══════════════════════════════════════════════════════════
+section('[10] 表单状态：用户在 JS 到达之前的输入不能被抹掉');
+{
+  const Client = { render: () => h('input', { value: 'server' }) };
+
+  // 对照：没人动过 ⇒ 值就是服务端渲染的那个（收敛路径正常工作）
+  const plain = await hydrateWith(Client, '<input value="server">');
+  check(
+    '对照：没人动过时值保持服务端渲染的内容',
+    plain.querySelector('input').value === 'server',
+    plain.querySelector('input').value,
+  );
+
+  // 场景：慢网络下用户已经敲了字，之后脚本才加载完成
+  const host = document.createElement('div');
+  host.innerHTML = '<input value="server">';
+  document.body.appendChild(host);
+  host.querySelector('input').value = 'typed by user';
+  await createApp(Client).mount(host, { hydrate: true });
+  await sleep();
+  check(
+    '已输入的内容在水合后仍然存在（此前被抹成 server）',
+    host.querySelector('input').value === 'typed by user',
+    host.querySelector('input').value,
+  );
+}
+{
+  const Client = { render: () => h('input', { type: 'checkbox', checked: false }) };
+  const host = document.createElement('div');
+  host.innerHTML = '<input type="checkbox">';
+  document.body.appendChild(host);
+  const box = host.querySelector('input');
+  box.checked = true; // 用户已经勾上
+  await createApp(Client).mount(host, { hydrate: true });
+  await sleep();
+  check('已勾选的复选框不被取消', host.querySelector('input').checked === true);
+}
+{
+  const Client = {
+    render: () =>
+      h('select', { value: 'a' }, [
+        h('option', { value: 'a' }, 'A'),
+        h('option', { value: 'b' }, 'B'),
+      ]),
+  };
+  const host = document.createElement('div');
+  host.innerHTML = '<select><option value="a">A</option><option value="b">B</option></select>';
+  document.body.appendChild(host);
+  host.querySelector('select').value = 'b'; // 用户已经选了 B
+  await createApp(Client).mount(host, { hydrate: true });
+  await sleep();
+  check('已选择的下拉项不被重置', host.querySelector('select').value === 'b');
+}
+{
+  // 对照：没人动过、两端不同 ⇒ 必须收敛到客户端（不能为了「保护用户输入」一律跳过）
+  const Client = { render: () => h('input', { value: 'client' }) };
+  const c = await hydrateWith(Client, '<input value="server">');
+  check(
+    '对照：两端 value 不同且用户没动过 ⇒ 以客户端为准',
+    c.querySelector('input').value === 'client',
+    c.querySelector('input').value,
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+section('[11] 多根（Fragment）根节点：容器级收敛与锚点');
+{
+  const Client = { render: () => [h('p', {}, '1'), h('p', {}, '2')] };
+  const hydrated = await hydrateWith(Client);
+  const mounted = await mountOnly(Client);
+  check('多根：逐字等于客户端渲染（含片段锚点）', hydrated.innerHTML === mounted.innerHTML, {
+    水合: hydrated.innerHTML,
+    客户端: mounted.innerHTML,
+  });
+}
+{
+  // SSR 多一个根：此前**完全没删**（元素级收敛覆盖不到「根就是 Fragment」）
+  const Client = { render: () => [h('p', {}, '1'), h('p', {}, '2')] };
+  const c = await hydrateWith(Client, '<p>1</p><p>2</p><p>3</p>');
+  check('SSR 多一个根：残留根被删除', norm(c.innerHTML) === '<p>1</p><p>2</p>', norm(c.innerHTML));
+}
+{
+  // 客户端多一个根：必须落在片段内（结束锚点之前），不能跑到锚点后面
+  const Client = { render: () => [h('p', {}, '1'), h('p', {}, '2'), h('p', {}, '3')] };
+  const hydrated = await hydrateWith(Client, '<p>1</p><p>2</p>');
+  const mounted = await mountOnly(Client);
+  check(
+    '客户端多一个根：插在片段内（与客户端渲染一致）',
+    hydrated.innerHTML === mounted.innerHTML,
+    { 水合: hydrated.innerHTML, 客户端: mounted.innerHTML },
+  );
+}
+{
+  // 片段范围不能把「不属于本片段」的服务端内容包进去 —— 否则卸载时会一起删掉
+  const Client = { render: () => [h('p', {}, '1')] };
+  const c = await hydrateWith(Client, '<p>1</p><script type="application/json">{"a":1}</script>');
+  const script = c.querySelector('script[type="application/json"]');
+  check('片段外的资源节点被保留', script !== null, c.innerHTML);
+  const app = createApp(Client);
+  const host = document.createElement('div');
+  host.innerHTML = '<p>1</p><script type="application/json">{"a":1}</script>';
+  document.body.appendChild(host);
+  await app.mount(host, { hydrate: true });
+  await sleep();
+  app.unmount();
+  await sleep();
+  check(
+    '卸载后资源节点仍在（片段范围没把它包进去）',
+    host.querySelector('script[type="application/json"]') !== null,
+    host.innerHTML,
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+section('[12] 陷阱 API：createHydrationFunctions 不能是静默的');
+{
+  const adapter = await import(`${ROOT}/packages/adapter-web/dist/index.mjs`);
+  check(
+    'createHydrationFunctions 仍是导出（删属于破坏性变更）',
+    typeof adapter.createHydrationFunctions === 'function',
+  );
+  const calls = [];
+  const original = console.warn;
+  console.warn = (...args) => calls.push(args.map(String).join(' '));
+  try {
+    adapter.createHydrationFunctions({});
+  } finally {
+    console.warn = original;
+  }
+  const warned = calls.some((line) => line.includes('createHydrationFunctions'));
+  check('调用时给出弃用提示（说明它不会接管响应式）', warned, warned ? undefined : calls);
+  check(
+    '提示里指明了正确入口',
+    calls.some((line) => line.includes('mount') && line.includes('hydrate')),
+    calls,
+  );
+}
+{
+  // 指南曾写「app.mount('#app') 就会自动水合」—— 实测不会：服务端那份 HTML 留着，
+  // 客户端又追加一份（连 id 都重复）。现在至少要在「有内容 + 没开 hydrate」时告警。
+  const C = { render: () => h('div', { id: 'root' }, 'client') };
+  const capture = async (container) => {
+    const calls = [];
+    const original = console.warn;
+    console.warn = (...args) => calls.push(args.map(String).join(' '));
+    try {
+      await createApp(C).mount(container);
+      await sleep(20);
+    } finally {
+      console.warn = original;
+    }
+    return calls;
+  };
+
+  const nonEmpty = document.createElement('div');
+  nonEmpty.innerHTML = '<div id="root">server</div>';
+  document.body.appendChild(nonEmpty);
+  const warned = await capture(nonEmpty);
+  check(
+    'mount 到「有内容但没开 hydrate」的容器 ⇒ 告警（否则内容被静默追加）',
+    warned.some((line) => line.includes('hydrate')),
+    warned,
+  );
+
+  const empty = document.createElement('div');
+  document.body.appendChild(empty);
+  const quiet = await capture(empty);
+  check('对照：空容器挂载不告警', quiet.length === 0, quiet);
 }
 
 // ══════════════════════════════════════════════════════════

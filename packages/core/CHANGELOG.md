@@ -1,5 +1,17 @@
 # @lytjs/core
 
+## [未发布] - 2026-11-04
+
+### ✨ 新增（诊断）
+
+- **`app.mount()` 在「容器里已有内容却没开 `hydrate`」时告警**：这是 SSR 页面最常见的
+  误用 —— 指南曾写「`app.mount('#app')` 会自动水合」，实际不会：服务端那份 HTML 留着、
+  客户端又追加一份 ⇒ 页面出现**两份相同内容**（连 `id` 都重复）。
+  实测：`<div id="root">server</div>` + `mount('#app')` ⇒
+  `<div id="root">server</div><div id="root">client</div>`。
+  不自动改走水合（挂载到「有内容的容器」也可能是用户有意为之，静默改语义更危险），
+  只提示，并指明正确写法 `app.mount(el, { hydrate: true })`。
+
 ## [6.9.6] - 2026-06-06
 
 ### 🚀 版本升级

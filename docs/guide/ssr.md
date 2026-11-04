@@ -168,12 +168,33 @@ Hydration 是将服务端渲染的静态 HTML "激活"为可交互应用的过�
 import { createApp } from '@lytjs/core';
 import App from './App';
 
-// 客户端使用 createApp 进行水合
-const app = createApp(App);
-app.mount('#app');
+// ⚠️ 必须显式开启 hydrate
+createApp(App).mount('#app', { hydrate: true });
 ```
 
-LytJS 会自动检测服务端渲染的标记（`data-server-rendered`），并复用已有的 DOM 节点，而非重新创建。
+> **没有 `{ hydrate: true }` 就不会水合**：`mount('#app')` 会把服务端那份 HTML
+> 留在原地、再把客户端渲染结果**追加**进去 ⇒ 页面出现两份相同内容（连 `id` 都重复）。
+> 为此 `mount()` 在「容器里已有内容却没开 hydrate」时会给出告警，但不会替你改语义。
+
+水合的语义是「**复用 + 收敛到客户端 vnode**」：
+
+| 情况                                                    | 行为                                                      |
+| ------------------------------------------------------- | --------------------------------------------------------- |
+| 节点对得上（类型 + 标签名）                             | 复用既有 DOM，只接上 props / 事件 / 响应式                |
+| 服务端多出来的普通节点                                  | 删除（并给出 mismatch 告警）                              |
+| 客户端多出来的节点                                      | 新建，并插到正确位置                                      |
+| 服务端独有的属性                                        | 清理（`value` / `checked` / `selected` 除外，见下）       |
+| 根内的 `<script>` / `<style>` / `<link>` / `<noscript>` | **保留** —— SSG 常把序列化状态塞在根里，关键 CSS 也在其中 |
+| 用户在 JS 到达前改过的表单状态                          | **保留** —— 慢网络下用户已经敲进去的字不会被抹掉          |
+
+> ⚠️ 不要用 `@lytjs/adapter-web` 的 `createHydrationFunctions()`：它**只做 DOM 匹配**，
+> 不建立组件实例与响应式 effect ⇒ 页面看起来完全正常，但点了没反应、改状态 DOM 不动。
+> （调用时会给弃用提示，正确入口就是上面的 `mount(el, { hydrate: true })`。）
+
+> ⚠️ 两端顺序不一致时以**客户端**为准（SSR `p,span` + 客户端 `span,p` ⇒ 水合后 `span,p`）。
+> 但节点身份是**按位置**配对的（不做 keyed 匹配）—— 有状态元素（`<input>`、
+> 正在播放的 `<video>`、`<iframe>`）在「两端列表顺序不同」时会串。
+> 这类页面请保证两端渲染同一个顺序。
 
 ### Hydration 注意事项
 

@@ -166,6 +166,12 @@ Readable.fromWeb(stream).pipe(process.stdout);
 
 ## createHydrationFunctions()
 
+> ⚠️ **已弃用（2026-11-04）**：这个函数**只做 DOM 匹配**，不建立组件实例与响应式
+> effect —— 用它「水合」出来的页面看起来完全正常，但点了没反应、改状态 DOM 不动。
+> 请改用 `createApp(root).mount(el, { hydrate: true })`（复用同一套渲染器，
+> 组件实例 / effect / 事件 / 生命周期都会照常建立）。
+> 调用本函数时会给出一次弃用提示。
+
 创建水合（hydration）函数，用于将 SSR 生成的 HTML 与客户端应用进行关联。
 
 ### 签名

@@ -1,6 +1,17 @@
-# @lytjs/adapter-web 更新日志
+## [未发布] - 2026-11-04（第二轮）
 
-## [未发布] - 2026-11-04
+### 🐞 修复 / 标注
+
+- **`WebRendererHost.getFormState()`**：读 `value` / `checked` / `selected` 的
+  实时值与初始值（`<select>` 的初始值取「带 `selected` 的 option」或第一个 option）。
+  渲染器用它判断「用户是否在 JS 到达之前改过表单」，改过就不覆盖。
+  同时转发进 `web-dom-renderer` 的 `RendererOptions`。
+- **`createHydrationFunctions()` 标注 `@deprecated` 并加运行时提示**（P1）：
+  它只做 DOM 匹配，**不建立组件实例与响应式 effect** ⇒ 用它「水合」出来的页面
+  看起来完全正常，但点击不触发更新、外部改状态 DOM 不动（实测：点按钮文本仍是 `0`，
+  而 `createApp(C).mount(el, { hydrate: true })` 正常变成 `1`）。
+  留着不删是因为它是公开导出（删属于破坏性变更），但**不能再是静默的**：
+  调用时用 `warnOnce` 指明正确入口。彻底方案（删除或改为委托）见评估 §31.6。
 
 ### 🐞 修复（水合属性清理拿不到宿主能力）
 

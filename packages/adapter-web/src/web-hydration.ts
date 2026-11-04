@@ -9,7 +9,7 @@
 import type { VNode } from '@lytjs/vdom';
 import { Fragment, Text, Comment, ShapeFlags } from '@lytjs/vdom';
 import { isArray, isFunction } from '@lytjs/common-is';
-import { warn } from '@lytjs/common-error';
+import { warn, warnOnce } from '@lytjs/common-error';
 import { WebRendererHost } from './web-host';
 import { patchProp } from './web-patch-props';
 
@@ -480,6 +480,19 @@ function hydrateNode(
 /**
  * 创建水合函数，用于将现有 DOM 与 vnode 匹配。
  *
+ * @deprecated 这个函数**只做 DOM 匹配**：它会认领既有节点、写 props（含事件监听），
+ *   但**不会创建组件实例、不会建立响应式 effect**。用它「水合」出来的页面
+ *   看起来完全正常（DOM 就是服务端那份），可是：
+ *
+ *   · 点击不触发状态更新（事件里改的 signal 没有渲染 effect 订阅）；
+ *   · 外部改状态，DOM 不动。
+ *
+ *   实测（2026-11-04）：`hydrate(h(C), container)` 后点击按钮，文本仍是 `0`；
+ *   而 `createApp(C).mount(container, { hydrate: true })` 正常变成 `1`。
+ *
+ *   请改用 `createApp(root).mount(container, { hydrate: true })` —— 它复用同一套
+ *   渲染器，因此组件实例 / effect / 事件 / 生命周期都照常建立。
+ *
  * @param _rendererOptions - 保留用于未来渲染器配置（当前未使用）
  * @param sharedVnodeMap - 可选的共享 vnodeMap，使水合和 DOM 渲染器使用同一映射
  */
@@ -487,6 +500,12 @@ export function createHydrationFunctions(
   _rendererOptions: Record<string, unknown>,
   sharedVnodeMap?: WeakMap<Element, VNode | null>,
 ): HydrationRenderer {
+  // 只提示一次：这个 API 是「陷阱」—— 名字叫 hydrate，产物却不可交互。
+  // 留着不删是因为它是公开导出（删属于破坏性变更），但**绝不能让它是静默的**。
+  warnOnce(
+    'createHydrationFunctions() 只做 DOM 匹配，不会建立组件实例与响应式 effect —— ' +
+      '用它水合出来的页面点了没反应。请改用 createApp(root).mount(el, { hydrate: true })。',
+  );
   const host = new WebRendererHost();
   const vnodeMap = sharedVnodeMap ?? new WeakMap<Element, VNode | null>();
 

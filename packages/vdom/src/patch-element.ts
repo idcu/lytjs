@@ -39,6 +39,10 @@ export interface RendererContext<HN, HE extends HN> {
   getTagName: ((el: HE) => string) | undefined;
   /** 水合用：取元素属性名（小写），用于清理 SSR 独有属性 */
   getAttributeNames: ((el: HE) => string[]) | undefined;
+  /** 水合用：读表单状态（实时值 vs 初始值），用于避免覆盖用户已输入的内容 */
+  getFormState:
+    | ((el: HE, key: string) => { live: unknown; initial: unknown } | undefined)
+    | undefined;
   /** 水合模式开关：`hydrate()` 入口置 true，首屏挂载期间复用既有 DOM */
   hydrating: boolean;
   /**
@@ -142,6 +146,12 @@ export interface RendererContext<HN, HE extends HN> {
 // ============================================================
 
 export interface ElementPatchAPI<HN, _HE extends HN> {
+  /**
+   * 删除容器里本次水合中从未被认领的节点（资源节点除外）。
+   *
+   * 元素级收敛在 `mountElement` 内部调用；多根（Fragment）根节点由 `hydrate()` 调用。
+   */
+  cleanupUnclaimedChildren: (container: HN, label: string) => number;
   mountElement: (
     vnode: VNode,
     container: HN,
@@ -224,30 +234,71 @@ export function createElementPatch<HN, HE extends HN>(
   const NODE_TYPE_COMMENT = 8;
 
   /**
-   * 在容器里找第一个**未被占用**且**类型匹配**（元素还需标签名相同）的既有节点。
+   * 水合时可以跳过的「噪声」节点。
    *
-   * - 命中即登记进 `hydrateUsed` ⇒ 兄弟同标签（`<li>`×3）不会认领到同一个节点；
-   * - 未命中返回 `null`，调用方退回「新建」（客户端比 SSR 多出来的节点）；
-   * - 顺带跳过的节点**不删除**（容器里可能有本组件之外的其它内容，删不得）。
+   * ⚠️ 2026-11-04 新增。服务端 HTML 常常带格式化缩进与占位注释：
    *
-   * ⚠️ 宿主没有 `firstChild`（`nextSibling` 只接受一个参数），故按
-   * `getChildNodes` 的快照顺序扫描；水合期间只有「认领」不「插入」，
-   * 已被占用的节点靠 `hydrateUsed` 排除，因此不会错位。
+   *     <div>
+   *       <p>a</p>
+   *     </div>
+   *
+   * 若游标严格「只看当前节点」，第一版 `<p>` 会撞上 `"\n  "` 这个文本节点 ⇒ 判为不匹配
+   * ⇒ 新建一个 `<p>`、把既有 `<p>` 留作多余节点删掉。结果**正确但复用全丢**
+   * （水合退化成重新挂载，有状态元素全部重建）。
+   *
+   * 只跳**文本与注释**，且「期望的就是这个类型」时不跳 —— 否则会把真正要认领的节点跳过。
+   */
+  function isSkippableNode(node: HN, expectedType: number): boolean {
+    const { getNodeType } = ctx;
+    if (!getNodeType) return false;
+    const type = getNodeType(node);
+    if (type === expectedType) return false;
+    return type === NODE_TYPE_TEXT || type === NODE_TYPE_COMMENT;
+  }
+
+  /**
+   * 认领容器里**当前位置**的既有节点（类型 + 标签名都要匹配）。
+   *
+   * ⚠️ 2026-11-04 修（P1）：此前是「在容器里**搜索**第一个未被占用且类型匹配的节点」。
+   *   那个实现在「水合期间不插入节点」的前提下是安全的（注释里也这么写着），
+   *   但 2026-11-04 给水合补了「客户端多出来的节点要插到正确位置」之后，**前提不再成立**：
+   *
+   *     SSR:   `<div><p>P</p><span>S</span></div>`
+   *     客户端: `<div><span>S</span><p>P</p></div>`
+   *
+   *   `<span>` 的 vnode 会跳过游标处的 `<p>`、认领**后面**那个 `<span>`；
+   *   `<p>` 再认领前面的 `<p>`。两个都「命中」了，DOM 顺序却仍是 `p, span`
+   *   ⇒ 水合结果与「客户端直接渲染」的**结构不一致**（违反水合的基本不变量），
+   *   而下一次 patch 会按 vnode 顺序操作 DOM ⇒ 错位。
+   *
+   *   现在改为**游标语义**（与 `adapter-web/web-hydration.ts` 的 index 语义一致）：
+   *   只看当前位置，匹配就认领并前进；不匹配就返回 null，由调用方在游标**之前**新建节点。
+   *   代价是「中间多一个不相干元素」时不再跨过去复用 —— 那本来就是两端不一致的场景，
+   *   收敛到客户端才是正确行为。
    */
   function claimExisting(container: HN, nodeType: number, tag?: string): HN | null {
     const { getNodeType, getTagName, getChildNodes, hydrateUsed } = ctx;
     if (!getNodeType || !getTagName || !getChildNodes) return null;
     const children = getChildNodes(container);
-    for (let i = 0; i < children.length; i++) {
-      const node = children[i] as HN;
-      if (hydrateUsed.has(node)) continue;
-      if (getNodeType(node) !== nodeType) continue;
-      // 元素额外要求标签名一致（宿主返回小写标签名）
-      if (nodeType === NODE_TYPE_ELEMENT && getTagName(node as HE) !== tag) continue;
-      hydrateUsed.add(node);
-      return node;
+
+    let index = 0;
+    while (index < children.length) {
+      const node = children[index] as HN;
+      if (hydrateUsed.has(node) || isSkippableNode(node, nodeType)) {
+        index++;
+        continue;
+      }
+      break;
     }
-    return null;
+    if (index >= children.length) return null;
+
+    const node = children[index] as HN;
+    if (getNodeType(node) !== nodeType) return null;
+    // 元素额外要求标签名一致（宿主返回小写标签名）
+    if (nodeType === NODE_TYPE_ELEMENT && getTagName(node as HE) !== tag) return null;
+
+    hydrateUsed.add(node);
+    return node;
   }
 
   /**
@@ -270,6 +321,92 @@ export function createElementPatch<HN, HE extends HN>(
       if (!hydrateUsed.has(node)) return node;
     }
     return null;
+  }
+
+  /** 表单状态属性（写的是 DOM property，不是 attribute） */
+  const FORM_STATE_PROPS = new Set(['value', 'checked', 'selected']);
+
+  /**
+   * 水合时是否要**保留**用户已经改过的表单状态（不按 vnode 覆盖）。
+   *
+   * ⚠️ 2026-11-04 修（P1）：水合按 vnode 无条件写 props，会把**用户在 JS 到达之前
+   *   输入的内容抹掉**。实测（`<input value="server">`，水合前手动把 `input.value`
+   *   设为 `"typed by user"`）：水合后 `input.value` 变回 `"server"`。
+   *   慢网络下这是真实场景 —— 用户看到输入框已经能打字（SSR 的 HTML 是可交互的），
+   *   敲了几个字，脚本加载完成后**字就没了**，而且没有任何报错。
+   *
+   * 判据不是「DOM 与 vnode 不一致」，而是「**DOM 与它自己的初始值不一致**」：
+   *   · 一致 ⇒ 说明没人动过，按 vnode 覆盖（服务端/客户端数据不同时要收敛到客户端）；
+   *   · 不一致 ⇒ 说明用户（或浏览器自动填充）改过 ⇒ 保留用户的选择。
+   *
+   * 初始值用 DOM 标准的 `defaultValue` / `defaultChecked` / `defaultSelected` ——
+   * 它们反映的正是「解析 HTML 时的值」，即服务端渲染出来的那个。
+   */
+  function shouldKeepUserFormState(el: HE, key: string): boolean {
+    if (!FORM_STATE_PROPS.has(key)) return false;
+    const { getFormState } = ctx;
+    if (!getFormState) return false;
+    const state = getFormState(el, key);
+    if (!state) return false;
+    return state.live !== state.initial;
+  }
+
+  /**
+   * 服务端注入的「资源节点」—— 客户端 vnode 不描述它们，但**不能删**。
+   *
+   * ⚠️ 2026-11-04 修（P0）：上一轮给水合补了「删除未被认领的子节点」以收敛到客户端 vnode，
+   *   结果把根节点里的 `<script type="application/json">`（SSG / SSR 常把序列化状态
+   *   塞在根里）、`<style>`（关键 CSS）、`<noscript>` 一起删了 —— **丢数据、丢样式**，
+   *   而且没有任何报错。
+   *
+   *   这些标签的副作用**在 DOM 之外**（脚本执行 / 样式应用 / 资源加载），
+   *   与「多余的一个 `<div>`」完全不同类，因此单独开一个白名单：
+   *   它们既不是 vnode 的一部分、也不该被水合收敛掉，留在原地即可
+   *   （后续 patch 只操作 vnode 描述的节点，不会碰它们）。
+   */
+  function isPreservedResourceNode(node: HN): boolean {
+    const { getNodeType, getTagName } = ctx;
+    if (!getNodeType || !getTagName) return false;
+    if (getNodeType(node) !== NODE_TYPE_ELEMENT) return false;
+    const tag = getTagName(node as HE);
+    return (
+      tag === 'script' ||
+      tag === 'style' ||
+      tag === 'link' ||
+      tag === 'meta' ||
+      tag === 'noscript' ||
+      tag === 'base' ||
+      tag === 'title'
+    );
+  }
+
+  /**
+   * 删除容器里**本次水合中从未被认领**的节点，让 DOM 收敛到客户端 vnode。
+   *
+   * 两条调用路径：
+   * · 认领元素：它的 children 挂载完后清理（`mountElement`）；
+   * · 多根（Fragment）根节点：容器里除 vnode 描述的根之外的内容也是服务端残留，
+   *   由 `hydrate()` 在 patch 结束后统一清理（此前**完全没做**，实测 SSR 三个根、
+   *   客户端两个根时，第三个根会一直留在页面上）。
+   *
+   * 资源节点（`<script>` / `<style>` / …）不删，见 `isPreservedResourceNode`。
+   */
+  function cleanupUnclaimedChildren(container: HN, label: string): number {
+    const { getChildNodes } = ctx;
+    if (!getChildNodes) return 0;
+    let removed = 0;
+    for (const child of getChildNodes(container)) {
+      if (ctx.hydrateUsed.has(child)) continue;
+      if (isPreservedResourceNode(child)) continue;
+      ctx.remove(child);
+      removed++;
+    }
+    // 不包 `if (__DEV__)`：`warn()` 自带运行时判定（见 @lytjs/common-error 的 getDevMode），
+    // 而本包的构建把 `__DEV__` 烘成 false ⇒ 包起来等于**把告警删掉**。
+    if (removed > 0) {
+      warn(`Hydration mismatch: removed ${removed} extra node(s) in <${label}>.`);
+    }
+    return removed;
   }
 
   /**
@@ -325,8 +462,12 @@ export function createElementPatch<HN, HE extends HN>(
     const claimed = ctx.hydrating
       ? claimExisting(container, NODE_TYPE_ELEMENT, tag.toLowerCase())
       : null;
-    // 新建节点（SSR 里没有）要插在「下一个未认领的既有节点」之前，否则顺序会错
-    const insertAnchor = ctx.hydrating && !claimed ? nextUnclaimedChild(container) : anchor;
+    // 新建节点（SSR 里没有）要插在「下一个未认领的既有节点」之前，否则顺序会错。
+    // ⚠️ 2026-11-04：没有未认领节点时必须回落到调用方给的 `anchor` —— 对 Fragment 的
+    //   子节点来说那是**结束锚点**，直接 `null` 会把它追加到结束锚点**之后**
+    //   （跑到片段外面去了），后续 patch 的插入点就错了。
+    const insertAnchor =
+      ctx.hydrating && !claimed ? (nextUnclaimedChild(container) ?? anchor) : anchor;
     const el = (claimed ?? createElement(tag)) as HE;
     // 无论认领还是新建，都登记为「已占用」—— 否则当客户端比 SSR 多出节点时，
     // 后续兄弟 vnode 会把这里**新建**的节点误认成自己的（两个 vnode 共享一个 DOM 节点）
@@ -337,6 +478,8 @@ export function createElementPatch<HN, HE extends HN>(
     const props = vnode.props ?? EMPTY_OBJ;
     for (const key in props) {
       if (key === 'key' || key === 'ref') continue;
+      // 水合：用户已经改过的表单状态不覆盖（见 shouldKeepUserFormState）
+      if (ctx.hydrating && claimed && shouldKeepUserFormState(el, key)) continue;
       patchProp(el, key, null, props[key]);
     }
     // 水合：清掉「服务端有、客户端没有」的属性（`patchProp(null → v)` 只能加不能减）
@@ -361,19 +504,8 @@ export function createElementPatch<HN, HE extends HN>(
       //     客户端: `<div><i>I</i></div>`
       //     水合后 `<div><span class="only-server">S</span><i>I</i></div>` ← 脏内容留在页面上
       //   现在把「本次水合中从未被认领」的子节点删掉，让 DOM 收敛到客户端 vnode。
-      const childNodes = ctx.getChildNodes;
-      if (ctx.hydrating && claimed && childNodes) {
-        let removed = 0;
-        for (const child of childNodes(el)) {
-          if (ctx.hydrateUsed.has(child)) continue;
-          ctx.remove(child);
-          removed++;
-        }
-        // 不包 `if (__DEV__)`：`warn()` 自己就带运行时判定（见 @lytjs/common-error 的 getDevMode），
-        // 而本包的构建把 `__DEV__` 烘成 false ⇒ 包起来等于**把告警删掉**。
-        if (removed > 0) {
-          warn(`Hydration mismatch: removed ${removed} extra node(s) in <${tag}>.`);
-        }
+      if (ctx.hydrating && claimed) {
+        cleanupUnclaimedChildren(el, tag);
       }
     } else if (vnode.shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       setElementText(el, String(vnode.children ?? ''));
@@ -636,5 +768,6 @@ export function createElementPatch<HN, HE extends HN>(
     mountTextNode,
     mountCommentNode,
     setRef,
+    cleanupUnclaimedChildren,
   };
 }

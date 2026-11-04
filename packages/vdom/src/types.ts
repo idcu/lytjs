@@ -124,6 +124,14 @@ export interface RendererOptions<HN = unknown, HE extends HN = HN> {
    * 宿主不提供时跳过清理（退化为旧行为）。
    */
   getAttributeNames?(el: HE): string[];
+
+  /**
+   * 读取表单状态属性（`value` / `checked` / `selected`）的实时值与初始值。
+   *
+   * 水合时用它判断「用户是否在 JS 到达之前改过这个输入」——改过就**不覆盖**，
+   * 否则慢网络下用户已经敲进去的字会被服务端渲染的值抹掉（实测）。
+   */
+  getFormState?(el: HE, key: string): { live: unknown; initial: unknown } | undefined;
   /** 可选回调：为子组件创建和 setup 组件实例。
    *  当提供时，mountComponent 会在 vnode.component 未设置时调用此回调。
    *  接收 vnode 和父组件实例。

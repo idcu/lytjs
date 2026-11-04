@@ -303,6 +303,24 @@ export function createApp(
 
       context._container = container;
 
+      // ⚠️ 2026-11-04 新增：容器里已有内容、却没开 `hydrate` ⇒ 内容会被**追加**。
+      //
+      //   这是 SSR 页面最常见的误用：指南里写的是 `app.mount('#app')`，而它
+      //   **不会**水合（水合要显式 `{ hydrate: true }`）⇒ 服务端那份 HTML 留着，
+      //   客户端又渲染一份 ⇒ 页面出现两份相同内容（连 `id` 都重复）。
+      //   实测：容器 `<div id="root">server</div>` + `mount('#app')` ⇒
+      //   `<div id="root">server</div><div id="root">client</div>`。
+      //
+      //   不自动改走水合：`mount()` 到「有内容的容器」也可能是用户有意为之
+      //   （比如先清空 loading 占位），静默改变语义更危险。这里只提示。
+      if (mountOptions?.hydrate !== true && container.firstChild) {
+        warn(
+          'App.mount(): 容器里已有内容，但未启用 hydrate —— 新内容会被**追加**，' +
+            '已有节点不会被复用（典型症状：页面出现两份相同内容）。' +
+            '若这是 SSR 产物，请用 app.mount(el, { hydrate: true })。',
+        );
+      }
+
       try {
         // 根据渲染模式选择不同的渲染路径
         if (effectiveMode === 'signal') {

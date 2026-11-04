@@ -312,6 +312,23 @@ export interface RendererHost<HN = unknown, HE extends HN = HN> {
   getAttributeNames?(el: HE): string[];
 
   /**
+   * 读取表单**状态**属性（`value` / `checked` / `selected`）的「实时值」与「初始值」。
+   *
+   * ⚠️ 2026-11-04 新增：水合时必须能区分「DOM 里的值是服务端渲染出来的」还是
+   *   「用户在 JS 到达之前自己改的」——
+   *
+   *     · 服务端渲染 `<input value="server">`；
+   *     · 用户在慢网络下先输入了 `hello`（此时 JS 还没到）；
+   *     · 水合时按 vnode 把 `value` 写回 `"server"` ⇒ **用户的输入被抹掉**（实测）。
+   *
+   *   DOM 标准里 `defaultValue` / `defaultChecked` / `defaultSelected` 反映的正是
+   *   「解析时的初始值」（即服务端渲染的那个），与实时属性一比即可判断用户是否改过。
+   *
+   * 返回 `undefined` 表示该 key 不是表单状态属性（或宿主不支持）。
+   */
+  getFormState?(el: HE, key: string): { live: unknown; initial: unknown } | undefined;
+
+  /**
    * 获取节点类型（用于 hydration 判断）。
    *
    * Web: Node.ELEMENT_NODE(1) / Node.TEXT_NODE(3) / Node.COMMENT_NODE(8)

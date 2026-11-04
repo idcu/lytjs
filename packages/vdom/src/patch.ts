@@ -59,6 +59,10 @@ interface InternalRendererOptions<HN, HE extends HN> {
   getChildNodes: ((node: HN) => HN[]) | undefined;
   /** 水合用：取元素属性名（小写），用于清理 SSR 独有属性 */
   getAttributeNames: ((el: HE) => string[]) | undefined;
+  /** 水合用：读表单状态（live vs initial），用于避免覆盖用户已输入的内容 */
+  getFormState:
+    | ((el: HE, key: string) => { live: unknown; initial: unknown } | undefined)
+    | undefined;
   setupChildComponent:
     | ((vnode: VNode, parent: ComponentInternalInstance | null) => void)
     | undefined;
@@ -105,6 +109,9 @@ function hostToOptions<HN, HE extends HN>(
     getAttributeNames: host.getAttributeNames
       ? (el) => host.getAttributeNames!(el as unknown as HE)
       : undefined,
+    getFormState: host.getFormState
+      ? (el, key) => host.getFormState!(el as unknown as HE, key)
+      : undefined,
     setupChildComponent: undefined,
     normalizeProps: undefined,
     initSlots: undefined,
@@ -142,6 +149,7 @@ function optionsToInternal<HN, HE extends HN>(
     getAttributeNames: options.getAttributeNames
       ? (el) => options.getAttributeNames!(el)
       : undefined,
+    getFormState: options.getFormState ? (el, key) => options.getFormState!(el, key) : undefined,
     setupChildComponent: options.setupChildComponent,
     normalizeProps: options.normalizeProps,
     initSlots: options.initSlots,
@@ -319,6 +327,7 @@ export function createRenderer<HN, HE extends HN>(
     getTagName,
     getChildNodes,
     getAttributeNames,
+    getFormState,
     setupChildComponent,
     normalizeProps,
     initSlots,
@@ -362,6 +371,7 @@ export function createRenderer<HN, HE extends HN>(
   ctx.getTagName = getTagName;
   ctx.getChildNodes = getChildNodes;
   ctx.getAttributeNames = getAttributeNames;
+  ctx.getFormState = getFormState;
   // ── 水合状态 ────────────────────────────────────────────────────────
   // `hydrate()` 入口置 true，首屏挂载期间 mountElement / mountTextNode /
   // mountCommentNode 改为「认领」容器内既有节点而非新建。
@@ -810,9 +820,14 @@ export function createRenderer<HN, HE extends HN>(
    * ⚠️ 能力边界（务必知悉后再用）：
    * · 宿主必须提供 `getNodeType` / `getTagName`（`WebRendererHost` 已有），
    *   否则无法判断节点类型，只能退化为「全部新建」。
-   * · 认领是**按顺序配对**的，不做 keyed 匹配 ⇒ SSR 与客户端产物顺序不一致时
-   *   会认领到错位的节点（此时 dev 侧告警，不静默）。
-   * · **不删除**容器里未被认领的多余节点（避免误删容器中的其它内容）。
+   * · 认领是**按顺序配对**的（游标语义），不做 keyed 匹配 ⇒ SSR 与客户端产物顺序不一致时
+   *   以客户端为准：多出来的节点会被删、少掉的节点会新建（dev 侧告警，不静默）。
+   * · 多根（Fragment）根节点会**清理容器里的服务端残留**；单根时容器里的其它内容
+   *   （`<script>` / 第三方 widget）不动 —— 那些可能不属于本应用。
+   * · 服务端注入的资源节点（`<script>` / `<style>` / `<link>` / `<noscript>` …）
+   *   **永不删除**：它们的副作用在 DOM 之外（丢数据 / 丢样式），且不属于 vnode。
+   * · 表单状态（`value` / `checked` / `selected`）若**已被用户改动**则保留，
+   *   不按 vnode 覆盖 —— 否则慢网络下用户先输入的内容会被抹掉。
    */
   function hydrate(vnode: VNode, container: HN): void {
     if (!getNodeType || !getTagName || !getChildNodes) {
@@ -825,6 +840,21 @@ export function createRenderer<HN, HE extends HN>(
     ctx.hydrateUsed.clear();
     try {
       patch(null, vnode, container, null);
+
+      // ⚠️ 2026-11-04 修（P1）：**多根（Fragment）根节点**要清理容器里的服务端残留。
+      //
+      //   元素级收敛（`mountElement` 里删未认领的 children）覆盖不到「根就是 Fragment」
+      //   的情况：容器的 children 就是应用的根，多出来的根没有任何人负责删除。
+      //   实测：SSR 输出 3 个根、客户端只渲染 2 个 ⇒ 第 3 个根**一直留在页面上**
+      //   （还带着服务端的数据），而 `mount()` 的结果只有 2 个。
+      //
+      //   只在根是 Fragment 时做：单根时容器里可能还有本应用之外的内容
+      //   （统计脚本、第三方 widget），不能一并删掉。
+      let root: VNode = vnode;
+      while (root.component?.subTree) root = root.component.subTree;
+      if (root.type === Fragment) {
+        elementAPI.cleanupUnclaimedChildren(container, 'root');
+      }
     } finally {
       ctx.hydrating = false;
       ctx.hydrateUsed.clear();

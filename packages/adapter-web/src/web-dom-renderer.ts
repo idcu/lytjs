@@ -379,6 +379,10 @@ export function createDOMRenderer(
     getAttributeNames(el: Element): string[] {
       return host.getAttributeNames(el);
     },
+    // 水合时判断「用户是否在 JS 到达之前改过表单」，改过就不覆盖
+    getFormState(el: Element, key: string): { live: unknown; initial: unknown } | undefined {
+      return host.getFormState(el, key);
+    },
     ...(extraOptions?.setupChildComponent
       ? { setupChildComponent: extraOptions.setupChildComponent }
       : {}),

@@ -89,6 +89,16 @@
  *   改成运行时判定 `getDevMode()`，**整个框架的诊断通道才重新活过来**。
  *   代价是 barrel-only +32 字节 gzip（实测 9 532）。原来的 9 500 预算只剩 32 字节余量，
  *   任何无关改动都会误报，因此给到 9 700。
+ * ## 2026-11-04（第二轮）：minimal-app 94 000 → 95 000 / runtime-app 92 000 → 93 000
+ *
+ * 水合的**收敛语义**必须修（`hydrate()` 之后 DOM 与 `mount()` 不一致会让下一次 patch
+ * 错位；资源节点被删会丢 hydration data；用户输入被抹掉是数据丢失），而它就在
+ * `mountElement` 的热路径旁 —— 树摇不掉，minimal-app 实测 94.1 KB 超出 94.0 KB。
+ *
+ * 新增代码都是纯判定（游标跳过、资源节点白名单、表单状态比对、片段锚点定位），
+ * 没有引入依赖。另外 `app.mount()` 新增一条「容器已有内容却没开 hydrate」的告警
+ * （两个入口都会带上）。给到 95 000 / 93 000（各约 0.9 KB 余量）。
+ *
  * - **minimal-app vs runtime-app**：锁「两个入口的分工」。
  *   ⚠️ 目前两者只差 2 KB，因为 `@lytjs/renderer` 的 `signal-renderer.ts` **静态** import 了
  *   编译器，而 renderer 从 core 的 `createApp` 动态可达。这项留作下一批（见评估报告）。
@@ -151,7 +161,7 @@ const count = ref(0);
 const double = computed(() => count.value * 2);
 export const app = createApp({ render: () => h('div', null, [String(count.value), String(double.value)]) });
 export { count, double };`,
-    budget: 94_000,
+    budget: 95_000,
   },
   {
     name: 'runtime-app',
@@ -162,7 +172,7 @@ const count = ref(0);
 const double = computed(() => count.value * 2);
 export const app = createApp({ render: () => h('div', null, [String(count.value), String(double.value)]) });
 export { count, double };`,
-    budget: 92_000,
+    budget: 93_000,
   },
 ];
 

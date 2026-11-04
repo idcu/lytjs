@@ -464,6 +464,30 @@ export class WebRendererHost implements RendererHost<Node, Element> {
   }
 
   /**
+   * 读表单状态的「实时值」与「初始值」。
+   *
+   * `defaultValue` / `defaultChecked` / `defaultSelected` 反映的是**解析 HTML 时**的值
+   * （即服务端渲染出来的那个），与实时属性一比即可判断「用户是否在 JS 到达之前改过」。
+   * `<select>` 没有 `defaultValue`，初始值取「带 `selected` 的 option」或第一个 option。
+   */
+  getFormState(el: Element, key: string): { live: unknown; initial: unknown } | undefined {
+    const node = el as unknown as Record<string, unknown>;
+    if (key === 'value') {
+      if (el.tagName.toLowerCase() === 'select') {
+        const select = el as HTMLSelectElement;
+        const options = Array.from(select.options);
+        const selected = options.find((option) => option.defaultSelected) ?? options[0];
+        return { live: select.value, initial: selected ? selected.value : '' };
+      }
+      const initial = 'defaultValue' in node ? node.defaultValue : el.getAttribute('value');
+      return { live: node.value, initial };
+    }
+    if (key === 'checked') return { live: node.checked, initial: node.defaultChecked };
+    if (key === 'selected') return { live: node.selected, initial: node.defaultSelected };
+    return undefined;
+  }
+
+  /**
    * 获取节点类型（用于 hydration 判断）。
    */
   getNodeType(node: Node): number {

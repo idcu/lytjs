@@ -75,8 +75,28 @@ export function createFragmentPatch<HN, HE extends HN>(
     setVNodeEl(vnode, fragmentStartAnchor);
     vnode.anchor = fragmentEndAnchor as unknown as Node | null;
 
-    insert(fragmentStartAnchor, container, anchor);
-    insert(fragmentEndAnchor, container, anchor);
+    // ⚠️ 2026-11-04 修（P1）：水合时锚点的**位置**与**登记**都要特殊处理。
+    //
+    //   旧行为：两个锚点都 `insert(..., anchor)` —— 水合时 `anchor` 是 `null`
+    //   ⇒ 两个锚点被**追加到容器末尾**，落在所有既有子节点之后。于是
+    //   `vnode.el`（= 起始锚点）指向片段的**末尾**，`unmountFragment` 按它往后走
+    //   就一个子节点都摘不到；`patchFragment` 的插入点也错位。
+    //   实测（2026-11-04，SSR 三个根 / 客户端两个根）：残留根删不掉、锚点停在末尾。
+    //
+    //   水合时：起始锚点插到**第一个既有子节点之前**（片段真正的起点），
+    //   结束锚点用调用方给的 `anchor`（根片段即容器末尾）；并把两个锚点登记为
+    //   「已认领」，否则会被「未认领节点清理」当成服务端残留删掉
+    //   （删掉后片段的更新/卸载会失去定位基准）。
+    if (ctx.hydrating) {
+      const firstExisting = ctx.getChildNodes?.(container)[0] ?? anchor;
+      insert(fragmentStartAnchor, container, firstExisting);
+      insert(fragmentEndAnchor, container, anchor);
+      ctx.hydrateUsed.add(fragmentStartAnchor);
+      ctx.hydrateUsed.add(fragmentEndAnchor);
+    } else {
+      insert(fragmentStartAnchor, container, anchor);
+      insert(fragmentEndAnchor, container, anchor);
+    }
 
     // 在锚点之间挂载 children
     const children = isArray(vnode.children) ? vnode.children : [];
@@ -85,6 +105,20 @@ export function createFragmentPatch<HN, HE extends HN>(
       if (child != null) {
         patch(null, child, container, fragmentEndAnchor, parentComponent, parentSuspense, isSVG);
       }
+    }
+
+    // ⚠️ 2026-11-04 修（P1）：水合时把结束锚点**收到最后一个已认领子节点之后**。
+    //
+    //   挂载前它被放在容器末尾（或调用方给的 anchor），而容器里可能还有
+    //   不属于本片段的服务端内容（`<script type="application/json">`、多出来的根）。
+    //   锚点留在它们后面会带来两个后果：
+    //     · 之后新建的子节点插到锚点之前 ⇒ 跑到那些内容**后面**，顺序错；
+    //     · `unmountFragment` 从起始锚点走到结束锚点逐个删除 ⇒ 把那些内容一起删掉。
+    //   挂载完成后，「第一个未认领节点」正是片段的**右边界**。
+    if (ctx.hydrating) {
+      const childNodes = ctx.getChildNodes?.(container) ?? [];
+      const boundary = childNodes.find((node) => !ctx.hydrateUsed.has(node)) ?? null;
+      insert(fragmentEndAnchor, container, boundary);
     }
   }
 
