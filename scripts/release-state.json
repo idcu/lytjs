@@ -1,0 +1,5 @@
+{
+  "lastKnownNpmVersion": "6.9.6",
+  "checkedAt": "2026-11-05T15:10:00.000Z",
+  "note": "离线时 check-release-parity 回退到本值；联网时以 npm view 实测为准，本文件不自动更新（门禁只读）。"
+}

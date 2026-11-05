@@ -4,6 +4,20 @@
 
 ## [Unreleased]
 
+### 🚦 门禁与 CI：安装链路、覆盖率快照、发布一致性（2026-11-05）
+
+- CI 新增 `install` job（`pnpm install --frozen-lockfile` + lockfile 校验），
+  `build-order / keel-gates / audit / changeset-check / lint / type-check / test` 全部 `needs: [install]`，
+  pnpm 统一钉在 11.3.0（去掉 test 矩阵里的版本维度）。
+- `test:coverage` 显式 `--maxWorkers=2`：并发跑覆盖率会清 `.tmp` 并触发 safe-delete 拦截。
+- 新增 `scripts/coverage-snapshot.mjs` + `check-coverage-snapshot`（fast）：
+  快照带 commit / 生成时间 / 文件集合 / 阈值，门禁校验 commit 真实、≤7 天、
+  文件集合与当前 src 相等、已插桩比例 ≥97.5%。当前 434 个 src 文件，425 已插桩（97.93%）。
+- 新增 `check-release-parity`（fast，只读）：76 包版本一致且等于声明值、HEAD tag 与声明一致、
+  npm 最新版本（离线回退 `release-state.json`）、自基线 tag 起改动的包被 changeset 覆盖、
+  豁免必须带 reason / ownerSignOff / 未过期。输出 `declared=true` / `parity=false`（未发布，如实记录）。
+- `release.yml` 补 lockfile 校验、`test:coverage`、`check-coverage-snapshot`、`check-release-parity`。
+
 ### 🧩 `core-signal`：setup 契约与类型诚实（2026-11-05）
 
 - `setup(props, ctx)` 的第二参不再传空对象：`ctx.inject()` / `ctx.emit()` / `ctx.expose()`
@@ -64,6 +78,31 @@
   优化器分叉棘轮。
 - 详见 [packages/compiler/CHANGELOG.md](packages/compiler/CHANGELOG.md) 与
   [keel/decisions/0012-signal-optimizer-default-off.md](keel/decisions/0012-signal-optimizer-default-off.md)。
+
+## [7.0.0] - 未发布（分支 `v7.0.0-dev`）
+
+> **状态：未发布。** npm 上 `@lytjs/core` 仍是 6.9.6，仓库里没有指向 HEAD 的 tag。
+> 三方一致性由 `check-release-parity` 持续记录：当前 `parity = false`（如实标注，不粉饰）。
+> 首次发布必须由 owner 显式授权后走 C01，本版本号不因流程而提前改动。
+
+### 本版主题：A 阶段「止血」
+
+- **验证链**：锁文件（CI 独立 install job）、构建顺序、循环依赖（76/76）、
+  覆盖率快照（≤ 7 天 + 覆盖全部 src）、发布一致性（changeset + 三方比对）、E2E 主路径。
+- **静默失效修复**：编译器优化默认关闭、signal `v-html` 双模式消毒一致、
+  CLI 脚手架生成即可跑、core-signal `setup` 契约、响应式三处语义缺口。
+- **组件成熟度**：Golden 20 冻结，其余导出标注 `experimental`。
+
+### 延期 / 已知取舍
+
+| 项 | 当前取舍 | 依据 |
+| --- | --- | --- |
+| Suspense fallback 的边界行为 | 延期，不阻塞 v7 首发 | [ADR 0002](keel/decisions/0002-suspense-fallback-deferred.md) |
+| SSR 水合标记 | 默认关闭，显式开启 | [ADR 0003](keel/decisions/0003-ssr-hydrate-markers-default-off.md) |
+| `@lytjs/common-*` 合并范围 | 只合并已确认无生产引用的死包 | [ADR 0007](keel/decisions/0007-common-package-merge-scope.md) |
+| signal/vapor 优化器 | 默认关闭，`optimizeSignal: true` 显式开启 | [ADR 0012](keel/decisions/0012-signal-optimizer-default-off.md) |
+| 组件 stable 面 | 收敛为 Golden 20，其余 `experimental` | [ADR 0013](keel/decisions/0013-golden-20-freeze.md) |
+| 主仓 v7 与 npm 6.9.6 的对应关系 | 发布前另开决策处理 | [ADR 0005](keel/decisions/0005-lytx-version-alignment.md) |
 
 ## [6.9.6] - 2026-06-06
 

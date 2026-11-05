@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  PNPM_VERSION: '11.1.1'
+  PNPM_VERSION: '11.3.0'
   NODE_VERSION: '22'
 
 jobs:
@@ -41,6 +41,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # A11：锁文件与 package.json 必须一致（发布链路的第一环）
+      - name: Verify lockfile matches package.json
+        run: node scripts/check-lockfile.mjs --require-clean
+
       - name: Run ESLint
         run: pnpm run lint:check
 
@@ -53,8 +57,19 @@ jobs:
       - name: Build all packages
         run: pnpm run build
 
-      - name: Run tests
-        run: pnpm test
+      # A11：test tier 进发布必需，且固定 --maxWorkers=2。
+      # 此前这里是 `pnpm test`（无覆盖率、并发随 runner 浮动）——
+      # 「发布前的测试」和「日常的测试」口径不一致，等于没有发布前测试。
+      - name: Run tests with coverage (release-required)
+        run: pnpm run test:coverage -- --maxWorkers=2
+
+      # A11：覆盖率快照必须新鲜，否则上面的覆盖率数字与当前代码无因果关系
+      - name: Check coverage snapshot freshness
+        run: node scripts/check-coverage-snapshot.mjs
+
+      # A12：发布一致性（npm / tag / 76 个 package.json 三方比对）
+      - name: Check release parity
+        run: node scripts/check-release-parity.mjs
 
       - name: Create Release Pull Request or Publish
         id: changesets

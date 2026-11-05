@@ -578,6 +578,38 @@ const GATES = [
       'inject 对缺键伪造值 ⇒ 2 项红',
   },
   {
+    name: 'check-coverage-snapshot',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-coverage-snapshot.mjs'],
+    approx: '~0.2s',
+    desc:
+      '★ 覆盖率快照的**时效性与覆盖面**（A11）：`coverage/` 被 .gitignore 忽略，此前没人知道' +
+      '「覆盖率 xx%」对应哪个提交、覆盖了哪些文件 —— 这类数字一旦失去因果就会变成长期摆设。' +
+      '本门禁校验受版本控制的 scripts/coverage-snapshot.json：① commit 在仓库真实存在；' +
+      '② 距今 ≤ 7 天；③ 列出的文件集合 == 当前全部 src 文件（新增 src 必须补快照，否则分母被' +
+      '悄悄放大）；④ 已插桩比例 ≥ 97.5%（口径 = 出现在 coverage-final.json，与评估报告' +
+      '「437/448 文件」一致，**不是**语句执行率）。真实重跑在慢档 test:coverage；两者配合：' +
+      '慢档保证数字是真的，本项保证数字不过期。注入验证：新增 1 个 src 文件 ⇒ 红；' +
+      '快照 commit 改到 190 天前的提交 ⇒ 红；把 20 个文件标为未覆盖 ⇒ 93.32% 红',
+  },
+  {
+    name: 'check-release-parity',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-release-parity.mjs'],
+    approx: '~1s',
+    desc:
+      '★ 发布一致性（A12 / P1-10）：npm 6.9.6、仓库 76 个 package.json 6.9.6、HEAD 无 tag、' +
+      '`.changeset/` 原本零实体 —— 三个地方各说各话，而没有任何测试会因此变红。' +
+      '本门禁把三方对齐成可检查的契约：① 76 包版本一致且等于声明值；② HEAD tag 与声明一致；' +
+      '③ npm 最新版本与声明一致（离线时回退 scripts/release-state.json 并标注来源）；' +
+      '④ 自基线 tag 以来改过的包必须被 changeset 覆盖；⑤ 豁免必须带 reason / ownerSignOff / ' +
+      '未过期的 expiresOn（防止「预期不一致」永久免检，评估 R5）。**只读**：不发 npm、不改版本号。' +
+      '输出 declared（机制与声明是否成立）与 parity（三方是否真的一致）两个布尔 —— ' +
+      '未发布阶段要求 declared=true、parity=false（评估 M5：100% / false，如实记录）。' +
+      '注入验证：删掉 changeset 实体 ⇒ 2 项红（实体存在 + 覆盖 100%）；' +
+      '把 expiresOn 改成过去日期 ⇒ 1 项红；改动任一包版本号 ⇒ 版本一致性与声明比对 2 项红',
+  },
+  {
     name: 'check-web-cssvars',
     tier: 'fast',
     needsDist: true,

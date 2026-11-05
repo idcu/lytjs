@@ -1,0 +1,84 @@
+---
+'@lytjs/adapter-web': major
+'@lytjs/common-a11y': major
+'@lytjs/common-algorithm': major
+'@lytjs/common-assertions': major
+'@lytjs/common-async-scheduler': major
+'@lytjs/common-cache': major
+'@lytjs/common': major
+'@lytjs/common-constants': major
+'@lytjs/common-dom': major
+'@lytjs/common-dom-helpers': major
+'@lytjs/common-env': major
+'@lytjs/common-error': major
+'@lytjs/common-event-normalizer': major
+'@lytjs/common-events': major
+'@lytjs/common-http': major
+'@lytjs/common-is': major
+'@lytjs/common-keyboard': major
+'@lytjs/common-memory': major
+'@lytjs/common-node-cache': major
+'@lytjs/common-object': major
+'@lytjs/common-path': major
+'@lytjs/common-performance': major
+'@lytjs/common-query': major
+'@lytjs/common-raf': major
+'@lytjs/common-rate-limit': major
+'@lytjs/common-render-queue': major
+'@lytjs/common-scheduler': major
+'@lytjs/common-security': major
+'@lytjs/common-storage': major
+'@lytjs/common-string': major
+'@lytjs/common-timing': major
+'@lytjs/common-transition-engine': major
+'@lytjs/common-validate': major
+'@lytjs/common-vnode': major
+'@lytjs/common-warn': major
+'@lytjs/compiler': major
+'@lytjs/component': major
+'@lytjs/core': major
+'@lytjs/core-signal': major
+'@lytjs/core-vnode': major
+'@lytjs/dom': major
+'@lytjs/dom-runtime': major
+'@lytjs/bundler': major
+'@lytjs/compat': major
+'@lytjs/config': major
+'@lytjs/devtools': major
+'@lytjs/di': major
+'@lytjs/platform-adapter': major
+'@lytjs/plugin': major
+'@lytjs/runtime-edge': major
+'@lytjs/cache': major
+'@lytjs/cache-isr': major
+'@lytjs/hmr': major
+'@lytjs/html-renderer': major
+'@lytjs/ssg': major
+'@lytjs/ssr': major
+'@lytjs/store': major
+'@lytjs/ui': major
+'@lytjs/api': major
+'@lytjs/http-server': major
+'@lytjs/metadata': major
+'@lytjs/middleware': major
+'@lytjs/middleware-auth': major
+'@lytjs/middleware-cors': major
+'@lytjs/middleware-rate-limit': major
+'@lytjs/router': major
+'@lytjs/router-fs': major
+'@lytjs/host-contract': major
+'@lytjs/reactivity': major
+'@lytjs/renderer': major
+'@lytjs/shared-types': major
+'@lytjs/cli': major
+'@lytjs/devtools-extension': major
+'@lytjs/test-utils': major
+'@lytjs/vdom': major
+'@lytjs/web': major
+---
+
+v7.0.0 核心止血批次（A 阶段 A01–A14）。
+
+- 修复静默丢内容 / 静默 no-op 类缺陷（编译器、signal 渲染、CLI、core-signal setup 契约）。
+- 补齐验证链：锁文件、构建顺序、循环依赖、覆盖率快照、发布一致性、E2E。
+- 行为变更与取舍见根 CHANGELOG.md「v7 未发布」章节与 ADR 0012/0013。
