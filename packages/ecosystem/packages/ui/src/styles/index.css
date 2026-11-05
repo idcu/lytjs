@@ -2285,11 +2285,14 @@
   position: absolute;
   display: flex;
   flex-direction: column;
-  max-width: 90vw;
   background: var(--lyt-bg-color);
   box-shadow: -6px 0 18px rgba(0, 0, 0, 0.12);
   overflow: auto;
   transition: transform var(--lyt-transition-duration) ease;
+}
+.lyt-drawer--rtl .lyt-drawer__container,
+.lyt-drawer--ltr .lyt-drawer__container {
+  max-width: 90vw;
 }
 .lyt-drawer--rtl .lyt-drawer__container {
   top: 0;
@@ -2572,10 +2575,24 @@
 /* ===== Pagination ===== */
 .lyt-pagination {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
   font-size: 13px;
   color: var(--lyt-text-color-regular);
+}
+.lyt-pagination__total,
+.lyt-pagination__pager,
+.lyt-pagination__btn,
+.lyt-pagination__prev,
+.lyt-pagination__next,
+.lyt-pagination__ellipsis,
+.lyt-pagination__sizes,
+.lyt-pagination__select,
+.lyt-pagination__jumper,
+.lyt-pagination__input {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 .lyt-pagination__total {
   color: var(--lyt-text-color-secondary);
