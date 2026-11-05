@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global document */
 /**
  * 门禁：错误路径（错误被谁接住、会不会静默、出错后还能不能用）
  *
@@ -110,7 +111,14 @@ section('[1] setup 抛错');
 {
   const trap = trapConsole();
   const captured = [];
-  const Bad = { name: 'Bad', setup() { boom('setup-boom'); return {}; }, template: `<div class="bad">bad</div>` };
+  const Bad = {
+    name: 'Bad',
+    setup() {
+      boom('setup-boom');
+      return {};
+    },
+    template: `<div class="bad">bad</div>`,
+  };
   const Good = { template: `<div class="good">good</div>` };
   const root = mkRoot();
   const app = createApp({
@@ -130,7 +138,11 @@ section('[1] setup 抛错');
 
   check('错误到达 errorCaptured', captured.length >= 1, JSON.stringify(captured));
   check('errorCaptured 收到 info 描述', !!captured[0]?.info, captured[0]?.info);
-  check('兄弟组件仍然渲染（错误未摧毁整棵树）', root.querySelector('.good') !== null, root.innerHTML);
+  check(
+    '兄弟组件仍然渲染（错误未摧毁整棵树）',
+    root.querySelector('.good') !== null,
+    root.innerHTML,
+  );
   check('出错组件不渲染出内容', root.querySelector('.bad') === null, root.innerHTML);
   check(
     '未静默（errorCaptured 或 console 至少一处有痕迹）',
@@ -145,7 +157,12 @@ section('[2] render 抛错');
 {
   const trap = trapConsole();
   const captured = [];
-  const Bad = { name: 'BadRender', render() { boom('render-boom'); } };
+  const Bad = {
+    name: 'BadRender',
+    render() {
+      boom('render-boom');
+    },
+  };
   const root = mkRoot();
   const app = createApp({
     components: { Bad },
@@ -289,7 +306,11 @@ section('[6] computed getter 抛错（渲染期）');
   });
   await app.mount(root);
   await tick();
-  check('正常时 computed 正确', root.querySelector('.c')?.textContent?.trim() === '2', root.textContent);
+  check(
+    '正常时 computed 正确',
+    root.querySelector('.c')?.textContent?.trim() === '2',
+    root.textContent,
+  );
 
   let threw = false;
   try {
@@ -336,9 +357,21 @@ section('[7] 出错后应用仍可继续更新');
   await tick();
   trap.restore();
 
-  check('抛错那次确实失败了', afterError.includes('bad') === false || afterError.includes('1'), afterError);
-  check('之后仍能恢复渲染（应用没死）', root.querySelector('.bad')?.textContent?.trim() === '2', root.innerHTML);
-  check('兄弟插值同步更新', root.querySelector('.tail')?.textContent?.trim() === '2', root.innerHTML);
+  check(
+    '抛错那次确实失败了',
+    afterError.includes('bad') === false || afterError.includes('1'),
+    afterError,
+  );
+  check(
+    '之后仍能恢复渲染（应用没死）',
+    root.querySelector('.bad')?.textContent?.trim() === '2',
+    root.innerHTML,
+  );
+  check(
+    '兄弟插值同步更新',
+    root.querySelector('.tail')?.textContent?.trim() === '2',
+    root.innerHTML,
+  );
   app.unmount();
 }
 
@@ -348,7 +381,14 @@ section('[8] errorCaptured 返回 false 阻止向上传播');
   const trap = trapConsole();
   const inner = [];
   const outer = [];
-  const Bad = { name: 'Bad', setup() { boom('x'); return {}; }, template: `<i>x</i>` };
+  const Bad = {
+    name: 'Bad',
+    setup() {
+      boom('x');
+      return {};
+    },
+    template: `<i>x</i>`,
+  };
   const Mid = {
     components: { Bad },
     setup() {
@@ -387,7 +427,14 @@ section('[9] errorCaptured 不返回 false 时向上传播');
   const trap = trapConsole();
   const inner = [];
   const outer = [];
-  const Bad = { name: 'Bad', setup() { boom('y'); return {}; }, template: `<i>x</i>` };
+  const Bad = {
+    name: 'Bad',
+    setup() {
+      boom('y');
+      return {};
+    },
+    template: `<i>x</i>`,
+  };
   const Mid = {
     components: { Bad },
     setup() {
@@ -459,7 +506,9 @@ section('[10] 异步组件 loader 失败');
 // ══════════════════════════════════════════════════════════
 section('[11] SSR：组件 setup 抛错不得输出空页');
 {
-  const ssr = await import(`${ROOT}/packages/ecosystem/packages/ssr-kit/packages/ssr/dist/index.mjs`);
+  const ssr = await import(
+    `${ROOT}/packages/ecosystem/packages/ssr-kit/packages/ssr/dist/index.mjs`
+  );
   core.installTemplateCompiler();
   const trap = trapConsole();
 
@@ -486,13 +535,19 @@ section('[11] SSR：组件 setup 抛错不得输出空页');
     threw !== null || (html !== null && html.length > 0),
     `threw=${threw ? threw.message : 'null'} html=${JSON.stringify(html)}`,
   );
-  check('抛出的错误带上组件名与原始消息', threw === null || /SSRBad/.test(threw.message), threw?.message);
+  check(
+    '抛出的错误带上组件名与原始消息',
+    threw === null || /SSRBad/.test(threw.message),
+    threw?.message,
+  );
 }
 
 // ══════════════════════════════════════════════════════════
 section('[12] SSR：render 抛错');
 {
-  const ssr = await import(`${ROOT}/packages/ecosystem/packages/ssr-kit/packages/ssr/dist/index.mjs`);
+  const ssr = await import(
+    `${ROOT}/packages/ecosystem/packages/ssr-kit/packages/ssr/dist/index.mjs`
+  );
   const trap = trapConsole();
   const Bad = {
     name: 'SSRBadRender',

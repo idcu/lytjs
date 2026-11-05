@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global document */
 /**
  * 渲染成本门禁 check-render-cost
  *
@@ -140,7 +141,11 @@ console.log('   [列表更新只碰相关节点]\n');
 let appendOps200 = 0;
 {
   const { root, items } = await mountList(200);
-  check('初始 200 项渲染完成', root.querySelectorAll('li').length === 200, `li=${root.querySelectorAll('li').length}`);
+  check(
+    '初始 200 项渲染完成',
+    root.querySelectorAll('li').length === 200,
+    `li=${root.querySelectorAll('li').length}`,
+  );
 
   beginCount();
   items.value = [...items.value, { id: 999, v: 'new' }];
@@ -153,14 +158,22 @@ let appendOps200 = 0;
     ops.structural <= 5,
     `insert=${ops.insert} remove=${ops.remove} replace=${ops.replace}`,
   );
+  check('追加 1 项：没有重挂既有节点（remove=0）', ops.remove === 0, `remove=${ops.remove}`);
   check(
-    '追加 1 项：没有重挂既有节点（remove=0）',
-    ops.remove === 0,
-    `remove=${ops.remove}`,
+    '追加 1 项：结果正确',
+    root.querySelectorAll('li').length === 201,
+    `li=${root.querySelectorAll('li').length}`,
   );
-  check('追加 1 项：结果正确', root.querySelectorAll('li').length === 201, `li=${root.querySelectorAll('li').length}`);
-  check('追加 1 项：ul 未重复', root.querySelectorAll('ul.l').length === 1, `ul 数=${root.querySelectorAll('ul.l').length}`);
-  check('追加 1 项：尾部兄弟节点仍在', root.querySelector('.tail') !== null, root.innerHTML.slice(0, 120));
+  check(
+    '追加 1 项：ul 未重复',
+    root.querySelectorAll('ul.l').length === 1,
+    `ul 数=${root.querySelectorAll('ul.l').length}`,
+  );
+  check(
+    '追加 1 项：尾部兄弟节点仍在',
+    root.querySelector('.tail') !== null,
+    root.innerHTML.slice(0, 120),
+  );
 }
 
 // ── 2. 改 1 项文本 ────────────────────────────────────────
@@ -192,8 +205,16 @@ let appendOps200 = 0;
   items.value = items.value.filter((it) => it.id !== 0);
   await tick();
   const ops = endCount();
-  check('删 1 项：结构性 DOM 操作 ≤ 5', ops.structural <= 5, `insert=${ops.insert} remove=${ops.remove}`);
-  check('删 1 项：结果正确', root.querySelectorAll('li').length === 199, `li=${root.querySelectorAll('li').length}`);
+  check(
+    '删 1 项：结构性 DOM 操作 ≤ 5',
+    ops.structural <= 5,
+    `insert=${ops.insert} remove=${ops.remove}`,
+  );
+  check(
+    '删 1 项：结果正确',
+    root.querySelectorAll('li').length === 199,
+    `li=${root.querySelectorAll('li').length}`,
+  );
 }
 
 // ── 4. 整体倒序 ───────────────────────────────────────────
@@ -208,7 +229,11 @@ let appendOps200 = 0;
     ops.structural <= 400,
     `insert=${ops.insert} remove=${ops.remove}（N²=40000）`,
   );
-  check('整体倒序：结果正确', root.querySelectorAll('li').length === 200, `li=${root.querySelectorAll('li').length}`);
+  check(
+    '整体倒序：结果正确',
+    root.querySelectorAll('li').length === 200,
+    `li=${root.querySelectorAll('li').length}`,
+  );
   const firstText = root.querySelector('li')?.textContent?.trim();
   check('整体倒序：首项变为原末项', firstText === 'v199', firstText);
 }
@@ -242,7 +267,11 @@ console.log('\n   [规模无关性：O(1) vs O(N)]\n');
     root.querySelector('ul.l')?.querySelectorAll('li').length === 1,
     root.innerHTML.slice(0, 160),
   );
-  check('空列表→1 项：无 li 逃逸', root.querySelectorAll('li').length === 1, `total=${root.querySelectorAll('li').length}`);
+  check(
+    '空列表→1 项：无 li 逃逸',
+    root.querySelectorAll('li').length === 1,
+    `total=${root.querySelectorAll('li').length}`,
+  );
 }
 
 // ── 7. 负向对照：阈值必须能区分 O(1) 与 O(N) ──────────────
@@ -278,7 +307,11 @@ console.log('\n   [阳性对照：计数器有效性]\n');
     mountOps !== null && mountOps.insert >= 200,
     `insert=${mountOps?.insert} remove=${mountOps?.remove}`,
   );
-  check('阳性对照：挂载结果正确', root.querySelectorAll('li').length === 200, `li=${root.querySelectorAll('li').length}`);
+  check(
+    '阳性对照：挂载结果正确',
+    root.querySelectorAll('li').length === 200,
+    `li=${root.querySelectorAll('li').length}`,
+  );
 }
 
 // ── 汇总 ──────────────────────────────────────────────────

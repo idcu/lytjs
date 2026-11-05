@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global document */
 /**
  * 模板形态电池 check-render-shapes
  *
@@ -65,7 +66,9 @@ let total = 0;
 const check = (name, ok, detail) => {
   total++;
   if (!ok) fail++;
-  console.log(`${ok ? '   ✅' : '   ❌'} ${name}${!ok && detail ? ' :: ' + String(detail).slice(0, 200) : ''}`);
+  console.log(
+    `${ok ? '   ✅' : '   ❌'} ${name}${!ok && detail ? ' :: ' + String(detail).slice(0, 200) : ''}`,
+  );
 };
 
 /** 挂载模板；state 由调用方传入（不覆盖组件自身的 setup） */
@@ -94,8 +97,16 @@ console.log('   [v-for 与动态兄弟]');
   );
   items.value = ['a', 'b'];
   await tick();
-  check('v-for 空→2 + 旁边有按钮：li 全在 ul 内', root.querySelector('ul.l')?.querySelectorAll('li').length === 2, root.innerHTML);
-  check('v-for：无 li 逃逸到 ul 外', root.querySelectorAll('li').length === 2, `total=${root.querySelectorAll('li').length}`);
+  check(
+    'v-for 空→2 + 旁边有按钮：li 全在 ul 内',
+    root.querySelector('ul.l')?.querySelectorAll('li').length === 2,
+    root.innerHTML,
+  );
+  check(
+    'v-for：无 li 逃逸到 ul 外',
+    root.querySelectorAll('li').length === 2,
+    `total=${root.querySelectorAll('li').length}`,
+  );
 }
 {
   // P0② 的原始形态：插值 + 列表 + 插值
@@ -108,13 +119,33 @@ console.log('   [v-for 与动态兄弟]');
   n.value = 3;
   await tick();
   check('插值+列表+插值：先改插值 n', txt(root.querySelector('p.n')) === '3', root.innerHTML);
-  check('插值+列表+插值：先改插值 n*2', txt(root.querySelector('span.dbl')) === '6', root.innerHTML);
+  check(
+    '插值+列表+插值：先改插值 n*2',
+    txt(root.querySelector('span.dbl')) === '6',
+    root.innerHTML,
+  );
   list.value = ['a'];
   await tick();
-  check('插值+列表+插值：再改列表后 li 在 ul 内', root.querySelector('ul.l')?.querySelectorAll('li').length === 1, root.innerHTML);
-  check('插值+列表+插值：ul 没有被重复挂载', root.querySelectorAll('ul.l').length === 1, `ul 数=${root.querySelectorAll('ul.l').length}`);
-  check('插值+列表+插值：无 li 逃逸', root.querySelectorAll('li').length === 1, `total=${root.querySelectorAll('li').length}`);
-  check('插值+列表+插值：插值仍正确', txt(root.querySelector('p.n')) === '3' && txt(root.querySelector('span.dbl')) === '6', root.innerHTML);
+  check(
+    '插值+列表+插值：再改列表后 li 在 ul 内',
+    root.querySelector('ul.l')?.querySelectorAll('li').length === 1,
+    root.innerHTML,
+  );
+  check(
+    '插值+列表+插值：ul 没有被重复挂载',
+    root.querySelectorAll('ul.l').length === 1,
+    `ul 数=${root.querySelectorAll('ul.l').length}`,
+  );
+  check(
+    '插值+列表+插值：无 li 逃逸',
+    root.querySelectorAll('li').length === 1,
+    `total=${root.querySelectorAll('li').length}`,
+  );
+  check(
+    '插值+列表+插值：插值仍正确',
+    txt(root.querySelector('p.n')) === '3' && txt(root.querySelector('span.dbl')) === '6',
+    root.innerHTML,
+  );
 }
 
 // ══════════════════════════════════════════════════════════
@@ -129,9 +160,21 @@ console.log('   [多列表 / 嵌套列表]');
   );
   b.value = ['b1', 'b2', 'b3'];
   await tick();
-  check('并列两列表：只增长的那个变 3', root.querySelector('ul.ub')?.querySelectorAll('li').length === 3, root.innerHTML);
-  check('并列两列表：另一个仍 1', root.querySelector('ul.ua')?.querySelectorAll('li').length === 1, root.innerHTML);
-  check('并列两列表：无 li 逃逸', root.querySelectorAll('li').length === 4, `total=${root.querySelectorAll('li').length}`);
+  check(
+    '并列两列表：只增长的那个变 3',
+    root.querySelector('ul.ub')?.querySelectorAll('li').length === 3,
+    root.innerHTML,
+  );
+  check(
+    '并列两列表：另一个仍 1',
+    root.querySelector('ul.ua')?.querySelectorAll('li').length === 1,
+    root.innerHTML,
+  );
+  check(
+    '并列两列表：无 li 逃逸',
+    root.querySelectorAll('li').length === 4,
+    `total=${root.querySelectorAll('li').length}`,
+  );
 }
 {
   const groups = ref([{ name: 'g1', items: ['x'] }]);
@@ -141,8 +184,16 @@ console.log('   [多列表 / 嵌套列表]');
   );
   groups.value = [{ name: 'g1', items: ['x', 'y', 'z'] }];
   await tick();
-  check('嵌套 v-for：内层增长到 3 且在 ul 内', root.querySelector('ul.inner')?.querySelectorAll('li').length === 3, root.innerHTML);
-  check('嵌套 v-for：无 li 逃逸', root.querySelectorAll('li').length === 3, `total=${root.querySelectorAll('li').length}`);
+  check(
+    '嵌套 v-for：内层增长到 3 且在 ul 内',
+    root.querySelector('ul.inner')?.querySelectorAll('li').length === 3,
+    root.innerHTML,
+  );
+  check(
+    '嵌套 v-for：无 li 逃逸',
+    root.querySelectorAll('li').length === 3,
+    `total=${root.querySelectorAll('li').length}`,
+  );
 }
 {
   const first = ref(['f1']);
@@ -153,9 +204,21 @@ console.log('   [多列表 / 嵌套列表]');
   );
   second.value = ['s1', 's2'];
   await tick();
-  check('同一 ul 内两段 v-for：第一段仍 1', root.querySelectorAll('li.f').length === 1, root.innerHTML);
-  check('同一 ul 内两段 v-for：第二段变 2', root.querySelectorAll('li.s').length === 2, root.innerHTML);
-  check('同一 ul 内两段 v-for：都留在 ul 内', root.querySelector('ul.l')?.querySelectorAll('li').length === 3, `total=${root.querySelectorAll('li').length}`);
+  check(
+    '同一 ul 内两段 v-for：第一段仍 1',
+    root.querySelectorAll('li.f').length === 1,
+    root.innerHTML,
+  );
+  check(
+    '同一 ul 内两段 v-for：第二段变 2',
+    root.querySelectorAll('li.s').length === 2,
+    root.innerHTML,
+  );
+  check(
+    '同一 ul 内两段 v-for：都留在 ul 内',
+    root.querySelector('ul.l')?.querySelectorAll('li').length === 3,
+    `total=${root.querySelectorAll('li').length}`,
+  );
 }
 
 // ══════════════════════════════════════════════════════════
@@ -171,11 +234,23 @@ console.log('   [v-if 与 v-for 混合]');
   show.value = true;
   await tick();
   check('v-if 打开：p 出现', txt(root.querySelector('p.p')) === 'shown', root.innerHTML);
-  check('v-if 打开：li 仍在 ul 内', root.querySelector('ul.l')?.querySelectorAll('li').length === 1, root.innerHTML);
+  check(
+    'v-if 打开：li 仍在 ul 内',
+    root.querySelector('ul.l')?.querySelectorAll('li').length === 1,
+    root.innerHTML,
+  );
   list.value = ['a', 'b'];
   await tick();
-  check('v-if 打开后再增长列表：2 项在 ul 内', root.querySelector('ul.l')?.querySelectorAll('li').length === 2, root.innerHTML);
-  check('v-if + v-for：无 li 逃逸', root.querySelectorAll('li').length === 2, `total=${root.querySelectorAll('li').length}`);
+  check(
+    'v-if 打开后再增长列表：2 项在 ul 内',
+    root.querySelector('ul.l')?.querySelectorAll('li').length === 2,
+    root.innerHTML,
+  );
+  check(
+    'v-if + v-for：无 li 逃逸',
+    root.querySelectorAll('li').length === 2,
+    `total=${root.querySelectorAll('li').length}`,
+  );
 }
 {
   const ok = ref(true);
@@ -202,8 +277,16 @@ console.log('   [v-if 与 v-for 混合]');
   check('单节点→列表：初始单节点', txt(root.querySelector('.one')) === 'one', root.innerHTML);
   mode.value = 'list';
   await tick();
-  check('单节点→列表：2 个 li 在 ul 内', root.querySelector('ul.many')?.querySelectorAll('li').length === 2, root.innerHTML);
-  check('单节点→列表：无 li 逃逸', root.querySelectorAll('li').length === 2, `total=${root.querySelectorAll('li').length}`);
+  check(
+    '单节点→列表：2 个 li 在 ul 内',
+    root.querySelector('ul.many')?.querySelectorAll('li').length === 2,
+    root.innerHTML,
+  );
+  check(
+    '单节点→列表：无 li 逃逸',
+    root.querySelectorAll('li').length === 2,
+    `total=${root.querySelectorAll('li').length}`,
+  );
   mode.value = 'single';
   await tick();
   check('单节点→列表：切回单节点', txt(root.querySelector('.one')) === 'one', root.innerHTML);
@@ -218,14 +301,26 @@ console.log('   [v-if 与 v-for 混合]');
   rows.value = [{ id: 1, on: true, label: 'r1' }];
   await tick();
   check('列表项内 v-if：打开后 em 出现', root.querySelector('em.on') !== null, root.innerHTML);
-  check('列表项内 v-if：兄弟 span 仍在 li 内', root.querySelector('li .lbl') !== null, root.innerHTML);
+  check(
+    '列表项内 v-if：兄弟 span 仍在 li 内',
+    root.querySelector('li .lbl') !== null,
+    root.innerHTML,
+  );
   rows.value = [
     { id: 1, on: true, label: 'r1' },
     { id: 2, on: false, label: 'r2' },
   ];
   await tick();
-  check('列表项内 v-if：行增长到 2 且在 ul 内', root.querySelector('ul.l')?.querySelectorAll('li').length === 2, root.innerHTML);
-  check('列表项内 v-if：无 li 逃逸', root.querySelectorAll('li').length === 2, `total=${root.querySelectorAll('li').length}`);
+  check(
+    '列表项内 v-if：行增长到 2 且在 ul 内',
+    root.querySelector('ul.l')?.querySelectorAll('li').length === 2,
+    root.innerHTML,
+  );
+  check(
+    '列表项内 v-if：无 li 逃逸',
+    root.querySelectorAll('li').length === 2,
+    `total=${root.querySelectorAll('li').length}`,
+  );
 }
 {
   const show = ref(false);
@@ -237,11 +332,23 @@ console.log('   [v-if 与 v-for 混合]');
   check('条件列表：初始显示 empty', txt(root.querySelector('.empty')) === 'empty', root.innerHTML);
   show.value = true;
   await tick();
-  check('条件列表：打开后 2 个 li 在 ul 内', root.querySelector('ul.l')?.querySelectorAll('li').length === 2, root.innerHTML);
+  check(
+    '条件列表：打开后 2 个 li 在 ul 内',
+    root.querySelector('ul.l')?.querySelectorAll('li').length === 2,
+    root.innerHTML,
+  );
   list.value = ['a', 'b', 'c'];
   await tick();
-  check('条件列表：之后再增长到 3', root.querySelector('ul.l')?.querySelectorAll('li').length === 3, root.innerHTML);
-  check('条件列表：无 li 逃逸', root.querySelectorAll('li').length === 3, `total=${root.querySelectorAll('li').length}`);
+  check(
+    '条件列表：之后再增长到 3',
+    root.querySelector('ul.l')?.querySelectorAll('li').length === 3,
+    root.innerHTML,
+  );
+  check(
+    '条件列表：无 li 逃逸',
+    root.querySelectorAll('li').length === 3,
+    `total=${root.querySelectorAll('li').length}`,
+  );
 }
 
 // ══════════════════════════════════════════════════════════
@@ -265,7 +372,11 @@ console.log('   [列表增删重排]');
   ];
   await tick();
   check('keyed 重排：变 CAB', liTexts(root) === 'CAB', liTexts(root));
-  check('keyed 重排：仍在 ul 内', root.querySelector('ul.l')?.querySelectorAll('li').length === 3, `total=${root.querySelectorAll('li').length}`);
+  check(
+    'keyed 重排：仍在 ul 内',
+    root.querySelector('ul.l')?.querySelectorAll('li').length === 3,
+    `total=${root.querySelectorAll('li').length}`,
+  );
 }
 {
   const list = ref([]);
@@ -275,22 +386,48 @@ console.log('   [列表增删重排]');
   );
   list.value = ['1', '2', '3'];
   await tick();
-  check('数量往返：0→3', root.querySelector('ul.l')?.querySelectorAll('li').length === 3, root.innerHTML);
+  check(
+    '数量往返：0→3',
+    root.querySelector('ul.l')?.querySelectorAll('li').length === 3,
+    root.innerHTML,
+  );
   list.value = ['1'];
   await tick();
-  check('数量往返：3→1', root.querySelector('ul.l')?.querySelectorAll('li').length === 1, root.innerHTML);
+  check(
+    '数量往返：3→1',
+    root.querySelector('ul.l')?.querySelectorAll('li').length === 1,
+    root.innerHTML,
+  );
   list.value = ['1', '2'];
   await tick();
-  check('数量往返：1→2', root.querySelector('ul.l')?.querySelectorAll('li').length === 2, root.innerHTML);
-  check('数量往返：三轮后无 li 逃逸', root.querySelectorAll('li').length === 2, `total=${root.querySelectorAll('li').length}`);
+  check(
+    '数量往返：1→2',
+    root.querySelector('ul.l')?.querySelectorAll('li').length === 2,
+    root.innerHTML,
+  );
+  check(
+    '数量往返：三轮后无 li 逃逸',
+    root.querySelectorAll('li').length === 2,
+    `total=${root.querySelectorAll('li').length}`,
+  );
 }
 {
   const list = ref([]);
-  const root = await mount(`<div><ul class="l"><li v-for="x in list">{{x}}</li></ul></div>`, { list });
+  const root = await mount(`<div><ul class="l"><li v-for="x in list">{{x}}</li></ul></div>`, {
+    list,
+  });
   list.value = ['p', 'q'];
   await tick();
-  check('无 key 的 v-for：空→2 且在 ul 内', root.querySelector('ul.l')?.querySelectorAll('li').length === 2, root.innerHTML);
-  check('无 key 的 v-for：无 li 逃逸', root.querySelectorAll('li').length === 2, `total=${root.querySelectorAll('li').length}`);
+  check(
+    '无 key 的 v-for：空→2 且在 ul 内',
+    root.querySelector('ul.l')?.querySelectorAll('li').length === 2,
+    root.innerHTML,
+  );
+  check(
+    '无 key 的 v-for：无 li 逃逸',
+    root.querySelectorAll('li').length === 2,
+    `total=${root.querySelectorAll('li').length}`,
+  );
 }
 {
   const obj = ref({ a: '1' });
@@ -300,8 +437,16 @@ console.log('   [列表增删重排]');
   );
   obj.value = { a: '1', b: '2' };
   await tick();
-  check('对象 v-for：增长到 2 且在 ul 内', root.querySelector('ul.l')?.querySelectorAll('li').length === 2, root.innerHTML);
-  check('对象 v-for：无 li 逃逸', root.querySelectorAll('li').length === 2, `total=${root.querySelectorAll('li').length}`);
+  check(
+    '对象 v-for：增长到 2 且在 ul 内',
+    root.querySelector('ul.l')?.querySelectorAll('li').length === 2,
+    root.innerHTML,
+  );
+  check(
+    '对象 v-for：无 li 逃逸',
+    root.querySelectorAll('li').length === 2,
+    `total=${root.querySelectorAll('li').length}`,
+  );
 }
 
 // ══════════════════════════════════════════════════════════
@@ -317,8 +462,16 @@ console.log('   [组件 / 插槽 / computed]');
   );
   list.value = ['x', 'y'];
   await tick();
-  check('组件 v-for：增长到 2 且在 ul 内', root.querySelector('ul.l')?.querySelectorAll('li.it').length === 2, root.innerHTML);
-  check('组件 v-for：无 li 逃逸', root.querySelectorAll('li.it').length === 2, `total=${root.querySelectorAll('li.it').length}`);
+  check(
+    '组件 v-for：增长到 2 且在 ul 内',
+    root.querySelector('ul.l')?.querySelectorAll('li.it').length === 2,
+    root.innerHTML,
+  );
+  check(
+    '组件 v-for：无 li 逃逸',
+    root.querySelectorAll('li.it').length === 2,
+    `total=${root.querySelectorAll('li.it').length}`,
+  );
 }
 {
   const list = ref(['s1']);
@@ -330,8 +483,16 @@ console.log('   [组件 / 插槽 / computed]');
   );
   list.value = ['s1', 's2', 's3'];
   await tick();
-  check('插槽内 v-for：增长到 3 且在 ul 内', root.querySelector('ul.l')?.querySelectorAll('li').length === 3, root.innerHTML);
-  check('插槽内 v-for：无 li 逃逸', root.querySelectorAll('li').length === 3, `total=${root.querySelectorAll('li').length}`);
+  check(
+    '插槽内 v-for：增长到 3 且在 ul 内',
+    root.querySelector('ul.l')?.querySelectorAll('li').length === 3,
+    root.innerHTML,
+  );
+  check(
+    '插槽内 v-for：无 li 逃逸',
+    root.querySelectorAll('li').length === 3,
+    `total=${root.querySelectorAll('li').length}`,
+  );
 }
 {
   const all = ref(['a', 'bb', 'ccc']);
@@ -345,11 +506,23 @@ console.log('   [组件 / 插槽 / computed]');
     },
   }).mount(root);
   await tick();
-  check('computed 列表：初始 2 项', root.querySelector('ul.l')?.querySelectorAll('li').length === 2, root.innerHTML);
+  check(
+    'computed 列表：初始 2 项',
+    root.querySelector('ul.l')?.querySelectorAll('li').length === 2,
+    root.innerHTML,
+  );
   all.value = ['a', 'bb', 'ccc', 'dddd'];
   await tick();
-  check('computed 列表：变 3 项且在 ul 内', root.querySelector('ul.l')?.querySelectorAll('li').length === 3, root.innerHTML);
-  check('computed 列表：无 li 逃逸', root.querySelectorAll('li').length === 3, `total=${root.querySelectorAll('li').length}`);
+  check(
+    'computed 列表：变 3 项且在 ul 内',
+    root.querySelector('ul.l')?.querySelectorAll('li').length === 3,
+    root.innerHTML,
+  );
+  check(
+    'computed 列表：无 li 逃逸',
+    root.querySelectorAll('li').length === 3,
+    `total=${root.querySelectorAll('li').length}`,
+  );
 }
 
 // ══════════════════════════════════════════════════════════
@@ -358,11 +531,19 @@ console.log('   [其他指令]');
 {
   const vis = ref(true);
   const root = await mount(`<div><p v-show="vis" class="p">hi</p></div>`, { vis });
-  check('v-show：初始可见', root.querySelector('p.p')?.style.display !== 'none', root.querySelector('p.p')?.style.display);
+  check(
+    'v-show：初始可见',
+    root.querySelector('p.p')?.style.display !== 'none',
+    root.querySelector('p.p')?.style.display,
+  );
   vis.value = false;
   await tick();
   check('v-show：关闭后元素仍在', root.querySelector('p.p') !== null, root.innerHTML);
-  check('v-show：关闭后 display=none', root.querySelector('p.p')?.style.display === 'none', root.querySelector('p.p')?.style.display);
+  check(
+    'v-show：关闭后 display=none',
+    root.querySelector('p.p')?.style.display === 'none',
+    root.querySelector('p.p')?.style.display,
+  );
 }
 {
   const html = ref('<b>one</b>');
@@ -381,8 +562,16 @@ console.log('   [其他指令]');
   );
   list.value = ['deep'];
   await tick();
-  check('深层嵌套：li 在 ul.d 内', root.querySelector('ul.d')?.querySelectorAll('li').length === 1, root.innerHTML);
-  check('深层嵌套：无 li 逃逸', root.querySelectorAll('li').length === 1, `total=${root.querySelectorAll('li').length}`);
+  check(
+    '深层嵌套：li 在 ul.d 内',
+    root.querySelector('ul.d')?.querySelectorAll('li').length === 1,
+    root.innerHTML,
+  );
+  check(
+    '深层嵌套：无 li 逃逸',
+    root.querySelectorAll('li').length === 1,
+    `total=${root.querySelectorAll('li').length}`,
+  );
 }
 
 // ── 汇总 ──

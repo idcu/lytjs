@@ -1,3 +1,4 @@
+/* global document */
 /**
  * LytJS Getting Started — 可运行的最小 demo
  *
@@ -36,11 +37,13 @@ globalThis.cancelAnimationFrame = (id) => clearTimeout(id);
 // 路径用相对仓库根的绝对路径，确保不受 CWD 影响
 const REPO = import.meta.url.replace(/\/examples\/.*$/, '');
 
-const { createApp, h, ref, computed, installTemplateCompiler } =
-  await import(`${REPO}/packages/core/dist/index.mjs`);
+const { createApp, h, ref, computed, installTemplateCompiler } = await import(
+  `${REPO}/packages/core/dist/index.mjs`
+);
 
-const { renderToString } =
-  await import(`${REPO}/packages/ecosystem/packages/ssr-kit/packages/ssr/dist/index.mjs`);
+const { renderToString } = await import(
+  `${REPO}/packages/ecosystem/packages/ssr-kit/packages/ssr/dist/index.mjs`
+);
 
 // ── 3. 定义组件 ──────────────────────────────────────────────
 

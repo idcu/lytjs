@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global document */
 /**
  * 组件级形态电池 check-component-shapes
  *
@@ -64,7 +65,9 @@ let total = 0;
 const check = (name, ok, detail) => {
   total++;
   if (!ok) fail++;
-  console.log(`${ok ? '   ✅' : '   ❌'} ${name}${!ok && detail ? ' :: ' + String(detail).slice(0, 200) : ''}`);
+  console.log(
+    `${ok ? '   ✅' : '   ❌'} ${name}${!ok && detail ? ' :: ' + String(detail).slice(0, 200) : ''}`,
+  );
 };
 
 async function mount(component) {
@@ -175,7 +178,11 @@ console.log('   [Transition / TransitionGroup]');
   list.value = ['b'];
   await tick(250);
   check('TransitionGroup：减到 1 项', root.querySelectorAll('.tg li').length === 1, root.innerHTML);
-  check('TransitionGroup：无 li 逃逸', root.querySelectorAll('li').length === 1, `total=${root.querySelectorAll('li').length}`);
+  check(
+    'TransitionGroup：无 li 逃逸',
+    root.querySelectorAll('li').length === 1,
+    `total=${root.querySelectorAll('li').length}`,
+  );
 }
 
 // ══════════════════════════════════════════════════════════
@@ -192,7 +199,11 @@ console.log('   [v-model]');
   });
   const inputs = root.querySelectorAll('.in');
   check('v-model+v-for：渲染 2 个输入框', inputs.length === 2, root.innerHTML);
-  check('v-model+v-for：初始值正确', inputs[0]?.value === 'x' && inputs[1]?.value === 'y', `${inputs[0]?.value}/${inputs[1]?.value}`);
+  check(
+    'v-model+v-for：初始值正确',
+    inputs[0]?.value === 'x' && inputs[1]?.value === 'y',
+    `${inputs[0]?.value}/${inputs[1]?.value}`,
+  );
   const inp = inputs[0];
   inp.value = 'X2';
   inp.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
@@ -200,8 +211,16 @@ console.log('   [v-model]');
   check('v-model+v-for：输入回写到 state', rows.value[0].v === 'X2', JSON.stringify(rows.value));
   rows.value = [...rows.value, { id: 3, v: 'z' }];
   await tick();
-  check('v-model+v-for：增长后 3 个输入框', root.querySelectorAll('.in').length === 3, root.innerHTML);
-  check('v-model+v-for：无 input 逃逸', root.querySelectorAll('input').length === 3, `total=${root.querySelectorAll('input').length}`);
+  check(
+    'v-model+v-for：增长后 3 个输入框',
+    root.querySelectorAll('.in').length === 3,
+    root.innerHTML,
+  );
+  check(
+    'v-model+v-for：无 input 逃逸',
+    root.querySelectorAll('input').length === 3,
+    `total=${root.querySelectorAll('input').length}`,
+  );
 }
 {
   const val = ref('init');
@@ -239,10 +258,18 @@ console.log('   [动态组件 / 异步组件 / Suspense]');
   check('动态组件：初始 A', root.querySelector('.ca') !== null, root.innerHTML);
   which.value = 'B';
   await tick();
-  check('动态组件：切到 B 且 A 已移除', root.querySelector('.cb') !== null && root.querySelector('.ca') === null, root.innerHTML);
+  check(
+    '动态组件：切到 B 且 A 已移除',
+    root.querySelector('.cb') !== null && root.querySelector('.ca') === null,
+    root.innerHTML,
+  );
   which.value = 'A';
   await tick();
-  check('动态组件：切回 A 且 B 已移除', root.querySelector('.ca') !== null && root.querySelector('.cb') === null, root.innerHTML);
+  check(
+    '动态组件：切回 A 且 B 已移除',
+    root.querySelector('.ca') !== null && root.querySelector('.cb') === null,
+    root.innerHTML,
+  );
 }
 {
   const show = ref(false);
@@ -276,7 +303,11 @@ console.log('   [动态组件 / 异步组件 / Suspense]');
     template: `<div><Suspense><AsyncApp /></Suspense></div>`,
   });
   await tick(250);
-  check('Suspense：异步 setup 完成后渲染内容', txt(root.querySelector('.as')) === 'resolved', root.innerHTML);
+  check(
+    'Suspense：异步 setup 完成后渲染内容',
+    txt(root.querySelector('.as')) === 'resolved',
+    root.innerHTML,
+  );
 }
 
 // ══════════════════════════════════════════════════════════
@@ -324,12 +355,22 @@ console.log('   [插槽 / 子组件 / 错误边界]');
   list.value = ['a', 'b'];
   await tick();
   check('插槽内 v-if+v-for：p 出现', root.querySelector('.s') !== null, root.innerHTML);
-  check('插槽内 v-if+v-for：li 2 个且在 ul 内', root.querySelector('ul.l')?.querySelectorAll('li').length === 2, root.innerHTML);
-  check('插槽内 v-if+v-for：无 li 逃逸', root.querySelectorAll('li').length === 2, `total=${root.querySelectorAll('li').length}`);
+  check(
+    '插槽内 v-if+v-for：li 2 个且在 ul 内',
+    root.querySelector('ul.l')?.querySelectorAll('li').length === 2,
+    root.innerHTML,
+  );
+  check(
+    '插槽内 v-if+v-for：无 li 逃逸',
+    root.querySelectorAll('li').length === 2,
+    `total=${root.querySelectorAll('li').length}`,
+  );
 }
 {
   const list = ref(['a']);
-  const Card = { template: `<div class="card"><header><slot name="head" /></header><main><slot /></main></div>` };
+  const Card = {
+    template: `<div class="card"><header><slot name="head" /></header><main><slot /></main></div>`,
+  };
   const root = await mount({
     components: { Card },
     setup: () => ({ list }),
@@ -338,8 +379,16 @@ console.log('   [插槽 / 子组件 / 错误边界]');
   check('具名插槽：head 渲染', root.querySelector('.h') !== null, root.innerHTML);
   list.value = ['a', 'b', 'c'];
   await tick();
-  check('具名插槽：默认插槽内列表增长到 3', root.querySelector('ul.l')?.querySelectorAll('li').length === 3, root.innerHTML);
-  check('具名插槽：无 li 逃逸', root.querySelectorAll('li').length === 3, `total=${root.querySelectorAll('li').length}`);
+  check(
+    '具名插槽：默认插槽内列表增长到 3',
+    root.querySelector('ul.l')?.querySelectorAll('li').length === 3,
+    root.innerHTML,
+  );
+  check(
+    '具名插槽：无 li 逃逸',
+    root.querySelectorAll('li').length === 3,
+    `total=${root.querySelectorAll('li').length}`,
+  );
 }
 {
   const n = ref(0);
@@ -420,7 +469,11 @@ console.log('   [组件 v-for + keyed 重排（状态跟随 key）]');
   check('组件 v-for 重排：顺序变 B,A', labels === 'B,A', labels);
   const clicks = [...root.querySelectorAll('.ck')].map((e) => e.textContent?.trim()).join(',');
   check('组件 v-for 重排：状态跟随 key（A 的计数 2 移到第二行）', clicks === '0,2', clicks);
-  check('组件 v-for 重排：无 li 逃逸', root.querySelectorAll('li.row').length === 2, `total=${root.querySelectorAll('li.row').length}`);
+  check(
+    '组件 v-for 重排：无 li 逃逸',
+    root.querySelectorAll('li.row').length === 2,
+    `total=${root.querySelectorAll('li.row').length}`,
+  );
 }
 
 // ══════════════════════════════════════════════════════════
@@ -445,7 +498,10 @@ console.log('   [宿主能力缺失：无 getComputedStyle]');
   check('无 getComputedStyle：getTransitionInfoDOM 不抛错', threw === null, threw);
   check(
     '无 getComputedStyle：按「无过渡/无动画」返回',
-    info !== null && info.hasTransition === false && info.hasAnimation === false && info.duration === 0,
+    info !== null &&
+      info.hasTransition === false &&
+      info.hasAnimation === false &&
+      info.duration === 0,
     JSON.stringify(info),
   );
 
@@ -457,7 +513,11 @@ console.log('   [宿主能力缺失：无 getComputedStyle]');
   });
   show.value = false;
   await tick(200);
-  check('无 getComputedStyle：Transition 离开在 200ms 内完成（不卡死）', root.querySelector('.tp2') === null, root.innerHTML);
+  check(
+    '无 getComputedStyle：Transition 离开在 200ms 内完成（不卡死）',
+    root.querySelector('.tp2') === null,
+    root.innerHTML,
+  );
 
   G.getComputedStyle = originalGetComputedStyle;
 }

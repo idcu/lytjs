@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global document */
 /**
  * 门禁：SSR 请求隔离
  *
@@ -106,7 +107,12 @@ const trapWarn = () => {
   const calls = [];
   const orig = console.warn;
   console.warn = (...a) => calls.push(a.map(String).join(' '));
-  return { calls, restore: () => { console.warn = orig; } };
+  return {
+    calls,
+    restore: () => {
+      console.warn = orig;
+    },
+  };
 };
 
 const mkRoot = () => {
@@ -144,7 +150,11 @@ section('[2] 没有 pinia 时落到进程级单例（且必须告警）');
   const second = useAnon();
   trap.restore();
 
-  check('无 pinia 时两次调用是同一个 store（单例语义）', first === second, `same=${first === second}`);
+  check(
+    '无 pinia 时两次调用是同一个 store（单例语义）',
+    first === second,
+    `same=${first === second}`,
+  );
   check('无 pinia 时读到的是同一份状态', second.v === 42, `v=${second.v}`);
   check(
     '必须告警一次（静默的进程级单例在 SSR 上是隐患）',
@@ -221,8 +231,16 @@ section('[5] pinia.state 不串');
 
   const stateA = piniaA.state.value;
   const stateB = piniaB.state.value;
-  check('A 的 pinia.state 里有 iso-state', Object.keys(stateA).includes('iso-state'), JSON.stringify(Object.keys(stateA)));
-  check('B 的 pinia.state 里没有 A 的 store', !Object.keys(stateB).includes('iso-state'), JSON.stringify(Object.keys(stateB)));
+  check(
+    'A 的 pinia.state 里有 iso-state',
+    Object.keys(stateA).includes('iso-state'),
+    JSON.stringify(Object.keys(stateA)),
+  );
+  check(
+    'B 的 pinia.state 里没有 A 的 store',
+    !Object.keys(stateB).includes('iso-state'),
+    JSON.stringify(Object.keys(stateB)),
+  );
 }
 
 // ══════════════════════════════════════════════════════════
@@ -254,8 +272,16 @@ section('[6] provide/inject 在两个 app 之间隔离');
   await appB.mount(rootB);
   await tick();
 
-  check('app A 的注入是 dark', rootA.querySelector('.theme')?.textContent?.trim() === 'dark', rootA.innerHTML);
-  check('app B 的注入是 light（未被 A 污染）', rootB.querySelector('.theme')?.textContent?.trim() === 'light', rootB.innerHTML);
+  check(
+    'app A 的注入是 dark',
+    rootA.querySelector('.theme')?.textContent?.trim() === 'dark',
+    rootA.innerHTML,
+  );
+  check(
+    'app B 的注入是 light（未被 A 污染）',
+    rootB.querySelector('.theme')?.textContent?.trim() === 'light',
+    rootB.innerHTML,
+  );
   appA.unmount();
   appB.unmount();
 }
@@ -277,8 +303,16 @@ section('[7] app.config.globalProperties 在两个 app 之间隔离');
   await appB.mount(rootB);
   await tick();
 
-  check('app A 的 globalProperties 生效', rootA.querySelector('.gp')?.textContent?.trim() === 'AAA', rootA.innerHTML);
-  check('app B 的 globalProperties 未被 A 污染', rootB.querySelector('.gp')?.textContent?.trim() === 'BBB', rootB.innerHTML);
+  check(
+    'app A 的 globalProperties 生效',
+    rootA.querySelector('.gp')?.textContent?.trim() === 'AAA',
+    rootA.innerHTML,
+  );
+  check(
+    'app B 的 globalProperties 未被 A 污染',
+    rootB.querySelector('.gp')?.textContent?.trim() === 'BBB',
+    rootB.innerHTML,
+  );
   appA.unmount();
   appB.unmount();
 }
@@ -322,8 +356,16 @@ section('[9] runWithPinia 结束后恢复原 activePinia');
   useRw(outer).tag = 'OUTER';
 
   const insideTag = store.runWithPinia(inner, () => useRw().tag);
-  check('作用域内解析到 inner（未写入 ⇒ 默认空）', insideTag === '', `tag=${JSON.stringify(insideTag)}`);
-  check('作用域结束后 activePinia 恢复为 outer', store.getActivePinia() === outer, 'activePinia 未恢复');
+  check(
+    '作用域内解析到 inner（未写入 ⇒ 默认空）',
+    insideTag === '',
+    `tag=${JSON.stringify(insideTag)}`,
+  );
+  check(
+    '作用域结束后 activePinia 恢复为 outer',
+    store.getActivePinia() === outer,
+    'activePinia 未恢复',
+  );
   check('恢复后 useRw() 仍指向 outer 的那份', useRw().tag === 'OUTER', useRw().tag);
 }
 

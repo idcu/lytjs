@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global document */
 /**
  * SSR ↔ 客户端 一致性门禁 check-ssr-client-parity
  *
@@ -62,9 +63,7 @@ G.cancelAnimationFrame = (id) => clearTimeout(id);
 
 const url = (p) => new URL(p, import.meta.url).href;
 const core = await import(url('../packages/core/dist/index.mjs'));
-const ssr = await import(
-  url('../packages/ecosystem/packages/ssr-kit/packages/ssr/dist/index.mjs')
-);
+const ssr = await import(url('../packages/ecosystem/packages/ssr-kit/packages/ssr/dist/index.mjs'));
 const { createApp, h, ref, installTemplateCompiler } = core;
 installTemplateCompiler();
 
@@ -328,7 +327,11 @@ console.log('\n   [静态模板的 attrs 隔离]');
   const els = [...root.querySelectorAll('.own')];
   check('两个实例：元素数为 2', els.length === 2, `count=${els.length}`);
   check('第 1 个实例 class 只有 own a', els[0]?.className === 'own a', els[0]?.className);
-  check('第 2 个实例 class 只有 own b（不继承上一个的 a）', els[1]?.className === 'own b', els[1]?.className);
+  check(
+    '第 2 个实例 class 只有 own b（不继承上一个的 a）',
+    els[1]?.className === 'own b',
+    els[1]?.className,
+  );
 }
 {
   // 只传 id 时不得凭空出现 class
@@ -376,7 +379,11 @@ console.log('\n   [静态模板的 attrs 隔离]');
   check('静态实例卸载：初始 2 个', root.querySelectorAll('.own').length === 2, root.innerHTML);
   showA.value = false;
   await tick();
-  check('静态实例卸载：卸载后剩 1 个（未误删另一个）', root.querySelectorAll('.own').length === 1, root.innerHTML);
+  check(
+    '静态实例卸载：卸载后剩 1 个（未误删另一个）',
+    root.querySelectorAll('.own').length === 1,
+    root.innerHTML,
+  );
   check('静态实例卸载：兄弟标记仍在', root.querySelector('.mark') !== null, root.innerHTML);
 }
 {
@@ -395,22 +402,44 @@ console.log('\n   [静态模板的 attrs 隔离]');
   await tick();
   const cls = [...root.querySelectorAll('.own')].map((e) => e.className).join('|');
   check('静态组件在 v-for 中：增长后 class 互不污染', cls === 'own a|own b|own c', cls);
-  check('静态组件在 v-for 中：无 li 逃逸', root.querySelectorAll('li').length === 3, `total=${root.querySelectorAll('li').length}`);
+  check(
+    '静态组件在 v-for 中：无 li 逃逸',
+    root.querySelectorAll('li').length === 3,
+    `total=${root.querySelectorAll('li').length}`,
+  );
   list.value = ['b'];
   await tick();
-  check('静态组件在 v-for 中：缩减后 class 正确', root.querySelector('.own')?.className === 'own b', root.querySelector('.own')?.className);
+  check(
+    '静态组件在 v-for 中：缩减后 class 正确',
+    root.querySelector('.own')?.className === 'own b',
+    root.querySelector('.own')?.className,
+  );
 }
 {
   // 两个不同父组件各自使用同一静态组件
   const Static = { template: `<div class="own">inner</div>` };
-  const P1 = { components: { Static }, template: `<section class="p1"><Static class="x" /></section>` };
-  const P2 = { components: { Static }, template: `<section class="p2"><Static class="y" /></section>` };
+  const P1 = {
+    components: { Static },
+    template: `<section class="p1"><Static class="x" /></section>`,
+  };
+  const P2 = {
+    components: { Static },
+    template: `<section class="p2"><Static class="y" /></section>`,
+  };
   const root = document.createElement('div');
   document.body.appendChild(root);
   await createApp({ components: { P1, P2 }, template: `<div><P1 /><P2 /></div>` }).mount(root);
   await tick();
-  check('两个父组件：P1 内 class 正确', root.querySelector('.p1 .own')?.className === 'own x', root.querySelector('.p1 .own')?.className);
-  check('两个父组件：P2 内 class 正确（不被 P1 污染）', root.querySelector('.p2 .own')?.className === 'own y', root.querySelector('.p2 .own')?.className);
+  check(
+    '两个父组件：P1 内 class 正确',
+    root.querySelector('.p1 .own')?.className === 'own x',
+    root.querySelector('.p1 .own')?.className,
+  );
+  check(
+    '两个父组件：P2 内 class 正确（不被 P1 污染）',
+    root.querySelector('.p2 .own')?.className === 'own y',
+    root.querySelector('.p2 .own')?.className,
+  );
 }
 {
   // 两个组件**模板字符串完全相同**：共用一个编译产物，但状态必须独立
@@ -424,7 +453,10 @@ console.log('\n   [静态模板的 attrs 隔离]');
   });
   const root = document.createElement('div');
   document.body.appendChild(root);
-  await createApp({ components: { C1: mk(0), C2: mk(100) }, template: `<div><C1 /><C2 /></div>` }).mount(root);
+  await createApp({
+    components: { C1: mk(0), C2: mk(100) },
+    template: `<div><C1 /><C2 /></div>`,
+  }).mount(root);
   await tick();
   const click = (el) => el?.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
   click(root.querySelectorAll('.b')[0]);

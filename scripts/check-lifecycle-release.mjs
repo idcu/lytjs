@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global document */
 /**
  * 门禁：生命周期资源释放（卸载之后，框架有没有把东西清理干净？）
  *
@@ -42,7 +43,6 @@
  */
 
 import { JSDOM } from 'jsdom';
-import { gzipSync } from 'node:zlib';
 
 // ── 环境 ──────────────────────────────────────────────────
 const dom = new JSDOM('<!doctype html><html><body></body></html>', { url: 'http://localhost' });
@@ -334,7 +334,7 @@ section('[7] 卸载后副作用停止（watch / watchEffect / onScopeDispose）'
       scopeInSetup = re.getCurrentScope() ?? null;
       watch(state, () => watchRuns++, { flush: 'sync' });
       watchEffect(() => {
-        state.value;
+        void state.value;
         effectRuns++;
       });
       re.onScopeDispose(() => disposed++);
@@ -357,7 +357,11 @@ section('[7] 卸载后副作用停止（watch / watchEffect / onScopeDispose）'
   state.value = 1;
   await tick();
 
-  check('卸载后 watch 不再触发', watchRuns === before.watchRuns, `before=${before.watchRuns} after=${watchRuns}`);
+  check(
+    '卸载后 watch 不再触发',
+    watchRuns === before.watchRuns,
+    `before=${before.watchRuns} after=${watchRuns}`,
+  );
   check(
     '卸载后 watchEffect 不再触发',
     effectRuns === before.effectRuns,
@@ -388,7 +392,11 @@ section('[8] 卸载后渲染 effect 停止');
   const afterUnmount = renders;
   state.value = 1;
   await tick();
-  check('卸载后渲染 effect 不再执行', renders === afterUnmount, `before=${afterUnmount} after=${renders}`);
+  check(
+    '卸载后渲染 effect 不再执行',
+    renders === afterUnmount,
+    `before=${afterUnmount} after=${renders}`,
+  );
 }
 
 // ══════════════════════════════════════════════════════════
@@ -494,7 +502,9 @@ section('[11] Teleport 卸载');
 // ══════════════════════════════════════════════════════════
 section('[12] SSR 每请求必须释放（实例永不被 unmount）');
 {
-  const ssr = await import(`${ROOT}/packages/ecosystem/packages/ssr-kit/packages/ssr/dist/index.mjs`);
+  const ssr = await import(
+    `${ROOT}/packages/ecosystem/packages/ssr-kit/packages/ssr/dist/index.mjs`
+  );
   // 纯 SSR 进程不调 createApp ⇒ 需要显式注入模板编译器
   core.installTemplateCompiler();
 

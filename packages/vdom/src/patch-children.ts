@@ -7,7 +7,7 @@
  */
 
 import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
-import { ShapeFlags, isSameVNodeType, isVNode } from '@lytjs/common-vnode';
+import { ShapeFlags, isVNode } from '@lytjs/common-vnode';
 import { isArray } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
 import type { SuspenseBoundary } from './types';

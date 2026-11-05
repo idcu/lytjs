@@ -98,7 +98,7 @@ describe('组件实例的 effect scope', () => {
       setup() {
         watch(state, () => {});
         watchEffect(() => {
-          state.value;
+          void state.value;
         });
         return {};
       },
@@ -120,7 +120,7 @@ describe('组件实例的 effect scope', () => {
       setup() {
         watch(state, () => watchRuns++, { flush: 'sync' });
         watchEffect(() => {
-          state.value;
+          void state.value;
           effectRuns++;
         });
         return {};

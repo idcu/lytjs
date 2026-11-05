@@ -32,7 +32,7 @@
  *
  * 退出码 0 = 所有示例的 @lytjs 导入均可解析，且无穿透源码的相对导入。
  */
-import { readdirSync, readFileSync, statSync, existsSync } from 'node:fs';
+import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join, relative, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
