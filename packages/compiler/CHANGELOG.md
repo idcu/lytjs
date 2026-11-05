@@ -2,6 +2,40 @@
 
 ## [Unreleased]
 
+### ⚠️ 行为变更：`optimizeSignal` 默认关闭（A04 / D1，2026-11-05）
+
+- **默认值由 true 改为 false**。`rendererMode: 'signal' | 'vapor'` 在不传
+  `optimizeSignal` 时走**基础实现**（`generateSignal`），只有显式
+  `compile(tpl, { rendererMode: 'signal', optimizeSignal: true })` 才启用优化器。
+  - 原因：优化版 `codegen-signal-optimized` 与基础实现存在语义分叉，会**静默丢内容**
+    （根级 `{{msg}}`、`v-if` 分支的动态属性、kebab 组件 `_ctx.my-comp` 语法错误、
+    `v-for` 列表项内的嵌套元素）。生产用例不应默认落在这条路径上。
+  - 开启方式：`compile(template, { rendererMode: 'signal', optimizeSignal: true })`。
+  - 回退路径：如需恢复旧默认，把上述显式开关作为默认值下发即可（无需改产物逻辑）；
+    但必须同时保留 `scripts/check-compiler-parity.mjs` 的分叉基线，否则门禁会红。
+  - 决策记录：[keel/decisions/0012-signal-optimizer-default-off.md](../../keel/decisions/0012-signal-optimizer-default-off.md)。
+  - 两版合一（parity）安排在计划 B01，完成后再评估默认值。
+
+### 🐛 修复基础 signal codegen 的四类静默丢内容（A04，2026-11-05）
+
+- **根级纯文本 / 插值**（`{{msg}}`、`Hello {{name}}`）：此前整段丢弃（`elementVars`
+  为空时没有任何 DOM 创建），现按文本段逐段创建文本节点并建立 `setText` effect。
+- **`v-if` 分支的动态属性**（`<span v-if="ok" :id="i">` 曾产出 `id="i"`）：
+  静态序列化改用「字面量」判据，动态项在分支创建/更新时各执行一次 `setAttribute`。
+- **kebab 组件**（`<my-comp/>` 曾产出 `_ctx.my-comp`，被解析成减法 → ReferenceError）：
+  统一走 `_ctx['my-comp']` 形式。
+- **`v-for` 列表项内的嵌套元素**（`<li v-for="x in xs"><span>{{x}}</span></li>` 曾生成空 `li`）：
+  按 DOM 结构逐层生成 create/update。
+- **`v-for` 的 `:key` 从未生效**（props key 内容为 `"key"` 带引号，比较用 `key`）：
+  去引号后比较；此前所有列表都静默回退到 `item.id`。
+
+新增门禁 `scripts/check-compiler-parity.mjs`（fast tier）：5 个最小模板真实执行 +
+DOM 与响应式更新断言；断言「默认产物 == `optimizeSignal:false`」；显式开启优化器的
+已知分叉记录在 `scripts/compiler-parity-baseline.json`（只减不增）。
+注入验证：把默认切回优化器 ⇒ 6 项红。
+
+## [6.9.6] - 2026-06-06
+
 ### 🐛 修复 `compileSFC()` 的两个静默失效（2026-10-10，P1-8 连带发现）
 
 - **`<style scoped>` 的默认路径产出 `[data-v-undefined]`**：

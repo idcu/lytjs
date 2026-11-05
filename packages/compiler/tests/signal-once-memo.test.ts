@@ -6,9 +6,13 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { compile } from '../src/index';
+import { compile as compileImpl } from '../src/index';
 
-const signal = (t: string) => compile(t, { rendererMode: 'signal' }).code;
+/** A04/D1：本文件断言优化版产物，故显式开启 optimizeSignal（断言未改动）。 */
+const compile = (template: string, options: Parameters<typeof compileImpl>[1] = {}) =>
+  compileImpl(template, { rendererMode: 'signal', optimizeSignal: true, ...options });
+
+const signal = (t: string) => compile(t).code;
 
 /** 校验生成片段是合法 JS（避免再出现箭头函数体缺大括号这类语法错误） */
 function assertSyntaxOk(code: string, fragment: string): void {

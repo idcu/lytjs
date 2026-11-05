@@ -2,7 +2,14 @@
 // Signal 模式代码生成测试
 
 import { describe, it, expect } from 'vitest';
-import { compile } from '../src/index';
+import { compile as compileImpl } from '../src/index';
+
+/**
+ * A04/D1：`optimizeSignal` 已默认关闭，而本文件断言的是**优化版产物**的细节。
+ * 因此显式开启（断言本身未改动）；显式传 `optimizeSignal:false` 的用例会覆盖此默认值。
+ */
+const compile = (template: string, options: Parameters<typeof compileImpl>[1] = {}) =>
+  compileImpl(template, { rendererMode: 'signal', optimizeSignal: true, ...options });
 
 describe('codegen-signal', () => {
   // ============================================================

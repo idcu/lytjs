@@ -330,6 +330,18 @@ const GATES = [
 
   // ── 慢档：全仓级 / 需要 dist ────────────────────────────────
   {
+    name: 'check-compiler-parity',
+    tier: 'fast',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-compiler-parity.mjs'],
+    approx: '~2s',
+    desc:
+      '★ signal/vapor **默认编译路径**的语义正确性（A04/D1）：5 个最小模板默认选项编译 → ' +
+      '真实执行 → 断言 DOM 与响应式更新（根级 {{msg}}、v-if 动态属性、kebab 组件、v-for 嵌套元素）。' +
+      '同时断言「默认产物 == optimizeSignal:false」，显式开启优化器的已知分叉记录在 ' +
+      'scripts/compiler-parity-baseline.json（棘轮只减不增）。注入验证：默认切回优化器 ⇒ 6 项红',
+  },
+  {
     name: 'check-hmr',
     tier: 'fast',
     needsDist: true,

@@ -2,6 +2,20 @@
 
 本项目的所有重要变更将记录在此文件中。
 
+## [Unreleased]
+
+### ⚠️ 默认行为变更：signal/vapor 编译器优化默认关闭（2026-11-05）
+
+- `compile(template, { rendererMode: 'signal' | 'vapor' })` 现在默认走**语义正确**的
+  基础实现；优化版仅在显式 `optimizeSignal: true` 时启用。
+- 原因：优化版与基础实现存在语义分叉，会静默丢内容（根级插值、`v-if` 动态属性、
+  kebab 组件、`v-for` 嵌套元素）。
+- 开启方式：`compile(template, { rendererMode: 'signal', optimizeSignal: true })`。
+- 新增门禁 `check-compiler-parity`（纳入 `gate.mjs` fast tier）：5 模板真实 DOM 断言 +
+  优化器分叉棘轮。
+- 详见 [packages/compiler/CHANGELOG.md](packages/compiler/CHANGELOG.md) 与
+  [keel/decisions/0012-signal-optimizer-default-off.md](keel/decisions/0012-signal-optimizer-default-off.md)。
+
 ## [6.9.6] - 2026-06-06
 
 ### 本次更新内容

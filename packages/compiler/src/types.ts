@@ -351,12 +351,12 @@ export interface CompilerOptions extends ParserOptions, TransformOptions, Codege
   /** SSR 编译模式：启用后跳过客户端专用指令（v-on, v-model, v-show），生成 renderToString 格式代码 */
   ssrMode?: boolean;
   /**
-   * Phase 1.1: Signal 模式代码优化
-   * 启用后使用优化版本的代码生成器，生成更紧凑的代码
-   * - 短导入别名：effect -> e, setText -> x 等
-   * - 合并多个 effect 为单个 effect
-   * - 更短的变量名：_div -> _0
-   * 默认为 true
+   * Signal 模式代码优化
+   * 启用后使用优化版本的代码生成器（短导入别名、合并 effect、短变量名）。
+   *
+   * **默认 false**（A04/D1，2026-11-05）：优化版与基础实现存在语义分叉（会静默丢内容），
+   * 仅保留显式开启入口；待 B01 完成两版合一后再评估默认值。
+   * 决策记录见 `keel/decisions/0012-signal-optimizer-default-off.md`。
    */
   optimizeSignal?: boolean;
 }

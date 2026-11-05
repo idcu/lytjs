@@ -10,9 +10,13 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { compile } from '../src/index';
+import { compile as compileImpl } from '../src/index';
 
-const signal = (t: string) => compile(t, { rendererMode: 'signal' }).code;
+/** A04/D1：本文件断言优化版产物，故显式开启 optimizeSignal（断言未改动）。 */
+const compile = (template: string, options: Parameters<typeof compileImpl>[1] = {}) =>
+  compileImpl(template, { rendererMode: 'signal', optimizeSignal: true, ...options });
+
+const signal = (t: string) => compile(t).code;
 
 describe('Signal 模式 - v-for 项内容', () => {
   it('插值应写入元素 textContent', () => {
@@ -233,7 +237,7 @@ describe('Signal 模式 - 子组件（两版 codegen 均已支持挂载）', () 
   });
 
   it('VNode 模式组件标签应前缀化', () => {
-    const code = compile('<div><Child/></div>').code;
+    const code = compile('<div><Child/></div>', { rendererMode: 'vnode' }).code;
     expect(code).toContain('_ctx.Child');
   });
 });

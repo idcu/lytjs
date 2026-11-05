@@ -1,0 +1,10 @@
+{
+  "$comment": "A04/D1：显式 optimizeSignal:true 与基础实现的已知语义分叉。棘轮：只允许减少，不允许增加。两者合一（parity）安排在 B01，完成后删除本文件与对应用例。",
+  "divergent": [
+    "static-interpolation",
+    "root-text",
+    "if-dynamic-attr",
+    "kebab-component",
+    "for-nested-element"
+  ]
+}

@@ -189,8 +189,9 @@ function buildCompileCacheKey(source: string, options: CompilerOptions): string 
 
   // 缓存键必须覆盖**所有**影响产物的选项。
   // 此前这里只列了 7 个字段，漏掉了 `optimizeSignal` 等影响 codegen 分支的选项 ——
-  // 结果是：同一模板先按默认（优化版）编译一次后，再用 `optimizeSignal:false`
-  // 请求非优化版，会命中缓存直接返回优化版产物（错误结果）。
+  // 结果是：同一模板先按 `optimizeSignal:false` 编译一次后，再用默认（基础实现）
+  // 请求，会命中缓存直接返回前一份产物。A04/D1 后默认也是基础实现，
+  // 但显式 `optimizeSignal:true` 仍必须与默认分开缓存。
   // 这里改为"把所有标量选项按 key 排序后序列化"，避免今后再次遗漏。
   const record = options as unknown as Record<string, unknown>;
   const optionsKey = Object.keys(record)
@@ -318,9 +319,12 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
   if (ssrMode) {
     codegenResult = generateSSR(ast, options);
   } else if (options.rendererMode === 'signal' || options.rendererMode === 'vapor') {
-    // Phase 1.1: 使用优化版本的 Signal 代码生成器
-    // 当 optimizeSignal 选项为 true 时使用优化版本（默认为 true）
-    if (options.optimizeSignal !== false) {
+    // A04 / D1：signal/vapor 默认走**语义正确**的基础实现。
+    // `codegen-signal-optimized` 目前与基础实现存在语义分叉（会静默丢内容，
+    // 例如 `{{msg}}` 根级文本、v-if 分支的动态属性），因此只保留**显式开启**入口，
+    // 默认关闭。两者合一（parity）安排在 B01，届时才可重新评估默认值。
+    // 决策记录见 keel/decisions/。
+    if (options.optimizeSignal === true) {
       codegenResult = generateSignalOptimized(ast, options);
     } else {
       codegenResult = generateSignal(ast, options);
