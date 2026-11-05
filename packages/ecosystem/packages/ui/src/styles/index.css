@@ -2577,8 +2577,18 @@
   font-size: 13px;
   color: var(--lyt-text-color-regular);
 }
-.lyt-pagination button,
-.lyt-pagination .lyt-pagination__item {
+.lyt-pagination__total {
+  color: var(--lyt-text-color-secondary);
+}
+.lyt-pagination__pager {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.lyt-pagination__btn,
+.lyt-pagination__prev,
+.lyt-pagination__next,
+.lyt-pagination__item {
   min-width: 30px;
   height: 30px;
   padding: 0 8px;
@@ -2588,13 +2598,64 @@
   cursor: pointer;
   color: inherit;
 }
-.lyt-pagination button:hover {
+.lyt-pagination__btn:hover:not(:disabled),
+.lyt-pagination__prev:hover:not(:disabled),
+.lyt-pagination__next:hover:not(:disabled) {
   color: var(--lyt-color-primary);
   border-color: var(--lyt-color-primary);
 }
+.lyt-pagination__btn:disabled,
+.lyt-pagination__prev:disabled,
+.lyt-pagination__next:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.lyt-pagination__btn--active,
+.lyt-pagination__btn--active:hover:not(:disabled) {
+  border-color: var(--lyt-color-primary);
+  background: var(--lyt-color-primary);
+  color: #ffffff;
+}
+.lyt-pagination__ellipsis {
+  min-width: 30px;
+  text-align: center;
+  color: var(--lyt-text-color-secondary);
+}
+.lyt-pagination__sizes {
+  display: inline-flex;
+  align-items: center;
+}
+.lyt-pagination__select {
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--lyt-border-color);
+  border-radius: var(--lyt-border-radius-base);
+  background: var(--lyt-bg-color);
+  color: inherit;
+}
+.lyt-pagination__jumper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.lyt-pagination__input {
+  width: 50px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--lyt-border-color);
+  border-radius: var(--lyt-border-radius-base);
+  background: var(--lyt-bg-color);
+  color: inherit;
+  text-align: center;
+}
+.lyt-pagination--background .lyt-pagination__btn,
 .lyt-pagination--background .lyt-pagination__item {
   background: #f4f4f5;
   border-color: transparent;
+}
+.lyt-pagination--background .lyt-pagination__btn--active {
+  background: var(--lyt-color-primary);
+  color: #ffffff;
 }
 .lyt-pagination--simple {
   gap: 10px;

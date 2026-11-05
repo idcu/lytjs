@@ -144,10 +144,7 @@
       "slots": { "status": "n/a", "reason": "无插槽接口（自含 UI）" },
       "events": { "status": "pass" },
       "controlled": { "status": "pass" },
-      "styles": {
-        "status": "red",
-        "reason": "__total / __btn / __pager / __prev / __next / __sizes / __select / __jumper / __input / __ellipsis 无规则"
-      },
+      "styles": { "status": "pass" },
       "keyboard": { "status": "pass" }
     },
     "Progress": {
