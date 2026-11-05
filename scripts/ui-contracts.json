@@ -45,13 +45,10 @@
     },
     "Button": {
       "vmodel": { "status": "n/a", "reason": "按钮无值语义" },
-      "slots": { "status": "red", "reason": "声明 loading / icon 插槽，渲染函数只读 default" },
+      "slots": { "status": "pass" },
       "events": { "status": "pass" },
       "controlled": { "status": "pass" },
-      "styles": {
-        "status": "red",
-        "reason": "lyt-button__loading / __loading-icon / __text 无 CSS 规则"
-      },
+      "styles": { "status": "pass" },
       "keyboard": { "status": "pass" }
     },
     "Card": {

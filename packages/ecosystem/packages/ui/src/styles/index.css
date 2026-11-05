@@ -114,6 +114,24 @@
   cursor: wait;
   pointer-events: none;
 }
+.lyt-button__text {
+  display: inline-flex;
+  align-items: center;
+}
+.lyt-button__icon {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+.lyt-button__loading {
+  display: inline-flex;
+  align-items: center;
+}
+.lyt-button__loading-icon {
+  width: 1em;
+  height: 1em;
+  animation: lyt-spin-rotate 1s linear infinite;
+}
 
 /* ===== Input 组件 ===== */
 .lyt-input {

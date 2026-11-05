@@ -84,16 +84,33 @@ export const Button = defineComponent({
       const children: VNode[] = [];
 
       if (p.loading) {
+        // ★ 2026-11-06（B04）：`loading` 插槽此前声明了却从未渲染 ⇒ 传了看不到。
+        //   不传时保持原内置图标；DOM 结构（`span.lyt-button__loading`）不变。
         children.push(
-          createVNode('span', { class: 'lyt-button__loading' }, [
-            createVNode('svg', { class: 'lyt-button__loading-icon', viewBox: '0 0 1024 1024' }, [
-              createVNode('path', {
-                d: 'M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z',
-                fill: 'currentColor',
-              }),
-            ]),
-          ]),
+          createVNode(
+            'span',
+            { class: 'lyt-button__loading' },
+            slots.loading
+              ? slots.loading()
+              : [
+                  createVNode(
+                    'svg',
+                    { class: 'lyt-button__loading-icon', viewBox: '0 0 1024 1024' },
+                    [
+                      createVNode('path', {
+                        d: 'M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z',
+                        fill: 'currentColor',
+                      }),
+                    ],
+                  ),
+                ],
+          ),
         );
+      }
+
+      // ★ 2026-11-06（B04）：`icon` 插槽此前同样只声明不渲染。
+      if (slots.icon) {
+        children.push(createVNode('span', { class: 'lyt-button__icon' }, slots.icon()));
       }
 
       if (slots.default) {
