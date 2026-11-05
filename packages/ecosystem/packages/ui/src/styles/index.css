@@ -161,12 +161,9 @@
 }
 
 /* ===== Dialog 组件 ===== */
-.lyt-dialog {
+.lyt-dialog__wrapper {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   z-index: 2000;
   display: flex;
   align-items: center;
@@ -174,11 +171,19 @@
 }
 .lyt-dialog__overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background-color: var(--lyt-bg-color-overlay);
+}
+.lyt-dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: auto;
+  background-color: var(--lyt-bg-color);
+  border-radius: var(--lyt-border-radius-base);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 .lyt-dialog__content {
   display: flex;
@@ -186,6 +191,56 @@
   background-color: var(--lyt-bg-color);
   border-radius: var(--lyt-border-radius-base);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.lyt-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--lyt-border-color-lighter);
+}
+.lyt-dialog__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--lyt-text-color-primary);
+}
+.lyt-dialog__close {
+  padding: 0 4px;
+  border: none;
+  background: transparent;
+  color: var(--lyt-text-color-secondary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.lyt-dialog__body {
+  padding: 20px;
+  color: var(--lyt-text-color-regular);
+}
+.lyt-dialog__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--lyt-border-color-lighter);
+}
+.lyt-dialog__cancel-btn,
+.lyt-dialog__confirm-btn {
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: var(--lyt-border-radius-base);
+  cursor: pointer;
+}
+.lyt-dialog__cancel-btn {
+  border: 1px solid var(--lyt-border-color);
+  background: var(--lyt-bg-color);
+  color: var(--lyt-text-color-regular);
+}
+.lyt-dialog__confirm-btn {
+  border: 1px solid var(--lyt-color-primary);
+  background: var(--lyt-color-primary);
+  color: #ffffff;
 }
 
 /* ===== Select 组件 ===== */

@@ -80,10 +80,7 @@
       "slots": { "status": "pass" },
       "events": { "status": "pass" },
       "controlled": { "status": "pass" },
-      "styles": {
-        "status": "red",
-        "reason": "__wrapper / __header / __title / __close / __body / __footer / __*-btn 无规则；.lyt-dialog 误带遮罩定位"
-      },
+      "styles": { "status": "pass" },
       "keyboard": { "status": "pass" }
     },
     "Divider": {
