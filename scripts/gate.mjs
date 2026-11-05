@@ -109,8 +109,9 @@ const GATES = [
     cmd: ['tsx', 'scripts/check-ui-styles.ts'],
     approx: '~0.4s',
     desc:
-      '★ UI 样式覆盖：每个组件至少有一个自己发出的类名在 styles/index.css 里有规则' +
-      ' —— 评估时 18 个组件零命中（Modal/Drawer 变裸 div、Message 出现在页面底部）（2026-10-31）',
+      '★ UI 样式覆盖（选择器级）：组件发出的**每一个**静态类名都必须真实出现在 styles/index.css 的' +
+      '选择器里 —— 旧判据「至少一个类名命中 + 全文字符串出现」曾让 Dialog/Modal 整块内部结构无样式仍通过；' +
+      '既有欠账棘轮在 scripts/ui-styles-baseline.txt，Golden 20 不允许入基线（2026-11-06 收紧）',
   },
   {
     name: 'check-ui-contracts',

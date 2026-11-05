@@ -43,7 +43,37 @@ const ONLY = onlyIdx >= 0 ? process.argv[onlyIdx + 1] : null;
 
 const TYPES = fs.readFileSync(path.join(UI, 'components/types.ts'), 'utf8');
 const CSS = fs.readFileSync(path.join(UI, 'styles/index.css'), 'utf8');
-const CSS_CLASSES = new Set([...CSS.matchAll(/\.([a-zA-Z][\w-]*)/g)].map((m) => m[1]));
+// 与 check-ui-styles 同一判据：只认**选择器位置**的类名（剥注释、跳过 @keyframes 内部）
+const CSS_CLASSES = selectorClassNames(CSS);
+
+function selectorClassNames(css) {
+  const text = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  const classes = new Set();
+  const stack = [];
+  let buf = '';
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === '{') {
+      const selector = buf.trim();
+      const insideKeyframes = stack.includes('keyframes');
+      const isKeyframes = /^@(?:-\w+-)?keyframes/.test(selector);
+      const isAtRule = selector.startsWith('@');
+      if (!isAtRule && !insideKeyframes) {
+        for (const m of selector.matchAll(/\.([a-zA-Z][\w-]*)/g)) classes.add(m[1]);
+      }
+      stack.push(isKeyframes ? 'keyframes' : isAtRule ? 'at' : 'rule');
+      buf = '';
+    } else if (c === '}') {
+      stack.pop();
+      buf = '';
+    } else if (c === ';' && stack.length === 0) {
+      buf = '';
+    } else {
+      buf += c;
+    }
+  }
+  return classes;
+}
 
 const VALUE_PROPS = ['modelValue', 'current', 'pageSize'];
 const CONTROLLED_PROPS = [...VALUE_PROPS, 'src', 'open', 'visible', 'spinning'];
