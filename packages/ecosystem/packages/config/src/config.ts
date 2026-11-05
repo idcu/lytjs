@@ -3,6 +3,7 @@
 
 import { deepClone } from '@lytjs/common-object';
 import { hasChanged, isObject } from '@lytjs/common-is';
+import { FORBIDDEN_KEYS } from './proto-keys';
 
 // ============================================================
 // 类型定义
@@ -57,12 +58,24 @@ export type ConfigArray = ConfigValue[];
  *
  * 现在所有按路径读写的入口都先过 `isSafePath`：命中危险段就当作「路径不存在」，
  * `set` / `delete` 额外给一条告警（静默拒绝会让用户以为写成功了）。
+ * 判据与 `proto-keys.ts` 共享，merge / 转换器 用的是同一份集合。
  */
-const FORBIDDEN_PATH_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype']);
+const FORBIDDEN_PATH_SEGMENTS = FORBIDDEN_KEYS;
 
 /** 路径是否安全（不含原型链上的特殊段） */
 function isSafePath(keys: string[]): boolean {
   return keys.every((key) => !FORBIDDEN_PATH_SEGMENTS.has(key));
+}
+
+/**
+ * 对象键是否可以安全写入配置（`merge` / `setMultiple` 的对象形态走这里）。
+ *
+ * ⚠️ 2026-11-05 修（P0 安全）：`merge(JSON.parse('{"__proto__":{"polluted":"yes"}}'))`
+ *   此前会经 `deepMergeNotify` 递归进 `target["__proto__"]`（也就是 `Object.prototype`），
+ *   把 `polluted` 写到**全局原型**上。拒绝范围只限这三个键，不影响合法键名。
+ */
+function isSafeObjectKey(key: string): boolean {
+  return !FORBIDDEN_PATH_SEGMENTS.has(key);
 }
 
 /**
@@ -361,6 +374,12 @@ export class ConfigManager {
       this.deepMergeNotify(this.config, config, '', mergedKeys);
     } else {
       for (const key of Object.keys(config)) {
+        if (!isSafeObjectKey(key)) {
+          console.warn(
+            `[ConfigManager] 拒绝合并危险键 "${key}"（merge 不写入 __proto__ / constructor / prototype）`,
+          );
+          continue;
+        }
         const oldValue = this.config[key];
         this.config[key] = config[key];
         if (hasChanged(this.config[key], oldValue)) {
@@ -384,6 +403,12 @@ export class ConfigManager {
     mergedKeys: string[],
   ): void {
     Object.entries(source).forEach(([key, value]) => {
+      if (!isSafeObjectKey(key)) {
+        console.warn(
+          `[ConfigManager] 拒绝合并危险键 "${key}"（merge 不写入 __proto__ / constructor / prototype）`,
+        );
+        return;
+      }
       const fullPath = prefix ? `${prefix}.${key}` : key;
       if (isObject(target[key]) && isObject(value)) {
         this.deepMergeNotify(

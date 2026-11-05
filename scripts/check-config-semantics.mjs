@@ -31,6 +31,9 @@ const ROOT = process.cwd();
 const { ConfigManager, validateConfig, transformConfig, mergeConfig } = await import(
   join(ROOT, 'packages/ecosystem/packages/config/dist/index.mjs')
 );
+const { deepMerge, deepClone } = await import(
+  join(ROOT, 'packages/common/packages/object/dist/index.mjs')
+);
 
 let pass = 0;
 let fail = 0;
@@ -293,6 +296,82 @@ section('[7] 实例隔离（SSR 场景：每个请求一个 ConfigManager）');
   const a = mk({ token: 'A' });
   const b = mk({ token: 'B' });
   check('两个实例互不影响', a.get('token') === 'A' && b.get('token') === 'B');
+}
+
+// ══════════════════════════════════════════════════════════
+section('[8] 原型污染：merge / setMultiple / deepClone / deepMerge / mergeConfig');
+{
+  // `JSON.parse` 产出的 `__proto__` 是**自有键**（与普通对象字面量不同），
+  // 这正是 `merge(JSON.parse(...))` 能污染全局原型的原因。
+  const payload = () => JSON.parse('{"__proto__":{"polluted":"yes"}}');
+
+  const cfg = mk();
+  const warnings = captureWarn(() => cfg.merge(payload()));
+  check(
+    '★ merge(JSON.parse({"__proto__":{...}})) 不污染 Object.prototype',
+    {}.polluted === undefined,
+    {}.polluted,
+  );
+  check('merge 拒绝危险键时给出告警（不静默）', warnings.length >= 1, warnings);
+  check(
+    '合法键名不被误伤（merge 正常生效）',
+    (() => {
+      const c = mk();
+      c.merge({ constructorName: 1 });
+      return c.get('constructorName') === 1;
+    })(),
+  );
+}
+{
+  const cfg = mk();
+  cfg.merge(JSON.parse('{"__proto__":{"pollutedB":"yes"}}'), false);
+  check('merge(..., deep=false) 同样不污染', {}.pollutedB === undefined, {}.pollutedB);
+}
+{
+  const cfg = mk();
+  const warnings = captureWarn(() =>
+    cfg.setMultiple(JSON.parse('{"__proto__":{"pollutedC":"yes"}}')),
+  );
+  check('setMultiple 同样不污染', {}.pollutedC === undefined, {}.pollutedC);
+  check('setMultiple 拒绝时给出告警', warnings.length >= 1, warnings);
+}
+{
+  const ctor = mk(JSON.parse('{"__proto__":{"pollutedD":"yes"}}'));
+  check(
+    '★ 构造参数里的 __proto__ 被 deepClone 丢弃（克隆体原型未被改写）',
+    {}.pollutedD === undefined && Object.getPrototypeOf(ctor.getAll()) === Object.prototype,
+  );
+
+  const cloned = deepClone(JSON.parse('{"__proto__":{"pollutedE":"yes"}}'));
+  check(
+    'common-object.deepClone 丢弃 __proto__ 自有键',
+    {}.pollutedE === undefined && Object.getPrototypeOf(cloned) === Object.prototype,
+  );
+
+  deepMerge({}, JSON.parse('{"__proto__":{"pollutedF":"yes"}}'));
+  check('common-object.deepMerge 不污染', {}.pollutedF === undefined, {}.pollutedF);
+
+  let cycleThrew = false;
+  let cycleResult;
+  const cyc = { a: 1 };
+  cyc.self = cyc;
+  try {
+    cycleResult = deepMerge({}, cyc);
+  } catch {
+    cycleThrew = true;
+  }
+  check(
+    '★ deepMerge 遇循环引用不无限递归',
+    !cycleThrew && cycleResult?.a === 1,
+    cycleThrew ? 'stack overflow' : cycleResult,
+  );
+
+  const shared = { x: 1 };
+  const diamond = deepMerge({}, { a: shared, b: shared });
+  check('deepMerge 的菱形引用仍完整合并', diamond.a?.x === 1 && diamond.b?.x === 1, diamond);
+
+  mergeConfig({}, JSON.parse('{"__proto__":{"pollutedG":"yes"}}'), {});
+  check('★ mergeConfig（转换器）同样不污染', {}.pollutedG === undefined, {}.pollutedG);
 }
 
 // ══════════════════════════════════════════════════════════

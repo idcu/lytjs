@@ -3,6 +3,7 @@
 
 import type { ConfigSchema, ConfigTransformReport, ConfigValidationError } from './config-schema';
 import { ConfigValidator } from './config-validator';
+import { FORBIDDEN_KEYS } from './proto-keys';
 
 /**
  * 配置转换器
@@ -339,6 +340,10 @@ export class ConfigTransformer {
     const result: Record<string, unknown> = { ...target };
 
     for (const [key, value] of Object.entries(source)) {
+      // ⚠️ 2026-11-05 修（P0 安全）：JSON.parse 产出的 `__proto__` 是**自有键**，
+      //   `result[key] = value` 会改写 result 的原型；若 result 是普通对象且继续递归，
+      //   最终会写到 `Object.prototype`。证明：mergeConfig({}, JSON.parse('{"__proto__":{...}}'))。
+      if (FORBIDDEN_KEYS.has(key)) continue;
       if (value !== undefined) {
         if (
           typeof value === 'object' &&

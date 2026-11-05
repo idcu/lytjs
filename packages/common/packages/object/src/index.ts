@@ -32,8 +32,16 @@ export function mergeObjects<T extends Record<string, unknown>>(...sources: Part
 /**
  * 深度合并两个对象
  */
-export function deepMerge<T extends Record<string, unknown>>(target: T, source: Partial<T>): T {
+export function deepMerge<T extends Record<string, unknown>>(
+  target: T,
+  source: Partial<T>,
+  seen: WeakSet<object> = new WeakSet<object>(),
+): T {
   const result = { ...target };
+  // 循环引用：source 已经在当前递归路径上 ⇒ 直接返回，避免无限递归
+  // （用 seen.delete 收尾，保证「菱形引用」（同一对象出现两次但不成环）仍会被完整合并）
+  if (seen.has(source as object)) return result;
+  seen.add(source as object);
   for (const key in source) {
     if (hasOwn(source, key) && !LOCAL_PROTO_POLLUTION_KEYS.has(key)) {
       const sourceVal = source[key];
@@ -42,12 +50,14 @@ export function deepMerge<T extends Record<string, unknown>>(target: T, source: 
         result[key] = deepMerge(
           targetVal as Record<string, unknown>,
           sourceVal as Record<string, unknown>,
+          seen,
         ) as (typeof result)[typeof key];
       } else {
         result[key] = sourceVal as (typeof result)[typeof key];
       }
     }
   }
+  seen.delete(source as object);
   return result;
 }
 
@@ -192,6 +202,10 @@ export function deepClone<T>(
   const clone = Object.create(Object.getPrototypeOf(source)) as Record<string | symbol, unknown>;
   seen.set(source, clone);
   for (const key of Reflect.ownKeys(source)) {
+    // ⚠️ 2026-11-05 修（P0 安全）：`JSON.parse('{"__proto__":{...}}')` 会产出**自有** `__proto__` 键，
+    //   `clone[key] = value` 改的是 clone 的原型（而不是新增属性）⇒ 克隆体带着污染的原型到处跑。
+    //   只跳过这三个键；合法键名不受影响。
+    if (typeof key === 'string' && LOCAL_PROTO_POLLUTION_KEYS.has(key)) continue;
     const clonedValue = deepClone(
       (source as Record<string | symbol, unknown>)[key as string | symbol],
       seen,
