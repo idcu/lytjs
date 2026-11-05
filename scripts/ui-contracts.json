@@ -1,0 +1,219 @@
+{
+  "$comment": "B04 前置：Golden 20 × 六类能力基线（2026-11-06）。status 由 check-ui-contracts.mjs 从源码重新推导并与本表比对：推导结果不一致即红（防『改登记表冒充修复』）。red / n/a 必须写 reason；pass 由探针现场证明。只允许逐格收敛，不允许 skip。",
+  "components": [
+    "Avatar",
+    "Badge",
+    "Button",
+    "Card",
+    "Checkbox",
+    "Container",
+    "Dialog",
+    "Divider",
+    "Drawer",
+    "Empty",
+    "Icon",
+    "InputNumber",
+    "Link",
+    "Modal",
+    "Pagination",
+    "Progress",
+    "Radio",
+    "Spin",
+    "Switch",
+    "Tag"
+  ],
+  "capabilities": ["vmodel", "slots", "events", "controlled", "styles", "keyboard"],
+  "cells": {
+    "Avatar": {
+      "vmodel": { "status": "n/a", "reason": "纯展示组件，无值语义" },
+      "slots": { "status": "pass" },
+      "events": { "status": "pass" },
+      "controlled": {
+        "status": "red",
+        "probe": "sticky",
+        "reason": "src 变更不重置 isImageExist：一次加载失败后换图仍为空（无 watch）"
+      },
+      "styles": { "status": "pass" },
+      "keyboard": { "status": "n/a", "reason": "无键盘交互（仅 img onError）" }
+    },
+    "Badge": {
+      "vmodel": { "status": "n/a", "reason": "纯展示组件，无值语义" },
+      "slots": { "status": "pass" },
+      "events": { "status": "n/a", "reason": "无事件回调" },
+      "controlled": { "status": "pass" },
+      "styles": { "status": "pass" },
+      "keyboard": { "status": "n/a", "reason": "无交互" }
+    },
+    "Button": {
+      "vmodel": { "status": "n/a", "reason": "按钮无值语义" },
+      "slots": { "status": "red", "reason": "声明 loading / icon 插槽，渲染函数只读 default" },
+      "events": { "status": "pass" },
+      "controlled": { "status": "pass" },
+      "styles": {
+        "status": "red",
+        "reason": "lyt-button__loading / __loading-icon / __text 无 CSS 规则"
+      },
+      "keyboard": { "status": "pass" }
+    },
+    "Card": {
+      "vmodel": { "status": "n/a", "reason": "纯展示组件，无值语义" },
+      "slots": { "status": "pass" },
+      "events": { "status": "n/a", "reason": "无事件回调" },
+      "controlled": { "status": "pass" },
+      "styles": { "status": "pass" },
+      "keyboard": { "status": "n/a", "reason": "无交互" }
+    },
+    "Checkbox": {
+      "vmodel": { "status": "pass" },
+      "slots": { "status": "pass" },
+      "events": { "status": "pass" },
+      "controlled": { "status": "pass" },
+      "styles": { "status": "pass" },
+      "keyboard": { "status": "pass" }
+    },
+    "Container": {
+      "vmodel": { "status": "n/a", "reason": "布局容器，无值语义" },
+      "slots": { "status": "pass" },
+      "events": { "status": "n/a", "reason": "无事件回调" },
+      "controlled": { "status": "pass" },
+      "styles": { "status": "pass" },
+      "keyboard": { "status": "n/a", "reason": "无交互" }
+    },
+    "Dialog": {
+      "vmodel": { "status": "pass" },
+      "slots": { "status": "pass" },
+      "events": { "status": "pass" },
+      "controlled": { "status": "pass" },
+      "styles": {
+        "status": "red",
+        "reason": "__wrapper / __header / __title / __close / __body / __footer / __*-btn 无规则；.lyt-dialog 误带遮罩定位"
+      },
+      "keyboard": { "status": "pass" }
+    },
+    "Divider": {
+      "vmodel": { "status": "n/a", "reason": "纯展示组件，无值语义" },
+      "slots": { "status": "pass" },
+      "events": { "status": "n/a", "reason": "无事件回调" },
+      "controlled": { "status": "pass" },
+      "styles": { "status": "pass" },
+      "keyboard": { "status": "n/a", "reason": "无交互" }
+    },
+    "Drawer": {
+      "vmodel": { "status": "pass" },
+      "slots": { "status": "pass" },
+      "events": { "status": "pass" },
+      "controlled": { "status": "pass" },
+      "styles": {
+        "status": "red",
+        "reason": "__overlay / __container / __header / __title / __close / __body / __footer 无规则"
+      },
+      "keyboard": { "status": "pass" }
+    },
+    "Empty": {
+      "vmodel": { "status": "n/a", "reason": "纯展示组件，无值语义" },
+      "slots": { "status": "pass" },
+      "events": { "status": "n/a", "reason": "无事件回调" },
+      "controlled": { "status": "pass" },
+      "styles": { "status": "pass" },
+      "keyboard": { "status": "n/a", "reason": "无交互" }
+    },
+    "Icon": {
+      "vmodel": { "status": "n/a", "reason": "纯展示组件，无值语义" },
+      "slots": { "status": "pass" },
+      "events": { "status": "n/a", "reason": "无事件回调" },
+      "controlled": { "status": "pass" },
+      "styles": { "status": "pass" },
+      "keyboard": { "status": "n/a", "reason": "无交互" }
+    },
+    "InputNumber": {
+      "vmodel": { "status": "pass" },
+      "slots": { "status": "red", "reason": "声明 default 插槽，渲染函数从不读取" },
+      "events": { "status": "pass" },
+      "controlled": { "status": "pass" },
+      "styles": { "status": "pass" },
+      "keyboard": { "status": "pass" }
+    },
+    "Link": {
+      "vmodel": { "status": "n/a", "reason": "链接无值语义" },
+      "slots": { "status": "pass" },
+      "events": { "status": "pass" },
+      "controlled": { "status": "pass" },
+      "styles": {
+        "status": "red",
+        "reason": "lyt-link--no-underline 无 CSS 规则（underline=false 无效）"
+      },
+      "keyboard": {
+        "status": "red",
+        "reason": "无 href 时渲染 span[role=link]，无 tabindex / Enter 处理"
+      }
+    },
+    "Modal": {
+      "vmodel": { "status": "pass" },
+      "slots": { "status": "pass" },
+      "events": { "status": "pass" },
+      "controlled": { "status": "pass" },
+      "styles": {
+        "status": "red",
+        "reason": "__overlay / __header / __title / __close / __body / __footer / __*-btn 无规则；.lyt-modal 误带遮罩定位"
+      },
+      "keyboard": { "status": "pass" }
+    },
+    "Pagination": {
+      "vmodel": { "status": "pass" },
+      "slots": { "status": "n/a", "reason": "无插槽接口（自含 UI）" },
+      "events": { "status": "pass" },
+      "controlled": { "status": "pass" },
+      "styles": {
+        "status": "red",
+        "reason": "__total / __btn / __pager / __prev / __next / __sizes / __select / __jumper / __input / __ellipsis 无规则"
+      },
+      "keyboard": { "status": "pass" }
+    },
+    "Progress": {
+      "vmodel": { "status": "n/a", "reason": "纯展示组件，无值语义" },
+      "slots": { "status": "red", "reason": "声明 default 插槽，渲染函数从不读取" },
+      "events": { "status": "n/a", "reason": "无事件回调" },
+      "controlled": { "status": "pass" },
+      "styles": {
+        "status": "red",
+        "reason": "__circle-trail / __circle-path 无规则（圆形进度靠内联属性硬撑）"
+      },
+      "keyboard": { "status": "n/a", "reason": "无交互" }
+    },
+    "Radio": {
+      "vmodel": { "status": "pass" },
+      "slots": { "status": "pass" },
+      "events": { "status": "pass" },
+      "controlled": { "status": "pass" },
+      "styles": { "status": "pass" },
+      "keyboard": { "status": "pass" }
+    },
+    "Spin": {
+      "vmodel": { "status": "n/a", "reason": "纯展示组件，无值语义" },
+      "slots": { "status": "pass" },
+      "events": { "status": "n/a", "reason": "无事件回调" },
+      "controlled": { "status": "pass" },
+      "styles": { "status": "red", "reason": "lyt-spin--spinning 无 CSS 规则（状态类零命中）" },
+      "keyboard": { "status": "n/a", "reason": "无交互" }
+    },
+    "Switch": {
+      "vmodel": { "status": "pass" },
+      "slots": { "status": "red", "reason": "声明 default 插槽，渲染函数只读 active / inactive" },
+      "events": { "status": "pass" },
+      "controlled": { "status": "pass" },
+      "styles": { "status": "pass" },
+      "keyboard": { "status": "pass" }
+    },
+    "Tag": {
+      "vmodel": { "status": "n/a", "reason": "可见性仅内部 state，无受控 prop" },
+      "slots": { "status": "pass" },
+      "events": { "status": "pass" },
+      "controlled": { "status": "n/a", "reason": "无受控 prop（visible 仅内部状态）" },
+      "styles": { "status": "pass" },
+      "keyboard": {
+        "status": "red",
+        "reason": "关闭按钮是 span（role=button+tabindex），无 Enter / Space 处理"
+      }
+    }
+  }
+}

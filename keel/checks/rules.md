@@ -25,17 +25,14 @@ keywords: [校验, 规则, 扩展检查, CI, 门禁]
 | 9 | 慢档全量（发布前） | `corepack pnpm@11.3.0 gate --tier slow` | ❌ fail | 发布前 / 定时任务 |
 | 10 | 源码卫生（`eval(` / `new Function(` / `console.log(` 三条规则 + 显式清单） | `corepack pnpm@11.3.0 check-src-hygiene` | ❌ fail | 本地（`check:fast` 已含）+ CI |
 | 11 | 治理接线（keel CI 三关卡齐全） | `corepack pnpm@11.3.0 check-keel-wiring` | ❌ fail | 本地（`check:fast` 已含）+ CI |
+| 12 | Golden 20 × 六类行为契约（B04；报告模式允许红） | `node scripts/check-ui-contracts.mjs` | ❌ fail（登记/源码漂移；`--strict` 时红项也 fail） | 本地（fast）+ 逐组件修复验收 |
 
 ## 级别变更记录
 
 - **2026-10-10｜新增 #10 源码卫生（`check-src-hygiene.ts`）**
-  背景：`compiler/src/optimizations/index.ts` 用 `eval()` 做**伪优化**（P2-3）—— 四个"优化开关"无一成立，
-  且 `stats.reduction` 的唯一非 0 来源是**误伤用户代码**（`x1 + 2` → `x3`、`"1+2"` → `"3"`）。
-  修完缺陷后把判据**机械化**：扫描全部 `src/**/*.ts`（实测 825 个文件），三条规则各配**显式清单**
-  （每条必须写明理由），未清单化即 exit 1。
-  实测：`eval(` 清单 1 项、`new Function(` 3 项、`console.log(` 8 项；注入缺陷后报 3 处（A/B/C 各一）。
-  说明：清单是**故意保留**的豁免面（CLI 生成模板、`__DEV__` 门控、HMR/DevTools 输出等），
-  属「误报可接受 + 显式豁免」的第 2 条准入标准。
+  `compiler/src/optimizations/index.ts` 曾用 `eval()` 做伪优化（P2-3）：四个开关无一成立，
+  `stats.reduction` 唯一非 0 来源是误伤用户代码。修后判据机械化：扫描 `src/**/*.ts`，
+  三条规则各配显式清单（须写理由），未清单化即 exit 1。
 
 - **2026-10-10｜#5 UI props 接线：⚠️ warn → ❌ fail（收紧）**
   升级前该脚本**恒 exit 0** —— 它只是一份打印报告，既拦不住新增欠账、也没有任何豁免方式，
@@ -48,6 +45,10 @@ keywords: [校验, 规则, 扩展检查, CI, 门禁]
 - **2026-10-11｜新增 #11 治理接线（`check-keel-wiring.ts`）**
   背景：`test-lint.sh`（判据自测）此前只在 `install.sh` 跑一次、CI 里没有 ⇒ 改 `keel-lint.sh` 判据可静默腐烂。
   修法：① 接进 `keel.yml`；② 本守卫断言该接线在（防被静默删）。实测：移除 test-lint 步骤 ⇒ exit 1。
+
+- **2026-11-06｜新增 #12 Golden 20 六类契约（B04）**
+  `check-ui-contracts.mjs` 对 20 组件 × 6 类逐格从源码推导，再与 `scripts/ui-contracts.json` 比对；
+  初始 15 红全部登记原因（无 skip），`--strict` 用于逐组件验收。
 
 ## CI 接入状态（诚实说明）
 

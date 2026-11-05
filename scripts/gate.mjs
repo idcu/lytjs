@@ -113,6 +113,17 @@ const GATES = [
       ' —— 评估时 18 个组件零命中（Modal/Drawer 变裸 div、Message 出现在页面底部）（2026-10-31）',
   },
   {
+    name: 'check-ui-contracts',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-ui-contracts.mjs'],
+    approx: '~0.4s',
+    desc:
+      '★ Golden 20 × 六类行为契约（B04）：v-model / slots / events / controlled / ' +
+      '样式命中 / 键盘路径。每格先从源码推导再与 scripts/ui-contracts.json 登记比对，' +
+      '登记与代码漂移即红；红 / n/a 必须写 reason。报告模式允许红（逐组件收敛），' +
+      '`--strict` 时任一红退出 1',
+  },
+  {
     name: 'check-dist-freshness',
     tier: 'fast',
     cmd: ['tsx', 'scripts/check-dist-freshness.ts'],
