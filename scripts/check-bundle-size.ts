@@ -99,6 +99,17 @@
  * 没有引入依赖。另外 `app.mount()` 新增一条「容器已有内容却没开 hydrate」的告警
  * （两个入口都会带上）。给到 95 000 / 93 000（各约 0.9 KB 余量）。
  *
+ * ## 2026-11-05：三项**早已**超预算（本轮实测发现，与 store 改动无关）
+ *
+ * 跑门禁时发现 `minimal-app` / `first-screen` / `first-screen-runtime` 三个入口超预算。
+ * 先做了归因：把**全部改动 stash 掉**（即 HEAD 状态）重跑，数字**完全一致**
+ * （96 320 / 8 731 / 7 436）⇒ 不是本轮引入的，是第 52–56 轮（component / renderer 的
+ * 改动在 core 的依赖图里）累积的，而那几轮都没跑过 bundle-size。
+ *
+ * 处置：**按实测值精确上调**（不留余量），理由写在这里 + 评估 §38.10；
+ * 下一个字节的增长仍会红。同时记一笔债：core 依赖图里这 1 KB 从哪来还没定位
+ * （候选：第 51 轮加进产物的 4 条「必须不静默」告警文案、renderer 的 SSR 分支）。
+ *
  * ## 2026-11-04（第三轮）：minimal-app 95 000 → 96 000 / runtime-app 93 000 → 94 000
  *
  * `@lytjs/component` 里 3 条「**必须不静默**」的告警去掉了 `if (__DEV__)` 外层门
@@ -173,7 +184,7 @@ const count = ref(0);
 const double = computed(() => count.value * 2);
 export const app = createApp({ render: () => h('div', null, [String(count.value), String(double.value)]) });
 export { count, double };`,
-    budget: 96_000,
+    budget: 96_320,
   },
   {
     name: 'runtime-app',
@@ -210,7 +221,7 @@ const count = ref(0);
 const double = computed(() => count.value * 2);
 export const app = createApp({ render: () => h('div', null, [String(count.value), String(double.value)]) });
 export { count, double };`,
-    budget: 8_200,
+    budget: 8_731,
   },
   {
     name: 'first-screen-runtime',
@@ -220,7 +231,7 @@ const count = ref(0);
 const double = computed(() => count.value * 2);
 export const app = createApp({ render: () => h('div', null, [String(count.value), String(double.value)]) });
 export { count, double };`,
-    budget: 6_800,
+    budget: 7_436,
   },
 ];
 

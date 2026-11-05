@@ -29,10 +29,11 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@lytjs/common-error": "workspace:*",
     "@lytjs/common-is": "workspace:*",
     "@lytjs/common-object": "workspace:*",
-    "@lytjs/reactivity": "workspace:*",
-    "@lytjs/core": "workspace:*"
+    "@lytjs/core": "workspace:*",
+    "@lytjs/reactivity": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

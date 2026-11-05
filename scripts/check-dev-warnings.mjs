@@ -31,7 +31,7 @@
  *    整条链是通的。
  */
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = process.cwd();
@@ -386,6 +386,57 @@ section('[11] 「必须不静默」的告警不能被构建删掉（产物级守
   check(
     '源码里「多个子节点」告警不再被 `if (__DEV__)` 包住',
     !/if \(__DEV__\s*&&\s*count > 1\)/.test(src),
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+section('[12] 不得把 `@lytjs/common-error` 内联进产物（否则 `getDevMode()` 会坍缩成 false）');
+{
+  // ⚠️ 2026-11-05 修（P1，与第 51 轮同族但换了一层）：
+  //
+  //   第 51 轮修好了 `getDevMode()` 的**运行时**逻辑（读 NODE_ENV）。但如果某个包在
+  //   tsup 里既 `define: { __DEV__: 'false' }`、又**没把 common-error 标成 external**，
+  //   esbuild 会把内联进来的这一句折叠掉：
+  //
+  //     if (typeof __DEV__ === 'boolean') return __DEV__;   // ⇒ return false
+  //
+  //   于是整条函数坍缩成 `return false`（后面的 `process.env.NODE_ENV` 分支被当成
+  //   不可达删除）⇒ **该包所有 `warn()` 在产物里都是哑的**，而单测跑的是 src，全绿。
+  //   而且 `setDevMode(true)` 也救不回来 —— 它改的是真身模块里的 `runtimeDevMode`，
+  //   内联副本有自己的一份。
+  //
+  //   实测：`@lytjs/store` 的产物里就是这样（`$patch` 的未知键告警一条都不打印）。
+  //   判据：除 `common-error` 自己外，任何产物里都不该出现 `function getDevMode`。
+  const { readdirSync } = await import('node:fs');
+  const distFiles = [];
+  const findDist = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      if (entry.name === 'node_modules') continue;
+      const full = join(dir, entry.name);
+      if (entry.name === 'dist') {
+        const candidate = join(full, 'index.mjs');
+        if (existsSync(candidate)) distFiles.push(candidate);
+        continue;
+      }
+      findDist(full);
+    }
+  };
+  findDist(join(ROOT, 'packages'));
+
+  const offenders = [];
+  for (const file of distFiles) {
+    if (file.includes('/packages/common/packages/error/')) continue;
+    const code = readFileSync(file, 'utf-8');
+    if (!code.includes('function getDevMode')) continue;
+    const at = code.indexOf('function getDevMode');
+    const collapsed = !code.slice(at, at + 600).includes('NODE_ENV');
+    offenders.push(`${file.slice(ROOT.length + 1)}${collapsed ? '（已坍缩成 return false）' : ''}`);
+  }
+  check(
+    `没有包把 common-error 内联进产物${offenders.length ? `（违规：${offenders.join('; ')}）` : ''}`,
+    offenders.length === 0,
+    offenders,
   );
 }
 

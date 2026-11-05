@@ -447,7 +447,11 @@ const GATES = [
       '而浏览器没有 process ⇒ 打包器替换后的 NODE_ENV 用不上 ⇒ 浏览器 dev 一条都不打印；' +
       '判据是真用 esbuild 打浏览器包、在**无 process 的 vm 上下文**里跑）；' +
       '② **「必须不静默」的告警不能被构建删掉**（Transition 的 in-out / 多子节点、' +
-      'template 无编译器 —— 这 3 条此前在产物里被整段删除，用户只看到「功能没生效」）',
+      'template 无编译器 —— 这 3 条此前在产物里被整段删除，用户只看到「功能没生效」）。' +
+      '2026-11-05 补第 12 组（跨包）：**任何包都不得把 @lytjs/common-error 内联进产物** —— ' +
+      '某包若同时 `define: { __DEV__: false }`，esbuild 会把 getDevMode() 的第一句折叠成 ' +
+      '`return false`（后面的 NODE_ENV 分支被当成不可达删掉）⇒ 该包所有 warn() 全哑，' +
+      '而单测跑的是 src、全绿（实测 @lytjs/store 就是这样）',
   },
   {
     name: 'check-plugin-semantics',
@@ -468,6 +472,25 @@ const GATES = [
       '⑧ resolveLoadOrder() 静默跳过缺失依赖；⑨ unregister() 不检查依赖方；' +
       '⑩ registerKnownPlugins() 是**空操作**（名字进集合，没有任何规则读它，README 却宣传了它）。' +
       '判据 9 组 65 条，含多组对照（可选依赖不阻断、重复 install 只装一次、register 不自动安装）',
+  },
+  {
+    name: 'check-store-semantics',
+    tier: 'fast',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-store-semantics.mjs'],
+    approx: '~0.5s',
+    desc:
+      '★ 状态管理语义（@lytjs/store）：缺陷形态全是「界面不更新 / 数据没存住」，而它们**都不抛异常**。' +
+      '单测很难发现 —— 因为单测直接读 `store.xxx`（拿到的是新值），只有「effect 重跑了吗 / 订阅者收到了吗」才暴露。' +
+      '2026-11-05 首次运行抓到 11 个：① **对象/数组原地变更完全无响应**（push 后 effect 只跑过初值、$subscribe 0 条）；' +
+      '② getter 不跟随嵌套变更（computedSignal 只订阅 signal）；③ setup store 直接赋值不通知；' +
+      '④ **setup store 的 `store.n` 拿到的是信号函数**（reactive 只解包对象型 ref）⇒ `store.n + 1` 变字符串拼接、' +
+      '`store.n = 1` 还会把信号整个替换掉 ⇒ 之后 action 改原信号，store 永远不变；' +
+      '⑤ storeToRefs 把 action 也转成 ref（解构后调用 ⇒ TypeError）；⑥ setup 的 $state 含 action 函数；' +
+      '⑦ `store.$state = {...}` 抛 TypeError（类型里写的是可写）；⑧ setup 的 `$patch(fn)` 写入静默丢失；' +
+      '⑨ $patch 静默丢弃未知键；⑩ $reset 按 key 各发一条事件；⑪ $dispose/clearStoreCache 不停内部 effect。' +
+      '另修一个**跨包**缺陷：本包 tsup 内联了 common-error + `define __DEV__: false` ⇒ getDevMode() 坍缩成 return false' +
+      '（所有 warn 在产物里是哑的，见 check-dev-warnings 第 12 组）。判据 9 组 65 条，含多组对照',
   },
   {
     name: 'check-web-cssvars',

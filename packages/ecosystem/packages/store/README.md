@@ -503,6 +503,80 @@ actions: {
 }
 ```
 
+## 状态变更的语义（2026-11-05 明确）
+
+### 响应式范围
+
+状态里的**对象 / 数组是可变的**，原地变更会被追踪：
+
+```typescript
+store.items.push(item); // 触发渲染与 $subscribe
+store.user.name = 'bob'; // 同上
+store.list.splice(0, 1); // 同上
+```
+
+> 2026-11-05 之前这些**都不生效**（`signal` 不做深包裹）—— 列表增删后界面不动，
+> 而 `$subscribe` 一条事件都收不到。
+
+### 订阅（`$subscribe`）何时触发
+
+| 操作                           | 事件                                      |
+| ------------------------------ | ----------------------------------------- |
+| `store.x = v`                  | 1 条 `direct`                             |
+| `store.items.push(v)`          | 1 条 `direct`                             |
+| `store.action()`（内部改状态） | 1 条（不重复）                            |
+| `store.$patch({...})`          | 1 条 `patch object`（**不**逐键发）       |
+| `store.$patch(fn)`             | 1 条 `patch function`                     |
+| `store.$reset()`               | 1 条 `direct`（`payload.reset === true`） |
+| `store.$state = {...}`         | 1 条 `direct`                             |
+
+同值赋值（`Object.is` 相等）不触发。
+
+### `$patch` 与 `$state`
+
+- **`$patch` 只接受已存在的键**（state 的键在 `state()` / `setup()` 返回时就固定了）。
+  未知键会被**忽略并告警** —— 不会再静默丢数据。
+- **`store.$state = {...}` 支持整体赋值**（只写已存在的键，未知键告警）。
+  类型里 `$state` 一直是可写的，但此前只有 getter，赋值会抛
+  `Cannot set property $state ... which has only a getter`。
+- `$patch(fn)` 里新增的键会被丢弃并告警（否则会在 `$state` 上留下一个**没有 signal 的影子属性**：
+  `store.$state.x` 有值、`store.x` 没有）。
+
+### setup store
+
+```typescript
+const useCounter = defineStore('counter', () => {
+  const n = signal(0);
+  const inc = () => n.set(n() + 1);
+  return { n, inc };
+});
+
+const store = useCounter();
+store.n; // 0 —— 解包成值（不是信号函数）
+store.n = 5; // 写穿透到原信号，action 之后仍能改同一个值
+store.$state; // { n: 5 } —— 只含状态键，不含 action
+```
+
+- **`$state` 不含 action**（持久化插件 `Object.assign({}, store.$state)` 不会把函数带进去）。
+- **`$reset()` 不支持**（无法重放 setup 的闭包）—— 会给出告警并提示替代写法。
+
+### `storeToRefs`
+
+只提取 **state + getters**，**不包含 action**（与 Pinia 一致）。action 请直接从 store 上取：
+
+```typescript
+const { n, double } = storeToRefs(store); // ✅ 都是 ref
+const { inc } = storeToRefs(store); // ❌ inc 不在结果里
+store.inc(); // ✅ 从 store 上调用
+```
+
+### 已知限制
+
+- `Map` / `Set` 的**中间态**可能合并成一次通知（最终值正确）。
+- setup store 里**没有改动状态的 action** 仍会发一条 `direct` 事件（无法可靠判断「是否真的变了」——
+  setup 可能用裸对象当伪 ref）。需要精确事件流时请用 options store。
+- `getters` 首次读取时才建立依赖（惰性）；之后依赖变更会自动重算。
+
 ## 浏览器兼容性
 
 `@lytjs/store` 支持所有现代浏览器。如果需要支持旧版浏览器，可能需要引入 polyfill。
