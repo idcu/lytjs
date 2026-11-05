@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+### ⚠️ 成熟度模型：Golden 20 冻结，其余导出标注 `experimental`（A14 / D2，2026-11-05）
+
+- `stable` **必须且只能**是 `GOLDEN_COMPONENTS` 的 20 个：
+  Avatar、Badge、Button、Card、Checkbox、Container、Dialog、Divider、Drawer、Empty、
+  Icon、InputNumber、Link、Modal、Pagination、Progress、Radio、Spin、Switch、Tag。
+- 其余 41 个导出**保留导出**，标注 `experimental` 并写缺口 note
+  （Carousel / CarouselItem / Transition / TransitionGroup 为审计判定空壳）。
+- API：`isBetaComponent` / `listBetaComponents` →
+  `isExperimentalComponent` / `listExperimentalComponents`；新增 `GOLDEN_COMPONENTS`。
+- 硬门禁：`node scripts/check-component-status.mjs` 输出 `mislabeled_stable = 0`，
+  且 `stable` 集合 == Golden 20。注入验证：把 `Table` 改成 `stable` ⇒ 立即红。
+- 决策记录：[keel/decisions/0013-golden-20-freeze.md](../../../../keel/decisions/0013-golden-20-freeze.md)。
+
 ### 🐞 修复（对话框的无障碍契约：焦点 / Escape / aria 树）
 
 三个弹层各自实现了一套焦点与键盘处理，**三套都是错的、错法还各不相同** ——

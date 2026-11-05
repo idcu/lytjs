@@ -1,36 +1,34 @@
 /**
- * 组件成熟度守卫（报告 §8.2 第 13 条）
+ * 组件成熟度守卫（A14 / D2，2026-11-05）
  *
- * ## 为什么需要这条
+ * ## 决策
  *
- * `@lytjs/ui` 对外说「56 个组件」，而 2026-10-26 的全维度审计实测：
- * **24 个是半成品**（主要路径能渲染，边界/交互/无障碍未系统覆盖）。
+ * Golden 20 冻结：`stable` **必须且只能**是 `GOLDEN_COMPONENTS` 里的 20 个；
+ * 其余导出保留但标注 `experimental`，不移出默认导出。
+ * `mislabeled_stable = 0` 是硬门禁（同 `scripts/check-component-status.mjs`）。
  *
- * 把两者混在同一个数字里，代价是**用户的信任**：他按文档抄一个 `<Table />`，
- * 跑起来发现排序点了没反应 —— 问题不在他。
+ * ## 这条守卫锁五件事
  *
- * ## 这条守卫锁四件事
- *
- * 1. `src/index.ts` 里**每一个**导出都必须在 `COMPONENT_STATUS` 里有登记
- *    （新增组件不能「默认按成熟」混进去）；
- * 2. `COMPONENT_STATUS` 里不能有**已删除**的组件（避免表变成垃圾场）；
- * 3. `beta` 组件的源文件头必须有 `@beta` 标签（IDE 悬停就能看到，
- *    而不是只有翻这个表才知道）；
- * 4. `stable` 组件**不得**有 `@beta` 标签（防止降级后忘了改表，或反过来）。
- *
- * 外加一条**棘轮**：beta 数量只能降不能升 —— 修好一个就从表里改成 stable，
- * 想新增 beta 必须显式改这里的上限并在提交里说明。
+ * 1. `src/index.ts` 里每个导出都在 `COMPONENT_STATUS` 登记（新增组件不能默认按成熟混入）；
+ * 2. `COMPONENT_STATUS` 里不能有已删除组件；
+ * 3. `stable` 集合 == `GOLDEN_COMPONENTS`（20 个，多一个少一个都红）；
+ * 4. `GOLDEN_COMPONENTS` 成员必须是真实导出；
+ * 5. `experimental` 必须写 note，且数量 = 导出总数 - 20。
  */
 
 import { describe, it, expect } from 'vitest';
-import { readFileSync, existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { COMPONENT_STATUS, listBetaComponents } from '../src/component-status';
+import {
+  COMPONENT_STATUS,
+  GOLDEN_COMPONENTS,
+  listExperimentalComponents,
+} from '../src/component-status';
 
 const UI_SRC = join(__dirname, '..', 'src');
 const INDEX = join(UI_SRC, 'index.ts');
-const COMPONENTS = join(UI_SRC, 'components');
+const UI_TESTS = join(__dirname);
 
 /** 从 index.ts 里抽出实际导出的组件名（`export { A, B as C } from './components/...'`） */
 function exportedComponentNames(): string[] {
@@ -49,16 +47,7 @@ function exportedComponentNames(): string[] {
   return [...names].sort();
 }
 
-/** 读组件文件头部的块注释（没有则空串） */
-function headerComment(componentName: string): string {
-  const file = join(COMPONENTS, `${componentName}.ts`);
-  if (!existsSync(file)) return '';
-  const src = readFileSync(file, 'utf8');
-  const m = src.match(/^\/\*\*[\s\S]*?\*\//);
-  return m ? m[0] : '';
-}
-
-describe('组件成熟度（单一真相源守卫）', () => {
+describe('组件成熟度（Golden 20 单一真相源守卫）', () => {
   const exported = exportedComponentNames();
 
   it('index.ts 里必须能解析出组件导出（防止正则失效导致空跑）', () => {
@@ -75,37 +64,38 @@ describe('组件成熟度（单一真相源守卫）', () => {
     expect(stale).toEqual([]);
   });
 
-  it('beta 组件的源文件头必须有 @beta 标签', () => {
-    const missing: string[] = [];
-
-    for (const name of listBetaComponents()) {
-      const header = headerComment(name);
-      if (!header.includes('@beta')) missing.push(name);
-    }
-
-    expect(missing).toEqual([]);
+  it('Golden 名单冻结为 20 个且都是真实导出', () => {
+    expect(GOLDEN_COMPONENTS).toHaveLength(20);
+    expect(new Set(GOLDEN_COMPONENTS).size).toBe(20);
+    const notExported = GOLDEN_COMPONENTS.filter((name) => !exported.includes(name));
+    expect(notExported).toEqual([]);
   });
 
-  it('stable 组件不得残留 @beta 标签', () => {
-    const offenders = exported.filter(
-      (name) =>
-        COMPONENT_STATUS[name]?.status === 'stable' && headerComment(name).includes('@beta'),
+  it('stable 集合必须且只能等于 Golden 20（mislabeled_stable = 0）', () => {
+    const stable = Object.keys(COMPONENT_STATUS).filter(
+      (name) => COMPONENT_STATUS[name]!.status === 'stable',
     );
-
-    expect(offenders).toEqual([]);
+    expect(stable.sort()).toEqual([...GOLDEN_COMPONENTS].sort());
   });
 
-  it('beta 数量是棘轮：只能降，不能升（当前上限 24）', () => {
-    // 想上调必须同时改这里，并在提交信息里写清「为什么这个组件从 stable 变 beta」。
-    const BETA_CEILING = 24;
-    const actual = listBetaComponents();
+  it('experimental 全部带 note，数量 = 导出总数 - 20', () => {
+    const experimental = listExperimentalComponents();
+    expect(experimental).toHaveLength(exported.length - 20);
+    const withoutNote = experimental.filter((name) => !COMPONENT_STATUS[name]!.note);
+    expect(withoutNote).toEqual([]);
+  });
 
-    expect(actual.length).toBeLessThanOrEqual(BETA_CEILING);
-    // 失败时把清单打出来，方便直接看到是哪个组件把数字顶上去了
-    if (actual.length > BETA_CEILING) {
-      throw new Error(
-        `beta 组件数 ${actual.length} 超过上限 ${BETA_CEILING}：${actual.join(', ')}`,
-      );
-    }
+  it('Golden 20 的判定证据文件必须存在（防止名单凭空长出来）', () => {
+    const evidence = [
+      'all-components-smoke.test.ts',
+      'dialog-a11y.test.ts',
+      'e2e-dialog.test.ts',
+      'e2e-pagination.test.ts',
+      'pagination-controlled.test.ts',
+      'e2e-interaction-p0.test.ts',
+      'e2e-input-number.test.ts',
+    ];
+    const missing = evidence.filter((f) => !existsSync(join(UI_TESTS, f)));
+    expect(missing).toEqual([]);
   });
 });

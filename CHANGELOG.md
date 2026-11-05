@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### ⚠️ 组件成熟度：Golden 20 冻结（2026-11-05）
+
+- `@lytjs/ui` 的 `stable` 收敛为 Golden 20；其余 41 个导出保留但标注 `experimental`
+  （不移出默认导出）。硬门禁 `check-component-status`：`mislabeled_stable = 0`。
+- 详见 [keel/decisions/0013-golden-20-freeze.md](keel/decisions/0013-golden-20-freeze.md)。
+
 ### ⚠️ 默认行为变更：signal/vapor 编译器优化默认关闭（2026-11-05）
 
 - `compile(template, { rendererMode: 'signal' | 'vapor' })` 现在默认走**语义正确**的

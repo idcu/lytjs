@@ -164,6 +164,16 @@ const GATES = [
       '（2026-11-02：单特性都测过但组合没测，导致两个 P0 在 8432 用例 + 12 门禁下存活）',
   },
   {
+    name: 'check-component-status',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-component-status.mjs'],
+    approx: '~0.1s',
+    desc:
+      '★ 组件成熟度诚实性（A14/D2）：Golden 20 冻结，stable ⇔ Golden 20；' +
+      '其余导出保留但标注 experimental 且必须写缺口 note。硬门禁 ' +
+      '`mislabeled_stable = 0`（注入验证：把 Table 改成 stable ⇒ 立即红）',
+  },
+  {
     name: 'check-component-shapes',
     tier: 'fast',
     cmd: ['node', 'scripts/check-component-shapes.mjs'],

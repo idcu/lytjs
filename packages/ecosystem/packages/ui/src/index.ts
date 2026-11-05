@@ -8,13 +8,14 @@
 import './styles/index.css';
 
 // ── 组件成熟度（**单一真相源**）─────────────────────────────────────────
-// 2026-10-26 审计：对外「56 组件」里有 24 个是半成品。把「能用」和「能用得放心」
-// 混在一个数字里是在消耗用户信任 ⇒ 逐个标注，并由 tests/component-status.test.ts 守卫。
+// 2026-11-05 / D2：Golden 20 冻结，其余导出如实标注 experimental（保留导出）。
+// `tests/component-status.test.ts` 与 `scripts/check-component-status.mjs` 守卫。
 export {
   COMPONENT_STATUS,
+  GOLDEN_COMPONENTS,
   getComponentStatus,
-  isBetaComponent,
-  listBetaComponents,
+  isExperimentalComponent,
+  listExperimentalComponents,
 } from './component-status';
 export type { ComponentMaturity, ComponentMaturityInfo } from './component-status';
 

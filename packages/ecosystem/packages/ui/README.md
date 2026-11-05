@@ -22,22 +22,24 @@ LytJS 官方 UI 组件库，零第三方依赖，支持主题切换。**61 个�
 
 因此每个导出都有一个明确分级（**单一真相源** = `src/component-status.ts`）：
 
-| 分级     | 含义                                                               |
-| -------- | ------------------------------------------------------------------ |
-| `stable` | 主要路径 + 常见边界有行为级用例，可以放心用于生产                  |
-| `beta`   | 主要路径可用；**边界 / 交互 / 无障碍未系统覆盖**，用于生产前请自测 |
+| 分级           | 含义                                                                       |
+| -------------- | -------------------------------------------------------------------------- |
+| `stable`       | 列入 Golden 20：主要路径 + 常见边界有行为级用例，可以放心用于生产          |
+| `experimental` | 保留导出，但**边界 / 交互 / 无障碍未系统覆盖**（或审计判定空壳），不作承诺 |
 
-- 取某个组件的分级：`getComponentStatus('Table')` → `{ status: 'beta', note: '…' }`
-- 列出全部 beta：`listBetaComponents()`
-- IDE 里悬停 `beta` 组件的名字，也能看到 `@beta` 标签与说明
+- 取某个组件的分级：`getComponentStatus('Table')` → `{ status: 'experimental', note: '…' }`
+- 列出全部 experimental：`listExperimentalComponents()`
+- Golden 名单：`GOLDEN_COMPONENTS`
 
-**beta 清单（24 个）**：Alert、Calendar、Cascader、CheckboxGroup、ColorPicker、DatePicker、
-Dialog、Drawer、Form、Input、Menu、Modal、Pagination、Popconfirm、RadioGroup、Rate、
-RichTextEditor、Select、Slider、Table、TimePicker、Tree、TreeSelect、Upload
+**Golden 20（冻结，2026-11-05 / D2）**：Avatar、Badge、Button、Card、Checkbox、Container、
+Dialog、Divider、Drawer、Empty、Icon、InputNumber、Link、Modal、Pagination、Progress、
+Radio、Spin、Switch、Tag。
 
-> 这 24 个里的**交互 P0**（Modal 点击穿透、受控弹层关不掉、Cascader 冒泡双 toggle、
-> Popconfirm 移入即消失、Upload / RichTextEditor 的 ref 失效）已于 2026-10-27 修复，
-> 但**功能覆盖度**仍是 beta。修好一个就从表里改成 `stable` —— 有守卫棘轮盯着，数量只降不升。
+**其余 41 个导出如实标注 `experimental`**（Carousel / CarouselItem / Transition / TransitionGroup
+为审计判定的空壳）。D2 明确：**不移出默认导出** —— 保留可用性，但不把「导出数」当「可用数」。
+
+守卫：`tests/component-status.test.ts` + `node scripts/check-component-status.mjs`
+（硬门禁 `mislabeled_stable = 0`，stable ⇔ Golden 20）。
 
 ## 依赖关系
 

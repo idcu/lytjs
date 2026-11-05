@@ -19,3 +19,4 @@ keywords: [决策, ADR, 索引]
 | 0010 | 登记缺陷二分：**缺陷**按 ADR 修复 + 守卫，**取舍**交 owner（首个执行项：Tabs 四处） | active | [0010-registered-defects-fix-vs-tradeoff.md](0010-registered-defects-fix-vs-tradeoff.md) |
 | 0011 | 同名公开 API 只允许**一份权威实现**，其余入口只转发（首个执行项：`defineAsyncComponent` 三份收敛为一份） | active | [0011-single-authoritative-implementation.md](0011-single-authoritative-implementation.md) |
 | 0012 | signal/vapor 优化器**默认关闭**（显式 `optimizeSignal:true` 才启用），`check-compiler-parity` 进 fast 门禁 + 分叉棘轮 | active | [0012-signal-optimizer-default-off.md](0012-signal-optimizer-default-off.md) |
+| 0013 | `@lytjs/ui` **Golden 20 冻结**，其余 41 导出保留但标 `experimental`；`mislabeled_stable = 0` 硬门禁 | active | [0013-golden-20-freeze.md](0013-golden-20-freeze.md) |
