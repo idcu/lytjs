@@ -73,6 +73,129 @@ function getExpContent(node: SimpleExpressionNode | CompoundExpressionNode | und
 }
 
 // ============================================================
+// 产物短别名（B01b 体积手法）
+// ============================================================
+
+/**
+ * 运行时函数 → 产物里的短别名。
+ *
+ * 产物的 import 与调用点会重复同一批函数名，短别名把两处字节一起压缩。
+ * 可读性兜底：产物首行输出 `//lytjs-signal:<短名>=<原名>` 映射，出问题时按映射还原。
+ *
+ * ⚠️ 替换只作用于**代码片段**：字符串字面量（静态 HTML / 属性值 / 用户表达式里的字符串）
+ * 与成员访问（`_ctx.insert`）一律不动 —— 否则会把页面文本或用户方法调用改坏。
+ */
+const RUNTIME_SHORT_NAMES: Record<string, string> = {
+  effect: 'e',
+  reconcileArray: 'n',
+  createTemplate: 't',
+  getRealNode: 'w',
+  setText: 'x',
+  setHTML: 'h',
+  setAttribute: 'a',
+  setProperty: 'p',
+  setStyle: 's',
+  setClass: 'c',
+  insert: 'i',
+  remove: 'r',
+  createEventHandler: 'v',
+  onCleanup: 'o',
+  runCleanups: 'g',
+  claimTextSlots: 'k',
+  mountComponent: 'm',
+  mountSlotOutlet: 'u',
+  mountVNode: 'M',
+  createVNode: 'V',
+  Text: 'T',
+};
+
+/** 运行时包 → 该包负责的 helper；用于按实际引用裁剪 import */
+const RUNTIME_IMPORT_GROUPS: Array<{ module: string; names: readonly string[] }> = [
+  { module: '@lytjs/reactivity', names: ['effect'] },
+  {
+    module: '@lytjs/dom-runtime',
+    names: [
+      'reconcileArray',
+      'createTemplate',
+      'getRealNode',
+      'setText',
+      'setHTML',
+      'setAttribute',
+      'setProperty',
+      'setStyle',
+      'setClass',
+      'insert',
+      'remove',
+      'createEventHandler',
+      'onCleanup',
+      'runCleanups',
+      'claimTextSlots',
+    ],
+  },
+  { module: '@lytjs/renderer', names: ['mountComponent', 'mountSlotOutlet', 'mountVNode'] },
+  { module: '@lytjs/vdom', names: ['createVNode', 'Text', 'Teleport', 'Suspense'] },
+];
+
+/**
+ * 字符串字面量片段（含模板串）。扫描/替换时整段跳过，
+ * 避免把静态 HTML 里的 `insert` / `remove` 等页面文本当成运行时调用改坏。
+ */
+const STRING_LITERAL_RE = /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`/;
+
+/** 匹配「代码位置上的 helper 名」：字符串字面量优先整体吃掉，成员访问（`_ctx.x`）排除 */
+const helperMatcher = (names: string): RegExp =>
+  new RegExp(`${STRING_LITERAL_RE.source}|(?<![\\w$.])(${names})\\b`, 'g');
+
+/**
+ * 收集产物实际用到的 helper：文本反查 ∪ AST 判据。
+ *
+ * DOM / 响应式 helper 以产物文本为准（旧实现无脑带 15 个导入，多数模板用不到）；
+ * renderer / vdom / 内置组件以 AST 判据为准，避免漏引入（Teleport/Suspense 不参与别名）。
+ */
+function collectProductHelpers(code: string, seeds: Set<string>): Set<string> {
+  const used = new Set<string>(seeds);
+  const re = helperMatcher(Object.keys(RUNTIME_SHORT_NAMES).join('|'));
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(code)) !== null) {
+    const name = match[1];
+    if (name) used.add(name);
+  }
+  return used;
+}
+
+/** 把产物用到的 helper 全名换成短别名（字符串字面量与成员访问不动） */
+function applyRuntimeAliases(code: string, used: Set<string>): string {
+  if (used.size === 0) return code;
+  const re = helperMatcher([...used].join('|'));
+  return code.replace(re, (full: string, name?: string) =>
+    name ? (RUNTIME_SHORT_NAMES[name] ?? name) : full,
+  );
+}
+
+/** 生成产物前缀：来源映射注释 + 按实际引用裁剪的 import */
+function emitProductPrefix(used: Set<string>, builtinComponents: Set<string>): string {
+  const lines: string[] = [];
+  const aliased = Object.keys(RUNTIME_SHORT_NAMES).filter((name) => used.has(name));
+  if (aliased.length > 0) {
+    // 单一映射行：短名在前、原名在后，便于人工阅读 / 源码映射还原
+    lines.push(`//lytjs-signal:${aliased.map((n) => `${RUNTIME_SHORT_NAMES[n]}=${n}`).join(',')};`);
+  }
+  for (const group of RUNTIME_IMPORT_GROUPS) {
+    const specs = group.names
+      .filter((name) => used.has(name))
+      .map((name) => {
+        const short = RUNTIME_SHORT_NAMES[name];
+        return short ? `${name} as ${short}` : name;
+      });
+    if (specs.length > 0) lines.push(`import{${specs.join(',')}}from'${group.module}';`);
+  }
+  if (builtinComponents.size > 0) {
+    lines.push(`import{${[...builtinComponents].join(',')}}from'@lytjs/component';`);
+  }
+  return lines.join('\n');
+}
+
+// ============================================================
 // Helper: 生成静态 HTML 模板
 // ============================================================
 
@@ -185,19 +308,13 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
   // 用到的内置组件（决定要不要从 @lytjs/component 引入）
   const builtinComponents = collectBuiltinComponents(ast.children);
 
-  // ---- Phase 1: Generate imports ----
-  // FIX: P1-13 添加 runCleanups 到 import 列表
-  lines.push(
-    // ⚠️ `reconcileArray` 属于 `@lytjs/dom-runtime`（下一行的列表里已正确列出）。
-    // 此前它被重复写在此处的 `@lytjs/reactivity` 导入里 ⇒ 契约守卫
-    // （scripts/check-runtime-contract.ts）报「reactivity 缺少导出 reconcileArray」。
-    // 运行时因「剥掉 import + 按本地名注入」而侥幸不受影响，但 AOT / 直接 ESM 消费会解析失败。
-    `import { effect } from '@lytjs/reactivity';`,
-    `import { createTemplate, getRealNode, setText, setHTML, setAttribute, setProperty, setStyle, setClass, insert, remove, createEventHandler, onCleanup, runCleanups, reconcileArray, claimTextSlots } from '@lytjs/dom-runtime';`,
-  );
+  // ---- Phase 1: import 种子（真实 import 在产物拼装阶段按引用裁剪，见 emitProductPrefix） ----
+  // 旧实现固定带 15 个 dom-runtime 导入（多数模板根本用不到）；这里只记录 AST 判据要求的
+  // 额外引入，DOM / 响应式 helper 由产物文本反查。
+  const importSeeds = new Set<string>();
   // 用到组件挂载时才引入（@lytjs/renderer 提供运行时实现）
   if (usedComponents || usedListComponent) {
-    lines.push(`import { mountComponent } from '@lytjs/renderer';`);
+    importSeeds.add('mountComponent');
   }
   // 组件带子内容（插槽）或含 Teleport 时才需要 vnode 构造能力；
   // 列表项为组件且带插槽内容时（VNODE_CALL 形态）也需引入
@@ -206,25 +323,21 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
     containsTeleportOutlet(ast.children) ||
     hasListComponentVNodeWithChildren(ast.children)
   ) {
-    lines.push(`import { createVNode, Text } from '@lytjs/vdom';`);
+    importSeeds.add('createVNode');
+    importSeeds.add('Text');
   }
   // 含 `<slot/>` 出口时才需要运行期挂载能力
   if (usedSlotOutlet) {
-    lines.push(`import { mountSlotOutlet } from '@lytjs/renderer';`);
+    importSeeds.add('mountSlotOutlet');
   }
   // `<Teleport>` / `<Suspense>` 走 vnode 路径：需运行期挂载原语 + vdom 侧符号
   // （`createVNode` / `Text` 由上面的分支负责，避免重复声明）
   if (containsTag(ast.children, 'Teleport') || containsTag(ast.children, 'Suspense')) {
-    lines.push(`import { mountVNode } from '@lytjs/renderer';`);
+    importSeeds.add('mountVNode');
     for (const sym of ['Teleport', 'Suspense']) {
-      if (containsTag(ast.children, sym)) lines.push(`import { ${sym} } from '@lytjs/vdom';`);
+      if (containsTag(ast.children, sym)) importSeeds.add(sym);
     }
   }
-  // 内置组件从运行时包导入（使用方无需手动注册）
-  if (builtinComponents.size > 0) {
-    lines.push(`import { ${[...builtinComponents].join(', ')} } from '@lytjs/component';`);
-  }
-  lines.push('');
 
   // 先通过 buildStaticHTML 收集所有元素变量（使用 varCounter）
   const staticHTML = buildStaticHTML(ast.children, varCounter, elementVars, staticVars);
@@ -316,8 +429,10 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
   lines.push('  return () => { runCleanups(); };');
   lines.push('}');
 
+  const rawBody = lines.join('\n');
+  const usedHelpers = collectProductHelpers(rawBody, importSeeds);
   return {
-    code: lines.join('\n'),
+    code: `${emitProductPrefix(usedHelpers, builtinComponents)}\n\n${applyRuntimeAliases(rawBody, usedHelpers)}`,
     preamble: '',
     ast,
   };

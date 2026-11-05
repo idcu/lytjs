@@ -13,7 +13,6 @@ import {
   insert,
   remove,
   runCleanups,
-  bindEffect,
   onCleanup,
   createTemplate,
   getRealNode,
@@ -144,7 +143,6 @@ export function createSignalRenderer(
           insert,
           remove,
           createEventHandler,
-          bindEffect,
           onCleanup,
           runCleanups,
           mountComponent,
@@ -261,27 +259,30 @@ function makeCreateRenderFactory(): (
   }
 
   // 运行时依赖参数（render 函数本身还需要 _ctx / _container，由调用方传入）
+  //
+  // ⚠️ 参数名必须与 `codegen-signal.ts` 产物里的**本地别名**一致：产物 import 行会被
+  // 剥掉，helper 全部按参数名注入。别名映射见 `RUNTIME_SHORT_NAMES`
+  // （编译器产物首行的 `//lytjs-signal:<短名>=<原名>;` 就是同一份映射）。
   const paramNames = [
-    'effect',
-    'reconcileArray',
-    'createTemplate',
-    'getRealNode',
-    'setText',
-    'setHTML',
-    'setAttribute',
-    'setProperty',
-    'setStyle',
-    'setClass',
-    'insert',
-    'remove',
-    'createEventHandler',
-    'bindEffect',
-    'onCleanup',
-    'runCleanups',
-    'mountComponent',
-    'createVNode',
-    'Text',
-    'claimTextSlots',
+    'e', // effect
+    'n', // reconcileArray
+    't', // createTemplate
+    'w', // getRealNode
+    'x', // setText
+    'h', // setHTML
+    'a', // setAttribute
+    'p', // setProperty
+    's', // setStyle
+    'c', // setClass
+    'i', // insert
+    'r', // remove
+    'v', // createEventHandler
+    'o', // onCleanup
+    'g', // runCleanups
+    'm', // mountComponent
+    'V', // createVNode
+    'T', // Text
+    'k', // claimTextSlots
     // ⚠️ 2026-10-31 修（P0）：产物里的 `v-html` 会引用构建期常量 `__DEV__`。
     //   `new Function` 的作用域里没有它 ⇒ 运行期 ReferenceError。见 core 同源修复。
     '__DEV__',
