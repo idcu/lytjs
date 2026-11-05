@@ -187,7 +187,7 @@
       "slots": { "status": "pass" },
       "events": { "status": "n/a", "reason": "无事件回调" },
       "controlled": { "status": "pass" },
-      "styles": { "status": "red", "reason": "lyt-spin--spinning 无 CSS 规则（状态类零命中）" },
+      "styles": { "status": "pass" },
       "keyboard": { "status": "n/a", "reason": "无交互" }
     },
     "Switch": {
