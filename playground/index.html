@@ -56,11 +56,9 @@
     </style>
   </head>
   <body>
-    <div id="app">
-      <h1>Lyt.js v6 Playground</h1>
-      <nav class="scenario-nav" id="scenario-nav"></nav>
-      <div class="scenario-container" id="scenario-container"></div>
-    </div>
+    <!-- A13：容器必须为空。此前这里预置了 h1/nav/container，而 createApp().mount()
+         不做 hydrate（"未启用 hydrate ⇒ 新内容追加"），e2e 会看到两份导航。 -->
+    <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

@@ -19,43 +19,44 @@ const scenarios = [
 // 1. 计数器组件
 function CounterComponent() {
   const count = ref(0);
-  return h('div', { class: 'counter', style: { textAlign: 'center', padding: '40px' } }, [
-    h('h2', { style: { color: '#333' } }, '计数器场景'),
-    h(
-      'div',
-      { class: 'count-display', style: { fontSize: '48px', margin: '20px 0' } },
-      String(count.value),
-    ),
-    h('div', { class: 'buttons' }, [
+  return () =>
+    h('div', { class: 'counter', style: { textAlign: 'center', padding: '40px' } }, [
+      h('h2', { style: { color: '#333' } }, '计数器场景'),
       h(
-        'button',
-        {
-          id: 'btn-decrement',
-          onClick: () => count.value--,
-          style: { fontSize: '24px', padding: '10px 20px', margin: '0 10px', cursor: 'pointer' },
-        },
-        '-',
+        'div',
+        { class: 'count-display', style: { fontSize: '48px', margin: '20px 0' } },
+        String(count.value),
       ),
-      h(
-        'button',
-        {
-          id: 'btn-reset',
-          onClick: () => (count.value = 0),
-          style: { fontSize: '24px', padding: '10px 20px', margin: '0 10px', cursor: 'pointer' },
-        },
-        'Reset',
-      ),
-      h(
-        'button',
-        {
-          id: 'btn-increment',
-          onClick: () => count.value++,
-          style: { fontSize: '24px', padding: '10px 20px', margin: '0 10px', cursor: 'pointer' },
-        },
-        '+',
-      ),
-    ]),
-  ]);
+      h('div', { class: 'buttons' }, [
+        h(
+          'button',
+          {
+            id: 'btn-decrement',
+            onClick: () => count.value--,
+            style: { fontSize: '24px', padding: '10px 20px', margin: '0 10px', cursor: 'pointer' },
+          },
+          '-',
+        ),
+        h(
+          'button',
+          {
+            id: 'btn-reset',
+            onClick: () => (count.value = 0),
+            style: { fontSize: '24px', padding: '10px 20px', margin: '0 10px', cursor: 'pointer' },
+          },
+          'Reset',
+        ),
+        h(
+          'button',
+          {
+            id: 'btn-increment',
+            onClick: () => count.value++,
+            style: { fontSize: '24px', padding: '10px 20px', margin: '0 10px', cursor: 'pointer' },
+          },
+          '+',
+        ),
+      ]),
+    ]);
 }
 
 // 2. 待办事项组件
@@ -76,10 +77,8 @@ function TodoComponent() {
     if (index !== -1) todos.value.splice(index, 1);
   };
 
-  return h(
-    'div',
-    { class: 'todo', style: { maxWidth: '600px', margin: '0 auto', padding: '40px' } },
-    [
+  return () =>
+    h('div', { class: 'todo', style: { maxWidth: '600px', margin: '0 auto', padding: '40px' } }, [
       h('h2', { style: { color: '#333' } }, '待办事项场景'),
       h('div', { style: { display: 'flex', gap: '10px', marginBottom: '20px' } }, [
         h('input', {
@@ -144,8 +143,7 @@ function TodoComponent() {
           ),
         ),
       ),
-    ],
-  );
+    ]);
 }
 
 // 3. CRUD 列表组件
@@ -182,100 +180,101 @@ function CrudListComponent() {
     if (index !== -1) items.value.splice(index, 1);
   };
 
-  return h(
-    'div',
-    { class: 'crud-list', style: { maxWidth: '600px', margin: '0 auto', padding: '40px' } },
-    [
-      h('h2', { style: { color: '#333' } }, 'CRUD 列表场景'),
-      h('div', { style: { display: 'flex', gap: '10px', marginBottom: '20px' } }, [
-        h('input', {
-          id: 'item-name',
-          value: name.value,
-          onInput: (e: any) => (name.value = e.target.value),
-          onKeyup: (e: any) => e.key === 'Enter' && addItem(),
-          style: { flex: '1', padding: '10px', fontSize: '16px' },
-        }),
-        h(
-          'button',
-          {
-            id: 'btn-add-item',
-            onClick: addItem,
-            style: { padding: '10px 20px', cursor: 'pointer' },
-          },
-          '添加',
-        ),
-      ]),
-      h(
-        'div',
-        { id: 'item-list', style: { display: 'flex', flexDirection: 'column', gap: '10px' } },
-        items.value.map((item) =>
+  return () =>
+    h(
+      'div',
+      { class: 'crud-list', style: { maxWidth: '600px', margin: '0 auto', padding: '40px' } },
+      [
+        h('h2', { style: { color: '#333' } }, 'CRUD 列表场景'),
+        h('div', { style: { display: 'flex', gap: '10px', marginBottom: '20px' } }, [
+          h('input', {
+            id: 'item-name',
+            value: name.value,
+            onInput: (e: any) => (name.value = e.target.value),
+            onKeyup: (e: any) => e.key === 'Enter' && addItem(),
+            style: { flex: '1', padding: '10px', fontSize: '16px' },
+          }),
           h(
-            'div',
+            'button',
             {
-              class: 'list-item',
-              key: item.id,
-              style: {
-                padding: '10px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              },
+              id: 'btn-add-item',
+              onClick: addItem,
+              style: { padding: '10px 20px', cursor: 'pointer' },
             },
-            [
-              editingId.value === item.id
-                ? h('div', { style: { display: 'flex', gap: '10px' } }, [
-                    h('input', {
-                      id: 'edit-item-name',
-                      value: editName.value,
-                      onInput: (e: any) => (editName.value = e.target.value),
-                      style: { padding: '5px', fontSize: '14px' },
-                    }),
-                    h(
-                      'button',
-                      {
-                        id: 'btn-save-edit',
-                        onClick: saveEdit,
-                        style: { padding: '5px 10px', cursor: 'pointer' },
-                      },
-                      '保存',
-                    ),
-                  ])
-                : h('div', { style: { display: 'flex', gap: '10px', alignItems: 'center' } }, [
-                    h('span', { class: 'item-name' }, item.name),
-                    h(
-                      'button',
-                      {
-                        class: 'btn-edit',
-                        onClick: () => startEdit(item),
-                        style: { padding: '5px 10px', cursor: 'pointer' },
-                      },
-                      '编辑',
-                    ),
-                    h(
-                      'button',
-                      {
-                        class: 'btn-delete',
-                        onClick: () => deleteItem(item.id),
-                        style: {
-                          padding: '5px 10px',
-                          cursor: 'pointer',
-                          backgroundColor: '#ff4444',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
+            '添加',
+          ),
+        ]),
+        h(
+          'div',
+          { id: 'item-list', style: { display: 'flex', flexDirection: 'column', gap: '10px' } },
+          items.value.map((item) =>
+            h(
+              'div',
+              {
+                class: 'list-item',
+                key: item.id,
+                style: {
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                },
+              },
+              [
+                editingId.value === item.id
+                  ? h('div', { style: { display: 'flex', gap: '10px' } }, [
+                      h('input', {
+                        id: 'edit-item-name',
+                        value: editName.value,
+                        onInput: (e: any) => (editName.value = e.target.value),
+                        style: { padding: '5px', fontSize: '14px' },
+                      }),
+                      h(
+                        'button',
+                        {
+                          id: 'btn-save-edit',
+                          onClick: saveEdit,
+                          style: { padding: '5px 10px', cursor: 'pointer' },
                         },
-                      },
-                      '删除',
-                    ),
-                  ]),
-            ],
+                        '保存',
+                      ),
+                    ])
+                  : h('div', { style: { display: 'flex', gap: '10px', alignItems: 'center' } }, [
+                      h('span', { class: 'item-name' }, item.name),
+                      h(
+                        'button',
+                        {
+                          class: 'btn-edit',
+                          onClick: () => startEdit(item),
+                          style: { padding: '5px 10px', cursor: 'pointer' },
+                        },
+                        '编辑',
+                      ),
+                      h(
+                        'button',
+                        {
+                          class: 'btn-delete',
+                          onClick: () => deleteItem(item.id),
+                          style: {
+                            padding: '5px 10px',
+                            cursor: 'pointer',
+                            backgroundColor: '#ff4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                          },
+                        },
+                        '删除',
+                      ),
+                    ]),
+              ],
+            ),
           ),
         ),
-      ),
-    ],
-  );
+      ],
+    );
 }
 
 // 4. 表单验证组件
@@ -314,97 +313,105 @@ function FormValidationComponent() {
     }
   };
 
-  return h(
-    'div',
-    { class: 'form-validation', style: { maxWidth: '400px', margin: '0 auto', padding: '40px' } },
-    [
-      h('h2', { style: { color: '#333' } }, '表单验证场景'),
-      h('form', { id: 'validation-form', onSubmit: handleSubmit }, [
-        h('div', { style: { marginBottom: '15px' } }, [
-          h('label', { for: 'email', style: { display: 'block', marginBottom: '5px' } }, '邮箱'),
-          h('input', {
-            id: 'email',
-            type: 'email',
-            value: email.value,
-            onInput: (e: any) => (email.value = e.target.value),
-            style: { width: '100%', padding: '10px', fontSize: '16px' },
-          }),
-          errors.value.email &&
+  return () =>
+    h(
+      'div',
+      { class: 'form-validation', style: { maxWidth: '400px', margin: '0 auto', padding: '40px' } },
+      [
+        h('h2', { style: { color: '#333' } }, '表单验证场景'),
+        // A13：必须关掉浏览器的原生校验。`input type="email"` + 非法值会让浏览器
+        // 直接拦截 submit 事件（validate() 根本不执行 ⇒ 页面没有任何自定义错误提示）。
+        // 自己实现校验时加 novalidate 是标准做法。
+        h('form', { id: 'validation-form', novalidate: 'true', onSubmit: handleSubmit }, [
+          h('div', { style: { marginBottom: '15px' } }, [
+            h('label', { for: 'email', style: { display: 'block', marginBottom: '5px' } }, '邮箱'),
+            h('input', {
+              id: 'email',
+              type: 'email',
+              value: email.value,
+              onInput: (e: any) => (email.value = e.target.value),
+              style: { width: '100%', padding: '10px', fontSize: '16px' },
+            }),
+            errors.value.email &&
+              h(
+                'div',
+                {
+                  id: 'email-error',
+                  class: 'error-message',
+                  style: { color: 'red', fontSize: '14px', marginTop: '5px' },
+                },
+                errors.value.email,
+              ),
+          ]),
+          h('div', { style: { marginBottom: '15px' } }, [
             h(
-              'div',
-              {
-                id: 'email-error',
-                class: 'error-message',
-                style: { color: 'red', fontSize: '14px', marginTop: '5px' },
-              },
-              errors.value.email,
+              'label',
+              { for: 'password', style: { display: 'block', marginBottom: '5px' } },
+              '密码',
             ),
-        ]),
-        h('div', { style: { marginBottom: '15px' } }, [
-          h('label', { for: 'password', style: { display: 'block', marginBottom: '5px' } }, '密码'),
-          h('input', {
-            id: 'password',
-            type: 'password',
-            value: password.value,
-            onInput: (e: any) => (password.value = e.target.value),
-            style: { width: '100%', padding: '10px', fontSize: '16px' },
-          }),
-          errors.value.password &&
+            h('input', {
+              id: 'password',
+              type: 'password',
+              value: password.value,
+              onInput: (e: any) => (password.value = e.target.value),
+              style: { width: '100%', padding: '10px', fontSize: '16px' },
+            }),
+            errors.value.password &&
+              h(
+                'div',
+                {
+                  id: 'password-error',
+                  class: 'error-message',
+                  style: { color: 'red', fontSize: '14px', marginTop: '5px' },
+                },
+                errors.value.password,
+              ),
+          ]),
+          h('div', { style: { marginBottom: '20px' } }, [
             h(
-              'div',
-              {
-                id: 'password-error',
-                class: 'error-message',
-                style: { color: 'red', fontSize: '14px', marginTop: '5px' },
-              },
-              errors.value.password,
+              'label',
+              { for: 'confirm-password', style: { display: 'block', marginBottom: '5px' } },
+              '确认密码',
             ),
-        ]),
-        h('div', { style: { marginBottom: '20px' } }, [
+            h('input', {
+              id: 'confirm-password',
+              type: 'password',
+              value: confirmPassword.value,
+              onInput: (e: any) => (confirmPassword.value = e.target.value),
+              style: { width: '100%', padding: '10px', fontSize: '16px' },
+            }),
+            errors.value.confirmPassword &&
+              h(
+                'div',
+                {
+                  id: 'confirm-password-error',
+                  class: 'error-message',
+                  style: { color: 'red', fontSize: '14px', marginTop: '5px' },
+                },
+                errors.value.confirmPassword,
+              ),
+          ]),
           h(
-            'label',
-            { for: 'confirm-password', style: { display: 'block', marginBottom: '5px' } },
-            '确认密码',
-          ),
-          h('input', {
-            id: 'confirm-password',
-            type: 'password',
-            value: confirmPassword.value,
-            onInput: (e: any) => (confirmPassword.value = e.target.value),
-            style: { width: '100%', padding: '10px', fontSize: '16px' },
-          }),
-          errors.value.confirmPassword &&
-            h(
-              'div',
-              {
-                id: 'confirm-password-error',
-                class: 'error-message',
-                style: { color: 'red', fontSize: '14px', marginTop: '5px' },
+            'button',
+            {
+              id: 'btn-submit-form',
+              type: 'submit',
+              style: {
+                width: '100%',
+                padding: '12px',
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '16px',
+                cursor: 'pointer',
               },
-              errors.value.confirmPassword,
-            ),
-        ]),
-        h(
-          'button',
-          {
-            id: 'btn-submit-form',
-            type: 'submit',
-            style: {
-              width: '100%',
-              padding: '12px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '16px',
-              cursor: 'pointer',
             },
-          },
-          '提交',
-        ),
-      ]),
-    ],
-  );
+            '提交',
+          ),
+        ]),
+      ],
+    );
 }
 
 // 5. 颜色选择器组件
@@ -421,63 +428,64 @@ function ColorPickerComponent() {
     '#fd7e14',
   ];
 
-  return h(
-    'div',
-    {
-      class: 'color-picker',
-      style: { maxWidth: '600px', margin: '0 auto', padding: '40px', textAlign: 'center' },
-    },
-    [
-      h('h2', { style: { color: '#333' } }, '颜色选择器场景'),
-      h(
-        'div',
-        {
-          id: 'color-display',
-          style: {
-            width: '200px',
-            height: '200px',
-            backgroundColor: selectedColor.value,
-            margin: '20px auto',
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            fontSize: '24px',
-          },
-        },
-        selectedColor.value,
-      ),
-      h(
-        'div',
-        {
-          id: 'color-options',
-          style: {
-            display: 'flex',
-            gap: '10px',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-            marginTop: '20px',
-          },
-        },
-        colors.map((color) =>
-          h('button', {
-            class: 'color-option',
-            'data-color': color,
-            onClick: () => (selectedColor.value = color),
+  return () =>
+    h(
+      'div',
+      {
+        class: 'color-picker',
+        style: { maxWidth: '600px', margin: '0 auto', padding: '40px', textAlign: 'center' },
+      },
+      [
+        h('h2', { style: { color: '#333' } }, '颜色选择器场景'),
+        h(
+          'div',
+          {
+            id: 'color-display',
             style: {
-              width: '40px',
-              height: '40px',
-              backgroundColor: color,
-              border: '2px solid #ddd',
-              borderRadius: '4px',
-              cursor: 'pointer',
+              width: '200px',
+              height: '200px',
+              backgroundColor: selectedColor.value,
+              margin: '20px auto',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontSize: '24px',
             },
-          }),
+          },
+          selectedColor.value,
         ),
-      ),
-    ],
-  );
+        h(
+          'div',
+          {
+            id: 'color-options',
+            style: {
+              display: 'flex',
+              gap: '10px',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              marginTop: '20px',
+            },
+          },
+          colors.map((color) =>
+            h('button', {
+              class: 'color-option',
+              'data-color': color,
+              onClick: () => (selectedColor.value = color),
+              style: {
+                width: '40px',
+                height: '40px',
+                backgroundColor: color,
+                border: '2px solid #ddd',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              },
+            }),
+          ),
+        ),
+      ],
+    );
 }
 
 // 6. 计时器组件
@@ -515,61 +523,62 @@ function TimerComponent() {
     return `${m}:${s}`;
   };
 
-  return h(
-    'div',
-    {
-      class: 'timer',
-      style: { maxWidth: '400px', margin: '0 auto', padding: '40px', textAlign: 'center' },
-    },
-    [
-      h('h2', { style: { color: '#333' } }, '计时器场景'),
-      h(
-        'div',
-        {
-          id: 'timer-display',
-          class: 'timer-display',
-          style: { fontSize: '72px', fontFamily: 'monospace', margin: '20px 0' },
-        },
-        formatTime(seconds.value),
-      ),
-      h(
-        'div',
-        {
-          class: 'timer-buttons',
-          style: { display: 'flex', gap: '10px', justifyContent: 'center' },
-        },
-        [
-          h(
-            'button',
-            {
-              id: 'btn-start-timer',
-              onClick: start,
-              style: { padding: '10px 20px', fontSize: '16px', cursor: 'pointer' },
-            },
-            '开始',
-          ),
-          h(
-            'button',
-            {
-              id: 'btn-stop-timer',
-              onClick: stop,
-              style: { padding: '10px 20px', fontSize: '16px', cursor: 'pointer' },
-            },
-            '停止',
-          ),
-          h(
-            'button',
-            {
-              id: 'btn-reset-timer',
-              onClick: reset,
-              style: { padding: '10px 20px', fontSize: '16px', cursor: 'pointer' },
-            },
-            '重置',
-          ),
-        ],
-      ),
-    ],
-  );
+  return () =>
+    h(
+      'div',
+      {
+        class: 'timer',
+        style: { maxWidth: '400px', margin: '0 auto', padding: '40px', textAlign: 'center' },
+      },
+      [
+        h('h2', { style: { color: '#333' } }, '计时器场景'),
+        h(
+          'div',
+          {
+            id: 'timer-display',
+            class: 'timer-display',
+            style: { fontSize: '72px', fontFamily: 'monospace', margin: '20px 0' },
+          },
+          formatTime(seconds.value),
+        ),
+        h(
+          'div',
+          {
+            class: 'timer-buttons',
+            style: { display: 'flex', gap: '10px', justifyContent: 'center' },
+          },
+          [
+            h(
+              'button',
+              {
+                id: 'btn-start-timer',
+                onClick: start,
+                style: { padding: '10px 20px', fontSize: '16px', cursor: 'pointer' },
+              },
+              '开始',
+            ),
+            h(
+              'button',
+              {
+                id: 'btn-stop-timer',
+                onClick: stop,
+                style: { padding: '10px 20px', fontSize: '16px', cursor: 'pointer' },
+              },
+              '停止',
+            ),
+            h(
+              'button',
+              {
+                id: 'btn-reset-timer',
+                onClick: reset,
+                style: { padding: '10px 20px', fontSize: '16px', cursor: 'pointer' },
+              },
+              '重置',
+            ),
+          ],
+        ),
+      ],
+    );
 }
 
 // 7. 购物车组件
@@ -600,126 +609,127 @@ function ShoppingCartComponent() {
     cart.value.reduce((sum, item) => sum + item.price * item.quantity, 0),
   );
 
-  return h(
-    'div',
-    { class: 'shopping-cart', style: { maxWidth: '800px', margin: '0 auto', padding: '40px' } },
-    [
-      h('h2', { style: { color: '#333' } }, '购物车场景'),
-      h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' } }, [
-        h(
-          'div',
-          { id: 'product-list', style: { borderRight: '1px solid #ddd', paddingRight: '20px' } },
-          [
-            h('h3', { style: { marginBottom: '15px' } }, '产品列表'),
-            products.map((product) =>
-              h(
-                'div',
-                {
-                  class: 'product-item',
-                  key: product.id,
-                  style: {
-                    padding: '10px',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    marginBottom: '10px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  },
-                },
-                [
-                  h('div', {}, [
-                    h('div', { class: 'product-name' }, product.name),
-                    h(
-                      'div',
-                      { class: 'product-price', style: { color: '#666' } },
-                      `¥${product.price}`,
-                    ),
-                  ]),
-                  h(
-                    'button',
-                    {
-                      class: 'btn-add-to-cart',
-                      'data-product-id': product.id,
-                      onClick: () => addToCart(product),
-                      style: { padding: '5px 10px', cursor: 'pointer' },
-                    },
-                    '加入购物车',
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        h('div', { id: 'cart-items', style: { paddingLeft: '20px' } }, [
-          h('h3', { style: { marginBottom: '15px' } }, '购物车'),
+  return () =>
+    h(
+      'div',
+      { class: 'shopping-cart', style: { maxWidth: '800px', margin: '0 auto', padding: '40px' } },
+      [
+        h('h2', { style: { color: '#333' } }, '购物车场景'),
+        h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' } }, [
           h(
             'div',
-            { id: 'cart-list' },
-            cart.value.map((item) =>
-              h(
-                'div',
-                {
-                  class: 'cart-item',
-                  key: item.id,
-                  style: {
-                    padding: '10px',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    marginBottom: '10px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
+            { id: 'product-list', style: { borderRight: '1px solid #ddd', paddingRight: '20px' } },
+            [
+              h('h3', { style: { marginBottom: '15px' } }, '产品列表'),
+              products.map((product) =>
+                h(
+                  'div',
+                  {
+                    class: 'product-item',
+                    key: product.id,
+                    style: {
+                      padding: '10px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      marginBottom: '10px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    },
                   },
-                },
-                [
-                  h('div', {}, [
-                    h('div', {}, `${item.name} x ${item.quantity}`),
+                  [
+                    h('div', {}, [
+                      h('div', { class: 'product-name' }, product.name),
+                      h(
+                        'div',
+                        { class: 'product-price', style: { color: '#666' } },
+                        `¥${product.price}`,
+                      ),
+                    ]),
                     h(
-                      'div',
-                      { class: 'cart-item-price', style: { color: '#666' } },
-                      `小计: ¥${item.price * item.quantity}`,
-                    ),
-                  ]),
-                  h(
-                    'button',
-                    {
-                      class: 'btn-remove-from-cart',
-                      'data-item-id': item.id,
-                      onClick: () => removeFromCart(item.id),
-                      style: {
-                        padding: '5px 10px',
-                        cursor: 'pointer',
-                        backgroundColor: '#ff4444',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
+                      'button',
+                      {
+                        class: 'btn-add-to-cart',
+                        'data-product-id': product.id,
+                        onClick: () => addToCart(product),
+                        style: { padding: '5px 10px', cursor: 'pointer' },
                       },
+                      '加入购物车',
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          h('div', { id: 'cart-items', style: { paddingLeft: '20px' } }, [
+            h('h3', { style: { marginBottom: '15px' } }, '购物车'),
+            h(
+              'div',
+              { id: 'cart-list' },
+              cart.value.map((item) =>
+                h(
+                  'div',
+                  {
+                    class: 'cart-item',
+                    key: item.id,
+                    style: {
+                      padding: '10px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      marginBottom: '10px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
                     },
-                    '删除',
-                  ),
-                ],
+                  },
+                  [
+                    h('div', {}, [
+                      h('div', {}, `${item.name} x ${item.quantity}`),
+                      h(
+                        'div',
+                        { class: 'cart-item-price', style: { color: '#666' } },
+                        `小计: ¥${item.price * item.quantity}`,
+                      ),
+                    ]),
+                    h(
+                      'button',
+                      {
+                        class: 'btn-remove-from-cart',
+                        'data-item-id': item.id,
+                        onClick: () => removeFromCart(item.id),
+                        style: {
+                          padding: '5px 10px',
+                          cursor: 'pointer',
+                          backgroundColor: '#ff4444',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                        },
+                      },
+                      '删除',
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          h(
-            'div',
-            {
-              id: 'cart-total',
-              style: {
-                marginTop: '20px',
-                paddingTop: '20px',
-                borderTop: '1px solid #ddd',
-                fontSize: '20px',
-                fontWeight: 'bold',
+            h(
+              'div',
+              {
+                id: 'cart-total',
+                style: {
+                  marginTop: '20px',
+                  paddingTop: '20px',
+                  borderTop: '1px solid #ddd',
+                  fontSize: '20px',
+                  fontWeight: 'bold',
+                },
               },
-            },
-            `总计: ¥${total.value}`,
-          ),
+              `总计: ¥${total.value}`,
+            ),
+          ]),
         ]),
-      ]),
-    ],
-  );
+      ],
+    );
 }
 
 // 8. Markdown 编辑器组件
@@ -743,49 +753,59 @@ function MarkdownEditorComponent() {
     preview.value = parseMarkdown(markdown.value);
   };
 
-  return h(
-    'div',
-    { class: 'markdown-editor', style: { maxWidth: '1000px', margin: '0 auto', padding: '40px' } },
-    [
-      h('h2', { style: { color: '#333' } }, 'Markdown 编辑器场景'),
-      h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' } }, [
-        h('div', {}, [
-          h('h3', { style: { marginBottom: '10px' } }, '编辑'),
-          h('textarea', {
-            id: 'markdown-input',
-            value: markdown.value,
-            onInput: (e: any) => {
-              markdown.value = e.target.value;
-              updatePreview();
-            },
-            style: {
-              width: '100%',
-              height: '300px',
-              padding: '10px',
-              fontFamily: 'monospace',
-              fontSize: '14px',
-            },
-          }),
-        ]),
-        h('div', {}, [
-          h('h3', { style: { marginBottom: '10px' } }, '预览'),
-          h(
-            'div',
-            {
-              id: 'markdown-preview',
-              style: {
-                border: '1px solid #ddd',
-                padding: '10px',
-                height: '300px',
-                overflow: 'auto',
+  return () =>
+    h(
+      'div',
+      {
+        class: 'markdown-editor',
+        style: { maxWidth: '1000px', margin: '0 auto', padding: '40px' },
+      },
+      [
+        h('h2', { style: { color: '#333' } }, 'Markdown 编辑器场景'),
+        h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' } }, [
+          h('div', {}, [
+            h('h3', { style: { marginBottom: '10px' } }, '编辑'),
+            // A13：textarea 的初始内容必须走**子文本**，不能用 value 属性 ——
+            // `<textarea value="x">` 在 DOM 里不会显示（属性只存在于 HTML 解析阶段），
+            // 实测 textarea 一直是空的。文本子节点才会被渲染成内容。
+            h(
+              'textarea',
+              {
+                id: 'markdown-input',
+                onInput: (e: any) => {
+                  markdown.value = e.target.value;
+                  updatePreview();
+                },
+                style: {
+                  width: '100%',
+                  height: '300px',
+                  padding: '10px',
+                  fontFamily: 'monospace',
+                  fontSize: '14px',
+                },
               },
-            },
-            preview.value,
-          ),
+              markdown.value,
+            ),
+          ]),
+          h('div', {}, [
+            h('h3', { style: { marginBottom: '10px' } }, '预览'),
+            h(
+              'div',
+              {
+                id: 'markdown-preview',
+                style: {
+                  border: '1px solid #ddd',
+                  padding: '10px',
+                  height: '300px',
+                  overflow: 'auto',
+                },
+              },
+              preview.value,
+            ),
+          ]),
         ]),
-      ]),
-    ],
-  );
+      ],
+    );
 }
 
 // 9. 井字棋组件
@@ -826,62 +846,63 @@ function TicTacToeComponent() {
     winner.value = null;
   };
 
-  return h(
-    'div',
-    {
-      class: 'tic-tac-toe',
-      style: { maxWidth: '400px', margin: '0 auto', padding: '40px', textAlign: 'center' },
-    },
-    [
-      h('h2', { style: { color: '#333' } }, '井字棋场景'),
-      h(
-        'div',
-        { id: 'game-status', style: { fontSize: '20px', marginBottom: '20px' } },
-        winner.value ? `赢家: ${winner.value}` : `下一位: ${isXNext.value ? 'X' : 'O'}`,
-      ),
-      h(
-        'div',
-        {
-          id: 'board',
-          style: {
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 80px)',
-            gap: '5px',
-            margin: '20px auto',
-            width: '250px',
-          },
-        },
-        board.value.map((value, i) =>
-          h(
-            'button',
-            {
-              class: 'square',
-              id: `square-${i}`,
-              onClick: () => makeMove(i),
-              style: {
-                width: '80px',
-                height: '80px',
-                fontSize: '48px',
-                cursor: 'pointer',
-                backgroundColor: '#f0f0f0',
-                border: '1px solid #ddd',
-              },
+  return () =>
+    h(
+      'div',
+      {
+        class: 'tic-tac-toe',
+        style: { maxWidth: '400px', margin: '0 auto', padding: '40px', textAlign: 'center' },
+      },
+      [
+        h('h2', { style: { color: '#333' } }, '井字棋场景'),
+        h(
+          'div',
+          { id: 'game-status', style: { fontSize: '20px', marginBottom: '20px' } },
+          winner.value ? `赢家: ${winner.value}` : `下一位: ${isXNext.value ? 'X' : 'O'}`,
+        ),
+        h(
+          'div',
+          {
+            id: 'board',
+            style: {
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 80px)',
+              gap: '5px',
+              margin: '20px auto',
+              width: '250px',
             },
-            value,
+          },
+          board.value.map((value, i) =>
+            h(
+              'button',
+              {
+                class: 'square',
+                id: `square-${i}`,
+                onClick: () => makeMove(i),
+                style: {
+                  width: '80px',
+                  height: '80px',
+                  fontSize: '48px',
+                  cursor: 'pointer',
+                  backgroundColor: '#f0f0f0',
+                  border: '1px solid #ddd',
+                },
+              },
+              value,
+            ),
           ),
         ),
-      ),
-      h(
-        'button',
-        {
-          id: 'btn-reset-game',
-          onClick: resetGame,
-          style: { padding: '10px 20px', fontSize: '16px', cursor: 'pointer' },
-        },
-        '重新开始',
-      ),
-    ],
-  );
+        h(
+          'button',
+          {
+            id: 'btn-reset-game',
+            onClick: resetGame,
+            style: { padding: '10px 20px', fontSize: '16px', cursor: 'pointer' },
+          },
+          '重新开始',
+        ),
+      ],
+    );
 }
 
 // 10. 天气仪表盘组件
@@ -902,96 +923,108 @@ function WeatherDashboardComponent() {
     if (city) weather.value = city;
   };
 
-  return h(
-    'div',
-    {
-      class: 'weather-dashboard',
-      style: { maxWidth: '600px', margin: '0 auto', padding: '40px', textAlign: 'center' },
-    },
-    [
-      h('h2', { style: { color: '#333' } }, '天气仪表盘场景'),
-      h(
-        'div',
-        { id: 'city-selector', style: { marginBottom: '20px' } },
-        cities.map((city) =>
-          h(
-            'button',
-            {
-              class: 'city-button',
-              id: `city-${city.id}`,
-              'data-city': city.id,
-              onClick: () => selectCity(city.id),
-              style: {
-                padding: '10px 20px',
-                margin: '0 5px',
-                fontSize: '16px',
-                cursor: 'pointer',
-                backgroundColor: selectedCity.value === city.id ? '#007bff' : '#f0f0f0',
-                color: selectedCity.value === city.id ? 'white' : 'black',
-                border: 'none',
-                borderRadius: '4px',
+  return () =>
+    h(
+      'div',
+      {
+        class: 'weather-dashboard',
+        style: { maxWidth: '600px', margin: '0 auto', padding: '40px', textAlign: 'center' },
+      },
+      [
+        h('h2', { style: { color: '#333' } }, '天气仪表盘场景'),
+        h(
+          'div',
+          { id: 'city-selector', style: { marginBottom: '20px' } },
+          cities.map((city) =>
+            h(
+              'button',
+              {
+                class: 'city-button',
+                id: `city-${city.id}`,
+                'data-city': city.id,
+                onClick: () => selectCity(city.id),
+                style: {
+                  padding: '10px 20px',
+                  margin: '0 5px',
+                  fontSize: '16px',
+                  cursor: 'pointer',
+                  backgroundColor: selectedCity.value === city.id ? '#007bff' : '#f0f0f0',
+                  color: selectedCity.value === city.id ? 'white' : 'black',
+                  border: 'none',
+                  borderRadius: '4px',
+                },
               },
-            },
-            city.name,
+              city.name,
+            ),
           ),
         ),
-      ),
-      h(
-        'div',
-        {
-          id: 'weather-display',
-          style: {
-            padding: '40px',
-            border: '1px solid #ddd',
-            borderRadius: '8px',
-            backgroundColor: '#f8f9fa',
-          },
-        },
-        [
-          h('h3', { id: 'city-name', style: { fontSize: '28px' } }, weather.value.name),
-          h(
-            'div',
-            {
-              id: 'temperature',
-              style: { fontSize: '64px', fontWeight: 'bold', margin: '20px 0' },
+        h(
+          'div',
+          {
+            id: 'weather-display',
+            style: {
+              padding: '40px',
+              border: '1px solid #ddd',
+              borderRadius: '8px',
+              backgroundColor: '#f8f9fa',
             },
-            weather.value.temp,
-          ),
-          h(
-            'div',
-            { id: 'condition', style: { fontSize: '24px', color: '#666' } },
-            weather.value.condition,
-          ),
-        ],
-      ),
-    ],
-  );
+          },
+          [
+            h('h3', { id: 'city-name', style: { fontSize: '28px' } }, weather.value.name),
+            h(
+              'div',
+              {
+                id: 'temperature',
+                style: { fontSize: '64px', fontWeight: 'bold', margin: '20px 0' },
+              },
+              weather.value.temp,
+            ),
+            h(
+              'div',
+              { id: 'condition', style: { fontSize: '24px', color: '#666' } },
+              weather.value.condition,
+            ),
+          ],
+        ),
+      ],
+    );
 }
 
 // 场景切换组件
+//
+// A13：10 个场景组件都是「函数体内建 ref、返回 vnode」的写法。直接 `h(fn)` 会被 vdom
+// 判为 "has no render function"；而把它当 render 每次调用，又会**每帧重建 ref**
+// （点 + 号时闭包指向旧 ref，UI 永远停在 0）。正确契约是 setup 返回 render 闭包：
+// ref 在 setup 里建一次，render 只负责读值。
+// 因此场景组件统一改成 `return () => h(...)`，这里以 `setup: fn` 挂载。
+const asComponent = (fn: () => () => ReturnType<typeof h>) => ({
+  name: fn.name,
+  setup: fn,
+});
+
 function App() {
   const renderScenario = () => {
     switch (currentScenario.value) {
       case 'counter':
-        return h(CounterComponent);
+        return h(asComponent(CounterComponent));
       case 'todo':
-        return h(TodoComponent);
+        return h(asComponent(TodoComponent));
       case 'crud-list':
-        return h(CrudListComponent);
+        return h(asComponent(CrudListComponent));
       case 'form-validation':
-        return h(FormValidationComponent);
+        return h(asComponent(FormValidationComponent));
       case 'color-picker':
-        return h(ColorPickerComponent);
+        return h(asComponent(ColorPickerComponent));
       case 'timer':
-        return h(TimerComponent);
+        return h(asComponent(TimerComponent));
       case 'shopping-cart':
-        return h(ShoppingCartComponent);
+        return h(asComponent(ShoppingCartComponent));
       case 'markdown-editor':
-        return h(MarkdownEditorComponent);
+        return h(asComponent(MarkdownEditorComponent));
       case 'tic-tac-toe':
-        return h(TicTacToeComponent);
+        return h(asComponent(TicTacToeComponent));
       case 'weather-dashboard':
-        return h(WeatherDashboardComponent);
+        return h(asComponent(WeatherDashboardComponent));
       default:
         return h('div', { style: { textAlign: 'center', padding: '40px' } }, [
           h('h1', { style: { color: '#333' } }, 'Lyt.js E2E 测试场景'),
@@ -1047,5 +1080,8 @@ function App() {
   ]);
 }
 
-const app = createApp(App);
+// A13：根组件必须是**对象**（带 render），不能直接传「返回 vnode 的函数」——
+// vdom 只认 `type.render`，函数组件会被判为 "has no render function" 并渲染成空白
+// （实测：整页只有 warning，没有任何 DOM，45 条 E2E 全部超时）。
+const app = createApp({ name: 'PlaygroundRoot', render: () => App() });
 app.mount('#app');

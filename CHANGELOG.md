@@ -18,6 +18,17 @@
   豁免必须带 reason / ownerSignOff / 未过期。输出 `declared=true` / `parity=false`（未发布，如实记录）。
 - `release.yml` 补 lockfile 校验、`test:coverage`、`check-coverage-snapshot`、`check-release-parity`。
 
+### 🎭 playground 与 E2E：主路径首次真正跑通（2026-11-05）
+
+- 修复 playground 自始无法渲染：10 个场景组件与根组件都是「函数返回 vnode」，
+  不被 vdom 接受（`Component "anonymous" has no render function`）。改为 `setup` 返回 render 闭包，
+  ref 只创建一次（此前每帧重建导致点击不更新）。
+- 修复表单场景：自实现校验时加 `novalidate`（`type="email"` 原生校验会拦截 submit）；
+  markdown 的 textarea 改用子文本而非 `value` 属性。
+- `playground/index.html` 移除预置 DOM，避免 hydrate 警告与双份导航。
+- E2E：`chromium` 45 条 + `playground` 39 条全绿；根目录 4 个原本访问不存在路由的测试
+  改为驱动真实场景（组件契约 / 场景切换 / 状态生命周期 / CRUD 主路径）。
+
 ### 🧩 `core-signal`：setup 契约与类型诚实（2026-11-05）
 
 - `setup(props, ctx)` 的第二参不再传空对象：`ctx.inject()` / `ctx.emit()` / `ctx.expose()`
