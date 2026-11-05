@@ -42,10 +42,12 @@ const read = (rel: string): string => readFileSync(join(workDir, rel), 'utf8');
 // ==================== 基本生成 ====================
 
 describe('generate：组件', () => {
-  it('默认生成 src/components/<kebab>.ts，且内容用 PascalCase 命名', async () => {
+  // ⚠️ 2026-11-05（A06）：默认组件模板产出 JSX，落盘必须是 `.tsx`
+  //   （JSX 写在 `.ts` 里 tsc / vite 直接语法错误）。
+  it('默认生成 src/components/<kebab>.tsx，且内容用 PascalCase 命名', async () => {
     await generate({ type: 'component', name: 'MyWidget' });
 
-    const file = 'src/components/my-widget.ts';
+    const file = 'src/components/my-widget.tsx';
     expect(existsSync(join(workDir, file))).toBe(true);
     const content = read(file);
     expect(content).toContain('MyWidget');
@@ -55,7 +57,7 @@ describe('generate：组件', () => {
   it('命名转换：user-profile ⇒ PascalCase / kebab-case 都对', async () => {
     await generate({ type: 'component', name: 'user-profile' });
 
-    const file = 'src/components/user-profile.ts';
+    const file = 'src/components/user-profile.tsx';
     expect(existsSync(join(workDir, file))).toBe(true);
     const content = read(file);
     expect(content).toContain('UserProfile');
@@ -73,15 +75,15 @@ describe('generate：组件', () => {
   it('path 选项改变输出目录', async () => {
     await generate({ type: 'component', name: 'A', path: './custom' });
 
-    expect(existsSync(join(workDir, 'custom/components/a.ts'))).toBe(true);
+    expect(existsSync(join(workDir, 'custom/components/a.tsx'))).toBe(true);
   });
 
   it('重复生成会覆盖同名文件（不产生第二份）', async () => {
     await generate({ type: 'component', name: 'Dup', description: 'first' });
     await generate({ type: 'component', name: 'Dup', description: 'second' });
 
-    expect(readdirSync(join(workDir, 'src/components'))).toEqual(['dup.ts']);
-    expect(read('src/components/dup.ts')).toContain('second');
+    expect(readdirSync(join(workDir, 'src/components'))).toEqual(['dup.tsx']);
+    expect(read('src/components/dup.tsx')).toContain('second');
   });
 });
 
@@ -92,7 +94,7 @@ describe('generate：选项矩阵', () => {
     await generate({ type: 'component', name: 'Styled', withStyles: true });
 
     expect(existsSync(join(workDir, 'src/components/styled.styles.css'))).toBe(true);
-    expect(read('src/components/styled.ts')).toContain('./styled.styles.css');
+    expect(read('src/components/styled.tsx')).toContain('./styled.styles.css');
   });
 
   it('withStyles + template=sfc ⇒ **不**产出 css（.lyt 自带样式块）', async () => {
@@ -101,10 +103,10 @@ describe('generate：选项矩阵', () => {
     expect(existsSync(join(workDir, 'src/components/sfc-styled.styles.css'))).toBe(false);
   });
 
-  it('language=js ⇒ 输出 .js 扩展名', async () => {
+  it('language=js ⇒ 输出 .jsx 扩展名（模板含 JSX）', async () => {
     await generate({ type: 'component', name: 'JsComp', language: 'js' });
 
-    expect(existsSync(join(workDir, 'src/components/js-comp.js'))).toBe(true);
+    expect(existsSync(join(workDir, 'src/components/js-comp.jsx'))).toBe(true);
   });
 
   it('template=sfc ⇒ 输出 .lyt 且内容是 SFC 结构', async () => {
@@ -118,7 +120,7 @@ describe('generate：选项矩阵', () => {
   it('page 类型文件名带 .page 后缀，目录为 pages', async () => {
     await generate({ type: 'page', name: 'Home' });
 
-    expect(existsSync(join(workDir, 'src/pages/home.page.ts'))).toBe(true);
+    expect(existsSync(join(workDir, 'src/pages/home.page.tsx'))).toBe(true);
   });
 
   it('★ withStorybook 是**未实现**选项：必须显式警告，不得静默空操作', async () => {
@@ -143,12 +145,12 @@ describe('generate：选项矩阵', () => {
 
 describe('generate：七种类型都能落盘', () => {
   const cases: Array<[Parameters<typeof generate>[0]['type'], string]> = [
-    ['component', 'src/components/x.ts'],
-    ['page', 'src/pages/x.page.ts'],
+    ['component', 'src/components/x.tsx'],
+    ['page', 'src/pages/x.page.tsx'],
     ['service', 'src/services/x.ts'],
     ['hook', 'src/hooks/x.ts'],
     ['store', 'src/stores/x.ts'],
-    ['layout', 'src/layouts/x.ts'],
+    ['layout', 'src/layouts/x.tsx'],
     ['middleware', 'src/middleware/x.ts'],
   ];
 

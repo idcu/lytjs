@@ -43,11 +43,19 @@ export async function create(
 
   logger.info(`Creating a new LytJS project in ${targetDir}...`);
 
+  // 未知模板必须报错，不静默回退到 default（A06）
+  const templateName = options.template || 'default';
+  if (!Object.prototype.hasOwnProperty.call(TEMPLATES, templateName)) {
+    logger.error(`Unknown template: "${templateName}"`);
+    logger.info(`Available templates: ${Object.keys(TEMPLATES).join(', ')}`);
+    process.exit(1);
+  }
+
   // Create directory
   ensureDir(targetDir);
 
   // Generate project files
-  generateProjectFiles(targetDir, projectName, options.template || 'default');
+  generateProjectFiles(targetDir, projectName, templateName);
 
   // Install dependencies
   logger.info('Installing dependencies...');
@@ -80,6 +88,14 @@ export function generateProjectFiles(
   projectName: string,
   template: string,
 ): void {
+  // ⚠️ 2026-11-05（A06）：未知模板此前会静默落进 default 分支 ——
+  //   用户以为自己选了模板，其实拿到的是另一个项目骨架。
+  if (!Object.prototype.hasOwnProperty.call(TEMPLATES, template)) {
+    throw new Error(
+      `Unknown template: "${template}". Available: ${Object.keys(TEMPLATES).join(', ')}`,
+    );
+  }
+
   // Determine template-specific settings
   const isMinimal = template === 'minimal';
   const isSsr = template === 'ssr';
@@ -383,9 +399,17 @@ export const useCounterStore = defineStore('counter', () => {
   // SSR-specific files
   if (isSsr) {
     // src/entry-server.ts
-    const entryServer = `import { h } from '@lytjs/core';
+    const entryServer = `import { h, createApp } from '@lytjs/core';
 import { renderToString } from '@lytjs/ssr';
 import App from './App';
+
+// ⚠️ 2026-11-05（A06）：服务端进程**必须**先注入模板编译器。
+//   此前直接 renderToString(h(App)) ⇒ 组件只有 \`template\` 字符串时抛
+//   「组件 "App" 提供了 template，但当前进程没有注入模板编译器」⇒ 每个请求 500。
+//   createApp() 内部会调用 installTemplateCompiler()（无需再单独调用）。
+const app = createApp(App);
+// 服务端不挂载：这里只是借用 createApp 的副作用（注入模板编译器）
+void app;
 
 /**
  * 服务端渲染入口。

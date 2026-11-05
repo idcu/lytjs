@@ -35,11 +35,37 @@
  * 但只有后者被 index.html 引用 ⇒ 死文件。
  */
 
-import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { spawn, spawnSync } from 'node:child_process';
+import {
+  existsSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  symlinkSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 
 const ROOT = process.cwd();
+const ROOT_MODULES = join(ROOT, 'node_modules');
+const BIN = join(ROOT_MODULES, '.bin');
+
+/**
+ * 让生成的项目能解析依赖。
+ *
+ * 生成目录在 /tmp 下，不在 workspace 里，pnpm 的 workspace 链接对它无效。
+ * 与其在门禁里跑一次真实 `pnpm install`（分钟级、需要网络），不如把**本仓
+ * 已装好的 node_modules** 链接进去 —— 这正好是「消费者能 import 到什么」的
+ * 真实近似：`@lytjs/*` 指向各包（types 指向 dist），vite / tsx / typescript
+ * 也都是仓库自带的版本，不会因为版本漂移产生假红/假绿。
+ */
+function linkNodeModules(dir) {
+  const target = join(dir, 'node_modules');
+  if (existsSync(target)) return;
+  symlinkSync(ROOT_MODULES, target, 'dir');
+}
 const { generateProjectFiles } = await import(`${ROOT}/packages/tools/packages/cli/dist/index.mjs`);
 
 let pass = 0;
@@ -173,6 +199,8 @@ try {
   for (const template of TEMPLATES) {
     const dir = join(tempRoot, template);
     generateProjectFiles(dir, `app-${template}`, template);
+    // 生成目录在 /tmp，workspace 链接失效 ⇒ 链接本仓已安装的 node_modules
+    linkNodeModules(dir);
     projects[template] = inspect(dir, template);
   }
 
@@ -367,6 +395,103 @@ try {
     check('对已有目录再次生成不抛错', threw === null, String(threw));
     const again = inspect(dir, 'default');
     check('二次生成后 package.json 仍可解析', again.pkg.name === 'app-default');
+  }
+
+  // ══════════════════════════════════════════════════════════
+  section('[6] 生成的代码真的能通过 tsc --noEmit');
+  //
+  // 前 5 节都是**文本级**交叉校验：引用存在、依赖声明对得上。但它们看不见
+  // 「类型层不成立」—— 例如 `components: { RouterLink }` 在运行时支持、
+  // ComponentOptions 里却没这个字段 ⇒ 用户第一次 `tsc` 就撞 TS2353。
+  // 所以这里对 6 个模板**真的跑一次编译器**。
+  for (const template of TEMPLATES) {
+    const p = projects[template];
+    const result = spawnSync(join(BIN, 'tsc'), ['--noEmit', '-p', join(p.dir, 'tsconfig.json')], {
+      cwd: p.dir,
+      encoding: 'utf-8',
+      timeout: 120_000,
+    });
+    const output = `${result.stdout ?? ''}${result.stderr ?? ''}`.trim();
+    check(
+      `[${template}] tsc --noEmit 通过`,
+      result.status === 0 && output === '',
+      output.split('\n').slice(0, 10).join('\n') || `exit=${result.status}`,
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════
+  section('[7] SSR 模板：真的启动服务，首页必须 200 且含预期内容');
+  //
+  // ⚠️ 2026-11-05 实测：模板只导出 `render` 而不注入模板编译器时，
+  //   每个请求都 500；而 `entry-server` 只导出 named export 时，
+  //   `mod.default` 是 undefined ⇒ `entry.render is not a function`。
+  //   这两类缺陷文本校验看不出，必须**起进程 + 发请求**。
+  {
+    const p = projects.ssr;
+    const port = 43_000 + Math.floor(Math.random() * 2_000);
+    const child = spawn(join(BIN, 'tsx'), ['server.ts'], {
+      cwd: p.dir,
+      env: { ...process.env, PORT: String(port), NODE_ENV: 'development' },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (d) => (stdout += d));
+    child.stderr.on('data', (d) => (stderr += d));
+    const exited = new Promise((resolveExit) => child.once('exit', resolveExit));
+
+    let status = null;
+    let body = '';
+    let lastError = '';
+    const deadline = Date.now() + 30_000;
+    try {
+      while (Date.now() < deadline) {
+        try {
+          const res = await fetch(`http://127.0.0.1:${port}/`);
+          status = res.status;
+          body = await res.text();
+          // 拿到任何响应就停：渲染错误是确定性的，重试只会拖慢失败反馈
+          break;
+        } catch (e) {
+          lastError = String(e);
+        }
+        await new Promise((r) => setTimeout(r, 250));
+      }
+    } finally {
+      child.kill('SIGTERM');
+      await Promise.race([exited, new Promise((r) => setTimeout(r, 3_000))]);
+      if (child.exitCode === null) child.kill('SIGKILL');
+    }
+
+    check('服务器启动并打印监听日志', /running at http:\/\/localhost:/.test(stdout), stdout.trim());
+    check(`首页返回 200（实际 ${status ?? '无响应'}）`, status === 200, lastError || stderr.trim());
+    check(
+      '首页包含 App 的期望文本 "Hello LytJS!"',
+      body.includes('Hello LytJS!'),
+      body.slice(0, 200),
+    );
+    check(
+      '服务端渲染没有报错',
+      !/SSR Error/.test(`${stdout}${stderr}`),
+      `${stdout}${stderr}`.trim(),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════
+  section('[8] 未知模板必须报错，不许静默回退 default');
+  //
+  // ⚠️ 2026-11-05：此前未知模板直接落进 default 分支 —— 用户以为自己
+  //   选了模板，其实拿到的是另一个骨架，且没有任何提示。
+  {
+    const dir = join(tempRoot, 'unknown');
+    let thrown = null;
+    try {
+      generateProjectFiles(dir, 'app-unknown', 'nope');
+    } catch (e) {
+      thrown = e;
+    }
+    check('未知模板抛错', thrown instanceof Error, String(thrown));
+    check('未知模板不产生半成品目录', !existsSync(dir), dir);
   }
 } finally {
   rmSync(tempRoot, { recursive: true, force: true });

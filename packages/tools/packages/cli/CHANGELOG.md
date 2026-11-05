@@ -1,5 +1,40 @@
 # @lytjs/cli 更新日志
 
+## [未发布] - 2026-11-05
+
+### 🐞 修复（A06：脚手架与代码生成「生成即可跑」）
+
+- **SSR 模板每个请求 500**：`src/entry-server.ts` 只 `import '@lytjs/core'` 而不调用
+  `createApp()` —— 模板编译器是**调用时**注入的，因此组件只有 `template` 字符串时直接抛
+  「当前进程没有注入模板编译器」。改为先 `createApp(App)`（借用其副作用，不挂载）。
+- **未知模板静默回退 default**：`lyt create --template nope` 与 `generateProjectFiles(..., 'nope')`
+  此前都落进 default 分支，用户拿到的东西和选择的模板无关且无提示。现在 `create()` 报错退出，
+  `generateProjectFiles()` 直接抛错且不写任何文件。
+- **生成的 component / page / layout 落盘为 `.ts` 却含 JSX** ⇒ tsc / vite 语法错误。
+  改为 `.tsx`（`language: 'js'` 时为 `.jsx`；`template: 'sfc'` 仍为 `.lyt`）。
+- **生成的 SFC 插值写成 `{title}`** ⇒ 模板里是纯文本而非插值。改为 `{{ title }}`。
+- **SFC 模板按 `lang` 条件导入 `ref`**，非 TS 时漏导入；改为无条件导入。
+- **service / store 模板用 `.value` 写 signal**：本仓 signal 是 `set()/update()`（没有 `.value`），
+  生成的代码运行即 TypeError。改为 `isLoading.set(...)` / `error.set(...)` /
+  `state.set(...)` / `state.update(prev => ...)`。
+- **插件模板 `extends: '@lytjs/core/tsconfig.json'`** 指向 `@lytjs/core` 不发布的文件
+  ⇒ 生成的插件项目 tsc 报 "File not found"。改为内联 `compilerOptions`。
+- **`add` 命令的 service 模板**同样改用 signal API（`.set()`）。
+
+### 🛡️ 门禁
+
+- `scripts/check-scaffold.mjs` 升级（`gate.mjs` fast tier）：
+  - **[6]** 6 个模板逐个 `tsc --noEmit`（真实编译器，不是正则）；
+  - **[7]** 真的 `spawn` SSR 服务进程并发起 HTTP 请求，断言 200 且首页含 `Hello LytJS!`；
+  - **[8]** 未知模板必须抛错且不产生半成品目录。
+  注入验证：去掉 `createApp()` 注入 ⇒ [7] 立刻红（500）。
+
+### 🩹 类型
+
+- `@lytjs/component` 的 `ComponentOptions` 补 `components` / `directives` 字段
+  （运行时早已支持，类型缺失导致 router 模板 `components: { RouterLink, RouterView }`
+  直接 TS2353）。
+
 ## [未发布] - 2026-11-03
 
 ### 🐞 修复（脚手架产物 7 个缺陷，均为「生成出来才看得见」）

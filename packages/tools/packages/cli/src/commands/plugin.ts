@@ -83,14 +83,26 @@ function getTemplateContent(template: string, pluginName: string): Record<string
   );
 
   // tsconfig.json
+  // ⚠️ 2026-11-05（A06）：此前 `extends: '@lytjs/core/tsconfig.json'` 指向一个
+  //   **@lytjs/core 根本不发布的文件** ⇒ 生成的插件项目 tsc 直接报
+  //   "File '@lytjs/core/tsconfig.json' not found"。改为**内联**编译选项，
+  //   不依赖任何包里的私有配置文件。
   files['tsconfig.json'] = JSON.stringify(
     {
-      extends: '@lytjs/core/tsconfig.json',
       compilerOptions: {
-        outDir: './dist',
-        rootDir: './src',
+        target: 'ES2020',
+        module: 'ESNext',
+        moduleResolution: 'Bundler',
+        lib: ['ES2020', 'DOM', 'DOM.Iterable'],
+        strict: true,
+        esModuleInterop: true,
+        skipLibCheck: true,
         declaration: true,
         declarationMap: true,
+        sourceMap: true,
+        outDir: './dist',
+        rootDir: './src',
+        types: [],
       },
       include: ['src'],
       exclude: ['node_modules', 'dist', 'tests'],

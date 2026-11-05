@@ -111,6 +111,17 @@ export interface ComponentOptions<
   renderTracked?(e: DebuggerEvent): void;
   renderTriggered?(e: DebuggerEvent): void;
   inheritAttrs?: boolean;
+  /**
+   * 局部组件注册表。
+   *
+   * ⚠️ 2026-11-05（A06）：运行时早已支持（`component-options.ts` 归一化、
+   * `component-proxy.ts` 解析局部注册），但**类型里没有这个字段** ——
+   * 于是 `lyt create router` 生成的模板 `components: { RouterLink, RouterView }`
+   * 直接 tsc 报 TS2353。补上字段，与运行时能力对齐。
+   */
+  components?: Record<string, unknown>;
+  /** 局部指令注册表（运行时同样已读取，补齐类型） */
+  directives?: Record<string, unknown>;
 }
 
 // ==================== AppContext ====================

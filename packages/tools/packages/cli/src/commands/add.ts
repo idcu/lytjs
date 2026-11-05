@@ -161,26 +161,26 @@ export function use${toPascalCase(name)}() {
   const data = signal<any>(null);
 
   // Computed
-  const hasData = computed(() => data.value !== null);
+  const hasData = computed(() => data() !== null);
 
   // Actions
   async function fetch() {
-    isLoading.value = true;
-    error.value = null;
+    isLoading.set(true);
+    error.set(null);
     try {
       // TODO: Fetch logic here
-      // data.value = await someApi();
+      // data.set(await someApi());
     } catch (e) {
-      error.value = e as Error;
+      error.set(e as Error);
     } finally {
-      isLoading.value = false;
+      isLoading.set(false);
     }
   }
 
   function reset() {
-    isLoading.value = false;
-    error.value = null;
-    data.value = null;
+    isLoading.set(false);
+    error.set(null);
+    data.set(null);
   }
 
   return {

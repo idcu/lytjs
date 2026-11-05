@@ -372,7 +372,7 @@ const GATES = [
     tier: 'fast',
     needsDist: true,
     cmd: ['node', 'scripts/check-scaffold.mjs'],
-    approx: '~2s',
+    approx: '~13s',
     desc:
       '★ 脚手架产物自洽性（lyt create）：这是用户接触框架的前五分钟，生成目录自相矛盾' +
       '时用户看到的不是「一个 bug」而是「这框架不能用」。已有测试是**源码级正则**，' +
@@ -382,7 +382,11 @@ const GATES = [
       'index.html 缺 <!--app-html-->（SSR 输出被丢弃）、preview 用 node 跑 .ts、' +
       '/vite.svg 从不生成、tsconfig 不含 server.ts、' +
       '开发模式创建 Vite 却从不挂载 vite.middlewares（白屏 + HMR 不通）。' +
-      '另修生成代码里的目录穿越',
+      '另修生成代码里的目录穿越。' +
+      '2026-11-05（A06）：[6] 6 个模板逐个 `tsc --noEmit`（抓到 router/full 的 ' +
+      '`components` 选项缺类型 ⇒ TS2353）；[7] 真的启动 SSR 进程并断言首页 200 且含 ' +
+      '"Hello LytJS!"（只导出 render 未注入模板编译器 ⇒ 500）；[8] 未知模板必须抛错，' +
+      '不许静默落进 default',
   },
   {
     name: 'check-api-routes',

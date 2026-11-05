@@ -50,7 +50,7 @@ const TEMPLATES = {
 </template>
 
 <script setup${tsOnly ? ' lang="ts"' : ''}>
-${tsOnly ? `import { ref } from '@lytjs/reactivity';\n` : ''}
+import { ref } from '@lytjs/reactivity';
 ${
   tsOnly
     ? `
@@ -141,14 +141,14 @@ export default ${data.pascalName};${testImport}
     if (template === 'sfc') {
       return `<template>
   <div class="${data.kebabName}-page">
-    <h1>{title}</h1>
+    <h1>{{ title }}</h1>
     <p>Page content for ${data.pascalName}</p>
     <slot />
   </div>
 </template>
 
 <script setup${tsOnly ? ' lang="ts"' : ''}>
-${tsOnly ? `import { ref } from '@lytjs/reactivity';\n` : ''}
+import { ref } from '@lytjs/reactivity';
 ${
   tsOnly
     ? `
@@ -340,23 +340,23 @@ export interface ${data.pascalName}Return {
   const error = signal<Error | null>(null);
 
   async function execute() {
-    loading.value = true;
-    error.value = null;
+    loading.set(true);
+    error.set(null);
 
     try {
       const result = await new Promise(resolve => setTimeout(() => resolve(null), 100));
-      data.value = result;
+      data.set(result);
     } catch (e) {
-      error.value = e as Error;
+      error.set(e as Error);
     } finally {
-      loading.value = false;
+      loading.set(false);
     }
   }
 
   function reset() {
-    data.value = null;
-    loading.value = false;
-    error.value = null;
+    data.set(null);
+    loading.set(false);
+    error.set(null);
   }
 
   if (immediate) {
@@ -414,59 +414,59 @@ ${
   });
 
   const selectedItem = computed(() => {
-    const currentState = state.value;
+    const currentState = state();
     return currentState.items.find(item => item.id === currentState.selectedId);
   });
 
-  const itemCount = computed(() => state.value.items.length);
+  const itemCount = computed(() => state().items.length);
 
   function setItems(items) {
-    state.value = { ...state.value, items };
+    state.update(prev => ({ ...prev, items }));
   }
 
   function selectItem(id) {
-    state.value = { ...state.value, selectedId: id };
+    state.update(prev => ({ ...prev, selectedId: id }));
   }
 
   function addItem(item) {
-    state.value = {
-      ...state.value,
-      items: [...state.value.items, item],
-    };
+    state.update(prev => ({
+      ...prev,
+      items: [...prev.items, item],
+    }));
   }
 
   function updateItem(id, updates) {
-    state.value = {
-      ...state.value,
-      items: state.value.items.map(item =>
+    state.update(prev => ({
+      ...prev,
+      items: prev.items.map(item =>
         item.id === id ? { ...item, ...updates } : item
       ),
-    };
+    }));
   }
 
   function removeItem(id) {
-    state.value = {
-      ...state.value,
-      items: state.value.items.filter(item => item.id !== id),
-      selectedId: state.value.selectedId === id ? null : state.value.selectedId,
-    };
+    state.update(prev => ({
+      ...prev,
+      items: prev.items.filter(item => item.id !== id),
+      selectedId: prev.selectedId === id ? null : prev.selectedId,
+    }));
   }
 
   function setLoading(loading) {
-    state.value = { ...state.value, loading };
+    state.update(prev => ({ ...prev, loading }));
   }
 
   function setError(error) {
-    state.value = { ...state.value, error };
+    state.update(prev => ({ ...prev, error }));
   }
 
   function reset() {
-    state.value = {
+    state.set({
       items: [],
       selectedId: null,
       loading: false,
       error: null,
-    };
+    });
   }
 
   return {
@@ -632,7 +632,17 @@ export async function generate(options: GenerateOptions): Promise<void> {
     process.exit(1);
   }
 
-  const extension = template === 'sfc' ? 'lyt' : language;
+  // ⚠️ 2026-11-05（A06）：component / page / layout 的默认模板产出的是 **JSX**，
+  //   落盘为 `.ts` 会让 tsc / vite 直接报语法错误（JSX 只在 .tsx/.jsx 里合法）。
+  const jsxTypes = new Set(['component', 'page', 'layout']);
+  const extension =
+    template === 'sfc'
+      ? 'lyt'
+      : jsxTypes.has(type)
+        ? language === 'ts'
+          ? 'tsx'
+          : 'jsx'
+        : language;
   const filename = `${templateData.kebabName}${type === 'page' ? '.page' : ''}.${extension}`;
   const filePath = path.join(targetDir, filename);
   const content = templateFn(templateData, withStyles, withTest, template, language);

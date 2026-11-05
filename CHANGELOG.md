@@ -4,6 +4,19 @@
 
 ## [Unreleased]
 
+### 🛠️ CLI 脚手架与代码生成：生成即可跑（2026-11-05）
+
+- SSR 模板改为先 `createApp(App)` 注入模板编译器 —— 此前每个 SSR 请求都是 500。
+- 未知模板不再静默回退 default：`lyt create --template nope` 报错退出，
+  `generateProjectFiles()` 直接抛错且不写文件。
+- 生成的 component / page / layout 含 JSX，扩展名由 `.ts` 改为 `.tsx`（`js` 为 `.jsx`）；
+  SFC 插值 `{title}` → `{{ title }}`；service / store 模板改用 signal 的 `set()/update()`
+  （不再用不存在的 `.value`）；插件模板 tsconfig 内联（不再 extends 一个不存在的文件）。
+- `scripts/check-scaffold.mjs` 升级：6 模板 `tsc --noEmit` + 真实启动 SSR 并断言首页
+  200 且含 `Hello LytJS!` + 未知模板必须抛错（`gate.mjs` fast tier）。
+- `@lytjs/component` 的 `ComponentOptions` 补 `components` / `directives` 字段（与运行时对齐）。
+- 详见 [packages/tools/packages/cli/CHANGELOG.md](packages/tools/packages/cli/CHANGELOG.md)。
+
 ### ⚠️ 组件成熟度：Golden 20 冻结（2026-11-05）
 
 - `@lytjs/ui` 的 `stable` 收敛为 Golden 20；其余 41 个导出保留但标注 `experimental`
