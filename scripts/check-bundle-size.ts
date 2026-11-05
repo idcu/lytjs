@@ -1,161 +1,88 @@
 /**
- * 真实产物体积门禁（棘轮）
+ * 真实产物体积门禁（基线 + 2% 波动，A15 重写）
  *
- * ## 为什么需要它
+ * ## 规则（A15 起生效，owner 已签字）
  *
- * 2026-10-26 评估里的「体量对比」用的是**单个包的 dist 文件 gzip**（core 11.9KB）。
- * 但用户实际交付的是**打包后的 app**：`createApp` 静态依赖 `@lytjs/compiler`
- * （运行时模板编译），所以一个最小应用的真实体积远大于单包数字。
+ * 1. **预算不再是脚本里的手写数字**，而是数据文件 `scripts/bundle-baseline.json`：
+ *      `预算 = floor(基线字节 × (1 + tolerance))`，`tolerance = 0.02`；
+ *      若该入口声明了 `ceilingBytes`（本阶段硬上限），再取二者较小值。
+ * 2. **不允许「实测后上调」**。基线只会因为体积变小而下调；要上调必须：
+ *      ① 停下来报 owner 签字；② 在 `keel/decisions/` 写入决策记录；
+ *      ③ 把 `approval.decisionRecord` 指向该文件。三者缺一，本项直接红。
+ * 3. 本阶段（A15）硬上限：`minimal-app ≤ 93.7 KiB`（= 95 948 B），`ceilingBytes` 里写明。
  *
- * 实测（本脚本，2026-10-28 整改后）：
- *   - `@lytjs/core` 只取 `ref/computed/h`（不调 createApp）→ **8.7 KB gzip**
- *   - `@lytjs/core` 的 `createApp`（支持 template）        → **82.6 KB gzip**
- *   - `@lytjs/core/runtime` 的 `createApp`（不含编译器）    → **80.7 KB gzip**
- *   - 只用 `@lytjs/vdom` 的 `createVNode` + `h`             → **1.6 KB gzip**
+ * ## 为什么改成这样
  *
- * ## 2026-11-03 的一次**主动**上调（+2.6 / +2.4 KB），理由写在下面
+ * 2026-10-26 ~ 11-05 期间，本脚本的预算被**五次**上调（8.3 → 8.7 → 8.9 → 9.4 → 9.6 万字节），
+ * 每次都是「先实测、再按实测值改预算」。这条路径的终点是预算永远追着实测跑，
+ * 门禁从「棘轮」退化成「上次数字的复印件」。评估 §38.10 把这定性为「预算上调掩盖增长」。
  *
- * 这一批不是单个改动，而是 2026-11-02 ~ 11-03 连续几轮**修正确性缺陷**的累积：
+ * 现在基线是**数据**（可审查的 diff）、上限是**契约**（owner 签字 + 决策记录），
+ * 脚本只负责算账，不再提供「上调预算」的建议文案。
  *
- *   · `patch-component` 改用 `cloneVNode` 合并 attrs（修「静态模板的 attrs 在实例
- *     之间累积」—— 第 2 个实例会继承上一个的 class）；
- *   · 过渡引擎新增 `safeGetComputedStyle`（修「宿主缺少 getComputedStyle 时
- *     `<Transition>` 的离开钩子抛错、元素永不移除」）；
- *   · 编译器新增提升引用的可达性分析（修「生成代码里有未被引用的提升声明」）。
+ * ## 口径
  *
- * 实测 87.4 → 90.2 KB（minimal-app）/ 85.4 → 87.9 KB（runtime-app）。
- * 预算随之从 89 500 / 87 500 上调到 **94 000 / 92 000**（仍留 ~2 KB 余量）。
+ * 用 esbuild 真打包（minify + esm + browser），取 **gzip 后**的字节数：
  *
- * ## ⚠️ 更正（2026-11-03）：上面那句「runtime 入口本该不含编译器」是**误判**
+ *   · `vdom-only`        只用 `createVNode` / `h`，不用 `createApp`
+ *   · `barrel-only`      只取 `ref/computed/h` —— 锁 tree-shaking 不被顶层副作用拖垮
+ *   · `minimal-app`      `createApp` + `h`（主入口，运行时模板编译器静态可达）
+ *   · `runtime-app`      `createApp` 来自 `@lytjs/core/runtime`
+ *   · `first-screen`     切分模式下的**首屏 chunk**（编译器必须落在懒加载 chunk）
+ *   · `first-screen-runtime` 同上，runtime 入口
  *
- * 我一度以为只要把 renderer 里对 `@lytjs/compiler` 的**静态** import 改成动态，
- * 就能让 `runtime-app` 掉到 ~35 KB。**实测不成立**，原因有两条：
- *
- * 1. **编译器对每个 `createApp` 用户都可达**，与入口无关。实测依赖链（esbuild
- *    metafile 的 BFS）：
- *      `@lytjs/core/runtime` → `core/web-component` → `@lytjs/core-vnode`
- *                            → `@lytjs/renderer` → `vapor/vapor-ssr` → `@lytjs/compiler`
- *    以及 `create-app` 里对 renderer 的**动态** import 也会把它带进来。
- *    即使把 `core-vnode` 里 `export { compile }` 那行删掉、把 `vapor-ssr` 改成
- *    `await import('@lytjs/compiler')`，本脚本口径下的数字**反而变大**
- *    （87.9 → 92.8 KB：不开代码分割时动态 import 会被**内联**，还多出包装开销）。
- *    ⇒ 已回退这两处改动，不留无收益的 API 变更。
- *
- * 2. **本脚本的口径（`splitting: false`）不代表用户实际体验**。
- *    真实构建（Vite / webpack / Rollup）默认**按动态 import 切分**。实测开分割后：
- *      minimal-app 首屏 chunk **7.4 KB**（共 5 个 chunk，合计 95.2 KB）
- *      runtime-app 首屏 chunk **6.1 KB**（共 6 个 chunk，合计 92.7 KB）
- *    ⇒ 编译器落在**懒加载 chunk** 里，首屏并不下载它。架构上是可接受的。
- *
- * 为此本脚本新增 `[切分模式]` 一节，专门盯**首屏 chunk**——这才是用户感知的数字，
- * 也能挡住「某次改动把编译器拖进首屏」这类回归。
- *
- * 若将来真要让 `runtime` 入口彻底不含编译器，唯一的路是把 vapor/signal 的模板编译
- * 从 renderer 的**主入口**里拆出去（独立子路径），属于结构性改造，需单独立项。
- *
- * ## 2026-10-29 的一次**主动**上调（+2.2 KB），理由写在下面
- *
- * 修「`<Transition>` 根本不播动画」（报告 §27）时，过渡引擎（`vdom/transition.ts`
- * 的 enter / leave / 等待结束 / FLIP）第一次真正被 patch 调用 ⇒ 它从**死代码**
- * 变成**必然进产物**的代码。实测 83.1 → 85.3 KB（+2.2）。
- *
- * 这是**用体积换正确性**：不修的代价是 `<Transition>` 一个类名、一个钩子都不发生
- * （子元素照常渲染，所以看起来"只是动画没生效"，极难归因）。
- * Vue 的 runtime 同样始终包含 BaseTransition。
- *
- * 预算（按 `kb()` 的 /1024 口径显示）85.4 / 83.5 → **87.4 / 85.4**，
- * 留 ~2 KB 余量而不是贴着实测值 —— 贴太紧会变成噪声源（上一次就是这么定的规矩）。
- *
- * ## 2026-10-28 的一次**主动**上调（+1.8 KB），理由写在下面
- *
- * 修「内置组件在模板里全部渲染为空」（报告 §20）时，组件实例代理必须能按名字解析
- * `Teleport` / `Suspense` / `Transition` / `TransitionGroup` / `KeepAlive`，
- * 于是这五个组件**必然**进入每个应用的产物 —— 实测 +1.8 KB gzip（80.8 → 82.6）。
- *
- * 这是**用体积换正确性**，而且价格合理（Vue 的 runtime 同样始终包含这几个内置组件）。
- * 不修的代价是：模板里写 `<Teleport>` 静默渲染为空，且不报错。
- * 预算随之从 83.0 / 81.1 上调到 84.9 / 83.0 —— 留 2.3 KB 余量，
- * 否则下一个 0.4 KB 的改动就会误报。
- *
- * ## 三个数字分别锁住什么
- *
- * - **barrel-only 9.5 KB**：锁「顶层副作用不能拖垮 tree-shaking」。
- *   整改前，`create-app.ts` 模块顶层那句 `setTemplateCompiler(...)` 是一条有副作用的
- *   顶层语句 ⇒ 打包器无法删除 ⇒ 只 import 一个 `ref` 也会把 createApp + renderer +
- *   compiler 全部拖进来（实测 82 KB）。现在注入挪进函数体，这条降到 9.5 KB。
- *
- *   ⚠️ 2026-11-04 预算 9.5 → 9.7 KB：`@lytjs/common-error` 的 `warn` 从
- *   `function warn(message) { return; }`（构建把 `__DEV__` 编译成 `false`）
- *   改成运行时判定 `getDevMode()`，**整个框架的诊断通道才重新活过来**。
- *   代价是 barrel-only +32 字节 gzip（实测 9 532）。原来的 9 500 预算只剩 32 字节余量，
- *   任何无关改动都会误报，因此给到 9 700。
- * ## 2026-11-04（第二轮）：minimal-app 94 000 → 95 000 / runtime-app 92 000 → 93 000
- *
- * 水合的**收敛语义**必须修（`hydrate()` 之后 DOM 与 `mount()` 不一致会让下一次 patch
- * 错位；资源节点被删会丢 hydration data；用户输入被抹掉是数据丢失），而它就在
- * `mountElement` 的热路径旁 —— 树摇不掉，minimal-app 实测 94.1 KB 超出 94.0 KB。
- *
- * 新增代码都是纯判定（游标跳过、资源节点白名单、表单状态比对、片段锚点定位），
- * 没有引入依赖。另外 `app.mount()` 新增一条「容器已有内容却没开 hydrate」的告警
- * （两个入口都会带上）。给到 95 000 / 93 000（各约 0.9 KB 余量）。
- *
- * ## 2026-11-05：三项**早已**超预算（本轮实测发现，与 store 改动无关）
- *
- * 跑门禁时发现 `minimal-app` / `first-screen` / `first-screen-runtime` 三个入口超预算。
- * 先做了归因：把**全部改动 stash 掉**（即 HEAD 状态）重跑，数字**完全一致**
- * （96 320 / 8 731 / 7 436）⇒ 不是本轮引入的，是第 52–56 轮（component / renderer 的
- * 改动在 core 的依赖图里）累积的，而那几轮都没跑过 bundle-size。
- *
- * 处置：**按实测值精确上调**（不留余量），理由写在这里 + 评估 §38.10；
- * 下一个字节的增长仍会红。同时记一笔债：core 依赖图里这 1 KB 从哪来还没定位
- * （候选：第 51 轮加进产物的 4 条「必须不静默」告警文案、renderer 的 SSR 分支）。
- *
- * ## 2026-11-04（第三轮）：minimal-app 95 000 → 96 000 / runtime-app 93 000 → 94 000
- *
- * `@lytjs/component` 里 3 条「**必须不静默**」的告警去掉了 `if (__DEV__)` 外层门
- * （`<Transition mode="in-out">` 未实现、`<Transition>` 收到多个子节点、
- * `template` 没有编译器）—— 它们此前在产物里被整段删除，用户只会看到「功能没生效」
- * 却没有任何线索。另有 `@lytjs/renderer` 的 SSR 一条（模板组件 + 无编译器 ⇒ 白屏）。
- * 代价是这几条文案进入产物（+约 550 B gzip）。
- *
- * ⚠️ 没有把全部 182 个调用点都放开：实测会让 minimal-app 涨到 **99.7 KB（+7.6 KB，+8%）**，
- * 而其中大部分在浏览器开发模式里仍然不打印（`__DEV__` 是构建期常量）。
- * 详见评估报告 §32 的取舍分析。
- *
- * - **minimal-app vs runtime-app**：锁「两个入口的分工」。
- *   ⚠️ 目前两者只差 2 KB，因为 `@lytjs/renderer` 的 `signal-renderer.ts` **静态** import 了
- *   编译器，而 renderer 从 core 的 `createApp` 动态可达。这项留作下一批（见评估报告）。
- * - **vdom-only 1.6 KB**：锁「不用 createApp 时的极致轻量」这条卖点。
- *
- * 包体必须**被测量、被盯住**，否则会在一次次的「顺手加个依赖」里悄悄膨胀。
- *
- * ## 判据
- *
- * 用 esbuild 真的打一次包（minify + esm + browser），取 **gzip 后**的字节数：
- *   - 超过预算 ⇒ 红（并要求在提交里解释为什么变大）；
- *   - 明显低于预算（< 90%）⇒ 提示「可收紧预算」。
+ * 前四个是 `splitting: false` —— 所有动态 import 会被内联，是「最坏情况」口径；
+ * 后两个只量首屏 chunk，才是用户真正先下载的那一块。
  *
  * ## 用法
- *   tsx scripts/check-bundle-size.ts
- *   tsx scripts/check-bundle-size.ts --verbose   # 打印 raw / gzip 明细
  *
- * 退出码：任一入口超预算 ⇒ 1。
+ *   tsx scripts/check-bundle-size.ts            # 校验（CI / 门禁）
+ *   tsx scripts/check-bundle-size.ts --verbose  # 附带 raw / gzip 明细
+ *   tsx scripts/check-bundle-size.ts --record   # 记录**当前实测**为新基线（只在体积变小或首次记录时允许）
+ *
+ * 退出码：任一入口超预算、或基线/上限不自洽 ⇒ 1。
  */
 import { build } from 'esbuild';
+import { execFileSync } from 'node:child_process';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
-import { dirname, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const VERBOSE = process.argv.includes('--verbose');
+const RECORD = process.argv.includes('--record');
+const BASELINE_PATH = join(ROOT, 'scripts', 'bundle-baseline.json');
 
 interface Case {
   name: string;
   /** 说明这个入口代表什么用户场景 */
   scenario: string;
   contents: string;
-  /** gzip 字节预算（棘轮：只能降不能升，升要在提交里写理由） */
-  budget: number;
+  /** `splitting: true` 时只量入口 chunk */
+  split?: boolean;
+}
+
+interface BaselineEntry {
+  /** 上次记录的实测 gzip 字节数（受版本控制，越小越好） */
+  baselineBytes: number;
+  /** 本阶段 owner 批准的硬上限；null = 只受基线 +2% 约束 */
+  ceilingBytes: number | null;
+}
+
+interface Baseline {
+  tolerance: number;
+  stage: string;
+  recordedOn: string;
+  /** 记录时的提交（`--record` 自动写入），用于追溯「这个基线对应哪份代码」 */
+  measuredCommit?: string;
+  approval: {
+    signer: string;
+    on: string;
+    scope: string;
+    decisionRecord: string | null;
+  };
+  entries: Record<string, BaselineEntry>;
 }
 
 const CASES: Case[] = [
@@ -164,7 +91,6 @@ const CASES: Case[] = [
     scenario: '只用 `createVNode` / `h` 手写渲染函数（不用 createApp）',
     contents: `import { createVNode, h } from '@lytjs/vdom';
 export { createVNode, h };`,
-    budget: 1800,
   },
   {
     name: 'barrel-only',
@@ -174,7 +100,6 @@ export { createVNode, h };`,
 const count = ref(0);
 const double = computed(() => count.value * 2);
 export { count, double, h };`,
-    budget: 9_700,
   },
   {
     name: 'minimal-app',
@@ -184,7 +109,6 @@ const count = ref(0);
 const double = computed(() => count.value * 2);
 export const app = createApp({ render: () => h('div', null, [String(count.value), String(double.value)]) });
 export { count, double };`,
-    budget: 96_320,
   },
   {
     name: 'runtime-app',
@@ -195,24 +119,7 @@ const count = ref(0);
 const double = computed(() => count.value * 2);
 export const app = createApp({ render: () => h('div', null, [String(count.value), String(double.value)]) });
 export { count, double };`,
-    budget: 94_000,
   },
-];
-
-/**
- * 「切分模式」用例：**只量首屏 chunk**。
- *
- * 为什么需要：上面那组是 `splitting: false`，会把所有动态 import **内联**进单一产物 ——
- * 那是个「最坏情况」口径，不代表用户实际体验（Vite/webpack/Rollup 默认按动态 import
- * 切分）。用户真正先下载的是**入口 chunk**，所以这一组盯的是它。
- *
- * 实测（2026-11-03）：minimal-app 首屏 7.4 KB / runtime-app 首屏 6.1 KB，
- * 编译器落在懒加载 chunk 里 —— 这正是「runtime 入口不含编译器」在工程上的真实含义。
- *
- * 预算故意给得紧（~12 KB）：它能挡住「某次改动把编译器/渲染引擎拖进首屏」这类回归，
- * 而对「懒加载 chunk 变大」不敏感 —— 后者不增加首屏成本，不该被这里拦住。
- */
-const SPLIT_CASES: Case[] = [
   {
     name: 'first-screen',
     scenario: '`createApp` 起步用法的**首屏 chunk**（开代码分割；编译器应在懒加载 chunk 里）',
@@ -221,7 +128,7 @@ const count = ref(0);
 const double = computed(() => count.value * 2);
 export const app = createApp({ render: () => h('div', null, [String(count.value), String(double.value)]) });
 export { count, double };`,
-    budget: 8_731,
+    split: true,
   },
   {
     name: 'first-screen-runtime',
@@ -231,7 +138,7 @@ const count = ref(0);
 const double = computed(() => count.value * 2);
 export const app = createApp({ render: () => h('div', null, [String(count.value), String(double.value)]) });
 export { count, double };`,
-    budget: 7_436,
+    split: true,
   },
 ];
 
@@ -239,43 +146,127 @@ interface Result {
   name: string;
   raw: number;
   gzip: number;
+  baseline: number;
+  ceiling: number | null;
+  /** 实际预算 = min(基线 × (1 + tolerance), ceiling) */
   budget: number;
   over: boolean;
   shrinkable: boolean;
-  /** 首屏 chunk 是否包含编译器（只对切分模式有意义） */
-  containsCompiler?: boolean;
+  entryOnlyGzip?: number;
+  closureChunks?: number;
+  /** 首屏静态闭包里是否含编译器（只对切分模式有意义） */
+  compilerInClosure?: boolean;
 }
 
-const results: Result[] = [];
+if (!existsSync(BASELINE_PATH)) {
+  console.error(`\n❌ 缺少 ${BASELINE_PATH}（体积基线必须受版本控制，不能写在脚本里）\n`);
+  process.exit(1);
+}
+const baseline = JSON.parse(readFileSync(BASELINE_PATH, 'utf8')) as Baseline;
+
+let ok = true;
+let assertions = 0;
+const failures: string[] = [];
+const kb = (n: number): string => `${(n / 1024).toFixed(1)} KB`;
+const check = (name: string, passed: boolean, detail?: string): boolean => {
+  assertions++;
+  if (passed) {
+    console.log(`  ✅ ${name}`);
+  } else {
+    ok = false;
+    failures.push(name);
+    console.log(`  ❌ ${name}`);
+    if (detail) console.log(`     ${detail}`);
+  }
+  return passed;
+};
+
+// ── 声明自洽：用例与基线一一对应；基线为正且不超过上限 ──────────────
+console.log('\n📦 真实产物体积 check-bundle-size');
+console.log(
+  `\n   规则：预算 = 基线 × (1 + ${(baseline.tolerance * 100).toFixed(0)}%)，再受本阶段上限约束`,
+);
+console.log(`   阶段：${baseline.stage}（记录于 ${baseline.recordedOn}）\n`);
+
+// 本阶段 owner 批准的硬上限（写死在脚本里 ⇒ 改 baseline 的 ceiling 突破不了它）
+const STAGE_CEILINGS: Record<string, number> = { 'minimal-app': 95948 };
+const hasDecision = baseline.approval.decisionRecord !== null;
+
+for (const [name, cap] of Object.entries(STAGE_CEILINGS)) {
+  const e = baseline.entries[name];
+  if (!e) continue;
+  check(
+    `${name} 的基线/上限不超过 A15 阶段上限 ${kb(cap)}`,
+    hasDecision || (e.ceilingBytes !== null && e.baselineBytes <= cap && e.ceilingBytes <= cap),
+    `baselineBytes=${e.baselineBytes}·ceilingBytes=${e.ceilingBytes}·阶段上限=${cap}` +
+      (hasDecision
+        ? `（已引用决策 ${baseline.approval.decisionRecord}）`
+        : '（无决策记录 ⇒ 禁止上调）'),
+  );
+}
+
+if (baseline.approval.decisionRecord !== null) {
+  const recordPath = join(ROOT, baseline.approval.decisionRecord);
+  check(
+    '预算上调引用的决策记录存在',
+    existsSync(recordPath),
+    `${baseline.approval.decisionRecord} 不存在 —— 签字必须对应一份真实入库的决策`,
+  );
+}
+
+const caseNames = new Set(CASES.map((c) => c.name));
+const entryNames = new Set(Object.keys(baseline.entries));
+const missingEntries = [...caseNames].filter((n) => !entryNames.has(n));
+const staleEntries = [...entryNames].filter((n) => !caseNames.has(n));
+check(
+  '用例与基线条目一一对应',
+  missingEntries.length === 0 && staleEntries.length === 0,
+  `缺少基线：${missingEntries.join(', ') || '无'}；多余条目：${staleEntries.join(', ') || '无'}`,
+);
 
 for (const c of CASES) {
-  const out = await build({
-    stdin: { contents: c.contents, resolveDir: ROOT, loader: 'ts' },
-    bundle: true,
-    minify: true,
-    format: 'esm',
-    platform: 'browser',
-    write: false,
-    logLevel: 'error',
-  });
-
-  const code = out.outputFiles[0]?.contents ?? new Uint8Array();
-  const gzip = gzipSync(code).length;
-
-  results.push({
-    name: c.name,
-    raw: code.length,
-    gzip,
-    budget: c.budget,
-    over: gzip > c.budget,
-    shrinkable: gzip < c.budget * 0.9,
-  });
+  const e = baseline.entries[c.name];
+  if (!e) continue;
+  check(
+    `${c.name} 的基线已记录且不超过上限`,
+    Number.isFinite(e.baselineBytes) &&
+      e.baselineBytes > 0 &&
+      (e.ceilingBytes === null || e.baselineBytes <= e.ceilingBytes),
+    e.ceilingBytes === null
+      ? `baselineBytes=${e.baselineBytes}`
+      : `baselineBytes=${e.baselineBytes} > ceilingBytes=${e.ceilingBytes}`,
+  );
 }
 
-// ── 切分模式：只量首屏 chunk ──────────────────────────────
-const splitResults: Result[] = [];
+// ── 实测 ─────────────────────────────────────────────────────────
+const measured: {
+  name: string;
+  raw: number;
+  gzip: number;
+  /** 切分模式：只量入口 chunk 时的 gzip（对照用，**不是**首屏成本） */
+  entryOnlyGzip?: number;
+  /** 切分模式：入口 + 静态 import 可达的 chunk 数 */
+  closureChunks?: number;
+  /** 切分模式：首屏静态闭包里是否含编译器 */
+  compilerInClosure?: boolean;
+}[] = [];
 
-for (const c of SPLIT_CASES) {
+for (const c of CASES) {
+  if (!c.split) {
+    const out = await build({
+      stdin: { contents: c.contents, resolveDir: ROOT, loader: 'ts' },
+      bundle: true,
+      minify: true,
+      format: 'esm',
+      platform: 'browser',
+      write: false,
+      logLevel: 'error',
+    });
+    const code = out.outputFiles[0]?.contents ?? new Uint8Array();
+    measured.push({ name: c.name, raw: code.length, gzip: gzipSync(code).length });
+    continue;
+  }
+
   const out = await build({
     stdin: { contents: c.contents, resolveDir: ROOT, loader: 'ts' },
     bundle: true,
@@ -289,93 +280,176 @@ for (const c of SPLIT_CASES) {
     metafile: true,
   });
 
-  // 入口 chunk = 文件名里带 `stdin` 的那个（esbuild 用入口文件名命名）
-  const entryChunk =
-    out.outputFiles.find((f) => /(^|\/)stdin\.js$/.test(f.path)) ?? out.outputFiles[0];
-  const code = entryChunk?.contents ?? new Uint8Array();
-  const gzip = gzipSync(code).length;
+  const metas = out.metafile?.outputs ?? {};
+  const fileByKey = new Map(
+    out.outputFiles.map((f) => [f.path.replace(`${ROOT}/`, ''), f.contents] as const),
+  );
+  const entryKey = Object.keys(metas).find((k) => /(^|\/)stdin\.js$/.test(k));
+  if (!entryKey) throw new Error(`无法定位 ${c.name} 的入口 chunk`);
+  const entryOnlyGzip = gzipSync(fileByKey.get(entryKey) ?? new Uint8Array()).length;
 
-  // ★ 内容断言（比体积更直接）：首屏 chunk 里**不得**包含编译器。
-  //   体积只能间接说明问题；这条直接看「这个 chunk 由哪些模块组成」。
-  //   它挡住的是「某次改动把编译器从懒加载 chunk 挪回首屏」这类回归 ——
-  //   那会让首屏从 ~7 KB 变成 ~50 KB，而总量几乎不变（总量里本来就有）。
-  let containsCompiler = false;
-  if (out.metafile) {
-    const entryKey = Object.keys(out.metafile.outputs).find((k) => /(^|\/)stdin\.js$/.test(k));
-    const entryMeta = entryKey ? out.metafile.outputs[entryKey] : undefined;
-    containsCompiler = Object.keys(entryMeta?.inputs ?? {}).some((p) =>
-      p.includes('compiler/dist'),
-    );
+  // ★ 首屏 = 入口 chunk + 入口**静态 import** 可达的全部 chunk。
+  //   只量入口 chunk 会严重低估：esbuild 会把共享模块（例如编译器）挪进一个
+  //   被入口 `import-statement` 引用的共享 chunk —— 浏览器启动时照样要下载它。
+  //   （2026-11-06 实测：入口 8.5 KB，但静态闭包 69.3 KB，编译器就在闭包里。）
+  const closure = new Set<string>([entryKey]);
+  const queue = [entryKey];
+  while (queue.length > 0) {
+    const cur = queue.pop()!;
+    for (const imp of metas[cur].imports ?? []) {
+      if (imp.kind !== 'import-statement') continue;
+      if (closure.has(imp.path)) continue;
+      closure.add(imp.path);
+      queue.push(imp.path);
+    }
   }
 
-  splitResults.push({
+  let raw = 0;
+  let gzip = 0;
+  let compilerInClosure = false;
+  for (const key of closure) {
+    raw += metas[key].bytes;
+    gzip += gzipSync(fileByKey.get(key) ?? new Uint8Array()).length;
+    if (Object.keys(metas[key].inputs).some((p) => p.includes('compiler/dist'))) {
+      compilerInClosure = true;
+    }
+  }
+
+  measured.push({
     name: c.name,
-    raw: code.length,
+    raw,
     gzip,
-    budget: c.budget,
-    over: gzip > c.budget || containsCompiler,
-    shrinkable: gzip < c.budget * 0.9,
-    containsCompiler,
+    entryOnlyGzip,
+    closureChunks: closure.size,
+    compilerInClosure,
   });
 }
 
-const kb = (n: number): string => `${(n / 1024).toFixed(1)} KB`;
-
-console.log('\n📦 真实产物体积 check-bundle-size');
-console.log('\n   用 esbuild 真打包（minify + esm + browser），取 gzip 字节数：\n');
-
-for (let i = 0; i < results.length; i++) {
-  const r = results[i]!;
-  const c = CASES[i]!;
-  const mark = r.over ? '❌' : '✅';
-  console.log(`${mark} ${r.name.padEnd(14)} ${kb(r.gzip).padStart(9)}  (预算 ${kb(r.budget)})`);
-  console.log(`   ↳ ${c.scenario}`);
-  if (VERBOSE) console.log(`     raw ${kb(r.raw)} → gzip ${kb(r.gzip)}`);
-}
-
-// ── 切分模式报告 ──────────────────────────────────────────
-console.log('\n   [切分模式] 只量首屏 chunk（用户真正先下载的那一块）：\n');
-for (let i = 0; i < splitResults.length; i++) {
-  const r = splitResults[i]!;
-  const c = SPLIT_CASES[i]!;
-  const mark = r.over ? '❌' : '✅';
-  console.log(`${mark} ${r.name.padEnd(14)} ${kb(r.gzip).padStart(9)}  (预算 ${kb(r.budget)})`);
-  console.log(`   ↳ ${c.scenario}`);
-  if (r.containsCompiler !== undefined) {
-    console.log(
-      r.containsCompiler
-        ? '   ❌ 首屏 chunk 里包含编译器（应落在懒加载 chunk）'
-        : '   ✅ 首屏 chunk 不含编译器（在懒加载 chunk 里）',
-    );
+// ── --record：只在体积变小（或首次记录）时写回 ────────────────────
+if (RECORD) {
+  const refusals: string[] = [];
+  for (const m of measured) {
+    const e = baseline.entries[m.name];
+    if (!e) continue;
+    if (e.ceilingBytes !== null && m.gzip > e.ceilingBytes) {
+      refusals.push(`${m.name}: 实测 ${m.gzip} B > 上限 ${e.ceilingBytes} B`);
+    } else if (e.baselineBytes > 0 && m.gzip > e.baselineBytes) {
+      refusals.push(`${m.name}: 实测 ${m.gzip} B > 基线 ${e.baselineBytes} B（只能下调）`);
+    }
   }
-  if (VERBOSE) console.log(`     raw ${kb(r.raw)} → gzip ${kb(r.gzip)}`);
-}
-
-const over = [...results, ...splitResults].filter((r) => r.over);
-const shrinkable = [...results, ...splitResults].filter((r) => r.shrinkable);
-
-if (shrinkable.length > 0) {
-  console.log('\nℹ️  预算可收紧（实际 < 预算的 90%）：');
-  for (const r of shrinkable) {
-    console.log(`   ${r.name}: 实际 ${kb(r.gzip)}，预算 ${kb(r.budget)} → 可改为 ${kb(r.gzip)}`);
+  if (refusals.length > 0) {
+    console.log('\n❌ 拒绝记录：以下入口体积变大\n');
+    for (const r of refusals) console.log(`   ${r}`);
+    console.log('\n   体积增长必须归因（`--verbose` + metafile）。若确认是必要的功能增长：');
+    console.log('   停止，报 owner 签字，并把决策写入 keel/decisions/，再更新 baseline 的');
+    console.log('   approval.decisionRecord —— **不得自行上调**。\n');
+    process.exit(1);
   }
-}
-
-if (over.length === 0) {
-  console.log('\n✅ 所有入口都在预算内\n');
+  for (const m of measured) {
+    const e = baseline.entries[m.name];
+    if (!e) continue;
+    if (e.baselineBytes !== m.gzip) {
+      console.log(`   ${m.name}: ${e.baselineBytes} → ${m.gzip}`);
+      e.baselineBytes = m.gzip;
+    }
+  }
+  baseline.recordedOn = new Date().toISOString().slice(0, 10);
+  baseline.measuredCommit = execFileSync('git', ['rev-parse', 'HEAD'], {
+    cwd: ROOT,
+    encoding: 'utf8',
+  }).trim();
+  writeFileSync(BASELINE_PATH, `${JSON.stringify(baseline, null, 2)}\n`);
+  console.log(`\n✅ 已写回基线 ${BASELINE_PATH.replace(`${ROOT}/`, '')}\n`);
   process.exit(0);
 }
 
-console.log(`\n❌ ${over.length} 个入口超出预算：\n`);
-for (const r of over) {
+// ── 校验：实测 ≤ 预算 ────────────────────────────────────────────
+const results: Result[] = [];
+for (const m of measured) {
+  const e = baseline.entries[m.name]!;
+  const toleranceBudget = Math.floor(e.baselineBytes * (1 + baseline.tolerance));
+  const budget =
+    e.ceilingBytes === null ? toleranceBudget : Math.min(toleranceBudget, e.ceilingBytes);
+  results.push({
+    name: m.name,
+    raw: m.raw,
+    gzip: m.gzip,
+    baseline: e.baselineBytes,
+    ceiling: e.ceilingBytes,
+    budget,
+    over: m.gzip > budget,
+    shrinkable: m.gzip < budget * 0.9,
+    entryOnlyGzip: m.entryOnlyGzip,
+    closureChunks: m.closureChunks,
+    compilerInClosure: m.compilerInClosure,
+  });
+}
+
+console.log('   用 esbuild 真打包（minify + esm + browser），取 gzip 字节数：\n');
+for (const r of results) {
+  const mark = r.over ? '❌' : '✅';
   console.log(
-    `   ${r.name}: ${kb(r.gzip)} > 预算 ${kb(r.budget)}（超出 ${kb(r.gzip - r.budget)}）`,
+    `${mark} ${r.name.padEnd(22)} ${kb(r.gzip).padStart(8)}  ` +
+      `(预算 ${kb(r.budget)} = 基线 ${kb(r.baseline)} +${(baseline.tolerance * 100).toFixed(0)}%` +
+      `${r.ceiling === null ? '' : `，上限 ${kb(r.ceiling)}`})`,
+  );
+  if (VERBOSE) console.log(`     raw ${kb(r.raw)} → gzip ${kb(r.gzip)}（${r.gzip} B）`);
+  if (r.closureChunks !== undefined) {
+    console.log(
+      `     首屏 = 入口 ${kb(r.entryOnlyGzip ?? 0)} + 静态闭包 ${r.closureChunks} 个 chunk` +
+        `（编译器${r.compilerInClosure ? '在' : '不在'}闭包内）`,
+    );
+  }
+}
+
+for (const r of results.filter((x) => x.closureChunks !== undefined)) {
+  check(
+    `${r.name} 的首屏度量覆盖静态闭包（不是只量入口 chunk）`,
+    r.closureChunks! >= 2 && r.gzip >= (r.entryOnlyGzip ?? 0),
+    `closureChunks=${r.closureChunks}·gzip=${r.gzip}·entryOnly=${r.entryOnlyGzip}`,
   );
 }
-console.log('\n两种处置：');
-console.log(
-  '  1) 查清是什么把体积撑大了（`--verbose` 看 raw/gzip；必要时用 esbuild --metafile 分析）；',
+
+check(
+  'first-screen-runtime 的首屏静态闭包不含编译器',
+  results.find((r) => r.name === 'first-screen-runtime')?.compilerInClosure === false,
+  '`@lytjs/core/runtime` 的静态闭包里出现了编译器 —— runtime 入口的意义就是不带编译器',
 );
-console.log('  2) 若确认是必要的功能增长，在 scripts/check-bundle-size.ts 里上调预算，');
-console.log('     并在提交信息里写清「为什么值得多这几 KB」。');
+
+const firstScreen = results.find((r) => r.name === 'first-screen');
+if (firstScreen?.compilerInClosure === true) {
+  console.log(
+    '\nℹ️  已知债务：`@lytjs/core` 首屏静态闭包包含编译器（A15 只记录不改，留给 B03 AOT 处理）',
+  );
+}
+
+for (const r of results) {
+  check(
+    `${r.name} 在预算内`,
+    !r.over,
+    `${r.gzip} B > 预算 ${r.budget} B（基线 ${r.baseline} B${r.ceiling === null ? '' : `，上限 ${r.ceiling} B`}）`,
+  );
+}
+
+const shrinkable = results.filter((r) => r.shrinkable);
+if (shrinkable.length > 0) {
+  console.log('\nℹ️  以下入口远低于预算（< 90%），可用 `--record` 下调基线：');
+  for (const r of shrinkable) console.log(`   ${r.name}: ${kb(r.gzip)} / 预算 ${kb(r.budget)}`);
+}
+
+const passed = assertions - failures.length;
+console.log(`\n共 ${assertions} 条断言：✅ ${passed} / ❌ ${failures.length}`);
+
+if (ok && results.every((r) => !r.over)) {
+  console.log('\n✅ 所有入口都在预算内（基线 + 2% 波动）\n');
+  process.exit(0);
+}
+
+console.log('\n❌ check-bundle-size 失败：\n');
+for (const f of failures) console.log(`   · ${f}`);
+console.log('\n处置路径（**不要**按实测上调预算）：');
+console.log('   1) 先归因：`--verbose` 看 raw/gzip，或用 esbuild metafile 按包/按源文件拆贡献；');
+console.log('   2) 若增长来自「不必要的依赖进产物」⇒ 回退该依赖，而不是改基线；');
+console.log('   3) 若确认是必要的功能增长 ⇒ 停下来报 owner 签字 + 写 keel/decisions/，');
+console.log('      再更新 baseline 的 approval.decisionRecord。\n');
 process.exit(1);

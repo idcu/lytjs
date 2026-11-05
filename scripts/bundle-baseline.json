@@ -1,0 +1,20 @@
+{
+  "tolerance": 0.02,
+  "stage": "A15（体积预算回到真实基线）",
+  "recordedOn": "2026-11-06",
+  "measuredCommit": "1164a36f",
+  "approval": {
+    "signer": "owner",
+    "on": "2026-11-06",
+    "scope": "A15 只做「不增长 + 真实归因」：预算改为基线 + 波动 ≤2%，禁止按实测上调；minimal-app 本阶段硬上限 93.7 KB。任何上调须 owner 签字并写 keel/decisions/。",
+    "decisionRecord": null
+  },
+  "entries": {
+    "vdom-only": { "baselineBytes": 1697, "ceilingBytes": null },
+    "barrel-only": { "baselineBytes": 9577, "ceilingBytes": null },
+    "minimal-app": { "baselineBytes": 91382, "ceilingBytes": 95948 },
+    "runtime-app": { "baselineBytes": 89119, "ceilingBytes": null },
+    "first-screen": { "baselineBytes": 70977, "ceilingBytes": null },
+    "first-screen-runtime": { "baselineBytes": 37466, "ceilingBytes": null }
+  }
+}

@@ -698,8 +698,10 @@ const GATES = [
     cmd: ['tsx', 'scripts/check-bundle-size.ts'],
     approx: '~8s',
     desc:
-      '★ 真实产物体积（esbuild 真打包 + gzip）：vdom-only 与 minimal-app 两条入口的棘轮。' +
-      '单包 dist 体积会低估真实成本 —— createApp 静态带编译器，实测最小 app 约 94 KB gzip',
+      '★ 真实产物体积（esbuild 真打包 + gzip）：实测值与 `scripts/bundle-baseline.json` 的' +
+      '**基线 + ≤2% 波动**比较，基线只能下调；上调须 owner 签字 + keel/decisions 记录。' +
+      'minimal-app 本阶段硬上限 93.7 KB（实测 89.2 KB）；首屏按「入口 + 静态 import 闭包」计' +
+      '（实测 69.3 KB，编译器在闭包内——已知债务，留给 B03）',
     needsDist: true,
   },
   {
