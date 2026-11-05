@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * @lytjs/hmr 测试
  *

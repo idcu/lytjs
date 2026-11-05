@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * @lytjs/common-a11y —— `focusTrap` 的行为回归（2026-11-04）
  *

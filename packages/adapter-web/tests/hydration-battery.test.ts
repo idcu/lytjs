@@ -33,10 +33,19 @@ beforeEach(() => {
   warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 });
 
+/**
+ * 只统计「水合不匹配」告警。
+ *
+ * `createHydrationFunctions()` 本身会发一条弃用提示（「只做 DOM 匹配、页面点了没反应」，
+ * 见 `src/web-hydration.ts` 的 warnOnce），它不属于水合结果，不能算进内容是否一致的判据。
+ */
+const mismatchWarnings = () =>
+  warnSpy.mock.calls.filter((args) => String(args[0]).includes('Hydration mismatch'));
+
 // ==================== 文本 ====================
 
 describe('文本水合', () => {
-  it('内容一致 ⇒ 复用原文本节点（不新建、不告警）', () => {
+  it('内容一致 ⇒ 复用原文本节点（不新建、不产生不匹配告警）', () => {
     container.appendChild(document.createTextNode('hello'));
     const node = container.childNodes[0]!;
 
@@ -45,7 +54,7 @@ describe('文本水合', () => {
 
     expect(vnode.el).toBe(node);
     expect(container.childNodes).toHaveLength(1);
-    expect(warnSpy).not.toHaveBeenCalled();
+    expect(mismatchWarnings()).toHaveLength(0);
   });
 
   it('内容不一致 ⇒ 复用节点但对齐文本，并告警', () => {
