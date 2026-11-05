@@ -138,14 +138,8 @@
       "slots": { "status": "pass" },
       "events": { "status": "pass" },
       "controlled": { "status": "pass" },
-      "styles": {
-        "status": "red",
-        "reason": "lyt-link--no-underline 无 CSS 规则（underline=false 无效）"
-      },
-      "keyboard": {
-        "status": "red",
-        "reason": "无 href 时渲染 span[role=link]，无 tabindex / Enter 处理"
-      }
+      "styles": { "status": "pass" },
+      "keyboard": { "status": "pass" }
     },
     "Modal": {
       "vmodel": { "status": "pass" },

@@ -32,12 +32,20 @@ export const Link = defineComponent({
 
   setup(props: Record<string, unknown>, { slots }) {
     const _props = props as LinkSetupProps;
-    const handleClick = (event: MouseEvent) => {
+    const handleClick = (event: Event) => {
       if (_props.disabled) {
         event.preventDefault();
         return;
       }
-      _props.onClick?.(event);
+      _props.onClick?.(event as MouseEvent);
+    };
+
+    // ★ 2026-11-06（B04）：无 href 时渲染 span[role=link]，此前只有 onClick
+    //   ⇒ 既不可聚焦也无法用 Enter/Space 激活。与点击共用同一激活逻辑。
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        handleClick(event);
+      }
     };
 
     const getLinkClass = () => {
@@ -45,8 +53,10 @@ export const Link = defineComponent({
       if (_props.type !== 'default') {
         classes.push(`lyt-link--${_props.type}`);
       }
-      if (!_props.underline) {
-        classes.push('lyt-link--no-underline');
+      // ★ 2026-11-06（B04）：CSS 里存在的是 `--underline`，此前却输出
+      //   `--no-underline`（无规则）⇒ underline=false 无效、true 也没下划线。
+      if (_props.underline) {
+        classes.push('lyt-link--underline');
       }
       if (_props.disabled) {
         classes.push('lyt-link--disabled');
@@ -111,7 +121,9 @@ export const Link = defineComponent({
             {
               class: getLinkClass(),
               style: getLinkStyle(),
+              tabindex: _props.disabled ? -1 : 0,
               onClick: handleClick,
+              onKeydown: handleKeydown,
             },
           ),
           children,
