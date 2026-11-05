@@ -3,10 +3,11 @@
 //
 // ## 为什么需要这一层（P1-N）
 //
-// `options.template` 的支持依赖 `@lytjs/compiler`（~98 KB raw / ~18 KB gzip 边际成本）。
+// `options.template` 的支持依赖 `@lytjs/compiler`（2026-11-06 A15 实测：边际成本
+// 36,690 B = 35.8 KB gzip，占 minimal-app 的 40.2%）。
 // 此前这份依赖是**无条件**的：`create-app.ts` 静态 import `./template-compiler`，
 // 于是任何 `import { createApp } from '@lytjs/core'` 的应用都必须付这份体积
-// （实测最小 app 94.3 KB gzip，而纯 vdom 只要 1.6 KB）。
+// （实测最小 app 89.2 KB gzip，而纯 vdom 只要 1.7 KB）。
 //
 // 现在拆成两个入口：
 //   · 本模块 → 主入口 `@lytjs/core` 的 `createApp`：`template` 可用；

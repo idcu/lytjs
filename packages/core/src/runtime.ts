@@ -4,8 +4,11 @@
 // ## 为什么要这个入口（P1-N）
 //
 // 主入口 `@lytjs/core` 的 `createApp` 支持 `options.template`，为此必须静态依赖
-// `@lytjs/compiler`（实测 52 KB gzip）。而 AOT 预编译 / SSR / 只写 `render()` 的用户
+// `@lytjs/compiler`（实测边际成本 36,690 B = 35.8 KB gzip，占 minimal-app 的 40.2%）.
+// 而 AOT 预编译 / SSR / 只写 `render()` 的用户
 // 完全不需要它 —— 却因为 `createApp` 从主入口出来而被迫付这份体积。
+// （2026-11-06 A15 实测：主入口首屏静态闭包 69.3 KB，本入口 36.6 KB；归因见
+// evaluation/LYTJS_体积归因_2026-11-06.md）
 //
 // 本入口与主入口的**唯一差别**是 `createApp` 不带模板编译器：
 //   · 本入口：`template` 不可用（会得到一条明确的 DEV 告警，不是静默空白）

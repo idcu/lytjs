@@ -1,15 +1,15 @@
 ---
 scope: now
 status: active
-last-verified: 2026-11-05
-updated: 2026-11-05
+last-verified: 2026-11-06
+updated: 2026-11-06
 keywords: [硬约束9]
 ---
 
 # NOW · main
 
 ## 当前焦点
-《开发计划 2026-11-05》：A01–A14 已完成（A15 待 owner 决策）。
+《开发计划 2026-11-05》：**A 阶段收官**（A01–A15 完成）。
 
 ## 11-05 完成
 - **A01–A03** 锁文件守卫、8720 测试全绿、ESLint 45 errors 清零；slow 14/14。
@@ -28,12 +28,19 @@ keywords: [硬约束9]
 - **A12** `check-release-parity`（declared=true / parity=false）；changeset 覆盖 76/76；
   注入 2/1/2 红。
 - **A13** playground 修复函数组件不渲染；E2E chromium 45/45 + playground 39/39。
+
+## 11-06 完成
+- **A15** 体积预算改「基线 + ≤2%」（`scripts/bundle-baseline.json`，基线只能下调）；
+  `minimal-app` 89.2 KB ≤ 93.7 KB；首屏口径勘误：**69.3 KB**（原 8.5 KB 只量入口 chunk，
+  编译器在静态闭包内；runtime 入口 36.6 KB 不含编译器）。归因：
+  `evaluation/LYTJS_体积归因_2026-11-06.md`。17 条断言；注入 6 类全红。
 - 门禁：fast 46/46；slow 14/14。
 
 ## 下一步
-1. A15 体积压缩：等 owner 确认是否现在做。
+1. 阶段 B：B01 codegen 合并 / B03 AOT 入口（A15 归因已给出靶心与顺序）。
 
 ## 阻塞
 | 卡在 | 绕行 |
 | --- | --- |
 | 覆盖率并发清 .tmp / safe-delete 拦 coverage | 单包复核 / reportsDirectory=/tmp |
+

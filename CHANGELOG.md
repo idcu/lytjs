@@ -4,6 +4,21 @@
 
 ## [Unreleased]
 
+### 📦 体积预算回到真实基线（2026-11-06）
+
+- `check-bundle-size` 不再把预算写在脚本里：基线移到 `scripts/bundle-baseline.json`，
+  预算 = **基线 × 1.02**，`minimal-app` 另有写死在脚本里的阶段上限 **93.7 KB**（95,948 B）。
+- 基线**只能下调**：`--record` 在"实测 > 基线"时直接拒绝；上调的唯一路径是把
+  `approval.decisionRecord` 指向一份真实存在的 `keel/decisions/*.md`，否则门禁红。
+  脚本不再输出"按实测上调预算"的建议。
+- **首屏口径修正**：旧实现只量入口 chunk（8.5 KB），现量「入口 + 静态 import 闭包」。
+  实测 `@lytjs/core` 首屏 **69.3 KB**（编译器在共享 chunk 内、启动即下载），
+  `@lytjs/core/runtime` 首屏 **36.6 KB**（不含编译器）。
+- 实测：`minimal-app` 89.2 KB（≤93.7 KB，未增长）；新增 17 条断言。
+- 归因结论（编译器边际 35.8 KB gzip = 40.2%；四套 codegen 占编译器 56.6%，
+  `signal` 与 `signal-optimized` 行级重复约 48%）见
+  `evaluation/LYTJS_体积归因_2026-11-06.md`，作为 B01/B03 的输入。
+
 ### 🚦 门禁与 CI：安装链路、覆盖率快照、发布一致性（2026-11-05）
 
 - CI 新增 `install` job（`pnpm install --frozen-lockfile` + lockfile 校验），
