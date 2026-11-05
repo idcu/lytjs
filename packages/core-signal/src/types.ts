@@ -2,7 +2,7 @@
 // @lytjs/core-signal - 类型定义
 
 import type { BaseAppConfig } from '@lytjs/shared-types';
-import type { ComponentOptions, ComponentPublicInstance } from '@lytjs/component';
+import type { ComponentOptions, ComponentPublicInstance, SetupContext } from '@lytjs/component';
 import type {
   Directive,
   DirectiveBinding,
@@ -24,12 +24,28 @@ export interface App<HostElement = Element> {
   mount(rootContainer: HostElement | string): Promise<ComponentPublicInstance | null>;
   unmount(): void;
   provide<T = unknown>(key: string | symbol, value: T): App;
-  inject<T = unknown>(key: string | symbol, defaultValue?: T): T;
+  /**
+   * 读取 `app.provide()` 注入的值。
+   *
+   * ⚠️ 诚实类型（A10）：键不存在且未传默认值时返回 `undefined` ——
+   * 返回类型因此是 `T | undefined`，不再用 `as T` 假装必定存在。
+   */
+  inject<T = unknown>(key: string | symbol, defaultValue?: T): T | undefined;
   component(name: string, component: Component): App;
   directive(name: string, directive: Directive): App;
   mixin(mixin: ComponentOptions): App;
   errorHandler?: (err: unknown, instance: ComponentPublicInstance | null, info: string) => void;
   warnHandler?: (msg: string, instance: ComponentPublicInstance | null, trace: string) => void;
+}
+
+/**
+ * Signal 模式下 `setup(props, ctx)` 的第二参。
+ *
+ * 在 `SetupContext` 之上补 `inject`：Signal 模式没有组件实例的 provides 链，
+ * `inject` 直接读应用级 `app.provide()` 的注册表。
+ */
+export interface SignalSetupContext extends SetupContext {
+  inject<T = unknown>(key: string | symbol, defaultValue?: T): T | undefined;
 }
 
 export interface AppConfig extends BaseAppConfig {

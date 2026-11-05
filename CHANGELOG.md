@@ -4,6 +4,16 @@
 
 ## [Unreleased]
 
+### 🧩 `core-signal`：setup 契约与类型诚实（2026-11-05）
+
+- `setup(props, ctx)` 的第二参不再传空对象：`ctx.inject()` / `ctx.emit()` / `ctx.expose()`
+  均可调用（此前调用即 TypeError）。`emit` 会把事件名映射到 props 上的 `onXxx` 监听器。
+- `app.inject<T>()` 缺键返回 `undefined`，返回类型改为 `T | undefined`（此前 `undefined as T`）。
+- `app.component() / directive() / mixin()` 改用生产环境仍可见的 `error()`，
+  不再在 `__DEV__` 之外静默 no-op。
+- 新增门禁 `check-core-signal-contract`（fast，15 条运行时断言）。
+- 详见 [packages/core-signal/CHANGELOG.md](packages/core-signal/CHANGELOG.md)。
+
 ### 🔐 `v-html` 消毒：两条渲染路径的一致性纳入门禁（2026-11-05）
 
 - 审计曾称「signal 模式直接 `setHTML` ⇒ 绕过消毒」。实测已过时：`@lytjs/dom-runtime`

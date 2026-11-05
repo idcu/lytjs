@@ -86,6 +86,7 @@ export type {
   Plugin,
   Component,
   ComponentOptions,
+  SignalSetupContext,
   Directive,
   DirectiveBinding,
   DirectiveArguments,

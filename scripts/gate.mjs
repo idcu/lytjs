@@ -562,6 +562,22 @@ const GATES = [
       '故本门禁钉住实现细节而非依赖它。注入验证：摘掉 setHTML 内的 sanitizeHTML ⇒ 16 项红',
   },
   {
+    name: 'check-core-signal-contract',
+    tier: 'fast',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-core-signal-contract.mjs'],
+    approx: '~1s',
+    desc:
+      '★ `@lytjs/core-signal` 的 setup 契约与类型诚实（A10）：Signal 模式的 createApp 是独立路径，' +
+      '2026-11-05 审计发现 ① `setup(props, {})` 第二参是空对象 —— `inject/emit/expose` 一调就 TypeError；' +
+      '② `app.inject<T>()` 返回类型写成 `T`，缺键却返回 `undefined`（`undefined as T` 类型撒谎）；' +
+      '③ `component/directive/mixin` 仅在 `__DEV__` 下 `warn()`，而该函数在生产构建被短路 ⇒ **静默 no-op**。' +
+      '本门禁用**运行时行为**断言（非类型断言）：setup 上下文三个方法可用、inject 缺键返回 undefined、' +
+      'emit 真正调用 `onXxx` 监听器（含 kebab 映射）、expose 真正限制公共实例，且生产产物里三个注册 API ' +
+      '必须输出错误。判据 3 组 15 条。注入验证：setup 回退 `{}` ⇒ 8 项红；注册 API 回退 dev-only warn ⇒ 3 项红；' +
+      'inject 对缺键伪造值 ⇒ 2 项红',
+  },
+  {
     name: 'check-web-cssvars',
     tier: 'fast',
     needsDist: true,

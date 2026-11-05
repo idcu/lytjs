@@ -283,7 +283,7 @@ describe('createApp', () => {
     expect(result).toBe(app);
   });
 
-  it('inject should return undefined in Signal mode (limited support)', () => {
+  it('inject 缺键返回 undefined（A10 诚实类型）', () => {
     const { createApp } = coreSignal;
     const app = createApp({
       template: '<div>inject</div>',
@@ -293,7 +293,7 @@ describe('createApp', () => {
     expect(result).toBeUndefined();
   });
 
-  it('component() should return app (limited support in Signal mode)', () => {
+  it('component() 报告「Signal 模式不支持」并仍返回 app', () => {
     const { createApp } = coreSignal;
     const app = createApp({
       template: '<div>component</div>',
@@ -302,7 +302,7 @@ describe('createApp', () => {
     expect(result).toBe(app);
   });
 
-  it('directive() should return app (limited support in Signal mode)', () => {
+  it('directive() 报告「Signal 模式不支持」并仍返回 app', () => {
     const { createApp } = coreSignal;
     const app = createApp({
       template: '<div>directive</div>',
@@ -311,7 +311,7 @@ describe('createApp', () => {
     expect(result).toBe(app);
   });
 
-  it('mixin() should return app (not supported in Signal mode)', () => {
+  it('mixin() 报告「Signal 模式不支持」并仍返回 app', () => {
     const { createApp } = coreSignal;
     const app = createApp({
       template: '<div>mixin</div>',

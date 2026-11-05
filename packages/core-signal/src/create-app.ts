@@ -6,7 +6,25 @@ declare const __DEV__: boolean;
 import { createSignalRenderer } from '@lytjs/renderer';
 import type { SignalRenderer } from '@lytjs/renderer';
 import { error, warn } from '@lytjs/common-error';
-import type { App, AppOptions, Plugin, Component, ComponentPublicInstance } from './types';
+import type {
+  App,
+  AppOptions,
+  Plugin,
+  Component,
+  ComponentPublicInstance,
+  SignalSetupContext,
+} from './types';
+
+/** `save-item` → `saveItem`（与 Vue 的 emit 约定一致） */
+function camelize(name: string): string {
+  return name.replace(/-(\w)/g, (_, c: string) => c.toUpperCase());
+}
+
+/** `save` → `onSave`：把 emit 的事件名映射到 props 上的监听器键 */
+function toHandlerKey(event: string): string {
+  const camelized = camelize(event);
+  return `on${camelized.charAt(0).toUpperCase()}${camelized.slice(1)}`;
+}
 
 export function createApp(
   rootComponent: Component,
@@ -20,6 +38,8 @@ export function createApp(
   // Signal 模式下的渲染器引用
   let signalRenderer: SignalRenderer | null = null;
   let _container: Element | null = null;
+  // setup() 的 expose() 结果：一旦调用，公共实例只暴露这些键
+  let _exposed: Record<string, unknown> | null = null;
 
   // 应用上下文（包含 provides 和 config）
   const context = {
@@ -123,13 +143,40 @@ export function createApp(
 
         // 执行 setup 函数
         if (typeof componentOptions.setup === 'function') {
+          // ⚠️ A10（2026-11-05）：第二参此前是 `{}` —— `inject` / `emit` / `expose`
+          // 全部不可用，用户在 setup 里调用会直接 TypeError。这里构建真实上下文：
+          // - inject：读应用级 `app.provide()` 注册表（含缺键 → undefined 的诚实语义）
+          // - emit：把事件名映射为 props 上的 `onXxx` 监听器并调用
+          // - expose：限制公共实例暴露的键（未调用则暴露整个 ctx）
+          _exposed = null;
+          const setupContext: SignalSetupContext = {
+            attrs: rootProps ?? {},
+            slots: {},
+            emit(event: string, ...args: unknown[]) {
+              const handler = (rootProps ?? {})[toHandlerKey(event)];
+              if (typeof handler === 'function') {
+                (handler as (...handlerArgs: unknown[]) => void)(...args);
+              } else if (__DEV__) {
+                warn(
+                  `Component emitted event "${event}" but no handler was passed ` +
+                    `(expected a "${toHandlerKey(event)}" prop).`,
+                );
+              }
+            },
+            expose(exposed?: Record<string, unknown>) {
+              _exposed = exposed ?? null;
+            },
+            inject<T = unknown>(key: string | symbol, defaultValue?: T): T | undefined {
+              return app.inject<T>(key, defaultValue);
+            },
+          };
           try {
             const setupResult = (
               componentOptions.setup as (
                 props: Record<string, unknown>,
-                ctx: Record<string, unknown>,
+                ctx: SignalSetupContext,
               ) => unknown
-            )(rootProps ?? {}, {});
+            )(rootProps ?? {}, setupContext);
             if (setupResult && typeof setupResult === 'object') {
               Object.assign(ctx, setupResult);
             }
@@ -166,6 +213,8 @@ export function createApp(
           get(_, key: string | symbol) {
             if (key === '$el') return container;
             if (key === '$options') return componentOptions;
+            // setup() 调用了 expose() ⇒ 公共实例只暴露白名单内的键
+            if (_exposed !== null) return _exposed[key as string];
             return (ctx as Record<string | symbol, unknown>)[key];
           },
           set(_, key: string | symbol, value: unknown) {
@@ -236,7 +285,7 @@ export function createApp(
       return app;
     },
 
-    inject<T = unknown>(key: string | symbol, defaultValue?: T): T {
+    inject<T = unknown>(key: string | symbol, defaultValue?: T): T | undefined {
       const provides = context.provides;
       if (key in provides) {
         return provides[key] as T;
@@ -247,39 +296,36 @@ export function createApp(
       if (__DEV__) {
         warn(`Injection "${String(key)}" not found.`);
       }
-      return undefined as T;
+      return undefined;
     },
 
     component(_name: string, _component: unknown) {
-      // Signal 模式下组件注册暂不支持
-      if (__DEV__) {
-        warn(
-          `app.component() is not fully supported in Signal mode. ` +
-            `Use template-based component composition instead.`,
-        );
-      }
+      // Signal 模式下组件注册暂不支持。
+      // ⚠️ A10：此前只有 `__DEV__` 分支的 warn —— 生产构建里 `warn()` 本身被
+      // getDevMode() 短路 ⇒ 调用完全静默。改用 `error()`：它在生产环境仍然输出，
+      // 保证「注册了但从不生效」不会被误认为成功。
+      error(
+        `[LytJS] app.component() is not supported in Signal mode. ` +
+          `Use template-based component composition instead.`,
+      );
       return app;
     },
 
     directive(_name: string, _directive: unknown) {
-      // Signal 模式下指令注册暂不支持
-      if (__DEV__) {
-        warn(
-          `app.directive() is not fully supported in Signal mode. ` +
-            `Use template-based event handling instead.`,
-        );
-      }
+      // 同上：生产环境也必须可见，不能静默 no-op。
+      error(
+        `[LytJS] app.directive() is not supported in Signal mode. ` +
+          `Use template-based event handling instead.`,
+      );
       return app;
     },
 
     mixin(_mixin: unknown) {
-      // Signal 模式下 mixin 暂不支持
-      if (__DEV__) {
-        warn(
-          `app.mixin() is not supported in Signal mode. ` +
-            `Use composition API (setup function) instead.`,
-        );
-      }
+      // 同上：mixin 在 Signal 模式没有执行位置，必须显式告知。
+      error(
+        `[LytJS] app.mixin() is not supported in Signal mode. ` +
+          `Use composition API (setup function) instead.`,
+      );
       return app;
     },
   };
