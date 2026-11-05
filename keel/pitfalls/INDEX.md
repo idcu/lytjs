@@ -33,3 +33,4 @@ keywords: [坑库, 索引, 转发链, dist, 假绿, 门禁]
 | 覆盖率并发作废 | verify | P1 | [coverage-concurrent-runs-clobber-tmp](verify/coverage-concurrent-runs-clobber-tmp.md) |
 | Proxy has 污染取值 | core | P1 | [proxy-has-cache-poison](core/proxy-has-cache-poison.md) |
 | pre-commit 回滚工作区 | process | P2 | [precommit-reverts-working-tree](process/precommit-reverts-working-tree.md) |
+| 短名未定义·无模板行号 | core | P1 | [signal-param-alias-contract](core/signal-param-alias-contract.md) |
