@@ -770,8 +770,16 @@ console.log('   [Hydrate + 后续更新]');
       root.querySelector('ul.l')?.querySelectorAll('li').length === 3,
       root.innerHTML,
     );
-    check('hydrate+v-for：无 li 逃逸', root.querySelectorAll('li').length === 3, `total=${root.querySelectorAll('li').length}`);
-    check('hydrate+v-for：ul 未重复', root.querySelectorAll('ul.l').length === 1, `ul 数=${root.querySelectorAll('ul.l').length}`);
+    check(
+      'hydrate+v-for：无 li 逃逸',
+      root.querySelectorAll('li').length === 3,
+      `total=${root.querySelectorAll('li').length}`,
+    );
+    check(
+      'hydrate+v-for：ul 未重复',
+      root.querySelectorAll('ul.l').length === 1,
+      `ul 数=${root.querySelectorAll('ul.l').length}`,
+    );
   }
 
   // ② 空列表水合后增长（含动态兄弟节点）
@@ -790,7 +798,11 @@ console.log('   [Hydrate + 后续更新]');
       root.querySelector('ul.l')?.querySelectorAll('li').length === 2,
       root.innerHTML,
     );
-    check('hydrate+空列表：无 li 逃逸', root.querySelectorAll('li').length === 2, `total=${root.querySelectorAll('li').length}`);
+    check(
+      'hydrate+空列表：无 li 逃逸',
+      root.querySelectorAll('li').length === 2,
+      `total=${root.querySelectorAll('li').length}`,
+    );
   }
 
   // ③ v-if 水合后切换
@@ -801,13 +813,25 @@ console.log('   [Hydrate + 后续更新]');
       template: `<div><p v-if="show" class="yes">Y</p><p v-else class="no">N</p></div>`,
     };
     const root = await ssrHydrate(App);
-    check('hydrate+v-if：初始 Y', root.querySelector('.yes')?.textContent?.trim() === 'Y', root.innerHTML);
+    check(
+      'hydrate+v-if：初始 Y',
+      root.querySelector('.yes')?.textContent?.trim() === 'Y',
+      root.innerHTML,
+    );
     show.value = false;
     await tick();
-    check('hydrate+v-if：切到 N', root.querySelector('.no') !== null && root.querySelector('.yes') === null, root.innerHTML);
+    check(
+      'hydrate+v-if：切到 N',
+      root.querySelector('.no') !== null && root.querySelector('.yes') === null,
+      root.innerHTML,
+    );
     show.value = true;
     await tick();
-    check('hydrate+v-if：切回 Y', root.querySelector('.yes') !== null && root.querySelector('.no') === null, root.innerHTML);
+    check(
+      'hydrate+v-if：切回 Y',
+      root.querySelector('.yes') !== null && root.querySelector('.no') === null,
+      root.innerHTML,
+    );
   }
 
   // ④ 插值 + computed 水合后更新
@@ -818,10 +842,18 @@ console.log('   [Hydrate + 后续更新]');
       template: `<div><p class="n">{{n}}</p></div>`,
     };
     const root = await ssrHydrate(App);
-    check('hydrate+插值：初始 1', root.querySelector('.n')?.textContent?.trim() === '1', root.innerHTML);
+    check(
+      'hydrate+插值：初始 1',
+      root.querySelector('.n')?.textContent?.trim() === '1',
+      root.innerHTML,
+    );
     n.value = 5;
     await tick();
-    check('hydrate+插值：更新为 5', root.querySelector('.n')?.textContent?.trim() === '5', root.innerHTML);
+    check(
+      'hydrate+插值：更新为 5',
+      root.querySelector('.n')?.textContent?.trim() === '5',
+      root.innerHTML,
+    );
   }
 
   // ⑤ 子组件 props 水合后更新
@@ -834,10 +866,18 @@ console.log('   [Hydrate + 后续更新]');
       template: `<div class="wrap"><Child :text="label" /><em class="sib">s</em></div>`,
     };
     const root = await ssrHydrate(App);
-    check('hydrate+子组件：初始 L1', root.querySelector('.c')?.textContent?.trim() === 'L1', root.innerHTML);
+    check(
+      'hydrate+子组件：初始 L1',
+      root.querySelector('.c')?.textContent?.trim() === 'L1',
+      root.innerHTML,
+    );
     label.value = 'L2';
     await tick();
-    check('hydrate+子组件：props 更新为 L2', root.querySelector('.c')?.textContent?.trim() === 'L2', root.innerHTML);
+    check(
+      'hydrate+子组件：props 更新为 L2',
+      root.querySelector('.c')?.textContent?.trim() === 'L2',
+      root.innerHTML,
+    );
     check('hydrate+子组件：兄弟节点未被破坏', root.querySelector('.sib') !== null, root.innerHTML);
   }
 
@@ -851,7 +891,11 @@ console.log('   [Hydrate + 后续更新]');
       template: `<div><ul class="l"><Row v-for="it in items" :key="it.id" :t="it.t" /></ul></div>`,
     };
     const root = await ssrHydrate(App);
-    check('hydrate+组件 v-for：初始 1 行', root.querySelectorAll('li.row').length === 1, root.innerHTML);
+    check(
+      'hydrate+组件 v-for：初始 1 行',
+      root.querySelectorAll('li.row').length === 1,
+      root.innerHTML,
+    );
     items.value = [
       { id: 1, t: 'a' },
       { id: 2, t: 'b' },
@@ -862,7 +906,11 @@ console.log('   [Hydrate + 后续更新]');
       root.querySelector('ul.l')?.querySelectorAll('li.row').length === 2,
       root.innerHTML,
     );
-    check('hydrate+组件 v-for：无 li 逃逸', root.querySelectorAll('li.row').length === 2, `total=${root.querySelectorAll('li.row').length}`);
+    check(
+      'hydrate+组件 v-for：无 li 逃逸',
+      root.querySelectorAll('li.row').length === 2,
+      `total=${root.querySelectorAll('li.row').length}`,
+    );
   }
 
   // ⑦ 插槽内列表水合后增长
@@ -883,7 +931,11 @@ console.log('   [Hydrate + 后续更新]');
       root.querySelector('ul.l')?.querySelectorAll('li').length === 2,
       root.innerHTML,
     );
-    check('hydrate+插槽：无 li 逃逸', root.querySelectorAll('li').length === 2, `total=${root.querySelectorAll('li').length}`);
+    check(
+      'hydrate+插槽：无 li 逃逸',
+      root.querySelectorAll('li').length === 2,
+      `total=${root.querySelectorAll('li').length}`,
+    );
   }
 
   // ⑧ 属性透传（class 合并）在 hydrate 后仍成立
@@ -894,8 +946,16 @@ console.log('   [Hydrate + 后续更新]');
     };
     const root = await ssrHydrate(App);
     const el = root.querySelector('.own');
-    check('hydrate+属性透传：自身 class 保留', el?.classList.contains('own') === true, el?.className);
-    check('hydrate+属性透传：传入 class 也在', el?.classList.contains('passed') === true, el?.className);
+    check(
+      'hydrate+属性透传：自身 class 保留',
+      el?.classList.contains('own') === true,
+      el?.className,
+    );
+    check(
+      'hydrate+属性透传：传入 class 也在',
+      el?.classList.contains('passed') === true,
+      el?.className,
+    );
   }
 
   // ⑨ 深层嵌套列表水合后增长
@@ -913,7 +973,11 @@ console.log('   [Hydrate + 后续更新]');
       root.querySelector('ul.d')?.querySelectorAll('li').length === 3,
       root.innerHTML,
     );
-    check('hydrate+深层嵌套：无 li 逃逸', root.querySelectorAll('li').length === 3, `total=${root.querySelectorAll('li').length}`);
+    check(
+      'hydrate+深层嵌套：无 li 逃逸',
+      root.querySelectorAll('li').length === 3,
+      `total=${root.querySelectorAll('li').length}`,
+    );
   }
 }
 
@@ -1215,7 +1279,11 @@ console.log('   [v-for 位序]');
   await tick();
 
   const texts = [...root.querySelectorAll('ul.list li')].map((el) => el.textContent?.trim());
-  check('v-for 增至 3 项：全部在 ul 内且顺序正确', JSON.stringify(texts) === '["x0","x1","x2"]', JSON.stringify(texts));
+  check(
+    'v-for 增至 3 项：全部在 ul 内且顺序正确',
+    JSON.stringify(texts) === '["x0","x1","x2"]',
+    JSON.stringify(texts),
+  );
   check(
     'v-for 增至 3 项：无 li 逃逸',
     root.querySelectorAll('li').length === 3,

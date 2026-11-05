@@ -54,6 +54,7 @@ app.mount(document.getElementById('app'));
 ```
 
 **关键点**：
+
 - `createApp()` 返回的应用实例支持 `mount(host)` 挂载到 DOM 元素
 - `mount()` 返回 Promise，在 Node 环境中建议 `await`
 - 模板编译器在 `createApp()` 调用时自动注入（从 `@lytjs/core` 主入口导入时）
@@ -93,7 +94,9 @@ const App = {
   components: { Child },
   setup() {
     const msg = ref('Hello');
-    const onReply = () => { msg.value = 'Replied!'; };
+    const onReply = () => {
+      msg.value = 'Replied!';
+    };
     return { msg, onReply };
   },
   template: `
@@ -108,12 +111,12 @@ createApp(App).mount(document.getElementById('app'));
 
 ### 4. 模板语法
 
-| 语法 | 说明 |
-|---|---|
-| `{{ expr }}` | 文本插值 |
-| `:prop="expr"` | 属性绑定 |
-| `@event="handler"` | 事件绑定 |
-| `v-if="cond"` / `v-else` | 条件渲染 |
+| 语法                                 | 说明     |
+| ------------------------------------ | -------- |
+| `{{ expr }}`                         | 文本插值 |
+| `:prop="expr"`                       | 属性绑定 |
+| `@event="handler"`                   | 事件绑定 |
+| `v-if="cond"` / `v-else`             | 条件渲染 |
 | `v-for="(item, i) in list" :key="i"` | 列表渲染 |
 
 ### 5. SSR（服务端渲染）
@@ -141,7 +144,7 @@ installTemplateCompiler();
 // 支持 async setup() 组件
 const AsyncApp = {
   async setup() {
-    const data = await fetch('/api/data').then(r => r.json());
+    const data = await fetch('/api/data').then((r) => r.json());
     return { data };
   },
   template: `<div>{{ data }}</div>`,
@@ -163,28 +166,30 @@ const useCounterStore = defineStore('counter', {
     double: (state) => state.count * 2,
   },
   actions: {
-    increment() { this.count++; },
+    increment() {
+      this.count++;
+    },
   },
 });
 
 const store = useCounterStore(pinia);
 store.increment();
-console.log(store.count);   // 1
-console.log(store.double);  // 2
+console.log(store.count); // 1
+console.log(store.double); // 2
 ```
 
 ## 包导入路径速查
 
-| 包名 | 导入路径 | 主要导出 |
-|---|---|---|
-| `@lytjs/core` | `@lytjs/core` | `createApp`, `h`, `ref`, `computed`, `installTemplateCompiler`, `renderToString`, `compile` |
-| `@lytjs/core/runtime` | `@lytjs/core/runtime` | 同上但**不含编译器**（体积小 52KB），不支持 `template` 选项 |
-| `@lytjs/reactivity` | `@lytjs/reactivity` | `ref`, `reactive`, `computed`, `watch`, `effectScope` |
-| `@lytjs/component` | `@lytjs/component` | `defineComponent`, `defineAsyncComponent`, `provide`, `inject` |
-| `@lytjs/compiler` | `@lytjs/compiler` | `compile`, `compileTemplateToRender` |
-| `@lytjs/ssr` | `@lytjs/ssr` | `renderToString`, `renderToStringAsync`, `renderToStream`, `generateStaticPages` |
-| `@lytjs/store` | `@lytjs/store` | `defineStore`, `createPinia`, `storeToRefs` |
-| `@lytjs/vdom` | `@lytjs/vdom` | `createVNode`, `Fragment`, `Text`, `Comment`, `Teleport`, `Suspense` |
+| 包名                  | 导入路径              | 主要导出                                                                                    |
+| --------------------- | --------------------- | ------------------------------------------------------------------------------------------- |
+| `@lytjs/core`         | `@lytjs/core`         | `createApp`, `h`, `ref`, `computed`, `installTemplateCompiler`, `renderToString`, `compile` |
+| `@lytjs/core/runtime` | `@lytjs/core/runtime` | 同上但**不含编译器**（体积小 52KB），不支持 `template` 选项                                 |
+| `@lytjs/reactivity`   | `@lytjs/reactivity`   | `ref`, `reactive`, `computed`, `watch`, `effectScope`                                       |
+| `@lytjs/component`    | `@lytjs/component`    | `defineComponent`, `defineAsyncComponent`, `provide`, `inject`                              |
+| `@lytjs/compiler`     | `@lytjs/compiler`     | `compile`, `compileTemplateToRender`                                                        |
+| `@lytjs/ssr`          | `@lytjs/ssr`          | `renderToString`, `renderToStringAsync`, `renderToStream`, `generateStaticPages`            |
+| `@lytjs/store`        | `@lytjs/store`        | `defineStore`, `createPinia`, `storeToRefs`                                                 |
+| `@lytjs/vdom`         | `@lytjs/vdom`         | `createVNode`, `Fragment`, `Text`, `Comment`, `Teleport`, `Suspense`                        |
 
 > ⚠️ **`h` 不在 `@lytjs/vdom` 里**。`@lytjs/vdom` 只导出 `createVNode`；
 > `h` 由 `@lytjs/core` 导出。若组件只用 `createVNode` 构建视图（不写 `template`），

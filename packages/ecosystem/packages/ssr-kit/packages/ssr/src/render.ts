@@ -89,7 +89,9 @@ function renderToStringInternal(
   //   Fragment 必须**展开 children**，而不是当文本转义。
   if (node.type === Fragment) {
     if (!isArray(node.children)) return '';
-    return (node.children as VNode[]).map((child) => renderToStringInternal(child, parent)).join('');
+    return (node.children as VNode[])
+      .map((child) => renderToStringInternal(child, parent))
+      .join('');
   }
 
   // 处理文本节点（Text 的 type 也是 symbol）

@@ -186,7 +186,11 @@ section('[7] 多层缓存：写入与回写');
   await remote.set('short', 'v', { ttl: 60 });
   await mlc.get('short'); // 回写
   await sleep(90);
-  check('回写后的副本按原 TTL 过期（未被续命）', (await local.has('short')) === false, 'local 仍在');
+  check(
+    '回写后的副本按原 TTL 过期（未被续命）',
+    (await local.has('short')) === false,
+    'local 仍在',
+  );
 }
 
 // ══════════════════════════════════════════════════════════

@@ -202,10 +202,7 @@ export function createComponentPatch<HN, HE extends HN>(
     //
     // 另外必须把 `el` / `anchor` 清空 —— 提升后的对象会被上一次挂载写上 `el`，
     // 直接复制过来会让新实例指向**别人的 DOM 节点**。
-    const cloneSubTreeWithProps = (
-      vnode: VNode,
-      props: Record<string, unknown>,
-    ): VNode => {
+    const cloneSubTreeWithProps = (vnode: VNode, props: Record<string, unknown>): VNode => {
       const cloned = cloneVNode(vnode, props);
       cloned.el = null;
       cloned.anchor = null;

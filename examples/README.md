@@ -10,13 +10,13 @@
 
 ## 一、从哪个开始
 
-| 顺序 | 示例 | 说明 | 怎么跑 |
-|---|---|---|---|
-| 1 | [`getting-started/demo.mjs`](./getting-started/demo.mjs) | **最小可运行**：ref/computed、v-if/v-for、子组件 props+emit、SSR→挂载→交互 | `node examples/getting-started/demo.mjs` |
-| 2 | [`counter/index.html`](./counter/) | 计数器：`createApp` + `ref` + `computed` + 模板 | 浏览器 / dev server 打开 |
-| 3 | [`complete-todo/main.ts`](./complete-todo/) | 待办应用：组件拆分 + `watch` | `pnpm dev` 后打开 |
-| 4 | [`ssr-complete-example.ts`](./ssr-complete-example.ts) | 服务端渲染：`createVNode` 建树 + `renderToString` / `renderToStream` + 状态序列化 | `npx tsx examples/ssr-complete-example.ts` |
-| 5 | [`plugins-demo/main.ts`](./plugins-demo/) | 插件系统：`definePlugin` + schema 校验 + `app.use()` | `pnpm dev` 后打开 |
+| 顺序 | 示例                                                     | 说明                                                                              | 怎么跑                                     |
+| ---- | -------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------ |
+| 1    | [`getting-started/demo.mjs`](./getting-started/demo.mjs) | **最小可运行**：ref/computed、v-if/v-for、子组件 props+emit、SSR→挂载→交互        | `node examples/getting-started/demo.mjs`   |
+| 2    | [`counter/index.html`](./counter/)                       | 计数器：`createApp` + `ref` + `computed` + 模板                                   | 浏览器 / dev server 打开                   |
+| 3    | [`complete-todo/main.ts`](./complete-todo/)              | 待办应用：组件拆分 + `watch`                                                      | `pnpm dev` 后打开                          |
+| 4    | [`ssr-complete-example.ts`](./ssr-complete-example.ts)   | 服务端渲染：`createVNode` 建树 + `renderToString` / `renderToStream` + 状态序列化 | `npx tsx examples/ssr-complete-example.ts` |
+| 5    | [`plugins-demo/main.ts`](./plugins-demo/)                | 插件系统：`definePlugin` + schema 校验 + `app.use()`                              | `pnpm dev` 后打开                          |
 
 `docs/GETTING_STARTED.md` 有配套的文字说明。
 
@@ -26,18 +26,18 @@
 
 ### 可运行（推荐）
 
-| 示例 | 要点 |
-|---|---|
-| [`getting-started/`](./getting-started/) | Node 直跑；SSR 与客户端初始结构一致 |
-| [`counter/`](./counter/) | `createApp` + 模板 + 响应式 |
-| [`complete-todo/`](./complete-todo/) | 组件化 + 状态 |
-| [`admin-dashboard/`](./admin-dashboard/) | 复杂布局 + 组件组合 |
-| [`plugins-demo/`](./plugins-demo/) | `definePlugin` / `app.use` / schema 校验 |
-| [`slots-demo/`](./slots-demo/) | 具名插槽 / 作用域插槽 / 插槽内 v-for |
-| [`hello/`](./hello/) · [`my-first/`](./my-first/) | 最小 `createApp` 示例 |
-| [`ssr-complete-example.ts`](./ssr-complete-example.ts) | SSR + 流式渲染 |
-| [`using-lytjs-as-dep/`](./using-lytjs-as-dep/) | 把 LytJS 当外部依赖用（含 Vite 配置） |
-| [`ui-components/`](./ui-components/) | UI 组件展示（静态页） |
+| 示例                                                   | 要点                                     |
+| ------------------------------------------------------ | ---------------------------------------- |
+| [`getting-started/`](./getting-started/)               | Node 直跑；SSR 与客户端初始结构一致      |
+| [`counter/`](./counter/)                               | `createApp` + 模板 + 响应式              |
+| [`complete-todo/`](./complete-todo/)                   | 组件化 + 状态                            |
+| [`admin-dashboard/`](./admin-dashboard/)               | 复杂布局 + 组件组合                      |
+| [`plugins-demo/`](./plugins-demo/)                     | `definePlugin` / `app.use` / schema 校验 |
+| [`slots-demo/`](./slots-demo/)                         | 具名插槽 / 作用域插槽 / 插槽内 v-for     |
+| [`hello/`](./hello/) · [`my-first/`](./my-first/)      | 最小 `createApp` 示例                    |
+| [`ssr-complete-example.ts`](./ssr-complete-example.ts) | SSR + 流式渲染                           |
+| [`using-lytjs-as-dep/`](./using-lytjs-as-dep/)         | 把 LytJS 当外部依赖用（含 Vite 配置）    |
+| [`ui-components/`](./ui-components/)                   | UI 组件展示（静态页）                    |
 
 ### 「响应式库」用法（不经过 createApp）
 
@@ -92,7 +92,7 @@ const myPlugin = definePlugin({
 });
 
 const app = createApp(App);
-app.use(myPlugin, { debug: true });   // 选项会先过 schema 校验
+app.use(myPlugin, { debug: true }); // 选项会先过 schema 校验
 app.mount('#app');
 ```
 
@@ -233,11 +233,11 @@ app.mount('#app');
 
 ## 六、三种渲染入口怎么选
 
-| 入口 | 适用场景 | 说明 |
-|---|---|---|
-| `@lytjs/core` | **默认选择** | 含运行时模板编译器，支持 `template` 字符串（+52 KB gzip） |
-| `@lytjs/core/runtime` | AOT 预编译 / 只写 `render()` / SSR | 不含编译器，体积小；`template` 会给出明确告警 |
-| `@lytjs/core-signal` · `@lytjs/core-vnode` | 明确只用 Vapor / 只用 VDOM | 单一模式入口 |
+| 入口                                       | 适用场景                           | 说明                                                      |
+| ------------------------------------------ | ---------------------------------- | --------------------------------------------------------- |
+| `@lytjs/core`                              | **默认选择**                       | 含运行时模板编译器，支持 `template` 字符串（+52 KB gzip） |
+| `@lytjs/core/runtime`                      | AOT 预编译 / 只写 `render()` / SSR | 不含编译器，体积小；`template` 会给出明确告警             |
+| `@lytjs/core-signal` · `@lytjs/core-vnode` | 明确只用 Vapor / 只用 VDOM         | 单一模式入口                                              |
 
 ```typescript
 // 默认：模板可用

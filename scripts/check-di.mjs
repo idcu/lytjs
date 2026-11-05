@@ -70,7 +70,11 @@ const section = (t) => console.log(`\n${t}`);
 section('[1] withProviderScope 必须恢复进入前的上下文');
 {
   resetProviderScope();
-  check('初始 current 为 null', getCurrentProviderNode() === null, String(getCurrentProviderNode()));
+  check(
+    '初始 current 为 null',
+    getCurrentProviderNode() === null,
+    String(getCurrentProviderNode()),
+  );
 
   withProviderScope(() => {
     check('作用域内 current 非 null', getCurrentProviderNode() !== null, 'null');
@@ -96,7 +100,11 @@ section('[2] 抛错时也必须恢复');
     threw = true;
   }
   check('异常向外传播', threw === true, '被吞掉了');
-  check('异常后 current 恢复为 null', getCurrentProviderNode() === null, String(getCurrentProviderNode()));
+  check(
+    '异常后 current 恢复为 null',
+    getCurrentProviderNode() === null,
+    String(getCurrentProviderNode()),
+  );
 }
 
 // ══════════════════════════════════════════════════════════
@@ -114,7 +122,11 @@ section('[3] 嵌套作用域');
   });
   check('内层节点的 parent 是外层', seen[0] === true, seen[0]);
   check('内层退出后回到外层', seen[1] === true, seen[1]);
-  check('全部退出后 current 为 null', getCurrentProviderNode() === null, String(getCurrentProviderNode()));
+  check(
+    '全部退出后 current 为 null',
+    getCurrentProviderNode() === null,
+    String(getCurrentProviderNode()),
+  );
 }
 
 // ══════════════════════════════════════════════════════════
@@ -136,7 +148,11 @@ section('[5] 一个 scope 的 stop 不得污染后续新建的 scope');
   exitProviderScope();
 
   const b = enterProviderScope();
-  check('新 scope 仍是 active（未被上一个的 stop 污染）', b.scope.active === true, `active=${b.scope.active}`);
+  check(
+    '新 scope 仍是 active（未被上一个的 stop 污染）',
+    b.scope.active === true,
+    `active=${b.scope.active}`,
+  );
   let ran = false;
   b.scope.run(() => {
     ran = true;
@@ -169,9 +185,21 @@ section('[7] 未提供时的行为：throw / optional / default');
   } catch (e) {
     threw = e;
   }
-  check('未提供时抛 InjectionError', threw instanceof InjectionError, threw ? threw.constructor.name : 'null');
-  check('optional 返回 undefined', injectValue('nope', { optional: true }) === undefined, '不是 undefined');
-  check('default 返回值', injectValue('nope', { default: 'D' }) === 'D', String(injectValue('nope', { default: 'D' })));
+  check(
+    '未提供时抛 InjectionError',
+    threw instanceof InjectionError,
+    threw ? threw.constructor.name : 'null',
+  );
+  check(
+    'optional 返回 undefined',
+    injectValue('nope', { optional: true }) === undefined,
+    '不是 undefined',
+  );
+  check(
+    'default 返回值',
+    injectValue('nope', { default: 'D' }) === 'D',
+    String(injectValue('nope', { default: 'D' })),
+  );
   check('default 支持函数', injectValue('nope', { default: () => 'F' }) === 'F', '不是 F');
 }
 
@@ -274,7 +302,11 @@ section('[12] resetProviderScope 必须停止残留作用域');
   const node = enterProviderScope();
   node.scope.stop(); // 手动 stop 记 1 次
   resetProviderScope();
-  check('reset 后 current 为 null', getCurrentProviderNode() === null, String(getCurrentProviderNode()));
+  check(
+    'reset 后 current 为 null',
+    getCurrentProviderNode() === null,
+    String(getCurrentProviderNode()),
+  );
   check('reset 后全局根节点被清空', getActiveProviderRoot() === null, '仍有 root');
   check('reset 会 stop 当前作用域（资源释放）', stopped >= 2, `stopped=${stopped}`);
 
@@ -322,7 +354,11 @@ section('[13] 进程级全局根节点：SSR 语义记录');
       return '<not found>';
     }
   });
-  check('用 withProviderScope 隔离后，请求 B 读不到 A 的值', reqB === '<not found>', `B 看到 ${JSON.stringify(reqB)}`);
+  check(
+    '用 withProviderScope 隔离后，请求 B 读不到 A 的值',
+    reqB === '<not found>',
+    `B 看到 ${JSON.stringify(reqB)}`,
+  );
   check('请求 A 自己的值正常', reqA === 'ALICE', String(reqA));
 }
 
@@ -415,7 +451,11 @@ section('[19] createProviderRecord 的基本形态');
   check('普通值 → 默认 singleton', rec.lifecycle === 'singleton', rec.lifecycle);
 
   const rec2 = createProviderRecord('k2', { useFactory: () => 1 });
-  check('工厂记录保留 factory 而不是提前求值', typeof rec2.factory === 'function', typeof rec2.factory);
+  check(
+    '工厂记录保留 factory 而不是提前求值',
+    typeof rec2.factory === 'function',
+    typeof rec2.factory,
+  );
 }
 
 // ══════════════════════════════════════════════════════════

@@ -140,7 +140,11 @@ function collectImports(file) {
       const arg = node.arguments[0];
       const isDynamicImport = node.expression.kind === ts.SyntaxKind.ImportKeyword;
       const isRequire = ts.isIdentifier(node.expression) && node.expression.text === 'require';
-      if ((isDynamicImport || isRequire) && ts.isStringLiteral(arg) && arg.text.startsWith('@lytjs/')) {
+      if (
+        (isDynamicImport || isRequire) &&
+        ts.isStringLiteral(arg) &&
+        arg.text.startsWith('@lytjs/')
+      ) {
         runtime.add(pkgOf(arg.text));
       }
     }
@@ -270,7 +274,8 @@ if (errors.length === 0 && inlined.length === 0) {
   process.exit(0);
 }
 
-if (errors.length > 0) console.log(`❌ 发现 ${errors.length} 处「运行时 import 了、但没声明」的依赖：\n`);
+if (errors.length > 0)
+  console.log(`❌ 发现 ${errors.length} 处「运行时 import 了、但没声明」的依赖：\n`);
 for (const [pkgName, list] of group(errors)) {
   console.log(`  ${pkgName}  (${list[0].dir})`);
   for (const v of list) console.log(`    · ${v.spec}   ← ${v.file}`);
