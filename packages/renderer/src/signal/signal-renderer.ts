@@ -115,13 +115,15 @@ export function createSignalRenderer(
         // [P2-batch2-3] 已确认安全风险并记录。当前实现依赖编译器可信输入，
         // 后续版本应考虑使用 AOT 编译或沙箱执行环境来消除此风险。
         // 生产环境建议使用 AOT 预编译替代运行时编译
-        // 创建渲染函数，传入所有 dom-runtime 和 reactivity 的函数作为参数
-        // 参数名必须与 codegen-signal.ts 生成的 import 名称一致
         // FIX: P0-2 使用 setSafeHTML 替代 setHTML，避免 XSS 攻击
-        // 注意：生成的代码使用短别名和 _c/_n 参数名
-        // 参数顺序：effect, reconcileArray, createTemplate, setText, setHTML, setAttribute,
-        //          setProperty, setStyle, setClass, insert, remove, createEventHandler,
-        //          bindEffect, onCleanup, runCleanups, ctx, container
+        //
+        // ⚠️ 高危契约（B01b）：产物里的 `import{...}from'...';` 行会被
+        // makeCreateRenderFactory 剥离，helper 只能靠**参数名**注入。
+        // 因此下面 args 的顺序 + `paramNames` 的短别名，必须与
+        // `codegen-signal.ts` 的 `RUNTIME_SHORT_NAMES` 以及产物首行的
+        // `//lytjs-signal:<短名>=<原名>;` 映射三方一致。
+        // 任一侧改名而另一侧漏改，运行时只会报 `ReferenceError: <短名> is not defined`，
+        // 栈里看不到模板行号 —— 断链极难反查，改动务必同步并跑对拍门禁。
         // 创建「工厂」：工厂只接收运行时依赖参数，产出 render 函数（render 再接收 _ctx/_container）。
         // 两段式的目的：让 `new Function` 只有一处、且不再对 render 函数体做花括号配平扫描
         //（组件挂载产物里的空对象字面量会打乱扫描，导致 body 截断 / 参数错位）。
@@ -214,7 +216,6 @@ interface _RenderParams {
   insert: unknown;
   remove: unknown;
   createEventHandler: unknown;
-  bindEffect: unknown;
   onCleanup: unknown;
   runCleanups: unknown;
   mountComponent: unknown;
@@ -300,6 +301,9 @@ function makeCreateRenderFactory(): (
   ): (
     ...runtimeArgs: unknown[]
   ) => (_ctx: Record<string, unknown>, _container: unknown) => (() => void) | void {
+    // ⚠️ 契约的另一半：这里按「行首 import 到行尾」剥成单行导入。编译器产物必须保持
+    // `import{...}from'...';` **一行一条**（`emitProductPrefix` 保证），且本地名已改写成
+    // 上面的短别名；首行 `//lytjs-signal:...;` 是注释，不参与执行，仅供人工还原。
     const moduleCode = code.replace(/^\s*import[^\n]*\n/gm, '').replace(/\bexport\s+/g, '');
     try {
       return new Function(...paramNames, `${moduleCode}\nreturn render;`) as unknown as (
