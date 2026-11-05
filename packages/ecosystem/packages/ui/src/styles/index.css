@@ -2270,23 +2270,88 @@
 /* ===== Drawer ===== */
 .lyt-drawer {
   position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 380px;
-  max-width: 90vw;
+  inset: 0;
   z-index: 2001;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+.lyt-drawer__overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--lyt-bg-color-overlay);
+}
+.lyt-drawer__container {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  max-width: 90vw;
   background: var(--lyt-bg-color);
   box-shadow: -6px 0 18px rgba(0, 0, 0, 0.12);
   overflow: auto;
-  transform: translateX(100%);
   transition: transform var(--lyt-transition-duration) ease;
 }
-.lyt-drawer--visible {
-  transform: translateX(0);
-}
-.lyt-drawer--closing {
+.lyt-drawer--rtl .lyt-drawer__container {
+  top: 0;
+  right: 0;
+  bottom: 0;
   transform: translateX(100%);
+}
+.lyt-drawer--ltr .lyt-drawer__container {
+  top: 0;
+  left: 0;
+  bottom: 0;
+  transform: translateX(-100%);
+}
+.lyt-drawer--ttb .lyt-drawer__container {
+  top: 0;
+  left: 0;
+  right: 0;
+  transform: translateY(-100%);
+}
+.lyt-drawer--btt .lyt-drawer__container {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  transform: translateY(100%);
+}
+.lyt-drawer--visible .lyt-drawer__container {
+  transform: translate(0, 0);
+}
+.lyt-drawer--closing .lyt-drawer__overlay {
+  opacity: 0;
+  transition: opacity var(--lyt-transition-duration) ease;
+}
+.lyt-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--lyt-border-color-lighter);
+}
+.lyt-drawer__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--lyt-text-color-primary);
+}
+.lyt-drawer__close {
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--lyt-text-color-secondary);
+  cursor: pointer;
+}
+.lyt-drawer__body {
+  flex: 1 1 auto;
+  padding: 20px;
+  overflow: auto;
+  color: var(--lyt-text-color-regular);
+}
+.lyt-drawer__footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--lyt-border-color-lighter);
 }
 
 /* ===== Image ===== */

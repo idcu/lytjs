@@ -96,10 +96,7 @@
       "slots": { "status": "pass" },
       "events": { "status": "pass" },
       "controlled": { "status": "pass" },
-      "styles": {
-        "status": "red",
-        "reason": "__overlay / __container / __header / __title / __close / __body / __footer 无规则"
-      },
+      "styles": { "status": "pass" },
       "keyboard": { "status": "pass" }
     },
     "Empty": {
