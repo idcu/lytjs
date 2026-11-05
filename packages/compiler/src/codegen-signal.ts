@@ -3,6 +3,7 @@
 
 import { NodeTypes, ElementTypes } from './constants';
 import { buildItemComponentProps } from './codegen-signal-optimized';
+import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
 import { FRAGMENT_SENTINEL } from './transforms/transform-element';
 import type {
@@ -491,6 +492,7 @@ function processChildren(
   inheritedOnce = false,
   locals: ReadonlySet<string> = new Set(),
   staticVars?: Map<ElementNode, string>,
+  inheritedMemo?: string,
 ): void {
   for (const child of children) {
     if (child.type === NodeTypes.ELEMENT) {
@@ -503,6 +505,7 @@ function processChildren(
         inheritedOnce,
         locals,
         staticVars,
+        inheritedMemo,
       );
     } else if (child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
       processConditional(
@@ -634,9 +637,19 @@ function processElement(
   inheritedOnce = false,
   locals: ReadonlySet<string> = new Set(),
   staticVars?: Map<ElementNode, string>,
+  inheritedMemo?: string,
 ): void {
   // v-once：沿元素树向下传递（整个子树都只渲染一次）
   const onceMode = inheritedOnce || node.__isOnce === true;
+
+  // v-memo（B01b 移植）：transformVMemo 已把指令从 props 摘掉，只留元数据。
+  // 有自己 v-memo 的元素把「本元素 + 后代」的绑定统一包进依赖守卫；
+  // 仅继承祖先 memo 的后代**不再重复包**（否则守卫会嵌套，父依赖变化时
+  // 反复新建内层 effect）。v-once 优先级更高（与优化版一致）。
+  const memoMeta = getMemoMeta(node);
+  const memoDeps =
+    memoMeta && memoMeta.deps ? prefixIdentifiers(memoMeta.deps, new Set()) : inheritedMemo;
+  const memoMode = !onceMode && !!memoMeta?.deps;
   // 记录本次调用前的长度，末尾统一把"新增绑定"去掉 effect 包裹
   const bindingStart = dynamicBindings.length;
 
@@ -778,6 +791,7 @@ function processElement(
         onceMode,
         locals,
         staticVars,
+        memoDeps,
       );
     } else if (child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
       // 插入锚点：分支元素必须落在「原位置」，而不是父容器末尾。
@@ -813,9 +827,27 @@ function processElement(
     }
   }
 
-  // v-once：把本次产生的绑定去掉 `effect()` 包裹 —— 只渲染一次，不建响应式边界。
-  // 幂等：内层递归已处理过的绑定再处理一次也无副作用。
-  if (onceMode) {
+  // v-memo：把「本元素 + 后代」新增的绑定收进一个依赖守卫。
+  // 守卫本身必须是 effect（需要每次依赖变化都重跑比较），内部的逐绑定 effect 去掉
+  // —— 否则内层 effect 仍会独立触发，memo 形同虚设。
+  // v-once 优先级更高：本元素是 v-once 时走下面的「去掉 effect 包裹」分支。
+  if (memoMode && memoDeps) {
+    const inner = dynamicBindings.slice(bindingStart);
+    if (inner.length > 0) {
+      const depth = varCounter.get('_memo_depth') ?? 0;
+      varCounter.set('_memo_depth', depth + 1);
+      const memoVar = `_memo_${depth}`;
+      // 与优化版同一形态：`let _memo_N=null;effect(()=>{const _d=deps;...})`
+      const body = inner.map((b) => stripEffectWrapper(b.code)).join('');
+      dynamicBindings.length = bindingStart;
+      dynamicBindings.push({
+        varName: inner[0]!.varName,
+        code: `let ${memoVar}=null;effect(()=>{const _d=${memoDeps};if(!${memoVar}||${memoVar}.some((v,i)=>v!==_d[i])){${memoVar}=_d;${body}}});`,
+      });
+    }
+  } else if (onceMode) {
+    // v-once：把本次产生的绑定去掉 `effect()` 包裹 —— 只渲染一次，不建响应式边界。
+    // 幂等：内层递归已处理过的绑定再处理一次也无副作用。
     for (let i = bindingStart; i < dynamicBindings.length; i++) {
       const binding = dynamicBindings[i];
       if (binding) binding.code = stripEffectWrapper(binding.code);

@@ -72,3 +72,41 @@ describe('Signal 模式 - v-memo', () => {
     expect(code).toContain('_memo_1');
   });
 });
+
+/**
+ * B01b：v-memo 移植到**基础实现**（运行时 SignalRenderer 走的路径）。
+ * 此前基础实现只在 v-once 上有处理，v-memo 被静默丢弃 —— 双 codegen 再次不同步。
+ */
+describe('Signal 模式 - 基础实现（optimizeSignal:false）的 v-memo', () => {
+  const base = (t: string) =>
+    compileImpl(t, { rendererMode: 'signal', optimizeSignal: false }).code;
+
+  it('应生成依赖数组守卫，且守卫内不再包一层 effect', () => {
+    const code = base('<div v-memo="[a, b]">{{ msg }}</div>');
+    expect(code).toContain('let _memo_0=null;');
+    expect(code).toContain('const _d=[_ctx.a, _ctx.b];');
+    expect(code).toContain('some((v,i)=>v!==_d[i])');
+    expect(code).toContain('_memo_0=_d;x(_div, _ctx.msg);');
+    // 逐绑定 effect 必须被去掉，否则内层 effect 仍独立触发，memo 失效
+    expect(code).not.toContain('e(() => x(_div');
+  });
+
+  it('v-memo 应把整个子树的绑定收进守卫', () => {
+    const code = base('<div v-memo="[a]"><span>{{ msg }}</span></div>');
+    expect(code).toContain('const _d=[_ctx.a];');
+    expect(code).toContain('_memo_0=_d;x(_span, _ctx.msg);');
+  });
+
+  it('多个 v-memo 元素应使用不同的缓存变量名（基础实现）', () => {
+    const code = base('<div><i v-memo="[a]">{{ x }}</i><b v-memo="[b]">{{ y }}</b></div>');
+    expect(code).toContain('let _memo_0=null;');
+    expect(code).toContain('let _memo_1=null;');
+  });
+
+  it('v-once 优先于 v-memo（与优化版一致）', () => {
+    const code = base('<div v-once v-memo="[a]">{{ msg }}</div>');
+    expect(code).not.toContain('_memo_');
+    expect(code).toContain('x(_div, _ctx.msg);');
+    expect(code).not.toContain('e(() => x(_div');
+  });
+});
