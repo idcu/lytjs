@@ -1319,6 +1319,13 @@
 .lyt-progress__circle {
   position: relative;
 }
+.lyt-progress__circle-trail,
+.lyt-progress__circle-path {
+  fill: none;
+}
+.lyt-progress__circle-path {
+  transition: stroke-dashoffset 0.3s;
+}
 
 /* ===== Slider 组件 ===== */
 .lyt-slider {

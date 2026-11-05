@@ -1888,9 +1888,8 @@ export interface ProgressProps {
   ariaDescribedBy?: string;
 }
 
-export interface ProgressSlots {
-  default?: () => VNode[];
-}
+// ★ 2026-11-06（B04）：本组件没有任何插槽 —— 删除从未渲染的 `default` 声明。
+export type ProgressSlots = Record<string, never>;
 
 export interface ProgressSetupProps extends Record<string, unknown> {
   percentage: number;

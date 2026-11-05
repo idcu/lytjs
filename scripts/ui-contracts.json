@@ -161,13 +161,10 @@
     },
     "Progress": {
       "vmodel": { "status": "n/a", "reason": "纯展示组件，无值语义" },
-      "slots": { "status": "red", "reason": "声明 default 插槽，渲染函数从不读取" },
+      "slots": { "status": "n/a", "reason": "组件无插槽（删除从未渲染的 default 声明）" },
       "events": { "status": "n/a", "reason": "无事件回调" },
       "controlled": { "status": "pass" },
-      "styles": {
-        "status": "red",
-        "reason": "__circle-trail / __circle-path 无规则（圆形进度靠内联属性硬撑）"
-      },
+      "styles": { "status": "pass" },
       "keyboard": { "status": "n/a", "reason": "无交互" }
     },
     "Radio": {
