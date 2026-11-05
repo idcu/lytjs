@@ -836,7 +836,8 @@
       "state": {
         "ok": false
       },
-      "components": ["my-comp"]
+      "components": ["my-comp"],
+      "expected": "<div></div>"
     },
     {
       "id": "kb06",

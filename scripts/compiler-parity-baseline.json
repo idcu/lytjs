@@ -36,24 +36,19 @@
         "note": "优化版不做分支内动态绑定：:id 写成字面量、文本丢失"
       },
       {
+        "id": "if05",
+        "kind": "opt-if-branch-nested-text-lost",
+        "note": "基础实现已修复（分支内两层插值正确）；优化版仍不做分支内嵌套绑定，<div></div>"
+      },
+      {
         "id": "if06",
         "kind": "opt-if-branch-dynamic-lost",
         "note": "优化版不做分支内文本绑定：{{n}} 丢失"
       },
       {
-        "id": "if07",
-        "kind": "base-v-if-static-class-leak",
-        "note": "基础实现把分支元素的静态 class 泄漏到父容器（属基础实现缺陷）"
-      },
-      {
-        "id": "if08",
-        "kind": "base-v-elseif-crash",
-        "note": "基础实现 v-else-if 链抛 Cannot read properties of undefined（属基础实现缺陷）"
-      },
-      {
         "id": "if09",
-        "kind": "base-if-branch-class-unprefixed",
-        "note": "基础实现分支 :class 未加 _ctx. 前缀 → ReferenceError（属基础实现缺陷）"
+        "kind": "opt-if-branch-class-unprefixed",
+        "note": "基础实现已修复（:class 取 _ctx.cls）；优化版把动态值写成字面量 class=\"cls\""
       },
       {
         "id": "if11",
@@ -64,11 +59,6 @@
         "id": "for02",
         "kind": "opt-for-nested-children-lost",
         "note": "优化版列表项只处理直接文本，嵌套 <span> 整段丢失"
-      },
-      {
-        "id": "for08",
-        "kind": "base-for-item-prop-not-prefixed",
-        "note": "基础实现列表项 :data-k 未按 item 形参求值，写成字面量 x（属基础实现缺陷）"
       },
       {
         "id": "for09",
@@ -115,25 +105,19 @@
         "kind": "opt-kebab-component-subtraction",
         "note": "同上（两个 kebab 组件混排）"
       },
-      {
-        "id": "kb05",
-        "kind": "base-for-component-invalid-name",
-        "note": "基础实现 v-for 内组件名校验把解析后的表达式当名字，直接编译抛错（属基础实现缺陷）"
-      },
       { "id": "mx01", "kind": "opt-if-branch-dynamic-lost", "note": "优化版 v-if 分支文本丢失" },
       { "id": "mx02", "kind": "opt-for-nested-children-lost", "note": "优化版列表项嵌套元素丢失" },
       {
         "id": "mx04",
-        "kind": "base-v-if-node-order",
-        "note": "基础实现把 v-if 分支追加到末尾而非原位；优化版另有文本/属性丢失；两版都不符合语义基准"
+        "kind": "opt-if-branch-dynamic-lost",
+        "note": "基础实现已修复（分支按原位置插入 + 文本/属性绑定）；优化版仍有文本/属性丢失"
       }
     ],
-    "expectedMismatch": [
-      { "id": "if05", "note": "基础实现 v-if 分支内两层插值丢失（<div></div>）" },
-      { "id": "if07", "note": "基础实现把分支静态 class 泄漏到父容器" },
-      { "id": "for08", "note": "基础实现列表项动态属性未求值，写成字面量" },
-      { "id": "mx04", "note": "基础实现 v-if 分支节点顺序错误（追加到末尾）" },
-      { "id": "mx06", "note": "基础实现 <slot/> 出口保留字面量 <slot> 元素未替换" }
-    ]
+    "expectedMismatch": []
+  },
+  "modeParity": {
+    "$comment": "vnode / SSR 产物执行冒烟中**已知**抛错的模板（B01a 起纳入棘轮，只允许减少）。ssrThrows 的 5 条均为动态组件名整段表达式引用了未注入的 comp。",
+    "vnodeThrows": [],
+    "ssrThrows": ["cp02", "cp06", "cp09", "kb02", "kb03"]
   }
 }

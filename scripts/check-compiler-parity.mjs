@@ -63,10 +63,15 @@ const REACTIVITY = new URL('../packages/reactivity/dist/index.mjs', import.meta.
 const VDOM = new URL('../packages/vdom/dist/index.mjs', import.meta.url).href;
 const RENDERER = new URL('../packages/renderer/dist/index.mjs', import.meta.url).href;
 const COMPONENT = new URL('../packages/component/dist/index.mjs', import.meta.url).href;
+const SECURITY = new URL('../packages/common/packages/security/dist/index.mjs', import.meta.url)
+  .href;
 
 const { compile } = await import(COMPILER);
-const { createSignalRenderer } = await import(RENDERER);
+const { createSignalRenderer, mountVNode } = await import(RENDERER);
 const { reactive } = await import(REACTIVITY);
+const vdomRuntime = await import(VDOM);
+const domRuntimeModules = await import(DOM_RUNTIME);
+await import(SECURITY);
 
 /**
  * 执行 signal 产物（与 packages/renderer/src/signal/signal-renderer.ts 的参数表一致）。
@@ -527,6 +532,166 @@ for (const fx of FIXTURES) {
   } else if (divergent) {
     console.log(`     · ${fx.name} 仍分叉（已记录基线）`);
   }
+}
+
+// ============================================================
+// ④ vnode / SSR 模式安全网（B01a 补齐，B01b 前置）
+//
+// 为什么需要：B01b 会把 codegen-signal / codegen-signal-optimized / codegen /
+// codegen-ssr 里重复的工具函数抽成共享模块。signal 模式已有真实执行对拍，
+// **vnode 与 SSR 两条产物链路此前没有任何门禁** —— 抽取一旦改坏它们，
+// 只有等下游用例偶然覆盖才会发现。这里补两层：
+//
+//   a) **产物逐字快照**：每条模板的 vnode / SSR 编译产物存进
+//      `scripts/compiler-mode-snapshot.json`，重构后必须逐字不变
+//      （有意变更时用 `--update-mode-snapshot` 重生成，diff 即评审点）。
+//   b) **执行冒烟**：vnode 产物真实 render + mount、SSR 产物真实求值，
+//      断言不抛错（语义/结构差异不在此断言，避免把运行时差异当编译缺陷）。
+//
+// 已知的 SSR 抛错（动态组件名的表达式中引用了未注入的 `comp`）记在
+// `compiler-parity-baseline.json` 的 `modeParity` 段，同样**只允许减少**。
+// ============================================================
+const MODE_RUNTIME = {
+  ...vdomRuntime,
+  ...domRuntimeModules,
+  ...(await import(COMPONENT)),
+  ...(await import(RENDERER)),
+  ...(await import(REACTIVITY)),
+};
+const MODE_NAMES = Object.keys(MODE_RUNTIME).filter((n) => /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(n));
+
+/** 构造模板执行上下文（组件映射与插槽占位，与 signal 对拍保持一致） */
+function buildModeCtx(entry) {
+  const data = { ...(entry.state ?? {}) };
+  if (entry.slots) data.$slots = makeSlots(entry.slots);
+  if (entry.components) {
+    for (const tag of entry.components) {
+      if (COMPONENTS[tag]) data[tag] = COMPONENTS[tag];
+    }
+  }
+  return data;
+}
+
+function execVNodeMode(code, ctx) {
+  const factory = new Function(...MODE_NAMES, `${code}\n;return render;`);
+  const render = factory(...MODE_NAMES.map((n) => MODE_RUNTIME[n]));
+  const vnode = render(ctx, []);
+  const host = document.createElement('div');
+  document.body.appendChild(host);
+  mountVNode(vnode, host);
+  const html = host.innerHTML.trim();
+  host.remove();
+  return html;
+}
+
+function execSSRMode(code, ctx) {
+  const factory = new Function(
+    '_ctx',
+    'sanitizeHTML',
+    'normalizeClass',
+    'normalizeStyle',
+    'renderComponentVNode',
+    '__DEV__',
+    `${code}\n;return render(_ctx);`,
+  );
+  return factory(
+    ctx,
+    runtime.sanitizeHTML,
+    runtime.normalizeClass,
+    runtime.normalizeStyle,
+    runtime.renderComponentVNode,
+    false,
+  );
+}
+
+const modeSnapshotPath = new URL('./compiler-mode-snapshot.json', import.meta.url);
+const updateModeSnapshot = process.argv.includes('--update-mode-snapshot');
+const modeSnapshot = updateModeSnapshot
+  ? { vnode: {}, ssr: {} }
+  : JSON.parse(readFileSync(modeSnapshotPath, 'utf8'));
+const modeBaseline = baseline.modeParity ?? { vnodeThrows: [], ssrThrows: [] };
+const observedModeThrows = { vnode: [], ssr: [] };
+const nextModeSnapshot = { vnode: {}, ssr: {} };
+
+console.log('\n  ↪ vnode / SSR 模式安全网：产物逐字快照 + 执行冒烟');
+for (const entry of TEMPLATES) {
+  let vnodeCode = '';
+  let ssrCode = '';
+  try {
+    vnodeCode = compile(entry.template, {}).code;
+  } catch (e) {
+    fail(`${entry.id}: vnode 编译抛错`, e instanceof Error ? e.message : String(e));
+  }
+  try {
+    ssrCode = compile(entry.template, { ssrMode: true }).code;
+  } catch (e) {
+    fail(`${entry.id}: SSR 编译抛错`, e instanceof Error ? e.message : String(e));
+  }
+  nextModeSnapshot.vnode[entry.id] = vnodeCode;
+  nextModeSnapshot.ssr[entry.id] = ssrCode;
+
+  if (!updateModeSnapshot) {
+    for (const mode of ['vnode', 'ssr']) {
+      const code = mode === 'vnode' ? vnodeCode : ssrCode;
+      const expected = modeSnapshot[mode]?.[entry.id];
+      if (expected === undefined) {
+        fail(
+          `${entry.id}: ${mode} 产物缺少快照`,
+          '请运行 node scripts/check-compiler-parity.mjs --update-mode-snapshot',
+        );
+      } else if (expected !== code) {
+        const a = expected.split('\n');
+        const b = code.split('\n');
+        let line = 0;
+        while (line < a.length && line < b.length && a[line] === b[line]) line++;
+        fail(
+          `${entry.id}: ${mode} 产物与快照不一致（首个差异行 ${line + 1}）`,
+          `快照: ${JSON.stringify(a[line] ?? '<EOF>')}\n     实际: ${JSON.stringify(b[line] ?? '<EOF>')}`,
+        );
+      }
+    }
+  }
+
+  // 执行冒烟（组件/插槽上下文齐全）
+  const ctx = buildModeCtx(entry);
+  try {
+    execVNodeMode(vnodeCode, { ...ctx });
+  } catch (e) {
+    observedModeThrows.vnode.push(entry.id);
+    if (!modeBaseline.vnodeThrows.includes(entry.id)) {
+      fail(`${entry.id}: vnode 产物执行抛错`, e instanceof Error ? e.message : String(e));
+    }
+  }
+  try {
+    const html = execSSRMode(ssrCode, { ...ctx });
+    if (typeof html !== 'string') throw new Error(`SSR 产物返回 ${typeof html}`);
+  } catch (e) {
+    observedModeThrows.ssr.push(entry.id);
+    if (!modeBaseline.ssrThrows.includes(entry.id)) {
+      fail(`${entry.id}: SSR 产物执行抛错`, e instanceof Error ? e.message : String(e));
+    }
+  }
+}
+
+// 棘轮：基线里记录、但本轮已不再抛错的项必须移除
+for (const id of modeBaseline.vnodeThrows) {
+  if (!observedModeThrows.vnode.includes(id)) {
+    fail(`${id}: vnode 产物已不再抛错，请从 baseline.modeParity.vnodeThrows 移除`);
+  }
+}
+for (const id of modeBaseline.ssrThrows) {
+  if (!observedModeThrows.ssr.includes(id)) {
+    fail(`${id}: SSR 产物已不再抛错，请从 baseline.modeParity.ssrThrows 移除`);
+  }
+}
+console.log(
+  `     产物快照: ${updateModeSnapshot ? '已重生成' : `${TEMPLATES.length} 条 × 2 模式逐字一致`}；` +
+    `执行冒烟：vnode 抛错 ${observedModeThrows.vnode.length}、SSR 抛错 ${observedModeThrows.ssr.length}`,
+);
+
+if (updateModeSnapshot) {
+  writeFileSync(modeSnapshotPath, `${JSON.stringify(nextModeSnapshot, null, 2)}\n`);
+  console.log(`     已写入 ${modeSnapshotPath.pathname}`);
 }
 
 const reportIdx = process.argv.indexOf('--report');
