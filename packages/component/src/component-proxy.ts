@@ -9,7 +9,7 @@ import { nextTick } from '@lytjs/common-scheduler';
 import { unref, isRef } from '@lytjs/reactivity';
 import type { ComponentInternalInstance, ComponentPublicInstance } from './types';
 import { forceComponentUpdate } from './force-update';
-import { isBuiltinComponentName, getBuiltinComponent } from './builtin-components';
+import { isBuiltinComponentName, getBuiltinComponent } from './builtin-registry';
 // FIX: DTS build error - VNode 未使用
 // import type { VNode } from '@lytjs/common-vnode';
 

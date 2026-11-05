@@ -19,22 +19,19 @@
 // 而 `import { Teleport } from '@lytjs/core'` + `h(Teleport, …)` 一直正常 ——
 // 也就是说「内置组件可用」这句话**只在 import 路径上成立，在模板路径上是假的**。
 //
-// ## 为什么单开一个文件
+// ## 为什么查表函数搬到了 builtin-registry.ts
 //
-// `component-proxy.ts` 是组件实例的核心，导入 `suspense.ts` / `keep-alive.ts`
-// 会形成 `component-proxy → suspense → component → component-proxy` 的环。
-// 环本身是安全的（这几个模块顶层只有声明与对象字面量，没有会触碰环另一侧的**调用**），
-// 但把它隔离在一个「只有数据、没有逻辑」的文件里，能把环的爆炸半径压到最小：
-// 将来若某个内置组件在顶层加了副作用，只需要改这一个文件，而不是核心代理。
-//
-// ⚠️ 这里刻意用**对象字面量**（而非 getter）：代理的 `get` 在渲染期高频调用，
-//   走一层属性读取即可；用 getter 会让每次查找都多一次函数调用。
+// 本文件要 import 五个实现，而实现（尤其 keep-alive）会回到 component 核心，
+// 于是 `component-proxy` 直接 import 本文件会形成源码级循环依赖。
+// 查表函数与注册表已下沉到 `builtin-registry.ts`（叶子模块），
+// `component-proxy` 只依赖它；本文件在加载时把实现注册进去。
 
 import { Teleport } from './teleport';
 import { Suspense } from './suspense';
 import { Transition } from './transition';
 import { TransitionGroup } from './transition-group';
 import { KeepAlive } from './keep-alive';
+import { registerBuiltin } from './builtin-registry';
 
 /**
  * 内置组件名 → 组件对象。
@@ -52,14 +49,9 @@ export const BUILTIN_COMPONENTS: Record<string, unknown> = {
   KeepAlive,
 };
 
-/** 该名字是否是内置组件（`hasOwn` 而非 `in`，避免命中原型链上的 `constructor` 等） */
-export function isBuiltinComponentName(key: string): boolean {
-  return Object.prototype.hasOwnProperty.call(BUILTIN_COMPONENTS, key);
+// 注册到叶子表：`BUILTIN_COMPONENTS` 仍是唯一真相，注册只是把同一份数据交给查表模块。
+for (const [name, component] of Object.entries(BUILTIN_COMPONENTS)) {
+  registerBuiltin(name, component);
 }
 
-/** 取内置组件对象（未注册返回 `undefined`） */
-export function getBuiltinComponent(key: string): unknown {
-  return Object.prototype.hasOwnProperty.call(BUILTIN_COMPONENTS, key)
-    ? BUILTIN_COMPONENTS[key]
-    : undefined;
-}
+export { isBuiltinComponentName, getBuiltinComponent } from './builtin-registry';

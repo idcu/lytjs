@@ -1,6 +1,10 @@
 // src/index.ts
 // @lytjs/component - 主入口文件
 
+// 副作用加载：把内置组件注册进 builtin-registry（component-proxy 只依赖那个叶子表）。
+// 必须在其它导出之前加载，保证通过包入口使用组件系统时表已就绪。
+import './builtin-components';
+
 // 核心组件 API
 /** 创建组件实例、设置组件、定义组件等核心 API */
 export {
