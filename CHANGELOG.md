@@ -4,6 +4,33 @@
 
 ## [Unreleased]
 
+### 🛠️ 编译器：基础 signal 实现修复 8 处缺陷 + vnode/SSR 对拍安全网（B01a，2026-11-06）
+
+**行为变更（默认路径 `rendererMode:'signal'`，`optimizeSignal` 缺省即走基础实现）**
+
+- `v-if` 分支元素不再把静态 `class` 泄漏到父容器（if07）。
+- `v-if / v-else-if / v-else` 链不再抛 `Cannot read properties of undefined (reading 'varName')`（if08）。
+- 分支内 `:class` / `:style` 改为绑定到**分支元素自身**并补 `_ctx.` 前缀，不再 `ReferenceError`（if09）。
+- 列表项动态属性按 item 形参求值，不再把 `:data-k="x"` 写成字面量 `data-k="x"`（for08）。
+- 组件出现在 `v-if` 分支时不再编译抛错；分支激活时由 `mountComponent` 挂载（kb05）。
+- `v-if` 分支按模板原位置插入（用后一个静态兄弟元素作锚点），不再一律追加到父容器末尾（mx04）。
+- 分支子树内的多层插值（`<div v-if><span>{{msg}}</span></div>`）不再整段丢失：分支 HTML 现在为每个插值留文本槽位，运行期 `claimTextSlots` 认领（if05）。
+- `<slot/>` 出口改为就地挂载（`mountSlotOutlet`，A/B 两版同改）：插槽内容落在模板原位置，DOM 里不再残留字面量 `<slot>` 包装（mx06）；有 fallback 子内容时仍走原 `mountSlot`。
+
+**门禁与资产**
+
+- `check-compiler-parity`（fast，约 2s）扩出第 ③ 段 **vnode / SSR 模式安全网**：
+  100 模板 × 2 模式的编译产物逐字快照（`scripts/compiler-mode-snapshot.json`，用
+  `--update-mode-snapshot` 重生成）+ 执行冒烟（vnode 真实 render/mount、SSR 真实求值不得抛错）。
+  已知 SSR 抛错 5 条（动态组件名表达式引用未注入的 `comp`：cp02/cp06/cp09/kb02/kb03）记入
+  `compiler-parity-baseline.json` 的 `modeParity`，同样只允许减少。
+- 100 模板对拍结果从 **一致 74 / 不一致 26、expectedMismatch 5** 收敛到
+  **一致 77 / 不一致 23、expectedMismatch 0**；棘轮基线 26 → 23（移除 if07/if08/for08/kb05，
+  if05 由「两版同错」转为「基础实现正确、优化实现仍错」的真实分叉）。
+- 优化实现（`optimizeSignal:true`）保持原样、未删除；剩余 23 条分叉全部是优化实现侧问题。
+- 体积：100 模板基础实现产物合计 77,233 B，优化实现 41,380 B（B 小 46.4%）；修复 8 条模板
+  新增分支动态/槽位/原位插入代码合计 9,319 B（此前 if08/kb05 不可编译、其余 6 条为不完整产物）。
+
 ### 🔍 编译器：两套 signal codegen 逐字对拍（B01 前置，2026-11-06）
 
 - `check-compiler-parity`（fast，约 2s）在原有「默认路径 5 模板语义正确」之上，

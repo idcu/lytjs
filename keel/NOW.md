@@ -35,9 +35,12 @@ keywords: [硬约束9]
   编译器在静态闭包内；runtime 入口 36.6 KB 不含编译器）。归因：
   `evaluation/LYTJS_体积归因_2026-11-06.md`。17 条断言；注入 6 类全红。
 - 门禁：fast 46/46；slow 14/14。
+- **B01a** 基础 signal 修 8 缺陷（if05/07/08/09·for08·kb05·mx04·mx06）；
+  对拍 74→**77**、基线 26→**23**、`expectedMismatch` 5→**0**；
+  门禁扩 vnode/SSR 快照；详见 `evaluation/LYTJS_B01a修复报告_2026-11-06.md`。
 
 ## 下一步
-1. 阶段 B：B01 codegen 合并 / B03 AOT 入口（A15 归因已给出靶心与顺序）。
+1. 阶段 B：B01b 体积手法移植 → B03 AOT 入口（A15 归因已给靶心）。
 
 ## 阻塞
 | 卡在 | 绕行 |
