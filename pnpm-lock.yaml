@@ -1315,6 +1315,9 @@ importers:
 
   packages/ecosystem/packages/store:
     dependencies:
+      '@lytjs/common-error':
+        specifier: workspace:*
+        version: link:../../../common/packages/error
       '@lytjs/common-is':
         specifier: workspace:*
         version: link:../../../common/packages/is

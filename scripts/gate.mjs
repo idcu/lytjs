@@ -49,6 +49,15 @@ const ENV = { ...process.env, PATH: `${BIN}:${process.env.PATH ?? ''}` };
 const GATES = [
   // ── 快档：只读源码、不需要 dist ──────────────────────────────
   {
+    name: 'check-lockfile',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-lockfile.mjs'],
+    approx: '~0.2s',
+    desc:
+      '★ 锁文件一致性：每个 workspace package.json 的依赖声明必须与 pnpm-lock.yaml 的 importers 段一致 ' +
+      '（不一致时 `install --frozen-lockfile` 会失败，整个验证链起不来；2026-11-05 新增）',
+  },
+  {
     name: 'check-build-order',
     tier: 'fast',
     cmd: ['tsx', 'scripts/check-build-order.ts'],
