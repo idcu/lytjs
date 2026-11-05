@@ -4,6 +4,16 @@
 
 ## [Unreleased]
 
+### 🔐 `v-html` 消毒：两条渲染路径的一致性纳入门禁（2026-11-05）
+
+- 审计曾称「signal 模式直接 `setHTML` ⇒ 绕过消毒」。实测已过时：`@lytjs/dom-runtime`
+  的 `setHTML` 自 2026-10-27 起在写入前调用 `sanitizeHTML`，vnode 与 signal 两种模式
+  对 8 组不可信载荷产出的 DOM **逐字相同**且均已消毒。
+- 新增门禁 `check-security-html`（fast，24 条）：两模式逐字比对 + 无危险构造 + 安全 HTML
+  保留 + signal 更新路径二次消毒 + `setHTML` 自身消毒（防止两边「一致地不安全」）。
+- 注入验证：摘掉 `setHTML` 内的 `sanitizeHTML` ⇒ 16 项红。
+- 详见 [packages/dom-runtime/CHANGELOG.md](packages/dom-runtime/CHANGELOG.md)。
+
 ### 🧠 响应式语义：三处「不抛异常」的缺口（2026-11-05）
 
 - `reactive` 解包函数型 Signal（读侧返回当前值，写侧写穿到 `signal.set()`），

@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### 🔐 `v-html` 的 signal 产物标注消毒责任（A09，2026-11-05）
+
+- `codegen-signal` 的 `innerHTML` / `html` 分支仍生成 `setHTML(el, x)`；消毒由
+  `@lytjs/dom-runtime.setHTML` 统一负责，与 vnode 模式的 `sanitizeHTML(x)` 共用同一实现。
+  代码内已补注释，避免后续重构误以为此处无需消毒。
+- 双模式一致性由 `scripts/check-security-html.mjs`（fast）逐字比对；**产物无变化**。
+
 ### ⚠️ 行为变更：`optimizeSignal` 默认关闭（A04 / D1，2026-11-05）
 
 - **默认值由 true 改为 false**。`rendererMode: 'signal' | 'vapor'` 在不传

@@ -735,7 +735,10 @@ function processVNodeCallProps(
         code: `effect(() => setText(${varName}, ${prefixIdentifiers(value, locals)}));`,
       });
     } else if (key === 'innerHTML') {
-      // v-html 转换后的结果
+      // v-html 转换后的结果。
+      // 消毒由 @lytjs/dom-runtime 的 setHTML 统一负责（写入前调用 sanitizeHTML），
+      // 与 vnode 模式的 `innerHTML: sanitizeHTML(x)` 共用同一真相源；
+      // 一致性由 scripts/check-security-html.mjs 门禁逐字比对两种模式。
       dynamicBindings.push({
         varName,
         code: `effect(() => setHTML(${varName}, ${prefixIdentifiers(value, locals)}));`,
@@ -941,7 +944,7 @@ function processDirective(
     case 'html': {
       // v-html 在 transform 阶段已被转换为 innerHTML 属性
       // 在 processVNodeCallProps 中处理
-      // 此处作为后备
+      // 此处作为后备（消毒同样由 dom-runtime.setHTML 承担，见上方 innerHTML 分支注释）
       if (expContent) {
         dynamicBindings.push({
           varName,

@@ -1,5 +1,15 @@
 # @lytjs/dom-runtime 更新日志
 
+## [Unreleased]
+
+### 🔐 `v-html` 消毒的单一真相源（2026-11-05，A09）
+
+- `setHTML()` 自 2026-10-27 起在写入 `innerHTML` 前调用 `sanitizeHTML()`（未变更）。
+  本次把它与 vnode 模式的 `innerHTML: sanitizeHTML(x)` 纳入同一门禁
+  `scripts/check-security-html.mjs`：8 组不可信载荷在两模式下的消毒结果必须逐字一致，
+  且 `setHTML` 自身必须消毒（不依赖调用方）。
+- 注入验证：摘掉 `setHTML` 内的 `sanitizeHTML` ⇒ 门禁 16 项红。
+
 ## [6.9.6] - 2026-06-06
 
 ### 🚀 版本升级

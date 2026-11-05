@@ -545,6 +545,23 @@ const GATES = [
       '判据 3 组 23 条，含三组「回退修复即红」的负向对照（分别 5 / 5 / 3 红）',
   },
   {
+    name: 'check-security-html',
+    tier: 'fast',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-security-html.mjs'],
+    approx: '~1s',
+    desc:
+      '★ `v-html` 消毒的**双模式一致性**（A09）：vnode 在编译期生成 `sanitizeHTML(x)`，' +
+      'signal 生成 `setHTML(el, x)` 由 dom-runtime 运行时消毒 —— 两条完全不同的路径。' +
+      '只要一边漏消毒，同一模板换个 renderer 就变成 XSS，而各自断言产物字符串的单测**发现不了**。' +
+      '本门禁把 8 组不可信载荷（script / onerror / javascript: / svg onload / onclick / style 整段 / ' +
+      '实体编码 / 重组 XSS）分别喂给两条真实渲染路径，断言消毒后的 DOM **逐字相同**且无危险构造；' +
+      '另断言安全 HTML 被保留（消毒不退化成全删）、signal 更新路径二次消毒、' +
+      '以及共用写入原语 `setHTML` **自身**消毒（否则两边会「一致地不安全」）。' +
+      '审计原称「signal 直接 setHTML 绕过消毒」已过时（dom-runtime 自 2026-10-27 起消毒），' +
+      '故本门禁钉住实现细节而非依赖它。注入验证：摘掉 setHTML 内的 sanitizeHTML ⇒ 16 项红',
+  },
+  {
     name: 'check-web-cssvars',
     tier: 'fast',
     needsDist: true,
