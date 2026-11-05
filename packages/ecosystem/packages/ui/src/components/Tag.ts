@@ -43,6 +43,15 @@ export const Tag = defineComponent({
       // ★ 2026-10-04：`emit` 本身就会去 props 里找 `onClose` 并调用（见 component/src/emit.ts）⇒ 紧随其后的直接调用是**重复触发**，已删。
     };
 
+    // ★ 2026-11-06（B04）：关闭按钮此前只有 onClick，可聚焦（a11y 助手给了 tabindex=0）
+    //   却按不动 —— Enter / Space 必须与点击等价。
+    const handleKeydown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleClose(e);
+      }
+    };
+
     const getTagClass = () => {
       const classes = ['lyt-tag'];
       if (_props.type !== 'default') classes.push(`lyt-tag--${_props.type}`);
@@ -96,6 +105,7 @@ export const Tag = defineComponent({
             mergeA11yProps(closeBtnProps, {
               class: 'lyt-tag__close',
               onClick: handleClose,
+              onKeydown: handleKeydown,
             }),
             [createVNode('span', {}, '&times;')],
           ),

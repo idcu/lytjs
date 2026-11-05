@@ -210,10 +210,7 @@
       "events": { "status": "pass" },
       "controlled": { "status": "n/a", "reason": "无受控 prop（visible 仅内部状态）" },
       "styles": { "status": "pass" },
-      "keyboard": {
-        "status": "red",
-        "reason": "关闭按钮是 span（role=button+tabindex），无 Enter / Space 处理"
-      }
+      "keyboard": { "status": "pass" }
     }
   }
 }
