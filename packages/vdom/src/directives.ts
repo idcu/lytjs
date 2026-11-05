@@ -26,7 +26,7 @@
  * 这种最难排查的现象。
  */
 
-import type { VNode } from './types';
+import type { VNode } from '@lytjs/common-vnode';
 
 export type DirectiveHookName =
   | 'created'
