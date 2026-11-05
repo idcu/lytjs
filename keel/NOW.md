@@ -38,7 +38,7 @@ keywords: [硬约束9]
   首批 Tag/Link/Spin/Switch 逐组件提交，6 类全绿。
 
 ## 下一步
-1. B04 余 11 红：Avatar/Button/Dialog/Drawer/InputNumber/Modal/Pagination/Progress 逐组件清。
+1. B04 余 10 红：Avatar/Button/Dialog/Drawer/InputNumber/Modal/Pagination/Progress 逐组件清。
 
 ## 阻塞
 | 卡在 | 绕行 |
