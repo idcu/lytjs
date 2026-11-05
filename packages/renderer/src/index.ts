@@ -559,6 +559,7 @@ export type {
 export {
   mountComponent,
   mountSlot,
+  mountSlotOutlet,
   mountVNode,
   resetVaporComponentRenderer,
 } from './vapor/mount-component';

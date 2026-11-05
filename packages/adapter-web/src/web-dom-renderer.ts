@@ -249,7 +249,7 @@ export interface DOMRenderer {
   render(vnode: VNode | null, container: Element): void;
   patch(n1: VNode | null, n2: VNode, container: Node, anchor?: Node | null): void;
   unmount(vnode: VNode): void;
-  mount(vnode: VNode, container: Node): void;
+  mount(vnode: VNode, container: Node, anchor?: Node | null): void;
   /**
    * 登记一个与 vnode 绑定的**资源清理函数**（动画帧、IntersectionObserver、
    * ResizeObserver、MutationObserver 等）。

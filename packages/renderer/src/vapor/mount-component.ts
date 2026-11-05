@@ -277,3 +277,50 @@ export function mountSlot(slotFn: unknown, container: unknown, props?: unknown):
     prevVNode = next;
   });
 }
+
+/**
+ * `<slot/>` 出口的**就地**挂载：插槽内容直接落在模板原位置，
+ * 不再保留一层字面量 `<slot>` 包装（mx06 实测：`<slot>` 元素残留在 DOM 里）。
+ *
+ * 与 `mountSlot()` 的区别：传入的是「出口元素本身」而不是外部容器，
+ * 出口元素会被移除，插槽内容按「出口之后的兄弟节点」为锚点插入。
+ * 不插入注释锚点 —— 否则 `innerHTML` 里会残留 `<!--lyt-slot-->`，破坏逐字对拍。
+ */
+export function mountSlotOutlet(slotFn: unknown, outlet: unknown, props?: unknown): void {
+  if (outlet === null || outlet === undefined) return;
+  const el = getRealNode(outlet) as Node;
+  const parent = el.parentNode;
+  if (!parent) return;
+  // 出口位置靠「后一个兄弟节点」固定；没有后续兄弟时用 null（等价于追加）
+  const nextSibling = el.nextSibling;
+  parent.removeChild(el);
+
+  let prevVNode: VNode | null = null;
+  effect(() => {
+    const vnodes = resolveSlotVNodes(slotFn, props);
+    const next: VNode | null =
+      vnodes.length === 0
+        ? null
+        : ((vnodes.length === 1
+            ? vnodes[0]
+            : createVNode(Fragment as never, null, vnodes as never)) as VNode);
+
+    if (next === null) {
+      if (prevVNode !== null) {
+        getRenderer().unmount(prevVNode);
+        prevVNode = null;
+      }
+      return;
+    }
+    const anchor = nextSibling !== null && nextSibling.parentNode === parent ? nextSibling : null;
+    if (prevVNode === null) {
+      getRenderer().mount(next, parent, anchor);
+    } else if (prevVNode.type === next.type) {
+      getRenderer().patch(prevVNode, next, parent, anchor);
+    } else {
+      getRenderer().unmount(prevVNode);
+      getRenderer().mount(next, parent, anchor);
+    }
+    prevVNode = next;
+  });
+}

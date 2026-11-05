@@ -94,6 +94,7 @@ function serializeStaticHTML(
   node: ElementNode,
   varCounter: Map<string, number>,
   elementVars: Array<{ varName: string; tag: string }>,
+  staticVars?: Map<ElementNode, string>,
 ): string {
   // 组件：输出占位元素（不能是注释 —— 注释不在 element.children 里，会打乱下标），
   // 由运行时 mountComponent 挂载真实组件（与优化版 codegen 行为一致）
@@ -106,6 +107,7 @@ function serializeStaticHTML(
 
   const varName = genVarName(node.tag, varCounter);
   elementVars.push({ varName, tag: node.tag });
+  staticVars?.set(node, varName);
 
   let attrs = '';
   for (const prop of node.props) {
@@ -123,7 +125,12 @@ function serializeStaticHTML(
     if (child.type === NodeTypes.TEXT) {
       childrenHTML += escapeHtmlStatic((child as TextNode).content);
     } else if (child.type === NodeTypes.ELEMENT) {
-      childrenHTML += serializeStaticHTML(child as ElementNode, varCounter, elementVars);
+      childrenHTML += serializeStaticHTML(
+        child as ElementNode,
+        varCounter,
+        elementVars,
+        staticVars,
+      );
     } else if (child.type === NodeTypes.INTERPOLATION) {
       // 为**每个插值**留一个注释槽位（运行时由 claimTextSlots 换成独立文本节点）。
       // 不这么做的话，同一元素里的多个插值会全部写到同一个元素上 ⇒ 互相覆盖只剩最后一个。
@@ -147,6 +154,8 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
   const varCounter = new Map<string, number>();
   const elementVars: Array<{ varName: string; tag: string }> = [];
   const consumedCount = new Map<string, number>();
+  // 静态元素节点 → 变量名：用于给 v-if 分支找「下一个静态兄弟节点」作为插入锚点
+  const staticVars = new Map<ElementNode, string>();
 
   // 跟踪哪些元素有动态绑定
   const dynamicBindings: Array<{ varName: string; code: string }> = [];
@@ -201,7 +210,7 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
   }
   // 含 `<slot/>` 出口时才需要运行期挂载能力
   if (usedSlotOutlet) {
-    lines.push(`import { mountSlot } from '@lytjs/renderer';`);
+    lines.push(`import { mountSlotOutlet } from '@lytjs/renderer';`);
   }
   // `<Teleport>` / `<Suspense>` 走 vnode 路径：需运行期挂载原语 + vdom 侧符号
   // （`createVNode` / `Text` 由上面的分支负责，避免重复声明）
@@ -218,7 +227,7 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
   lines.push('');
 
   // 先通过 buildStaticHTML 收集所有元素变量（使用 varCounter）
-  const staticHTML = buildStaticHTML(ast.children, varCounter, elementVars);
+  const staticHTML = buildStaticHTML(ast.children, varCounter, elementVars, staticVars);
 
   // ---- Phase 3: Process AST children for dynamic bindings ----
   // 此时 varCounter 已被 buildStaticHTML 初始化，processElement 不再重复分配变量名
@@ -230,6 +239,7 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
     consumedCount,
     false,
     new Set(),
+    staticVars,
   );
 
   // ---- Phase 4: Generate render function ----
@@ -321,13 +331,14 @@ function buildStaticHTML(
   children: TemplateChildNode[],
   varCounter: Map<string, number>,
   elementVars: Array<{ varName: string; tag: string }>,
+  staticVars: Map<ElementNode, string>,
 ): string {
   let html = '';
   for (const child of children) {
     if (child.type === NodeTypes.TEXT) {
       html += (child as TextNode).content;
     } else if (child.type === NodeTypes.ELEMENT) {
-      html += serializeStaticHTML(child as ElementNode, varCounter, elementVars);
+      html += serializeStaticHTML(child as ElementNode, varCounter, elementVars, staticVars);
     }
     // 跳过动态节点（JSConditionalExpression、JSCallExpression 等）
   }
@@ -346,6 +357,7 @@ function processChildren(
   consumedCount: Map<string, number>,
   inheritedOnce = false,
   locals: ReadonlySet<string> = new Set(),
+  staticVars?: Map<ElementNode, string>,
 ): void {
   for (const child of children) {
     if (child.type === NodeTypes.ELEMENT) {
@@ -357,6 +369,7 @@ function processChildren(
         consumedCount,
         inheritedOnce,
         locals,
+        staticVars,
       );
     } else if (child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
       processConditional(
@@ -367,6 +380,7 @@ function processChildren(
         undefined,
         consumedCount,
         locals,
+        undefined,
       );
     } else if (child.type === NodeTypes.JS_CALL_EXPRESSION) {
       processCallExpression(
@@ -486,6 +500,7 @@ function processElement(
   consumedCount: Map<string, number>,
   inheritedOnce = false,
   locals: ReadonlySet<string> = new Set(),
+  staticVars?: Map<ElementNode, string>,
 ): void {
   // v-once：沿元素树向下传递（整个子树都只渲染一次）
   const onceMode = inheritedOnce || node.__isOnce === true;
@@ -527,15 +542,16 @@ function processElement(
     return;
   }
 
-  // `<slot/>` 出口：由运行期 `mountSlot` 把传入的插槽内容挂载进该元素
-  // （修复缺口三段的第 ② 段；信号模式下 `$slots` 由公共实例代理提供）
+  // `<slot/>` 出口：由运行期 `mountSlotOutlet` 把传入的插槽内容**就地**挂载进该元素。
+  // 与 `mountSlot`（挂进容器、保留 `<slot>` 包装）不同：出口元素会被替换成注释锚点，
+  // 插槽内容直接落在模板原位置（mx06 实测：字面量 `<slot>` 元素残留）。
   if (node.tag === 'slot') {
     const slotName = getStaticAttr(node, 'name') ?? 'default';
     const slotVar =
       findExistingVar(elementVars, 'slot', consumedCount) ?? genVarName('slotEl', varCounter);
     dynamicBindings.push({
       varName: slotVar,
-      code: `mountSlot(_ctx.$slots&&_ctx.$slots[${JSON.stringify(slotName)}],${slotVar});`,
+      code: `mountSlotOutlet(_ctx.$slots&&_ctx.$slots[${JSON.stringify(slotName)}],${slotVar});`,
     });
     return;
   }
@@ -586,7 +602,8 @@ function processElement(
   // 而不是写整个元素 —— 后者会让同元素内的多个插值互相覆盖（只剩最后一个）。
   let slotsVar: string | undefined;
   let slotIndex = 0;
-  for (const child of node.children) {
+  for (let i = 0; i < node.children.length; i++) {
+    const child = node.children[i]!;
     if (child.type === NodeTypes.INTERPOLATION) {
       const exp = getExpContent((child as InterpolationNode).content as SimpleExpressionNode);
       // ⚠️ 2026-09-30 修复：此前这里用「只允许简单属性路径」的白名单正则，复杂插值
@@ -618,8 +635,20 @@ function processElement(
         consumedCount,
         onceMode,
         locals,
+        staticVars,
       );
     } else if (child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
+      // 插入锚点：分支元素必须落在「原位置」，而不是父容器末尾。
+      // 用其后第一个静态兄弟元素作为 `insert(..., ref)` 的参考节点；
+      // 若后面没有静态元素（或全是动态节点）则退回追加（ref=undefined）。
+      let anchorVar: string | undefined;
+      for (let j = i + 1; j < node.children.length; j++) {
+        const sibling = node.children[j]!;
+        if (sibling.type === NodeTypes.ELEMENT) {
+          anchorVar = staticVars?.get(sibling as ElementNode);
+          break;
+        }
+      }
       processConditional(
         child as JSConditionalExpression,
         varCounter,
@@ -628,6 +657,7 @@ function processElement(
         varName,
         consumedCount,
         locals,
+        anchorVar,
       );
     } else if (child.type === NodeTypes.JS_CALL_EXPRESSION) {
       processCallExpression(
@@ -1069,8 +1099,9 @@ function processConditional(
   elementVars: Array<{ varName: string; tag: string }>,
   dynamicBindings: Array<{ varName: string; code: string }>,
   parentVar?: string,
-  consumedCount?: Map<string, number>,
+  _consumedCount?: Map<string, number>,
   locals: ReadonlySet<string> = new Set(),
+  anchorVar?: string,
 ): void {
   const testExpr = getTestExpr(node.test);
 
@@ -1120,11 +1151,16 @@ function processConditional(
   }
 
   // 为每个分支注册变量名（确保 varCounter 和 elementVars 正确递增）
+  //
+  // ⚠️ 这里**不能**消费 consumedCount：同一标签在多个分支（`<i v-if>…<i v-else-if>`）
+  //   会出现多次，按「消费」计数会让第二次取值越界，直接抛
+  //   `Cannot read properties of undefined (reading 'varName')`（if08 实测）。
+  //   本循环只需知道「该标签是否已有变量」，不参与后续 processElement 的消费顺序。
   for (let i = 0; i < branches.length; i++) {
     const branchInfo = branches[i]!;
     const elInfo = extractElementFromBranch(branchInfo.branch);
     if (elInfo) {
-      const existing = findExistingVar(elementVars, elInfo.tag, consumedCount);
+      const existing = findExistingVar(elementVars, elInfo.tag);
       if (!existing) {
         const varName = genVarName(elInfo.tag, varCounter);
         elementVars.push({ varName, tag: elInfo.tag });
@@ -1150,10 +1186,23 @@ function processConditional(
   varCounter.set(ifCounterKey, (varCounter.get(ifCounterKey) ?? 0) + 1);
   varCounter.set('_if_depth', ifDepth + 1);
 
+  // 预先算好每个分支的动态绑定：文本槽位变量必须声明在 effect 外，
+  // 才能在「创建分支」和「分支保持激活」两条路径里共用。
+  const branchDynamics = branches.map((branchInfo, i) =>
+    buildBranchDynamics(
+      collectBranchDynamics(branchInfo.branch, locals),
+      ifVarName,
+      `${ifVarName}_b${i}`,
+    ),
+  );
+
   // FIX: P2-24 模板缩进保持：生成的代码保持与模板一致的缩进层级
   // 生成条件分支的 DOM 插入/移除代码
   let code = `let ${ifVarName}El = null;\n`;
   code += `let ${ifVarName}Active = -1;\n`;
+  for (const dyn of branchDynamics) {
+    if (dyn.declarations) code += `${dyn.declarations}\n`;
+  }
   code += `effect(() => {\n`;
 
   for (let i = 0; i < branches.length; i++) {
@@ -1184,32 +1233,22 @@ function processConditional(
     // FIX: P0-07 添加 null 检查，防止空 HTML 或纯文本 HTML 导致 firstElementChild 为 null 时崩溃
     code += `        if (!${ifVarName}El) { ${ifVarName}El = document.createComment(''); }\n`;
     if (branchHTML.trim()) {
-      code += `        insert(${ifVarName}El, ${containerVar});\n`;
+      // 插入参考节点：`anchorVar` 为「原位置后面的静态兄弟元素」，
+      // 保证 v-if 分支落在模板书写的位置，而不是父容器末尾（mx04 实测）。
+      code += `      insert(${ifVarName}El, ${containerVar}${anchorVar ? `, ${anchorVar}` : ''});\n`;
     }
     code += `        ${ifVarName}Active = ${i};\n`;
 
-    // 处理分支内的动态绑定（如插值文本 / 动态属性）
-    // FIX: P2-44 缓存 extractChildrenText 结果，避免对同一分支重复调用
-    const childrenText = extractChildrenText(branchInfo.branch);
-    if (childrenText && branchHTML.trim()) {
-      code += `        setText(${ifVarName}El, ${prefixIdentifiers(childrenText, locals)});\n`;
-    }
-    const dynamicProps = collectDynamicBranchProps(branchInfo.branch);
-    for (const prop of dynamicProps) {
-      code += `        setAttribute(${ifVarName}El, ${JSON.stringify(prop.key)}, ${prefixIdentifiers(prop.value, locals)});\n`;
-    }
+    // 处理分支内的动态绑定（插值文本 / 动态属性 / 组件挂载）
+    const dyn = branchDynamics[i]!;
+    if (dyn.create) code += dyn.create;
 
     code += `      }`;
 
-    // 如果分支已激活，更新动态内容（复用已缓存的 childrenText / dynamicProps）
-    if ((childrenText && branchHTML.trim()) || dynamicProps.length > 0) {
+    // 如果分支已激活，更新动态内容（同一段代码在「保持激活」分支里再执行一次）
+    if (dyn.update) {
       code += ` else {\n`;
-      if (childrenText && branchHTML.trim()) {
-        code += `        setText(${ifVarName}El, ${prefixIdentifiers(childrenText, locals)});\n`;
-      }
-      for (const prop of dynamicProps) {
-        code += `        setAttribute(${ifVarName}El, ${JSON.stringify(prop.key)}, ${prefixIdentifiers(prop.value, locals)});\n`;
-      }
+      code += dyn.update;
       code += `      }`;
     }
 
@@ -1240,16 +1279,10 @@ function processConditional(
     code,
   });
 
-  // 处理每个分支中的子元素动态绑定（如 :class, :style 等）
-  for (let i = 0; i < branches.length; i++) {
-    processBranchDynamics(
-      branches[i]!.branch,
-      containerVar,
-      varCounter,
-      elementVars,
-      dynamicBindings,
-    );
-  }
+  // 分支内的动态绑定已在上面按「分支元素自身」生成。
+  // ⚠️ 这里**不再**调用 processBranchDynamics：它把 `:class` / `:style` 绑到
+  //   `containerVar`（分支的**父容器**）上，而且没有做 `_ctx.` 前缀 ⇒
+  //   静态 class 泄漏到父元素（if07）、动态表达式直接 `ReferenceError`（if09）。
   // FIX: P2-12 在 processConditional 结束时递减 _if_depth，避免同级 v-if 时计数器持续增长
   varCounter.set('_if_depth', ifDepth);
 }
@@ -1266,9 +1299,27 @@ function serializeBranchHTML(
   if (Array.isArray(branch)) {
     return branch.map((item) => serializeBranchHTML(item)).join('');
   }
+  // 分支内的插值：留文本槽位（运行期 claimTextSlots 换成独立文本节点），
+  // 这样多层嵌套里的插值不会被整段丢弃（if05 实测）
+  if (branch.type === NodeTypes.INTERPOLATION) return TEXT_SLOT_COMMENT;
+  if (branch.type === NodeTypes.JS_CALL_EXPRESSION) {
+    const call = branch as JSCallExpression;
+    const callee = typeof call.callee === 'string' ? call.callee : String(call.callee);
+    return callee === 'TO_DISPLAY_STRING' || callee === 'toDisplayString' ? TEXT_SLOT_COMMENT : '';
+  }
+  if (branch.type === NodeTypes.COMPOUND_EXPRESSION) {
+    const compound = branch as CompoundExpressionNode;
+    return (compound.children ?? []).map((c) => serializeBranchHTML(c as never)).join('');
+  }
   if (branch.type === NodeTypes.VNODE_CALL) {
     const vnode = branch as VNodeCall;
     if (typeof vnode.tag === 'string') {
+      // 组件分支（tag 是标识符/表达式，如 `(_ctx["my-comp"] || …)`）：
+      // 不能按 HTML 标签名序列化，更不能按组件名规则校验（kb05 曾直接编译抛错）。
+      // 与静态组件的做法一致：输出占位元素，运行期 mountComponent 挂载真实组件。
+      if (vnode.tag !== '' && !/^["']/.test(vnode.tag)) {
+        return `<lyt-comp data-lyt-comp="${escapeHtmlStatic(vnode.tag)}"></lyt-comp>`;
+      }
       const rawTag = vnode.tag.replace(/^"|"$/g, '');
       // `<template>` 的 Fragment 哨兵：signal 模式不支持 Fragment（见上文的说明），
       // 这里按字面量 `template` 元素序列化，并且**跳过组件名校验**
@@ -1305,9 +1356,11 @@ function serializeBranchHTML(
       let childrenHTML = '';
       if (vnode.children) {
         if (typeof vnode.children === 'string') {
-          childrenHTML = vnode.children;
+          childrenHTML = escapeHtmlStatic(vnode.children);
         } else if (Array.isArray(vnode.children)) {
           childrenHTML = vnode.children.map((c) => serializeBranchHTML(c)).join('');
+        } else {
+          childrenHTML = serializeBranchHTML(vnode.children as never);
         }
       }
       return `<${tag}${attrs}>${childrenHTML}</${tag}>`;
@@ -1319,39 +1372,221 @@ function serializeBranchHTML(
   return '';
 }
 
+/** 分支内的动态项（文本 / 属性 / 组件挂载） */
+interface BranchDynamicOp {
+  /** 目标元素在分支根元素内的**先序索引**（-1 = 分支根元素自身） */
+  elementIndex: number;
+  kind: 'text' | 'attr' | 'class' | 'style' | 'component';
+  /** 文本槽位序号（kind === 'text'） */
+  slotIndex?: number;
+  key?: string;
+  expr?: string;
+  propsCode?: string;
+}
+
 /**
- * 条件分支里的**动态属性**（`:id="i"`、`:title="t"` …）。
+ * 收集 v-if 分支子树里的动态绑定。
  *
- * transform 之后它们以 `{ id: 'i' }` 形式挂在 VNODE_CALL.props 上，值未加前缀；
- * 静态 HTML 只能承载字面量，所以动态项必须由 condition 内的 setAttribute 应用。
+ * 分支 HTML 是**静态**的，动态内容必须在 effect 里按位置更新：
+ * - 插值 → `claimTextSlots(el)[slotIndex]`（与 processElement 同一套槽位机制）；
+ * - 动态属性 → 目标元素 setAttribute / setClass / setStyle；
+ * - 组件分支 → 占位元素上 mountComponent。
+ *
+ * 元素定位用 `rootEl.querySelectorAll('*')[n]`（先序遍历序号），
+ * 需要与序列化顺序严格一致 —— 故递归时按「元素节点」计数。
  */
-function collectDynamicBranchProps(
+function collectBranchDynamics(
   branch: JSChildNode | TemplateChildNode | TemplateChildNode[] | string | undefined,
-): Array<{ key: string; value: string }> {
-  if (!branch || typeof branch === 'string') return [];
+  locals: ReadonlySet<string>,
+): BranchDynamicOp[] {
+  const ops: BranchDynamicOp[] = [];
+  let nextIndex = 0;
+
+  const visit = (raw: unknown, selfIndex: number, inheritedLocals: ReadonlySet<string>): void => {
+    if (!raw || typeof raw !== 'object') return;
+    const vn = raw as VNodeCall;
+    if (vn.type !== NodeTypes.VNODE_CALL || typeof vn.tag !== 'string' || vn.tag === '') return;
+
+    // 组件：整棵子树交给组件自身渲染
+    if (!/^["']/.test(vn.tag)) {
+      ops.push({
+        elementIndex: selfIndex,
+        kind: 'component',
+        expr: vn.tag,
+        propsCode: buildVNodePropsCode(vn, inheritedLocals),
+      });
+      return;
+    }
+
+    // 动态属性
+    if (vn.props && vn.props.type === NodeTypes.JS_OBJECT_EXPRESSION) {
+      for (const rawProp of (vn.props as JSObjectExpression).properties) {
+        if (rawProp.type !== NodeTypes.JS_PROPERTY) continue;
+        const jsProp = rawProp as JSProperty;
+        if (
+          jsProp.key.type !== NodeTypes.SIMPLE_EXPRESSION ||
+          jsProp.value.type !== NodeTypes.SIMPLE_EXPRESSION
+        ) {
+          continue;
+        }
+        const key = (jsProp.key as SimpleExpressionNode).content.replace(/^["']|["']$/g, '');
+        const value = (jsProp.value as SimpleExpressionNode).content;
+        if (key === 'key' || /^on[A-Z]/.test(key)) continue;
+        if (isStaticPropValue(value)) continue;
+        ops.push({
+          elementIndex: selfIndex,
+          kind: key === 'class' ? 'class' : key === 'style' ? 'style' : 'attr',
+          key,
+          expr: prefixIdentifiers(value, inheritedLocals),
+        });
+      }
+    }
+
+    // 本元素自身的文本槽位（元素子节点单独递归，不会破坏槽位顺序）
+    const kids = vn.children;
+    const kidList: unknown[] =
+      kids === undefined || kids === null ? [] : Array.isArray(kids) ? kids : [kids];
+    let textSlotIndex = 0;
+    for (const kid of kidList) {
+      const exp = readInterpolationExpr(kid);
+      if (exp === null) continue;
+      ops.push({
+        elementIndex: selfIndex,
+        kind: 'text',
+        slotIndex: textSlotIndex,
+        expr: `(${prefixIdentifiers(exp, inheritedLocals)} ?? '')`,
+      });
+      textSlotIndex++;
+    }
+
+    // 递归元素子节点（先序计数）
+    for (const kid of kidList) {
+      if (!kid || typeof kid !== 'object') continue;
+      const k = kid as { type?: number; tag?: unknown };
+      if (k.type === NodeTypes.VNODE_CALL || k.type === NodeTypes.ELEMENT) {
+        const childIndex = nextIndex++;
+        visit(kid, childIndex, inheritedLocals);
+      }
+    }
+  };
+
   if (Array.isArray(branch)) {
-    return branch.flatMap((item) => collectDynamicBranchProps(item));
+    for (const item of branch) visit(item, -1, locals);
+  } else {
+    visit(branch, -1, locals);
   }
-  if (branch.type !== NodeTypes.VNODE_CALL) return [];
-  const vnode = branch as VNodeCall;
-  if (!vnode.props || vnode.props.type !== NodeTypes.JS_OBJECT_EXPRESSION) return [];
-  const out: Array<{ key: string; value: string }> = [];
-  for (const prop of (vnode.props as JSObjectExpression).properties) {
-    if (prop.type !== NodeTypes.JS_PROPERTY) continue;
-    const jsProp = prop as JSProperty;
+  return ops;
+}
+
+/** 叶子节点是否是一个插值（TO_DISPLAY_STRING / INTERPOLATION），返回表达式 */
+function readInterpolationExpr(node: unknown): string | null {
+  if (!node || typeof node !== 'object') return null;
+  const n = node as {
+    type?: number;
+    callee?: unknown;
+    arguments?: unknown[];
+    content?: unknown;
+  };
+  if (n.type === NodeTypes.INTERPOLATION) {
+    const inner = n.content as { content?: unknown } | undefined;
+    return typeof inner?.content === 'string' ? inner.content : null;
+  }
+  if (n.type === NodeTypes.JS_CALL_EXPRESSION) {
+    const callee = typeof n.callee === 'string' ? n.callee : String(n.callee);
+    if (callee !== 'TO_DISPLAY_STRING' && callee !== 'toDisplayString') return null;
+    const arg = (n.arguments ?? [])[0] as { content?: unknown } | undefined;
+    return typeof arg?.content === 'string' ? arg.content : null;
+  }
+  return null;
+}
+
+/** VNODE_CALL.props → 传给 mountComponent 的 props 对象代码 */
+function buildVNodePropsCode(vnode: VNodeCall, locals: ReadonlySet<string>): string {
+  if (!vnode.props || vnode.props.type !== NodeTypes.JS_OBJECT_EXPRESSION) return 'null';
+  const parts: string[] = [];
+  for (const rawProp of (vnode.props as JSObjectExpression).properties) {
+    if (rawProp.type !== NodeTypes.JS_PROPERTY) continue;
+    const jsProp = rawProp as JSProperty;
     if (
       jsProp.key.type !== NodeTypes.SIMPLE_EXPRESSION ||
       jsProp.value.type !== NodeTypes.SIMPLE_EXPRESSION
     ) {
       continue;
     }
-    const key = (jsProp.key as SimpleExpressionNode).content.replace(/^["']|["']$/g, '');
+    const key = (jsProp.key as SimpleExpressionNode).content;
     const value = (jsProp.value as SimpleExpressionNode).content;
-    // key 与事件处理器不是 DOM 属性
-    if (key === 'key' || /^on[A-Z]/.test(key)) continue;
-    if (!isStaticPropValue(value)) out.push({ key, value });
+    parts.push(`${key}: ${prefixIdentifiers(value, locals)}`);
   }
-  return out;
+  return parts.length ? `{ ${parts.join(', ')} }` : 'null';
+}
+
+/**
+ * 分支动态代码生成：
+ * - create：分支元素刚创建时执行（含 claimTextSlots 认领文本槽位）
+ * - update：分支保持激活、依赖变化时重新执行
+ * - declarations：槽位变量声明（必须在 effect 外，供 create/update 共用）
+ */
+function buildBranchDynamics(
+  ops: BranchDynamicOp[],
+  ifVar: string,
+  branchTag: string,
+): { declarations: string; create: string; update: string } {
+  const declLines: string[] = [];
+  const createLines: string[] = [];
+  const updateLines: string[] = [];
+  const claimed = new Set<number>();
+  const pad = '        ';
+
+  const access = (index: number): string =>
+    index < 0 ? `${ifVar}El` : `${ifVar}El.querySelectorAll('*')[${index}]`;
+
+  for (const op of ops) {
+    if (op.kind === 'text') {
+      const index = op.elementIndex;
+      const slotsVar = `${branchTag}Text${index < 0 ? 'Root' : index}`;
+      if (!claimed.has(index)) {
+        claimed.add(index);
+        declLines.push(`let ${slotsVar} = null;`);
+        if (index < 0) {
+          createLines.push(`${slotsVar} = claimTextSlots(${ifVar}El);`);
+        } else {
+          createLines.push(
+            `{ const _e = ${access(index)}; if (_e) ${slotsVar} = claimTextSlots(_e); }`,
+          );
+        }
+      }
+      const read = `(${slotsVar} || [])[${op.slotIndex ?? 0}]`;
+      createLines.push(`setText(${read}, ${op.expr});`);
+      updateLines.push(`setText(${read}, ${op.expr});`);
+      continue;
+    }
+
+    if (op.kind === 'component') {
+      const target = access(op.elementIndex);
+      const apply = `mountComponent(${op.expr}, ${op.propsCode ?? 'null'}, ${target});`;
+      const stmt = op.elementIndex < 0 ? apply : `{ const _e = ${target}; if (_e) ${apply} }`;
+      // 只在创建时 mount：mountComponent 自带 effect，重复调用会重复建实例
+      createLines.push(stmt);
+      continue;
+    }
+
+    const target = access(op.elementIndex);
+    const apply =
+      op.kind === 'class'
+        ? `setClass(${target}, ${op.expr});`
+        : op.kind === 'style'
+          ? `setStyle(${target}, ${op.expr});`
+          : `setAttribute(${target}, ${JSON.stringify(op.key)}, ${op.expr});`;
+    const stmt = op.elementIndex < 0 ? apply : `{ const _e = ${target}; if (_e) ${apply} }`;
+    createLines.push(stmt);
+    updateLines.push(stmt);
+  }
+
+  return {
+    declarations: declLines.join('\n'),
+    create: createLines.map((line) => pad + line + '\n').join(''),
+    update: updateLines.map((line) => pad + line + '\n').join(''),
+  };
 }
 
 /** 列表项的 children 里是否有**嵌套元素**（`<li v-for><span>{{x}}</span></li>`）。 */
@@ -1670,10 +1905,14 @@ function processCallExpression(
             const key = (jsProp.key as SimpleExpressionNode).content.replace(/^"|"$/g, '');
             const value = (jsProp.value as SimpleExpressionNode).content;
             if (key === 'key') continue; // :key 不写为 DOM 属性
-            if (value.includes('_ctx') || value.includes(`(${itemVar})`) || value.includes('(')) {
+            // ⚠️ 旧判据「值里没有 `_ctx` / 没有 `(` 就算静态」会把 `:data-k="x"`
+            //   写成字面量 `data-k="x"`（for08 实测）。静态只认**字面量**，
+            //   其余一律按表达式处理并加前缀（循环变量在 locals 里保持裸名）。
+            if (!isStaticPropValue(value)) {
+              const valueCode = prefixIdentifiers(value, itemLocals);
               // 动态绑定：create 用新元素，update 用 reconcileArray 传入的已存在元素
-              createBody += `${elVar}.setAttribute('${key}', ${value});`;
-              updateBody += `_el.setAttribute('${key}', ${value});`;
+              createBody += `${elVar}.setAttribute('${key}', ${valueCode});`;
+              updateBody += `_el.setAttribute('${key}', ${valueCode});`;
             } else {
               // 静态属性
               createBody += `${elVar}.setAttribute('${key}', '${value.replace(/^"|"$/g, '')}');`;
@@ -1770,6 +2009,9 @@ function extractElementFromBranch(
   if (branch.type === NodeTypes.VNODE_CALL) {
     const vnode = branch as VNodeCall;
     if (typeof vnode.tag === 'string') {
+      // 组件分支的 tag 是标识符/表达式（不带引号）：它不是 HTML 标签，
+      // 既不能进 elementVars（会生成非法变量名），也不需要静态兄弟锚点
+      if (vnode.tag === '' || !/^["']/.test(vnode.tag)) return null;
       return { tag: vnode.tag.replace(/^"|"$/g, '') };
     }
   }
@@ -1852,97 +2094,7 @@ function extractItemChildrenText(children: unknown, locals: ReadonlySet<string>)
   return null;
 }
 
-function extractChildrenText(
-  branch: JSChildNode | TemplateChildNode | TemplateChildNode[] | string | undefined,
-): string | null {
-  if (!branch) return null;
-  if (typeof branch === 'string') return null;
-  if (Array.isArray(branch)) {
-    for (const item of branch) {
-      const result = extractChildrenText(item);
-      if (result) return result;
-    }
-    return null;
-  }
-  if (branch.type === NodeTypes.VNODE_CALL) {
-    const vnode = branch as VNodeCall;
-    if (vnode.children && typeof vnode.children === 'string') {
-      // 静态文本子节点，不需要动态绑定
-      return null;
-    }
-    if (
-      vnode.children &&
-      typeof vnode.children !== 'string' &&
-      !Array.isArray(vnode.children) &&
-      vnode.children.type === NodeTypes.JS_CALL_EXPRESSION
-    ) {
-      const call = vnode.children as JSCallExpression;
-      const callee = typeof call.callee === 'string' ? call.callee : String(call.callee);
-      if (callee === 'TO_DISPLAY_STRING' || callee === 'toDisplayString') {
-        const arg = call.arguments[0];
-        if (
-          arg &&
-          typeof arg !== 'string' &&
-          !Array.isArray(arg) &&
-          arg.type === NodeTypes.SIMPLE_EXPRESSION
-        ) {
-          return (arg as SimpleExpressionNode).content;
-        }
-      }
-    }
-  }
-  return null;
-}
-
-// ============================================================
-// Helper: 处理条件分支中的动态绑定
-// ============================================================
-
-function processBranchDynamics(
-  branch: JSChildNode | TemplateChildNode | TemplateChildNode[] | string | undefined,
-  _parentVar: string,
-  varCounter: Map<string, number>,
-  elementVars: Array<{ varName: string; tag: string }>,
-  dynamicBindings: Array<{ varName: string; code: string }>,
-): void {
-  if (!branch || typeof branch === 'string') return;
-  if (Array.isArray(branch)) {
-    for (const item of branch) {
-      processBranchDynamics(item, _parentVar, varCounter, elementVars, dynamicBindings);
-    }
-    return;
-  }
-  if (branch.type === NodeTypes.VNODE_CALL) {
-    const vnode = branch as VNodeCall;
-    if (vnode.props && vnode.props.type === NodeTypes.JS_OBJECT_EXPRESSION) {
-      const objExpr = vnode.props as JSObjectExpression;
-      for (const prop of objExpr.properties) {
-        if (prop.type === NodeTypes.JS_PROPERTY) {
-          const jsProp = prop as JSProperty;
-          if (
-            jsProp.key.type === NodeTypes.SIMPLE_EXPRESSION &&
-            jsProp.value.type === NodeTypes.SIMPLE_EXPRESSION
-          ) {
-            const key = (jsProp.key as SimpleExpressionNode).content.replace(/^"|"$/g, '');
-            const value = (jsProp.value as SimpleExpressionNode).content;
-            // 处理 :class, :style, 其他属性绑定
-            if (key === 'class') {
-              dynamicBindings.push({
-                varName: _parentVar,
-                code: `effect(() => setClass(${_parentVar}, ${value}));`,
-              });
-            } else if (key === 'style') {
-              dynamicBindings.push({
-                varName: _parentVar,
-                code: `effect(() => setStyle(${_parentVar}, ${value}));`,
-              });
-            }
-          }
-        }
-      }
-    }
-  }
-}
+/** 列表项的 children 里是否有**嵌套元素**（`<li v-for><span>{{x}}</span></li>`）。 */
 
 /**
  * `JS_CALL_EXPRESSION` 的 RENDER_LIST 调用（v-for 在 Signal 模式的 transform 产物）
@@ -2378,7 +2530,14 @@ function toComponentEventKey(event: string): string {
 function containsComponentVNode(node: unknown): boolean {
   if (!node || typeof node !== 'object') return false;
   if (Array.isArray(node)) return node.some(containsComponentVNode);
-  const n = node as { type?: number; tag?: string; children?: unknown; arguments?: unknown };
+  const n = node as {
+    type?: number;
+    tag?: string;
+    children?: unknown;
+    arguments?: unknown;
+    consequent?: unknown;
+    alternate?: unknown;
+  };
   if (
     n.type === NodeTypes.VNODE_CALL &&
     typeof n.tag === 'string' &&
@@ -2387,7 +2546,13 @@ function containsComponentVNode(node: unknown): boolean {
   ) {
     return true;
   }
-  return containsComponentVNode(n.children) || containsComponentVNode(n.arguments);
+  return (
+    containsComponentVNode(n.children) ||
+    containsComponentVNode(n.arguments) ||
+    // `v-if` 分支里的组件（如 `<my-comp v-if="ok"/>`）只出现在 consequent/alternate 上
+    containsComponentVNode(n.consequent) ||
+    containsComponentVNode(n.alternate)
+  );
 }
 
 /**

@@ -233,8 +233,8 @@ function generateOptimizedImports(usedRuntime: Set<string>, useShortNames: boole
       const mc = getShortName('mountComponent', true);
       result += `\nimport{mountComponent as ${mc}}from'@lytjs/renderer';`;
     }
-    if (usedRuntime.has('mountSlot')) {
-      result += `\nimport{mountSlot}from'@lytjs/renderer';`;
+    if (usedRuntime.has('mountSlotOutlet')) {
+      result += `\nimport{mountSlotOutlet}from'@lytjs/renderer';`;
     }
     if (usedRuntime.has('mountVNode')) {
       result += `\nimport{mountVNode}from'@lytjs/renderer';`;
@@ -285,8 +285,8 @@ function generateOptimizedImports(usedRuntime: Set<string>, useShortNames: boole
     if (usedRuntime.has('mountComponent')) {
       result += `\nimport{mountComponent}from'@lytjs/renderer';`;
     }
-    if (usedRuntime.has('mountSlot')) {
-      result += `\nimport{mountSlot}from'@lytjs/renderer';`;
+    if (usedRuntime.has('mountSlotOutlet')) {
+      result += `\nimport{mountSlotOutlet}from'@lytjs/renderer';`;
     }
     if (usedRuntime.has('mountVNode')) {
       result += `\nimport{mountVNode}from'@lytjs/renderer';`;
@@ -581,19 +581,17 @@ function processElementOptimized(
     return;
   }
 
-  // `<slot/>` 出口：由运行期 `mountSlot` 把传入的插槽内容挂载进该元素。
-  //
-  // 2026-09-30 修复缺口三段中的第 ② 段 —— 此前 `<slot>` 被当普通元素烧进静态 HTML，
-  // 产物里是字面量 `<slot>`（无人消费 ⇒ 组件模板的插槽永不渲染）。
-  // `$slots` 在该模式下由公共实例代理提供（`_c.$slots`），故需判空。
+  // `<slot/>` 出口：由运行期 `mountSlotOutlet` 把插槽内容**就地**挂载进模板原位置。
+  // 与 `mountSlot`（挂进容器、保留字面量 `<slot>` 包装）不同（mx06 实测）——两套实现同改，
+  // 否则「默认路径修好、优化路径仍错」会造成新的语义分叉。
   if (node.tag === 'slot') {
     const slotName = getStaticAttr(node, 'name') ?? 'default';
     const slotIdx = findElementIndex(elementVars, node.tag, consumedCount);
     const slotVar = slotIdx !== null ? elementVars[slotIdx]!.varName : `_${elementVars.length}`;
-    usedRuntime.add('mountSlot');
+    usedRuntime.add('mountSlotOutlet');
     sink.push({
       varName: slotVar,
-      code: `mountSlot(_c.$slots&&_c.$slots[${JSON.stringify(slotName)}],${slotVar});`,
+      code: `mountSlotOutlet(_c.$slots&&_c.$slots[${JSON.stringify(slotName)}],${slotVar});`,
     });
     return;
   }
