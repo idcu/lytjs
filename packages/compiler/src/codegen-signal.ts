@@ -74,40 +74,8 @@ function getExpContent(node: SimpleExpressionNode | CompoundExpressionNode | und
 }
 
 // ============================================================
-// 产物短别名（B01b 体积手法）
+// 产物运行时导入（按实际引用裁剪）
 // ============================================================
-
-/**
- * 运行时函数 → 产物里的短别名。
- *
- * 产物的 import 与调用点会重复同一批函数名，短别名把两处字节一起压缩。
- * 可读性兜底：产物首行输出 `//lytjs-signal:<短名>=<原名>` 映射，出问题时按映射还原。
- *
- * ⚠️ 替换只作用于**代码片段**：字符串字面量（静态 HTML / 属性值 / 用户表达式里的字符串）
- * 与成员访问（`_ctx.insert`）一律不动 —— 否则会把页面文本或用户方法调用改坏。
- */
-const RUNTIME_SHORT_NAMES: Record<string, string> = {
-  effect: 'e',
-  reconcileArray: 'n',
-  createTemplate: 't',
-  setText: 'x',
-  setHTML: 'h',
-  setAttribute: 'a',
-  setProperty: 'p',
-  setStyle: 's',
-  setClass: 'c',
-  insert: 'i',
-  remove: 'r',
-  createEventHandler: 'v',
-  onCleanup: 'o',
-  runCleanups: 'g',
-  claimTextSlots: 'k',
-  mountComponent: 'm',
-  mountSlotOutlet: 'u',
-  mountVNode: 'M',
-  createVNode: 'V',
-  Text: 'T',
-};
 
 /** 运行时包 → 该包负责的 helper；用于按实际引用裁剪 import */
 const RUNTIME_IMPORT_GROUPS: Array<{ module: string; names: readonly string[] }> = [
@@ -149,11 +117,14 @@ const helperMatcher = (names: string): RegExp =>
  * 收集产物实际用到的 helper：文本反查 ∪ AST 判据。
  *
  * DOM / 响应式 helper 以产物文本为准（旧实现无脑带 15 个导入，多数模板用不到）；
- * renderer / vdom / 内置组件以 AST 判据为准，避免漏引入（Teleport/Suspense 不参与别名）。
+ * renderer / vdom / 内置组件以 AST 判据为准，避免漏引入。
+ *
+ * ⚠️ 只做「是否出现过」的判定，**不改写产物文本**（B01b 短别名已回退，
+ * 详见 keel/pitfalls/core/signal-param-alias-contract.md）。
  */
 function collectProductHelpers(code: string, seeds: Set<string>): Set<string> {
   const used = new Set<string>(seeds);
-  const re = helperMatcher(Object.keys(RUNTIME_SHORT_NAMES).join('|'));
+  const re = helperMatcher(RUNTIME_IMPORT_GROUPS.flatMap((g) => g.names).join('|'));
   let match: RegExpExecArray | null;
   while ((match = re.exec(code)) !== null) {
     const name = match[1];
@@ -162,30 +133,11 @@ function collectProductHelpers(code: string, seeds: Set<string>): Set<string> {
   return used;
 }
 
-/** 把产物用到的 helper 全名换成短别名（字符串字面量与成员访问不动） */
-function applyRuntimeAliases(code: string, used: Set<string>): string {
-  if (used.size === 0) return code;
-  const re = helperMatcher([...used].join('|'));
-  return code.replace(re, (full: string, name?: string) =>
-    name ? (RUNTIME_SHORT_NAMES[name] ?? name) : full,
-  );
-}
-
-/** 生成产物前缀：来源映射注释 + 按实际引用裁剪的 import */
+/** 生成产物前缀：按实际引用裁剪的 import（产物保持全名，便于调试） */
 function emitProductPrefix(used: Set<string>, builtinComponents: Set<string>): string {
   const lines: string[] = [];
-  const aliased = Object.keys(RUNTIME_SHORT_NAMES).filter((name) => used.has(name));
-  if (aliased.length > 0) {
-    // 单一映射行：短名在前、原名在后，便于人工阅读 / 源码映射还原
-    lines.push(`//lytjs-signal:${aliased.map((n) => `${RUNTIME_SHORT_NAMES[n]}=${n}`).join(',')};`);
-  }
   for (const group of RUNTIME_IMPORT_GROUPS) {
-    const specs = group.names
-      .filter((name) => used.has(name))
-      .map((name) => {
-        const short = RUNTIME_SHORT_NAMES[name];
-        return short ? `${name} as ${short}` : name;
-      });
+    const specs = group.names.filter((name) => used.has(name));
     if (specs.length > 0) lines.push(`import{${specs.join(',')}}from'${group.module}';`);
   }
   if (builtinComponents.size > 0) {
@@ -451,7 +403,7 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
   const rawBody = lines.join('\n');
   const usedHelpers = collectProductHelpers(rawBody, importSeeds);
   return {
-    code: `${emitProductPrefix(usedHelpers, builtinComponents)}\n\n${applyRuntimeAliases(rawBody, usedHelpers)}`,
+    code: `${emitProductPrefix(usedHelpers, builtinComponents)}\n\n${rawBody}`,
     preamble: '',
     ast,
   };

@@ -27,20 +27,21 @@ keywords: [硬约束9]
   `check-coverage-snapshot`（434 文件 / 425 已插桩 97.93%）；注入 1/1/1 红。
 - **A12** `check-release-parity`（declared=true / parity=false）；changeset 覆盖 76/76；
   注入 2/1/2 红。
-- **A13** playground 修复函数组件不渲染；E2E chromium 45/45 + playground 39/39。
+- **A13** playground 函数组件修复；E2E 45/45 + playground 39/39。
 
 ## 11-06 完成
-- **A15** 体积预算改「基线 + ≤2%」（`scripts/bundle-baseline.json`，基线只能下调）；
-  `minimal-app` 89.2 KB ≤ 93.7 KB；首屏口径勘误：**69.3 KB**（原 8.5 KB 只量入口 chunk，
-  编译器在静态闭包内；runtime 入口 36.6 KB 不含编译器）。归因：
+- **A15** 体积预算「基线 + ≤2%」（`bundle-baseline.json`，只降不升）；minimal-app
+  89.2 KB；首屏 **69.3 KB**（原 8.5 KB 只量入口）；归因
   `evaluation/LYTJS_体积归因_2026-11-06.md`。17 条断言；注入 6 类全红。
 - 门禁：fast 46/46；slow 14/14。
 - **B01a** 基础 signal 修 8 缺陷（if05/07/08/09·for08·kb05·mx04·mx06）；
   对拍 74→**77**、基线 26→**23**、`expectedMismatch` 5→**0**；
   门禁扩 vnode/SSR 快照；详见 `evaluation/LYTJS_B01a修复报告_2026-11-06.md`。
+- **B01b** 项 2/3/4 与 import 裁剪；短别名实测净负（+6,255 B）→ **回退**，决策 `0014`。
+  A 100 模板 **58,797 B**；minimal-app **92,538 B**（回退 −179 B）。
 
 ## 下一步
-1. 阶段 B：B01b 体积手法移植 → B03 AOT 入口（A15 归因已给靶心）。
+1. 阶段 B：B03 AOT 入口（A15 归因已给靶心）。
 
 ## 阻塞
 | 卡在 | 绕行 |

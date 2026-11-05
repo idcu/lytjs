@@ -117,12 +117,11 @@ export function createSignalRenderer(
         // 生产环境建议使用 AOT 预编译替代运行时编译
         // FIX: P0-2 使用 setSafeHTML 替代 setHTML，避免 XSS 攻击
         //
-        // ⚠️ 高危契约（B01b）：产物里的 `import{...}from'...';` 行会被
-        // makeCreateRenderFactory 剥离，helper 只能靠**参数名**注入。
-        // 因此下面 args 的顺序 + `paramNames` 的短别名，必须与
-        // `codegen-signal.ts` 的 `RUNTIME_SHORT_NAMES` 以及产物首行的
-        // `//lytjs-signal:<短名>=<原名>;` 映射三方一致。
-        // 任一侧改名而另一侧漏改，运行时只会报 `ReferenceError: <短名> is not defined`，
+        // ⚠️ 契约：产物里的 `import{...}from'...';` 行会被 makeCreateRenderFactory
+        // 剥离，helper 只能靠**参数名**注入。下面 args 的顺序 + `paramNames`
+        // 必须与 `codegen-signal.ts` 产物 import 的**全名**一一对应
+        //（B01b 短别名已回退，产物保持全名；见 keel/pitfalls/core/signal-param-alias-contract.md）。
+        // 任一侧改名而另一侧漏改，运行时只会报 `ReferenceError: <名> is not defined`，
         // 栈里看不到模板行号 —— 断链极难反查，改动务必同步并跑对拍门禁。
         // 创建「工厂」：工厂只接收运行时依赖参数，产出 render 函数（render 再接收 _ctx/_container）。
         // 两段式的目的：让 `new Function` 只有一处、且不再对 render 函数体做花括号配平扫描
@@ -259,28 +258,27 @@ function makeCreateRenderFactory(): (
 
   // 运行时依赖参数（render 函数本身还需要 _ctx / _container，由调用方传入）
   //
-  // ⚠️ 参数名必须与 `codegen-signal.ts` 产物里的**本地别名**一致：产物 import 行会被
-  // 剥掉，helper 全部按参数名注入。别名映射见 `RUNTIME_SHORT_NAMES`
-  // （编译器产物首行的 `//lytjs-signal:<短名>=<原名>;` 就是同一份映射）。
+  // ⚠️ 参数名必须与 `codegen-signal.ts` 产物 import 的**全名**一致：产物 import 行
+  // 会被剥掉，helper 全部按参数名注入（B01b 短别名已回退，产物不再改名）。
   const paramNames = [
-    'e', // effect
-    'n', // reconcileArray
-    't', // createTemplate
-    'x', // setText
-    'h', // setHTML
-    'a', // setAttribute
-    'p', // setProperty
-    's', // setStyle
-    'c', // setClass
-    'i', // insert
-    'r', // remove
-    'v', // createEventHandler
-    'o', // onCleanup
-    'g', // runCleanups
-    'm', // mountComponent
-    'V', // createVNode
-    'T', // Text
-    'k', // claimTextSlots
+    'effect',
+    'reconcileArray',
+    'createTemplate',
+    'setText',
+    'setHTML',
+    'setAttribute',
+    'setProperty',
+    'setStyle',
+    'setClass',
+    'insert',
+    'remove',
+    'createEventHandler',
+    'onCleanup',
+    'runCleanups',
+    'mountComponent',
+    'createVNode',
+    'Text',
+    'claimTextSlots',
     // ⚠️ 2026-10-31 修（P0）：产物里的 `v-html` 会引用构建期常量 `__DEV__`。
     //   `new Function` 的作用域里没有它 ⇒ 运行期 ReferenceError。见 core 同源修复。
     '__DEV__',
@@ -302,8 +300,8 @@ function makeCreateRenderFactory(): (
     ...runtimeArgs: unknown[]
   ) => (_ctx: Record<string, unknown>, _container: unknown) => (() => void) | void {
     // ⚠️ 契约的另一半：这里按「行首 import 到行尾」剥成单行导入。编译器产物必须保持
-    // `import{...}from'...';` **一行一条**（`emitProductPrefix` 保证），且本地名已改写成
-    // 上面的短别名；首行 `//lytjs-signal:...;` 是注释，不参与执行，仅供人工还原。
+    // `import{...}from'...';` **一行一条**（`emitProductPrefix` 保证），本地名与上面的
+    // paramNames 全名一致。
     const moduleCode = code.replace(/^\s*import[^\n]*\n/gm, '').replace(/\bexport\s+/g, '');
     try {
       return new Function(...paramNames, `${moduleCode}\nreturn render;`) as unknown as (

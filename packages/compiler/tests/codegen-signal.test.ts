@@ -425,34 +425,8 @@ describe('codegen-signal', () => {
   // ============================================================
 
   describe('non-optimized component mounting (optimizeSignal: false)', () => {
-    /**
-     * B01b：基础实现产物改用短别名（体积手法）。本组断言守的是**调用形状**，
-     * 与别名无关 —— 这里先把别名展开回全名再断言，断言语义保持不变。
-     */
-    const expandAliases = (code: string): string =>
-      code
-        .replace(/(?<![\w$.])m\(/g, 'mountComponent(')
-        .replace(/(?<![\w$.])V\(/g, 'createVNode(')
-        // `Text` 在产物里是**值**（createVNode(Text, …)），不是调用，故按标识符展开
-        .replace(/(?<![\w$.])T(?=[,)])/g, 'Text')
-        .replace(/(?<![\w$.])t\(/g, 'createTemplate(')
-        .replace(/(?<![\w$.])x\(/g, 'setText(')
-        .replace(/(?<![\w$.])a\(/g, 'setAttribute(')
-        .replace(/(?<![\w$.])p\(/g, 'setProperty(')
-        .replace(/(?<![\w$.])s\(/g, 'setStyle(')
-        .replace(/(?<![\w$.])c\(/g, 'setClass(')
-        .replace(/(?<![\w$.])i\(/g, 'insert(')
-        .replace(/(?<![\w$.])o\(/g, 'onCleanup(')
-        .replace(/(?<![\w$.])g\(/g, 'runCleanups(')
-        .replace(/(?<![\w$.])e\(/g, 'effect(')
-        .replace(/(?<![\w$.])k\(/g, 'claimTextSlots(');
-
     const opts = { rendererMode: 'signal' as const, optimizeSignal: false };
-    // 本组用「展开别名后」的产物做形状断言；`rawCode` 留给语法/执行类断言
-    const compile = (template: string, _options?: unknown) => {
-      const result = compileImpl(template, opts);
-      return { ...result, code: expandAliases(result.code), rawCode: result.code };
-    };
+    const compile = (template: string, _options?: unknown) => compileImpl(template, opts);
 
     it('should emit a <lyt-comp> placeholder instead of a raw component tag', () => {
       const result = compile('<div><Child/></div>', opts);
@@ -465,8 +439,8 @@ describe('codegen-signal', () => {
 
     it('should import mountComponent from @lytjs/renderer when a component is used', () => {
       const result = compile('<div><Child/></div>', opts);
-      // B01b 起 import 走短别名并压缩空白：`import{mountComponent as m}from'@lytjs/renderer';`
-      expect(result.code).toMatch(/mountComponent as m\}from'@lytjs\/renderer'/);
+      // B01b 回退后产物保持全名：`import{mountComponent}from'@lytjs/renderer';`
+      expect(result.code).toMatch(/mountComponent\}from'@lytjs\/renderer'/);
     });
 
     it('should NOT import mountComponent when no component is used', () => {
@@ -499,8 +473,7 @@ describe('codegen-signal', () => {
 
     it('should produce syntactically valid render function body', () => {
       const result = compile('<div><Child :title="t"/></div>', opts);
-      // 语法检查必须用**原始产物**（展开别名后的文本不再是合法 JS）
-      const code = result.rawCode;
+      const code = result.code;
       // 从 export function render(_ctx, _container) { 的函数体开始切，避开 import 里的花括号
       const fnStart = code.indexOf('export function render');
       const braceStart = code.indexOf('{', fnStart) + 1;
