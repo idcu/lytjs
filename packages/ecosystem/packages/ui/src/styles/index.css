@@ -2461,36 +2461,91 @@
 }
 
 /* ===== Modal ===== */
-.lyt-modal {
+.lyt-modal__overlay {
   position: fixed;
   inset: 0;
   z-index: 2002;
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding-top: 12vh;
   background: var(--lyt-bg-color-overlay);
   overflow: auto;
 }
-.lyt-modal > * {
+.lyt-modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 420px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: auto;
   background: var(--lyt-bg-color);
   border-radius: var(--lyt-border-radius-base);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
-  min-width: 420px;
-  max-width: 90vw;
 }
 .lyt-modal--fullscreen {
-  padding-top: 0;
-  align-items: stretch;
-}
-.lyt-modal--fullscreen > * {
+  position: fixed;
+  inset: 0;
+  top: 0 !important;
   min-width: 100vw;
   min-height: 100vh;
+  max-width: none;
+  max-height: none;
   border-radius: 0;
 }
 .lyt-modal--closing {
   opacity: 0;
   transition: opacity var(--lyt-transition-duration) ease;
+}
+.lyt-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--lyt-border-color-lighter);
+}
+.lyt-modal__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--lyt-text-color-primary);
+}
+.lyt-modal__close {
+  padding: 0 4px;
+  border: none;
+  background: transparent;
+  color: var(--lyt-text-color-secondary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.lyt-modal__body {
+  padding: 20px;
+  color: var(--lyt-text-color-regular);
+}
+.lyt-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--lyt-border-color-lighter);
+}
+.lyt-modal__cancel-btn,
+.lyt-modal__confirm-btn {
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: var(--lyt-border-radius-base);
+  cursor: pointer;
+}
+.lyt-modal__cancel-btn {
+  border: 1px solid var(--lyt-border-color);
+  background: var(--lyt-bg-color);
+  color: var(--lyt-text-color-regular);
+}
+.lyt-modal__confirm-btn {
+  border: 1px solid var(--lyt-color-primary);
+  background: var(--lyt-color-primary);
+  color: #ffffff;
 }
 
 /* ===== Notification ===== */
