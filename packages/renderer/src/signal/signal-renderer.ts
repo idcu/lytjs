@@ -15,7 +15,6 @@ import {
   runCleanups,
   onCleanup,
   createTemplate,
-  getRealNode,
   setText,
   setHTML,
   setAttribute,
@@ -133,7 +132,6 @@ export function createSignalRenderer(
           effect,
           reconcileArray,
           createTemplate,
-          getRealNode,
           setText,
           setHTML,
           setAttribute,
@@ -267,7 +265,6 @@ function makeCreateRenderFactory(): (
     'e', // effect
     'n', // reconcileArray
     't', // createTemplate
-    'w', // getRealNode
     'x', // setText
     'h', // setHTML
     'a', // setAttribute

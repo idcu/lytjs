@@ -89,7 +89,6 @@ const RUNTIME_SHORT_NAMES: Record<string, string> = {
   effect: 'e',
   reconcileArray: 'n',
   createTemplate: 't',
-  getRealNode: 'w',
   setText: 'x',
   setHTML: 'h',
   setAttribute: 'a',
@@ -117,7 +116,6 @@ const RUNTIME_IMPORT_GROUPS: Array<{ module: string; names: readonly string[] }>
     names: [
       'reconcileArray',
       'createTemplate',
-      'getRealNode',
       'setText',
       'setHTML',
       'setAttribute',
@@ -396,14 +394,12 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
     // 解构子元素
     if (elementVars.length > 1) {
       const childVars = elementVars.slice(1).map((v) => v.varName);
-      // createTemplate 返回的是 **TemplateWrapper**：它的 `.children` 只有 1 项（真实根元素），
-      // 直接解构会把下标整体错位（表现为后续元素为 undefined → "Cannot set properties of undefined"）。
-      // 因此必须先 getRealNode() 取到真实根元素再解构。
-      // 2026-09-30 修复：同优化版 —— 元素变量覆盖全部后代元素（先序），
-      // 用 children 在嵌套模板下会解构出 undefined 并在运行期崩溃。
+      // createTemplate 返回的 **TemplateWrapper** 是静态 HTML 的唯一持有者。浏览器下它会
+      // 把 `querySelectorAll` 直接代理到真实根元素（非浏览器 mock 走 `children` 兜底），
+      // 因此这里直接复用包装器查找后代，**不再额外 getRealNode() 取中间量**（B01b 体积手法）。
+      // 注意：`.children` 只有 1 项（真实根元素），不能用来解构后代；元素变量覆盖全部后代（先序）。
       lines.push(
-        `  const _root = getRealNode(${rootVar});` +
-          `\n  const [${childVars.join(', ')}] = Array.from(_root.querySelectorAll ? _root.querySelectorAll('*') : _root.children || []);`,
+        `  const [${childVars.join(', ')}] = Array.from(${rootVar}.querySelectorAll ? ${rootVar}.querySelectorAll('*') : ${rootVar}.children || []);`,
       );
     }
 
