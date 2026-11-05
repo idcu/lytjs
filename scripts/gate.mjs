@@ -346,10 +346,11 @@ const GATES = [
     cmd: ['node', 'scripts/check-compiler-parity.mjs'],
     approx: '~2s',
     desc:
-      '★ signal/vapor **默认编译路径**的语义正确性（A04/D1）：5 个最小模板默认选项编译 → ' +
-      '真实执行 → 断言 DOM 与响应式更新（根级 {{msg}}、v-if 动态属性、kebab 组件、v-for 嵌套元素）。' +
-      '同时断言「默认产物 == optimizeSignal:false」，显式开启优化器的已知分叉记录在 ' +
-      'scripts/compiler-parity-baseline.json（棘轮只减不增）。注入验证：默认切回优化器 ⇒ 6 项红',
+      '★ signal/vapor **默认编译路径**的语义正确性（A04/D1）+ 两套 codegen **逐字对拍**（B01 前置）：' +
+      '5 个最小模板默认选项编译 → 真实执行 → 断言 DOM 与响应式更新；100 模板分别用 ' +
+      'optimizeSignal:false/true 编译并真实执行，断言 innerHTML 逐字一致（含 26 个已知分叉与 ' +
+      '5 个基础实现缺陷的棘轮基线，只减不增）。执行器按 import 别名注入运行时，避免短名产物被误报为分叉。' +
+      '资产：scripts/compiler-parity-templates.json + scripts/compiler-parity-baseline.json。',
   },
   {
     name: 'check-hmr',

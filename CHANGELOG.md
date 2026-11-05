@@ -4,6 +4,27 @@
 
 ## [Unreleased]
 
+### 🔍 编译器：两套 signal codegen 逐字对拍（B01 前置，2026-11-06）
+
+- `check-compiler-parity`（fast，约 2s）在原有「默认路径 5 模板语义正确」之上，
+  新增 **100 模板逐字对拍**：同一模板分别以 `optimizeSignal:false`（基础实现）与
+  `true`（优化实现）编译 → 各自真实执行 → 断言 `innerHTML` 逐字一致，带 `update`
+  的模板再对拍一次响应式更新后的 DOM。资产：`scripts/compiler-parity-templates.json`
+  + `scripts/compiler-parity-baseline.json`（棘轮只减不增；修好不收基线也报红）。
+- **修复门禁自身的伪分叉**：旧执行器把产物 `import` 行整条剥掉却不绑定短别名
+  （优化版产物是 `import { setText as x }`），导致优化版一律 `ReferenceError`，
+  被误记为语义分叉。现按 `原名 as 别名` 注入运行时导出。
+- 当前结果：**一致 74 / 不一致 26**。不一致归因：优化实现侧 20 条（根级文本缺失 2、
+  元素整体 setText 覆盖静态文本 3、v-if 分支动态不生成 4、v-for 列表项嵌套不生成 6、
+  kebab 组件被解析成减法崩溃 5）；基础实现侧 6 条（分支 class 泄漏、`v-else-if` 崩溃、
+  分支 `:class` 未加 `_ctx.` 前缀、列表项动态属性写成字面量、v-for 内组件名校验崩溃、
+  分支节点顺序错误）。另有 2 条两版共有缺陷，5 条基础实现与人工语义基准不符。
+- 一致模板上优化实现产物仍小 **42.9%**（51,713 → 29,509 B），说明其体积收益来自
+  短别名导入与静态 HTML 复用，不是靠丢语义。
+- 结论与建议方案（先补基础实现缺陷、再移植体积手法、暂不删除优化实现）见
+  `evaluation/LYTJS_codegen对拍报告_2026-11-06.md` 与
+  `evaluation/LYTJS_codegen差异清单_2026-11-06.md`。本批**未改编译器实现、未删代码**。
+
 ### 📦 体积预算回到真实基线（2026-11-06）
 
 - `check-bundle-size` 不再把预算写在脚本里：基线移到 `scripts/bundle-baseline.json`，

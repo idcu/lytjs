@@ -1,0 +1,908 @@
+{
+  "$comment": "B01 前置：信号模式两套 codegen 的逐字对拍模板。同一模板分别用 optimizeSignal:false（基础实现 A）与 optimizeSignal:true（优化实现 B）编译并真实执行，断言 innerHTML 逐字一致。字段：id / group / template / state（注入 reactive ctx，可选）/ update（更新后对拍，可选）/ components（脚本内置组件映射）/ slots（注入 $slots）/ expected（人工核定的语义基准，可选——缺省时只做 A↔B 对拍）。约束：本文件只增加用例，不允许为通过而对齐某一份实现的错误行为。",
+  "templates": [
+    {
+      "id": "st01",
+      "group": "静态与根级文本",
+      "template": "<div>hello</div>",
+      "state": {},
+      "expected": "<div>hello</div>"
+    },
+    {
+      "id": "st02",
+      "group": "静态与根级文本",
+      "template": "<div><span>a</span><span>b</span></div>",
+      "state": {},
+      "expected": "<div><span>a</span><span>b</span></div>"
+    },
+    {
+      "id": "st03",
+      "group": "静态与根级文本",
+      "template": "<p class=\"a\">static</p>",
+      "state": {},
+      "expected": "<p class=\"a\">static</p>"
+    },
+    {
+      "id": "st04",
+      "group": "静态与根级文本",
+      "template": "{{msg}}",
+      "state": {
+        "msg": "root"
+      },
+      "expected": "root"
+    },
+    {
+      "id": "st05",
+      "group": "静态与根级文本",
+      "template": "Hello {{name}}",
+      "state": {
+        "name": "W"
+      },
+      "expected": "Hello W"
+    },
+    {
+      "id": "st06",
+      "group": "静态与根级文本",
+      "template": "<div></div>",
+      "state": {},
+      "expected": "<div></div>"
+    },
+    {
+      "id": "st07",
+      "group": "静态与根级文本",
+      "template": "<ul><li>a</li><li>b</li></ul>",
+      "state": {},
+      "expected": "<ul><li>a</li><li>b</li></ul>"
+    },
+    {
+      "id": "st08",
+      "group": "静态与根级文本",
+      "template": "<div><b>bold</b>text</div>",
+      "state": {},
+      "expected": "<div><b>bold</b>text</div>"
+    },
+    {
+      "id": "st09",
+      "group": "静态与根级文本",
+      "template": "<section><p>nested</p></section>",
+      "state": {},
+      "expected": "<section><p>nested</p></section>"
+    },
+    {
+      "id": "st10",
+      "group": "静态与根级文本",
+      "template": "<div class=\"x\" id=\"y\">z</div>",
+      "state": {},
+      "expected": "<div class=\"x\" id=\"y\">z</div>"
+    },
+    {
+      "id": "in01",
+      "group": "插值",
+      "template": "<p>Hello {{name}}!</p>",
+      "state": {
+        "name": "W"
+      },
+      "expected": "<p>Hello W!</p>",
+      "update": {
+        "name": "L"
+      }
+    },
+    {
+      "id": "in02",
+      "group": "插值",
+      "template": "<p>{{a}} and {{b}}</p>",
+      "state": {
+        "a": "1",
+        "b": "2"
+      },
+      "expected": "<p>1 and 2</p>"
+    },
+    {
+      "id": "in03",
+      "group": "插值",
+      "template": "<div><span>{{msg}}</span></div>",
+      "state": {
+        "msg": "M"
+      },
+      "expected": "<div><span>M</span></div>",
+      "update": {
+        "msg": "N"
+      }
+    },
+    {
+      "id": "in04",
+      "group": "插值",
+      "template": "<div>{{ a + b }}</div>",
+      "state": {
+        "a": 1,
+        "b": 2
+      },
+      "expected": "<div>3</div>"
+    },
+    {
+      "id": "in05",
+      "group": "插值",
+      "template": "<div>{{ ok ? 'A' : 'B' }}</div>",
+      "state": {
+        "ok": true
+      },
+      "expected": "<div>A</div>"
+    },
+    {
+      "id": "in06",
+      "group": "插值",
+      "template": "<div><span>{{x}}</span><span>{{y}}</span></div>",
+      "state": {
+        "x": "A",
+        "y": "B"
+      },
+      "expected": "<div><span>A</span><span>B</span></div>"
+    },
+    {
+      "id": "in07",
+      "group": "插值",
+      "template": "<div>{{ msg.length }}</div>",
+      "state": {
+        "msg": "abc"
+      },
+      "expected": "<div>3</div>"
+    },
+    {
+      "id": "in08",
+      "group": "插值",
+      "template": "<div>{{ user.name }}</div>",
+      "state": {
+        "user": {
+          "name": "Ann"
+        }
+      },
+      "expected": "<div>Ann</div>"
+    },
+    {
+      "id": "in09",
+      "group": "插值",
+      "template": "<div>{{ items.length }}</div>",
+      "state": {
+        "items": [1, 2]
+      },
+      "expected": "<div>2</div>"
+    },
+    {
+      "id": "in10",
+      "group": "插值",
+      "template": "<div>{{ count + 1 }}</div>",
+      "state": {
+        "count": 5
+      },
+      "expected": "<div>6</div>"
+    },
+    {
+      "id": "in11",
+      "group": "插值",
+      "template": "<div><span>{{ a ? 'Y' : 'N' }}</span></div>",
+      "state": {
+        "a": false
+      },
+      "expected": "<div><span>N</span></div>"
+    },
+    {
+      "id": "in12",
+      "group": "插值",
+      "template": "<p>prefix {{v}} suffix</p>",
+      "state": {
+        "v": "X"
+      },
+      "expected": "<p>prefix X suffix</p>"
+    },
+    {
+      "id": "if01",
+      "group": "v-if",
+      "template": "<div><span v-if=\"ok\">Y</span></div>",
+      "state": {
+        "ok": true
+      },
+      "expected": "<div><span>Y</span></div>",
+      "update": {
+        "ok": false
+      }
+    },
+    {
+      "id": "if02",
+      "group": "v-if",
+      "template": "<div><span v-if=\"!ok\">N</span></div>",
+      "state": {
+        "ok": false
+      },
+      "expected": "<div><span>N</span></div>"
+    },
+    {
+      "id": "if03",
+      "group": "v-if",
+      "template": "<div><p v-if=\"ok\">A</p><p v-else>B</p></div>",
+      "state": {
+        "ok": true
+      },
+      "expected": "<div><p>A</p></div>",
+      "update": {
+        "ok": false
+      }
+    },
+    {
+      "id": "if04",
+      "group": "v-if",
+      "template": "<div><span v-if=\"ok\" :id=\"i\">{{msg}}</span></div>",
+      "state": {
+        "ok": true,
+        "i": 7,
+        "msg": "M"
+      },
+      "expected": "<div><span id=\"7\">M</span></div>"
+    },
+    {
+      "id": "if05",
+      "group": "v-if",
+      "template": "<div v-if=\"ok\"><span>{{msg}}</span></div>",
+      "state": {
+        "ok": true,
+        "msg": "M"
+      },
+      "expected": "<div><span>M</span></div>"
+    },
+    {
+      "id": "if06",
+      "group": "v-if",
+      "template": "<div><p v-if=\"n > 0\">{{n}}</p></div>",
+      "state": {
+        "n": 3
+      },
+      "expected": "<div><p>3</p></div>"
+    },
+    {
+      "id": "if07",
+      "group": "v-if",
+      "template": "<div><span v-if=\"ok\" class=\"a\">x</span></div>",
+      "state": {
+        "ok": true
+      },
+      "expected": "<div><span class=\"a\">x</span></div>"
+    },
+    {
+      "id": "if08",
+      "group": "v-if",
+      "template": "<div><i v-if=\"ok\">A</i><i v-else-if=\"n > 0\">B</i><i v-else>C</i></div>",
+      "state": {
+        "ok": true,
+        "n": 1
+      },
+      "expected": "<div><i>A</i></div>",
+      "update": {
+        "ok": false
+      }
+    },
+    {
+      "id": "if09",
+      "group": "v-if",
+      "template": "<div><span v-if=\"ok\" :class=\"cls\">c</span></div>",
+      "state": {
+        "ok": true,
+        "cls": "k"
+      },
+      "expected": "<div><span class=\"k\">c</span></div>"
+    },
+    {
+      "id": "if10",
+      "group": "v-if",
+      "template": "<div><span v-show=\"ok\">s</span></div>",
+      "state": {
+        "ok": false
+      },
+      "expected": "<div><span style=\"display: none;\">s</span></div>"
+    },
+    {
+      "id": "if11",
+      "group": "v-if",
+      "template": "<div><span v-if=\"ok\">{{name}}</span></div>",
+      "state": {
+        "ok": true,
+        "name": "W"
+      },
+      "expected": "<div><span>W</span></div>"
+    },
+    {
+      "id": "if12",
+      "group": "v-if",
+      "template": "<div><b v-if=\"ok\">A</b></div>",
+      "state": {
+        "ok": true
+      },
+      "expected": "<div><b>A</b></div>"
+    },
+    {
+      "id": "for01",
+      "group": "v-for",
+      "template": "<ul><li v-for=\"x in xs\" :key=\"x\">{{x}}</li></ul>",
+      "state": {
+        "xs": ["a", "b"]
+      },
+      "expected": "<ul><li>a</li><li>b</li></ul>",
+      "update": {
+        "xs": ["a", "c"]
+      }
+    },
+    {
+      "id": "for02",
+      "group": "v-for",
+      "template": "<ul><li v-for=\"x in xs\" :key=\"x\"><span>{{x}}</span></li></ul>",
+      "state": {
+        "xs": ["a", "b"]
+      },
+      "expected": "<ul><li><span>a</span></li><li><span>b</span></li></ul>"
+    },
+    {
+      "id": "for03",
+      "group": "v-for",
+      "template": "<ul><li v-for=\"(x, i) in xs\" :key=\"i\">{{i}}:{{x}}</li></ul>",
+      "state": {
+        "xs": ["a", "b"]
+      },
+      "expected": "<ul><li>0:a</li><li>1:b</li></ul>"
+    },
+    {
+      "id": "for04",
+      "group": "v-for",
+      "template": "<ul><li v-for=\"x in xs\" :key=\"x.id\">{{x.name}}</li></ul>",
+      "state": {
+        "xs": [
+          {
+            "id": 1,
+            "name": "A"
+          },
+          {
+            "id": 2,
+            "name": "B"
+          }
+        ]
+      },
+      "expected": "<ul><li>A</li><li>B</li></ul>"
+    },
+    {
+      "id": "for05",
+      "group": "v-for",
+      "template": "<div><p v-for=\"x in xs\" :key=\"x\">{{x}}</p></div>",
+      "state": {
+        "xs": ["a", "b"]
+      },
+      "expected": "<div><p>a</p><p>b</p></div>"
+    },
+    {
+      "id": "for06",
+      "group": "v-for",
+      "template": "<ul><li v-for=\"x in xs\">{{x}}</li></ul>",
+      "state": {
+        "xs": ["a", "b"]
+      },
+      "expected": "<ul><li>a</li><li>b</li></ul>"
+    },
+    {
+      "id": "for07",
+      "group": "v-for",
+      "template": "<ul><li v-for=\"x in xs\" :key=\"x\" class=\"row\">{{x}}</li></ul>",
+      "state": {
+        "xs": ["a", "b"]
+      },
+      "expected": "<ul><li class=\"row\">a</li><li class=\"row\">b</li></ul>"
+    },
+    {
+      "id": "for08",
+      "group": "v-for",
+      "template": "<ul><li v-for=\"x in xs\" :key=\"x\" :data-k=\"x\">v</li></ul>",
+      "state": {
+        "xs": ["a", "b"]
+      },
+      "expected": "<ul><li data-k=\"a\">v</li><li data-k=\"b\">v</li></ul>"
+    },
+    {
+      "id": "for09",
+      "group": "v-for",
+      "template": "<ul><li v-for=\"x in nums\" :key=\"x\"><b>{{x}}</b><i>s</i></li></ul>",
+      "state": {
+        "nums": [1, 2]
+      },
+      "expected": "<ul><li><b>1</b><i>s</i></li><li><b>2</b><i>s</i></li></ul>"
+    },
+    {
+      "id": "for10",
+      "group": "v-for",
+      "template": "<div><span v-for=\"x in xs\" :key=\"x\">{{x}}</span></div>",
+      "state": {
+        "xs": ["a", "b"]
+      },
+      "expected": "<div><span>a</span><span>b</span></div>"
+    },
+    {
+      "id": "for11",
+      "group": "v-for",
+      "template": "<ul><li v-for=\"(x, idx) in xs\" :key=\"idx\"><span>{{x}}</span></li></ul>",
+      "state": {
+        "xs": ["a", "b"]
+      },
+      "expected": "<ul><li><span>a</span></li><li><span>b</span></li></ul>"
+    },
+    {
+      "id": "for12",
+      "group": "v-for",
+      "template": "<ul><li v-for=\"x in xs\" :key=\"x\">static</li></ul>",
+      "state": {
+        "xs": ["a", "b"]
+      },
+      "expected": "<ul><li>static</li><li>static</li></ul>"
+    },
+    {
+      "id": "for13",
+      "group": "v-for",
+      "template": "<ul><li v-for=\"x in xs\" :key=\"x\"><span :class=\"'c'\">{{x}}</span></li></ul>",
+      "state": {
+        "xs": ["a", "b"]
+      },
+      "expected": "<ul><li><span class=\"c\">a</span></li><li><span class=\"c\">b</span></li></ul>"
+    },
+    {
+      "id": "for14",
+      "group": "v-for",
+      "template": "<table><tr v-for=\"x in xs\" :key=\"x\"><td>{{x}}</td></tr></table>",
+      "state": {
+        "xs": ["a", "b"]
+      },
+      "expected": "<table><tr><td>a</td></tr><tr><td>b</td></tr></table>"
+    },
+    {
+      "id": "bin01",
+      "group": "动态属性",
+      "template": "<div :id=\"i\">x</div>",
+      "state": {
+        "i": 5
+      },
+      "expected": "<div id=\"5\">x</div>"
+    },
+    {
+      "id": "bin02",
+      "group": "动态属性",
+      "template": "<div :class=\"cls\">x</div>",
+      "state": {
+        "cls": "k"
+      },
+      "expected": "<div class=\"k\">x</div>"
+    },
+    {
+      "id": "bin03",
+      "group": "动态属性",
+      "template": "<div class=\"a\" :class=\"cls\">x</div>",
+      "state": {
+        "cls": "k"
+      },
+      "expected": "<div class=\"a k\">x</div>"
+    },
+    {
+      "id": "bin04",
+      "group": "动态属性",
+      "template": "<div :title=\"t\">x</div>",
+      "state": {
+        "t": "ti"
+      },
+      "expected": "<div title=\"ti\">x</div>"
+    },
+    {
+      "id": "bin05",
+      "group": "动态属性",
+      "template": "<input :value=\"v\">",
+      "state": {
+        "v": "vv"
+      },
+      "expected": "<input value=\"vv\">"
+    },
+    {
+      "id": "bin06",
+      "group": "动态属性",
+      "template": "<div :data-x=\"i\">x</div>",
+      "state": {
+        "i": 5
+      },
+      "expected": "<div data-x=\"5\">x</div>"
+    },
+    {
+      "id": "bin07",
+      "group": "动态属性",
+      "template": "<div :[dyn]=\"i\">x</div>",
+      "state": {
+        "dyn": "role",
+        "i": "r"
+      },
+      "expected": "<div role=\"r\">x</div>"
+    },
+    {
+      "id": "bin08",
+      "group": "动态属性",
+      "template": "<a :href=\"url\">link</a>",
+      "state": {
+        "url": "/u"
+      },
+      "expected": "<a href=\"/u\">link</a>"
+    },
+    {
+      "id": "bin09",
+      "group": "动态属性",
+      "template": "<div :style=\"st\">x</div>",
+      "state": {
+        "st": {
+          "color": "red"
+        }
+      },
+      "expected": "<div style=\"color: red;\">x</div>"
+    },
+    {
+      "id": "bin10",
+      "group": "动态属性",
+      "template": "<div :class=\"[a, b]\">x</div>",
+      "state": {
+        "a": "p",
+        "b": "q"
+      },
+      "expected": "<div class=\"p q\">x</div>"
+    },
+    {
+      "id": "bin11",
+      "group": "动态属性",
+      "template": "<div class=\"s\" :class=\"{ on: ok }\">x</div>",
+      "state": {
+        "ok": true
+      },
+      "expected": "<div class=\"s on\">x</div>"
+    },
+    {
+      "id": "ev01",
+      "group": "事件",
+      "template": "<div><button @click=\"go\">b</button></div>",
+      "state": {
+        "go": "noop"
+      },
+      "expected": "<div><button>b</button></div>"
+    },
+    {
+      "id": "ev02",
+      "group": "事件",
+      "template": "<div><button @click=\"count++\">{{count}}</button></div>",
+      "state": {
+        "count": 0
+      },
+      "expected": "<div><button>0</button></div>"
+    },
+    {
+      "id": "ev03",
+      "group": "事件",
+      "template": "<div><button @click.stop=\"go\">b</button></div>",
+      "state": {
+        "go": "noop"
+      },
+      "expected": "<div><button>b</button></div>"
+    },
+    {
+      "id": "ev04",
+      "group": "事件",
+      "template": "<div><input @input=\"onInput\"></div>",
+      "state": {
+        "onInput": "noop"
+      },
+      "expected": "<div><input></div>"
+    },
+    {
+      "id": "ev05",
+      "group": "事件",
+      "template": "<div><button v-on:click=\"go\">b</button></div>",
+      "state": {
+        "go": "noop"
+      },
+      "expected": "<div><button>b</button></div>"
+    },
+    {
+      "id": "ev06",
+      "group": "事件",
+      "template": "<div><form @submit.prevent=\"go\"><input></form></div>",
+      "state": {
+        "go": "noop"
+      },
+      "expected": "<div><form><input></form></div>"
+    },
+    {
+      "id": "vm01",
+      "group": "v-model",
+      "template": "<div><input v-model=\"text\"></div>",
+      "state": {
+        "text": "t"
+      },
+      "expected": "<div><input></div>"
+    },
+    {
+      "id": "vm02",
+      "group": "v-model",
+      "template": "<div><input v-model.lazy=\"text\"></div>",
+      "state": {
+        "text": "t"
+      },
+      "expected": "<div><input></div>"
+    },
+    {
+      "id": "vm03",
+      "group": "v-model",
+      "template": "<div><input v-model.number=\"num\"></div>",
+      "state": {
+        "num": 1
+      },
+      "expected": "<div><input></div>"
+    },
+    {
+      "id": "vm04",
+      "group": "v-model",
+      "template": "<div><textarea v-model=\"text\"></textarea></div>",
+      "state": {
+        "text": "t"
+      },
+      "expected": "<div><textarea></textarea></div>"
+    },
+    {
+      "id": "vm05",
+      "group": "v-model",
+      "template": "<div><select v-model=\"sel\"><option value=\"a\">A</option></select></div>",
+      "state": {
+        "sel": "a"
+      },
+      "expected": "<div><select><option value=\"a\">A</option></select></div>"
+    },
+    {
+      "id": "vm06",
+      "group": "v-model",
+      "template": "<div><input v-model.trim=\"text\"></div>",
+      "state": {
+        "text": " t "
+      },
+      "expected": "<div><input></div>"
+    },
+    {
+      "id": "cp01",
+      "group": "组件",
+      "template": "<div><MyComp/></div>",
+      "state": {},
+      "components": ["MyComp"]
+    },
+    {
+      "id": "cp02",
+      "group": "组件",
+      "template": "<div><my-comp/></div>",
+      "state": {},
+      "components": ["my-comp"]
+    },
+    {
+      "id": "cp04",
+      "group": "组件",
+      "template": "<div><MyComp :id=\"i\"/></div>",
+      "state": {
+        "i": 3
+      },
+      "components": ["MyComp"]
+    },
+    {
+      "id": "cp05",
+      "group": "组件",
+      "template": "<div><MyComp><span>child</span></MyComp></div>",
+      "state": {},
+      "components": ["MyComp"]
+    },
+    {
+      "id": "cp06",
+      "group": "组件",
+      "template": "<div><MyComp/><my-comp/></div>",
+      "state": {},
+      "components": ["MyComp", "my-comp"]
+    },
+    {
+      "id": "cp07",
+      "group": "组件",
+      "template": "<div><Panel title=\"t\"/></div>",
+      "state": {},
+      "components": ["Panel"]
+    },
+    {
+      "id": "cp08",
+      "group": "组件",
+      "template": "<div><MyComp :title=\"t\"/></div>",
+      "state": {
+        "t": "T"
+      },
+      "components": ["MyComp"]
+    },
+    {
+      "id": "cp09",
+      "group": "组件",
+      "template": "<div><my-comp><span>c</span></my-comp></div>",
+      "state": {},
+      "components": ["my-comp"]
+    },
+    {
+      "id": "sl01",
+      "group": "插槽",
+      "template": "<div><slot/></div>",
+      "state": {},
+      "slots": ["default"]
+    },
+    {
+      "id": "sl02",
+      "group": "插槽",
+      "template": "<div><slot name=\"header\"/></div>",
+      "state": {},
+      "slots": ["header"]
+    },
+    {
+      "id": "sl03",
+      "group": "插槽",
+      "template": "<div class=\"w\"><slot/></div>",
+      "state": {},
+      "slots": ["default"]
+    },
+    {
+      "id": "sl04",
+      "group": "插槽",
+      "template": "<div><slot name=\"x\"/><slot/></div>",
+      "state": {},
+      "slots": ["x", "default"]
+    },
+    {
+      "id": "sl05",
+      "group": "插槽",
+      "template": "<div><slot name=\"footer\"/></div>",
+      "state": {},
+      "slots": ["footer"]
+    },
+    {
+      "id": "sl06",
+      "group": "插槽",
+      "template": "<div><header><slot name=\"header\"/></header></div>",
+      "state": {},
+      "slots": ["header"]
+    },
+    {
+      "id": "di01",
+      "group": "指令杂项",
+      "template": "<div v-once>{{msg}}</div>",
+      "state": {
+        "msg": "M"
+      },
+      "expected": "<div>M</div>"
+    },
+    {
+      "id": "di02",
+      "group": "指令杂项",
+      "template": "<div v-memo=\"[msg]\">{{msg}}</div>",
+      "state": {
+        "msg": "M"
+      },
+      "expected": "<div>M</div>"
+    },
+    {
+      "id": "di03",
+      "group": "指令杂项",
+      "template": "<div v-text=\"msg\"></div>",
+      "state": {
+        "msg": "M"
+      },
+      "expected": "<div>M</div>"
+    },
+    {
+      "id": "di04",
+      "group": "指令杂项",
+      "template": "<div v-html=\"h\"></div>",
+      "state": {
+        "h": "<b>B</b>"
+      },
+      "expected": "<div><b>B</b></div>"
+    },
+    {
+      "id": "kb02",
+      "group": "kebab 与边界",
+      "template": "<div><my-comp :title=\"t\"/></div>",
+      "state": {
+        "t": "T"
+      },
+      "components": ["my-comp"]
+    },
+    {
+      "id": "kb03",
+      "group": "kebab 与边界",
+      "template": "<div><my-comp/><MyComp/></div>",
+      "state": {},
+      "components": ["my-comp", "MyComp"]
+    },
+    {
+      "id": "kb04",
+      "group": "kebab 与边界",
+      "template": "<div><ul><Row v-for=\"x in xs\" :key=\"x\">{{x}}</Row></ul></div>",
+      "state": {
+        "xs": ["a", "b"]
+      },
+      "components": ["Row"]
+    },
+    {
+      "id": "kb05",
+      "group": "kebab 与边界",
+      "template": "<div><my-comp v-if=\"ok\"/></div>",
+      "state": {
+        "ok": false
+      },
+      "components": ["my-comp"]
+    },
+    {
+      "id": "kb06",
+      "group": "kebab 与边界",
+      "template": "<div><Suspense><span>s</span></Suspense></div>",
+      "state": {}
+    },
+    {
+      "id": "mx01",
+      "group": "混合回归",
+      "template": "<div><h1>{{title}}</h1><p v-if=\"ok\">{{msg}}</p></div>",
+      "state": {
+        "title": "T",
+        "ok": true,
+        "msg": "M"
+      },
+      "expected": "<div><h1>T</h1><p>M</p></div>"
+    },
+    {
+      "id": "mx02",
+      "group": "混合回归",
+      "template": "<div><ul><li v-for=\"x in xs\" :key=\"x\"><span>{{x}}</span></li></ul></div>",
+      "state": {
+        "xs": ["a", "b"]
+      },
+      "expected": "<div><ul><li><span>a</span></li><li><span>b</span></li></ul></div>"
+    },
+    {
+      "id": "mx03",
+      "group": "混合回归",
+      "template": "<div><p :class=\"cls\">{{msg}}</p></div>",
+      "state": {
+        "cls": "k",
+        "msg": "M"
+      },
+      "expected": "<div><p class=\"k\">M</p></div>"
+    },
+    {
+      "id": "mx04",
+      "group": "混合回归",
+      "template": "<div><span v-if=\"ok\" :id=\"i\">{{msg}}</span><b>end</b></div>",
+      "state": {
+        "ok": true,
+        "i": 7,
+        "msg": "M"
+      },
+      "expected": "<div><span id=\"7\">M</span><b>end</b></div>"
+    },
+    {
+      "id": "mx05",
+      "group": "混合回归",
+      "template": "<div><button @click=\"count++\">{{count}}</button><span v-if=\"count > 0\">pos</span></div>",
+      "state": {
+        "count": 1
+      },
+      "expected": "<div><button>1</button><span>pos</span></div>"
+    },
+    {
+      "id": "mx06",
+      "group": "混合回归",
+      "template": "<main><header>{{title}}</header><section><slot/></section></main>",
+      "state": {
+        "title": "T"
+      },
+      "slots": ["default"],
+      "expected": "<main><header>T</header><section><span>slot-ok</span></section></main>"
+    }
+  ]
+}

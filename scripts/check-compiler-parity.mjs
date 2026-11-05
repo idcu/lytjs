@@ -3,29 +3,37 @@
 /**
  * scripts/check-compiler-parity.mjs
  *
- * **门禁：signal/vapor 编译产物的「默认路径」必须语义正确**（A04 / D1）。
+ * **门禁：signal/vapor 编译产物的「默认路径」必须语义正确 + 两套 codegen 逐字对拍**
  *
- * ## 为什么需要它（2026-11-05 新增）
+ * ## 历史（2026-11-05 建立，A04 / D1）
  *
- * `codegen-signal-optimized` 在 2026-11 的默认路径上是**静默丢内容**的：
+ * `codegen-signal-optimized` 曾静默丢内容：根级 `{{msg}}`、v-if 分支动态属性、
+ * kebab 组件、v-for 嵌套子元素。因此本门禁本来的职责是：
+ * 5 个最小模板走**默认选项**编译 → 真实执行 → 断言 DOM；默认产物必须等于
+ * `optimizeSignal: false`；显式 `optimizeSignal: true` 的分叉记录在棘轮基线里。
  *
- *   - `{{msg}}` 根级文本 → 产物里根本没有 DOM 创建（页面空白）；
- *   - `<span v-if="ok" :id="i">{{msg}}</span>` → 属性写成 `id="i"`、文本整段丢失；
- *   - `<my-comp/>` → `_ctx.my-comp` 被解析成减法（ReferenceError）；
- *   - `<li v-for="x in xs"><span>{{x}}</span></li>` → 每个 li 都是空的。
+ * ## 2026-11-06（B01 前置）扩展
  *
- * 这些问题产出的字符串「看起来像编译成功」，单测断言片段时全部能过，
- * 只有**真的执行并断言 DOM** 才会暴露。因此本门禁：
+ * 1. **修复执行器伪分叉**：优化版产物用短别名导入（`effect as e` / `setText as x`），
+ *    旧执行器把 import 行整条剥掉却没有把 `e` / `x` 绑到运行时 ⇒ 优化版一律
+ *    `ReferenceError: e is not defined`，被误记为「语义分叉」。现在解析 import 并
+ *    按别名注入运行时，分叉才是真的语义分叉。
+ * 2. **100 模板对拍**：`scripts/compiler-parity-templates.json` 里同一模板分别用
+ *    `optimizeSignal: false`（基础实现 A）与 `true`（优化实现 B）编译并真实执行，
+ *    断言 `innerHTML` 逐字一致；有 `update` 的模板再对拍一次响应式更新后的 DOM。
+ * 3. **棘轮基线**：已知不一致与已知「基础实现≠人工核定语义基准」都记入
+ *    `scripts/compiler-parity-baseline.json`，**只允许减少**。新增分叉直接报红，
+ *    修好却未收缩基线也报红（防止棘轮失效）。
  *
- * 1. 对 5 个最小模板，用**默认选项**（不传 optimizeSignal）编译 → 执行 → 断言真实 DOM；
- * 2. 断言默认产物与 `optimizeSignal: false` 产物**逐字相同**（默认必须是基础实现）；
- * 3. 对响应式更新（改名 / 切分支 / 改列表）重新断言 DOM；
- * 4. 显式 `optimizeSignal: true` 的分叉记录在
- *    `scripts/compiler-parity-baseline.json`，**只允许减少不允许增加**（棘轮）。
+ * 本文件只做对拍与断言，**不修改、不删除任何编译器实现**。
  *
  * 退出码：0 = 全部通过；1 = 有失败（打印实际 DOM 与产物）。
+ *
+ * 用法：
+ *   node scripts/check-compiler-parity.mjs
+ *   node scripts/check-compiler-parity.mjs --report /tmp/parity-report.json
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
 
 const dom = new JSDOM('<!doctype html><html><body></body></html>', { url: 'http://localhost' });
@@ -54,6 +62,7 @@ const DOM_RUNTIME = new URL('../packages/dom-runtime/dist/index.mjs', import.met
 const REACTIVITY = new URL('../packages/reactivity/dist/index.mjs', import.meta.url).href;
 const VDOM = new URL('../packages/vdom/dist/index.mjs', import.meta.url).href;
 const RENDERER = new URL('../packages/renderer/dist/index.mjs', import.meta.url).href;
+const COMPONENT = new URL('../packages/component/dist/index.mjs', import.meta.url).href;
 
 const { compile } = await import(COMPILER);
 const { createSignalRenderer } = await import(RENDERER);
@@ -62,14 +71,15 @@ const { reactive } = await import(REACTIVITY);
 /**
  * 执行 signal 产物（与 packages/renderer/src/signal/signal-renderer.ts 的参数表一致）。
  *
- * 门禁必须能跑**显式 optimizeSignal: true** 的产物，而 `createSignalRenderer` 写死
- * `optimizeSignal: false`，所以这里保留一份最小执行器，只用于分叉基线对比。
+ * `createSignalRenderer` 写死 `optimizeSignal: false`，所以显式开启优化器的产物
+ * 只能由本脚本直接执行。
  */
 const runtime = {
   ...(await import(DOM_RUNTIME)),
   ...(await import(REACTIVITY)),
   ...(await import(VDOM)),
   ...(await import(RENDERER)),
+  ...(await import(COMPONENT)),
 };
 const EXEC_PARAMS = [
   'effect',
@@ -118,11 +128,46 @@ const EXEC_ARGS = [
   false,
 ];
 
-/** 直接执行一段信号产物；返回 DOM 字符串（抛错时返回 `throw: ...`）。 */
+/**
+ * 把产物的 `import {X as y} from '...'` 解析成「本地别名 → 运行时导出」绑定。
+ *
+ * 这是 2026-11-06 修正的核心：优化版产物用短别名（`effect as e`、`setText as x`），
+ * 旧执行器直接剥掉 import 行，导致 `e is not defined` 被误报成语义分叉。
+ */
+function resolveImports(code) {
+  const bindings = {};
+  const body = code.replace(
+    /\bimport\s*\{([^}]*)\}\s*from\s*['"]([^'"]+)['"]\s*;?/g,
+    (_full, specs, mod) => {
+      for (const raw of specs.split(',')) {
+        const s = raw.trim();
+        if (!s) continue;
+        const parts = s.split(/\s+as\s+/);
+        const orig = parts[0].trim();
+        const alias = (parts[1] ?? parts[0]).trim();
+        if (!(orig in runtime)) {
+          throw new Error(`产物引用了运行时缺失的导出：${orig}（来自 ${mod}）`);
+        }
+        // 全名导入且参数表已提供同名参数时，不需要再声明一次（会重复声明报错）
+        if (alias === orig && EXEC_PARAMS.includes(orig)) continue;
+        bindings[alias] = runtime[orig];
+      }
+      return '';
+    },
+  );
+  return { body, bindings };
+}
+
+/** 直接执行一段信号产物；返回 DOM 字符串（抛错时由调用方捕获）。 */
 function execSignal(code, ctx, container) {
-  const moduleCode = code.replace(/^\s*import[^\n]*\n/gm, '').replace(/\bexport\s+/g, '');
-  const factory = new Function(...EXEC_PARAMS, `${moduleCode}\nreturn render;`);
-  const render = factory(...EXEC_ARGS);
+  const { body, bindings } = resolveImports(code);
+  const names = Object.keys(bindings);
+  const factory = new Function(
+    ...EXEC_PARAMS,
+    ...names,
+    `${body.replace(/\bexport\s+/g, '')}\nreturn render;`,
+  );
+  const render = factory(...EXEC_ARGS, ...names.map((n) => bindings[n]));
   render(ctx, container);
   return container.innerHTML.trim();
 }
@@ -132,10 +177,27 @@ const MyComp = {
   setup: () => ({}),
   render: () => runtime.createVNode('div', { class: 'c' }, 'comp-ok'),
 };
+const Panel = {
+  name: 'Panel',
+  setup: () => ({}),
+  render: () => runtime.createVNode('div', { class: 'panel' }, 'panel'),
+};
+const Row = {
+  name: 'Row',
+  setup: () => ({}),
+  render: () => runtime.createVNode('div', { class: 'row' }, 'row'),
+};
+const COMPONENTS = { MyComp, 'my-comp': MyComp, Panel, Row };
+
+/** 插槽填充物：所有插槽都返回同一个可辨识节点，便于断言。 */
+function makeSlots(names) {
+  const slots = {};
+  for (const n of names) slots[n] = () => [runtime.createVNode('span', null, 'slot-ok')];
+  return slots;
+}
 
 /**
- * 5 个最小模板 = 评估报告里「静默丢内容」的具体形态。
- * `apply` 用来验证响应式更新后的 DOM（只跑默认路径）。
+ * 5 个最小模板 = 评估报告里「静默丢内容」的具体形态（A04/D1 建立，保留）。
  */
 const FIXTURES = [
   {
@@ -190,19 +252,28 @@ const FIXTURES = [
 
 const tick = (ms = 40) => new Promise((r) => setTimeout(r, ms));
 let failed = 0;
+let passed = 0;
 const fail = (msg, extra) => {
   failed += 1;
   console.log(`  ❌ ${msg}`);
   if (extra) console.log(`     ${extra}`);
 };
+const pass = (msg) => {
+  passed += 1;
+  console.log(`  ✅ ${msg}`);
+};
 
-console.log('\n🔍 编译器一致性 check-compiler-parity（signal/vapor 默认路径）\n');
-console.log('   5 个最小模板：默认选项编译 → 真实执行 → 断言 DOM + 更新 + 默认关闭棘轮\n');
+console.log('\n🔍 编译器一致性 check-compiler-parity（signal/vapor 默认路径 + 100 模板对拍）\n');
+console.log('   ① 5 个最小模板：默认选项编译 → 真实执行 → 断言 DOM + 更新 + 默认关闭棘轮');
+console.log('   ② 100 模板：optimizeSignal false/true 双编译 → 双执行 → innerHTML 逐字对拍\n');
 
+// ============================================================
+// ① 默认路径语义正确性（原 A04/D1 用例）
+// ============================================================
 for (const fx of FIXTURES) {
   const ctx = fx.state();
   let ok = true;
-  // ① 默认必须等于基础实现（D1：优化默认关闭）
+  // 默认必须等于基础实现（D1：优化默认关闭）
   const defaultCode = compile(fx.template, { rendererMode: 'signal' }).code;
   const baseCode = compile(fx.template, { rendererMode: 'signal', optimizeSignal: false }).code;
   if (defaultCode !== baseCode) {
@@ -213,7 +284,7 @@ for (const fx of FIXTURES) {
     );
   }
 
-  // ② 真实执行 + DOM 断言（走 renderer 的真实路径）
+  // 真实执行 + DOM 断言（走 renderer 的真实路径）
   const root = document.createElement('div');
   document.body.appendChild(root);
   try {
@@ -228,7 +299,6 @@ for (const fx of FIXTURES) {
         `实际: ${JSON.stringify(actual)}\n     期望: ${JSON.stringify(fx.expected)}`,
       );
     } else if (fx.update) {
-      // ③ 响应式更新
       const expectedAfter = fx.update(ctx);
       await tick();
       const updated = root.innerHTML.trim();
@@ -240,18 +310,198 @@ for (const fx of FIXTURES) {
         );
       }
     }
-    if (ok) console.log(`  ✅ ${fx.name}`);
+    if (ok) pass(fx.name);
     r.unmount();
   } catch (e) {
     fail(`${fx.name}: 执行抛错`, e instanceof Error ? e.message : String(e));
   }
 }
 
-// ④ 显式开启优化器的分叉棘轮（只允许减少，不允许增加）
+// ============================================================
+// ② 100 模板对拍（B01 前置）
+// ============================================================
+const templatesFile = JSON.parse(
+  readFileSync(new URL('./compiler-parity-templates.json', import.meta.url), 'utf8'),
+);
+const TEMPLATES = templatesFile.templates;
 const baselinePath = new URL('./compiler-parity-baseline.json', import.meta.url);
 const baseline = JSON.parse(readFileSync(baselinePath, 'utf8'));
+if (!Array.isArray(baseline.templateParity?.divergent)) {
+  console.log('  ❌ 基线缺少 templateParity.divergent 段');
+  process.exit(1);
+}
+if (!Array.isArray(baseline.templateParity?.expectedMismatch)) {
+  console.log('  ❌ 基线缺少 templateParity.expectedMismatch 段');
+  process.exit(1);
+}
+
+function makeCtx(entry) {
+  const data = { ...(entry.state ?? {}) };
+  if (entry.components) {
+    for (const tag of entry.components) {
+      if (!(tag in COMPONENTS)) throw new Error(`脚本未内置组件：${tag}`);
+      data[tag] = COMPONENTS[tag];
+    }
+  }
+  if (entry.slots) data.$slots = makeSlots(entry.slots);
+  return reactive(data);
+}
+
+/** 跑一个模板的两种实现；返回 {a:{dom,err}, b:{dom,err}} */
+function runPair(entry) {
+  const out = {};
+  for (const opt of [false, true]) {
+    const key = opt ? 'b' : 'a';
+    const ctx = makeCtx(entry);
+    const container = document.createElement('div');
+    try {
+      const code = compile(entry.template, { rendererMode: 'signal', optimizeSignal: opt }).code;
+      out[key] = { dom: execSignal(code, ctx, container), err: null, ctx, container };
+    } catch (e) {
+      out[key] = { dom: null, err: e instanceof Error ? e.message : String(e), ctx, container };
+    }
+  }
+  return out;
+}
+
+/**
+ * 当前不一致的根因归类（启发式；最终以基线里的 kind/note 为准）。
+ * 只用于输出摘要，不参与判定。
+ */
+function classify(pair) {
+  const { a, b } = pair;
+  if (a.err && b.err) return 'both-throw';
+  if (b.err) return 'opt-throws';
+  if (a.err) return 'base-throws';
+  if (b.dom === '' && a.dom !== '') return 'opt-empty-dom';
+  if (a.dom.length > b.dom.length && b.dom && a.dom.includes(b.dom)) return 'opt-content-loss';
+  return 'opt-other-diff';
+}
+
+const divergentIds = baseline.templateParity.divergent.map((x) =>
+  typeof x === 'string' ? x : x.id,
+);
+const expectedMismatchIds = baseline.templateParity.expectedMismatch.map((x) =>
+  typeof x === 'string' ? x : x.id,
+);
+const observedDivergent = [];
+const observedExpectedMismatch = [];
+const report = { total: TEMPLATES.length, divergent: [], expectedMismatch: [], groups: {} };
+
+for (const entry of TEMPLATES) {
+  const pair = runPair(entry);
+  const same = pair.a.err === pair.b.err && pair.a.dom === pair.b.dom;
+  let sameAfterUpdate = same;
+  let afterDom = null;
+
+  if (entry.update) {
+    if (!pair.a.err && !pair.b.err) {
+      Object.assign(pair.a.ctx, entry.update);
+      Object.assign(pair.b.ctx, entry.update);
+      await tick();
+      const da = pair.a.container.innerHTML.trim();
+      const db = pair.b.container.innerHTML.trim();
+      afterDom = { a: da, b: db };
+      sameAfterUpdate = da === db;
+    } else {
+      sameAfterUpdate = false;
+    }
+  }
+
+  const isSame = same && sameAfterUpdate;
+  const kind = isSame ? 'same' : classify(pair);
+
+  report.groups[entry.group] = report.groups[entry.group] ?? { total: 0, same: 0, divergent: 0 };
+  const g = report.groups[entry.group];
+  g.total += 1;
+
+  if (isSame) {
+    g.same += 1;
+    if (divergentIds.includes(entry.id)) {
+      fail(
+        `${entry.id}（${entry.group}）已在两实现间一致，请从 compiler-parity-baseline.json 移除`,
+        '棘轮只允许减少；修好后不收基线会让棘轮失效',
+      );
+    }
+  } else {
+    g.divergent += 1;
+    observedDivergent.push(entry.id);
+    report.divergent.push({
+      id: entry.id,
+      group: entry.group,
+      kind,
+      a: pair.a.err ? `THROW: ${pair.a.err}` : pair.a.dom,
+      b: pair.b.err ? `THROW: ${pair.b.err}` : pair.b.dom,
+      after: afterDom,
+    });
+    if (!divergentIds.includes(entry.id)) {
+      fail(
+        `${entry.id}（${entry.group}）新增分叉：${kind}`,
+        `A(false): ${pair.a.err ?? JSON.stringify(pair.a.dom)}\n     B(true): ${pair.b.err ?? JSON.stringify(pair.b.dom)}`,
+      );
+    }
+  }
+
+  // 人工语义基准（可选）：只对基础实现 A 断言，避免拿某一实现当标准
+  if (entry.expected !== undefined && !pair.a.err && pair.a.dom !== entry.expected) {
+    observedExpectedMismatch.push(entry.id);
+    report.expectedMismatch.push({
+      id: entry.id,
+      group: entry.group,
+      actual: pair.a.dom,
+      expected: entry.expected,
+    });
+    if (!expectedMismatchIds.includes(entry.id)) {
+      fail(
+        `${entry.id}（${entry.group}）基础实现≠人工语义基准`,
+        `实际: ${JSON.stringify(pair.a.dom)}\n     基准: ${JSON.stringify(entry.expected)}`,
+      );
+    }
+  } else if (entry.expected !== undefined && expectedMismatchIds.includes(entry.id)) {
+    fail(
+      `${entry.id} 已符合人工语义基准，请从 compiler-parity-baseline.json 的 expectedMismatch 移除`,
+      '棘轮只允许减少',
+    );
+  }
+}
+
+// 基线里记录、但本轮已消失的项（正常修复）
+for (const id of divergentIds) {
+  if (!observedDivergent.includes(id)) {
+    // 若模板已一致，上面的 per-entry 分支已报红；这里只兜底 id 不在模板集合的情况
+    if (!TEMPLATES.some((t) => t.id === id)) {
+      fail(`基线里的 ${id} 不在 templates 集合中`, '请清理基线或补回模板');
+    }
+  }
+}
+
+const sameCount = TEMPLATES.length - observedDivergent.length;
+const kindCounts = {};
+for (const d of report.divergent) kindCounts[d.kind] = (kindCounts[d.kind] ?? 0) + 1;
 console.log(
-  `\n  ↪ 显式 optimizeSignal:true 的已知分叉（基线 ${baseline.divergent.length} 项，只允许减少）`,
+  `\n  ↪ 100 模板对拍：一致 ${sameCount} / 不一致 ${observedDivergent.length}（基线 ${divergentIds.length}）`,
+);
+if (observedDivergent.length > 0) {
+  console.log(`     不一致根因分布: ${JSON.stringify(kindCounts)}`);
+  for (const d of report.divergent) {
+    console.log(`     · ${d.id}（${d.group}）${d.kind}`);
+  }
+}
+if (observedExpectedMismatch.length > 0) {
+  console.log(
+    `     基础实现≠人工语义基准: ${observedExpectedMismatch.length} 项（基线 ${expectedMismatchIds.length}）`,
+  );
+}
+console.log('     分组：');
+for (const [group, v] of Object.entries(report.groups)) {
+  console.log(`       ${group}: ${v.same}/${v.total} 一致`);
+}
+
+// ============================================================
+// ③ 原 5 模板的显式 optimizeSignal:true 分叉棘轮（保留）
+// ============================================================
+console.log(
+  `\n  ↪ 5 个最小模板的显式 optimizeSignal:true 分叉（基线 ${baseline.divergent.length} 项，只允许减少）`,
 );
 for (const fx of FIXTURES) {
   let divergent = false;
@@ -273,16 +523,21 @@ for (const fx of FIXTURES) {
   if (divergent && !known) {
     fail(`${fx.name}: 优化器新增分叉（基线未记录）`, detail);
   } else if (!divergent && known) {
-    // 修好了是好事，但必须同步收缩基线，否则棘轮会失效
     fail(`${fx.name}: 优化器已不再分叉，请从 compiler-parity-baseline.json 移除`);
   } else if (divergent) {
     console.log(`     · ${fx.name} 仍分叉（已记录基线）`);
   }
 }
 
+const reportIdx = process.argv.indexOf('--report');
+if (reportIdx !== -1 && process.argv[reportIdx + 1]) {
+  writeFileSync(process.argv[reportIdx + 1], `${JSON.stringify(report, null, 2)}\n`);
+  console.log(`\n  ↪ 对拍报告已写入 ${process.argv[reportIdx + 1]}`);
+}
+
 console.log(
   failed === 0
-    ? '\n✅ check-compiler-parity 通过：默认路径 5 模板全部语义正确\n'
+    ? `\n✅ check-compiler-parity 通过：默认路径 ${passed} 个最小模板语义正确；100 模板对拍无新增分叉\n`
     : `\n❌ check-compiler-parity 失败：${failed} 项\n`,
 );
 process.exit(failed === 0 ? 0 : 1);
