@@ -123,7 +123,7 @@
     },
     "InputNumber": {
       "vmodel": { "status": "pass" },
-      "slots": { "status": "red", "reason": "声明 default 插槽，渲染函数从不读取" },
+      "slots": { "status": "n/a", "reason": "组件无插槽（删除从未渲染的 default 声明）" },
       "events": { "status": "pass" },
       "controlled": { "status": "pass" },
       "styles": { "status": "pass" },

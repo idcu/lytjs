@@ -1182,9 +1182,9 @@ export interface InputNumberProps {
   onKeydown?: (event: KeyboardEvent) => void;
 }
 
-export interface InputNumberSlots {
-  default?: () => VNode[];
-}
+// ★ 2026-11-06（B04）：本组件没有任何插槽 —— 删除从未渲染的 `default` 声明。
+//   声明一个永远被忽略的插槽比没有更坏（用户传了内容却看不到）。
+export type InputNumberSlots = Record<string, never>;
 
 export interface InputNumberSetupProps extends Record<string, unknown> {
   modelValue: number | undefined;
