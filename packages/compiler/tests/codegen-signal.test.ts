@@ -676,21 +676,34 @@ describe('codegen-signal', () => {
       // 运行时 SignalRenderer 走的正是非优化版；此前的实现里 v-once **完全无效**
       //（插值仍被 effect 包裹），而优化版是对的 —— 典型的「双 codegen 不同步」。
       const result = compile('<div v-once>{{ msg }}</div>', opts);
-      // 插值现在写入**各自的文本槽位**（claimTextSlots 从注释标记换来），
-      // 而不是写整个元素 —— 后者会让同元素内的多个插值互相覆盖。
-      expect(result.code).toContain('setText(_divSlots[0], _ctx.msg);');
-      expect(result.code).not.toContain('effect(() => setText(_divSlots');
+      // 单插值元素直接以元素自身为文本宿主（B01b 去注释），没有 claimTextSlots；
+      // 多插值 / 静态文本 + 插值仍走槽位（见下方守护用例）。
+      expect(result.code).toContain('setText(_div, _ctx.msg);');
+      expect(result.code).not.toContain('effect(() => setText(_div,');
     });
 
     it('should propagate v-once down the subtree (non-optimized)', () => {
       const result = compile('<div v-once><span>{{ msg }}</span></div>', opts);
-      expect(result.code).toContain('setText(_spanSlots[0], _ctx.msg);');
-      expect(result.code).not.toContain('effect(() => setText(_spanSlots');
+      expect(result.code).toContain('setText(_span, _ctx.msg);');
+      expect(result.code).not.toContain('effect(() => setText(_span,');
     });
 
     it('should still wrap ordinary interpolations with effect (non-optimized)', () => {
       const result = compile('<div>{{ msg }}</div>', opts);
-      expect(result.code).toContain('effect(() => setText(_divSlots[0], _ctx.msg));');
+      expect(result.code).toContain('effect(() => setText(_div, _ctx.msg));');
+    });
+
+    it('should keep text slots for multiple interpolations (B01b 去注释只对单插值生效)', () => {
+      const result = compile('<div>{{ a }}-{{ b }}</div>', opts);
+      expect(result.code).toContain('claimTextSlots(_div)');
+      // 多插值仍由 effect 包裹，故调用本身不带结尾分号（`…_ctx.a));`）
+      expect(result.code).toContain('setText(_divSlots[0], _ctx.a)');
+      expect(result.code).toContain('setText(_divSlots[1], _ctx.b)');
+    });
+
+    it('should keep text slots when static text precedes an interpolation (B01b)', () => {
+      const result = compile('<div>Hi {{ name }}</div>', opts);
+      expect(result.code).toContain('claimTextSlots(_div)');
     });
 
     it('should treat blank-only slot content inside v-if as null children', () => {
