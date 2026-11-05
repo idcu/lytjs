@@ -1124,7 +1124,8 @@ export interface SwitchProps {
 }
 
 export interface SwitchSlots {
-  default?: () => VNode[];
+  // ★ 2026-11-06（B04）：移除从未渲染的 `default` —— 本组件只按状态渲染
+  //   active / inactive；声明一个永远被忽略的插槽比没有更坏。
   active?: () => VNode[];
   inactive?: () => VNode[];
 }

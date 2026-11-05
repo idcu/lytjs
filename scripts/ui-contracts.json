@@ -192,7 +192,7 @@
     },
     "Switch": {
       "vmodel": { "status": "pass" },
-      "slots": { "status": "red", "reason": "声明 default 插槽，渲染函数只读 active / inactive" },
+      "slots": { "status": "pass" },
       "events": { "status": "pass" },
       "controlled": { "status": "pass" },
       "styles": { "status": "pass" },
