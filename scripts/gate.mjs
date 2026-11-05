@@ -528,6 +528,23 @@ const GATES = [
       '（所有 warn 在产物里是哑的，见 check-dev-warnings 第 12 组）。判据 9 组 65 条，含多组对照',
   },
   {
+    name: 'check-reactivity-semantics',
+    tier: 'fast',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-reactivity-semantics.mjs'],
+    approx: '~0.2s',
+    desc:
+      '★ 响应式语义（@lytjs/reactivity）：这类缺陷**都不抛异常** —— 值能读出来，界面就是不更新。' +
+      '单测直接读 `obj.prop` / `computed()` 永远拿到「当下的正确值」，只有断言**副作用次数**才暴露。' +
+      '2026-11-05（A08）首次运行抓到三处：① `reactive` 只解包对象型 ref，**函数型 Signal 不解包**' +
+      '（`reactive({ s: signal(1) }).s` 是 function，`obj.s + 1` 变函数拼接；写侧也没有写穿 ⇒ 赋值把信号整个替换掉）；' +
+      '② `Map.set` 新增 key 一律按 SET 触发，**不惊动 ITERATE_KEY** ⇒ `map.size` / `keys()` 的 effect 永不重跑' +
+      '（实测 sizes === [1]）；删除/新增对 Set 还**双跑**（显式 ITERATE 与 trigger 内建叠加）；' +
+      '非字符串 key 直接不触发（`Set<number>.add(1)` 后 dummy 停在 0）；' +
+      '③ `computedSignal` 求值**没有 activeEffect** ⇒ getter 里读 `reactive` 不被追踪（`state.n = 2` 后仍是旧值）。' +
+      '判据 3 组 23 条，含三组「回退修复即红」的负向对照（分别 5 / 5 / 3 红）',
+  },
+  {
     name: 'check-web-cssvars',
     tier: 'fast',
     needsDist: true,

@@ -5,7 +5,7 @@
  */
 
 import { SignalSymbol, ComputedSignalSymbol, TrackOpTypes, TriggerOpTypes } from './constants';
-import { track, trigger, beginTriggerBatch, endTriggerBatch } from './effect';
+import { track, trigger, beginTriggerBatch, endTriggerBatch, ReactiveEffect } from './effect';
 import { REACTIVITY_MAX_TRIGGER_DEPTH } from '@lytjs/common-constants';
 import { isSignalUntracked, withSignalUntracked, resetSignalUntracked } from './shared/untracked';
 import type { Subscriber } from './shared/types';
@@ -246,6 +246,16 @@ function createComputedSignalInternal<T>(
     }
   };
 
+  // ★ 2026-11-05（A08）：getter 必须在 **effect 的 activeEffect 上下文**里执行，
+  //   否则 getter 里读 `reactive` / `ref` 时 `track()` 直接返回（`activeEffect === undefined`）
+  //   ⇒ computed 只依赖 signal，对 reactive 字段的变化完全无感知
+  //   （实测 `computedSignal(() => state.n * 2)` 在 `state.n = 2` 后仍是旧值）。
+  //   用 ReactiveEffect 包一层：run() 会设置 activeEffect 并清理旧依赖，
+  //   scheduler 走 invalidate，与 signal 内部订阅合并成同一条失效路径。
+  //   注意：getter 期间 `isSignalComputedGetter = true` 会抑制 signal 的 effect 桥接
+  //   track，signal 依赖仍由内部订阅管理，不会出现双重触发。
+  const reactiveRunner = new ReactiveEffect(getter, () => invalidate());
+
   const computedFn = function computedFn(): T {
     if (disposed) return value as T;
 
@@ -279,7 +289,7 @@ function createComputedSignalInternal<T>(
         };
         isSignalComputedGetter = true;
         try {
-          value = getter();
+          value = reactiveRunner.run() as T;
           dirty = false;
         } finally {
           activeSubscriber = prevSubscriber;
@@ -298,6 +308,7 @@ function createComputedSignalInternal<T>(
 
   const dispose = (): void => {
     disposed = true;
+    reactiveRunner.stop();
     for (const unsubscribe of dependencies.values()) {
       unsubscribe();
     }

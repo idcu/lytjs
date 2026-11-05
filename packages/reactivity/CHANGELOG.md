@@ -1,5 +1,29 @@
 # @lytjs/reactivity
 
+## [未发布] - 2026-11-05
+
+### 🐞 修复（A08：三处「不抛异常」的语义缺口）
+
+- **`reactive` 解包函数型 Signal**（读侧 + 写侧）：此前只解包对象型 `ref`，
+  `reactive({ s: signal(1) }).s` 拿到的是 signal 函数本身（`obj.s + 1` 变函数拼接），
+  且 `obj.s = 2` 会把信号整个替换成普通值（之后 signal.set 不再可见）。
+  现在读取返回当前值，赋值写穿到 `signal.set()`；数组整数索引保持返回函数（与 ref 一致），
+  `readonly` 视图同样解包，普通函数属性不受影响。
+- **集合变更的通知范围**：`Map.set` 新增 key 改为按 `ADD` 触发（`trigger` 会额外收集
+  `ITERATE_KEY` 依赖）⇒ `map.size` / `keys()` 的 effect 正确重跑；同时移除 Set/Map 的
+  `add`/`delete` 里与 `trigger` 内建逻辑重叠的显式 `ITERATE_KEY` 触发（一次变更曾让
+  订阅者跑两遍）；非字符串 key（`Set<number>`、`Map<object>`) 回落到 `ITERATE_KEY`，
+  `set.add(1)` 后 `size` 的 effect 不再停在旧值。
+- **`computedSignal` 追踪 `reactive`**：求值改用内部 `ReactiveEffect`（设置 `activeEffect`
+  并清理旧依赖），getter 里读 `reactive` / 嵌套字段现在能建立依赖；`signal` 依赖路径
+  （内部订阅 + `isSignalComputedGetter` 抑制桥接）保持不变，`dispose()` 会停止该 effect。
+
+### 🛡️ 门禁
+
+- 新增 `scripts/check-reactivity-semantics.mjs`（fast tier）：3 组 23 条断言，直接断言
+  **副作用次数**（`effect` 重跑次数 / `computedSignal` 通知次数），并保留三组负向对照
+  （分别回退修复 ⇒ 5 / 5 / 3 条红）。
+
 ## [6.9.6] - 2026-06-06
 
 ### 🚀 版本升级

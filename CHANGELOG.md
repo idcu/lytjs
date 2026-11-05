@@ -4,6 +4,16 @@
 
 ## [Unreleased]
 
+### 🧠 响应式语义：三处「不抛异常」的缺口（2026-11-05）
+
+- `reactive` 解包函数型 Signal（读侧返回当前值，写侧写穿到 `signal.set()`），
+  readonly 同样生效，数组整数索引与普通函数属性不受影响。
+- `Map.set` 新增 key 按 ADD 触发 ⇒ `map.size` / `keys()` 正确更新；移除 add/delete 上
+  重复的 ITERATE_KEY 触发（订阅者曾一次变更跑两遍）；非字符串 key 回落到 ITERATE_KEY。
+- `computedSignal` 求值时设置 `activeEffect`，getter 内读 `reactive` 可追踪（`dispose()` 生效）。
+- 新增门禁 `check-reactivity-semantics`（fast，23 条，断言副作用次数）。
+- 详见 [packages/reactivity/CHANGELOG.md](packages/reactivity/CHANGELOG.md)。
+
 ### 🛠️ CLI 脚手架与代码生成：生成即可跑（2026-11-05）
 
 - SSR 模板改为先 `createApp(App)` 注入模板编译器 —— 此前每个 SSR 请求都是 500。

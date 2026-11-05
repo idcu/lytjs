@@ -9,6 +9,7 @@ import { ReactiveFlags, TrackOpTypes, TriggerOpTypes, ITERATE_KEY } from './cons
 import { track, trigger, pauseTracking, resetTracking, isIntegerKey } from './effect';
 import type { UnwrapNestedRefs, DeepReadonly } from './types';
 import { toRaw, isRef } from './shared';
+import { isSignal } from './signal';
 
 // ==================== 类型 ====================
 
@@ -199,6 +200,34 @@ function toTriggerKey(value: unknown): string | symbol | undefined {
   return undefined;
 }
 
+/**
+ * 集合（Map/Set）变更的统一触发入口。
+ *
+ * dep 槽位只接受 `string | symbol`，所以**非字符串 key**（如 `Set<number>`、
+ * `Map<object, T>`）没有 key 级订阅：此前直接 `toTriggerKey(...)` 拿到
+ * undefined 就静默跳过 ⇒ `set.add(1)` 后读 `set.size` 的 effect 不重跑
+ * （实测 dummy 停在 0，`tests/reactive.test.ts` 的 Set 用例红）。
+ * 这类变更至少要让集合级订阅者（`size` / 迭代）收到，它们挂在 ITERATE_KEY。
+ * 字符串 / symbol key 仍走 key 级触发（ADD/DELETE 会由 trigger 自动带上
+ * ITERATE_KEY 依赖，不会双跑）。
+ */
+function triggerCollectionMutation(
+  target: object,
+  type: string,
+  key: unknown,
+  newValue?: unknown,
+  oldValue?: unknown,
+): void {
+  const triggerKey = toTriggerKey(key);
+  if (triggerKey !== undefined) {
+    trigger(target, type, triggerKey, newValue, oldValue);
+    return;
+  }
+  if (type === TriggerOpTypes.ADD || type === TriggerOpTypes.DELETE) {
+    trigger(target, type, ITERATE_KEY, newValue, oldValue);
+  }
+}
+
 // ==================== createReactiveObject ====================
 
 function createReactiveObject(
@@ -274,6 +303,15 @@ function createMutableHandler(isReadonly: boolean, isShallow: boolean): ProxyHan
         return targetIsArray && isIntegerKey(key) ? res : res.value;
       }
 
+      // ★ 2026-11-05（A08）：函数型 Signal 也要解包。
+      //   `ref` 有 `__v_isRef`（对象），Signal 是**带品牌标记的函数**，所以
+      //   旧的 isRef 分支永远不命中 ⇒ `reactive({ s: signal(1) }).s` 拿到的是
+      //   signal 函数本身，`obj.s + 1` 得到 `"() => ...1"` 这种脏值。
+      //   数组整数索引与 ref 保持一致：返回原函数，避免 `arr[0].set()` 失效。
+      if (isSignal(res)) {
+        return targetIsArray && isIntegerKey(key) ? res : res();
+      }
+
       if (isObject(res)) {
         return isReadonly ? readonly(res) : reactive(res);
       }
@@ -305,6 +343,18 @@ function createMutableHandler(isReadonly: boolean, isShallow: boolean): ProxyHan
         oldValue = toRaw(oldValue);
         if (!Array.isArray(target) && isRef(oldValue) && !isRef(value)) {
           oldValue.value = value;
+          return true;
+        }
+        // 与 ref 对称：给「signal 属性」赋普通值 = 写穿到 signal.set()，
+        // 否则读侧的自动解包会让 `obj.s = 2` 变成「属性变成普通值」——
+        // 之后的写入不再触发响应，且与读侧语义自相矛盾。
+        if (
+          !Array.isArray(target) &&
+          isSignal(oldValue) &&
+          !isSignal(value) &&
+          typeof (oldValue as { set?: unknown }).set === 'function'
+        ) {
+          (oldValue as unknown as { set: (v: unknown) => void }).set(value);
           return true;
         }
       }
@@ -452,36 +502,35 @@ function createCollectionHandler(isReadonly: boolean, isShallow: boolean): Proxy
                 const hadKey = rawTarget.has(args[0]);
                 const result = res.apply(target, args);
                 if (!hadKey || !Object.is(toRaw(oldValue), toRaw(args[1]))) {
-                  const triggerKey = toTriggerKey(args[0]);
-                  if (triggerKey !== undefined) {
-                    trigger(target, TriggerOpTypes.SET, triggerKey, args[1], oldValue);
-                  }
+                  // ★ 2026-11-05（A08）：新增 key 必须按 **ADD** 触发。
+                  //   `trigger()` 对 add 会额外收集 ITERATE_KEY 的依赖，而
+                  //   `map.size` / `keys()` 恰好追踪 ITERATE_KEY；此前一律用 SET，
+                  //   所以读 size 的 effect 永远不重跑（实测 sizes === [1]）。
+                  //   已有的 key 改值仍是 SET（size 不变，不该惊动迭代类订阅者）。
+                  triggerCollectionMutation(
+                    target,
+                    hadKey ? TriggerOpTypes.SET : TriggerOpTypes.ADD,
+                    args[0],
+                    args[1],
+                    oldValue,
+                  );
                 }
                 return result;
               } else if (key === 'add') {
                 // Set.add: 利用返回值判断是否新增
                 const had = rawTarget.has(args[0]);
                 const result = res.apply(target, args);
-                if (!had) {
-                  const triggerKey = toTriggerKey(args[0]);
-                  if (triggerKey !== undefined) {
-                    trigger(target, TriggerOpTypes.ADD, triggerKey, args[0]);
-                  }
-                  // size 变化，触发 ITERATE_KEY 依赖
-                  trigger(target, TriggerOpTypes.ADD, ITERATE_KEY);
-                }
+                // ADD 已包含 ITERATE_KEY 依赖（effect.ts 的 trigger 分支），
+                // 再显式触发一次会让 size/迭代类 effect 一次变更跑两遍。
+                if (!had) triggerCollectionMutation(target, TriggerOpTypes.ADD, args[0], args[0]);
                 return result;
               } else if (key === 'delete') {
                 // Map/Set.delete: 已有 hadKey 检查
                 const hadKey = rawTarget.has(args[0]);
                 const result = res.apply(target, args);
                 if (hadKey) {
-                  const triggerKey = toTriggerKey(args[0]);
-                  if (triggerKey !== undefined) {
-                    trigger(target, TriggerOpTypes.DELETE, triggerKey, undefined, undefined);
-                  }
-                  // size 变化，触发 ITERATE_KEY 依赖
-                  trigger(target, TriggerOpTypes.DELETE, ITERATE_KEY);
+                  // DELETE 同样已包含 ITERATE_KEY 依赖；显式重复会双跑。
+                  triggerCollectionMutation(target, TriggerOpTypes.DELETE, args[0]);
                 }
                 return result;
               } else if (key === 'clear') {
