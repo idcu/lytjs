@@ -8,7 +8,7 @@ import type { AvatarProps, AvatarSlots, AvatarSetupProps } from './types';
 import { defineComponent, type PropType } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
-import { signal } from '@lytjs/reactivity';
+import { signal, watch } from '@lytjs/reactivity';
 import { mergeA11yProps } from '@lytjs/common-a11y';
 
 export const Avatar = defineComponent({
@@ -36,6 +36,16 @@ export const Avatar = defineComponent({
   setup(props: Record<string, unknown>, { slots }) {
     const _props = props as AvatarSetupProps;
     const isImageExist = signal(true);
+
+    // ★ 2026-11-06（B04）：`src` 是受控 prop，加载失败状态不能「粘住」。
+    //   此前只 `isImageExist.set(false)`、从不复位 ⇒ 一次加载失败后换成有效地址，
+    //   仍然只剩 icon/插槽。src（或 srcSet）一变就重新尝试加载。
+    watch(
+      () => [_props.src, _props.srcSet],
+      () => {
+        isImageExist.set(true);
+      },
+    );
 
     const getSize = () => {
       if (typeof _props.size === 'number') {

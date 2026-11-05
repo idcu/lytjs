@@ -29,9 +29,8 @@
       "slots": { "status": "pass" },
       "events": { "status": "pass" },
       "controlled": {
-        "status": "red",
-        "probe": "sticky",
-        "reason": "src 变更不重置 isImageExist：一次加载失败后换图仍为空（无 watch）"
+        "status": "pass",
+        "probe": "sticky"
       },
       "styles": { "status": "pass" },
       "keyboard": { "status": "n/a", "reason": "无键盘交互（仅 img onError）" }
