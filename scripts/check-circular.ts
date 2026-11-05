@@ -3,6 +3,12 @@
  *
  * 使用 madge 检测所有包的循环依赖。
  *
+ * ★ 2026-11-05（A07）：包发现改为**递归遍历 `packages/**`**。旧实现硬编码
+ *   「顶层 + 5 个 `xx/packages` 子目录」，实测只扫到 61/76 个包 —— 漏掉的 15 个
+ *   （`ecosystem/.../packages` 的更深层级、`packages/common` 本体等）里的循环
+ *   永远不会被这个门禁看见。现在源码模式会断言 `扫描数 == manifest 目录数`
+ *   （当前 76/76），漏扫直接红。
+ *
  * ⚠️ **默认模式扫的是 `dist`（构建产物），不是源码**（2026-10-05 实测）：
  *   - `check-circular`（默认 / dist）：检出 **0** 条；
  *   - `check-circular:src`（源码）：检出 198 条 ⇒ 逐层过滤后只剩 **8 条**：
@@ -76,52 +82,56 @@ interface PackageEntry {
   path: string;
 }
 
+/**
+ * 递归发现 `packages/**` 下的所有包。
+ *
+ * ⚠️ 2026-11-05（A07）：此前是**硬编码两层目录**（顶层 + 5 个固定的
+ *   `xx/packages` 子目录）⇒ 实测只扫到 61 个包，漏掉 15 个
+ *   （例如 `ecosystem/packages` 下更深一级的布局变化、
+ *   `common` 里被新增的子包）。检查器扫不到 = 新循环永远不会红。
+ *   现在按「目录里有 package.json 且入口存在」判定，层级不限。
+ *   实测：76 个包（与 workspace 包数一致）。
+ *
+ * 跳过 `node_modules` / `dist` / `coverage` / `.tmp`：它们里面可能有
+ *   第三方包或构建副本的 package.json，会把依赖图污染成假环。
+ */
+const SKIP_DIRS = new Set(['node_modules', 'dist', 'coverage', '.tmp']);
+
+/** 递归遍历 `packages/**`，对每个带 package.json 的目录回调一次 */
+function walkPackageDirs(visit: (fullDir: string, pkgJsonPath: string) => void): void {
+  const walk = (dir: string): void => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (!entry.isDirectory() || SKIP_DIRS.has(entry.name)) continue;
+      const full = join(dir, entry.name);
+      const pkgJson = join(full, 'package.json');
+      if (existsSync(pkgJson)) visit(full, pkgJson);
+      // 继续向下：包可以嵌套（ecosystem/packages/*、common/*、tools/packages/*）
+      walk(full);
+    }
+  };
+  walk(join(ROOT, 'packages'));
+}
+
 function collectPackages(): PackageEntry[] {
   const packages: PackageEntry[] = [];
-  const packagesDir = join(ROOT, 'packages');
-
-  // 顶层包
-  const topDirs = readdirSync(packagesDir, { withFileTypes: true });
-  for (const dir of topDirs) {
-    if (!dir.isDirectory()) continue;
-    if (dir.name.startsWith('_') || dir.name === 'common' || dir.name === 'lytui') continue;
-
-    const entryFile = isSrc
-      ? join(packagesDir, dir.name, 'src', 'index.ts')
-      : join(packagesDir, dir.name, 'dist', 'index.mjs');
-
-    if (existsSync(entryFile)) {
-      packages.push({ name: `@lytjs/${dir.name}`, path: entryFile });
-    }
-  }
-
-  // 孙包目录
-  const subDirs = [
-    'common/packages',
-    'common/common-warn',
-    'ecosystem/packages',
-    'plugins/packages',
-    'tools/packages',
-  ];
-  for (const sub of subDirs) {
-    const subPath = join(packagesDir, sub);
-    if (!existsSync(subPath)) continue;
-
-    const dirs = readdirSync(subPath, { withFileTypes: true });
-    for (const dir of dirs) {
-      if (!dir.isDirectory()) continue;
-
-      const entryFile = isSrc
-        ? join(subPath, dir.name, 'src', 'index.ts')
-        : join(subPath, dir.name, 'dist', 'index.mjs');
-
-      if (existsSync(entryFile)) {
-        packages.push({ name: `@lytjs/${dir.name}`, path: entryFile });
-      }
-    }
-  }
-
+  walkPackageDirs((full, pkgJson) => {
+    const entryFile = isSrc ? join(full, 'src', 'index.ts') : join(full, 'dist', 'index.mjs');
+    if (!existsSync(entryFile)) return;
+    packages.push({
+      name: JSON.parse(readFileSync(pkgJson, 'utf-8')).name,
+      path: entryFile,
+    });
+  });
   return packages;
+}
+
+/** `packages/**` 下带 package.json 的目录总数（扫描覆盖率的对照值） */
+function countManifestDirs(): number {
+  let count = 0;
+  walkPackageDirs(() => {
+    count++;
+  });
+  return count;
 }
 
 async function main(): Promise<void> {
@@ -143,6 +153,21 @@ async function main(): Promise<void> {
     console.log('⚠️  未找到任何包入口文件。');
     console.log(isSrc ? '请确保 src/index.ts 文件存在。' : '请先运行 pnpm build。');
     process.exit(1);
+  }
+
+  // ★ 覆盖率自检（A07）：扫描范围必须覆盖 `packages/**` 下所有包。
+  //   只报「发现的包数」时，漏扫会被静默读成「没有循环」—— 这正是
+  //   61/76 的漏扫能长期存活的原因。源码模式强制对齐；dist 模式允许
+  //   少于总数（未构建的包没有 dist 入口），不在此处判红。
+  if (isSrc) {
+    const manifests = countManifestDirs();
+    if (packages.length !== manifests) {
+      console.error(
+        `❌ 扫描覆盖不完整：${packages.length}/${manifests} 个包。` +
+          '检查器发现逻辑漏掉了包（或某个包缺少 src/index.ts）。',
+      );
+      process.exit(1);
+    }
   }
 
   console.log(`扫描到 ${packages.length} 个包，逐个检查中...\n`);

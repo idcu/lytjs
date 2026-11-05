@@ -22,3 +22,5 @@ keywords: [循环依赖, 类型环, 懒加载, madge, 棘轮, detective]
 - 先分类再还债：加 `detectiveOptions.ts.skipTypeImports/skipAsyncImports`，只拦**运行时环**；
 - 棘轮基线 `scripts/circular-baseline.txt` 只拦新增，消掉的要删基线行；
 - 拆"动态范围开关"类环时，标志必须保持**单一模块级绑定**（先例 `shared/untracked.ts`）。
+- **扫描范围也是判据**（A07）：包发现曾只扫 61/76 个包 ⇒ 漏掉的环永远不红；
+  现递归遍历并断言「扫描数 == manifest 目录数」（76/76）。
