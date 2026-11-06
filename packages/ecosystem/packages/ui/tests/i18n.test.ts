@@ -12,6 +12,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { createApp, h } from '@lytjs/core';
 import { createVNode, createTextVNode } from '@lytjs/vdom';
 import { Pagination } from '../src/components/Pagination';
+import { Empty } from '../src/components/Empty';
 import { FALLBACK_LOCALE, UI_LOCALE_MESSAGES, getUiLocale, setUiLocale, t } from '../src/locale';
 
 const hosts: HTMLElement[] = [];
@@ -91,6 +92,23 @@ describe('i18n · 运行时切换会触发组件重渲染', () => {
     await flush();
     expect(host.textContent).toContain('100 total');
     expect(host.querySelector('.lyt-pagination__prev')!.textContent).toBe('Previous page');
+  });
+
+  it('空状态：默认 description 跟随 locale（显式传值时以传入值为准）', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    hosts.push(host);
+    await createApp({
+      setup() {
+        return () => h(Empty as never, {});
+      },
+    } as never).mount(host);
+    await flush();
+    expect(host.textContent).toContain('暂无数据');
+
+    setUiLocale('en-US');
+    await flush();
+    expect(host.textContent).toContain('No data');
   });
 });
 

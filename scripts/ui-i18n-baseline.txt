@@ -4,8 +4,6 @@
 # 门禁只对**新增**报错。最终目标：本文件清空（Golden 20 零硬编码）。
 # 格式：每行一条，`<组件> → <原文>`。新增前先问：为什么不用 t()？
 #
-Empty → empty
-Empty → 暂无数据
 InputNumber → 减少
 InputNumber → 增加
 Progress → Progress

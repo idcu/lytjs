@@ -3,12 +3,14 @@ import { defineComponent } from '@lytjs/component';
 import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { mergeA11yProps } from '@lytjs/common-a11y';
+import { t } from '../locale';
 
 export const Empty = defineComponent({
   name: 'LytEmpty',
 
   props: {
-    description: { type: String, default: '暂无数据' },
+    // 默认文案走 i18n（运行时切换 locale 才可能变化）；显式传 description 时以传入值为准。
+    description: { type: String, default: '' },
     image: { type: String, default: '' },
     imageSize: { type: Number, default: 160 },
     class: { type: String, default: '' },
@@ -48,7 +50,7 @@ export const Empty = defineComponent({
           createVNode('div', { class: 'lyt-empty__image' }, [
             createVNode('img', {
               src: p.image,
-              alt: 'empty',
+              alt: t('empty.imageAlt'),
               style: { width: `${p.imageSize}px`, height: `${p.imageSize}px` },
             }),
           ]),
@@ -109,6 +111,12 @@ export const Empty = defineComponent({
       } else if (p.description) {
         children.push(
           createVNode('div', { class: 'lyt-empty__description' }, [createTextVNode(p.description)]),
+        );
+      } else {
+        children.push(
+          createVNode('div', { class: 'lyt-empty__description' }, [
+            createTextVNode(t('empty.description')),
+          ]),
         );
       }
 
