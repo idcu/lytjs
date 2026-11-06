@@ -1,0 +1,33 @@
+# Golden 20 硬编码文案基线（i18n 棘轮）—— 由 `tsx scripts/check-ui-i18n.ts --write-baseline` 生成
+#
+# 语义：这些是**已确认待迁移**到 `src/locale/messages.ts` 的硬编码文案，
+# 门禁只对**新增**报错。最终目标：本文件清空（Golden 20 零硬编码）。
+# 格式：每行一条，`<组件> → <原文>`。新增前先问：为什么不用 t()？
+#
+Dialog → Close dialog
+Dialog → 取消
+Dialog → 确定
+Drawer → Close drawer
+Empty → empty
+Empty → 暂无数据
+InputNumber → 减少
+InputNumber → 增加
+Modal → Cancel
+Modal → Close dialog
+Modal → Confirm
+Modal → 取消
+Modal → 确定
+Pagination → ${size} 条/页
+Pagination → 上一页
+Pagination → 下一页
+Pagination → 共 ${p.total} 条
+Pagination → 分页
+Pagination → 每页条数
+Pagination → 第${page}页
+Pagination → 第${totalPages()}页
+Pagination → 第1页
+Pagination → 跳至
+Pagination → 跳转到第几页
+Pagination → 页
+Progress → Progress
+Tag → 关闭标签

@@ -19,6 +19,19 @@ export {
 } from './component-status';
 export type { ComponentMaturity, ComponentMaturityInfo } from './component-status';
 
+// ── i18n（B05）────────────────────────────────────────────────────────
+// 文案表：src/locale/messages.ts；运行时 API：setUiLocale / getUiLocale / t。
+// 缺键策略见 messages.ts 头注释（回退 zh-CN → 抛错，绝不返回空串）。
+export {
+  FALLBACK_LOCALE,
+  UI_LOCALE_MESSAGES,
+  getUiLocale,
+  getUiLocaleMessages,
+  setUiLocale,
+  t,
+} from './locale';
+export type { UiLocaleKey, UiLocaleMessages, UiLocaleName, UiLocaleParams } from './locale';
+
 // 组件导出
 export { Button } from './components/Button';
 export { Input } from './components/Input';

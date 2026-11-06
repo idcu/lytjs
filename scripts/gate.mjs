@@ -125,6 +125,16 @@ const GATES = [
       '`--strict` 时任一红退出 1',
   },
   {
+    name: 'check-ui-i18n',
+    tier: 'fast',
+    cmd: ['tsx', 'scripts/check-ui-i18n.ts'],
+    approx: '~0.5s',
+    desc:
+      '★ Golden 20 i18n（B05）：zh-CN / en-US 键集合与 `{param}` 占位必须一致、文案不得为空串；' +
+      '组件源码里面向用户的硬编码文案（含 CJK 字面量与 ariaLabel/alt）零新增 —— ' +
+      '既有欠账棘轮在 scripts/ui-i18n-baseline.txt（Golden 20 逐组件迁移到 src/locale/messages.ts）',
+  },
+  {
     name: 'check-dist-freshness',
     tier: 'fast',
     cmd: ['tsx', 'scripts/check-dist-freshness.ts'],
