@@ -12,6 +12,7 @@ import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
 import { signal, watch } from '@lytjs/reactivity';
 import { getDialogA11yProps, getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 import { createOverlayFocus } from './overlay-focus';
+import { t } from '../locale';
 import type { ModalSetupProps, ModalSlots } from './types';
 
 export const Modal = defineComponent({
@@ -181,7 +182,7 @@ export const Modal = defineComponent({
 
         if (p.showClose) {
           const closeBtnProps = getButtonA11yProps({
-            ariaLabel: 'Close dialog',
+            ariaLabel: t('dialog.close'),
           });
           titlePart.push(
             createVNode(
@@ -226,10 +227,10 @@ export const Modal = defineComponent({
         );
       } else {
         const cancelBtnProps = getButtonA11yProps({
-          ariaLabel: 'Cancel',
+          ariaLabel: t('dialog.cancel'),
         });
         const confirmBtnProps = getButtonA11yProps({
-          ariaLabel: 'Confirm',
+          ariaLabel: t('dialog.confirm'),
         });
         footerChildren.push(
           createVNode(
@@ -250,7 +251,7 @@ export const Modal = defineComponent({
                     close();
                   },
                 }),
-                [createTextVNode('取消')],
+                [createTextVNode(t('dialog.cancel'))],
               ),
               createVNode(
                 'button',
@@ -258,7 +259,7 @@ export const Modal = defineComponent({
                   class: 'lyt-modal__confirm-btn',
                   onClick: () => p.onConfirm?.(),
                 }),
-                [createTextVNode('确定')],
+                [createTextVNode(t('dialog.confirm'))],
               ),
             ],
           ),

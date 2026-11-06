@@ -9,10 +9,5 @@ Empty → empty
 Empty → 暂无数据
 InputNumber → 减少
 InputNumber → 增加
-Modal → Cancel
-Modal → Close dialog
-Modal → Confirm
-Modal → 取消
-Modal → 确定
 Progress → Progress
 Tag → 关闭标签
