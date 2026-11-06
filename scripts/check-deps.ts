@@ -3,15 +3,14 @@
  *
  * 用途：检查所有包的依赖是否遵循层级约束，禁止反向依赖和同层交叉依赖。
  *
- * 层级定义：
- *   L0: @lytjs/common-* (零外部依赖)
- *   L1: @lytjs/reactivity, @lytjs/vdom, @lytjs/compiler (依赖 L0)
- *   L2: @lytjs/renderer, @lytjs/component (依赖 L0 + L1)
- *   L3: @lytjs/core (依赖 L0 + L1 + L2)
- *   L4: @lytjs/router, @lytjs/store, @lytjs/compat (依赖 L0 + L1)
- *   L5: @lytjs/cli, @lytjs/devtools, @lytjs/lytx, @lytjs/ai, @lytjs/test-utils (依赖 L3)
- *   L6: @lytjs/ui-*, @lytjs/plugin-* (依赖 L3 + L5)
- *   L7: @lytjs/lytjs (聚合包，依赖全部)
+ * 层级定义（2026-11-07 S02 起要求 **76/76 全部登记**；未登记即红）：
+ *   L0: @lytjs/common-* / shared-types / host-contract（零外部依赖）
+ *   L1: reactivity, vdom, compiler, dom-runtime 及平台工具（依赖 L0）
+ *   L2: renderer, component, adapter-web, ssr 及生态引擎（依赖 L0 ~ L1）
+ *   L3: core / core-vnode / core-signal 及 ssg、html-renderer、devtools-extension
+ *   L4: router, store, compat, router-fs
+ *   L5: cli, devtools, test-utils
+ *   L6: @lytjs/ui（聚合消费端）
  *
  * 用法: pnpm run check-deps
  */
@@ -48,10 +47,32 @@ const LAYER_MAP: Record<string, number> = {
   '@lytjs/vdom': 1,
   '@lytjs/compiler': 1,
   '@lytjs/dom-runtime': 1,
+  // L1 平台工具 / 通用基础设施（零业务依赖，或只依赖 L0）
+  // 2026-11-07（S02）：此前未登记 ⇒ check-deps 直接跳过，依赖方向对它们失明。
+  '@lytjs/dom': 1,
+  '@lytjs/web': 1,
+  '@lytjs/runtime-edge': 1,
+  '@lytjs/hmr': 1,
+  '@lytjs/cache': 1,
+  '@lytjs/config': 1,
+  '@lytjs/di': 1,
+  '@lytjs/middleware': 1,
+  '@lytjs/metadata': 1,
   // L2
   '@lytjs/renderer': 2,
   '@lytjs/component': 2,
   '@lytjs/adapter-web': 2,
+  // L2 生态引擎 / 服务端组件
+  '@lytjs/ssr': 2,
+  '@lytjs/api': 2,
+  '@lytjs/bundler': 2,
+  '@lytjs/platform-adapter': 2,
+  '@lytjs/cache-isr': 2,
+  '@lytjs/middleware-auth': 2,
+  '@lytjs/middleware-cors': 2,
+  '@lytjs/middleware-rate-limit': 2,
+  '@lytjs/http-server': 2,
+  '@lytjs/plugin': 2,
   // L3
   '@lytjs/core': 3,
   // `@lytjs/core-vnode` 与 core 同属「核心运行时层」，但它是**窄核心**：
@@ -60,23 +81,23 @@ const LAYER_MAP: Record<string, number> = {
   // 显式登记这一条**有向**例外，而不是把它下移到 L2（它依赖 component/renderer，下移会误报）。
   '@lytjs/core-vnode': 3,
   '@lytjs/core-signal': 3,
+  // L3 生态构建/服务端产物（依赖 L2 的 ssr 或 component）
+  '@lytjs/ssg': 3,
+  '@lytjs/html-renderer': 3,
+  '@lytjs/devtools-extension': 3,
   // L4
   '@lytjs/router': 4,
   '@lytjs/store': 4,
   '@lytjs/compat': 4,
+  '@lytjs/router-fs': 4,
   // L5
   '@lytjs/cli': 5,
   '@lytjs/devtools': 5,
-  '@lytjs/lytx': 5,
-  '@lytjs/ai': 5,
   '@lytjs/test-utils': 5,
   // L6
-  '@lytjs/ui-core': 6,
-  '@lytjs/ui-components': 6,
-  '@lytjs/ui-theme': 6,
-  '@lytjs/ui-icons': 6,
-  // L7
-  '@lytjs/lytjs': 7,
+  // 2026-11-07（S02）：原 `@lytjs/ui-core/ui-components/ui-theme/ui-icons` 与
+  // `@lytjs/lytx/ai/lytjs` 均为**不存在的包名**，已删除；只保留真实存在的聚合包。
+  '@lytjs/ui': 6,
 };
 
 // 允许的跨层依赖（例外情况）
@@ -114,6 +135,9 @@ const ALLOWED_CROSS_LAYER: Record<string, Set<string>> = {
     '@lytjs/component',
     '@lytjs/renderer',
     '@lytjs/dom-runtime',
+    // core 的配置系统直接复用独立包 `@lytjs/config`（`core/src/config.ts:11`）；
+    // 它是 L1 通用基础设施，core 用它是**向下**消费，不是反向依赖。
+    '@lytjs/config',
   ]),
   '@lytjs/core-vnode': new Set([
     '@lytjs/common-*',
@@ -326,6 +350,33 @@ const ALLOWED_CROSS_LAYER: Record<string, Set<string>> = {
     '@lytjs/core',
     '@lytjs/plugin-form',
   ]),
+
+  // ── 2026-11-07（S02）新增登记 ─────────────────────────────────────────
+  // 下列包此前不在 LAYER_MAP，依赖检查对它们整包跳过。补层之后按实际依赖补
+  // 跨层例外；每条只放行该包**真实声明**的 L0 依赖，不放宽到「任意 L0+L1+L2」。
+  '@lytjs/ssr': new Set(['@lytjs/common-*']),
+  '@lytjs/api': new Set(['@lytjs/common-*', '@lytjs/shared-types']),
+  '@lytjs/platform-adapter': new Set(['@lytjs/common-*']),
+  '@lytjs/cache-isr': new Set(['@lytjs/common-*']),
+  '@lytjs/middleware-auth': new Set(['@lytjs/common-*']),
+  '@lytjs/middleware-cors': new Set(['@lytjs/common-*']),
+  '@lytjs/middleware-rate-limit': new Set(['@lytjs/common-*']),
+  '@lytjs/http-server': new Set(['@lytjs/common-*', '@lytjs/shared-types']),
+  '@lytjs/plugin': new Set(['@lytjs/common-*']),
+  '@lytjs/ssg': new Set(['@lytjs/common-*']),
+  '@lytjs/html-renderer': new Set(['@lytjs/common-*']),
+  '@lytjs/devtools-extension': new Set(['@lytjs/common-*', '@lytjs/reactivity']),
+  // UI 组件库是 L6 消费端：61 个组件直接调用 `createVNode`/`signal`/`reactive`，
+  // 并依赖 `component` 的 slots 与 `core` 的 definePlugin。
+  // ⚠️ 与 `keel/ARCHITECTURE.md:26`「上层只依赖 core 与 component」冲突（C3）；
+  // 此处**只登记现状并留痕**，不在 S02 内改架构文档，也不擅自把 UI 降层。
+  '@lytjs/ui': new Set([
+    '@lytjs/common-*',
+    '@lytjs/reactivity',
+    '@lytjs/vdom',
+    '@lytjs/component',
+    '@lytjs/core',
+  ]),
 };
 
 // 允许同层交叉依赖的包（聚合包等特殊情况）
@@ -379,18 +430,29 @@ const ALLOWED_SAME_LAYER_DEPS: Record<number, Set<string>> = {
  * 用途：同一层里存在「窄核心 / 完整核心」这种单向组合关系时，无向白名单会
  * 连反向依赖一起放行（那会掩盖真正的循环依赖）。
  *
- * 当前只有一条：
+ * 当前两条：
  * - `@lytjs/core → @lytjs/core-vnode` —— core 是完整核心，core-vnode 是仅 VNode 的窄核心，
  *   core 组合它（`core/src/web-component.ts` 转发 Web Component 权威实现）。
+ * - `@lytjs/ssr → @lytjs/component` —— SSR 渲染器与 component 同为 L2，SSR 单向消费
+ *   component 的 slots/渲染契约；反向（component → ssr）仍按同层交叉报红。
  */
-const ALLOWED_SAME_LAYER_DIRECTED: Array<[string, string]> = [['@lytjs/core', '@lytjs/core-vnode']];
+const ALLOWED_SAME_LAYER_DIRECTED: Array<[string, string]> = [
+  ['@lytjs/core', '@lytjs/core-vnode'],
+  ['@lytjs/ssr', '@lytjs/component'],
+];
 
 interface Violation {
   source: string;
   target: string;
   sourceLayer: number;
   targetLayer: number;
-  type: 'reverse' | 'cross-layer' | 'same-layer';
+  type: 'reverse' | 'cross-layer' | 'same-layer' | 'unregistered';
+}
+
+interface Coverage {
+  total: number;
+  registered: number;
+  missing: string[];
 }
 
 function getLayer(packageName: string): number {
@@ -398,15 +460,11 @@ function getLayer(packageName: string): number {
   if (LAYER_MAP[packageName] !== undefined) {
     return LAYER_MAP[packageName]!;
   }
-  // 通配符匹配（如 @lytjs/common-* 匹配所有 L0 common 包）
+  // 通配符匹配：`@lytjs/common-*` 是真实存在的 34 个子包族，统一按 L0。
+  // ⚠️ 不要给 `ui-*` / `plugin-*` 加通配符：那会让**未登记的包**静默拿到层级，
+  // 正是 S02 要修掉的「跳过」缺口。未登记一律返回 -1，由调用方报红。
   if (packageName.startsWith('@lytjs/common-')) {
     return 0;
-  }
-  if (packageName.startsWith('@lytjs/ui-')) {
-    return 6;
-  }
-  if (packageName.startsWith('@lytjs/plugin-')) {
-    return 6;
   }
   // 非内部包，返回 -1
   return -1;
@@ -422,18 +480,34 @@ function isWildcardMatch(allowed: Set<string>, depName: string): boolean {
   return false;
 }
 
-function checkDependencies(): Violation[] {
+function checkDependencies(): { violations: Violation[]; coverage: Coverage } {
   const violations: Violation[] = [];
   const pkgFiles = findPackageJsonFiles(join(ROOT, 'packages'));
+  const coverage: Coverage = { total: 0, registered: 0, missing: [] };
 
   for (const pkgFile of pkgFiles) {
     const pkg = JSON.parse(readFileSync(pkgFile, 'utf-8'));
     const sourceName = pkg.name;
+    if (!sourceName.startsWith('@lytjs/')) {
+      continue;
+    }
+    coverage.total += 1;
     const sourceLayer = getLayer(sourceName);
 
     if (sourceLayer === -1) {
-      continue; // 跳过非内部包
+      // ★ 2026-11-07（S02）：未登记层的内部包**必须报红**，不得 continue。
+      // 旧行为让 24/76 个包整包跳过，依赖方向检查对它们完全失明。
+      coverage.missing.push(sourceName);
+      violations.push({
+        source: sourceName,
+        target: '(自身)',
+        sourceLayer: -1,
+        targetLayer: -1,
+        type: 'unregistered',
+      });
+      continue;
     }
+    coverage.registered += 1;
 
     const allDeps = {
       ...pkg.dependencies,
@@ -448,7 +522,16 @@ function checkDependencies(): Violation[] {
       const targetLayer = getLayer(depName);
 
       if (targetLayer === -1) {
-        continue; // 未知内部包，跳过
+        // ★ 2026-11-07（S02）：内部依赖没有层级同样报红。旧行为 `continue` 会让
+        // 未登记的目标包成为「隐形依赖」，反向/跨层都查不出来。
+        violations.push({
+          source: sourceName,
+          target: depName,
+          sourceLayer,
+          targetLayer: -1,
+          type: 'unregistered',
+        });
+        continue;
       }
 
       // 检查反向依赖
@@ -504,13 +587,20 @@ function checkDependencies(): Violation[] {
     }
   }
 
-  return violations;
+  return { violations, coverage };
 }
 
 function main(): void {
   console.log('🔍 检查依赖方向...\n');
 
-  const violations = checkDependencies();
+  const { violations, coverage } = checkDependencies();
+
+  // 覆盖声明必须显式可见：不接受「76 个包只查了 52 个却报绿」。
+  console.log(`📦 层级覆盖：${coverage.registered}/${coverage.total} 个内部包`);
+  if (coverage.missing.length > 0) {
+    console.log(`   未登记：${coverage.missing.join(', ')}`);
+  }
+  console.log('');
 
   if (violations.length === 0) {
     console.log('✅ 所有依赖方向正确，未发现违规。\n');
@@ -524,7 +614,13 @@ function main(): void {
       reverse: '反向依赖',
       'cross-layer': '跨层依赖',
       'same-layer': '同层交叉依赖',
+      unregistered: '未登记层级',
     }[v.type];
+
+    if (v.type === 'unregistered' && v.target === '(自身)') {
+      console.log(`  [${typeLabel}] ${v.source} 不在 LAYER_MAP，依赖方向无法校验`);
+      continue;
+    }
 
     console.log(
       `  [${typeLabel}] ${v.source} (L${v.sourceLayer}) → ${v.target} (L${v.targetLayer})`,
