@@ -190,21 +190,46 @@ function probeStyles(name, src) {
 }
 
 function probeKeyboard(name, src) {
-  const interactive =
-    /handleClick|onClick|handleChange|onChange|handleInput|onInput|handleKeydown|onKeyDown/.test(
-      src,
-    );
-  if (!interactive) return { status: 'n/a', detail: '无交互' };
-  if (/handleKeydown|onKeyDown|keydown/.test(src)) {
-    return { status: 'pass', detail: '有 keydown 处理' };
+  // B05 收紧：从「文件里有没有 keydown」改为「**每个**可点击元素有没有键盘路径」。
+  // 旧判据下 InputNumber 的加减按钮只有 onClick，却因为输入框有 ArrowUp/Down 而判过 ——
+  // 这正是「文件级绿灯、元素级红灯」的典型漏洞。
+  const nodes = scanVNodes(src);
+  const interactiveNodes = nodes.filter(
+    (n) =>
+      /\bonClick\b|\bonKeyDown\b|\bonChange\b|\bonInput\b/.test(n.props) &&
+      !/stopPropagation/.test(n.props),
+  );
+  if (interactiveNodes.length === 0) {
+    const interactive = /onClick|onChange|onInput|onKeyDown/.test(src);
+    return {
+      status: 'n/a',
+      detail: interactive ? '交互不落在可扫描的 VNode 节点上' : '无交互',
+    };
   }
-  const linkFallback = /role:\s*['"]link['"]/.test(src);
-  if (linkFallback && !/tabindex|tabIndex/.test(src)) {
-    return { status: 'red', detail: 'span[role=link] 无 tabindex / keydown' };
+  const offenders = [];
+  let checked = 0;
+  for (const n of interactiveNodes) {
+    const cls = (n.props.match(/class\s*:\s*(['"`])([^'`]*)\1/) ?? [])[2] ?? '';
+    // 遮罩点击的键盘等价物是 ESC（浏览器交互用例验证），不要求遮罩可聚焦。
+    if (/overlay|mask|backdrop/i.test(cls)) continue;
+    const native =
+      n.tag === 'button' ||
+      n.tag === 'input' ||
+      n.tag === 'select' ||
+      n.tag === 'textarea' ||
+      (n.tag === 'a' && /\bhref\s*:/.test(n.props));
+    checked++;
+    if (native) continue;
+    if (
+      /\bonClick\b|\bonKeyDown\b/.test(n.props) &&
+      !/\bonKeyDown\b|\bonKeydown\b|\bkeydown\b/.test(n.props)
+    ) {
+      offenders.push(n.tag);
+    }
   }
-  const native = /createVNode\(\s*['"](button|input|select|textarea)['"]/.test(src);
-  if (native) return { status: 'pass', detail: '原生可聚焦元素' };
-  return { status: 'red', detail: '无 keydown 处理，也无原生可聚焦元素' };
+  return offenders.length === 0
+    ? { status: 'pass', detail: `${checked} 个可交互元素均有键盘路径` }
+    : { status: 'red', detail: `仅 onClick、无 keydown: <${offenders.join('>, <')}>` };
 }
 
 // ── a11y（B05）────────────────────────────────────────────────────────────
