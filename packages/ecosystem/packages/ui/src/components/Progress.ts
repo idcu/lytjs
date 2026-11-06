@@ -9,6 +9,7 @@ import { defineComponent, type PropType } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject, isArray } from '@lytjs/common-is';
 import { computed } from '@lytjs/reactivity';
+import { t } from '../locale';
 
 export const Progress = defineComponent({
   name: 'LytProgress',
@@ -231,7 +232,7 @@ export const Progress = defineComponent({
         'div',
         {
           id: _props.id as string,
-          'aria-label': (_props.ariaLabel as string) || 'Progress',
+          'aria-label': (_props.ariaLabel as string) || t('progress.label'),
           'aria-describedby': _props.ariaDescribedBy as string,
           role: 'progressbar',
           'aria-valuenow': String(validPercentage.value),
