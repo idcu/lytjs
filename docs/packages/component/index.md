@@ -177,21 +177,35 @@ const App = defineComponent({
     </ErrorBoundary>
   `,
   methods: {
-    handleError(err: Error, info: string) {
-      console.error('Error:', err, 'Info:', info);
+    handleError(err: Error, errorInfo: ErrorInfo) {
+      console.error('Error:', err, 'Info:', errorInfo.componentStack);
     },
   },
 });
 ```
 
+> **破坏性变更（2026-11-07）**：`onError` 第二参数由 `string` 改为 `ErrorInfo`
+> （`{ componentStack?, timestamp }`），与 `@lytjs/core` 的原契约统一（ADR 0016）。
+> 迁移：`onError(err, info)` 中的 `info` 改用 `info.componentStack`；同时新增
+> `fallbackRender / maxRetries / retryDelay / onRetry / onMaxRetriesReached`，
+> `fallbackRender` 与 `fallback` 的优先级高于 `#fallback` 插槽。
+
 ### Props
 
 ```typescript
 interface ErrorBoundaryProps {
-  /** 错误回调 */
-  onError?: (error: Error, info: string) => void;
-  /** 回退组件 */
-  fallback?: ComponentOptions;
+  /** 错误回调；第二参数已由 string 改为 ErrorInfo */
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+  /** 回退组件，收到完整 FallbackProps */
+  fallback?: unknown;
+  /** 函数式回退，优先于 fallback 与插槽 */
+  fallbackRender?: (error: Error, errorInfo: ErrorInfo, reset: () => void) => VNode;
+  /** 最大重试次数，默认 3 */
+  maxRetries?: number;
+  /** 重试延迟（ms），默认 0 */
+  retryDelay?: number;
+  onRetry?: (retryCount: number) => void;
+  onMaxRetriesReached?: (error: Error) => void;
   /** 是否捕获异步 Promise 错误 */
   capturePromiseRejections?: boolean;
 }

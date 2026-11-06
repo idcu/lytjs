@@ -19,7 +19,12 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { ErrorBoundary } from '../src/error-boundary';
+import {
+  ErrorBoundary,
+  errorLogManager,
+  setGlobalErrorReporter,
+  getGlobalErrorReporter,
+} from '../src/error-boundary';
 import { setCurrentInstance, callMountedHook, callUnmountedHook } from '../src/lifecycle';
 import type { ComponentInternalInstance } from '../src/types';
 import { Text, Fragment } from '@lytjs/common-vnode';
@@ -78,6 +83,32 @@ function triggerError(instance: Record<string, unknown>, err: Error, info = 'ren
 
 const ctxWith = (slots: Record<string, unknown>) => ({ $slots: slots });
 
+/** 递归收集 vnode 文本，用于断言默认错误 UI */
+function textOf(node: unknown): string {
+  if (node == null || node === false) return '';
+  if (typeof node === 'string') return node;
+  if (Array.isArray(node)) return node.map(textOf).join('');
+  if (typeof node === 'object' && 'children' in node) {
+    return textOf((node as { children: unknown }).children);
+  }
+  return '';
+}
+
+type TestVNode = { type: unknown; props: Record<string, unknown>; children?: unknown };
+
+/** 递归收集 vnode 里的按钮节点 */
+function collectButtons(node: unknown, out: TestVNode[] = []): TestVNode[] {
+  if (node == null || typeof node !== 'object') return out;
+  if (Array.isArray(node)) {
+    node.forEach((n) => collectButtons(n, out));
+    return out;
+  }
+  const vnode = node as TestVNode;
+  if (vnode.type === 'button') out.push(vnode);
+  collectButtons(vnode.children, out);
+  return out;
+}
+
 beforeEach(() => {
   vi.restoreAllMocks();
 });
@@ -107,13 +138,13 @@ describe('正常态渲染默认插槽', () => {
     expect(out.children).toEqual(kids);
   });
 
-  it('没有默认插槽 ⇒ 渲染空文本', () => {
+  it('没有默认插槽 ⇒ 渲染空文本节点', () => {
     const { render } = mountBoundary();
 
-    const out = render(ctxWith({})) as { type: unknown; children: string };
+    const out = render(ctxWith({})) as { type: unknown };
 
     expect(out.type).toBe(Text);
-    expect(out.children).toBe('');
+    expect(textOf(out)).toBe('');
   });
 
   it('默认插槽返回空数组 ⇒ 渲染空文本（不产出空 Fragment）', () => {
@@ -134,24 +165,27 @@ describe('错误态', () => {
     expect(triggerError(instance, new Error('boom'))).toBe(false);
   });
 
-  it('捕获后渲染默认错误文本，含原始消息', () => {
+  it('捕获后渲染默认错误 UI，含原始消息', () => {
     const { instance, render } = mountBoundary();
     triggerError(instance, new Error('kaboom'));
 
-    const out = render(ctxWith({})) as { type: unknown; children: string };
+    const out = render(ctxWith({})) as { props: Record<string, unknown> };
 
-    expect(out.type).toBe(Text);
-    expect(out.children).toBe('Error: kaboom');
+    expect(out.props.class).toBe('error-boundary-fallback');
+    expect(textOf(out)).toContain('kaboom');
   });
 
-  it('onError 回调收到 (error, info)', () => {
+  it('onError 回调收到 (error, ErrorInfo)', () => {
     const onError = vi.fn();
     const { instance } = mountBoundary({ onError });
 
     const err = new Error('x');
     triggerError(instance, err, 'onMounted');
 
-    expect(onError).toHaveBeenCalledWith(err, 'onMounted');
+    expect(onError).toHaveBeenCalledWith(
+      err,
+      expect.objectContaining({ componentStack: 'onMounted', timestamp: expect.any(Date) }),
+    );
   });
 
   it('具名插槽 fallback 优先，且能拿到 error', () => {
@@ -201,13 +235,17 @@ describe('错误态', () => {
     expect(out.props.error).toBe(err);
   });
 
-  it('插槽优先于 fallback prop', () => {
+  it('fallback prop 优先于具名插槽（core 契约，2026-11-07 起）', () => {
     const FallbackView = { name: 'FallbackView' };
     const { instance, render } = mountBoundary({ fallback: FallbackView });
     triggerError(instance, new Error('both'));
 
-    const slotVNode = { type: 'aside' };
-    expect(render(ctxWith({ fallback: () => [slotVNode] }))).toBe(slotVNode);
+    const out = render(ctxWith({ fallback: () => [{ type: 'aside' }] })) as {
+      type: unknown;
+      props: Record<string, unknown>;
+    };
+
+    expect(out.type).toBe(FallbackView);
   });
 });
 
@@ -230,9 +268,12 @@ describe('capturePromiseRejections', () => {
       Object.assign(new Event('unhandledrejection'), { reason: new Error('async-boom') }),
     );
 
-    const out = render(ctxWith({})) as { children: string };
-    expect(out.children).toBe('Error: async-boom');
-    expect(onError).toHaveBeenCalledWith(expect.any(Error), 'unhandledrejection');
+    const out = render(ctxWith({}));
+    expect(textOf(out)).toContain('async-boom');
+    expect(onError).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({ componentStack: 'unhandledrejection' }),
+    );
   });
 
   it('非 Error 的 reason 被包成 Error（不能把字符串塞进 error 状态）', () => {
@@ -242,8 +283,8 @@ describe('capturePromiseRejections', () => {
       Object.assign(new Event('unhandledrejection'), { reason: 'plain-string' }),
     );
 
-    const out = render(ctxWith({})) as { children: string };
-    expect(out.children).toBe('Error: plain-string');
+    const out = render(ctxWith({}));
+    expect(textOf(out)).toContain('plain-string');
   });
 
   it('卸载后不再响应（监听器已摘除）', () => {
@@ -255,8 +296,9 @@ describe('capturePromiseRejections', () => {
       Object.assign(new Event('unhandledrejection'), { reason: new Error('after-unmount') }),
     );
 
-    const out = render(ctxWith({})) as { children: string };
-    expect(out.children).toBe('');
+    const out = render(ctxWith({})) as { type: unknown };
+    expect(out.type).toBe(Text);
+    expect(textOf(out)).toBe('');
   });
 
   it('多个边界各自独立：一个卸载不影响另一个', () => {
@@ -269,7 +311,81 @@ describe('capturePromiseRejections', () => {
       Object.assign(new Event('unhandledrejection'), { reason: new Error('still-alive') }),
     );
 
-    const outB = b.render(ctxWith({})) as { children: string };
-    expect(outB.children).toBe('Error: still-alive');
+    const outB = b.render(ctxWith({}));
+    expect(textOf(outB)).toContain('still-alive');
+  });
+});
+
+// ==================== core 契约（唯一权威） ====================
+
+describe('core 契约', () => {
+  it('fallbackRender 优先于 fallback prop，并收到 (error, ErrorInfo, reset)', () => {
+    const fallbackRender = vi.fn(() => ({ type: 'main' }));
+    const FallbackView = { name: 'FallbackView' };
+    const { instance, render } = mountBoundary({ fallbackRender, fallback: FallbackView });
+    const err = new Error('render-fn');
+    triggerError(instance, err);
+
+    const out = render(ctxWith({})) as { type: unknown };
+
+    expect(out.type).toBe('main');
+    expect(fallbackRender).toHaveBeenCalledWith(
+      err,
+      expect.objectContaining({ componentStack: 'render' }),
+      expect.any(Function),
+    );
+  });
+
+  it('retry 递增计数、触发 onRetry 并清空错误态', () => {
+    const onRetry = vi.fn();
+    const { instance, render } = mountBoundary({ maxRetries: 1, onRetry });
+    triggerError(instance, new Error('retry-me'));
+
+    // 默认错误 UI 的「重试」按钮直接绑定了 retry()
+    const buttons = collectButtons(render(ctxWith({})));
+    (buttons[0]!.props.onClick as () => void)();
+
+    expect(onRetry).toHaveBeenCalledWith(1);
+    expect(render(ctxWith({ default: () => [{ type: 'p' }] }))).toEqual({ type: 'p' });
+  });
+
+  it('reset 清空错误态', () => {
+    let resetBoundary: (() => void) | undefined;
+    const fallbackRender = vi.fn((_err: Error, _info: unknown, reset: () => void) => {
+      resetBoundary = reset;
+      return { type: 'section' };
+    });
+    const { instance, render } = mountBoundary({ fallbackRender });
+    triggerError(instance, new Error('reset-me'));
+
+    expect(render(ctxWith({}))).toEqual({ type: 'section' });
+    expect(resetBoundary).toBeTypeOf('function');
+
+    resetBoundary!();
+    expect(render(ctxWith({ default: () => [{ type: 'p' }] }))).toEqual({ type: 'p' });
+  });
+
+  it('错误进入 errorLogManager，并调用自定义 reporter', () => {
+    const reporter = { report: vi.fn() };
+    const previous = getGlobalErrorReporter();
+    setGlobalErrorReporter(reporter);
+    errorLogManager.clearLogs();
+
+    try {
+      const { instance } = mountBoundary();
+      const err = new Error('logged');
+      triggerError(instance, err, 'onMounted');
+
+      expect(reporter.report).toHaveBeenCalledWith(
+        err,
+        expect.objectContaining({ componentStack: 'onMounted' }),
+      );
+      expect(errorLogManager.getLogs()).toEqual([
+        expect.objectContaining({ error: err, retryCount: 0 }),
+      ]);
+    } finally {
+      setGlobalErrorReporter(previous);
+      errorLogManager.clearLogs();
+    }
   });
 });

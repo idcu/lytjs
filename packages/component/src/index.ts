@@ -119,10 +119,25 @@ export type {
 export { Teleport } from './teleport';
 export type { TeleportProps } from './teleport';
 
-// ErrorBoundary
+// ErrorBoundary（唯一权威实现；core / core-vnode 只转发）
 /** 错误边界组件，捕获子组件渲染错误 */
-export { ErrorBoundary } from './error-boundary';
-export type { ErrorBoundaryProps } from './error-boundary';
+export {
+  ErrorBoundary,
+  useErrorHandler,
+  useErrorBoundaryReset,
+  setGlobalErrorReporter,
+  getGlobalErrorReporter,
+  errorLogManager,
+  generateErrorId,
+} from './error-boundary';
+export type {
+  ErrorBoundaryProps,
+  FallbackProps,
+  ErrorInfo,
+  ErrorReporter,
+  ErrorContext,
+  ErrorLog,
+} from './error-boundary';
 
 // Signal 状态
 /** Signal State 适配器，使 Signal 可以与组件协作 */
