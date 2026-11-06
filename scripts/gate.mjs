@@ -119,9 +119,9 @@ const GATES = [
     cmd: ['node', 'scripts/check-ui-contracts.mjs'],
     approx: '~0.4s',
     desc:
-      '★ Golden 20 × 六类行为契约（B04）：v-model / slots / events / controlled / ' +
-      '样式命中 / 键盘路径。每格先从源码推导再与 scripts/ui-contracts.json 登记比对，' +
-      '登记与代码漂移即红；红 / n/a 必须写 reason。报告模式允许红（逐组件收敛），' +
+      '★ Golden 20 × 七类行为契约（B04 六类 + B05 a11y）：v-model / slots / events / ' +
+      'controlled / 样式命中 / 键盘路径 / a11y。每格先从源码推导再与 scripts/ui-contracts.json ' +
+      '登记比对，登记与代码漂移即红；红 / n/a 必须写 reason。报告模式允许红（逐组件收敛），' +
       '`--strict` 时任一红退出 1',
   },
   {

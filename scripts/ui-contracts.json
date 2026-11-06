@@ -1,5 +1,5 @@
 {
-  "$comment": "B04 前置：Golden 20 × 六类能力基线（2026-11-06）。status 由 check-ui-contracts.mjs 从源码重新推导并与本表比对：推导结果不一致即红（防『改登记表冒充修复』）。red / n/a 必须写 reason；pass 由探针现场证明。只允许逐格收敛，不允许 skip。",
+  "$comment": "Golden 20 × 七类能力基线（B04 六类 2026-11-06；B05 增 a11y 维度，共 140 格）。status 由 check-ui-contracts.mjs 从源码重新推导并与本表比对：推导结果不一致即红（防『改登记表冒充修复』）。red / n/a 必须写 reason；pass 由探针现场证明。只允许逐格收敛，不允许 skip。",
   "components": [
     "Avatar",
     "Badge",
@@ -22,7 +22,7 @@
     "Switch",
     "Tag"
   ],
-  "capabilities": ["vmodel", "slots", "events", "controlled", "styles", "keyboard"],
+  "capabilities": ["vmodel", "slots", "events", "controlled", "styles", "keyboard", "a11y"],
   "cells": {
     "Avatar": {
       "vmodel": { "status": "n/a", "reason": "纯展示组件，无值语义" },
@@ -33,7 +33,11 @@
         "probe": "sticky"
       },
       "styles": { "status": "pass" },
-      "keyboard": { "status": "n/a", "reason": "无键盘交互（仅 img onError）" }
+      "keyboard": { "status": "n/a", "reason": "无键盘交互（仅 img onError）" },
+      "a11y": {
+        "status": "red",
+        "reason": "img 的 alt 在空值（默认）时被整个省略，读屏会退化为读文件名；装饰图应输出空字符串 alt"
+      }
     },
     "Badge": {
       "vmodel": { "status": "n/a", "reason": "纯展示组件，无值语义" },
@@ -41,7 +45,8 @@
       "events": { "status": "n/a", "reason": "无事件回调" },
       "controlled": { "status": "pass" },
       "styles": { "status": "pass" },
-      "keyboard": { "status": "n/a", "reason": "无交互" }
+      "keyboard": { "status": "n/a", "reason": "无交互" },
+      "a11y": { "status": "pass" }
     },
     "Button": {
       "vmodel": { "status": "n/a", "reason": "按钮无值语义" },
@@ -49,7 +54,8 @@
       "events": { "status": "pass" },
       "controlled": { "status": "pass" },
       "styles": { "status": "pass" },
-      "keyboard": { "status": "pass" }
+      "keyboard": { "status": "pass" },
+      "a11y": { "status": "pass" }
     },
     "Card": {
       "vmodel": { "status": "n/a", "reason": "纯展示组件，无值语义" },
@@ -57,7 +63,8 @@
       "events": { "status": "n/a", "reason": "无事件回调" },
       "controlled": { "status": "pass" },
       "styles": { "status": "pass" },
-      "keyboard": { "status": "n/a", "reason": "无交互" }
+      "keyboard": { "status": "n/a", "reason": "无交互" },
+      "a11y": { "status": "pass" }
     },
     "Checkbox": {
       "vmodel": { "status": "pass" },
@@ -65,7 +72,8 @@
       "events": { "status": "pass" },
       "controlled": { "status": "pass" },
       "styles": { "status": "pass" },
-      "keyboard": { "status": "pass" }
+      "keyboard": { "status": "pass" },
+      "a11y": { "status": "pass" }
     },
     "Container": {
       "vmodel": { "status": "n/a", "reason": "布局容器，无值语义" },
@@ -73,7 +81,8 @@
       "events": { "status": "n/a", "reason": "无事件回调" },
       "controlled": { "status": "pass" },
       "styles": { "status": "pass" },
-      "keyboard": { "status": "n/a", "reason": "无交互" }
+      "keyboard": { "status": "n/a", "reason": "无交互" },
+      "a11y": { "status": "n/a", "reason": "无交互、无 aria 语义、无 img" }
     },
     "Dialog": {
       "vmodel": { "status": "pass" },
@@ -81,7 +90,8 @@
       "events": { "status": "pass" },
       "controlled": { "status": "pass" },
       "styles": { "status": "pass" },
-      "keyboard": { "status": "pass" }
+      "keyboard": { "status": "pass" },
+      "a11y": { "status": "pass" }
     },
     "Divider": {
       "vmodel": { "status": "n/a", "reason": "纯展示组件，无值语义" },
@@ -89,7 +99,8 @@
       "events": { "status": "n/a", "reason": "无事件回调" },
       "controlled": { "status": "pass" },
       "styles": { "status": "pass" },
-      "keyboard": { "status": "n/a", "reason": "无交互" }
+      "keyboard": { "status": "n/a", "reason": "无交互" },
+      "a11y": { "status": "pass" }
     },
     "Drawer": {
       "vmodel": { "status": "pass" },
@@ -97,7 +108,8 @@
       "events": { "status": "pass" },
       "controlled": { "status": "pass" },
       "styles": { "status": "pass" },
-      "keyboard": { "status": "pass" }
+      "keyboard": { "status": "pass" },
+      "a11y": { "status": "pass" }
     },
     "Empty": {
       "vmodel": { "status": "n/a", "reason": "纯展示组件，无值语义" },
@@ -105,7 +117,8 @@
       "events": { "status": "n/a", "reason": "无事件回调" },
       "controlled": { "status": "pass" },
       "styles": { "status": "pass" },
-      "keyboard": { "status": "n/a", "reason": "无交互" }
+      "keyboard": { "status": "n/a", "reason": "无交互" },
+      "a11y": { "status": "pass" }
     },
     "Icon": {
       "vmodel": { "status": "n/a", "reason": "纯展示组件，无值语义" },
@@ -113,7 +126,8 @@
       "events": { "status": "n/a", "reason": "无事件回调" },
       "controlled": { "status": "pass" },
       "styles": { "status": "pass" },
-      "keyboard": { "status": "n/a", "reason": "无交互" }
+      "keyboard": { "status": "n/a", "reason": "无交互" },
+      "a11y": { "status": "pass" }
     },
     "InputNumber": {
       "vmodel": { "status": "pass" },
@@ -121,7 +135,8 @@
       "events": { "status": "pass" },
       "controlled": { "status": "pass" },
       "styles": { "status": "pass" },
-      "keyboard": { "status": "pass" }
+      "keyboard": { "status": "pass" },
+      "a11y": { "status": "pass" }
     },
     "Link": {
       "vmodel": { "status": "n/a", "reason": "链接无值语义" },
@@ -129,7 +144,8 @@
       "events": { "status": "pass" },
       "controlled": { "status": "pass" },
       "styles": { "status": "pass" },
-      "keyboard": { "status": "pass" }
+      "keyboard": { "status": "pass" },
+      "a11y": { "status": "pass" }
     },
     "Modal": {
       "vmodel": { "status": "pass" },
@@ -137,7 +153,8 @@
       "events": { "status": "pass" },
       "controlled": { "status": "pass" },
       "styles": { "status": "pass" },
-      "keyboard": { "status": "pass" }
+      "keyboard": { "status": "pass" },
+      "a11y": { "status": "pass" }
     },
     "Pagination": {
       "vmodel": { "status": "pass" },
@@ -145,7 +162,8 @@
       "events": { "status": "pass" },
       "controlled": { "status": "pass" },
       "styles": { "status": "pass" },
-      "keyboard": { "status": "pass" }
+      "keyboard": { "status": "pass" },
+      "a11y": { "status": "pass" }
     },
     "Progress": {
       "vmodel": { "status": "n/a", "reason": "纯展示组件，无值语义" },
@@ -153,7 +171,8 @@
       "events": { "status": "n/a", "reason": "无事件回调" },
       "controlled": { "status": "pass" },
       "styles": { "status": "pass" },
-      "keyboard": { "status": "n/a", "reason": "无交互" }
+      "keyboard": { "status": "n/a", "reason": "无交互" },
+      "a11y": { "status": "pass" }
     },
     "Radio": {
       "vmodel": { "status": "pass" },
@@ -161,7 +180,8 @@
       "events": { "status": "pass" },
       "controlled": { "status": "pass" },
       "styles": { "status": "pass" },
-      "keyboard": { "status": "pass" }
+      "keyboard": { "status": "pass" },
+      "a11y": { "status": "pass" }
     },
     "Spin": {
       "vmodel": { "status": "n/a", "reason": "纯展示组件，无值语义" },
@@ -169,7 +189,8 @@
       "events": { "status": "n/a", "reason": "无事件回调" },
       "controlled": { "status": "pass" },
       "styles": { "status": "pass" },
-      "keyboard": { "status": "n/a", "reason": "无交互" }
+      "keyboard": { "status": "n/a", "reason": "无交互" },
+      "a11y": { "status": "pass" }
     },
     "Switch": {
       "vmodel": { "status": "pass" },
@@ -177,7 +198,8 @@
       "events": { "status": "pass" },
       "controlled": { "status": "pass" },
       "styles": { "status": "pass" },
-      "keyboard": { "status": "pass" }
+      "keyboard": { "status": "pass" },
+      "a11y": { "status": "pass" }
     },
     "Tag": {
       "vmodel": { "status": "n/a", "reason": "可见性仅内部 state，无受控 prop" },
@@ -185,7 +207,8 @@
       "events": { "status": "pass" },
       "controlled": { "status": "n/a", "reason": "无受控 prop（visible 仅内部状态）" },
       "styles": { "status": "pass" },
-      "keyboard": { "status": "pass" }
+      "keyboard": { "status": "pass" },
+      "a11y": { "status": "pass" }
     }
   }
 }

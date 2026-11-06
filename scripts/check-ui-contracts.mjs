@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * 门禁：Golden 20 × 六类行为契约（B04）
+ * 门禁：Golden 20 × 七类行为契约（B04 六类 + B05 a11y）
  *
  * ## 为什么是「推导 + 登记」双轨
  *
@@ -13,7 +13,7 @@
  * 红 / n/a 必须带 reason；`--strict` 时任一红即退出 1（逐组件修复完成后使用）。
  * 初始批次允许红，但**不允许 skip**：没有 status 的格子直接算登记缺失。
  *
- * ## 六类探针
+ * ## 七类探针
  *
  * | 类 | 判据 |
  * |---|---|
@@ -23,6 +23,7 @@
  * | controlled | 有值类 prop + 内部 signal/reactive + 无 watch ⇒ 红；无受控 prop 但有内部状态 ⇒ n/a |
  * | styles | 源码里的每个静态 `lyt-*` 类名在 `styles/index.css` 有规则 |
  * | keyboard | 有交互的组件必须有 keydown 处理或原生可聚焦元素；span[role=link] 无 tabindex ⇒ 红 |
+ * | a11y | 非原生可点击元素需 role+tabindex；图标按钮需 aria-label；img 需 alt；弹层需 role=dialog + aria-modal + createOverlayFocus；无正 tabindex；progressbar/switch/aria-expanded 状态属性完整 |
  *
  * 用法：
  *   node scripts/check-ui-contracts.mjs                 # 报告模式（有红也退出 0）
@@ -206,6 +207,218 @@ function probeKeyboard(name, src) {
   return { status: 'red', detail: '无 keydown 处理，也无原生可聚焦元素' };
 }
 
+// ── a11y（B05）────────────────────────────────────────────────────────────
+// 判据详见 ui-contracts.json 的 a11y 登记与 `keel/checks/rules.md`。
+// 只看能从源码确定的四件事：
+//   1. 可聚焦：非原生可点击元素必须有 role + tabindex（或标准 a11y 助手）；
+//   2. 可访问名称：图标按钮（子节点只有符号）必须有 aria-label；img 必须有 alt；
+//   3. 弹层语义与焦点：Dialog/Modal/Drawer 必须有 role=dialog + aria-modal，
+//      且通过 createOverlayFocus 保证「打开移入 / 关闭归还」；
+//   4. tab 顺序：不得出现正 tabindex；角色状态属性（progressbar 三值 / switch checked /
+//      aria-expanded 动态绑定）必须齐全。
+// 遮罩层点击是**指针辅助**（键盘等价物是 ESC），不要求遮罩本身可聚焦 —— 见 isBackdrop 跳过。
+const NATIVE_FOCUSABLE = new Set(['button', 'input', 'select', 'textarea', 'a']);
+const A11Y_HELPERS = [
+  'getButtonA11yProps',
+  'getFormControlA11yProps',
+  'getInputControlA11yProps',
+  'getSpinbuttonA11yProps',
+  'getSwitchA11yProps',
+  'getDialogA11yProps',
+];
+const LITERAL = /'([^'\\]*(?:\\.[^'\\]*)*)'|"([^"\\]*(?:\\.[^"\\]*)*)"|`([^`\\]*(?:\\.[^`\\]*)*)`/g;
+/** 纯符号文本（×、‹、›、−、+ …）不构成可访问名称。 */
+const SYMBOL_ONLY = /^[\s×✕✖‹›«»◌+\-−–—…·.,;:!?/\\|()[\]{}'"*#&^%$@~`]+$/;
+
+function balancedEnd(text, openParen) {
+  let depth = 0;
+  let quote = null;
+  for (let i = openParen; i < text.length; i++) {
+    const c = text[i];
+    if (quote) {
+      if (c === '\\') i++;
+      else if (c === quote) quote = null;
+      continue;
+    }
+    if (c === "'" || c === '"' || c === '`') {
+      quote = c;
+      continue;
+    }
+    if (c === '(') depth++;
+    else if (c === ')') {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
+}
+
+function splitArgs(text) {
+  const args = [];
+  let depth = 0;
+  let quote = null;
+  let start = 0;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (quote) {
+      if (c === '\\') i++;
+      else if (c === quote) quote = null;
+      continue;
+    }
+    if (c === "'" || c === '"' || c === '`') quote = c;
+    else if (c === '(' || c === '{' || c === '[') depth++;
+    else if (c === ')' || c === '}' || c === ']') depth--;
+    else if (c === ',' && depth === 0) {
+      args.push(text.slice(start, i));
+      start = i + 1;
+    }
+  }
+  args.push(text.slice(start));
+  return args;
+}
+
+/** 扫描源码里的 `createVNode('tag', props, children…)`，返回 tag / props / children 原文。 */
+function scanVNodes(src) {
+  const nodes = [];
+  for (const m of src.matchAll(/createVNode\(\s*(['"])([^'"]+)\1/g)) {
+    const open = src.indexOf('(', m.index);
+    const end = balancedEnd(src, open);
+    if (end < 0) continue;
+    const args = splitArgs(src.slice(open + 1, end));
+    nodes.push({
+      tag: m[2],
+      props: args[1] ?? '',
+      children: args.slice(2).join(','),
+    });
+  }
+  return nodes;
+}
+
+/** 把 `mergeA11yProps(btnProps, …)` 里的变量声明（getXxxA11yProps 调用）找回来。 */
+function propsHelperSource(src, propsText) {
+  const parts = [];
+  for (const m of propsText.matchAll(/(get[A-Za-z]+A11yProps)\s*\(/g)) {
+    const open = propsText.indexOf('(', m.index + m[1].length);
+    const end = balancedEnd(propsText, open);
+    if (end >= 0) parts.push(propsText.slice(m.index, end + 1));
+  }
+  const merged = propsText.match(/mergeA11yProps\s*\(\s*(\w+)/);
+  if (merged) {
+    const id = merged[1];
+    const re = new RegExp(`(?:const|let|var)\\s+${id}\\s*=\\s*(get[A-Za-z]+A11yProps)\\s*\\(`);
+    const dm = re.exec(src);
+    if (dm) {
+      const open = src.indexOf('(', dm.index + dm[1].length);
+      const end = balancedEnd(src, open);
+      if (end >= 0) parts.push(src.slice(dm.index, end + 1));
+    }
+  }
+  return parts.join('\n');
+}
+
+function probeA11y(name, src) {
+  const nodes = scanVNodes(src);
+  const issues = [];
+  const isDialogFamily = name === 'Dialog' || name === 'Modal' || name === 'Drawer';
+  const hasDialogHelper = /getDialogA11yProps\s*\(/.test(src);
+  const hasDialogRole = /role\s*:\s*'dialog'/.test(src) || hasDialogHelper;
+  const hasAriaSurface =
+    /role\s*:\s*['"]\w+['"]/.test(src) ||
+    /'aria-[a-z]+'\s*:/.test(src) ||
+    /aria-[a-z]+\s*:/.test(src);
+  const clickable = nodes.some((n) =>
+    /\bonClick\b|\bonKeyDown\b|\bonChange\b|\bonInput\b/.test(n.props),
+  );
+
+  if (!clickable && !hasAriaSurface && !isDialogFamily && !nodes.some((n) => n.tag === 'img')) {
+    return { status: 'n/a', detail: '无交互、无 aria 语义、无 img' };
+  }
+
+  // 1. img 必须有 alt；空值时不能把属性整个省掉（读屏会退化为读文件名）
+  for (const n of nodes.filter((x) => x.tag === 'img')) {
+    const alt = n.props.match(/alt\s*:\s*([^,}]+)/);
+    if (!alt) issues.push('img 缺 alt');
+    else if (/\bundefined\b/.test(alt[1])) issues.push('img alt 在空值时被省略（应为空串）');
+  }
+
+  // 2. 可点击元素：可聚焦 + 可访问名称
+  for (const n of nodes) {
+    if (!/\bonClick\b|\bonKeyDown\b/.test(n.props)) continue;
+    const cls = (n.props.match(/class\s*:\s*(['"`])([^'`]*)\1/) ?? [])[2] ?? '';
+    // 遮罩层点击是指针辅助，键盘等价物是 ESC，不要求遮罩可聚焦。
+    if (/overlay|mask|backdrop/i.test(cls)) continue;
+    // 仅用于阻止冒泡的 onClick（内容区常见）不是可激活语义，不要求可聚焦。
+    if (/stopPropagation/.test(n.props)) continue;
+
+    const helper = propsHelperSource(src, n.props);
+    const named =
+      /\baria-label\b|\bariaLabel\b/.test(n.props) || /\baria-label\b|\bariaLabel\b/.test(helper);
+
+    if (NATIVE_FOCUSABLE.has(n.tag)) {
+      if (n.tag === 'a' && !/\bhref\s*:/.test(n.props)) {
+        if (!/role\s*:/.test(n.props) || !/tabindex\b/i.test(n.props)) {
+          issues.push('a 无 href 却可点击，且缺 role+tabindex');
+        }
+      }
+    } else {
+      const explicit = /role\s*:/.test(n.props) && /tabindex\b/i.test(n.props);
+      const viaHelper = A11Y_HELPERS.some((h) => helper.includes(h));
+      if (!explicit && !viaHelper) issues.push(`可点击 <${n.tag}> 缺 role+tabindex`);
+    }
+
+    const literals = [...n.children.matchAll(LITERAL)]
+      .map((m) => m[1] ?? m[2] ?? m[3] ?? '')
+      .filter((s) => s.trim());
+    const dynamic =
+      /t\(\s*['"`]|\bString\(|\bslots\.|_props\.|\bp\.\w+|effectiveCurrent|totalPages/.test(
+        n.children,
+      );
+    if (literals.length > 0 && literals.every((s) => SYMBOL_ONLY.test(s)) && !dynamic && !named) {
+      issues.push(`图标按钮无可访问名称（<${n.tag}> 仅符号 ${literals.join('/')}）`);
+    }
+  }
+
+  // 3. 弹层语义 + 焦点管理
+  if (isDialogFamily || hasDialogHelper) {
+    if (!hasDialogRole) issues.push('弹层缺 role=dialog');
+    const hasModalAttr =
+      hasDialogHelper || /'aria-modal'\s*:/.test(src) || /"aria-modal"\s*:/.test(src);
+    if (!hasModalAttr) issues.push('弹层缺 aria-modal');
+  }
+  if (isDialogFamily && !/createOverlayFocus\s*\(/.test(src)) {
+    issues.push('未见 createOverlayFocus（打开移入/关闭归还没有保证）');
+  }
+
+  // 4. 角色状态属性
+  if (/role\s*:\s*['"]progressbar['"]/.test(src)) {
+    for (const attr of ['aria-valuenow', 'aria-valuemin', 'aria-valuemax']) {
+      if (!new RegExp(`'${attr}'`).test(src)) issues.push(`progressbar 缺 ${attr}`);
+    }
+  }
+  if (/getSwitchA11yProps\s*\(/.test(src) || /role\s*:\s*['"]switch['"]/.test(src)) {
+    if (!/getSwitchA11yProps\s*\(/.test(src) && !/'aria-checked'\s*:/.test(src)) {
+      issues.push('switch 缺 aria-checked');
+    }
+  }
+  for (const m of src.matchAll(/'aria-expanded'\s*:\s*([^,\n}]+)/g)) {
+    if (/^['"](true|false)['"]$/.test(m[1].trim())) {
+      issues.push('aria-expanded 静态写死（必须绑定状态）');
+    }
+  }
+
+  // 5. tab 顺序
+  for (const m of src.matchAll(/tabIndex\s*:\s*(\d+)/g)) {
+    if (Number(m[1]) > 0) issues.push(`正 tabindex ${m[1]} 破坏文档顺序`);
+  }
+  for (const m of src.matchAll(/tabindex\s*:\s*(?:'|")?(\d+)/g)) {
+    if (Number(m[1]) > 0) issues.push(`正 tabindex ${m[1]} 破坏文档顺序`);
+  }
+
+  return issues.length === 0
+    ? { status: 'pass', detail: '可聚焦/命名/弹层/状态/tab 顺序均通过' }
+    : { status: 'red', detail: issues.join('；') };
+}
+
 const PROBES = {
   vmodel: probeVmodel,
   slots: probeSlots,
@@ -213,6 +426,7 @@ const PROBES = {
   controlled: probeControlled,
   styles: probeStyles,
   keyboard: probeKeyboard,
+  a11y: probeA11y,
 };
 
 const components = ONLY ? [ONLY] : REG.components;
@@ -225,6 +439,14 @@ const rows = [];
 const mismatches = [];
 const malformed = [];
 let total = 0;
+
+// 维护用：只打印 a11y 推导结果（供登记时对照），不参与门禁。
+if (process.argv.includes('--derive-a11y')) {
+  const out = {};
+  for (const name of components) out[name] = probeA11y(name, readSource(name));
+  console.log(JSON.stringify(out, null, 2));
+  process.exit(0);
+}
 
 for (const name of components) {
   const src = readSource(name);
@@ -252,7 +474,7 @@ for (const name of components) {
 }
 
 const count = (cap, s) => rows.filter((r) => r.cells[cap].status === s).length;
-console.log('Golden 20 × 六类契约（源码推导）\n');
+console.log('Golden 20 × 七类契约（源码推导）\n');
 console.log('| 类 | 通过 | 红 | N/A |');
 console.log('|---|---|---|---|');
 for (const cap of REG.capabilities) {
