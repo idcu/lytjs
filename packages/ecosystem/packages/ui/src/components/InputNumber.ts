@@ -10,6 +10,7 @@ import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { reactive, computed, watch } from '@lytjs/reactivity';
 import { getSpinbuttonA11yProps, getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
+import { t } from '../locale';
 
 /**
  * InputNumber 组件
@@ -251,7 +252,7 @@ export const InputNumber = defineComponent({
       // 减号按钮
       if (_props.controls) {
         const decreaseBtnProps = getButtonA11yProps({
-          ariaLabel: '减少',
+          ariaLabel: t('inputNumber.decrease'),
           disabled: _props.disabled || isAtMin.value,
         });
         children.push(
@@ -269,7 +270,7 @@ export const InputNumber = defineComponent({
       // 加号按钮
       if (_props.controls) {
         const increaseBtnProps = getButtonA11yProps({
-          ariaLabel: '增加',
+          ariaLabel: t('inputNumber.increase'),
           disabled: _props.disabled || isAtMax.value,
         });
         children.push(
