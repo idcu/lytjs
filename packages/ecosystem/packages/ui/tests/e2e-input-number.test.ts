@@ -205,6 +205,22 @@ describe('InputNumber · 加减按钮', () => {
     expect(getInput(host).value).toBe('4');
   });
 
+  it('键盘：Enter / Space 激活加减按钮（B05）', async () => {
+    const onChange = vi.fn();
+    const { host } = await mountInputNumber({ modelValue: 5, onChange });
+
+    const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+    getInc(host).dispatchEvent(enter);
+    await flush();
+    expect(onChange).toHaveBeenLastCalledWith(6);
+
+    const space = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+    getDec(host).dispatchEvent(space);
+    await flush();
+    expect(onChange).toHaveBeenLastCalledWith(5);
+    expect(space.defaultPrevented).toBe(true);
+  });
+
   it('at max：+ 落 is-disabled/aria-disabled 且点击无效', async () => {
     const onChange = vi.fn();
     const { host } = await mountInputNumber({ modelValue: 10, max: 10, onChange });

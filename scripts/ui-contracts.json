@@ -132,10 +132,7 @@
       "events": { "status": "pass" },
       "controlled": { "status": "pass" },
       "styles": { "status": "pass" },
-      "keyboard": {
-        "status": "red",
-        "reason": "加减按钮是 span，仅 onClick 无 keydown；输入框的 ArrowUp/Down 不能替代按钮激活"
-      },
+      "keyboard": { "status": "pass" },
       "a11y": { "status": "pass" }
     },
     "Link": {

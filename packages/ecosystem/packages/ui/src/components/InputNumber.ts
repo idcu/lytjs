@@ -261,6 +261,13 @@ export const InputNumber = defineComponent({
             mergeA11yProps(decreaseBtnProps, {
               class: `lyt-input-number__decrease ${isAtMin.value ? 'is-disabled' : ''}`,
               onClick: handleDecrement,
+              // span 不是原生按钮：补 Enter/Space 键盘路径（B05）
+              onKeyDown: (e: KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleDecrement();
+                }
+              },
             }),
             [createTextVNode('−')],
           ),
@@ -279,6 +286,13 @@ export const InputNumber = defineComponent({
             mergeA11yProps(increaseBtnProps, {
               class: `lyt-input-number__increase ${isAtMax.value ? 'is-disabled' : ''}`,
               onClick: handleIncrement,
+              // span 不是原生按钮：补 Enter/Space 键盘路径（B05）
+              onKeyDown: (e: KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleIncrement();
+                }
+              },
             }),
             [createTextVNode('+')],
           ),
