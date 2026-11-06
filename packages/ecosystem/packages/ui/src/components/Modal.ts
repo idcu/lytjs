@@ -109,6 +109,10 @@ export const Modal = defineComponent({
             const allowed = await p.onBeforeOpen();
             if (allowed === false) return;
           }
+          // ⚠️ 2026-11-06 修（B05 浏览器验证暴露）：关闭后的 300ms 里 `isClosing` 为 true，
+          //   此时若「重新打开 → 立即按 ESC / 点遮罩」，`close()` 会被守卫直接 return，
+          //   弹层看起来对 Escape 无反应。重开即视为一次新的打开，清掉关闭态。
+          isClosing.set(false);
           if (p.lockScroll) setScrollLocked(true);
           p.onOpen?.();
           // DOM 就位后再建立陷阱（渲染是异步的，这里延一个宏任务）

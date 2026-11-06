@@ -100,6 +100,9 @@ export const Drawer = defineComponent({
             const allowed = await p.onBeforeOpen();
             if (allowed === false) return;
           }
+          // 同 Modal（B05）：关闭动画期间重开时清掉 `isClosing`，
+          // 否则紧接着的 ESC / 遮罩点击会被 `close()` 的守卫吞掉。
+          isClosing.set(false);
           if (p.lockScroll) setScrollLocked(true);
           p.onOpen?.();
           overlayFocus.activate();
