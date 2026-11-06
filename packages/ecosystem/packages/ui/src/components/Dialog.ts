@@ -15,6 +15,7 @@ import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
 import { signal, watch } from '@lytjs/reactivity';
 import { getDialogA11yProps, getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 import { createOverlayFocus } from './overlay-focus';
+import { t } from '../locale';
 import type { DialogSetupProps, DialogSlots } from './types';
 
 export const Dialog = defineComponent({
@@ -191,7 +192,7 @@ export const Dialog = defineComponent({
         );
         if (p.showClose) {
           const closeBtnProps = getButtonA11yProps({
-            ariaLabel: 'Close dialog',
+            ariaLabel: t('dialog.close'),
           });
           headerChildren.push(
             createVNode(
@@ -246,14 +247,14 @@ export const Dialog = defineComponent({
           if (p.onCancel) {
             footerChildren.push(
               createVNode('button', { class: 'lyt-dialog__cancel-btn', onClick: handleCancel }, [
-                createTextVNode('取消'),
+                createTextVNode(t('dialog.cancel')),
               ]),
             );
           }
           if (p.onConfirm) {
             footerChildren.push(
               createVNode('button', { class: 'lyt-dialog__confirm-btn', onClick: handleConfirm }, [
-                createTextVNode('确定'),
+                createTextVNode(t('dialog.confirm')),
               ]),
             );
           }

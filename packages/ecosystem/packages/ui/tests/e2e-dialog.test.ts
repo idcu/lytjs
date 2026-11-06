@@ -177,7 +177,7 @@ describe('Dialog — 渲染与 a11y', () => {
     const { host, mv } = await mountDialog({ title: 't' });
     mv.set(true);
     await tick(30);
-    expect(q(host, '.lyt-dialog__close')!.getAttribute('aria-label')).toBe('Close dialog');
+    expect(q(host, '.lyt-dialog__close')!.getAttribute('aria-label')).toBe('关闭对话框');
   });
 
   it('showClose=false：无 ×', async () => {
