@@ -10,6 +10,7 @@ import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { reactive } from '@lytjs/reactivity';
 import { getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
+import { t } from '../locale';
 
 /**
  * Tag 组件
@@ -98,7 +99,7 @@ export const Tag = defineComponent({
 
       // 关闭按钮
       if (_props.closable) {
-        const closeBtnProps = getButtonA11yProps({ ariaLabel: '关闭标签' });
+        const closeBtnProps = getButtonA11yProps({ ariaLabel: t('tag.close') });
         children.push(
           createVNode(
             'span',
