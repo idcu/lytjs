@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LYTJS UI · a11y 交互宿主页（B05）</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        margin: 24px;
+        display: flex;
+        gap: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+      B05 永久宿主页：真实 Chromium 里验证 Dialog / Modal / Drawer 的
+      遮罩点击关闭、ESC 关闭、Tab 焦点陷阱，以及 InputNumber 的键盘激活。
+      被 e2e/tests/ui-a11y-interaction.test.ts 直接访问（/ui-a11y.html）。
+    -->
+    <div id="app"></div>
+    <script type="module" src="/src/ui-a11y.ts"></script>
+  </body>
+</html>

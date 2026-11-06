@@ -22,6 +22,10 @@ export default defineConfig({
       '@lytjs/common-constants': resolve(__dirname, '../packages/common/packages/constants/dist'),
       '@lytjs/common-events': resolve(__dirname, '../packages/common/packages/events/dist'),
       '@lytjs/common-is': resolve(__dirname, '../packages/common/packages/is/dist'),
+      // B05：Golden 20 的永久 a11y/交互宿主页面（playground/ui-a11y.html）。
+      // 直接指向源码，避免「dist 过期但浏览器用例全绿」的假象。
+      '@lytjs/common-a11y': resolve(__dirname, '../packages/common/packages/a11y/src'),
+      '@lytjs/ui': resolve(__dirname, '../packages/ecosystem/packages/ui/src'),
     },
   },
   define: {
