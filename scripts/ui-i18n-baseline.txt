@@ -17,17 +17,5 @@ Modal → Close dialog
 Modal → Confirm
 Modal → 取消
 Modal → 确定
-Pagination → ${size} 条/页
-Pagination → 上一页
-Pagination → 下一页
-Pagination → 共 ${p.total} 条
-Pagination → 分页
-Pagination → 每页条数
-Pagination → 第${page}页
-Pagination → 第${totalPages()}页
-Pagination → 第1页
-Pagination → 跳至
-Pagination → 跳转到第几页
-Pagination → 页
 Progress → Progress
 Tag → 关闭标签

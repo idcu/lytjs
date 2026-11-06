@@ -9,8 +9,9 @@
  *   4. zh-CN 与 en-US 键集合、占位符一致（门禁 `check-ui-i18n` 的运行时镜像）。
  */
 import { describe, it, expect, afterEach } from 'vitest';
-import { createApp } from '@lytjs/core';
+import { createApp, h } from '@lytjs/core';
 import { createVNode, createTextVNode } from '@lytjs/vdom';
+import { Pagination } from '../src/components/Pagination';
 import { FALLBACK_LOCALE, UI_LOCALE_MESSAGES, getUiLocale, setUiLocale, t } from '../src/locale';
 
 const hosts: HTMLElement[] = [];
@@ -71,6 +72,25 @@ describe('i18n · 运行时切换会触发组件重渲染', () => {
     setUiLocale('en-US');
     await flush();
     expect(host.querySelector('.probe')!.textContent).toBe('Pagination');
+  });
+
+  it('分页器：运行时切到 en-US 后可见文案与 aria-label 同步变化', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    hosts.push(host);
+    await createApp({
+      setup() {
+        return () => h(Pagination as never, { total: 100, current: 1, pageSize: 10 });
+      },
+    } as never).mount(host);
+    await flush();
+    expect(host.textContent).toContain('共 100 条');
+    expect(host.querySelector('.lyt-pagination__prev')!.textContent).toBe('上一页');
+
+    setUiLocale('en-US');
+    await flush();
+    expect(host.textContent).toContain('100 total');
+    expect(host.querySelector('.lyt-pagination__prev')!.textContent).toBe('Previous page');
   });
 });
 

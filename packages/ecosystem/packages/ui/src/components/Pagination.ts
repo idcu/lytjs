@@ -11,6 +11,7 @@ import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal, watch } from '@lytjs/reactivity';
 import { getButtonA11yProps, getFormControlA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
+import { t } from '../locale';
 
 export interface PaginationSetupProps {
   current: number;
@@ -154,7 +155,7 @@ export const Pagination = defineComponent({
 
       const a11yProps = {
         id: p.id,
-        'aria-label': p.ariaLabel || '分页',
+        'aria-label': p.ariaLabel || t('pagination.label'),
         'aria-describedby': p.ariaDescribedBy,
       };
 
@@ -163,14 +164,14 @@ export const Pagination = defineComponent({
       if (p.layout.includes('total')) {
         children.push(
           createVNode('span', { class: 'lyt-pagination__total' }, [
-            createVNode('span', {}, `共 ${p.total} 条`),
+            createVNode('span', {}, t('pagination.total', { total: p.total })),
           ]),
         );
       }
 
       if (p.layout.includes('prev')) {
         const prevProps = getButtonA11yProps({
-          ariaLabel: '上一页',
+          ariaLabel: t('pagination.prev'),
           disabled: effectiveCurrent() === 1,
         });
         children.push(
@@ -181,7 +182,7 @@ export const Pagination = defineComponent({
               disabled: effectiveCurrent() === 1,
               onClick: handlePrev,
             }),
-            [createVNode('span', {}, '上一页')],
+            [createVNode('span', {}, t('pagination.prev'))],
           ),
         );
       }
@@ -192,7 +193,7 @@ export const Pagination = defineComponent({
         const firstPage = pageRange[0];
 
         if (firstPage !== undefined && firstPage > 1) {
-          const firstProps = getButtonA11yProps({ ariaLabel: '第1页' });
+          const firstProps = getButtonA11yProps({ ariaLabel: t('pagination.page', { page: 1 }) });
           pagerChildren.push(
             createVNode(
               'button',
@@ -215,7 +216,7 @@ export const Pagination = defineComponent({
 
         for (const page of pageRange) {
           const pageBtnProps = getButtonA11yProps({
-            ariaLabel: `第${page}页`,
+            ariaLabel: t('pagination.page', { page }),
             disabled: page === effectiveCurrent(),
           });
           pagerChildren.push(
@@ -246,7 +247,9 @@ export const Pagination = defineComponent({
             );
           }
 
-          const lastProps = getButtonA11yProps({ ariaLabel: `第${totalPages()}页` });
+          const lastProps = getButtonA11yProps({
+            ariaLabel: t('pagination.page', { page: totalPages() }),
+          });
           pagerChildren.push(
             createVNode(
               'button',
@@ -264,7 +267,7 @@ export const Pagination = defineComponent({
 
       if (p.layout.includes('next')) {
         const nextProps = getButtonA11yProps({
-          ariaLabel: '下一页',
+          ariaLabel: t('pagination.next'),
           disabled: effectiveCurrent() >= totalPages(),
         });
         children.push(
@@ -275,15 +278,15 @@ export const Pagination = defineComponent({
               disabled: effectiveCurrent() >= totalPages(),
               onClick: handleNext,
             }),
-            [createVNode('span', {}, '下一页')],
+            [createVNode('span', {}, t('pagination.next'))],
           ),
         );
       }
 
       if (p.layout.includes('sizes')) {
-        const selectProps = getFormControlA11yProps({ ariaLabel: '每页条数' });
+        const selectProps = getFormControlA11yProps({ ariaLabel: t('pagination.pageSize') });
         const options = p.pageSizes.map((size: number) =>
-          createVNode('option', { value: size }, String(`${size} 条/页`)),
+          createVNode('option', { value: size }, t('pagination.pageSizeOption', { size })),
         );
         children.push(
           createVNode('div', { class: 'lyt-pagination__sizes' }, [
@@ -301,10 +304,10 @@ export const Pagination = defineComponent({
       }
 
       if (p.layout.includes('jumper')) {
-        const inputProps = getFormControlA11yProps({ ariaLabel: '跳转到第几页' });
+        const inputProps = getFormControlA11yProps({ ariaLabel: t('pagination.jumpTo') });
         children.push(
           createVNode('div', { class: 'lyt-pagination__jumper' }, [
-            createVNode('span', {}, '跳至'),
+            createVNode('span', {}, t('pagination.jump')),
             createVNode(
               'input',
               mergeA11yProps(inputProps, {
@@ -315,7 +318,7 @@ export const Pagination = defineComponent({
                 onChange: handleJumperChange,
               }),
             ),
-            createVNode('span', {}, '页'),
+            createVNode('span', {}, t('pagination.pageUnit')),
           ]),
         );
       }

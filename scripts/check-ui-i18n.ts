@@ -106,6 +106,9 @@ function hardcodedTexts(src: string): string[] {
     for (const m of line.matchAll(LITERAL_RE)) {
       const body = m[1] ?? m[2] ?? m[3] ?? '';
       if (!body.trim() || A11Y_KEYS.has(body)) continue;
+      // `ariaLabel: t('pagination.prev')` —— 字面量是 i18n **key**，不是文案。
+      const prefix = line.slice(0, m.index ?? 0);
+      if (/t\(\s*$/.test(prefix)) continue;
       found.add(body);
     }
   }
