@@ -12,6 +12,7 @@ import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal, watch } from '@lytjs/reactivity';
 import { getDialogA11yProps, getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 import { createOverlayFocus } from './overlay-focus';
+import { t } from '../locale';
 import type { DrawerSetupProps, DrawerSlots } from './types';
 
 export const Drawer = defineComponent({
@@ -193,7 +194,7 @@ export const Drawer = defineComponent({
         }
 
         if (p.showClose) {
-          const closeBtnProps = getButtonA11yProps({ ariaLabel: 'Close drawer' });
+          const closeBtnProps = getButtonA11yProps({ ariaLabel: t('drawer.close') });
           headerChildren.push(
             createVNode(
               'button',
