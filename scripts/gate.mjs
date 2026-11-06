@@ -65,6 +65,13 @@ const GATES = [
     desc: '构建顺序表与实际包集合一致、无顺序倒置（单一真相源：build-order.ts）',
   },
   {
+    name: 'check-deps',
+    tier: 'fast',
+    cmd: ['tsx', 'scripts/check-deps.ts'],
+    approx: '~1.7s',
+    desc: '依赖方向：按 LAYER_MAP 校验包间依赖，禁止反向与同层交叉（2026-11-07 纳入 gate 单一真源）',
+  },
+  {
     name: 'check-dead-packages',
     tier: 'fast',
     cmd: ['tsx', 'scripts/check-dead-packages.ts'],
@@ -81,6 +88,13 @@ const GATES = [
     desc:
       '端到端断言强度：禁止 toBeDefined() / toContain("createBlock") / typeof==="object" ' +
       '这类「形状断言」冒充「行为断言」（2026-10-27 新增，起因：5,889 条用例全绿却有丢内容 P0）',
+  },
+  {
+    name: 'check-src-hygiene',
+    tier: 'fast',
+    cmd: ['tsx', 'scripts/check-src-hygiene.ts'],
+    approx: '~1.2s',
+    desc: '源码卫生：eval / new Function / console.log 残留清单制，新命中即红（2026-10-10 新增；2026-11-07 纳入 gate 单一真源）',
   },
   {
     name: 'check-ui-slot-single-node',

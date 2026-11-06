@@ -288,6 +288,10 @@ jobs:
       - name: Build all packages
         run: pnpm run build
 
+      # 单一真源：CI 在构建后统一执行 fast gate；下方逐项步骤保留，待 S04 清理
+      - name: Fast gate (single source)
+        run: node scripts/gate.mjs --tier fast
+
       # keel 扩展检查（需 dist）：登记见 keel/checks/rules.md
       - name: 契约漂移（绑定名须在导出面）
         run: pnpm run check-runtime-contract

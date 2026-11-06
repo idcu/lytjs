@@ -1,15 +1,19 @@
 ---
 scope: now
 status: active
-last-verified: 2026-11-06
-updated: 2026-11-06
+last-verified: 2026-11-07
+updated: 2026-11-07
 keywords: [硬约束9]
 ---
 
 # NOW · main
 
 ## 当前焦点
-B05 完成（Golden 20 i18n + a11y + 真实浏览器交互），待 B06/V7 后续。
+S01 完成（gate 单一真源），下一步 S02。
+
+## 11-07 完成
+- **S01** `check-deps`+`check-src-hygiene` 入 gate；`check:fast` 与 CI 改委托 `gate.mjs`。
+- 实测 fast **48→50 项，50/50 · 132.5s**；`check-deps` 24/76 覆盖缺口仍待 S02。
 
 ## 11-06 完成
 - **A15** 体积预算「基线+≤2%」；最小应用 89.2 KB / 首屏 **69.3 KB**。
@@ -28,8 +32,10 @@ B05 完成（Golden 20 i18n + a11y + 真实浏览器交互），待 B06/V7 后�
 - 门禁：fast **46/48**（2 项：dist 已重建、覆盖率快照待重生成）；slow 见 gate-logs。
 
 ## 下一步
-1. 复跑 fast/slow 并确认全绿；日志 `evaluation/evidence/gate-logs/`。
-2. B06 i18n 范围外组件（experimental 25 个）按需收敛。
+1. **S02** 补齐 `check-deps` 的 24 个包层级覆盖、删除 7 个幽灵包名，未登记层直接红。
+2. **S03** 让 `check-package-deps` 识别 `export ... from`，补 `common-constants` 声明。
+3. **S04/S05** CI/文档口径同步 + 门禁负控框架；随后复跑 slow 归档日志。
+4. B06 i18n 范围外组件（experimental 25 个）按需收敛。
 
 ## 阻塞
 | 卡在 | 绕行 |
