@@ -34,10 +34,7 @@
       },
       "styles": { "status": "pass" },
       "keyboard": { "status": "n/a", "reason": "无键盘交互（仅 img onError）" },
-      "a11y": {
-        "status": "red",
-        "reason": "img 的 alt 在空值（默认）时被整个省略，读屏会退化为读文件名；装饰图应输出空字符串 alt"
-      }
+      "a11y": { "status": "pass" }
     },
     "Badge": {
       "vmodel": { "status": "n/a", "reason": "纯展示组件，无值语义" },

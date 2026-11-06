@@ -106,7 +106,8 @@ export const Avatar = defineComponent({
               class: 'lyt-avatar__img',
               src: _props.src,
               srcset: _props.srcSet || undefined,
-              alt: _props.alt || undefined,
+              // 空 alt 必须输出 alt=""（装饰图），不能省略属性——否则读屏会退化为读文件名。
+              alt: _props.alt || '',
               style: {
                 objectFit: _props.fit,
               },
