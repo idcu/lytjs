@@ -25,30 +25,31 @@ keywords: [校验, 规则, 扩展检查, CI, 门禁]
 | 9 | 慢档全量（发布前） | `corepack pnpm@11.3.0 gate --tier slow` | ❌ fail | 发布前 / 定时任务 |
 | 10 | 源码卫生（`eval(` / `new Function(` / `console.log(` 三条规则 + 显式清单） | `corepack pnpm@11.3.0 check-src-hygiene` | ❌ fail | 本地（`check:fast` 已含）+ CI |
 | 11 | 治理接线（keel CI 三关卡齐全） | `corepack pnpm@11.3.0 check-keel-wiring` | ❌ fail | 本地（`check:fast` 已含）+ CI |
-| 12 | Golden 20 × 六类行为契约（B04；报告模式允许红） | `node scripts/check-ui-contracts.mjs` | ❌ fail（登记/源码漂移；`--strict` 时红项也 fail） | 本地（fast）+ 逐组件修复验收 |
+| 12 | Golden 20 × 七类行为契约（B04 六类 + B05 a11y；报告模式允许红） | `node scripts/check-ui-contracts.mjs` | ❌ fail（登记/源码漂移；`--strict` 时红项也 fail） | 本地（fast）+ 逐组件修复验收 |
+| 13 | Golden 20 i18n（双语 key 一致 + 硬编码棘轮） | `node scripts/check-ui-i18n.ts` | ❌ fail（新增硬编码 / 键或占位不一致） | 本地（fast）+ CI |
 
 ## 级别变更记录
 
 - **2026-10-10｜新增 #10 源码卫生（`check-src-hygiene.ts`）**
-  `compiler/src/optimizations/index.ts` 曾用 `eval()` 做伪优化（P2-3）：四个开关无一成立，
-  `stats.reduction` 唯一非 0 来源是误伤用户代码。修后判据机械化：扫描 `src/**/*.ts`，
+  `compiler/src/optimizations/index.ts` 曾用 `eval()` 做伪优化（P2-3）。现扫描 `src/**/*.ts`，
   三条规则各配显式清单（须写理由），未清单化即 exit 1。
 
 - **2026-10-10｜#5 UI props 接线：⚠️ warn → ❌ fail（收紧）**
-  升级前该脚本**恒 exit 0** —— 它只是一份打印报告，既拦不住新增欠账、也没有任何豁免方式，
-  连下面「准入标准」第 2 条都不满足。现按与 `check-circular.ts` 相同的**棘轮**模式改造：
-  既有欠账进 `scripts/ui-props-wiring-baseline.txt`，门禁**只拦新增**。
-  升级当口实测欠账为 **0**，故基线初始为空、门禁从一开始就是严格的。
-  注：本文件「级别定了别轻易改」针对的是**降级**（告警降级会让人无视全部告警）；
-  本次是**收紧**，且先决条件是欠账已归零。
+  升级前该脚本**恒 exit 0**（只是打印报告），既不拦新增也无豁免。现按棘轮改造：
+  既有欠账进 `scripts/ui-props-wiring-baseline.txt`，门禁**只拦新增**；升级当口欠账为 0。
+  本次是**收紧**（告警降级才会让人无视全部告警）。
 
 - **2026-10-11｜新增 #11 治理接线（`check-keel-wiring.ts`）**
-  背景：`test-lint.sh`（判据自测）此前只在 `install.sh` 跑一次、CI 里没有 ⇒ 改 `keel-lint.sh` 判据可静默腐烂。
-  修法：① 接进 `keel.yml`；② 本守卫断言该接线在（防被静默删）。实测：移除 test-lint 步骤 ⇒ exit 1。
+  此前 `test-lint.sh` 只在 `install.sh` 跑、CI 无 ⇒ 改 `keel-lint.sh` 可静默腐烂。
+  修法：接进 `keel.yml` 并断言接线在；实测移除 test-lint ⇒ exit 1。
 
-- **2026-11-06｜新增 #12 Golden 20 六类契约（B04）**
+- **2026-11-06｜新增 #12 Golden 20 六类契约（B04），#13 i18n（B05）**
   `check-ui-contracts.mjs` 对 20 组件 × 6 类逐格从源码推导，再与 `scripts/ui-contracts.json` 比对；
   初始 15 红全部登记原因（无 skip），`--strict` 用于逐组件验收。
+  **B05 扩到七类 140 格**（新增 a11y：alt/role/aria-*/焦点管理/tab 顺序/aria-expanded 动态）；
+  初始 a11y 18 pass / 1 红（Avatar）/ 1 N/A，修复后 19/0/1。
+  `check-ui-i18n.ts` 扫描 CJK 字面量与 `aria-label`/`alt` 行内字面量，棘轮
+  `scripts/ui-i18n-baseline.txt`（27 → 0）；两套 locale 键与 `{param}` 占位必须一致。
 
 ## CI 接入状态（诚实说明）
 

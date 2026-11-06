@@ -1,8 +1,8 @@
 {
-  "commit": "0b2d196ee690c12063051da8c311c8d6dc0dfeac",
-  "generatedAt": "2026-11-05T16:06:33.895Z",
-  "totalSrcFiles": 434,
-  "coveredSrcFiles": 425,
+  "commit": "73a1b005e01ecfec48d912c000c5785603353979",
+  "generatedAt": "2026-11-06T12:31:53.826Z",
+  "totalSrcFiles": 436,
+  "coveredSrcFiles": 427,
   "threshold": 0.975,
   "files": {
     "packages/adapter-web/src/index.ts": true,
@@ -296,6 +296,8 @@
     "packages/ecosystem/packages/ui/src/components/overlay-focus.ts": true,
     "packages/ecosystem/packages/ui/src/components/types.ts": true,
     "packages/ecosystem/packages/ui/src/index.ts": true,
+    "packages/ecosystem/packages/ui/src/locale/index.ts": true,
+    "packages/ecosystem/packages/ui/src/locale/messages.ts": true,
     "packages/ecosystem/packages/web-framework/packages/api/src/index.ts": true,
     "packages/ecosystem/packages/web-framework/packages/api/src/types.ts": true,
     "packages/ecosystem/packages/web-framework/packages/api/src/utils.ts": true,
