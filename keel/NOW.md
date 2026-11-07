@@ -25,6 +25,9 @@ S18 完成并推送；C3 待架构人审，`sideEffects` 归批次 0。
   事件修饰符共用；public-names、isSafeAttribute、style 数值、hydration/list-diff 收敛。
 - ⚠️ `sideEffects:false` 丢弃 builtin-components 副作用，core dist 5 红；修复方案
   B1/B2 见 `decisions/pending/0022-sideeffects-builtin-registration-plan.md`，待确认。
+- **slow 归因**：`first-screen-runtime` 38,719 B 超 504 B 由 `d936f3e9` 引入
+  （vdom 新增 `@lytjs/common-dom` 依赖，整包进 runtime 闭包）；判据下沉 `common-is`
+  后 37,966 B，`check-bundle-size` 恢复 18/18。
 - **待决 C3**：`@lytjs/ui` 5 个运行时依赖、61 文件/167 处 import 与 ARCHITECTURE:26
   冲突；见 `decisions/pending/0021-c3-ui-dependency-conflict.md`，待架构人审。
 

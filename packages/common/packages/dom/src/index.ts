@@ -307,18 +307,12 @@ export function patchAttr(el: Element, key: string, value: unknown, _isSVG: bool
  *   S3 input=typed p=from-data ref=from-data   ← p 更新了，input 没有
  * `checked` 同理（attribute 只改 defaultChecked）。
  */
-const FORM_STATE_KEYS = new Set(['value', 'checked', 'selected', 'indeterminate', 'muted']);
-
-/**
- * Property / Attribute 判据（单一真源）。
- *
- * vdom 在挂载阶段用它决定「表单状态是否要等子节点就绪后再写」：
- * `<select value="b">` 的 `value` 必须是 DOM property，但 property 只有在对应
- * `<option>` 存在时才会生效；props 先于 children 写入会被丢弃，首项被默认选中。
- */
-export function isFormStateProp(key: string): boolean {
-  return FORM_STATE_KEYS.has(key);
-}
+// ⚠️ 2026-11-07（S18 后续）：判据与键集合移到 `@lytjs/common-is` ——
+//   `@lytjs/vdom` 挂载阶段也要用它，而 vdom 的首屏闭包不含 `common-dom`；
+//   留在本包会把整个 common-dom 拉进 vdom 产物（实测首屏 runtime +835 B）。
+//   这里改为 import + re-export，保持既有公开导出面不变。
+import { FORM_STATE_KEYS } from '@lytjs/common-is';
+export { isFormStateProp } from '@lytjs/common-is';
 
 /** 写表单状态（property），并在值未变时跳过以免打断光标/输入法 */
 function patchFormState(el: Element, key: string, nextValue: unknown): void {

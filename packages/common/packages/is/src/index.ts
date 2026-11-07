@@ -8,6 +8,22 @@
 export { NOOP, EMPTY_FN, EMPTY_OBJ, EMPTY_ARR } from '@lytjs/common-constants';
 
 /**
+ * 表单**状态**属性：必须写 DOM **property**，不能写 attribute（单一真源）。
+ *
+ * 归属说明：`@lytjs/vdom` 判断「表单状态是否要等子节点就绪后再写」时也要用它，
+ * 而 vdom 的运行时闭包已包含 `common-is`、不含 `common-dom`；放在这里可避免
+ * 为一个小判据把整个 `common-dom` 拉进首屏产物。
+ */
+export const FORM_STATE_KEYS = new Set(['value', 'checked', 'selected', 'indeterminate', 'muted']);
+
+/**
+ * 是否为表单状态属性（Property / Attribute 判据，单一真源）。
+ */
+export function isFormStateProp(key: string): boolean {
+  return FORM_STATE_KEYS.has(key);
+}
+
+/**
  * 检查值是否为字符串
  */
 export const isString = (val: unknown): val is string => typeof val === 'string';

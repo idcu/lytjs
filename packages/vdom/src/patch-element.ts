@@ -7,9 +7,8 @@
 
 import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
 import { ShapeFlags, PatchFlags } from '@lytjs/common-vnode';
-import { hasChanged, EMPTY_OBJ, isFunction } from '@lytjs/common-is';
+import { hasChanged, EMPTY_OBJ, isFunction, isFormStateProp } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
-import { isFormStateProp } from '@lytjs/common-dom';
 import type { SuspenseBoundary } from './types';
 import { invokeDirectiveHook } from './directives';
 
