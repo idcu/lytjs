@@ -77,14 +77,21 @@
  *   - `lint:check`            eslint：新增一个含未使用变量的 src 文件 → eslint error 必红
  *   - `format:check`          prettier：新增一个格式不合规的文件 → 「Code style issues」必红
  *   - `check-ui-contracts`    行为契约：把登记表里一个 pass 格改成 red →「登记表与源码不一致」必红
+ *   - `build`                 全量构建：在首个叶子包（shared-types）注入语法错误 → tsup 首个包即失败
+ *   - `build:fallback`        兜底构建：同一注入 → 首个叶子包即失败（其余包连带缺类型）
+ *   - `type-check`            全量类型检查：在 shared-types 注入类型错误 → TS2322 必红
+ *   - `test`                  全量测试：新增一个必定失败的临时用例 → vitest 非零退出
+ *   - `test:coverage`         覆盖率测试：同上 → 用例失败即非零退出
  *
- * 其余门禁本轮不做注入实验，**如实登记为「未验证」**（见 negative-controls.json），
- * 不假装有反证。新增门禁时必须跑一次 `--sync` 让清单同步，否则本脚本报红。
+ * 判为不可负控的门禁（如聚合运行器）登记在 `uninjectable` 并写明原因，不假装有反证。
+ * 新增门禁时必须跑一次 `--sync` 让清单同步，否则本脚本报红。
  *
  * ## 用法
  *
- *   node scripts/check-negative-controls.mjs            # 跑全部已登记负控 + 审计
- *   node scripts/check-negative-controls.mjs check-deps # 只跑一项
+ *   node scripts/check-negative-controls.mjs            # 跑除重控制外的全部负控 + 审计
+ *   node scripts/check-negative-controls.mjs --quick    # 只跑秒级控制 + 审计（gate fast 档）
+ *   node scripts/check-negative-controls.mjs --slow     # 只跑慢控制（gate slow 档）
+ *   node scripts/check-negative-controls.mjs test       # 显式点名（含 build / test 等重控制）
  *   node scripts/check-negative-controls.mjs --audit    # 只审计清单，不注入
  *   node scripts/check-negative-controls.mjs --sync     # 按 gate.mjs 同步清单
  *   node scripts/gate.mjs --inject check-deps           # 经 gate 调用同一套负控
@@ -143,7 +150,8 @@ function expectFail(cmd, label) {
   const head =
     hit >= 0
       ? lines[hit]
-      : (lines.find((l) => /✖|error TS|AssertionError|no-unused-vars|Error:/.test(l)) ??
+      : (lines.find((l) => /AssertionError|error TS|no-unused-vars|✖/.test(l)) ??
+        lines.find((l) => /Error:/.test(l)) ??
         lines.find((l) => /Code style/i.test(l)) ??
         '');
   // 有些脚本先打印 `❌ 失败：`，具体条目在下一非空行 —— 一并带上，避免「红在哪」变成空白
@@ -191,6 +199,19 @@ function withTempDir(dir, files, run) {
     return run();
   } finally {
     rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+/** 运行命令；非零退出即抛错（用于负控结束后的现场修复） */
+function runOrThrow(cmd, label) {
+  const r = spawnSync(cmd[0], cmd.slice(1), {
+    cwd: ROOT,
+    stdio: 'pipe',
+    env: ENV,
+    encoding: 'utf-8',
+  });
+  if (r.status !== 0) {
+    throw new Error(`${label}：现场恢复失败（退出码 ${r.status ?? 'null'}）`);
   }
 }
 
@@ -1312,6 +1333,62 @@ const CONTROLS = {
         throw new Error('check-ui-contracts：注入点漂移（登记表里没有 pass 格）');
       },
       () => expectFail(['node', 'scripts/check-ui-contracts.mjs'], 'check-ui-contracts'),
+    );
+  },
+
+  build: () => {
+    // 注入：拓扑最早的叶子包（shared-types）里加语法错误 ⇒ tsup 在第一个包就失败
+    const file = join(ROOT, 'packages/shared-types/src/index.ts');
+    try {
+      withPatchedFile(
+        file,
+        (text) => `${text}\nexport const __negctlBuild: = 1;\n`,
+        () => expectFail(['pnpm', 'run', 'build'], 'build'),
+      );
+    } finally {
+      // tsup 在解析源码前会先 clean dist，失败注入会留下空 dist ⇒ 重建以恢复现场
+      runOrThrow(['pnpm', '--filter', '@lytjs/shared-types', 'build'], 'build');
+    }
+  },
+
+  'build:fallback': () => {
+    // 注入：同一个最早叶子包（shared-types）加语法错误 ⇒ 兜底构建首个包即失败
+    const file = join(ROOT, 'packages/shared-types/src/index.ts');
+    try {
+      withPatchedFile(
+        file,
+        (text) => `${text}\nexport const __negctlBuildFallback: = 1;\n`,
+        () => expectFail(['node', 'scripts/build-packages.mjs'], 'build:fallback'),
+      );
+    } finally {
+      // 兜底构建不 bail：注入失败会连带清空依赖包的 d.ts ⇒ 无注入重跑一次恢复全部 dist
+      runOrThrow(['node', 'scripts/build-packages.mjs'], 'build:fallback');
+    }
+  },
+
+  'type-check': () => {
+    // 注入：拓扑最早的叶子包（shared-types）里加类型错误 ⇒ tsc 报 TS2322
+    const file = join(ROOT, 'packages/shared-types/src/index.ts');
+    withPatchedFile(
+      file,
+      (text) => `${text}\nexport const __negctlType: string = 1;\n`,
+      () => expectFail(['pnpm', '-r', 'run', 'type-check'], 'type-check'),
+    );
+  },
+
+  test: () => {
+    // 注入：新增一个必定失败的临时测试 ⇒ vitest 非零退出
+    const file = join(ROOT, 'packages/vdom/tests/__negctl-fail.test.ts');
+    withTempFile(file, "import { expect } from 'vitest';\n\nexpect(1).toBe(2);\n", () =>
+      expectFail(['pnpm', 'run', 'test'], 'test'),
+    );
+  },
+
+  'test:coverage': () => {
+    // 注入：同 test（覆盖率门禁首先要求用例全绿）⇒ vitest 非零退出
+    const file = join(ROOT, 'packages/vdom/tests/__negctl-fail.test.ts');
+    withTempFile(file, "import { expect } from 'vitest';\n\nexpect(1).toBe(2);\n", () =>
+      expectFail(['pnpm', 'run', 'test:coverage'], 'test:coverage'),
     );
   },
 };

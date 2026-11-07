@@ -60,15 +60,20 @@
     "check-hydration",
     "check-vitest-alias-dist",
     "check-bundle-size",
+    "build",
+    "build:fallback",
     "check-runtime-contract",
     "check-api-snapshot",
     "check-doc-imports",
     "check-circular",
     "check-circular:src",
+    "type-check",
     "lint:check",
-    "format:check"
+    "format:check",
+    "test",
+    "test:coverage"
   ],
-  "unverified": ["build", "build:fallback", "type-check", "test", "test:coverage"],
+  "unverified": [],
   "uninjectable": [
     {
       "name": "check-negative-controls:slow",
