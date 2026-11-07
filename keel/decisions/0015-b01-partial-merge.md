@@ -1,8 +1,8 @@
 ---
 scope: meta
 status: active
-last-verified: 2026-11-06
-keywords: [compiler, codegen, B01, 部分完成, signal, optimized, 决策]
+last-verified: 2026-11-07
+keywords: [compiler, codegen, B01, S13, parity, 100/100, signal, optimized, 决策]
 type: decision
 created: 2026-11-06
 superseded-by:
@@ -10,8 +10,27 @@ superseded-by:
 
 # 0015 B01 部分完成：基础实现为语义主干，优化版保留实验路径
 
-> **状态：草稿（待 owner 拍板）。** 本文先把「实际交付 ≠ 原目标」写清楚，避免用
-> 「B01 已完成」的措辞掩盖仍未合并的事实。
+> **状态：active（2026-11-07 owner 裁定路径 1；合并方式待裁定）。**
+
+## 更新：2026-11-07 S13 owner 裁决
+
+Owner 选择**路径 1**：先修齐 `check-compiler-parity`，再合并两套 codegen，保留
+`optimizeSignal` 与 `codegen-signal-optimized.ts`，不删除优化能力。
+
+已完成：
+
+- 对拍 **100/100**（`expectedMismatch` 0；`templateParity.divergent` 23→0，
+  `divergent` 5→0，棘轮同步收缩）；
+- 所有修齐项以基础实现 A 为语义基准：A 与人工核定 `expected` 一致，A≠B 时修 B；
+  未放宽任何断言、未改期望值；
+- fast 门禁 53/53。
+
+未完成（**按 owner 要求停止，不自行决定**）：
+
+- 两套 codegen 的**代码合并**尚未进行。单发射器无法同时满足两份对外契约：
+  优化版测试固化短别名（`effect as e`）与 `render(_c,_n)` / `_0` 变量形态；
+  基础版默认路径另有其输出契约与测试。合并必须先裁定其中一方契约是否可调整。
+  候选方案：参数化单发射器、共享 helper 的双发射器、或允许更新优化版输出测试。
 
 ## 背景
 
