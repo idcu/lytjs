@@ -10,7 +10,6 @@ keywords: [决策, ADR, 索引]
 | 0002 | `<Suspense>` fallback 暂缓（4 处耦合） | active | [0002-suspense-fallback-deferred.md](0002-suspense-fallback-deferred.md) |
 | 0003 | SSR 水合标记默认关（可选开启） | active | [0003-ssr-hydrate-markers-default-off.md](0003-ssr-hydrate-markers-default-off.md) |
 | 0004 | group v-model 暂缓：`min/max` 靠子组件上报 | active | [0004-group-vmodel-collaboration-deferred.md](0004-group-vmodel-collaboration-deferred.md) |
-| 0005 | lytx 对齐 npm 6.9.6，不追 v7 | active | [0005-lytx-version-alignment.md](0005-lytx-version-alignment.md) |
 | 0006 | 硬约束 #9：公开开关须产物级断言 | active | [0006-public-switch-assertion.md](0006-public-switch-assertion.md) |
 | 0007 | 不全量合并 common 子包（只收敛同名不同实现） | active | [0007-common-package-merge-scope.md](0007-common-package-merge-scope.md) |
 | 0008 | 环境类失败不改仓库（内核提炼进人审，坑置 distilled） | active | [0008-env-failure-not-code-defect.md](0008-env-failure-not-code-defect.md) |
@@ -25,3 +24,4 @@ keywords: [决策, ADR, 索引]
 | 0017 | 公开名登记册：unified 单实现，registered 登记债 | active | [0017-public-name-registry.md](0017-public-name-registry.md) |
 | 0018 | style 数值统一不补 px，序列化收敛 common-string | active | [0018-style-unit-policy.md](0018-style-unit-policy.md) |
 | 0019 | hydration 入口转发；keyed diff 收敛 `planKeyedDiff` | active | [0019-hydration-list-diff-authority.md](0019-hydration-list-diff-authority.md) |
+| 0020 | S13 对拍补齐的必要功能增长：三入口基线签字上调，限内且留复查项 | active | [0020-bundle-baseline-s13-parity-growth.md](0020-bundle-baseline-s13-parity-growth.md) |

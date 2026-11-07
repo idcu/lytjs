@@ -1,6 +1,6 @@
 ---
 scope: meta
-status: active
+status: archived
 last-verified: 2026-10-09
 keywords: [lytx, 版本对齐, npm 发布版, 生态仓, 口径]
 type: decision
@@ -40,3 +40,9 @@ superseded-by:
 - 好处：版本口径唯一（npm 稳定版）；不依赖主仓分支状态，clone 即可安装。
 - 代价：若将来确有 6.6.0 用户需支持，要把 floor 回退（当前无此需求）；
   抬 floor 属**声明变更**，且需一次真实安装验证 —— 本次未做，勿当成已完成。
+
+## 归档（2026-11-07）
+
+- **原因**：`decisions/` 目录文件数达上限 20，本条已「只定档、未实施」且执行归属 lytx 仓，
+  不再占用热区检索位；移入 `decisions/archive/`，INDEX 移除对应行。
+- **仍有效**：结论（对齐 npm 稳定版而非主仓分支）未被推翻；需要时从冷区取回。
