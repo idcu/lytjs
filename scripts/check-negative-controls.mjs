@@ -45,6 +45,14 @@
  *   - `check-core-signal-contract` setup ctx：inject 不再委托 app.inject → 注入判据必红
  *   - `check-dev-warnings`     开发期诊断：删掉 warn 里的 console.warn 输出 → 必红
  *   - `check-render-cost`      渲染成本：让 keyed diff 同位置节点退化为卸载+重建 → 必红
+ *   - `check-di`               DI 生命周期：忽略 transient 工厂分支 →「transient 每次求值」必红
+ *   - `check-store-semantics`  状态管理：getter 的 effect 只算一次 →「getter 跟随数组 push」必红
+ *   - `check-reactivity-semantics` 响应式：computed 的 invalidate 不置 dirty →「computedSignal 重算并通知」必红
+ *   - `check-router-semantics`  路由优先级：改回权重求和 →「通配符不输给参数」必红
+ *   - `check-web-cssvars`      CSS 变量：normalizeVarName 不再补 `--` 前缀 →「缺前缀自动补 --」必红
+ *   - `check-runtime-contract` 运行时契约：从 core 导出面删掉 withModifiers → 产物 import 缺导出必红
+ *   - `check-api-routes`       文件路由：忽略规则退回子串匹配 →「distribution.ts 未被误伤」必红
+ *   - `check-scaffold`         脚手架：store/full 模板不再生成 stores/counter.ts → 文件/相对导入判据必红
  *
  * 其余门禁本轮不做注入实验，**如实登记为「未验证」**（见 negative-controls.json），
  * 不假装有反证。新增门禁时必须跑一次 `--sync` 让清单同步，否则本脚本报红。
@@ -654,6 +662,178 @@ const CONTROLS = {
         );
       },
       () => expectFail(['node', 'scripts/check-render-cost.mjs'], 'check-render-cost'),
+    );
+  },
+
+  'check-di': () => {
+    // 注入：materializeRecord 忽略 lifecycle='transient'（工厂只求值一次）⇒「transient 每次求值」必红
+    const file = join(ROOT, 'packages/ecosystem/packages/di/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-di：缺少 di dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle =
+          '    if (record.lifecycle === "transient") {\n      return record.factory();\n    }';
+        if (!text.includes(needle)) {
+          throw new Error('check-di：注入点漂移（找不到 transient 工厂分支）');
+        }
+        return text.replace(needle, '    if (false) {\n      return record.factory();\n    }');
+      },
+      () => expectFail(['node', 'scripts/check-di.mjs'], 'check-di'),
+    );
+  },
+
+  'check-store-semantics': () => {
+    // 注入：getter 的 effect 只在首次求值，之后不再重算 ⇒「getter 跟随数组 push」必红
+    const file = join(ROOT, 'packages/ecosystem/packages/store/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-store-semantics：缺少 store dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle =
+          '                const runner = effect(\n                  () => out.set(getterFn.call(thisContext, state, getters, store))\n                );';
+        if (!text.includes(needle)) {
+          throw new Error('check-store-semantics：注入点漂移（找不到 getter effect）');
+        }
+        return text.replace(
+          needle,
+          '                const runner = effect(\n                  () => {\n                    if (out() === void 0) out.set(getterFn.call(thisContext, state, getters, store));\n                  }\n                );',
+        );
+      },
+      () => expectFail(['node', 'scripts/check-store-semantics.mjs'], 'check-store-semantics'),
+    );
+  },
+
+  'check-reactivity-semantics': () => {
+    // 注入：computed 的 invalidate 不再把 dirty 置真 ⇒ 依赖变化后仍返回缓存，「computedSignal 重算并通知」必红
+    const file = join(ROOT, 'packages/reactivity/dist/index.mjs');
+    if (!existsSync(file))
+      throw new Error('check-reactivity-semantics：缺少 reactivity dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle =
+          '    dirty = true;\n    trigger(store, TriggerOpTypes.SET, COMPUTED_SIGNAL_KEY);';
+        if (!text.includes(needle)) {
+          throw new Error(
+            'check-reactivity-semantics：注入点漂移（找不到 invalidate 的 dirty 置位）',
+          );
+        }
+        return text.replace(
+          needle,
+          '    dirty = false;\n    trigger(store, TriggerOpTypes.SET, COMPUTED_SIGNAL_KEY);',
+        );
+      },
+      () =>
+        expectFail(
+          ['node', 'scripts/check-reactivity-semantics.mjs'],
+          'check-reactivity-semantics',
+        ),
+    );
+  },
+
+  'check-router-semantics': () => {
+    // 注入：路由优先级改回权重求和（静态 3 / 参数 2 / 通配 0）⇒「通配符不输给参数」必红
+    const file = join(
+      ROOT,
+      'packages/ecosystem/packages/web-framework/packages/router/dist/index.mjs',
+    );
+    if (!existsSync(file)) throw new Error('check-router-semantics：缺少 router dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle =
+          'function comparePriority(a, b) {\n  const len = Math.max(a.length, b.length);\n  for (let i = 0; i < len; i++) {\n    const av = a[i] ?? END_WEIGHT;\n    const bv = b[i] ?? END_WEIGHT;\n    if (av !== bv) return av - bv;\n  }\n  return 0;\n}';
+        if (!text.includes(needle)) {
+          throw new Error('check-router-semantics：注入点漂移（找不到 comparePriority）');
+        }
+        return text.replace(
+          needle,
+          'function comparePriority(a, b) {\n  return a.reduce((sum, value) => sum + value, 0) - b.reduce((sum, value) => sum + value, 0);\n}',
+        );
+      },
+      () => expectFail(['node', 'scripts/check-router-semantics.mjs'], 'check-router-semantics'),
+    );
+  },
+
+  'check-web-cssvars': () => {
+    // 注入：normalizeVarName 不再补 `--` 前缀 ⇒「缺前缀自动补 --」等名称规范化判据必红
+    const file = join(ROOT, 'packages/web/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-web-cssvars：缺少 web dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle =
+          'function normalizeVarName(name) {\n  return name.startsWith("--") ? name : `--${name}`;\n}';
+        if (!text.includes(needle)) {
+          throw new Error('check-web-cssvars：注入点漂移（找不到 normalizeVarName）');
+        }
+        return text.replace(needle, 'function normalizeVarName(name) {\n  return name;\n}');
+      },
+      () => expectFail(['node', 'scripts/check-web-cssvars.mjs'], 'check-web-cssvars'),
+    );
+  },
+
+  'check-runtime-contract': () => {
+    // 注入：从 core 导出面删掉 withModifiers（编译器产物仍 import 它）⇒「产物 import 的导出名可解析」必红
+    const file = join(ROOT, 'packages/core/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-runtime-contract：缺少 core dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle =
+          "export { normalizeClass, normalizeStyle, sanitizeHTML, withModifiers } from '@lytjs/dom-runtime';";
+        if (!text.includes(needle)) {
+          throw new Error('check-runtime-contract：注入点漂移（找不到 dom-runtime 导出面）');
+        }
+        return text.replace(
+          needle,
+          "export { normalizeClass, normalizeStyle, sanitizeHTML } from '@lytjs/dom-runtime';",
+        );
+      },
+      () => expectFail(['tsx', 'scripts/check-runtime-contract.ts'], 'check-runtime-contract'),
+    );
+  },
+
+  'check-api-routes': () => {
+    // 注入：忽略规则退回子串匹配（dist 规则误伤 distribution.ts）⇒「distribution.ts 未被误伤」必红
+    const file = join(
+      ROOT,
+      'packages/ecosystem/packages/web-framework/packages/api/dist/index.mjs',
+    );
+    if (!existsSync(file)) throw new Error('check-api-routes：缺少 api dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle =
+          'return patterns.some((pattern) => segments.includes(pattern) || stem === pattern);';
+        if (!text.includes(needle)) {
+          throw new Error('check-api-routes：注入点漂移（找不到 isIgnoredPath 判断）');
+        }
+        return text.replace(
+          needle,
+          'return patterns.some((pattern) => segments.includes(pattern) || fileName.includes(pattern));',
+        );
+      },
+      () => expectFail(['node', 'scripts/check-api-routes.mjs'], 'check-api-routes'),
+    );
+  },
+
+  'check-scaffold': () => {
+    // 注入：store/full 模板不再生成 stores/counter.ts ⇒「相对导入全部可解析」「有 stores/counter.ts」必红
+    const file = join(ROOT, 'packages/tools/packages/cli/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-scaffold：缺少 CLI dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle =
+          '    writeFile(join(targetDir, "src", "stores", "counter.ts"), counterStore);';
+        if (!text.includes(needle)) {
+          throw new Error('check-scaffold：注入点漂移（找不到 counter.ts 模板写入）');
+        }
+        return text.replace(needle, '    void counterStore;');
+      },
+      () => expectFail(['node', 'scripts/check-scaffold.mjs'], 'check-scaffold'),
     );
   },
 };
