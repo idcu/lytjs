@@ -9,11 +9,13 @@ keywords: [硬约束9]
 # NOW · main
 
 ## 当前焦点
-S22 完成（API 快照 / 计时分层 / host-contract 前置）；fast 56/56、slow 16/16；C3 待架构人审。
+B01c 落地（双 profile 快照）；fast 56/56、slow 17/17；C3 待架构人审。
 
 ## 11-08 完成
 - **S21 残留**：删 2 个残留脚本，职责归 `check-release-parity`。
 - **S20**：零引用 29→0（删 27+restore 2+孤儿 1）；入口收敛为 `build`；`check-script-refs` 棘轮+负控。
+- **B01c**：100 模板 × 2 profile 逐字快照（slow）+双侧负控；fast 151.7s（上限 180s），
+  超出把最慢注入移 slow，只改频率不降判据。
 - **S22**：`as unknown as` 基线 326/123 + 棘轮+负控；API 快照 39 包/1961 名（slow，`--update`
   显式）+负控；计时断言按 ADR 0024（<20ms 只报数字，≥20ms 保留）；host-contract ADR 0025
   维持不接（前置=第二个宿主目标）。
@@ -32,9 +34,8 @@ S22 完成（API 快照 / 计时分层 / host-contract 前置）；fast 56/56、
 - **待决 C3**：`@lytjs/ui` 依赖与 ARCHITECTURE:26 冲突，见 0021。
 
 ## 下一步
-1. 负控清零：72 项 **verified 71 / unverified 0 / uninjectable 1**（聚合运行器 `:slow`）。
-   fast 跑 `--quick`、slow 跑 `--slow`，build/type-check/test 等重控制仅显式点名；
-   分层只改频率不降判据。
+1. 负控清零：73 项 **verified 72 / unverified 0 / uninjectable 1**（聚合运行器 `:slow`）。
+   fast 跑 `--quick`、slow 跑 `--slow`，build/type-check/test 仅显式点名；分层只改频率不降判据。
 2. S23+：按评估台账确认后启动。
 
 ## 阻塞

@@ -64,6 +64,7 @@
     "build:fallback",
     "check-runtime-contract",
     "check-api-snapshot",
+    "check-signal-profile-snapshot",
     "check-doc-imports",
     "check-circular",
     "check-circular:src",

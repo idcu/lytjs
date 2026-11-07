@@ -37,6 +37,7 @@
  *   - `check-bundle-size`     体积预算：把基线压到实测之下 → 必红
  *   - `check-package-exports` 发布产物：把 main 指向不存在的文件 → 必红
  *   - `check-coverage-snapshot` 覆盖率快照：把 commit 改成不存在的 sha → 必红
+ *   - `check-signal-profile-snapshot` 双 profile 快照：分别篡改 base / optimized 产物 → 各自必红
  *   - `check-component-status` 组件成熟度：把 experimental 的 Table 错标 stable → 必红
  *   - `check-cache`            缓存容量：关掉 LRU 淘汰循环 →「totalSize 不超过 maxSize」必红
  *   - `check-config-semantics` 配置语义：让 get() 直接返回内部引用 →「读的隔离性」必红
@@ -433,6 +434,26 @@ const CONTROLS = {
       expectFail(['tsx', 'scripts/check-dist-freshness.ts'], 'check-dist-freshness');
     } finally {
       utimesSync(file, st.atime, st.mtime);
+    }
+  },
+
+  'check-signal-profile-snapshot': () => {
+    // B01c：分别改动 base / optimized 的产物快照 ⇒ 两个 profile 都必须各自转红。
+    // 分两次跑是为了证明「两侧都在比对」，而不是只有其中一侧生效。
+    const file = join(ROOT, 'scripts/signal-profile-snapshot.json');
+    const cmd = ['node', 'scripts/check-signal-profile-snapshot.mjs'];
+    for (const profile of ['base', 'optimized']) {
+      withPatchedFile(
+        file,
+        (text) => {
+          const snap = JSON.parse(text);
+          const id = Object.keys(snap[profile] ?? {})[0];
+          if (!id) throw new Error(`check-signal-profile-snapshot：快照缺少 ${profile} 段`);
+          snap[profile][id] += '\n// __negctl';
+          return `${JSON.stringify(snap, null, 2)}\n`;
+        },
+        () => expectFail(cmd, `check-signal-profile-snapshot(${profile})`),
+      );
     }
   },
 
@@ -1416,6 +1437,7 @@ const SLOW_CONTROLS = new Set([
   'check-scaffold',
   'check-hydration',
   'check-lifecycle-release',
+  'check-signal-profile-snapshot',
 ]);
 const HEAVY_CONTROLS = new Set(['build', 'build:fallback', 'type-check', 'test', 'test:coverage']);
 

@@ -837,6 +837,17 @@ const GATES = [
       'scripts/api-snapshot.json 逐包比对（不含签名）；任何增删必须显式 `--update` 才通过',
   },
   {
+    name: 'check-signal-profile-snapshot',
+    tier: 'slow',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-signal-profile-snapshot.mjs'],
+    approx: '~0.5s',
+    desc:
+      '★ signal 双 profile 产物逐字快照（B01c）：100 模板 × { base, optimized } 的编译产物' +
+      '必须与 scripts/signal-profile-snapshot.json 逐字一致；任何变化必须显式 `--update` 才通过。' +
+      '放在 slow 档：产物来自 compiler dist（fast 档的不变量是只读源码、不需要 dist）',
+  },
+  {
     name: 'check-doc-imports',
     tier: 'slow',
     needsDist: true,
