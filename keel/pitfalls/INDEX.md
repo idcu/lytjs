@@ -30,7 +30,8 @@ keywords: [坑库, 索引, 转发链, dist, 假绿, 门禁]
 | 静态 HTML 复用·插值覆盖 | core | P1 | [static-html-slot-reuse](core/static-html-slot-reuse.md) |
 | not.toThrow 漏异步抛 | verify | P2 | [async-throw-escapes](verify/async-throw-escapes.md) |
 | src/dist 混用假缺陷 | verify | P1 | [module-identity-src-vs-dist](verify/module-identity-src-vs-dist.md) |
-| 覆盖率并发作废 | verify | P1 | [coverage-concurrent-runs-clobber-tmp](verify/coverage-concurrent-runs-clobber-tmp.md) |
+| 覆盖率并发作废 | verify | P1 | [coverage-concurrent](verify/coverage-concurrent-runs-clobber-tmp.md) |
 | Proxy has 污染取值 | core | P1 | [proxy-has-cache-poison](core/proxy-has-cache-poison.md) |
-| pre-commit 回滚工作区 | process | P2 | [precommit-reverts-working-tree](process/precommit-reverts-working-tree.md) |
+| pre-commit 回滚工作区 | process | P2 | [precommit-reverts](process/precommit-reverts-working-tree.md) |
 | 短别名已回退·契约曾断链 | core | P1 | [signal-param-alias-contract](core/signal-param-alias-contract.md) |
+| 计时抖动 | verify | P2 | [flaky](verify/timing-flaky-parallel.md) |
