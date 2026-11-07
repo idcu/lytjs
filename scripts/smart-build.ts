@@ -38,7 +38,7 @@ const SKIP_BUILT = args.includes('--skip-built');
 const NO_CLEAN = args.includes('--no-clean') || process.env.LYTJS_BUILD_NO_CLEAN === '1';
 const FILTER = args.find((a) => a.startsWith('--filter='))?.split('=')[1];
 
-// 正确的构建顺序 - 按依赖关系严格排序（与 final-publish.ts 保持一致）
+// 正确的构建顺序 - 按依赖关系严格排序（以 build-order.ts 为唯一真源）
 // 构建顺序统一由 scripts/build-order.ts 提供（单一真相源），
 // 新增包后运行 `pnpm check-build-order` 校验集合与依赖拓扑。
 import { BUILD_ORDER } from './build-order';

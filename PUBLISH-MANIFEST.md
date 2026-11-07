@@ -105,15 +105,27 @@
 - **npm 组织**：@lytjs
 
 > ✅ 上述 76 个 `@lytjs/*` 包的 `package.json` 版本均已统一为 6.9.6。
-> ⚠️ 本清单为**发布包索引**，单次发布的实际明细以 `scripts/final-publish.ts` 运行结果为准。
+> ⚠️ 本清单为**发布包索引**；单次发布由 changesets 解析 workspace，包清单唯一真源为
+> `scripts/build-order.ts`。
 
 ---
 
 ## 发布脚本使用
 
+发布由 **changesets** 驱动，`push v7.0.0-dev` 触发 `.github/workflows/release.yml`：
+
 ```bash
-# 发布所有包（主脚本）
-pnpm publish:all            # 即 scripts/final-publish.ts
+# 开发期：为改动的包写 changeset
+pnpm changeset
+
+# 查看待发布包与目标版本（不写文件）
+pnpm changeset status --verbose
+
+# 升版本 + 生成 CHANGELOG + 消费 changeset（CI 由 Version Packages PR 执行）
+pnpm changeset version
+
+# 发布（CI 在 Version PR 合并后执行；本地等价于 build + changeset publish）
+pnpm run release
 
 # 查看当前包发布版本（验证是否成功）
 npm view @lytjs/core version
@@ -121,6 +133,9 @@ npm view @lytjs/router version
 npm view @lytjs/ssr version
 npm view @lytjs/hmr version
 ```
+
+> 手工的 `publish:prepare` / `publish:all` / `publish:restore` / `publish:check` /
+> `publish:single` 已于 2026-11-07 删除（ADR 见 `keel/NOW.md`）。
 
 ---
 

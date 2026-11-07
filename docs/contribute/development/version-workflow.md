@@ -659,18 +659,39 @@ pnpm tsx scripts/smart-build.ts
 
 #### 步骤 6: 发布到 npm
 
-**技能：** `npm-publish`
+**技能：** `changesets`
+
+发布由 `.github/workflows/release.yml` 驱动（`push v7.0.0-dev`）：
+
+1. 开发期用 `pnpm changeset` 为改动的包写 changeset（major / minor / patch）。
+2. 合并到 `v7.0.0-dev` 后，`changesets/action` 创建 **Version Packages** PR：
+   执行 `pnpm changeset version`，统一升版本、生成 CHANGELOG、消费 changeset。
+3. 合并该 PR 后，action 执行 `pnpm run release`（`pnpm run build && changeset publish`）。
+
+本地预演（不真正上传）：
 
 ```bash
-# 1. 准备发布
-pnpm run publish:prepare
-
-# 2. 发布所有包
-pnpm run publish:all
-
-# 3. 恢复 workspace
-pnpm run publish:restore
+pnpm changeset status --verbose   # 查看将被发布的包与目标版本
+pnpm changeset version            # 升到目标版本并消费 changeset
+pnpm run build                    # 构建全部 76 包
+npm publish --dry-run             # 在单个包目录验证产物
+git restore .                     # 预演后还原（含 CHANGELOG / package.json）
 ```
+
+#### 步骤 6.1: 如何写 changeset
+
+```bash
+pnpm changeset
+# 交互式选择受影响的包与 bump 类型，写一句用户可读的说明；
+# 生成 .changeset/<随机名>.md，提交时一并带进 PR。
+```
+
+约束：
+
+- `.changeset/config.json`：`access: public`、`baseBranch: v7.0.0-dev`；
+- `bumpVersionsWithWorkspaceProtocolOnly: true`：只改写 `workspace:*` 依赖，
+  `examples/using-lytjs-as-dep` 保持已发布版本，升版本不会让 `pnpm-lock.yaml` 失效；
+- 76 包清单唯一真源仍是 `scripts/build-order.ts`，由 `check-release-parity` 校验。
 
 #### 步骤 7: Roadmap 归档
 

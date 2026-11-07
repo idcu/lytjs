@@ -36,7 +36,7 @@ function main(): void {
   if (!hasNonWorkspaceRefs) {
     console.log('✅ 所有依赖都是 workspace 引用！');
   } else {
-    console.log('\n请运行: pnpm tsx scripts/restore-workspace.ts 来修复');
+    console.log('\n请运行: pnpm install 来修复 workspace 引用');
   }
 }
 

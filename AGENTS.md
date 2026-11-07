@@ -130,14 +130,14 @@ pnpm test                # 运行测试
 
 ## 发布与运维
 
-| 场景             | 入口                                                                                                                  |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------- |
-| **一键版本升级** | [版本开发流程 · 通用发布](docs/contribute/development/version-workflow.md#通用发布流程)                               |
-| 发布 npm 包      | `pnpm publish:prepare` → `pnpm publish:all` → `pnpm publish:restore`（见 [PUBLISH-MANIFEST.md](PUBLISH-MANIFEST.md)） |
-| 版本管理         | `pnpm run sync-versions` / `pnpm run versions:update`                                                                 |
-| 生成 CHANGELOG   | 见 [版本开发流程](docs/contribute/development/version-workflow.md) 步骤 3                                             |
-| 环境配置         | [keel/env/INDEX.md](keel/env/INDEX.md) + [keel/env/setup.md](keel/env/setup.md)                                       |
-| Roadmap 管理     | [docs/contribute/roadmap/current.md](docs/contribute/roadmap/current.md)                                              |
+| 场景             | 入口                                                                                                                                     |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **一键版本升级** | [版本开发流程 · 通用发布](docs/contribute/development/version-workflow.md#通用发布流程)                                                  |
+| 发布 npm 包      | `pnpm changeset` → 合并 Version Packages PR（`changesets/action` 自动 version + publish，见 [PUBLISH-MANIFEST.md](PUBLISH-MANIFEST.md)） |
+| 版本管理         | `pnpm run sync-versions` / `pnpm run versions:update`                                                                                    |
+| 生成 CHANGELOG   | 见 [版本开发流程](docs/contribute/development/version-workflow.md) 步骤 3                                                                |
+| 环境配置         | [keel/env/INDEX.md](keel/env/INDEX.md) + [keel/env/setup.md](keel/env/setup.md)                                                          |
+| Roadmap 管理     | [docs/contribute/roadmap/current.md](docs/contribute/roadmap/current.md)                                                                 |
 
 ---
 
