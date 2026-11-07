@@ -2,7 +2,20 @@
 // Signal 模式代码生成器 - 生成 effect() + DOM 操作代码
 
 import { NodeTypes, ElementTypes } from './constants';
-import { buildItemComponentProps } from './codegen-signal-optimized';
+import {
+  TEXT_SLOT_COMMENT,
+  genVarName,
+  getExpContent,
+  escapeHtmlStatic,
+  isDirectTextElement,
+  isStaticPropValue,
+  componentRef as componentRefShared,
+  readInterpolationExpr,
+  containsElementVNode,
+  emitListItemProps as emitListItemPropsShared,
+  emitListItemNode as emitListItemNodeShared,
+  buildItemComponentPropsShared,
+} from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
 import { FRAGMENT_SENTINEL } from './transforms/transform-element';
@@ -38,40 +51,6 @@ export interface SignalCodegenOptions {
 // ============================================================
 // Helper: 生成元素变量名
 // ============================================================
-
-/**
- * 根据标签名生成变量名，使用 _ 前缀
- * 重复标签通过计数器后缀区分
- */
-function genVarName(tag: string, counter: Map<string, number>): string {
-  const count = counter.get(tag) ?? 0;
-  counter.set(tag, count + 1);
-  if (count === 0) {
-    return `_${tag}`;
-  }
-  return `_${tag}${count}`;
-}
-
-// ============================================================
-// Helper: 获取表达式内容
-// ============================================================
-
-function getExpContent(node: SimpleExpressionNode | CompoundExpressionNode | undefined): string {
-  if (!node) return '';
-  if (node.type === NodeTypes.SIMPLE_EXPRESSION) return node.content;
-  // 形态异常（非 CompoundExpression 且没有 children）时返回空串 ——
-  // 此前会直接走 `node.children.map` 并对**无 type 的对象**抛 TypeError，
-  // 把一次局部失败放大成整个编译中断。
-  if (node.type !== NodeTypes.COMPOUND_EXPRESSION || !Array.isArray(node.children)) return '';
-  // CompoundExpression: 拼接所有子节点
-  return node.children
-    .map((c) => {
-      if (typeof c === 'string') return c;
-      if (c.type === NodeTypes.SIMPLE_EXPRESSION) return c.content;
-      return '';
-    })
-    .join('');
-}
 
 // ============================================================
 // 产物运行时导入（按实际引用裁剪）
@@ -149,30 +128,6 @@ function emitProductPrefix(used: Set<string>, builtinComponents: Set<string>): s
 // ============================================================
 // Helper: 生成静态 HTML 模板
 // ============================================================
-
-// FIX: P2-45 提取 escapeHtml 为模块级函数，避免每次调用 serializeStaticHTML 时重新创建
-function escapeHtmlStatic(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-/**
- * 元素是否只含**一个插值**子节点。
- *
- * 这种元素可以把自身当作文本宿主（`setText(el, exp)`），静态 HTML 里无需再插
- * `<!--lyt-t-->` 槽位注释，产物更小（B01b「去注释」）。
- * 多插值 / 静态文本 + 插值仍必须走 `claimTextSlots`，否则会互相覆盖。
- */
-function isDirectTextElement(node: ElementNode): boolean {
-  return (
-    node.tagType !== ElementTypes.COMPONENT &&
-    node.children.length === 1 &&
-    node.children[0]!.type === NodeTypes.INTERPOLATION
-  );
-}
 
 /**
  * 将静态元素子树序列化为 HTML 字符串，用于 createTemplate
@@ -525,21 +480,9 @@ function collectBuiltinComponents(children: unknown, acc = new Set<string>()): S
   return acc;
 }
 
-/** 组件标识符：带连字符的标签（`my-comp`）不能写成 `_ctx.my-comp`（会被解析成减法）。 */
+/** 组件引用（本发射器上下文前缀固定为 `_ctx`）。 */
 function componentRef(tag: string): string {
-  return /^[A-Za-z_$][\w$]*$/.test(tag) ? `_ctx.${tag}` : `_ctx[${JSON.stringify(tag)}]`;
-}
-
-/**
- * VNODE_CALL props 里的值是否为**字面量**（静态）。
- *
- * 旧判据是「值里没有 `_ctx` 就算静态」，于是 `v-if` 分支里的 `:id="i"`（值为未加前缀的
- * 标识符 `i`）被当成静态属性序列化进 HTML ⇒ `id="i"`，动态绑定整条丢失。
- */
-function isStaticPropValue(value: string): boolean {
-  const v = value.trim();
-  if (/^["'][\s\S]*["']$/.test(v)) return true; // 带引号的字符串字面量
-  return /^(?:-?\d+(?:\.\d+)?|true|false|null|undefined)$/.test(v);
+  return componentRefShared(tag, '_ctx');
 }
 
 /** 模板中是否含指定标签（用于按需引符号）。 */
@@ -915,12 +858,6 @@ function processVNodeCallProps(
 // ============================================================
 // 处理指令节点
 // ============================================================
-
-/**
- * 插值「文本槽位」在静态模板里的注释标记。
- * 与 `@lytjs/dom-runtime` 的 `claimTextSlots()` / `TEXT_SLOT_MARKER` **必须保持一致**。
- */
-const TEXT_SLOT_COMMENT = '<!--lyt-t-->';
 
 // FIX: P1-1~3 Signal 模式代码注入防护 - 表达式白名单验证
 const VALID_EXPRESSION = /^[a-zA-Z_$][a-zA-Z0-9_$]*(\.([a-zA-Z_$][a-zA-Z0-9_$]*))*$/;
@@ -1604,28 +1541,6 @@ function collectBranchDynamics(
   return ops;
 }
 
-/** 叶子节点是否是一个插值（TO_DISPLAY_STRING / INTERPOLATION），返回表达式 */
-function readInterpolationExpr(node: unknown): string | null {
-  if (!node || typeof node !== 'object') return null;
-  const n = node as {
-    type?: number;
-    callee?: unknown;
-    arguments?: unknown[];
-    content?: unknown;
-  };
-  if (n.type === NodeTypes.INTERPOLATION) {
-    const inner = n.content as { content?: unknown } | undefined;
-    return typeof inner?.content === 'string' ? inner.content : null;
-  }
-  if (n.type === NodeTypes.JS_CALL_EXPRESSION) {
-    const callee = typeof n.callee === 'string' ? n.callee : String(n.callee);
-    if (callee !== 'TO_DISPLAY_STRING' && callee !== 'toDisplayString') return null;
-    const arg = (n.arguments ?? [])[0] as { content?: unknown } | undefined;
-    return typeof arg?.content === 'string' ? arg.content : null;
-  }
-  return null;
-}
-
 /** VNODE_CALL.props → 传给 mountComponent 的 props 对象代码 */
 function buildVNodePropsCode(vnode: VNodeCall, locals: ReadonlySet<string>): string {
   if (!vnode.props || vnode.props.type !== NodeTypes.JS_OBJECT_EXPRESSION) return 'null';
@@ -1715,19 +1630,7 @@ function buildBranchDynamics(
   };
 }
 
-/** 列表项的 children 里是否有**嵌套元素**（`<li v-for><span>{{x}}</span></li>`）。 */
-function containsElementVNode(node: unknown): boolean {
-  if (node === undefined || node === null) return false;
-  if (Array.isArray(node)) return node.some((n) => containsElementVNode(n));
-  const n = node as { type?: number; tag?: unknown };
-  return n.type === NodeTypes.VNODE_CALL && typeof n.tag === 'string' && /^["']/.test(n.tag);
-}
-
-/**
- * 生成列表项的 props 代码（字面量 → setAttribute；动态 → create/update 各一次）。
- *
- * `updateExpr` 为 null 表示该元素不参与更新（不会调用 reconcile update）。
- */
+/** 本发射器（完整名 / `_ctx` 前缀）的列表项 props 生成。 */
 function emitListItemProps(
   props: unknown,
   createExpr: string,
@@ -1736,41 +1639,18 @@ function emitListItemProps(
   createLines: string[],
   updateLines: string[],
 ): void {
-  if (!props || (props as { type?: number }).type !== NodeTypes.JS_OBJECT_EXPRESSION) return;
-  for (const prop of (props as JSObjectExpression).properties) {
-    if (prop.type !== NodeTypes.JS_PROPERTY) continue;
-    const jsProp = prop as JSProperty;
-    if (
-      jsProp.key.type !== NodeTypes.SIMPLE_EXPRESSION ||
-      jsProp.value.type !== NodeTypes.SIMPLE_EXPRESSION
-    ) {
-      continue;
-    }
-    const key = (jsProp.key as SimpleExpressionNode).content.replace(/^["']|["']$/g, '');
-    const value = (jsProp.value as SimpleExpressionNode).content;
-    if (key === 'key' || /^on[A-Z]/.test(key)) continue;
-    if (isStaticPropValue(value)) {
-      createLines.push(
-        `${createExpr}.setAttribute(${JSON.stringify(key)}, ${JSON.stringify(
-          value.replace(/^["']|["']$/g, ''),
-        )});`,
-      );
-    } else {
-      const code = prefixIdentifiers(value, locals);
-      createLines.push(`${createExpr}.setAttribute(${JSON.stringify(key)}, ${code});`);
-      if (updateExpr)
-        updateLines.push(`${updateExpr}.setAttribute(${JSON.stringify(key)}, ${code});`);
-    }
-  }
+  emitListItemPropsShared(
+    props,
+    createExpr,
+    updateExpr,
+    locals,
+    createLines,
+    updateLines,
+    prefixIdentifiers,
+  );
 }
 
-/**
- * 递归生成列表项子树（元素 / 文本 / 插值）的 create 与 update 代码。
- *
- * 旧实现只认「children 直接是插值或字符串」，`<li v-for><span>{{x}}</span></li>`
- * 的嵌套元素被整段丢弃 ⇒ 每个 li 都是空的。这里按 DOM 结构逐层生成，
- * update 侧用 `childNodes[i]` 定位（创建顺序即索引，稳定）。
- */
+/** 本发射器（完整名 / `_ctx` 前缀）的列表项子树生成。 */
 function emitListItemNode(
   node: unknown,
   createParent: string,
@@ -1780,102 +1660,22 @@ function emitListItemNode(
   createLines: string[],
   updateLines: string[],
 ): boolean {
-  if (node === undefined || node === null) return false;
-  if (Array.isArray(node)) {
-    for (const child of node) {
-      emitListItemNode(
-        child,
-        createParent,
-        updateExpr,
-        locals,
-        varCounter,
-        createLines,
-        updateLines,
-      );
-    }
-    return false;
-  }
+  return emitListItemNodeShared(
+    node,
+    createParent,
+    updateExpr,
+    locals,
+    varCounter,
+    createLines,
+    updateLines,
+    prefixIdentifiers,
+    (content, loc) => `(${prefixIdentifiers(content, loc)} ?? '')`,
+  );
+}
 
-  // 静态文本 / COMPOUND_EXPRESSION 里的代码片段字符串
-  if (typeof node === 'string') {
-    if (!node) return false;
-    const textVar = genVarName('t', varCounter);
-    createLines.push(`const ${textVar} = document.createTextNode(${JSON.stringify(node)});`);
-    createLines.push(`${createParent}.appendChild(${textVar});`);
-    if (updateExpr) updateLines.push(`${updateExpr}.textContent = ${JSON.stringify(node)};`);
-    return true;
-  }
-
-  const n = node as {
-    type?: number;
-    tag?: unknown;
-    content?: unknown;
-    callee?: unknown;
-    arguments?: unknown[];
-    children?: unknown;
-    props?: unknown;
-  };
-
-  // 插值 / toDisplayString 叶子
-  let textExpr: string | null = null;
-  if (n.type === NodeTypes.INTERPOLATION) {
-    const inner = n.content as { content?: unknown } | undefined;
-    textExpr = typeof inner?.content === 'string' ? inner.content : null;
-  } else if (n.type === NodeTypes.JS_CALL_EXPRESSION) {
-    const callee = typeof n.callee === 'string' ? n.callee : String(n.callee);
-    if (callee === 'TO_DISPLAY_STRING' || callee === 'toDisplayString') {
-      const arg = (n.arguments ?? [])[0] as { content?: unknown } | undefined;
-      textExpr = typeof arg?.content === 'string' ? arg.content : null;
-    }
-  } else if (n.type === NodeTypes.COMPOUND_EXPRESSION && Array.isArray(n.children)) {
-    for (const child of n.children) {
-      emitListItemNode(
-        child,
-        createParent,
-        updateExpr,
-        locals,
-        varCounter,
-        createLines,
-        updateLines,
-      );
-    }
-    return false;
-  }
-  if (textExpr !== null) {
-    const code = `(${prefixIdentifiers(textExpr, locals)} ?? '')`;
-    const textVar = genVarName('t', varCounter);
-    createLines.push(`const ${textVar} = document.createTextNode(${code});`);
-    createLines.push(`${createParent}.appendChild(${textVar});`);
-    if (updateExpr) updateLines.push(`${updateExpr}.textContent = ${code};`);
-    return true;
-  }
-
-  if (n.type !== NodeTypes.VNODE_CALL || typeof n.tag !== 'string') return false;
-  const tag = n.tag.replace(/^["']|["']$/g, '');
-  const elVar = genVarName(tag, varCounter);
-  createLines.push(`const ${elVar} = document.createElement(${JSON.stringify(tag)});`);
-  createLines.push(`${createParent}.appendChild(${elVar});`);
-  emitListItemProps(n.props, elVar, updateExpr, locals, createLines, updateLines);
-
-  // children：逐个 append，update 用 childNodes[i] 定位
-  const rawKids = n.children as unknown;
-  const kidList =
-    rawKids === undefined || rawKids === null ? [] : Array.isArray(rawKids) ? rawKids : [rawKids];
-  let childIdx = 0;
-  for (const kid of kidList) {
-    const kidUpdate = updateExpr ? `${updateExpr}.childNodes[${childIdx}]` : null;
-    const emitted = emitListItemNode(
-      kid,
-      elVar,
-      kidUpdate,
-      locals,
-      varCounter,
-      createLines,
-      updateLines,
-    );
-    if (emitted) childIdx++;
-  }
-  return true;
+/** 本发射器（完整名 / `_ctx` 前缀）的列表项组件 props。 */
+function buildItemComponentProps(vnode: VNodeCall, locals: ReadonlySet<string>): string {
+  return buildItemComponentPropsShared(vnode, locals, prefixIdentifiers);
 }
 
 // ============================================================

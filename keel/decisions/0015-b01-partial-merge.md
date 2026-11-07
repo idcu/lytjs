@@ -10,27 +10,29 @@ superseded-by:
 
 # 0015 B01 部分完成：基础实现为语义主干，优化版保留实验路径
 
-> **状态：active（2026-11-07 owner 裁定路径 1；合并方式待裁定）。**
+> **状态：active（2026-11-07 owner 裁定方向 2：共享 helper 的双发射器）。**
 
-## 更新：2026-11-07 S13 owner 裁决
+## 更新：2026-11-07 S13 方向 2 落地
 
-Owner 选择**路径 1**：先修齐 `check-compiler-parity`，再合并两套 codegen，保留
-`optimizeSignal` 与 `codegen-signal-optimized.ts`，不删除优化能力。
+Owner 裁定**方向 2（共享 helper 的双发射器）**：语义逻辑抽成单一共享 helper，
+两个发射器只保留输出形态差异；两套既有输出契约与测试都不改。
 
-已完成：
+- **语义真源**：`packages/compiler/src/codegen-signal-shared.ts`，集中 AST 读取与
+  语义判定（文本槽位、直接文本、静态字面量、组件引用、插值、嵌套元素、
+  v-for 列表项 props/子树、列表项组件 props）。发射器只注入 `_ctx.` / `_c.` 前缀
+  与各自的文本兜底形态。
+- **有意保留的输出形态分叉**：①短别名 vs 全名；②`_c,_n` vs `_ctx,_container`；
+  ③`_0/_1` vs `_li/_span`；④`_c.` vs `_ctx.`；⑤空白/拆行差异。
+- **为什么保留双发射器**：两份输出契约都被测试固化；单发射器必然改其中一份，
+  owner 要求契约不动。
+- **不回归判据**：`check-compiler-parity` 共享前后均 **100/100**。
+- **顺带修正**：基础实现此前借用优化版 props helper，列表项组件表达式误用 `_c.`
+  （其 render 形参是 `_ctx`）；共享后回到 `_ctx.`，测试全过。
+- **后续收敛/删除条件**：优化版输出契约被正式废弃、且 `optimizeSignal` 不再作为
+  公开开关时，删除优化版发射器，短别名转为单一实现的内部选项。在此之前语义改动
+  只能改 shared，禁止两份发射器各写一份。
 
-- 对拍 **100/100**（`expectedMismatch` 0；`templateParity.divergent` 23→0，
-  `divergent` 5→0，棘轮同步收缩）；
-- 所有修齐项以基础实现 A 为语义基准：A 与人工核定 `expected` 一致，A≠B 时修 B；
-  未放宽任何断言、未改期望值；
-- fast 门禁 53/53。
-
-未完成（**按 owner 要求停止，不自行决定**）：
-
-- 两套 codegen 的**代码合并**尚未进行。单发射器无法同时满足两份对外契约：
-  优化版测试固化短别名（`effect as e`）与 `render(_c,_n)` / `_0` 变量形态；
-  基础版默认路径另有其输出契约与测试。合并必须先裁定其中一方契约是否可调整。
-  候选方案：参数化单发射器、共享 helper 的双发射器、或允许更新优化版输出测试。
+验证：对拍 **100/100**、`expectedMismatch` 0、baseline divergent 23→0；fast 53/53。
 
 ## 背景
 

@@ -9,15 +9,14 @@ keywords: [硬约束9]
 # NOW · main
 
 ## 当前焦点
-S13 对拍 100/100（基线 23→0）；两套 codegen 代码合并待契约裁定。
+S13 完成（对拍 100/100 + 共享 helper 双发射器）；下一步 S14 slow 档复跑。
 
 ## 11-07 完成
-- **S13（路径1 第一步）** `check-compiler-parity` **100/100**、`expectedMismatch` 0；
-  baseline divergent 23→0（棘轮同步收缩）；fast **53/53 · 117.8s**。
-  修齐以基础实现 A 为语义基准（A 与 expected 一致才修 B）：根级文本、多插值槽位、
-  v-if 分支动态内容、kebab 组件引用、v-for 嵌套子元素。
-- **S13 合并阻塞**：单发射器无法同时满足优化版输出契约（短别名、`render(_c,_n)`、
-  `_0`）与基础版默认路径契约/测试；已按用户要求停止待裁定，未改测试或默认值。
+- **S13** `check-compiler-parity` **100/100**、`expectedMismatch` 0；baseline
+  divergent 23→0。语义抽入 `codegen-signal-shared.ts`，两发射器只留输出形态
+  （短别名/形参名/变量名/前缀）；契约与测试未改，对拍维持 100/100。
+  修齐以基础实现 A 为语义基准：根级文本、多插值槽位、v-if 分支动态内容、
+  kebab 组件引用、v-for 嵌套子元素。
 - **S01/S02** gate 委托 `gate.mjs`；check-deps 覆盖 **76/76**。
 - **S06–S12** ErrorBoundary 下沉 component；core-vnode 权威收敛与 S07 体积回归修复
   （first-screen 90.3→**70.4 KB**、runtime 87.7→**36.6 KB**）；S08 事件修饰符共用；

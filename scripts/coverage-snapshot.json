@@ -1,8 +1,8 @@
 {
-  "commit": "73a1b005e01ecfec48d912c000c5785603353979",
-  "generatedAt": "2026-11-06T12:31:53.826Z",
-  "totalSrcFiles": 436,
-  "coveredSrcFiles": 427,
+  "commit": "759f5fa6a6de1fa28fd7737c491de4b9af8defd6",
+  "generatedAt": "2026-11-07T02:46:13.254Z",
+  "totalSrcFiles": 437,
+  "coveredSrcFiles": 428,
   "threshold": 0.975,
   "files": {
     "packages/adapter-web/src/index.ts": true,
@@ -50,6 +50,7 @@
     "packages/compiler/src/ast.ts": true,
     "packages/compiler/src/client-server-boundary/index.ts": true,
     "packages/compiler/src/codegen-signal-optimized.ts": true,
+    "packages/compiler/src/codegen-signal-shared.ts": true,
     "packages/compiler/src/codegen-signal.ts": true,
     "packages/compiler/src/codegen-ssr.ts": true,
     "packages/compiler/src/codegen.ts": true,
