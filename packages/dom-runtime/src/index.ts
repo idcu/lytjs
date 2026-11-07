@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { effect, stop } from '@lytjs/reactivity';
-import { sanitizeHTML } from '@lytjs/common-security';
+import { sanitizeHTML, isSafeAttribute } from '@lytjs/common-security';
 // ★ 2026-11-07（S08）：事件修饰符表与拦截语义的**唯一真源**在 @lytjs/common-events。
 import { isEventModifierIntercepted } from '@lytjs/common-events';
 
@@ -484,6 +484,14 @@ export function setAttribute(el: unknown, key: string, value: unknown): void {
   if (!isBrowser) return;
   const realNode = getRealNode(el) as Element;
   const realValue = String(unwrapValue(value));
+  // ★ 2026-11-07（S10）：与 vnode 路径共用 `isSafeAttribute` 的同一判定，
+  // 拦截 `href/src/...` 的 `javascript:` 等危险协议与内联事件属性。
+  if (!isSafeAttribute(key, realValue)) {
+    if (__DEV__) {
+      console.warn(`[LytJS] Unsafe attribute "${key}" with value "${realValue}" has been blocked.`);
+    }
+    return;
+  }
   // 增量更新：值相同时跳过
   if (realNode.getAttribute(key) === realValue) return;
   realNode.setAttribute(key, realValue);

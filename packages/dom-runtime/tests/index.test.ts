@@ -281,6 +281,21 @@ describe('@lytjs/dom-runtime', () => {
       setAttribute(container, 'class', 'b');
       expect(container.getAttribute('class')).toBe('b');
     });
+
+    it('should block javascript: URLs（S10 与 vnode 路径同判定）', () => {
+      setAttribute(container, 'href', 'javascript:alert(1)');
+      expect(container.hasAttribute('href')).toBe(false);
+    });
+
+    it('should allow safe URLs', () => {
+      setAttribute(container, 'href', 'https://example.com/a');
+      expect(container.getAttribute('href')).toBe('https://example.com/a');
+    });
+
+    it('should block inline event handler attributes', () => {
+      setAttribute(container, 'onclick', 'alert(1)');
+      expect(container.hasAttribute('onclick')).toBe(false);
+    });
   });
 
   // ==================== removeAttribute ====================

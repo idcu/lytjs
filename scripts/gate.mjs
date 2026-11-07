@@ -72,6 +72,15 @@ const GATES = [
     desc: '依赖方向：按 LAYER_MAP 校验包间依赖，禁止反向与同层交叉（2026-11-07 纳入 gate 单一真源）',
   },
   {
+    name: 'check-render-parity',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-render-parity.mjs'],
+    approx: '~1.5s',
+    desc:
+      '三模式渲染写入路径一致性（2026-11-07 新增）：vnode/common-dom、signal/dom-runtime、' +
+      'SSR/renderer 对危险 URL 与安全 URL 结论一致；S11 起扩展 style 单位',
+  },
+  {
     name: 'check-public-names',
     tier: 'fast',
     cmd: ['node', 'scripts/check-public-names.mjs'],
