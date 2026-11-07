@@ -2,6 +2,7 @@
   "updatedAt": "2026-11-07",
   "verified": [
     "check-deps",
+    "check-script-refs",
     "check-ui-styles",
     "check-package-deps",
     "check-controlled-props",

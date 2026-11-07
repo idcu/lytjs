@@ -145,6 +145,13 @@ const GATES = [
     desc: '治理接线：keel CI 三关卡（keel-lint / test-lint / verify-hooks）必须在 .github/workflows/keel.yml 里 —— 防判据自测被静默移除（2026-10-11）',
   },
   {
+    name: 'check-script-refs',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-script-refs.mjs'],
+    approx: '~1s',
+    desc: '零引用脚本棘轮（S20）：scripts/ 下每个可执行脚本必须有引用方（package.json/CI/gate/文档/其他脚本），基线 0，新增零引用即红',
+  },
+  {
     name: 'check-ui-styles',
     tier: 'fast',
     cmd: ['tsx', 'scripts/check-ui-styles.ts'],

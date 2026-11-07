@@ -16,6 +16,7 @@
  *   - `check-controlled-props` 受控组件：把 UI dist 的 `current` 受控读取改成常量 → 必红
  *   - `check-ui-styles`        样式覆盖：塞一个未在 CSS 里出现的静态类名 → 必红
  *   - `check-release-parity`  发布一致性：改一个包版本 → 「76 包版本一致」判据必红
+ *   - `check-script-refs`     零引用脚本棘轮（S20）：新增一个零引用脚本 → 必红
  *
  * 其余门禁本轮不做注入实验，**如实登记为「未验证」**（见 negative-controls.json），
  * 不假装有反证。新增门禁时必须跑一次 `--sync` 让清单同步，否则本脚本报红。
@@ -145,6 +146,14 @@ const CONTROLS = {
         return `${JSON.stringify(pkg, null, 2)}\n`;
       },
       () => expectFail(['node', 'scripts/check-release-parity.mjs'], 'check-release-parity'),
+    );
+  },
+
+  'check-script-refs': () => {
+    // S20：新增一个随机命名的零引用脚本 ⇒ 「每个脚本都有引用方」判据必须报红
+    const file = join(ROOT, 'scripts', `__negctl-zero-ref-${Date.now().toString(36)}.mjs`);
+    withTempFile(file, 'export const NEGCTL = 1;\n', () =>
+      expectFail(['node', 'scripts/check-script-refs.mjs'], 'check-script-refs'),
     );
   },
 };
