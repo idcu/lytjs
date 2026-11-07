@@ -3,6 +3,7 @@
 
 import { NodeTypes, ElementTypes } from './constants';
 import {
+  BASE_EMIT_PROFILE,
   TEXT_SLOT_COMMENT,
   genVarName,
   getExpContent,
@@ -201,6 +202,7 @@ function serializeStaticHTML(
 // ============================================================
 
 export function generateSignal(ast: RootNode, _options?: CompilerOptions): CodegenResult {
+  const profile = BASE_EMIT_PROFILE;
   const lines: string[] = [];
   const varCounter = new Map<string, number>();
   const elementVars: Array<{ varName: string; tag: string }> = [];
@@ -284,7 +286,7 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
   );
 
   // ---- Phase 4: Generate render function ----
-  lines.push('export function render(_ctx, _container) {');
+  lines.push(`export function render(${profile.ctxParam}, ${profile.containerParam}) {`);
 
   // 根级纯文本 / 插值（`{{msg}}`、`Hello {{name}}`）没有任何元素 ⇒ 旧实现整段丢弃，
   // 页面静默空白（P0-3 的一个具体形态）。这里按每个文本段各建一个文本节点。
@@ -297,7 +299,7 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
         lines.push(
           `  const ${varName} = document.createTextNode(${JSON.stringify((child as TextNode).content)});`,
         );
-        lines.push(`  insert(${varName}, _container);`);
+        lines.push(`  insert(${varName}, ${profile.containerParam});`);
         rootTextNodes.push(varName);
       } else if (child.type === NodeTypes.INTERPOLATION) {
         const exp = getExpContent((child as InterpolationNode).content as SimpleExpressionNode);
@@ -305,9 +307,9 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
         validateExpression(exp, 'interpolation');
         const varName = `_rootText${textIdx++}`;
         lines.push(`  const ${varName} = document.createTextNode("");`);
-        lines.push(`  insert(${varName}, _container);`);
+        lines.push(`  insert(${varName}, ${profile.containerParam});`);
         dynamicBindings.push({
-          varName: '_container',
+          varName: profile.containerParam,
           code: `effect(() => setText(${varName}, ${prefixIdentifiers(exp, new Set())}));`,
         });
         rootTextNodes.push(varName);
@@ -333,7 +335,7 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
       );
     }
 
-    lines.push(`  insert(${rootVar}, _container);`);
+    lines.push(`  insert(${rootVar}, ${profile.containerParam});`);
     lines.push('');
   }
 
@@ -480,9 +482,9 @@ function collectBuiltinComponents(children: unknown, acc = new Set<string>()): S
   return acc;
 }
 
-/** 组件引用（本发射器上下文前缀固定为 `_ctx`）。 */
+/** 组件引用（本发射器上下文前缀取自 `BASE_EMIT_PROFILE`）。 */
 function componentRef(tag: string): string {
-  return componentRefShared(tag, '_ctx');
+  return componentRefShared(tag, BASE_EMIT_PROFILE.ctxParam);
 }
 
 /** 模板中是否含指定标签（用于按需引符号）。 */
@@ -555,7 +557,7 @@ function processElement(
     const vpHost = vpEntry ?? genVarName('lytComp', varCounter);
     if (!vpEntry) elementVars.push({ varName: vpHost, tag: 'lyt-comp' });
 
-    const vpChildren = collectSlotVNodes(node.children, '_ctx.');
+    const vpChildren = collectSlotVNodes(node.children, BASE_EMIT_PROFILE.ctxPrefix);
     dynamicBindings.push({
       varName: vpHost,
       code: `mountVNode(createVNode(${vpTag},${buildComponentPropsObject(node)},[${vpChildren.join(',')}]),${vpHost});`,
@@ -571,7 +573,7 @@ function processElement(
 
     // 子内容 → 默认插槽。signal 产物本身是 DOM 操作，但 slot 契约要求返回 vnode
     // （normalizeSlotValue 会校验 `__v_isVNode`），故这里生成 vnode 构造代码。
-    const slotsObj = buildComponentSlotsObject(node, '_ctx.');
+    const slotsObj = buildComponentSlotsObject(node, BASE_EMIT_PROFILE.ctxPrefix);
     const slotsArg = slotsObj ? `,${slotsObj}` : '';
 
     dynamicBindings.push({
@@ -592,7 +594,7 @@ function processElement(
       findExistingVar(elementVars, 'slot', consumedCount) ?? genVarName('slotEl', varCounter);
     dynamicBindings.push({
       varName: slotVar,
-      code: `mountSlotOutlet(_ctx.$slots&&_ctx.$slots[${JSON.stringify(slotName)}],${slotVar});`,
+      code: `mountSlotOutlet(${BASE_EMIT_PROFILE.ctxParam}.$slots&&${BASE_EMIT_PROFILE.ctxParam}.$slots[${JSON.stringify(slotName)}],${slotVar});`,
     });
     return;
   }
@@ -1018,7 +1020,7 @@ function processDirective(
       if (expContent) {
         dynamicBindings.push({
           varName,
-          code: `let _ifFallbackEl = null;\n  effect(() => {\n    if (${prefixIdentifiers(expContent, locals)}) {\n      if (!_ifFallbackEl) {\n        _ifFallbackEl = ${varName};\n        insert(_ifFallbackEl, _container);\n      }\n    } else {\n      if (_ifFallbackEl) {\n        remove(_ifFallbackEl);\n        _ifFallbackEl = null;\n      }\n    }\n  });`,
+          code: `let _ifFallbackEl = null;\n  effect(() => {\n    if (${prefixIdentifiers(expContent, locals)}) {\n      if (!_ifFallbackEl) {\n        _ifFallbackEl = ${varName};\n        insert(_ifFallbackEl, ${BASE_EMIT_PROFILE.containerParam});\n      }\n    } else {\n      if (_ifFallbackEl) {\n        remove(_ifFallbackEl);\n        _ifFallbackEl = null;\n      }\n    }\n  });`,
         });
       }
       break;
@@ -1239,7 +1241,7 @@ function processConditional(
   }
 
   // 确定父容器和参考节点
-  const containerVar = parentVar ?? '_container';
+  const containerVar = parentVar ?? BASE_EMIT_PROFILE.containerParam;
   // FIX: P1-28 使用唯一计数器键确保嵌套 v-if 生成唯一变量名，
   // 避免嵌套场景下变量名冲突
   // FIX: P2-14 修复 `_if_undefined` 问题，确保深度值始终为数字
@@ -1758,7 +1760,7 @@ function processCallExpression(
             : [rawKids];
       const kidVNodes: string[] = [];
       for (const kid of kidList) {
-        const code = serializeVNodeCall(kid, '_ctx.', itemLocals);
+        const code = serializeVNodeCall(kid, BASE_EMIT_PROFILE.ctxPrefix, itemLocals);
         if (code) kidVNodes.push(code);
       }
       const slotsArg = kidVNodes.length ? ',{default:()=>[' + kidVNodes.join(',') + ']}' : '';
@@ -1893,7 +1895,7 @@ function processCallExpression(
     // 容器变量：render 的第二个形参叫 _container（见本文件 :164 生成的
     // `export function render(_ctx, _container)`）。此处曾写死 '_ul'，
     // 是为 ul/li 列表 demo 特判，换任何根容器都会产出 ReferenceError。
-    const containerVar = parentVar ?? '_container';
+    const containerVar = parentVar ?? BASE_EMIT_PROFILE.containerParam;
 
     dynamicBindings.push({
       varName: containerVar,

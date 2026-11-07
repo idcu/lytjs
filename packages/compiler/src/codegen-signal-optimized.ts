@@ -8,6 +8,7 @@
 
 import { NodeTypes, ElementTypes } from './constants';
 import {
+  OPTIMIZED_EMIT_PROFILE,
   TEXT_SLOT_COMMENT,
   genVarName,
   isDirectTextElement,
@@ -104,9 +105,9 @@ function getShortName(funcName: string, useShortNames: boolean): string {
   return RUNTIME_SHORT_NAMES[funcName as keyof typeof RUNTIME_SHORT_NAMES] || funcName;
 }
 
-/** 组件引用（本发射器上下文前缀固定为 `_c`）。 */
+/** 组件引用（本发射器上下文前缀取自 `OPTIMIZED_EMIT_PROFILE`）。 */
 function componentRef(tag: string): string {
-  return componentRefShared(tag, '_c');
+  return componentRefShared(tag, OPTIMIZED_EMIT_PROFILE.ctxParam);
 }
 
 /** 静态模板里登记的元素变量；`node` 用于 v-if 插入锚点定位。 */
@@ -123,9 +124,10 @@ interface ElementVarInfo {
 export function generateSignalOptimized(ast: RootNode, _options?: CompilerOptions): CodegenResult {
   // 优化版与非优化版（generateSignal）现在都已支持子组件
   //（占位元素 + mountComponent 运行时），两版行为一致，均无需告警。
+  const profile = OPTIMIZED_EMIT_PROFILE;
   const options: SignalCodegenOptions = {
     mode: 'signal',
-    useShortNames: true, // 启用短别名优化以减少代码体积
+    useShortNames: profile.shortNames,
     inlineSimpleExpressions: true,
   };
 
@@ -187,7 +189,7 @@ export function generateSignalOptimized(ast: RootNode, _options?: CompilerOption
         usedRuntime.add('setText');
         rootTexts.push({ varName, exp });
         dynamicBindings.push({
-          varName: '_n',
+          varName: profile.containerParam,
           code: `${getShortName('effect', options.useShortNames ?? true)}(()=>${getShortName(
             'setText',
             options.useShortNames ?? true,
@@ -208,12 +210,12 @@ export function generateSignalOptimized(ast: RootNode, _options?: CompilerOption
   usedRuntime.add('onCleanup');
   usedRuntime.add('runCleanups');
 
-  lines.push(generateOptimizedImports(usedRuntime, true));
+  lines.push(generateOptimizedImports(usedRuntime, profile.shortNames));
   lines.push('');
 
   // ---- Phase 4: Generate render function ----
   // 使用短参数名 _c (context) 和 _n (container) 减少代码体积
-  lines.push('export function render(_c,_n){');
+  lines.push(`export function render(${profile.ctxParam},${profile.containerParam}){`);
 
   // 生成 createTemplate 调用 - 使用短别名
   if (elementVars.length > 0) {
@@ -234,7 +236,7 @@ export function generateSignalOptimized(ast: RootNode, _options?: CompilerOption
 
     // 使用短别名生成 insert 调用
     const ins = getShortName('insert', options.useShortNames ?? true);
-    lines.push(`${ins}(${rootVar}, _n);`);
+    lines.push(`${ins}(${rootVar}, ${profile.containerParam});`);
     lines.push('');
   } else if (rootTexts.length > 0) {
     const ins = getShortName('insert', options.useShortNames ?? true);
@@ -244,7 +246,7 @@ export function generateSignalOptimized(ast: RootNode, _options?: CompilerOption
           r.staticText !== undefined ? JSON.stringify(r.staticText) : '""'
         });`,
       );
-      lines.push(`${ins}(${r.varName},_n);`);
+      lines.push(`${ins}(${r.varName},${profile.containerParam});`);
     }
     lines.push('');
   }
@@ -678,7 +680,7 @@ function processElementOptimized(
     usedRuntime.add('mountSlotOutlet');
     sink.push({
       varName: slotVar,
-      code: `mountSlotOutlet(_c.$slots&&_c.$slots[${JSON.stringify(slotName)}],${slotVar});`,
+      code: `mountSlotOutlet(${OPTIMIZED_EMIT_PROFILE.ctxParam}.$slots&&${OPTIMIZED_EMIT_PROFILE.ctxParam}.$slots[${JSON.stringify(slotName)}],${slotVar});`,
     });
     return;
   }
@@ -956,7 +958,7 @@ function processDirectiveOptimized(
         const rm = getShortName('remove', options.useShortNames ?? true);
         dynamicBindings.push({
           varName,
-          code: `let _f=null;${e}(()=>{if(${renderExpression(expContent)}){if(!_f){_f=${varName};${ins}(_f, _n);}}else{if(_f){${rm}(_f);_f=null;}}});`,
+          code: `let _f=null;${e}(()=>{if(${renderExpression(expContent)}){if(!_f){_f=${varName};${ins}(_f, ${OPTIMIZED_EMIT_PROFILE.containerParam});}}else{if(_f){${rm}(_f);_f=null;}}});`,
         });
       }
       break;
@@ -1219,7 +1221,7 @@ function processConditionalOptimized(
   // ⇒ `ReferenceError: createTemplate is not defined`。必须与 import 绑定名保持一致。
   const ct = getShortName('createTemplate', options.useShortNames ?? true);
 
-  const containerVar = parentVar ?? '_n';
+  const containerVar = parentVar ?? OPTIMIZED_EMIT_PROFILE.containerParam;
   const ifDepth = varCounter.get('_if_depth') ?? 0;
   const ifVarName = `_i${varCounter.get(`_if_${ifDepth}`) ?? 0}`;
   varCounter.set(`_if_${ifDepth}`, (varCounter.get(`_if_${ifDepth}`) ?? 0) + 1);
@@ -1504,7 +1506,7 @@ function processCallExpressionOptimized(
       }
       keyExpr = `${itemVar}.id`;
     }
-    const containerVar = parentVar ?? '_n';
+    const containerVar = parentVar ?? OPTIMIZED_EMIT_PROFILE.containerParam;
 
     usedRuntime.add('effect');
     usedRuntime.add('reconcileArray');

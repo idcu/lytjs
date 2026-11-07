@@ -25,6 +25,48 @@ import type {
  */
 export const TEXT_SLOT_COMMENT = '<!--lyt-t-->';
 
+/**
+ * 发射器输出形态（B01d-1）。
+ *
+ * 两个入口（`generateSignal` / `generateSignalOptimized`）都只读这里的常量，
+ * 不再各写一份形参名 / 前缀 / 短别名开关。本步只做常量抽取与接线，
+ * 不迁移任何序列化逻辑，产物必须逐字不变。
+ */
+export interface EmitProfile {
+  /** 产物形态标识 */
+  readonly name: 'base' | 'optimized';
+  /** render 第一形参（上下文），也是组件引用前缀的本体 */
+  readonly ctxParam: '_ctx' | '_c';
+  /** render 第二形参（容器） */
+  readonly containerParam: '_container' | '_n';
+  /** 上下文表达式前缀（含点，用于拼接 `_ctx.x` / `_c.x`） */
+  readonly ctxPrefix: '_ctx.' | '_c.';
+  /** 是否使用运行时短别名（`effect` vs `e`） */
+  readonly shortNames: boolean;
+  /** 元素临时变量命名：语义名（`_li`）或序号名（`_0`） */
+  readonly elementVarStyle: 'semantic' | 'indexed';
+}
+
+/** 基础实现（语义主干、默认路径）。 */
+export const BASE_EMIT_PROFILE: EmitProfile = {
+  name: 'base',
+  ctxParam: '_ctx',
+  containerParam: '_container',
+  ctxPrefix: '_ctx.',
+  shortNames: false,
+  elementVarStyle: 'semantic',
+};
+
+/** 优化实现（实验路径，`optimizeSignal: true` 显式开启）。 */
+export const OPTIMIZED_EMIT_PROFILE: EmitProfile = {
+  name: 'optimized',
+  ctxParam: '_c',
+  containerParam: '_n',
+  ctxPrefix: '_c.',
+  shortNames: true,
+  elementVarStyle: 'indexed',
+};
+
 /** 根据标签名生成变量名，使用 `_` 前缀；重复标签通过计数器后缀区分。 */
 export function genVarName(tag: string, counter: Map<string, number>): string {
   const count = counter.get(tag) ?? 0;
