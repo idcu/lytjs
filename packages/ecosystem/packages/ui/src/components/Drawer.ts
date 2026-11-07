@@ -170,7 +170,7 @@ export const Drawer = defineComponent({
 
     return () => {
       if (!p.modelValue && !isClosing()) {
-        return createVNode('div', { style: 'display: none;' }, []);
+        return createVNode('div', { hidden: true }, []);
       }
 
       const children: VNode[] = [];

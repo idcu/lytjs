@@ -81,7 +81,7 @@ export const Tag = defineComponent({
     };
 
     return () => {
-      if (!state.visible) return createVNode('div', { style: 'display: none;' }, []);
+      if (!state.visible) return createVNode('div', { hidden: true }, []);
 
       const children: VNode[] = [];
 

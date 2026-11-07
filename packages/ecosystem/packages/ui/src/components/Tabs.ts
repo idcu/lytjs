@@ -433,7 +433,7 @@ export const Tabs = defineComponent({
             }),
             content ? normalizeSlotChildren(content.children) : [],
           )
-        : createVNode('div', { style: 'display: none;', id: panelId }, []);
+        : createVNode('div', { hidden: true, id: panelId }, []);
 
       const tablistA11yProps = getTablistA11yProps({
         id: p.id || tabListId,

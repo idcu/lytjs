@@ -156,7 +156,7 @@ export const Modal = defineComponent({
 
     return () => {
       if (!p.modelValue) {
-        return createVNode('div', { style: 'display: none;' }, []);
+        return createVNode('div', { hidden: true }, []);
       }
 
       const headerChildren: VNode[] = [];

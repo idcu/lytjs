@@ -103,7 +103,8 @@ describe('Dialog — 渲染与 a11y', () => {
     const { host } = await mountDialog({ title: '标题' });
     expect(q(host, '.lyt-dialog')).toBeNull();
     const placeholder = host.firstElementChild as HTMLElement;
-    expect(placeholder.style.display).toBe('none');
+    // 断言升级（非放宽）：不认类名/内联写法，直接认「不可见」的计算结果。
+    expect(getComputedStyle(placeholder).display).toBe('none');
   });
 
   it('打开：role=dialog / aria-modal / title / 默认 width 50%', async () => {

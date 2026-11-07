@@ -283,10 +283,6 @@
 }
 
 /* ===== Tabs 组件 ===== */
-.lyt-tabs__header {
-  display: flex;
-  border-bottom: 1px solid var(--lyt-border-color-light);
-}
 .lyt-tabs__item {
   padding: 12px 20px;
   cursor: pointer;

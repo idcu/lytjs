@@ -162,7 +162,7 @@ export const Dialog = defineComponent({
 
     return () => {
       if (!visible()) {
-        return createVNode('div', { style: 'display: none;' }, []);
+        return createVNode('div', { hidden: true }, []);
       }
 
       const children: VNode[] = [];
