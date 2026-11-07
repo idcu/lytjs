@@ -369,6 +369,29 @@ section('[12] Select：modelValue 跟随与清空');
 }
 
 // ══════════════════════════════════════════════════════════
+section('[13] Cascader：modelValue 跟随与清空');
+{
+  const options = [
+    {
+      label: '浙江',
+      value: 'zj',
+      children: [{ label: '杭州', value: 'hz', isLeaf: true }],
+    },
+    { label: '直辖市', value: 'cq', isLeaf: true },
+  ];
+  const v = ref(['zj', 'hz']);
+  const host = await mount(() => h(ui.Cascader, { modelValue: v.value, options }));
+  const shown = () => text(host.querySelector('.lyt-cascader__value'));
+  check('Cascader 初始显示浙江 / 杭州', shown() === '浙江 / 杭州', shown());
+  v.value = ['cq'];
+  await sleep();
+  check('外部改 modelValue 后显示直辖市', shown() === '直辖市', shown());
+  v.value = [];
+  await sleep();
+  check('外部清空后回到占位符', shown() === '请选择', shown());
+}
+
+// ══════════════════════════════════════════════════════════
 for (const host of hosts) host.remove();
 // jsdom 会留下内部定时器/句柄，进程会一直挂着（实测挂 60s+）⇒ 断言跑完就显式退出
 dom.window.close();

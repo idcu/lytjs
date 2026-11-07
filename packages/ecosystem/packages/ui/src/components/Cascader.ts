@@ -10,7 +10,7 @@
 
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
-import { signal } from '@lytjs/reactivity';
+import { effect, signal } from '@lytjs/reactivity';
 import type { CascaderOption, CascaderSetupProps, CascaderSlots } from './types';
 import {
   getComboboxA11yProps,
@@ -59,13 +59,17 @@ export const Cascader = defineComponent({
     const searchText = signal('');
     const isFiltering = signal(false);
 
-    if (p.modelValue.length > 0) {
+    // 受控：modelValue 变化（含清空）时必须重建内部选中路径，否则显示停留在旧值。
+    effect(() => {
+      const mv = p.modelValue as (string | number)[] | Array<(string | number)[]>;
       if (p.multiple) {
-        selectedValues.set([...(p.modelValue as Array<(string | number)[]>)]);
+        selectedValues.set(Array.isArray(mv) ? [...(mv as Array<(string | number)[]>)] : []);
       } else {
-        selectedValues.set([p.modelValue as (string | number)[]]);
+        selectedValues.set(
+          Array.isArray(mv) && mv.length > 0 ? [[...(mv as (string | number)[])]] : [],
+        );
       }
-    }
+    });
 
     const toggleDropdown = (visible?: boolean) => {
       if (p.disabled) return;
