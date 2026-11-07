@@ -246,6 +246,23 @@ section('[6] Rate / InputNumber / Tabs：值 prop 跟随');
 }
 
 // ══════════════════════════════════════════════════════════
+section('[7] Radio：modelValue 跟随');
+{
+  const v = ref('a');
+  const host = await mount(() =>
+    h('div', {}, [
+      h(ui.Radio, { modelValue: v.value, label: 'a' }),
+      h(ui.Radio, { modelValue: v.value, label: 'b' }),
+    ]),
+  );
+  const checkedLabel = () => text(host.querySelector('.lyt-radio--checked .lyt-radio__label'));
+  check('Radio 初始选中 a', checkedLabel() === 'a', checkedLabel());
+  v.value = 'b';
+  await sleep();
+  check('Radio 外部改 b 后选中跟随', checkedLabel() === 'b', checkedLabel());
+}
+
+// ══════════════════════════════════════════════════════════
 for (const host of hosts) host.remove();
 // jsdom 会留下内部定时器/句柄，进程会一直挂着（实测挂 60s+）⇒ 断言跑完就显式退出
 dom.window.close();
