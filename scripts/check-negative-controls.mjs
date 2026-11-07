@@ -19,6 +19,16 @@
  *   - `check-script-refs`     零引用脚本棘轮（S20）：新增一个零引用脚本 → 必红
  *   - `check-as-unknown`      as unknown as 棘轮（S22）：多写一处 → 必红
  *   - `check-api-snapshot`    API 快照（S22）：删掉一个导出名 → 必红
+ *   - `check-lockfile`        锁文件一致性：声明一个锁文件里没有的依赖 → 必红
+ *   - `check-build-order`     构建顺序：从 BUILD_ORDER 删掉一条 → 必红
+ *   - `check-render-parity`   三模式写入：关掉属性安全检查 → 必红
+ *   - `check-list-diff`       keyed 对拍：让 signal 路径丢失 key 匹配 → 必红
+ *   - `check-public-names`    公开名登记册：多写一处同名实现 → 必红
+ *   - `check-keel-wiring`     keel CI：删掉 test-lint 关卡 → 必红
+ *   - `check-e2e-assertions`  e2e 断言强度：新增 toBeDefined() → 必红
+ *   - `check-src-hygiene`     源码卫生：新增 console.log 文件 → 必红
+ *   - `check-examples`        示例可用性：引用不存在的 @lytjs 包 → 必红
+ *   - `check-dist-freshness`  产物新鲜度：把 src 改成比 dist 新 → 必红
  *
  * 其余门禁本轮不做注入实验，**如实登记为「未验证」**（见 negative-controls.json），
  * 不假装有反证。新增门禁时必须跑一次 `--sync` 让清单同步，否则本脚本报红。
@@ -51,6 +61,9 @@ function gateNames() {
   return [...text.matchAll(/name:\s*'([^']+)'/g)].map((m) => m[1]);
 }
 
+/** 最近一次注入后门禁报出的第一条失败行（用于报告「红在哪条断言」） */
+let lastFailure = '';
+
 /** 运行命令，要求**必须失败**（退出码非 0） */
 function expectFail(cmd, label) {
   const r = spawnSync(cmd[0], cmd.slice(1), {
@@ -65,6 +78,17 @@ function expectFail(cmd, label) {
   if (r.status === 0) {
     throw new Error(`${label}：注入后门禁仍为绿（退出码 0）——判据没有生效`);
   }
+  // 去掉 ANSI 颜色码（用 String.fromCharCode 构造，避免 no-control-regex 误判）
+  const ANSI = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g');
+  const plain = `${r.stdout ?? ''}\n${r.stderr ?? ''}`.replace(ANSI, '');
+  lastFailure = (
+    plain.split('\n').find((l) => l.includes('❌')) ??
+    plain.split('\n').find((l) => /Error|error TS|AssertionError/.test(l)) ??
+    plain.trim().split('\n').find(Boolean) ??
+    ''
+  )
+    .trim()
+    .slice(0, 160);
   return r.status;
 }
 
@@ -189,6 +213,128 @@ const CONTROLS = {
       () => expectFail(['node', 'scripts/check-api-snapshot.mjs'], 'check-api-snapshot'),
     );
   },
+
+  'check-lockfile': () => {
+    // 声明一条锁文件 importer 里不存在的依赖 ⇒ 「package.json ↔ pnpm-lock.yaml 一致」必红
+    const file = join(ROOT, 'packages/common/packages/is/package.json');
+    withPatchedFile(
+      file,
+      (text) => {
+        const pkg = JSON.parse(text);
+        pkg.dependencies = { ...(pkg.dependencies ?? {}), '@lytjs/negctl-lockfile': 'workspace:*' };
+        return `${JSON.stringify(pkg, null, 2)}\n`;
+      },
+      () => expectFail(['node', 'scripts/check-lockfile.mjs'], 'check-lockfile'),
+    );
+  },
+
+  'check-build-order': () => {
+    // 从 BUILD_ORDER 删掉一条 ⇒ 「workspace 包必须都登记」必红
+    const file = join(ROOT, 'scripts/build-order.ts');
+    withPatchedFile(
+      file,
+      (text) => {
+        const patched = text.replace(/\s*\{ name: '[^']+', path: '[^']+' \},/, '');
+        if (patched === text)
+          throw new Error('check-build-order：注入点漂移（找不到 BUILD_ORDER 条目）');
+        return patched;
+      },
+      () => expectFail(['tsx', 'scripts/check-build-order.ts'], 'check-build-order'),
+    );
+  },
+
+  'check-render-parity': () => {
+    // 关掉 common-dom 的属性安全检查 ⇒ javascript: URL 不再被拦截，必红
+    const file = join(ROOT, 'packages/common/packages/dom/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-render-parity：缺少 common-dom dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const patched = text.replaceAll('if (!isSafeAttribute(key, strValue))', 'if (false)');
+        if (patched === text)
+          throw new Error('check-render-parity：注入点漂移（找不到 isSafeAttribute）');
+        return patched;
+      },
+      () => expectFail(['node', 'scripts/check-render-parity.mjs'], 'check-render-parity'),
+    );
+  },
+
+  'check-list-diff': () => {
+    // 让 signal 路径的旧 key 全部失配 ⇒ 节点全部重建，「两路径都复用同一节点」必红
+    const file = join(ROOT, 'packages/dom-runtime/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-list-diff：缺少 dom-runtime dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle = 'getOldKey: (index) => existingKeys[index] ?? null,';
+        if (!text.includes(needle))
+          throw new Error('check-list-diff：注入点漂移（找不到 getOldKey）');
+        return text.replace(needle, 'getOldKey: (index) => null,');
+      },
+      () => expectFail(['node', 'scripts/check-list-diff.mjs'], 'check-list-diff'),
+    );
+  },
+
+  'check-public-names': () => {
+    // 多写一处 unified 名字的实现 ⇒ 「同名只能一个实现」必红
+    const file = join(ROOT, 'packages/core/src/__negctl-public-name.ts');
+    withTempFile(file, 'export function setGlobalErrorReporter(): void {}\n', () =>
+      expectFail(['node', 'scripts/check-public-names.mjs'], 'check-public-names'),
+    );
+  },
+
+  'check-keel-wiring': () => {
+    // 删掉 keel.yml 里的 test-lint 关卡 ⇒ 「三关卡必须在 CI 里」必红
+    const file = join(ROOT, '.github/workflows/keel.yml');
+    withPatchedFile(
+      file,
+      (text) => {
+        const patched = text.replace(/\n\s*run: bash keel\/checks\/test-lint\.sh/, '');
+        if (patched === text)
+          throw new Error('check-keel-wiring：注入点漂移（找不到 test-lint 关卡）');
+        return patched;
+      },
+      () => expectFail(['tsx', 'scripts/check-keel-wiring.ts'], 'check-keel-wiring'),
+    );
+  },
+
+  'check-e2e-assertions': () => {
+    // 新增一个使用 toBeDefined() 的 e2e 测试文件 ⇒ 「禁止形状断言」必红
+    const file = join(ROOT, 'packages/vdom/tests/__negctl-e2e.test.ts');
+    withTempFile(file, 'expect(1).toBeDefined();\n', () =>
+      expectFail(['tsx', 'scripts/check-e2e-assertions.ts'], 'check-e2e-assertions'),
+    );
+  },
+
+  'check-src-hygiene': () => {
+    // 新增一个含 console.log 的 src 文件（不在基线） ⇒ 必红
+    const file = join(ROOT, 'packages/core/src/__negctl-src-hygiene.ts');
+    withTempFile(file, "console.log('negctl');\n", () =>
+      expectFail(['tsx', 'scripts/check-src-hygiene.ts'], 'check-src-hygiene'),
+    );
+  },
+
+  'check-examples': () => {
+    // 新增一个引用不存在 @lytjs 包的示例 ⇒ 「示例导入必须可解析」必红
+    const file = join(ROOT, 'examples/__negctl-example.mjs');
+    withTempFile(file, "import '@lytjs/negctl-not-exists';\n", () =>
+      expectFail(['node', 'scripts/check-examples.mjs'], 'check-examples'),
+    );
+  },
+
+  'check-dist-freshness': () => {
+    // 把 src 的 mtime 推到 dist 之后 ⇒ 「dist 必须比 src 新」必红；跑完恢复原 mtime
+    const file = join(ROOT, 'packages/core/src/index.ts');
+    if (!existsSync(file)) throw new Error('check-dist-freshness：缺少 packages/core/src/index.ts');
+    const st = statSync(file);
+    const future = new Date(Date.now() + 3_600_000);
+    utimesSync(file, future, future);
+    try {
+      expectFail(['tsx', 'scripts/check-dist-freshness.ts'], 'check-dist-freshness');
+    } finally {
+      utimesSync(file, st.atime, st.mtime);
+    }
+  },
 };
 
 /** 审计：gate.mjs 的每一项都必须在清单里，且有明确状态 */
@@ -258,8 +404,10 @@ for (const name of targets) {
   }
   const t0 = Date.now();
   try {
+    lastFailure = '';
     control();
     console.log(`✅ ${name}：注入后转红，恢复后回绿（${((Date.now() - t0) / 1000).toFixed(1)}s）`);
+    if (lastFailure) console.log(`   ↳ 红在：${lastFailure}`);
   } catch (err) {
     console.error(`❌ ${name}：${err.message}`);
     failed += 1;
