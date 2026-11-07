@@ -12,6 +12,9 @@ keywords: [硬约束9]
 S13/S14 完成，fast + slow 全绿；下一步批次 4。
 
 ## 11-07 完成
+- **S17** `check-ui-i18n` 扫描范围扩到 **61 组件**（`src/index.ts` 全量导出）：
+  Golden 20 硬编码 **0**；41 个 experimental 欠账 **122 条**登记基线（只减不增）。
+  未宣称已国际化；运行时缺键仍回退 zh-CN → 抛错。fast 53/53、UI 664/664。
 - **S13** `check-compiler-parity` **100/100**、`expectedMismatch` 0；baseline
   divergent 23→0。语义抽入 `codegen-signal-shared.ts`，两发射器只留输出形态
   （短别名/形参名/变量名/前缀）；契约与测试未改。

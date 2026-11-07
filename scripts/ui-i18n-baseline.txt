@@ -1,6 +1,128 @@
-# Golden 20 硬编码文案基线（i18n 棘轮）—— 由 `tsx scripts/check-ui-i18n.ts --write-baseline` 生成
+# UI 全量组件硬编码文案基线（i18n 棘轮）—— 由 `tsx scripts/check-ui-i18n.ts --write-baseline` 生成
 #
 # 语义：这些是**已确认待迁移**到 `src/locale/messages.ts` 的硬编码文案，
-# 门禁只对**新增**报错。最终目标：本文件清空（Golden 20 零硬编码）。
+# 门禁只对**新增**报错。Golden 20 已清零，剩余为 41 个 experimental 组件的欠账。
 # 格式：每行一条，`<组件> → <原文>`。新增前先问：为什么不用 t()？
 #
+Alert → Alert
+Alert → 关闭提示
+Calendar → ${current.getFullYear()}年 ${(p.monthNames as string[])[current.getMonth()]}
+Calendar → 一
+Calendar → 一月
+Calendar → 七月
+Calendar → 三
+Calendar → 三月
+Calendar → 九月
+Calendar → 二
+Calendar → 二月
+Calendar → 五
+Calendar → 五月
+Calendar → 今天
+Calendar → 八月
+Calendar → 六
+Calendar → 六月
+Calendar → 十一月
+Calendar → 十二月
+Calendar → 十月
+Calendar → 周视图（开发中）
+Calendar → 四
+Calendar → 四月
+Calendar → 日
+Calendar → 日视图（开发中）
+Cascader → ${values.length} 项
+Cascader → 搜索
+Cascader → 暂无数据
+Cascader → 清除
+Cascader → 移除标签
+Cascader → 请选择
+ColorPicker → 历史颜色
+ColorPicker → 确认
+ColorPicker → 请输入颜色
+ColorPicker → 预设颜色
+DatePicker → ${currentYear()}年${String(currentMonth() + 1).padStart(2, '0')}月
+DatePicker → 一
+DatePicker → 三
+DatePicker → 二
+DatePicker → 五
+DatePicker → 六
+DatePicker → 四
+DatePicker → 日
+DatePicker → 确定
+DatePicker → 选择日期
+Form → 格式不正确
+Form → 此字段必填
+Form → 类型不正确
+Form → 长度不能少于 {min} 个字符
+Form → 长度不能超过 {max} 个字符
+Form → 验证失败
+Input → Clear input
+Input → Hide password
+Input → Show password
+Menu → 主菜单
+Menu → 导航到最后一个菜单项：${item.label}
+Menu → 导航到第一个菜单项：${firstEnabled.label}
+Menu → 导航到菜单项：${nextItem.label}
+Menu → 导航到菜单项：${prevItem.label}
+Menu → 已关闭子菜单：${itemLabel}
+Menu → 已打开子菜单：${itemLabel}
+Menu → 已打开子菜单：${itemLabel}（已关闭其他子菜单）
+Menu → 已选择菜单项：${index}
+Popconfirm → 取消
+Popconfirm → 确定
+Rate → 一般
+Rate → 失望
+Rate → 惊喜
+Rate → 极差
+Rate → 满意
+RichTextEditor → 下划线
+RichTextEditor → 删除线
+RichTextEditor → 取消缩进
+RichTextEditor → 右对齐
+RichTextEditor → 居中
+RichTextEditor → 左对齐
+RichTextEditor → 斜体
+RichTextEditor → 无序列表
+RichTextEditor → 有序列表
+RichTextEditor → 清除格式
+RichTextEditor → 粗体
+RichTextEditor → 缩进
+RichTextEditor → 请输入内容
+Select → 已选择 ${selected.size} 个选项
+Select → 搜索...
+Select → 搜索选项
+Select → 无匹配选项
+Select → 清除选择
+Select → 请选择
+Select → 选择器
+Select → 选择选项
+Slider → Left value
+Slider → Right value
+Slider → Value
+Table → 全选
+Table → 暂无数据
+Table → 选择行
+Tabs → 关闭标签页 ${pane.props.label}
+Tabs → 已关闭标签页 ${pane.props.label}，现在显示标签页 ${nextPane.props.label}
+Tabs → 已关闭标签页 ${pane.props.label}，现在显示标签页 ${prevPane.props.label}
+Tabs → 已关闭标签页 ${pane.props.label}，现在没有标签页
+Tabs → 已切换到标签页 ${index + 1}：${pane.props.label}，共 ${panes.length} 个标签页
+Tabs → 已切换到标签页 ${newIndex + 1}：${pane.props.label}
+Tabs → 标签页导航
+Tabs → 标签页已从位置 ${dragIndex + 1} 移动到位置 ${dropIndex + 1}
+Tabs → 正在添加新标签页
+Tabs → 添加新标签页
+TimePicker → 确定
+TimePicker → 选择时间
+Transfer → 源列表
+Transfer → 目标列表
+Transfer → 请输入搜索内容
+Tree → 展开
+Tree → 收起
+Tree → 暂无数据
+TreeSelect → 展开
+TreeSelect → 收起
+TreeSelect → 暂无数据
+TreeSelect → 清除
+TreeSelect → 请输入搜索内容
+TreeSelect → 请选择
+Upload → 点击上传或拖拽文件

@@ -5,9 +5,11 @@
  * 判据（B05）：
  *   1. **locale 完整性**：zh-CN / en-US 键集合完全一致，`{param}` 占位符一致，
  *      任何文案不得为空串（空串 = 界面静默少一句话，比缺键更难发现）。
- *   2. **Golden 20 零硬编码**：组件源码里不允许出现面向用户的硬编码文案 ——
- *      含中文的字符串字面量，以及 `ariaLabel:` / `'aria-label':` / `alt:` 后的静态字面量。
- *      既有欠账登记在 `scripts/ui-i18n-baseline.txt`（棘轮，只允许减少）。
+ *   2. **全量组件零新增硬编码**：从 `src/index.ts` 的组件导出扫描全局源码，
+ *      不允许出现面向用户的硬编码文案 —— 含中文的字符串字面量，以及
+ *      `ariaLabel:` / `'aria-label':` / `alt:` 后的静态字面量。
+ *      既有欠账登记在 `scripts/ui-i18n-baseline.txt`（棘轮，只允许减少；
+ *      当前 Golden 20 已清零，41 experimental 仍为待迁移欠账）。
  *
  * 缺键策略（运行时的另一半）：`t()` 当前 locale 缺键 → 回退 zh-CN → 仍缺则**抛错**，
  * 永不返回空串。本门禁保证「表里两套语言都齐全」，运行时兜底只用于自定义 locale。
@@ -29,16 +31,31 @@ import {
 const ROOT = process.cwd();
 const UI_SRC = join(ROOT, 'packages/ecosystem/packages/ui/src');
 const COMPONENTS_DIR = join(UI_SRC, 'components');
-const CONTRACTS_PATH = join(ROOT, 'scripts/ui-contracts.json');
+const INDEX_PATH = join(UI_SRC, 'index.ts');
 const BASELINE_PATH = join(ROOT, 'scripts/ui-i18n-baseline.txt');
 
 const COUNT_ONLY = process.argv.includes('--count');
 const WRITE_BASELINE = process.argv.includes('--write-baseline');
 
 const LOCALES = Object.keys(UI_LOCALE_MESSAGES) as UiLocaleName[];
-/** Golden 20：扫描硬编码的唯一范围（不扩散到 experimental）。 */
-const GOLDEN: string[] = existsSync(CONTRACTS_PATH)
-  ? (JSON.parse(readFileSync(CONTRACTS_PATH, 'utf-8')).components as string[])
+
+/** 从 `src/index.ts` 抽取组件导出名（与 check-component-status.mjs 同一口径）。 */
+function exportedComponents(src: string): string[] {
+  const names = new Set<string>();
+  for (const m of src.matchAll(/^export \{ ([^}]+) \} from '\.\/components\//gm)) {
+    for (const raw of m[1]!.split(',')) {
+      const item = raw.trim();
+      if (!item || item.startsWith('type ')) continue;
+      const alias = item.match(/^default as (\w+)$/);
+      names.add(alias ? alias[1]! : item);
+    }
+  }
+  return [...names].sort();
+}
+
+/** 扫描范围：全部组件导出（Golden 20 + experimental），不是只看 Golden。 */
+const COMPONENTS: string[] = existsSync(INDEX_PATH)
+  ? exportedComponents(readFileSync(INDEX_PATH, 'utf-8'))
   : [];
 
 /** 去掉 TS 注释，避免把注释里的示例文案当成硬编码。 */
@@ -121,7 +138,7 @@ interface Row {
 }
 
 const rows: Row[] = [];
-for (const component of GOLDEN) {
+for (const component of COMPONENTS) {
   const file = join(COMPONENTS_DIR, `${component}.ts`);
   if (!existsSync(file)) continue;
   const texts = hardcodedTexts(readFileSync(file, 'utf-8'));
@@ -143,10 +160,10 @@ const known = readBaseline();
 if (WRITE_BASELINE) {
   const entries = [...current].sort();
   const header = [
-    '# Golden 20 硬编码文案基线（i18n 棘轮）—— 由 `tsx scripts/check-ui-i18n.ts --write-baseline` 生成',
+    '# UI 全量组件硬编码文案基线（i18n 棘轮）—— 由 `tsx scripts/check-ui-i18n.ts --write-baseline` 生成',
     '#',
     '# 语义：这些是**已确认待迁移**到 `src/locale/messages.ts` 的硬编码文案，',
-    '# 门禁只对**新增**报错。最终目标：本文件清空（Golden 20 零硬编码）。',
+    '# 门禁只对**新增**报错。Golden 20 已清零，剩余为 41 个 experimental 组件的欠账。',
     '# 格式：每行一条，`<组件> → <原文>`。新增前先问：为什么不用 t()？',
     '#',
   ].join('\n');
@@ -191,10 +208,11 @@ const fresh = [...current].filter((e) => !known.has(e));
 const fixed = [...known].filter((e) => !current.has(e));
 const totalHardcoded = current.size;
 
-console.log('\n🔍 Golden 20 i18n 守卫 check-ui-i18n\n');
+console.log('\n🔍 UI 全量组件 i18n 守卫 check-ui-i18n\n');
 console.log(
-  `   locale ${LOCALES.length} 套（${LOCALES.join(', ')}）· 文案键 ${fallbackKeys.length} 个 · ` +
-    `Golden 20 硬编码 ${totalHardcoded} 条（${rows.length} 个组件）· 基线欠账 ${known.size} 条`,
+  `   扫描组件 ${COMPONENTS.length} 个 · locale ${LOCALES.length} 套（${LOCALES.join(', ')}）· ` +
+    `文案键 ${fallbackKeys.length} 个 · 硬编码 ${totalHardcoded} 条（${rows.length} 个组件）· ` +
+    `基线欠账 ${known.size} 条`,
 );
 
 if (COUNT_ONLY) {
@@ -224,8 +242,8 @@ if (fixed.length > 0) {
 
 if (localeErrors.length === 0 && fresh.length === 0) {
   console.log(
-    `\n✅ 通过：${LOCALES.length} 套 locale 键与占位一致；Golden 20 硬编码 ${totalHardcoded} 条，` +
-      `与基线一致（${known.size} 条，只拦新增）。\n`,
+    `\n✅ 通过：扫描 ${COMPONENTS.length} 个组件；${LOCALES.length} 套 locale 键与占位一致；` +
+      `硬编码 ${totalHardcoded} 条，与基线一致（${known.size} 条，只拦新增）。\n`,
   );
   process.exit(0);
 }
