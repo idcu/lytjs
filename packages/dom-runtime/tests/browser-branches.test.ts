@@ -116,15 +116,16 @@ describe('dom-runtime · 浏览器环境分支补测', () => {
       expect(el.getAttribute('title')).toBe('t');
     });
 
-    it('setStyle：cssText 相同则跳过；数值自动补 px', () => {
+    it('setStyle：cssText 相同则跳过；数值不补 px', () => {
       const el = document.createElement('div');
       setStyle(el, 'color: red');
       setStyle(el, 'color: red'); // 命中 cssText 短路
       expect(el.style.color).toBe('red');
 
-      setStyle(el, { width: 10 }); // 命中数值 → px 分支
+      // ★ S11 / ADR 0018：数值不自动补 px，长度属性须显式单位
+      setStyle(el, { width: '10px' }); // 命中单属性写入
       expect(el.style.width).toBe('10px');
-      setStyle(el, { width: 10 }); // 命中单属性短路
+      setStyle(el, { width: '10px' }); // 命中单属性短路
       expect(el.style.width).toBe('10px');
     });
 

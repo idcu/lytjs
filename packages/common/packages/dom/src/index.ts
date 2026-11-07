@@ -13,6 +13,7 @@
 
 import {
   camelToKebab,
+  normalizeStyleValue,
   isSafeAttribute,
   sanitizeHTML,
   isBooleanAttr,
@@ -220,7 +221,7 @@ export function patchStyle(el: Element, prev: unknown, next: unknown): void {
   for (const key in nextStyle) {
     const val = nextStyle[key];
     if (val != null && val !== '') {
-      style.setProperty(camelToKebab(key), String(val));
+      style.setProperty(camelToKebab(key), normalizeStyleValue(val));
     } else {
       style.removeProperty(camelToKebab(key));
     }

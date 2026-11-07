@@ -6,6 +6,8 @@ import { effect, stop } from '@lytjs/reactivity';
 import { sanitizeHTML, isSafeAttribute } from '@lytjs/common-security';
 // ★ 2026-11-07（S08）：事件修饰符表与拦截语义的**唯一真源**在 @lytjs/common-events。
 import { isEventModifierIntercepted } from '@lytjs/common-events';
+// ★ 2026-11-07（S11 / ADR 0018）：style 序列化与数值策略的唯一真源在 common-string。
+import { camelToKebab, buildStyleString, normalizeStyleValue } from '@lytjs/common-string';
 
 // ==================== 环境检测 ====================
 
@@ -147,8 +149,8 @@ export function normalizeClass(value: unknown): string {
 }
 
 /**
- * 归一化 style 值：string 原样；object → `key:value;...`（camelCase → kebab-case，数值补 px）。
- * 与 normalizeClass 同理，两端共用（此前对象 style 在 SSR/客户端都会输出 `[object Object]`）。
+ * 归一化 style 值：string 原样；object → `key:value;...`（camelCase → kebab-case）。
+ * 数值**不补 px**（S11 / ADR 0018），与 vnode / SSR 路径一致。
  */
 export function normalizeStyle(style: unknown): string {
   const raw = unwrapValue(style);
@@ -156,21 +158,7 @@ export function normalizeStyle(style: unknown): string {
   if (typeof raw === 'string') return raw;
   if (typeof raw !== 'object') return String(raw);
 
-  const parts: string[] = [];
-  for (const [key, val] of Object.entries(raw as Record<string, unknown>)) {
-    const cssKey = camelToKebab(key);
-    const unwrappedVal = unwrapValue(val);
-    if (
-      typeof unwrappedVal === 'number' &&
-      typeof isNumericStyleProperty === 'function' &&
-      isNumericStyleProperty(cssKey)
-    ) {
-      parts.push(`${cssKey}:${unwrappedVal}px`);
-    } else {
-      parts.push(`${cssKey}:${unwrappedVal}`);
-    }
-  }
-  return parts.join(';');
+  return buildStyleString(raw as Record<string, unknown>);
 }
 
 // sanitizeHTML 由文件顶部再从 @lytjs/common-security 再导出（见上方「XSS 防护」段）。
@@ -573,7 +561,8 @@ export function setProperty(el: unknown, key: string, value: unknown): void {
  * 设置元素的样式（增量更新：相同值跳过）
  * FIX: P1-54 使用 setProperty 替代直接赋值，
  * 正确处理包含连字符的 CSS 属性名（如 background-color、font-size）
- * FIX: P2-45 对数值类型的 CSS 属性自动添加 px 单位
+ * ★ 2026-11-07（S11 / ADR 0018）：数值**不自动补 px**，与 vnode / SSR 路径一致；
+ *   长度类属性须由调用方显式带单位（如 `{ width: '10px' }`）。
  */
 export function setStyle(el: unknown, style: unknown): void {
   if (!isBrowser) return;
@@ -584,33 +573,18 @@ export function setStyle(el: unknown, style: unknown): void {
     if (realNode.style.cssText === rawStyle) return;
     realNode.style.cssText = rawStyle;
   } else if (rawStyle !== null && typeof rawStyle === 'object') {
-    const styleObj = style as Record<string, string | number>;
+    const styleObj = rawStyle as Record<string, unknown>;
     for (const [key, val] of Object.entries(styleObj)) {
       // FIX: P1-54 使用 style.setProperty 替代直接属性赋值，
       // 确保连字符 CSS 属性名（如 background-color）能正确设置
-      // FIX: P2-45 对数值类型的 CSS 属性自动添加 px 单位
-      let finalValue: string;
-      const unwrappedVal = unwrapValue(val);
-      // FIX: 将 camelCase 转换为 kebab-case，确保 setProperty 正确工作
       const cssKey = camelToKebab(key);
-      if (typeof unwrappedVal === 'number' && isNumericStyleProperty(cssKey)) {
-        finalValue = `${unwrappedVal}px`;
-      } else {
-        finalValue = String(unwrappedVal);
-      }
+      // ★ 2026-11-07（S11 / ADR 0018）：数值不补 px，三模式统一显式单位。
+      const finalValue = normalizeStyleValue(unwrapValue(val));
       // 增量更新：值相同时跳过
       if (realNode.style.getPropertyValue(cssKey) === finalValue) continue;
       realNode.style.setProperty(cssKey, finalValue);
     }
   }
-}
-
-/**
- * 将 camelCase 字符串转换为 kebab-case
- * 例如：fontSize -> font-size, backgroundColor -> background-color
- */
-function camelToKebab(str: string): string {
-  return str.replace(/([A-Z])/g, '-$1').toLowerCase();
 }
 
 /**
@@ -633,47 +607,6 @@ export function toggleClass(el: unknown, className: string, force?: boolean): vo
   if (!isBrowser) return;
   const realNode = getRealNode(el) as HTMLElement;
   realNode.classList.toggle(className, force);
-}
-
-// FIX: P2-45 需要单位的 CSS 属性列表
-const NUMERIC_STYLE_PROPERTIES = new Set([
-  'width',
-  'height',
-  'top',
-  'right',
-  'bottom',
-  'left',
-  'margin',
-  'margin-top',
-  'margin-right',
-  'margin-bottom',
-  'margin-left',
-  'padding',
-  'padding-top',
-  'padding-right',
-  'padding-bottom',
-  'padding-left',
-  'border-width',
-  'border-top-width',
-  'border-right-width',
-  'border-bottom-width',
-  'border-left-width',
-  'font-size',
-  'line-height',
-  'letter-spacing',
-  'word-spacing',
-  'min-width',
-  'max-width',
-  'min-height',
-  'max-height',
-  'outline-width',
-  'column-width',
-  'column-gap',
-  'row-gap',
-]);
-
-function isNumericStyleProperty(prop: string): boolean {
-  return NUMERIC_STYLE_PROPERTIES.has(prop);
 }
 
 // ==================== 事件绑定 ====================

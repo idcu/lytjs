@@ -137,10 +137,10 @@ describe('signal codegen · 进阶构造真跑（两套 codegen）', () => {
         expect(cls).toContain('on');
       });
 
-      t('style 多属性 + 数值补 px', () => {
+      t('style 多属性 + 数值不补 px（S11 / ADR 0018）', () => {
         const { container } = mount('<div :style="{ color: c, width: w }">x</div>', v, {
           c: 'red',
-          w: 10,
+          w: '10px',
         });
         const el = container.querySelector('div') as HTMLElement;
         expect(el.style.color).toBe('red');

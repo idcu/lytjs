@@ -5,7 +5,7 @@
  */
 
 import { isString, isObject, isNullish } from '@lytjs/common-is';
-import { camelToKebab } from '@lytjs/common-string';
+import { buildStyleString } from '@lytjs/common-string';
 import { warn } from '@lytjs/common-error';
 import { escapeHtml, isBooleanAttr } from '../utils';
 
@@ -276,15 +276,11 @@ export function renderAttributeToString(key: string, value: unknown): string {
       return ` style="${escapeHtml(value)}"`;
     }
     if (isObject(value)) {
-      const styles: string[] = [];
-      for (const k in value as Record<string, unknown>) {
-        const val = (value as Record<string, unknown>)[k];
-        if (val != null && val !== '') {
-          styles.push(`${camelToKebab(k)}:${String(val)}`);
-        }
-      }
-      if (styles.length === 0) return '';
-      return ` style="${escapeHtml(styles.join(';'))}"`;
+      // ★ 2026-11-07（S11 / ADR 0018）：style 对象的序列化与数值策略的唯一真源在
+      //   @lytjs/common-string；此处不再自行拼装，避免三模式（vnode / signal / SSR）漂移。
+      const styles = buildStyleString(value as Record<string, unknown>);
+      if (!styles) return '';
+      return ` style="${escapeHtml(styles)}"`;
     }
     return '';
   }

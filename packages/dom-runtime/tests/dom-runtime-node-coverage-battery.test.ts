@@ -89,13 +89,13 @@ describe('dom-runtime battery (node env): normalize / render helpers', () => {
     expect(normalizeClass({ a: true, b: false })).toBe('a');
   });
 
-  it('normalizeStyle covers string / number / null / object with px', () => {
+  it('normalizeStyle covers string / number / null / object without px', () => {
     expect(normalizeStyle('color:red')).toBe('color:red');
     expect(normalizeStyle(null)).toBe('');
     expect(normalizeStyle(undefined)).toBe('');
     expect(normalizeStyle(false)).toBe('');
     expect(normalizeStyle(42)).toBe('42');
-    expect(normalizeStyle({ width: 10, color: 'red' })).toContain('width:10px');
+    expect(normalizeStyle({ width: 10, color: 'red' })).toContain('width:10');
   });
 
   it('renderComponentVNode covers null / setup-fn / setup-object+render / render / template', () => {

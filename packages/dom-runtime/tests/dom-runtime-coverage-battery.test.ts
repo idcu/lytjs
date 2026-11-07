@@ -42,9 +42,10 @@ describe('dom-runtime battery: normalizeStyle', () => {
     expect(normalizeStyle('color:red')).toBe('color:red');
     expect(normalizeStyle(123)).toBe('123');
     expect(normalizeStyle({ color: 'red' })).toBe('color:red');
-    expect(normalizeStyle({ width: 100 })).toBe('width:100px');
+    // ★ S11 / ADR 0018：数值不自动补 px，三模式统一显式单位
+    expect(normalizeStyle({ width: 100 })).toBe('width:100');
     expect(normalizeStyle({ fontSize: '12px' })).toBe('font-size:12px');
-    expect(normalizeStyle({ lineHeight: 2, color: 'blue' })).toBe('line-height:2px;color:blue');
+    expect(normalizeStyle({ lineHeight: 2, color: 'blue' })).toBe('line-height:2;color:blue');
   });
 });
 
@@ -103,11 +104,12 @@ describe('dom-runtime battery: setStyle', () => {
     expect(el.style.color).toBe('blue');
   });
 
-  it('handles object style with numeric px and skip', () => {
+  it('handles object style with explicit units and skip', () => {
     const el = document.createElement('div');
-    setStyle(el, { width: 100, fontSize: '14px' });
-    setStyle(el, { width: 100, fontSize: '14px' }); // 相同 → 逐项跳过
-    setStyle(el, { width: 200 });
+    // ★ S11 / ADR 0018：数值不自动补 px
+    setStyle(el, { width: '100px', fontSize: '14px' });
+    setStyle(el, { width: '100px', fontSize: '14px' }); // 相同 → 逐项跳过
+    setStyle(el, { width: '200px' });
     expect(el.style.width).toBe('200px');
     expect(el.style.fontSize).toBe('14px');
   });

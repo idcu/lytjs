@@ -56,6 +56,31 @@ export function kebabToCamel(str: string): string {
 }
 
 /**
+ * 归一化单个 inline style 值。
+ *
+ * ★ 2026-11-07（S11 / ADR 0018）：数值**不自动补 px**。三模式（vnode/signal/SSR）
+ * 共用本函数，长度属性必须由调用方显式带单位（如 `{ width: '10px' }`）。
+ */
+export function normalizeStyleValue(value: unknown): string {
+  return String(value);
+}
+
+/**
+ * 把 style 对象序列化为 inline style 字符串（camelCase → kebab-case）。
+ *
+ * 跳过 `null` / `undefined` / `''`；数值走 `normalizeStyleValue`（不补单位）。
+ * vnode / signal / SSR 三处实现必须复用本函数，不得各自拼装。
+ */
+export function buildStyleString(style: Record<string, unknown>): string {
+  const parts: string[] = [];
+  for (const [key, value] of Object.entries(style)) {
+    if (value == null || value === '') continue;
+    parts.push(`${camelToKebab(key)}:${normalizeStyleValue(value)}`);
+  }
+  return parts.join(';');
+}
+
+/**
  * 转义正则表达式特殊字符
  */
 export function escapeRegExp(str: string): string {

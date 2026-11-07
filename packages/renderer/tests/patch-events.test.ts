@@ -64,14 +64,25 @@ describe('patch-events', () => {
   describe('parseEventModifier', () => {
     it('should parse no modifiers', () => {
       const parsed = parseEventModifier('onClick');
+      // ★ 2026-11-07（S08）：修饰符表收敛到 @lytjs/common-events 后，
+      //   ParsedEventModifier 扩展为完整标志位（含 modifierNames / 鼠标键 / 系统键 / exact）。
       expect(parsed).toEqual({
         name: 'click',
+        modifierNames: [],
         stop: false,
         prevent: false,
         capture: false,
         once: false,
         self: false,
         passive: false,
+        left: false,
+        middle: false,
+        right: false,
+        ctrl: false,
+        shift: false,
+        alt: false,
+        meta: false,
+        exact: false,
       });
     });
 

@@ -87,6 +87,67 @@ section('[2] 属性安全：安全 URL 三模式均保留');
   check('[ssr/renderer] 保留 https:', html.includes(SAFE), html);
 }
 
+// ★ 2026-11-07（S11 / ADR 0018）：style 数值策略——三模式统一**不自动补 px**。
+// 同一份 style 对象经三条写入路径后，DOM 上的计算结果必须一致：
+//   · vnode  → common-dom.patchStyle（setProperty）
+//   · signal → dom-runtime.setStyle（setProperty）
+//   · SSR    → renderer.renderToString（buildStyleString 序列化后由浏览器解析）
+section('[3] style 单位：数值不补 px，三模式一致（ADR 0018）');
+{
+  const read = (el) =>
+    `${el.style.getPropertyValue('width')}|${el.style.getPropertyValue('font-weight')}`;
+
+  const vnodeEl = w.document.createElement('div');
+  commonDom.patchStyle(vnodeEl, null, { width: 10, fontWeight: 700 });
+
+  const signalEl = w.document.createElement('div');
+  domRuntime.setStyle(signalEl, { width: 10, fontWeight: 700 });
+
+  const html = await renderer.renderToString({
+    vnode: vdom.createVNode('div', { style: { width: 10, fontWeight: 700 } }, 'x'),
+  });
+  const holder = w.document.createElement('div');
+  holder.innerHTML = html;
+  const ssrEl = holder.firstElementChild;
+
+  check(
+    '[三模式一致] { width: 10, fontWeight: 700 }',
+    read(vnodeEl) === read(signalEl) && read(signalEl) === read(ssrEl),
+    `vnode=${read(vnodeEl)} signal=${read(signalEl)} ssr=${read(ssrEl)}`,
+  );
+  check('[SSR 序列化] 数值未被补成 px', !html.includes('10px'), html);
+  check(
+    '[客户端] 数值未被补成 px',
+    !String(vnodeEl.getAttribute('style')).includes('10px') &&
+      !String(signalEl.getAttribute('style')).includes('10px'),
+    `vnode=${vnodeEl.getAttribute('style')} signal=${signalEl.getAttribute('style')}`,
+  );
+}
+
+section('[4] style 单位：显式 10px 三模式一致');
+{
+  const read = (el) => el.style.getPropertyValue('width');
+
+  const vnodeEl = w.document.createElement('div');
+  commonDom.patchStyle(vnodeEl, null, { width: '10px' });
+
+  const signalEl = w.document.createElement('div');
+  domRuntime.setStyle(signalEl, { width: '10px' });
+
+  const html = await renderer.renderToString({
+    vnode: vdom.createVNode('div', { style: { width: '10px' } }, 'x'),
+  });
+  const holder = w.document.createElement('div');
+  holder.innerHTML = html;
+  const ssrEl = holder.firstElementChild;
+
+  check(
+    '[三模式一致] { width: "10px" }',
+    read(vnodeEl) === '10px' && read(signalEl) === '10px' && read(ssrEl) === '10px',
+    `vnode=${read(vnodeEl)} signal=${read(signalEl)} ssr=${read(ssrEl)}`,
+  );
+}
+
 console.log(`\n共 ${pass + fail} 条断言：✅ ${pass} / ❌ ${fail}`);
 if (fail > 0) {
   console.log('❌ check-render-parity 失败');
