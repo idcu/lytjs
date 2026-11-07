@@ -16,6 +16,8 @@ import {
   emitListItemProps as emitListItemPropsShared,
   emitListItemNode as emitListItemNodeShared,
   buildItemComponentPropsShared,
+  buildStaticHtml as buildStaticHtmlShared,
+  serializeStaticHtml as serializeStaticHtmlShared,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -144,57 +146,17 @@ function serializeStaticHTML(
   staticVars?: Map<ElementNode, string>,
   allowDirectText = false,
 ): string {
-  // 组件：输出占位元素（不能是注释 —— 注释不在 element.children 里，会打乱下标），
-  // 由运行时 mountComponent 挂载真实组件（与优化版 codegen 行为一致）
-  if (node.tagType === ElementTypes.COMPONENT) {
-    // 变量名不能含连字符（`genVarName('lyt-comp')` 会产出 `_lyt-comp` 这种非法标识符）
-    const varName = genVarName('lytComp', varCounter);
-    elementVars.push({ varName, tag: 'lyt-comp' });
-    return `<lyt-comp data-lyt-comp="${node.tag}"></lyt-comp>`;
-  }
-
-  const varName = genVarName(node.tag, varCounter);
-  elementVars.push({ varName, tag: node.tag });
-  staticVars?.set(node, varName);
-
-  let attrs = '';
-  for (const prop of node.props) {
-    if (prop.type === NodeTypes.ATTRIBUTE && prop.value) {
-      // FIX: P1-11 对属性值进行 HTML 转义
-      attrs += ` ${prop.name}="${escapeHtmlStatic(prop.value.content)}"`;
-    } else if (prop.type === NodeTypes.ATTRIBUTE && !prop.value) {
-      attrs += ` ${prop.name}`;
-    }
-    // 跳过 DIRECTIVE 类型的 props
-  }
-
-  let childrenHTML = '';
-  for (const child of node.children) {
-    if (child.type === NodeTypes.TEXT) {
-      childrenHTML += escapeHtmlStatic((child as TextNode).content);
-    } else if (child.type === NodeTypes.ELEMENT) {
-      childrenHTML += serializeStaticHTML(
-        child as ElementNode,
-        varCounter,
-        elementVars,
-        staticVars,
-        allowDirectText,
-      );
-    } else if (child.type === NodeTypes.INTERPOLATION) {
-      // 为**每个插值**留一个注释槽位（运行时由 claimTextSlots 换成独立文本节点）。
-      // 不这么做的话，同一元素里的多个插值会全部写到同一个元素上 ⇒ 互相覆盖只剩最后一个。
-      // 例外：元素只有这一个插值时，可由元素自身作文本宿主，无需注释（产物更小）。
-      if (!(allowDirectText && isDirectTextElement(node))) {
-        childrenHTML += TEXT_SLOT_COMMENT;
-      }
-    }
-    // 跳过 CommentNode 等其它动态内容
-  }
-
-  if (node.children.length === 0 && node.isSelfClosing) {
-    return `<${node.tag}${attrs} />`;
-  }
-  return `<${node.tag}${attrs}>${childrenHTML}</${node.tag}>`;
+  return serializeStaticHtmlShared(
+    node,
+    (el, tag, isComponent) => {
+      // 变量名不能含连字符（`genVarName('lyt-comp')` 会产出 `_lyt-comp` 这种非法标识符）
+      const varName = isComponent ? genVarName('lytComp', varCounter) : genVarName(tag, varCounter);
+      elementVars.push({ varName, tag });
+      if (!isComponent) staticVars?.set(el, varName);
+      return varName;
+    },
+    allowDirectText,
+  );
 }
 
 // ============================================================
@@ -376,16 +338,12 @@ function buildStaticHTML(
   elementVars: Array<{ varName: string; tag: string }>,
   staticVars: Map<ElementNode, string>,
 ): string {
-  let html = '';
-  for (const child of children) {
-    if (child.type === NodeTypes.TEXT) {
-      html += (child as TextNode).content;
-    } else if (child.type === NodeTypes.ELEMENT) {
-      html += serializeStaticHTML(child as ElementNode, varCounter, elementVars, staticVars, true);
-    }
-    // 跳过动态节点（JSConditionalExpression、JSCallExpression 等）
-  }
-  return html;
+  return buildStaticHtmlShared(children, (node, tag, isComponent) => {
+    const varName = isComponent ? genVarName('lytComp', varCounter) : genVarName(tag, varCounter);
+    elementVars.push({ varName, tag });
+    if (!isComponent) staticVars.set(node, varName);
+    return varName;
+  });
 }
 
 // ============================================================

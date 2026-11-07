@@ -11,6 +11,7 @@ import {
   OPTIMIZED_EMIT_PROFILE,
   TEXT_SLOT_COMMENT,
   genVarName,
+  escapeHtmlStatic,
   isDirectTextElement,
   isStaticPropValue,
   componentRef as componentRefShared,
@@ -19,6 +20,8 @@ import {
   emitListItemProps as emitListItemPropsShared,
   emitListItemNode as emitListItemNodeShared,
   buildItemComponentPropsShared,
+  buildStaticHtml as buildStaticHtmlShared,
+  serializeStaticHtml as serializeStaticHtmlShared,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { FRAGMENT_SENTINEL } from './transforms/transform-element';
@@ -156,7 +159,7 @@ export function generateSignalOptimized(ast: RootNode, _options?: CompilerOption
   }
 
   // ---- Phase 1: Build static HTML and collect element variables ----
-  const staticHTML = buildStaticHTMLOptimized(ast.children, varCounter, elementVars);
+  const staticHTML = buildStaticHTMLOptimized(ast.children, elementVars);
 
   // ---- Phase 2: Process AST children for dynamic bindings ----
   processChildrenOptimized(
@@ -438,86 +441,33 @@ function generateOptimizedBindings(
 
 function buildStaticHTMLOptimized(
   children: TemplateChildNode[],
-  varCounter: Map<string, number>,
   elementVars: ElementVarInfo[],
 ): string {
-  let html = '';
-  for (const child of children) {
-    if (child.type === NodeTypes.TEXT) {
-      html += (child as TextNode).content;
-    } else if (child.type === NodeTypes.ELEMENT) {
-      html += serializeStaticHTMLOptimized(child as ElementNode, varCounter, elementVars, true);
-    }
-  }
-  return html;
+  return buildStaticHtmlShared(children, (node, tag, isComponent) => {
+    const varName = `_${elementVars.length}`;
+    elementVars.push(isComponent ? { varName, tag } : { varName, tag, node });
+    return varName;
+  });
 }
 
 // ============================================================
-// 优化的静态 HTML 序列化
+// 优化的静态 HTML 序列化（B01d-2：与基础实现共用同一份序列化逻辑）
 // ============================================================
-
-function escapeHtmlStatic(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
 
 function serializeStaticHTMLOptimized(
   node: ElementNode,
-  varCounter: Map<string, number>,
   elementVars: ElementVarInfo[],
   allowDirectText = false,
 ): string {
-  // 组件：不再把标签写进模板串（那会在 DOM 里留下字面量 <Child />），
-  // 改为输出一个占位元素 `<lyt-comp data-lyt-comp="Child">` 保住结构位置，
-  // 随后由运行时 mountComponent 把组件挂载进去。
-  // 注意：占位必须是**元素**而不是注释 —— 注释不在 element.children 里，
-  // 会让后续按下标取元素的 `_N` 变量全部错位。
-  if (node.tagType === ElementTypes.COMPONENT) {
-    const idx = elementVars.length;
-    const varName = `_${idx}`;
-    elementVars.push({ varName, tag: 'lyt-comp' });
-    return `<lyt-comp data-lyt-comp="${node.tag}"></lyt-comp>`;
-  }
-
-  // 使用更短的变量名：_0, _1, _2...
-  const idx = elementVars.length;
-  const varName = `_${idx}`;
-  elementVars.push({ varName, tag: node.tag, node });
-
-  let attrs = '';
-  for (const prop of node.props) {
-    if (prop.type === NodeTypes.ATTRIBUTE && prop.value) {
-      attrs += ` ${prop.name}="${escapeHtmlStatic(prop.value.content)}"`;
-    } else if (prop.type === NodeTypes.ATTRIBUTE && !prop.value) {
-      attrs += ` ${prop.name}`;
-    }
-  }
-
-  let childrenHTML = '';
-  const directText = allowDirectText && isDirectTextElement(node);
-  for (const child of node.children) {
-    if (child.type === NodeTypes.TEXT) {
-      childrenHTML += escapeHtmlStatic((child as TextNode).content);
-    } else if (child.type === NodeTypes.ELEMENT) {
-      childrenHTML += serializeStaticHTMLOptimized(
-        child as ElementNode,
-        varCounter,
-        elementVars,
-        allowDirectText,
-      );
-    } else if (child.type === NodeTypes.INTERPOLATION && !directText) {
-      // 混合文本里的插值：和基础实现一致，用注释占位，运行时由 claimTextSlots() 认领。
-      childrenHTML += TEXT_SLOT_COMMENT;
-    }
-  }
-
-  if (node.children.length === 0 && node.isSelfClosing) {
-    return `<${node.tag}${attrs} />`;
-  }
-  return `<${node.tag}${attrs}>${childrenHTML}</${node.tag}>`;
+  return serializeStaticHtmlShared(
+    node,
+    (el, tag, isComponent) => {
+      const varName = `_${elementVars.length}`;
+      elementVars.push(isComponent ? { varName, tag } : { varName, tag, node: el });
+      return varName;
+    },
+    allowDirectText,
+  );
 }
 
 // ============================================================
@@ -1659,7 +1609,7 @@ function serializeBranchHTML(
     }
   }
   if (branch.type === NodeTypes.ELEMENT) {
-    return serializeStaticHTMLOptimized(branch as ElementNode, new Map(), []);
+    return serializeStaticHTMLOptimized(branch as ElementNode, []);
   }
   return '';
 }

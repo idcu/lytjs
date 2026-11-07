@@ -12,6 +12,8 @@
 import { NodeTypes, ElementTypes } from './constants';
 import type {
   ElementNode,
+  TextNode,
+  TemplateChildNode,
   SimpleExpressionNode,
   CompoundExpressionNode,
   VNodeCall,
@@ -97,6 +99,83 @@ export function escapeHtmlStatic(str: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+/**
+ * 静态模板的元素变量分配器（B01d-2）。
+ *
+ * 两套发射器只有**变量名形态**不同，登记动作也略有差异（基础实现记 `staticVars`，
+ * 优化实现把 `node` 挂在元素变量上）。这里只暴露分配结果，登记由调用方在闭包里做。
+ */
+export type StaticHtmlAllocator = (node: ElementNode, tag: string, isComponent: boolean) => string;
+
+/**
+ * 把一组子节点序列化成静态模板串（两套发射器共用）。
+ *
+ * 只序列化 TEXT / ELEMENT；动态节点留给各自的动态绑定阶段。
+ */
+export function buildStaticHtml(
+  children: TemplateChildNode[],
+  allocate: StaticHtmlAllocator,
+): string {
+  let html = '';
+  for (const child of children) {
+    if (child.type === NodeTypes.TEXT) {
+      html += (child as TextNode).content;
+    } else if (child.type === NodeTypes.ELEMENT) {
+      html += serializeStaticHtml(child as ElementNode, allocate, true);
+    }
+  }
+  return html;
+}
+
+/**
+ * 静态序列化单个元素（两套发射器共用）。
+ *
+ * - 组件输出占位元素 `<lyt-comp data-lyt-comp="…">`，由运行时挂载真实组件；
+ *   占位必须是**元素**，注释不在 `element.children` 里，会让按下标取元素的变量错位。
+ * - 插值在混合文本里留 `TEXT_SLOT_COMMENT` 槽位，由 `claimTextSlots()` 认领；
+ *   元素只有一个插值时可省掉槽位（`allowDirectText`）。
+ */
+export function serializeStaticHtml(
+  node: ElementNode,
+  allocate: StaticHtmlAllocator,
+  allowDirectText = false,
+): string {
+  if (node.tagType === ElementTypes.COMPONENT) {
+    allocate(node, 'lyt-comp', true);
+    return `<lyt-comp data-lyt-comp="${node.tag}"></lyt-comp>`;
+  }
+
+  allocate(node, node.tag, false);
+
+  let attrs = '';
+  for (const prop of node.props) {
+    if (prop.type === NodeTypes.ATTRIBUTE && prop.value) {
+      attrs += ` ${prop.name}="${escapeHtmlStatic(prop.value.content)}"`;
+    } else if (prop.type === NodeTypes.ATTRIBUTE && !prop.value) {
+      attrs += ` ${prop.name}`;
+    }
+    // 跳过 DIRECTIVE 类型的 props
+  }
+
+  let childrenHTML = '';
+  const directText = allowDirectText && isDirectTextElement(node);
+  for (const child of node.children) {
+    if (child.type === NodeTypes.TEXT) {
+      childrenHTML += escapeHtmlStatic((child as TextNode).content);
+    } else if (child.type === NodeTypes.ELEMENT) {
+      childrenHTML += serializeStaticHtml(child as ElementNode, allocate, allowDirectText);
+    } else if (child.type === NodeTypes.INTERPOLATION && !directText) {
+      childrenHTML += TEXT_SLOT_COMMENT;
+    }
+    // 跳过 CommentNode 等其它动态内容
+  }
+
+  if (node.children.length === 0 && node.isSelfClosing) {
+    return `<${node.tag}${attrs} />`;
+  }
+  return `<${node.tag}${attrs}>${childrenHTML}</${node.tag}>`;
 }
 
 /**
