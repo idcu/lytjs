@@ -1,5 +1,8 @@
 # @lytjs/common-keyboard
 
+> ⚠️ **已弃用（deprecated）**：仓内无生产引用，仅为已发布 API 保留；**目标 8.0.0 删除**。
+> 无内置替代，请自行实现或固定使用 6.x。见 `keel/decisions/pending/0023-common-dead-packages-deprecation.md`。
+
 轻量级键盘快捷键工具，提供快捷键字符串解析、事件匹配与按键序列监听能力。
 
 ## 安装

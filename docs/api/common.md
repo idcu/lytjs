@@ -2,6 +2,13 @@
 
 `@lytjs/common-*` 是 LytJS 的 L0 基础层，包含 30+ 个零外部依赖的工具包。所有 common-\* 包仅相互依赖，构成框架的最小依赖集。
 
+> ⚠️ **已弃用（目标 8.0.0 删除）**：`common`、`common-async-scheduler`、`common-dom-helpers`、
+> `common-event-normalizer`、`common-keyboard`、`common-memory`、`common-node-cache`、
+> `common-performance`、`common-raf`、`common-render-queue`、`common-storage`、`common-validate`、
+> `common-warn`、`common-env`、`common-path`、`common-timing`。这些包仓内零生产引用，
+> 仅为已发布 API 保留；新代码请勿使用。替代与删除条件见
+> [ADR 0023](../../keel/decisions/pending/0023-common-dead-packages-deprecation.md)。
+
 ---
 
 ## @lytjs/common-is

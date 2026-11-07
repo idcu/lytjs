@@ -1,5 +1,8 @@
 # @lytjs/common
 
+> ⚠️ **已弃用（deprecated）**：仓内无生产引用，仅为已发布 API 保留；**目标 8.0.0 删除**。
+> 替代：按需安装子包（如 `@lytjs/common-is`）。见 `keel/decisions/pending/0023-common-dead-packages-deprecation.md`。
+
 LytJS 通用工具聚合包。它本身不实现任何逻辑，而是将众多的 `@lytjs/common-*` 子包统一导入并 **re-export**，让使用者只需从一个入口即可获取所有通用工具，无需逐个安装与导入各个子包。
 
 ## 安装

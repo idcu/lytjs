@@ -1,5 +1,8 @@
 # @lytjs/common-warn
 
+> ⚠️ **已弃用（deprecated）**：仓内无生产引用，仅为已发布 API 保留；**目标 8.0.0 删除**。
+> 替代：`@lytjs/common-error`（`warn` / `warnOnce`）。见 `keel/decisions/pending/0023-common-dead-packages-deprecation.md`。
+
 LytJS 框架级警告系统。提供分级日志、一次性（once）抑制、自定义日志处理器与可隔离的警告上下文，用于控制框架的日志级别与输出。
 
 ## 安装

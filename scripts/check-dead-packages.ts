@@ -44,24 +44,28 @@ const PACKAGES = join(ROOT, 'packages');
  *
  * ⚠️ 这份清单是**待办清单**，不是免死金牌：
  * 每一行都意味着「这个包目前没有消费者，要么接上，要么删掉」。
+ *
+ * 2026-11-07（S19）：16 个包全部已发布到 npm（6.9.6），按 ADR 0023 标 deprecated，
+ * **目标 8.0.0 删除**；7.x 期间保持零引用即可，不新增条目。
  */
 const DEAD_BASELINE: Record<string, string> = {
-  '@lytjs/common': '聚合 barrel —— 全仓无人 import 它，却 re-export 了下面 14 个死包',
-  '@lytjs/common-async-scheduler': '零引用（功能与 common-scheduler 重叠）',
-  '@lytjs/common-dom-helpers': '零引用（adapter-web 自带一套 DOM 操作）',
-  '@lytjs/common-event-normalizer': '零引用（adapter-web 的 web-patch-events 是同一套逻辑的正主）',
-  '@lytjs/common-keyboard': '零引用',
-  '@lytjs/common-memory': '零引用（对象池 / 泄漏检测，无消费者）',
-  '@lytjs/common-node-cache': '零引用',
-  '@lytjs/common-performance': '零引用（环形缓冲，无消费者）',
-  '@lytjs/common-raf': '零引用（与 common-timing 重叠）',
-  '@lytjs/common-render-queue': '零引用（修好了 no-op，但没人调用）',
-  '@lytjs/common-storage': '零引用',
-  '@lytjs/common-validate': '零引用',
-  '@lytjs/common-warn': '零引用（warn 的真相源已收敛到 common-error）',
-  '@lytjs/common-env': '零引用',
-  '@lytjs/common-path': '零引用',
-  '@lytjs/common-timing': '仅被自身测试引用（与 raf / scheduler 重叠）',
+  '@lytjs/common': '聚合 barrel —— 已发布；deprecated→8.0.0（ADR 0023）',
+  '@lytjs/common-async-scheduler': '已发布；与 common-scheduler 重叠；deprecated→8.0.0（ADR 0023）',
+  '@lytjs/common-dom-helpers': '已发布；adapter-web 自带 DOM 操作；deprecated→8.0.0（ADR 0023）',
+  '@lytjs/common-event-normalizer':
+    '已发布；adapter-web 的 web-patch-events 是正主；deprecated→8.0.0（ADR 0023）',
+  '@lytjs/common-keyboard': '已发布；deprecated→8.0.0（ADR 0023）',
+  '@lytjs/common-memory': '已发布；对象池/泄漏检测无消费者；deprecated→8.0.0（ADR 0023）',
+  '@lytjs/common-node-cache': '已发布；deprecated→8.0.0（ADR 0023）',
+  '@lytjs/common-performance': '已发布；性能监控无消费者；deprecated→8.0.0（ADR 0023）',
+  '@lytjs/common-raf': '已发布；与 common-timing 重叠；deprecated→8.0.0（ADR 0023）',
+  '@lytjs/common-render-queue': '已发布；与 common-scheduler 重叠；deprecated→8.0.0（ADR 0023）',
+  '@lytjs/common-storage': '已发布；deprecated→8.0.0（ADR 0023）',
+  '@lytjs/common-validate': '已发布；deprecated→8.0.0（ADR 0023）',
+  '@lytjs/common-warn': '已发布；真相源已收敛到 common-error；deprecated→8.0.0（ADR 0023）',
+  '@lytjs/common-env': '已发布；deprecated→8.0.0（ADR 0023）',
+  '@lytjs/common-path': '已发布；deprecated→8.0.0（ADR 0023）',
+  '@lytjs/common-timing': '已发布；仅测试引用；deprecated→8.0.0（ADR 0023）',
 };
 
 interface PkgInfo {

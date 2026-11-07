@@ -72,6 +72,14 @@
 · @lytjs/common-memory · @lytjs/common-env · @lytjs/common-rate-limit · @lytjs/common-security
 · @lytjs/common-path
 
+> ⚠️ **其中 16 个已标 deprecated（目标 8.0.0 删除）**：`@lytjs/common`、`@lytjs/common-async-scheduler`、
+> `@lytjs/common-dom-helpers`、`@lytjs/common-event-normalizer`、`@lytjs/common-keyboard`、
+> `@lytjs/common-memory`、`@lytjs/common-node-cache`、`@lytjs/common-performance`、
+> `@lytjs/common-raf`、`@lytjs/common-render-queue`、`@lytjs/common-storage`、
+> `@lytjs/common-validate`、`@lytjs/common-warn`、`@lytjs/common-env`、`@lytjs/common-path`、
+> `@lytjs/common-timing`。7.x 仍照常发布（数量不变）；npm `deprecated` 标记待有发布权限时执行。
+> 见 `keel/decisions/pending/0023-common-dead-packages-deprecation.md`。
+
 ---
 
 ## 不发布的包（Monorepo 配置包）

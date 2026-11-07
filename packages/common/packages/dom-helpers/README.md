@@ -1,5 +1,8 @@
 # @lytjs/common-dom-helpers
 
+> ⚠️ **已弃用（deprecated）**：仓内无生产引用，仅为已发布 API 保留；**目标 8.0.0 删除**。
+> 替代：adapter-web 自带的 DOM 操作。见 `keel/decisions/pending/0023-common-dead-packages-deprecation.md`。
+
 轻量级 DOM 操作辅助工具，提供常用的 DOM 创建、修改和查询方法。
 
 ## 安装

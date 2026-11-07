@@ -1,5 +1,8 @@
 # @lytjs/common-event-normalizer
 
+> ⚠️ **已弃用（deprecated）**：仓内无生产引用，仅为已发布 API 保留；**目标 8.0.0 删除**。
+> 替代：adapter-web 的 `web-patch-events`。见 `keel/decisions/pending/0023-common-dead-packages-deprecation.md`。
+
 事件归一化工具，解析事件名与修饰符，提供 invoker 缓存模式，并通过 RendererHost 接口执行平台无关的事件操作。
 
 ## 安装

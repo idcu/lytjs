@@ -1,5 +1,8 @@
 # @lytjs/common-raf
 
+> ⚠️ **已弃用（deprecated）**：仓内无生产引用，仅为已发布 API 保留；**目标 8.0.0 删除**。
+> 替代：`@lytjs/common-timing` 或原生 `requestAnimationFrame`。见 `keel/decisions/pending/0023-common-dead-packages-deprecation.md`。
+
 跨平台 `requestAnimationFrame` 工具集，提供 raf/caf 封装及节流、防抖、下一帧 Promise 能力。
 
 ## 安装

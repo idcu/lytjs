@@ -1,5 +1,8 @@
 # @lytjs/common-timing
 
+> ⚠️ **已弃用（deprecated）**：仓内无生产引用，仅为已发布 API 保留；**目标 8.0.0 删除**。
+> 无内置替代（防抖/节流可在应用内实现）。见 `keel/decisions/pending/0023-common-dead-packages-deprecation.md`。
+
 定时与调度工具函数。
 
 ## 安装

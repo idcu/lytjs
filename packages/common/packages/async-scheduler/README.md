@@ -1,5 +1,8 @@
 # @lytjs/common-async-scheduler
 
+> ⚠️ **已弃用（deprecated）**：仓内无生产引用，仅为已发布 API 保留；**目标 8.0.0 删除**。
+> 替代：`@lytjs/common-scheduler`。见 `keel/decisions/pending/0023-common-dead-packages-deprecation.md`。
+
 异步调度器，统一异步时序操作，通过 host 注入的定时器执行，支持优先级排序、任务合并与同步插队刷新。
 
 ## 安装

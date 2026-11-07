@@ -27,3 +27,4 @@ keywords: [决策, ADR, 索引]
 | 0020 | S13 必要功能增长：三入口基线签字上调 | active | [0020](0020-bundle-baseline-s13-parity-growth.md) |
 | 0021 | C3：UI 依赖与 ARCHITECTURE:26 冲突（待裁） | pending | [0021](pending/0021-c3-ui-dependency-conflict.md) |
 | 0022 | `sideEffects:false`：内置组件改显式注册（B2 已实施） | active | [0022](pending/0022-sideeffects-b2-builtin-registration.md) |
+| 0023 | common 域 16 个死包：保留+deprecated，8.0.0 删除 | pending | [0023](pending/0023-common-dead-packages-deprecation.md) |

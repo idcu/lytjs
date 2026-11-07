@@ -1,5 +1,8 @@
 # @lytjs/common-memory
 
+> ⚠️ **已弃用（deprecated）**：仓内无生产引用，仅为已发布 API 保留；**目标 8.0.0 删除**。
+> 无内置替代，请自行实现或固定使用 6.x。见 `keel/decisions/pending/0023-common-dead-packages-deprecation.md`。
+
 内存优化工具集，提供对象池、内存泄漏检测与内存压力监控能力。
 
 ## 安装

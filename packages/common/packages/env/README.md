@@ -1,5 +1,8 @@
 # @lytjs/common-env
 
+> ⚠️ **已弃用（deprecated）**：仓内无生产引用，仅为已发布 API 保留；**目标 8.0.0 删除**。
+> 无内置替代（可直接判断 `typeof window`）。见 `keel/decisions/pending/0023-common-dead-packages-deprecation.md`。
+
 环境检测工具，检测当前运行环境（浏览器/Node/SSR）。
 
 ## 安装

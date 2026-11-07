@@ -1,6 +1,9 @@
 # @lytjs/common
 
 > LytJS 框架的公共工具库 monorepo，包含 30 个子包 + 1 个聚合包
+>
+> ⚠️ **其中 16 个已弃用**（仓内零生产引用，保留已发布 API，**目标 8.0.0 删除**）：
+> 见下方「已弃用」表与 [ADR 0023](../../../keel/decisions/pending/0023-common-dead-packages-deprecation.md)。新代码请勿使用。
 
 ## 子包列表
 
@@ -70,17 +73,38 @@
 
 ### 聚合包
 
-| 包名            | 说明                         |
-| --------------- | ---------------------------- |
-| `@lytjs/common` | 聚合包（re-export 所有子包） |
+| 包名            | 说明                                  |
+| --------------- | ------------------------------------- |
+| `@lytjs/common` | 聚合包（re-export 所有子包）⚠️ 已弃用 |
+
+### 已弃用（deprecated）
+
+以下 16 个包在仓内零生产引用，仅为已发布 API 保留，**目标 8.0.0 删除**。新代码请勿使用；
+替代与删除条件见 [ADR 0023](../../../keel/decisions/pending/0023-common-dead-packages-deprecation.md)。
+
+| 包名                             | 替代 / 说明                                |
+| -------------------------------- | ------------------------------------------ |
+| `@lytjs/common`                  | 按需安装子包（如 `@lytjs/common-is`）      |
+| `@lytjs/common-async-scheduler`  | `@lytjs/common-scheduler`                  |
+| `@lytjs/common-dom-helpers`      | adapter-web 自带的 DOM 操作                |
+| `@lytjs/common-event-normalizer` | adapter-web 的 `web-patch-events`          |
+| `@lytjs/common-keyboard`         | 无内置替代                                 |
+| `@lytjs/common-memory`           | 无内置替代                                 |
+| `@lytjs/common-node-cache`       | 无内置替代                                 |
+| `@lytjs/common-performance`      | 无内置替代                                 |
+| `@lytjs/common-raf`              | `@lytjs/common-timing` 或原生 RAF          |
+| `@lytjs/common-render-queue`     | `@lytjs/common-scheduler`                  |
+| `@lytjs/common-storage`          | 无内置替代                                 |
+| `@lytjs/common-validate`         | 无内置替代                                 |
+| `@lytjs/common-warn`             | `@lytjs/common-error`（`warn`/`warnOnce`） |
+| `@lytjs/common-env`              | 无内置替代（直接判断 `typeof window`）     |
+| `@lytjs/common-path`             | 无内置替代                                 |
+| `@lytjs/common-timing`           | 无内置替代（防抖/节流可在应用内实现）      |
 
 ## 安装
 
 ```bash
-# 安装聚合包（包含所有子包）
-pnpm add @lytjs/common
-
-# 或按需安装单个子包
+# ⚠️ 聚合包 @lytjs/common 已弃用（目标 8.0.0 删除），请改为按需安装单个子包
 pnpm add @lytjs/common-is
 pnpm add @lytjs/common-string
 pnpm add @lytjs/common-vnode
