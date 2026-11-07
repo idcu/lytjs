@@ -9,9 +9,7 @@
 import { NodeTypes, ElementTypes } from './constants';
 import {
   OPTIMIZED_EMIT_PROFILE,
-  TEXT_SLOT_COMMENT,
   genVarName,
-  escapeHtmlStatic,
   isDirectTextElement,
   isStaticPropValue,
   componentRef as componentRefShared,
@@ -22,9 +20,9 @@ import {
   buildItemComponentPropsShared,
   buildStaticHtml as buildStaticHtmlShared,
   serializeStaticHtml as serializeStaticHtmlShared,
+  serializeBranchHtml as serializeBranchHtmlShared,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
-import { FRAGMENT_SENTINEL } from './transforms/transform-element';
 import { prefixIdentifiers } from './prefix-identifiers';
 import type {
   RootNode,
@@ -1550,68 +1548,11 @@ function extractTagFromVNode(vnode: VNodeCall): { tag: string; varName: string }
 function serializeBranchHTML(
   branch: JSChildNode | TemplateChildNode | TemplateChildNode[] | string | undefined,
 ): string {
-  if (!branch) return '';
-  if (typeof branch === 'string') return branch;
-  if (Array.isArray(branch)) {
-    return branch.map((item) => serializeBranchHTML(item)).join('');
-  }
-  // 分支内的插值：留文本槽位（运行期 claimTextSlots 换成独立文本节点）
-  if (branch.type === NodeTypes.INTERPOLATION) return TEXT_SLOT_COMMENT;
-  if (branch.type === NodeTypes.JS_CALL_EXPRESSION) {
-    const call = branch as JSCallExpression;
-    const callee = typeof call.callee === 'string' ? call.callee : String(call.callee);
-    return callee === 'TO_DISPLAY_STRING' || callee === 'toDisplayString' ? TEXT_SLOT_COMMENT : '';
-  }
-  if (branch.type === NodeTypes.COMPOUND_EXPRESSION) {
-    const compound = branch as CompoundExpressionNode;
-    return (compound.children ?? []).map((c) => serializeBranchHTML(c as never)).join('');
-  }
-  if (branch.type === NodeTypes.VNODE_CALL) {
-    const vnode = branch as VNodeCall;
-    if (typeof vnode.tag === 'string') {
-      // 组件分支：tag 是表达式（如 `_c["my-comp"]`），按占位元素输出，运行期挂载。
-      if (vnode.tag !== '' && !/^["']/.test(vnode.tag)) {
-        return `<lyt-comp data-lyt-comp="${escapeHtmlStatic(vnode.tag)}"></lyt-comp>`;
-      }
-      const rawTag = vnode.tag.replace(/^"|"$/g, '');
-      const tag = rawTag === FRAGMENT_SENTINEL ? 'template' : rawTag;
-      let attrs = '';
-      if (vnode.props && vnode.props.type === NodeTypes.JS_OBJECT_EXPRESSION) {
-        const objExpr = vnode.props as JSObjectExpression;
-        for (const prop of objExpr.properties) {
-          if (prop.type === NodeTypes.JS_PROPERTY) {
-            const jsProp = prop as JSProperty;
-            if (
-              jsProp.key.type === NodeTypes.SIMPLE_EXPRESSION &&
-              jsProp.value.type === NodeTypes.SIMPLE_EXPRESSION
-            ) {
-              const key = (jsProp.key as SimpleExpressionNode).content.replace(/^"|"$/g, '');
-              const value = (jsProp.value as SimpleExpressionNode).content;
-              // 只序列化字面量；动态绑定交给分支内的 setAttribute/setClass。
-              if (isStaticPropValue(value)) {
-                attrs += ` ${key}="${escapeHtmlStatic(value.replace(/^"|"$/g, ''))}"`;
-              }
-            }
-          }
-        }
-      }
-      let childrenHTML = '';
-      if (vnode.children) {
-        if (typeof vnode.children === 'string') {
-          childrenHTML = escapeHtmlStatic(vnode.children);
-        } else if (Array.isArray(vnode.children)) {
-          childrenHTML = vnode.children.map((c) => serializeBranchHTML(c)).join('');
-        } else {
-          childrenHTML = serializeBranchHTML(vnode.children as never);
-        }
-      }
-      return `<${tag}${attrs}>${childrenHTML}</${tag}>`;
-    }
-  }
-  if (branch.type === NodeTypes.ELEMENT) {
-    return serializeStaticHTMLOptimized(branch as ElementNode, []);
-  }
-  return '';
+  return serializeBranchHtmlShared(branch, {
+    serializeStaticElement: (el) => serializeStaticHTMLOptimized(el, []),
+    // 优化实现历史上不校验动态组件名，保持原状（不传 = 跳过校验）
+    stripStaticQuotes: (value) => value.replace(/^"|"$/g, ''),
+  });
 }
 
 interface BranchDynamicOp {

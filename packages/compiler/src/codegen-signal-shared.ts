@@ -10,12 +10,15 @@
 // 任何 helper 的**语义判据**只允许在这里修改一次；两个发射器不得再各写一份。
 
 import { NodeTypes, ElementTypes } from './constants';
+import { FRAGMENT_SENTINEL } from './transforms/transform-element';
 import type {
   ElementNode,
   TextNode,
   TemplateChildNode,
   SimpleExpressionNode,
   CompoundExpressionNode,
+  JSChildNode,
+  JSCallExpression,
   VNodeCall,
   JSObjectExpression,
   JSProperty,
@@ -176,6 +179,99 @@ export function serializeStaticHtml(
     return `<${node.tag}${attrs} />`;
   }
   return `<${node.tag}${attrs}>${childrenHTML}</${node.tag}>`;
+}
+
+/**
+ * v-if / v-for 分支静态序列化的形态钩子（B01d-2）。
+ *
+ * 两套发射器的差异只有三处，全部由调用方注入，语义不分叉。
+ */
+export interface BranchHtmlHooks {
+  /** 子树里的 ELEMENT 交给各自的静态模板序列化器 */
+  serializeStaticElement: (node: ElementNode) => string;
+  /** 动态组件名校验（基础实现开启；优化实现历史上未校验，传 undefined 保持原状） */
+  validateDynamicComponentName?: (tag: string) => void;
+  /** 剥离静态属性值两端引号（基础实现剥单双引号，优化实现只剥双引号） */
+  stripStaticQuotes: (value: string) => string;
+}
+
+/**
+ * 把 v-if / v-for 分支序列化成静态模板串（两套发射器共用）。
+ *
+ * 分支里的插值一律留 `TEXT_SLOT_COMMENT` 槽位，避免多层嵌套时被整段丢弃；
+ * 动态绑定留给分支内的 setAttribute / setClass 阶段。
+ */
+export function serializeBranchHtml(
+  branch: JSChildNode | TemplateChildNode | TemplateChildNode[] | string | undefined,
+  hooks: BranchHtmlHooks,
+): string {
+  if (!branch) return '';
+  if (typeof branch === 'string') return branch;
+  if (Array.isArray(branch)) {
+    return branch.map((item) => serializeBranchHtml(item, hooks)).join('');
+  }
+  if (branch.type === NodeTypes.INTERPOLATION) return TEXT_SLOT_COMMENT;
+  if (branch.type === NodeTypes.JS_CALL_EXPRESSION) {
+    const call = branch as JSCallExpression;
+    const callee = typeof call.callee === 'string' ? call.callee : String(call.callee);
+    return callee === 'TO_DISPLAY_STRING' || callee === 'toDisplayString' ? TEXT_SLOT_COMMENT : '';
+  }
+  if (branch.type === NodeTypes.COMPOUND_EXPRESSION) {
+    const compound = branch as CompoundExpressionNode;
+    return (compound.children ?? []).map((c) => serializeBranchHtml(c as never, hooks)).join('');
+  }
+  if (branch.type === NodeTypes.VNODE_CALL) {
+    const vnode = branch as VNodeCall;
+    if (typeof vnode.tag === 'string') {
+      // 组件分支（tag 是标识符/表达式）：不能按 HTML 标签名序列化，
+      // 输出占位元素，运行期由 mountComponent 挂载真实组件。
+      if (vnode.tag !== '' && !/^["']/.test(vnode.tag)) {
+        return `<lyt-comp data-lyt-comp="${escapeHtmlStatic(vnode.tag)}"></lyt-comp>`;
+      }
+      const rawTag = vnode.tag.replace(/^"|"$/g, '');
+      // `<template>` 的 Fragment 哨兵：signal 模式不支持 Fragment，按字面量序列化，
+      // 并且跳过组件名校验（哨兵名带下划线，会被 VALID_COMPONENT_NAME 判为非法）。
+      const tag = rawTag === FRAGMENT_SENTINEL ? 'template' : rawTag;
+      if (rawTag !== FRAGMENT_SENTINEL) {
+        hooks.validateDynamicComponentName?.(tag);
+      }
+      let attrs = '';
+      // 只序列化**字面量**属性值；动态绑定留给条件内的 setAttribute
+      if (vnode.props && vnode.props.type === NodeTypes.JS_OBJECT_EXPRESSION) {
+        const objExpr = vnode.props as JSObjectExpression;
+        for (const prop of objExpr.properties) {
+          if (prop.type === NodeTypes.JS_PROPERTY) {
+            const jsProp = prop as JSProperty;
+            if (
+              jsProp.key.type === NodeTypes.SIMPLE_EXPRESSION &&
+              jsProp.value.type === NodeTypes.SIMPLE_EXPRESSION
+            ) {
+              const key = (jsProp.key as SimpleExpressionNode).content.replace(/^"|"$/g, '');
+              const value = (jsProp.value as SimpleExpressionNode).content;
+              if (isStaticPropValue(value)) {
+                attrs += ` ${key}="${escapeHtmlStatic(hooks.stripStaticQuotes(value))}"`;
+              }
+            }
+          }
+        }
+      }
+      let childrenHTML = '';
+      if (vnode.children) {
+        if (typeof vnode.children === 'string') {
+          childrenHTML = escapeHtmlStatic(vnode.children);
+        } else if (Array.isArray(vnode.children)) {
+          childrenHTML = vnode.children.map((c) => serializeBranchHtml(c, hooks)).join('');
+        } else {
+          childrenHTML = serializeBranchHtml(vnode.children as never, hooks);
+        }
+      }
+      return `<${tag}${attrs}>${childrenHTML}</${tag}>`;
+    }
+  }
+  if (branch.type === NodeTypes.ELEMENT) {
+    return hooks.serializeStaticElement(branch as ElementNode);
+  }
+  return '';
 }
 
 /**

@@ -4,10 +4,8 @@
 import { NodeTypes, ElementTypes } from './constants';
 import {
   BASE_EMIT_PROFILE,
-  TEXT_SLOT_COMMENT,
   genVarName,
   getExpContent,
-  escapeHtmlStatic,
   isDirectTextElement,
   isStaticPropValue,
   componentRef as componentRefShared,
@@ -18,6 +16,7 @@ import {
   buildItemComponentPropsShared,
   buildStaticHtml as buildStaticHtmlShared,
   serializeStaticHtml as serializeStaticHtmlShared,
+  serializeBranchHtml as serializeBranchHtmlShared,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -1317,82 +1316,12 @@ function processConditional(
 function serializeBranchHTML(
   branch: JSChildNode | TemplateChildNode | TemplateChildNode[] | string | undefined,
 ): string {
-  if (!branch) return '';
-  if (typeof branch === 'string') return branch;
-  if (Array.isArray(branch)) {
-    return branch.map((item) => serializeBranchHTML(item)).join('');
-  }
-  // 分支内的插值：留文本槽位（运行期 claimTextSlots 换成独立文本节点），
-  // 这样多层嵌套里的插值不会被整段丢弃（if05 实测）
-  if (branch.type === NodeTypes.INTERPOLATION) return TEXT_SLOT_COMMENT;
-  if (branch.type === NodeTypes.JS_CALL_EXPRESSION) {
-    const call = branch as JSCallExpression;
-    const callee = typeof call.callee === 'string' ? call.callee : String(call.callee);
-    return callee === 'TO_DISPLAY_STRING' || callee === 'toDisplayString' ? TEXT_SLOT_COMMENT : '';
-  }
-  if (branch.type === NodeTypes.COMPOUND_EXPRESSION) {
-    const compound = branch as CompoundExpressionNode;
-    return (compound.children ?? []).map((c) => serializeBranchHTML(c as never)).join('');
-  }
-  if (branch.type === NodeTypes.VNODE_CALL) {
-    const vnode = branch as VNodeCall;
-    if (typeof vnode.tag === 'string') {
-      // 组件分支（tag 是标识符/表达式，如 `(_ctx["my-comp"] || …)`）：
-      // 不能按 HTML 标签名序列化，更不能按组件名规则校验（kb05 曾直接编译抛错）。
-      // 与静态组件的做法一致：输出占位元素，运行期 mountComponent 挂载真实组件。
-      if (vnode.tag !== '' && !/^["']/.test(vnode.tag)) {
-        return `<lyt-comp data-lyt-comp="${escapeHtmlStatic(vnode.tag)}"></lyt-comp>`;
-      }
-      const rawTag = vnode.tag.replace(/^"|"$/g, '');
-      // `<template>` 的 Fragment 哨兵：signal 模式不支持 Fragment（见上文的说明），
-      // 这里按字面量 `template` 元素序列化，并且**跳过组件名校验**
-      //（哨兵名带下划线，会被 VALID_COMPONENT_NAME 判为非法）。
-      const tag = rawTag === FRAGMENT_SENTINEL ? 'template' : rawTag;
-      if (rawTag !== FRAGMENT_SENTINEL) {
-        // FIX: P1-S6: 验证动态组件名
-        validateComponentName(tag, 'v-for dynamic component');
-      }
-      let attrs = '';
-      // 从 props 中提取静态属性
-      if (vnode.props && vnode.props.type === NodeTypes.JS_OBJECT_EXPRESSION) {
-        const objExpr = vnode.props as JSObjectExpression;
-        for (const prop of objExpr.properties) {
-          if (prop.type === NodeTypes.JS_PROPERTY) {
-            const jsProp = prop as JSProperty;
-            if (
-              jsProp.key.type === NodeTypes.SIMPLE_EXPRESSION &&
-              jsProp.value.type === NodeTypes.SIMPLE_EXPRESSION
-            ) {
-              const key = (jsProp.key as SimpleExpressionNode).content.replace(/^"|"$/g, '');
-              const value = (jsProp.value as SimpleExpressionNode).content;
-              // 只序列化**字面量**属性值；动态绑定（`:id="i"` / `_ctx.x`）留给
-              // condition 内的 setAttribute（否则会以属性名当值写死，见 A04 修复）
-              if (isStaticPropValue(value)) {
-                // FIX: P2-batch1-8 对属性值进行 HTML 转义，防止 XSS
-                attrs += ` ${key}="${escapeHtmlStatic(value.replace(/^["']|["']$/g, ''))}"`;
-              }
-            }
-          }
-        }
-      }
-      // 序列化 children
-      let childrenHTML = '';
-      if (vnode.children) {
-        if (typeof vnode.children === 'string') {
-          childrenHTML = escapeHtmlStatic(vnode.children);
-        } else if (Array.isArray(vnode.children)) {
-          childrenHTML = vnode.children.map((c) => serializeBranchHTML(c)).join('');
-        } else {
-          childrenHTML = serializeBranchHTML(vnode.children as never);
-        }
-      }
-      return `<${tag}${attrs}>${childrenHTML}</${tag}>`;
-    }
-  }
-  if (branch.type === NodeTypes.ELEMENT) {
-    return serializeStaticHTML(branch as ElementNode, new Map(), []);
-  }
-  return '';
+  return serializeBranchHtmlShared(branch, {
+    serializeStaticElement: (el) => serializeStaticHTML(el, new Map(), []),
+    // FIX: P1-S6: 验证动态组件名
+    validateDynamicComponentName: (tag) => validateComponentName(tag, 'v-for dynamic component'),
+    stripStaticQuotes: (value) => value.replace(/^["']|["']$/g, ''),
+  });
 }
 
 /** 分支内的动态项（文本 / 属性 / 组件挂载） */
