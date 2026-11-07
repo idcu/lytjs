@@ -28,3 +28,5 @@ keywords: [决策, ADR, 索引]
 | 0021 | C3：UI 依赖与 ARCHITECTURE:26 冲突（待裁） | pending | [0021](pending/0021-c3-ui-dependency-conflict.md) |
 | 0022 | `sideEffects:false`：内置组件改显式注册（B2 已实施） | active | [0022](pending/0022-sideeffects-b2-builtin-registration.md) |
 | 0023 | common 域 16 个死包：保留+deprecated，8.0.0 删除 | pending | [0023](pending/0023-common-dead-packages-deprecation.md) |
+| 0024 | S22：计时断言低于 20ms 只报数字，不参与慢档判定 | active | [0024](pending/0024-perf-timing-assertion-thresholds.md) |
+| 0025 | host-contract 暂缓接入：前置=出现第二个宿主目标 | pending | [0025](pending/0025-host-contract-deferred.md) |

@@ -3,6 +3,12 @@
  * @lytjs/ui - 性能基准测试
  *
  * 测试组件的渲染性能、响应时间等指标
+ *
+ * 计时断言分层（ADR 0024）：
+ * - **微秒级（阈值 < 20ms）只打印数字，不参与判定** —— 全量并发 + 覆盖率下观测到
+ *   放大两个数量级（signal 0.07ms → 9.74ms），任何低于 20ms 的阈值都可能误红。
+ * - **粗粒度（阈值 ≥ 20ms）保留断言** —— 阈值 ≥ 并发最坏观测（9.74ms）的 2 倍。
+ * 新增计时断言必须附实测分布（≥5 次串行 + 3 路并发），否则一律只报数字。
  */
 
 import { describe, it, expect } from 'vitest';
@@ -23,7 +29,7 @@ describe('UI 组件性能基准测试', () => {
       console.log(`Button 初始化耗时: ${initTime.toFixed(2)}ms`);
 
       expect(component).toBeDefined();
-      expect(initTime).toBeLessThan(10);
+      // 微秒级：只报数字（ADR 0024）
     });
 
     it('Button props 定义应该高效', () => {
@@ -39,7 +45,7 @@ describe('UI 组件性能基准测试', () => {
 
       expect(type).toBe('default');
       expect(size).toBe('medium');
-      expect(accessTime).toBeLessThan(1);
+      // 微秒级：只报数字（ADR 0024）
     });
   });
 
@@ -53,7 +59,7 @@ describe('UI 组件性能基准测试', () => {
       console.log(`Input 初始化耗时: ${initTime.toFixed(2)}ms`);
 
       expect(component).toBeDefined();
-      expect(initTime).toBeLessThan(10);
+      // 微秒级：只报数字（ADR 0024）
     });
   });
 
@@ -67,7 +73,7 @@ describe('UI 组件性能基准测试', () => {
       console.log(`Table 初始化耗时: ${initTime.toFixed(2)}ms`);
 
       expect(component).toBeDefined();
-      expect(initTime).toBeLessThan(10);
+      // 微秒级：只报数字（ADR 0024）
     });
 
     it('Table 处理 1000 行数据应该高效', () => {
@@ -95,6 +101,7 @@ describe('UI 组件性能基准测试', () => {
       const processingTime = end - start;
       console.log(`Table 1000行数据处理耗时: ${processingTime.toFixed(2)}ms`);
 
+      // 粗粒度：保留判定（ADR 0024，实测 max 0.03ms）
       expect(processingTime).toBeLessThan(50);
     });
   });
@@ -109,7 +116,7 @@ describe('UI 组件性能基准测试', () => {
       console.log(`Tree 初始化耗时: ${initTime.toFixed(2)}ms`);
 
       expect(component).toBeDefined();
-      expect(initTime).toBeLessThan(10);
+      // 微秒级：只报数字（ADR 0024）
     });
 
     it('Tree 处理深层嵌套数据应该高效', () => {
@@ -133,6 +140,7 @@ describe('UI 组件性能基准测试', () => {
       console.log(`Tree 深度5、广度3树处理耗时: ${processingTime.toFixed(2)}ms`);
 
       expect(data).toBeGreaterThan(0);
+      // 粗粒度：保留判定（ADR 0024，实测 max 0.00ms）
       expect(processingTime).toBeLessThan(50);
     });
   });
@@ -148,6 +156,7 @@ describe('UI 组件性能基准测试', () => {
 
       expect(uiComponents).toBeDefined();
       expect(Object.keys(uiComponents).length).toBeGreaterThan(20);
+      // 粗粒度：保留判定（ADR 0024，实测 max 0.00ms）
       expect(importTime).toBeLessThan(100);
     });
 
@@ -160,7 +169,7 @@ describe('UI 组件性能基准测试', () => {
       console.log(`单个 Button 导入耗时: ${singleImportTime.toFixed(2)}ms`);
 
       expect(component).toBeDefined();
-      expect(singleImportTime).toBeLessThan(10);
+      // 微秒级：只报数字（ADR 0024）
     });
   });
 
@@ -193,7 +202,7 @@ describe('响应式性能测试', () => {
     console.log(`signal 创建耗时: ${createTime.toFixed(2)}ms`);
 
     expect(count).toBeDefined();
-    expect(createTime).toBeLessThan(5);
+    // 微秒级：只报数字（ADR 0024）
   });
 
   it('computed 创建应该快速', () => {
@@ -209,6 +218,6 @@ describe('响应式性能测试', () => {
     console.log(`computed 创建耗时: ${createTime.toFixed(2)}ms`);
 
     expect(doubled).toBeDefined();
-    expect(createTime).toBeLessThan(5);
+    // 微秒级：只报数字（ADR 0024）
   });
 });

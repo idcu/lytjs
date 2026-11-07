@@ -22,7 +22,8 @@ keywords: [计时, flaky, performance.now, 并发]
 微秒级 `performance.now()` 在并发 worker + 覆盖率插桩 + 负载下被调度/GC 放大
 两个数量级；断言没错，测量方式不稳。
 
-## 正解（待决，未改阈值、未加 retry）
+## 正解
 
-同类阈值：props<1ms、初始化<10ms、Table 1000 行<50ms、导入<100ms、signal/computed<5ms。
-口径：①移出为 bench/harness；②N 次中位数；③维持人工复跑。
+已定（ADR 0024）：阈值 <20ms 只打印数字、不参与 slow 判定；≥20ms 保留并留余量。
+本次处置：props / 初始化 / signal / computed / 单个导入 移出判定；Table 1000 行 50ms、
+Tree 深度 5 50ms、完整导入 100ms 保留（余量依据见 ADR）。不加 retry、不改判据口径。
