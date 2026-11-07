@@ -37,6 +37,14 @@
  *   - `check-bundle-size`     体积预算：把基线压到实测之下 → 必红
  *   - `check-package-exports` 发布产物：把 main 指向不存在的文件 → 必红
  *   - `check-coverage-snapshot` 覆盖率快照：把 commit 改成不存在的 sha → 必红
+ *   - `check-component-status` 组件成熟度：把 experimental 的 Table 错标 stable → 必红
+ *   - `check-cache`            缓存容量：关掉 LRU 淘汰循环 →「totalSize 不超过 maxSize」必红
+ *   - `check-config-semantics` 配置语义：让 get() 直接返回内部引用 →「读的隔离性」必红
+ *   - `check-event-semantics`  事件名规范化：normalizeEventName 原样返回 → 规范化判据必红
+ *   - `check-security-html`    v-html 消毒：让 sanitizeHTML 直接返回输入 → 消毒判据必红
+ *   - `check-core-signal-contract` setup ctx：inject 不再委托 app.inject → 注入判据必红
+ *   - `check-dev-warnings`     开发期诊断：删掉 warn 里的 console.warn 输出 → 必红
+ *   - `check-render-cost`      渲染成本：让 keyed diff 同位置节点退化为卸载+重建 → 必红
  *
  * 其余门禁本轮不做注入实验，**如实登记为「未验证」**（见 negative-controls.json），
  * 不假装有反证。新增门禁时必须跑一次 `--sync` 让清单同步，否则本脚本报红。
@@ -98,14 +106,13 @@ function expectFail(cmd, label) {
   // 去掉 ANSI 颜色码（用 String.fromCharCode 构造，避免 no-control-regex 误判）
   const ANSI = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g');
   const plain = `${r.stdout ?? ''}\n${r.stderr ?? ''}`.replace(ANSI, '');
-  lastFailure = (
-    plain.split('\n').find((l) => l.includes('❌')) ??
-    plain.split('\n').find((l) => /Error|error TS|AssertionError/.test(l)) ??
-    plain.trim().split('\n').find(Boolean) ??
-    ''
-  )
-    .trim()
-    .slice(0, 160);
+  const lines = plain.split('\n');
+  const hit = lines.findIndex((l) => l.includes('❌'));
+  const head =
+    hit >= 0 ? lines[hit] : (lines.find((l) => /Error|error TS|AssertionError/.test(l)) ?? '');
+  // 有些脚本先打印 `❌ 失败：`，具体条目在下一非空行 —— 一并带上，避免「红在哪」变成空白
+  const next = hit >= 0 && /[：:]\s*$/.test(head) ? lines.slice(hit + 1).find((l) => l.trim()) : '';
+  lastFailure = `${head.trim()}${next ? ` ${next.trim()}` : ''}`.slice(0, 160);
   return r.status;
 }
 
@@ -494,6 +501,159 @@ const CONTROLS = {
         return `${JSON.stringify(pkg, null, 2)}\n`;
       },
       () => expectFail(['node', 'scripts/check-coverage-snapshot.mjs'], 'check-coverage-snapshot'),
+    );
+  },
+
+  'check-component-status': () => {
+    // 把 experimental 的 Table 错标 stable ⇒「mislabeled_stable > 0」与「stable 数量 ≠ 20」必红
+    const file = join(ROOT, 'packages/ecosystem/packages/ui/src/component-status.ts');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle = "Table: { status: 'experimental', note: EXPERIMENTAL_NOTE },";
+        if (!text.includes(needle)) {
+          throw new Error(
+            'check-component-status：注入点漂移（找不到 Table 的 experimental 登记）',
+          );
+        }
+        return text.replace(needle, "Table: { status: 'stable' },");
+      },
+      () => expectFail(['node', 'scripts/check-component-status.mjs'], 'check-component-status'),
+    );
+  },
+
+  'check-cache': () => {
+    // 关掉 LRU 淘汰循环 ⇒ 容量上限不再生效，「totalSize 不超过 maxSize」必红
+    const file = join(ROOT, 'packages/ecosystem/packages/ssr-kit/packages/cache/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-cache：缺少 cache dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle =
+          'while (this.stats.totalSize + size > this.maxSize && this.cache.size > 0) {';
+        if (!text.includes(needle)) throw new Error('check-cache：注入点漂移（找不到淘汰循环）');
+        return text.replace(needle, 'while (false) {');
+      },
+      () => expectFail(['node', 'scripts/check-cache.mjs'], 'check-cache'),
+    );
+  },
+
+  'check-config-semantics': () => {
+    // get() 不再深拷贝 ⇒ 外部改返回值即改内部状态，「两次 get 返回不同对象」必红
+    const file = join(ROOT, 'packages/ecosystem/packages/config/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-config-semantics：缺少 config dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle = 'return deepClone(value);';
+        if (!text.includes(needle)) {
+          throw new Error('check-config-semantics：注入点漂移（找不到 get 的 deepClone）');
+        }
+        return text.replace(needle, 'return value;');
+      },
+      () => expectFail(['node', 'scripts/check-config-semantics.mjs'], 'check-config-semantics'),
+    );
+  },
+
+  'check-event-semantics': () => {
+    // normalizeEventName 原样返回 ⇒「onClick → click」「@click.stop → click」等规范化判据必红
+    const file = join(ROOT, 'packages/common/packages/events/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-event-semantics：缺少 events dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle = 'return splitEventName(rawName).base.toLowerCase();';
+        if (!text.includes(needle)) {
+          throw new Error('check-event-semantics：注入点漂移（找不到 normalizeEventName）');
+        }
+        return text.replace(needle, 'return rawName;');
+      },
+      () => expectFail(['node', 'scripts/check-event-semantics.mjs'], 'check-event-semantics'),
+    );
+  },
+
+  'check-security-html': () => {
+    // sanitizeHTML 退化为直通 ⇒「删除 <script> / on* / javascript:」至少一条必红
+    const file = join(ROOT, 'packages/common/packages/security/dist/index.mjs');
+    if (!existsSync(file))
+      throw new Error('check-security-html：缺少 common-security dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle = 'function sanitizeHTML(str) {\n  let decoded = str;';
+        if (!text.includes(needle)) {
+          throw new Error('check-security-html：注入点漂移（找不到 sanitizeHTML）');
+        }
+        return text.replace(
+          needle,
+          'function sanitizeHTML(str) {\n  return str;\n  let decoded = str;',
+        );
+      },
+      () => expectFail(['node', 'scripts/check-security-html.mjs'], 'check-security-html'),
+    );
+  },
+
+  'check-core-signal-contract': () => {
+    // setup ctx 的 inject 不再委托 app.inject ⇒「ctx.inject 读到 app.provide 的值」必红
+    const file = join(ROOT, 'packages/core-signal/dist/index.mjs');
+    if (!existsSync(file))
+      throw new Error('check-core-signal-contract：缺少 core-signal dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle = 'return app.inject(key, defaultValue);';
+        if (!text.includes(needle)) {
+          throw new Error('check-core-signal-contract：注入点漂移（找不到 setup ctx inject）');
+        }
+        return text.replace(needle, 'return defaultValue;');
+      },
+      () =>
+        expectFail(
+          ['node', 'scripts/check-core-signal-contract.mjs'],
+          'check-core-signal-contract',
+        ),
+    );
+  },
+
+  'check-dev-warnings': () => {
+    // 删掉 warn 里的 console.warn 输出 ⇒「warn 有输出」「safeExec 失败时会告警」必红
+    const file = join(ROOT, 'packages/common/packages/error/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-dev-warnings：缺少 common-error dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle =
+          'function warn(message) {\n  if (!getDevMode()) return;\n  console.warn(`[LytJS]: ${message}`);\n}';
+        if (!text.includes(needle)) {
+          throw new Error('check-dev-warnings：注入点漂移（找不到 warn 实现）');
+        }
+        return text.replace(needle, 'function warn(message) {\n  if (!getDevMode()) return;\n}');
+      },
+      () => expectFail(['node', 'scripts/check-dev-warnings.mjs'], 'check-dev-warnings'),
+    );
+  },
+
+  'check-render-cost': () => {
+    // 让同位置节点的 diff 退化为「卸载旧节点 + 重挂新节点」⇒ 追加 1 项不再是 O(1)，
+    // 「结构性 DOM 操作 ≤ 5」与「没有重挂既有节点（remove=0）」必红
+    const file = join(ROOT, 'packages/vdom/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-render-cost：缺少 vdom dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle =
+          '    ops.patch(n1, n2, container, null, parentComponent, parentSuspense, isSVG);\n    i++;\n  }\n  while (i <= e1 && i <= e2) {\n    const n1 = c1[e1];';
+        if (!text.includes(needle)) {
+          throw new Error(
+            'check-render-cost：注入点漂移（找不到 patchKeyedChildren 首部复用路径）',
+          );
+        }
+        return text.replace(
+          needle,
+          '    ops.unmount(n1, parentComponent, parentSuspense, true);\n    ops.patch(null, n2, container, null, parentComponent, parentSuspense, isSVG);\n    i++;\n  }\n  while (i <= e1 && i <= e2) {\n    const n1 = c1[e1];',
+        );
+      },
+      () => expectFail(['node', 'scripts/check-render-cost.mjs'], 'check-render-cost'),
     );
   },
 };

@@ -33,7 +33,7 @@ S22 完成（API 快照 / 计时分层 / host-contract 前置）；fast 56/56、
 - **待决 C3**：`@lytjs/ui` 依赖与 ARCHITECTURE:26 冲突，见 0021。
 
 ## 下一步
-1. 负控清零：71 项 **verified 26 / unverified 45**（Batch 1–2 验 18 项）。每批 8–10 项、独立提交、
+1. 负控清零：71 项 **verified 34 / unverified 37**（Batch 1–3 验 26 项）。每批 8–10 项、独立提交、
    跑 fast+slow；不可负控项单列 `uninjectable` 并写原因。
 2. S23+：按评估台账确认后启动。
 
