@@ -1,6 +1,12 @@
 {
   "updatedAt": "2026-11-07",
-  "verified": ["check-deps", "check-ui-styles", "check-package-deps", "check-controlled-props"],
+  "verified": [
+    "check-deps",
+    "check-ui-styles",
+    "check-package-deps",
+    "check-controlled-props",
+    "check-release-parity"
+  ],
   "unverified": [
     "check-lockfile",
     "check-build-order",
@@ -48,7 +54,6 @@
     "check-security-html",
     "check-core-signal-contract",
     "check-coverage-snapshot",
-    "check-release-parity",
     "check-web-cssvars",
     "check-config-semantics",
     "check-router-semantics",

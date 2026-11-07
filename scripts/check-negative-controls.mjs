@@ -15,6 +15,7 @@
  *   - `check-package-deps`    依赖声明完整性（S03）：塞一个未声明的运行时 re-export → 必红
  *   - `check-controlled-props` 受控组件：把 UI dist 的 `current` 受控读取改成常量 → 必红
  *   - `check-ui-styles`        样式覆盖：塞一个未在 CSS 里出现的静态类名 → 必红
+ *   - `check-release-parity`  发布一致性：改一个包版本 → 「76 包版本一致」判据必红
  *
  * 其余门禁本轮不做注入实验，**如实登记为「未验证」**（见 negative-controls.json），
  * 不假装有反证。新增门禁时必须跑一次 `--sync` 让清单同步，否则本脚本报红。
@@ -130,6 +131,20 @@ const CONTROLS = {
     const file = join(ROOT, 'packages/ecosystem/packages/ui/src/components/__negctl.ts');
     withTempFile(file, "export const NEGCTL_CLASS = 'lyt-negctl-missing';\n", () =>
       expectFail(['tsx', 'scripts/check-ui-styles.ts'], 'check-ui-styles'),
+    );
+  },
+
+  'check-release-parity': () => {
+    // S21：把一个叶子包的版本改成不一致 ⇒ 「76 个包版本一致」判据必须报红
+    const file = join(ROOT, 'packages/common/packages/is/package.json');
+    withPatchedFile(
+      file,
+      (text) => {
+        const pkg = JSON.parse(text);
+        pkg.version = '0.0.0-negctl';
+        return `${JSON.stringify(pkg, null, 2)}\n`;
+      },
+      () => expectFail(['node', 'scripts/check-release-parity.mjs'], 'check-release-parity'),
     );
   },
 };
