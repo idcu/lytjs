@@ -305,6 +305,24 @@ section('[9] Image：src 跟随并重置错误态');
 }
 
 // ══════════════════════════════════════════════════════════
+section('[10] TimePicker：modelValue 跟随');
+{
+  const v = ref('01:02:03');
+  const host = await mount(() => h(ui.TimePicker, { modelValue: v.value }));
+  host
+    .querySelector('.lyt-time-picker__trigger')
+    ?.dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
+  await sleep();
+  const selectValues = () => [...host.querySelectorAll('select')].map((el) => el.value).join(':');
+  check('TimePicker 初始显示为 01:02:03', text(host).includes('01:02:03'), text(host));
+
+  v.value = '10:20:30';
+  await sleep();
+  check('外部改 modelValue 后显示跟随', text(host).includes('10:20:30'), text(host));
+  check('外部改 modelValue 后下拉选择跟随', selectValues() === '10:20:30', selectValues());
+}
+
+// ══════════════════════════════════════════════════════════
 for (const host of hosts) host.remove();
 // jsdom 会留下内部定时器/句柄，进程会一直挂着（实测挂 60s+）⇒ 断言跑完就显式退出
 dom.window.close();

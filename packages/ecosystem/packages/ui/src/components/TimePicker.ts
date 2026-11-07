@@ -10,7 +10,7 @@
 
 import { defineComponent, type PropType } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
-import { signal } from '@lytjs/reactivity';
+import { effect, signal } from '@lytjs/reactivity';
 
 export interface TimePickerSetupProps {
   modelValue: string | [string, string] | null;
@@ -158,6 +158,26 @@ export const TimePicker = defineComponent({
       const parts = splitHHmmss(v);
       return parts ? formatTime(parts[0], parts[1], parts[2]) : (v as string) || '';
     };
+
+    // 受控：把 modelValue 回灌到内部时/分/秒（含初始值），否则下拉选项与显示值脱节。
+    const applyModelValue = (v: unknown): void => {
+      if (_props.isRange) {
+        const start = splitHHmmss(Array.isArray(v) ? v[0] : null);
+        const end = splitHHmmss(Array.isArray(v) ? v[1] : null);
+        rangeStartHour.set(start?.[0] ?? 0);
+        rangeStartMinute.set(start?.[1] ?? 0);
+        rangeStartSecond.set(start?.[2] ?? 0);
+        rangeEndHour.set(end?.[0] ?? 0);
+        rangeEndMinute.set(end?.[1] ?? 0);
+        rangeEndSecond.set(end?.[2] ?? 0);
+        return;
+      }
+      const parts = splitHHmmss(v);
+      hours.set(parts?.[0] ?? 0);
+      minutes.set(parts?.[1] ?? 0);
+      seconds.set(parts?.[2] ?? 0);
+    };
+    effect(() => applyModelValue(_props.modelValue));
 
     const getDisplayValue = (): string => {
       if (_props.isRange && Array.isArray(_props.modelValue)) {
