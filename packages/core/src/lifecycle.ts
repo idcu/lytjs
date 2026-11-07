@@ -1,5 +1,5 @@
 // src/lifecycle.ts
-// @lytjs/core - 生命周期钩子（代理到 @lytjs/component）
+// @lytjs/core - 生命周期钩子（转发到 @lytjs/core-vnode）
 
 export {
   onMounted,
@@ -13,4 +13,4 @@ export {
   onDeactivated,
   onRenderTracked,
   onRenderTriggered,
-} from '@lytjs/component';
+} from '@lytjs/core-vnode';

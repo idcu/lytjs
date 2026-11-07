@@ -5,71 +5,10 @@ import { getCurrentInstance, onMounted } from '@lytjs/component';
 import { computed, shallowRef, watchEffect, readonly, onScopeDispose } from '@lytjs/reactivity';
 import { warnOnce } from '@lytjs/common-error';
 import type { WritableComputedRef, Ref } from '@lytjs/reactivity';
-import type { InternalSlots } from './types';
 
-/**
- * 获取当前组件的 slots
- * FIX: P2-37 useSlots 类型安全增强：
- * 返回的 InternalSlots 类型确保 slot 函数的参数和返回值类型正确
- */
-export function useSlots(): InternalSlots {
-  const instance = getCurrentInstance();
-  if (!instance) {
-    if (__DEV__) {
-      warnOnce('useSlots() called without an active component instance.');
-    }
-    return {} as InternalSlots;
-  }
-  return instance.slots || ({} as InternalSlots);
-}
-
-/**
- * 获取当前组件的 attrs
- */
-export function useAttrs(): Record<string, unknown> {
-  const instance = getCurrentInstance();
-  if (!instance) {
-    if (__DEV__) {
-      warnOnce('useAttrs() was called outside of setup().');
-    }
-    return {};
-  }
-  return instance.attrs || {};
-}
-
-/**
- * 双向绑定辅助（v-model 的 composition API 版本）
- */
-export function useModel<T>(
-  props: Record<string, T | undefined>,
-  key: string,
-): WritableComputedRef<T> {
-  const instance = getCurrentInstance();
-  if (!instance) {
-    // FIX: P1-43 useModel 无实例时添加 DEV 警告，
-    // 提醒开发者 useModel 必须在 setup() 中调用
-    if (__DEV__) {
-      warnOnce(`useModel("${key}") was called outside of setup(). The model will not be reactive.`);
-    }
-    return computed<T>({
-      get() {
-        return undefined as T;
-      },
-      set() {
-        // no-op when outside setup
-      },
-    });
-  }
-
-  return computed<T>({
-    get() {
-      return props[key] as T;
-    },
-    set(newValue: T) {
-      instance.emit(`update:${key}`, newValue);
-    },
-  });
-}
+// 2026-11-07（S07 / ADR 0016）：`useSlots / useAttrs / useModel` 的权威实现收敛到
+// `@lytjs/core-vnode`（同名函数身份一致），本文件只转发。
+export { useSlots, useAttrs, useModel } from '@lytjs/core-vnode';
 
 /**
  * defineModel 运行时实现。

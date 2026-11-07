@@ -29,7 +29,11 @@ const {
   mockOnRenderTriggered: vi.fn(),
 }));
 
-vi.mock('@lytjs/component', () => ({
+// 2026-11-07（S07）：core 的 lifecycle 改为从 `@lytjs/core-vnode` 转发，
+// 加载 core-vnode 入口会连带加载 `@lytjs/component` 的其余导出；
+// 因此 mock 需基于真实模块展开，只替换生命周期钩子。
+vi.mock('@lytjs/component', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   onMounted: mockOnMounted,
   onUnmounted: mockOnUnmounted,
   onUpdated: mockOnUpdated,

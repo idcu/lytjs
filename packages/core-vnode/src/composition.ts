@@ -50,7 +50,7 @@ export function useModel<T>(
     //   此前这里**静默**返回一个永远读 `undefined`、写入被吞掉的 computed ——
     //   用户拿到的是"能调、不报错、永远不生效"的对象，比直接抛错难查得多。
     if (__DEV__) {
-      warnOnce('useModel() was called outside of setup().');
+      warnOnce(`useModel("${key}") was called outside of setup(). The model will not be reactive.`);
     }
     return computed<T>({
       get() {

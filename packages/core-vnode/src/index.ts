@@ -59,6 +59,8 @@ export {
   onBeforeUnmount,
   onBeforeUpdate,
   onErrorCaptured,
+  onActivated,
+  onDeactivated,
   onRenderTracked,
   onRenderTriggered,
 } from './lifecycle';

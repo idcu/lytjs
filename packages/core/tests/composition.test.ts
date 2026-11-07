@@ -13,9 +13,16 @@ const mockInstance = {
 
 const mockGetCurrentInstance = vi.fn(() => mockInstance);
 
-vi.mock('@lytjs/component', () => ({
-  getCurrentInstance: (...args: any[]) => mockGetCurrentInstance(...args),
-}));
+// 2026-11-07（S07）：core 的 composition 改为从 `@lytjs/core-vnode` 转发，
+// 加载 core-vnode 入口会连带加载 `@lytjs/component` 的其余导出；
+// 因此 mock 需基于真实模块展开，只替换本测试关心的 getCurrentInstance。
+vi.mock('@lytjs/component', async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return {
+    ...actual,
+    getCurrentInstance: (...args: any[]) => mockGetCurrentInstance(...args),
+  };
+});
 
 import { useSlots, useAttrs, useModel } from '../src/composition';
 
