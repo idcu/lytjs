@@ -9,14 +9,15 @@ keywords: [硬约束9]
 # NOW · main
 
 ## 当前焦点
-S13 完成（对拍 100/100 + 共享 helper 双发射器）；下一步 S14 slow 档复跑。
+S13 完成；S14 slow 跑出 12/14，bundle-size 待 owner 签字（功能增长，不得私改基线）。
 
 ## 11-07 完成
 - **S13** `check-compiler-parity` **100/100**、`expectedMismatch` 0；baseline
-  divergent 23→0。语义抽入 `codegen-signal-shared.ts`，两发射器只留输出形态
-  （短别名/形参名/变量名/前缀）；契约与测试未改，对拍维持 100/100。
-  修齐以基础实现 A 为语义基准：根级文本、多插值槽位、v-if 分支动态内容、
-  kebab 组件引用、v-for 嵌套子元素。
+  divergent 23→0。语义抽入 `codegen-signal-shared.ts`（含静态/分支 HTML 序列化），
+  两发射器只留输出形态（短别名/形参名/变量名/前缀）；契约与测试未改。
+- **S14 slow 12/14**：`format:check` 既有红；`check-bundle-size` 三入口超 +2%
+  （first-screen 71.8 vs 70.7 KB，编译器同理 +2.5 KB gzip），均因 S13 对拍所需
+  功能增长（分支/嵌套列表/根文本）。按脚本要求待 owner 签字后才可改基线。
 - **S01/S02** gate 委托 `gate.mjs`；check-deps 覆盖 **76/76**。
 - **S06–S12** ErrorBoundary 下沉 component；core-vnode 权威收敛与 S07 体积回归修复
   （first-screen 90.3→**70.4 KB**、runtime 87.7→**36.6 KB**）；S08 事件修饰符共用；
