@@ -29,6 +29,14 @@
  *   - `check-src-hygiene`     源码卫生：新增 console.log 文件 → 必红
  *   - `check-examples`        示例可用性：引用不存在的 @lytjs 包 → 必红
  *   - `check-dist-freshness`  产物新鲜度：把 src 改成比 dist 新 → 必红
+ *   - `check-dead-packages`   死包棘轮：新增一个零引用 common 包 → 必红
+ *   - `check-vitest-alias-dist` 测试 alias：加一条指向不存在路径的 alias → 必红
+ *   - `check-doc-imports`     文档 import：guide 里写一个不存在的导出名 → 必红
+ *   - `check-ui-props-wiring` UI props：新增一个声明了却没引用的 prop → 必红
+ *   - `check-ui-i18n`         UI i18n：把一条英文文案改成空串 → 必红
+ *   - `check-bundle-size`     体积预算：把基线压到实测之下 → 必红
+ *   - `check-package-exports` 发布产物：把 main 指向不存在的文件 → 必红
+ *   - `check-coverage-snapshot` 覆盖率快照：把 commit 改成不存在的 sha → 必红
  *
  * 其余门禁本轮不做注入实验，**如实登记为「未验证」**（见 negative-controls.json），
  * 不假装有反证。新增门禁时必须跑一次 `--sync` 让清单同步，否则本脚本报红。
@@ -45,7 +53,16 @@
  */
 
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync, statSync, unlinkSync, utimesSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  unlinkSync,
+  utimesSync,
+  writeFileSync,
+} from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -92,14 +109,21 @@ function expectFail(cmd, label) {
   return r.status;
 }
 
-/** 临时改写一个文件，跑完（无论成败）恢复原字节 */
+/**
+ * 临时改写一个文件，跑完（无论成败）恢复原字节与原 mtime。
+ *
+ * 恢复 mtime 是必须的：注入任何包的 src 文件会把它的修改时间推到最新，
+ * 从而让 `check-dist-freshness`（dist 必须比 src 新）在**恢复之后**误红。
+ */
 function withPatchedFile(file, patch, run) {
   const original = readFileSync(file, 'utf-8');
+  const st = statSync(file);
   try {
     writeFileSync(file, patch(original));
     return run();
   } finally {
     writeFileSync(file, original);
+    utimesSync(file, st.atime, st.mtime);
   }
 }
 
@@ -110,6 +134,20 @@ function withTempFile(file, content, run) {
     return run();
   } finally {
     if (existsSync(file)) unlinkSync(file);
+  }
+}
+
+/** 临时新建一个目录树，跑完递归删除 */
+function withTempDir(dir, files, run) {
+  try {
+    for (const [rel, content] of Object.entries(files)) {
+      const full = join(dir, rel);
+      mkdirSync(dirname(full), { recursive: true });
+      writeFileSync(full, content);
+    }
+    return run();
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
   }
 }
 
@@ -185,15 +223,13 @@ const CONTROLS = {
 
   'check-as-unknown': () => {
     // S22：在已有计数的源码里多写一处 as unknown as ⇒ 「只减不增」判据必须报红。
-    // 恢复内容后再还原 mtime：否则 check-dist-freshness 会因「src 比 dist 新」误红。
+    // （withPatchedFile 会同时还原 mtime，避免 check-dist-freshness 误红）
     const file = join(ROOT, 'packages/vdom/src/patch.ts');
-    const st = statSync(file);
     withPatchedFile(
       file,
       (text) => `${text}\nexport const __negctlAsUnknown = 0 as unknown as string;\n`,
       () => expectFail(['node', 'scripts/check-as-unknown.mjs'], 'check-as-unknown'),
     );
-    utimesSync(file, st.atime, st.mtime);
   },
 
   'check-api-snapshot': () => {
@@ -334,6 +370,131 @@ const CONTROLS = {
     } finally {
       utimesSync(file, st.atime, st.mtime);
     }
+  },
+
+  'check-dead-packages': () => {
+    // 新增一个零生产引用的 common 内部包 ⇒ 「死包只减不增」必红
+    const dir = join(ROOT, 'packages/common/packages/__negctl-dead-pkg');
+    withTempDir(
+      dir,
+      {
+        'package.json': `${JSON.stringify(
+          { name: '@lytjs/common-negctl-dead', version: '0.0.0', private: true },
+          null,
+          2,
+        )}\n`,
+        'src/index.ts': 'export const NEGCTL = 1;\n',
+      },
+      () => expectFail(['tsx', 'scripts/check-dead-packages.ts'], 'check-dead-packages'),
+    );
+  },
+
+  'check-vitest-alias-dist': () => {
+    // 加一条指向不存在目录的 alias ⇒ 「每个 alias 目标都必须存在」必红
+    const file = join(ROOT, 'vitest.config.ts');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle = 'alias: {';
+        if (!text.includes(needle)) {
+          throw new Error('check-vitest-alias-dist：注入点漂移（找不到 alias 块）');
+        }
+        return text.replace(
+          needle,
+          `${needle}\n      '@lytjs/__negctl-missing': resolve(root, 'packages/__negctl-missing/src'),`,
+        );
+      },
+      () => expectFail(['tsx', 'scripts/check-vitest-alias-dist.ts'], 'check-vitest-alias-dist'),
+    );
+  },
+
+  'check-doc-imports': () => {
+    // guide 里写一个不存在的具名 import ⇒ 「文档接触面必须为 0 缺失」必红
+    const file = join(ROOT, 'docs/guide/__negctl-doc.md');
+    withTempFile(file, "import { __negctlMissing } from '@lytjs/core';\n", () =>
+      expectFail(['tsx', 'scripts/check-doc-imports.ts'], 'check-doc-imports'),
+    );
+  },
+
+  'check-ui-props-wiring': () => {
+    // 新增一个「声明了 props 却从未引用」的组件 ⇒ props 接线棘轮必红
+    const file = join(ROOT, 'packages/ecosystem/packages/ui/src/components/__negctl-props.ts');
+    withTempFile(
+      file,
+      [
+        'export default {',
+        "  name: 'NegctlProps',",
+        '  props: {',
+        '    neverWired: { type: String },',
+        '  },',
+        '  setup() {',
+        '    return () => null;',
+        '  },',
+        '};',
+        '',
+      ].join('\n'),
+      () => expectFail(['tsx', 'scripts/check-ui-props-wiring.ts'], 'check-ui-props-wiring'),
+    );
+  },
+
+  'check-ui-i18n': () => {
+    // 把 en-US 的一条文案改成空串 ⇒ 「文案不得为空串」必红
+    const file = join(ROOT, 'packages/ecosystem/packages/ui/src/locale/messages.ts');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle = "'tag.close': 'Close tag',";
+        if (!text.includes(needle))
+          throw new Error('check-ui-i18n：注入点漂移（找不到 en-US tag.close）');
+        return text.replace(needle, "'tag.close': '',");
+      },
+      () => expectFail(['tsx', 'scripts/check-ui-i18n.ts'], 'check-ui-i18n'),
+    );
+  },
+
+  'check-bundle-size': () => {
+    // 把某个入口的基线压到实测之下 ⇒ 「实测 ≤ 基线 + 2%」必红
+    const file = join(ROOT, 'scripts/bundle-baseline.json');
+    withPatchedFile(
+      file,
+      (text) => {
+        const pkg = JSON.parse(text);
+        if (!pkg.entries?.['vdom-only']) {
+          throw new Error('check-bundle-size：注入点漂移（找不到 vdom-only 条目）');
+        }
+        pkg.entries['vdom-only'].baselineBytes = 1;
+        return `${JSON.stringify(pkg, null, 2)}\n`;
+      },
+      () => expectFail(['tsx', 'scripts/check-bundle-size.ts'], 'check-bundle-size'),
+    );
+  },
+
+  'check-package-exports': () => {
+    // 把一个包的 main 指向不存在的文件 ⇒ 「发布产物入口必须存在」必红
+    const file = join(ROOT, 'packages/common/packages/is/package.json');
+    withPatchedFile(
+      file,
+      (text) => {
+        const pkg = JSON.parse(text);
+        pkg.main = './dist/__negctl-missing.cjs';
+        return `${JSON.stringify(pkg, null, 2)}\n`;
+      },
+      () => expectFail(['node', 'scripts/check-package-exports.mjs'], 'check-package-exports'),
+    );
+  },
+
+  'check-coverage-snapshot': () => {
+    // 把快照里的 commit 改成不存在的 sha ⇒ 「commit 必须真实存在」必红
+    const file = join(ROOT, 'scripts/coverage-snapshot.json');
+    withPatchedFile(
+      file,
+      (text) => {
+        const pkg = JSON.parse(text);
+        pkg.commit = '0000000000000000000000000000000000000000';
+        return `${JSON.stringify(pkg, null, 2)}\n`;
+      },
+      () => expectFail(['node', 'scripts/check-coverage-snapshot.mjs'], 'check-coverage-snapshot'),
+    );
   },
 };
 
