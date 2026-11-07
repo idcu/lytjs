@@ -9,6 +9,7 @@ import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
 import { ShapeFlags, PatchFlags } from '@lytjs/common-vnode';
 import { hasChanged, EMPTY_OBJ, isFunction } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
+import { isFormStateProp } from '@lytjs/common-dom';
 import type { SuspenseBoundary } from './types';
 import { invokeDirectiveHook } from './directives';
 
@@ -476,10 +477,19 @@ export function createElementPatch<HN, HE extends HN>(
 
     // 应用 props
     const props = vnode.props ?? EMPTY_OBJ;
+    // 表单状态（value/checked/selected…）在**有元素子节点**时必须等子节点就绪后再写：
+    // `<select value>` 的 property 在 `<option>` 出现前赋值会被丢弃，首项被误选中。
+    // 无元素子节点（如 `<option value>`）保持原有时序，避免 `.value === 文本` 时跳过写值。
+    const deferFormProps = (vnode.shapeFlag & ShapeFlags.ARRAY_CHILDREN) !== 0;
+    const deferredFormProps: Array<[string, unknown]> = [];
     for (const key in props) {
       if (key === 'key' || key === 'ref') continue;
       // 水合：用户已经改过的表单状态不覆盖（见 shouldKeepUserFormState）
       if (ctx.hydrating && claimed && shouldKeepUserFormState(el, key)) continue;
+      if (deferFormProps && isFormStateProp(key)) {
+        deferredFormProps.push([key, props[key]]);
+        continue;
+      }
       patchProp(el, key, null, props[key]);
     }
     // 水合：清掉「服务端有、客户端没有」的属性（`patchProp(null → v)` 只能加不能减）
@@ -511,6 +521,11 @@ export function createElementPatch<HN, HE extends HN>(
       setElementText(el, String(vnode.children ?? ''));
     }
     // 其余情况（无子节点 / 注释占位）无需处理
+
+    // 子节点就绪后补写表单状态（见上方 deferredFormProps）
+    for (const [key, value] of deferredFormProps) {
+      patchProp(el, key, null, value);
+    }
 
     // ★ 2026-10-31 新增：自定义指令 beforeMount（在插入文档**之前**，与 Vue 一致）
     invokeDirectiveHook(vnode, 'beforeMount');

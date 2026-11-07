@@ -315,6 +315,7 @@ section('[10] TimePicker：modelValue 跟随');
   await sleep();
   const selectValues = () => [...host.querySelectorAll('select')].map((el) => el.value).join(':');
   check('TimePicker 初始显示为 01:02:03', text(host).includes('01:02:03'), text(host));
+  check('TimePicker 初始下拉为 01:02:03', selectValues() === '1:2:3', selectValues());
 
   v.value = '10:20:30';
   await sleep();

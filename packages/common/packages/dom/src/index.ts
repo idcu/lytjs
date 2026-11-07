@@ -309,6 +309,17 @@ export function patchAttr(el: Element, key: string, value: unknown, _isSVG: bool
  */
 const FORM_STATE_KEYS = new Set(['value', 'checked', 'selected', 'indeterminate', 'muted']);
 
+/**
+ * Property / Attribute 判据（单一真源）。
+ *
+ * vdom 在挂载阶段用它决定「表单状态是否要等子节点就绪后再写」：
+ * `<select value="b">` 的 `value` 必须是 DOM property，但 property 只有在对应
+ * `<option>` 存在时才会生效；props 先于 children 写入会被丢弃，首项被默认选中。
+ */
+export function isFormStateProp(key: string): boolean {
+  return FORM_STATE_KEYS.has(key);
+}
+
 /** 写表单状态（property），并在值未变时跳过以免打断光标/输入法 */
 function patchFormState(el: Element, key: string, nextValue: unknown): void {
   const node = el as unknown as Record<string, unknown>;
