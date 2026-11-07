@@ -1,5 +1,8 @@
 // @lytjs/common-event-normalizer
 // 事件归一化：解析事件名、提供 invoker 缓存模式、通过 RendererHost 操作事件
+//
+// ★ 2026-11-07（S08）：修饰符表/解析/拦截语义全部来自 `@lytjs/common-events`，
+//   本文件不得再维护第二份实现（`KEY_ALIASES` / `MOUSE_BUTTONS` 等只有一份）。
 
 import type {
   RendererHost,
@@ -7,7 +10,13 @@ import type {
   HostEventHandler,
   HostEventOptions,
 } from '@lytjs/host-contract';
-import { EVENT_MODIFIER_RE } from '@lytjs/common-events';
+import {
+  getEventKey as sharedGetEventKey,
+  isEventModifierIntercepted,
+  normalizeEventName as sharedNormalizeEventName,
+  parseEventModifier,
+  type EventModifierFlags,
+} from '@lytjs/common-events';
 
 // ============================================================
 // 类型定义
@@ -16,20 +25,7 @@ import { EVENT_MODIFIER_RE } from '@lytjs/common-events';
 /**
  * 事件修饰符解析结果。
  */
-export interface ParsedModifiers {
-  /** 是否调用 stopPropagation */
-  stop: boolean;
-  /** 是否调用 preventDefault */
-  prevent: boolean;
-  /** 是否使用 capture 模式 */
-  capture: boolean;
-  /** 是否使用 once 模式 */
-  once: boolean;
-  /** 是否仅在 target === currentTarget 时触发 */
-  self: boolean;
-  /** 是否使用 passive 模式 */
-  passive: boolean;
-}
+export type ParsedModifiers = EventModifierFlags;
 
 /**
  * 解析后的事件信息。
@@ -143,20 +139,8 @@ export class EventNormalizer<HN extends object = object, HE extends HN = HN> {
    * @returns 规范化后的事件名
    */
   normalizeEventName(rawName: string): string {
-    // 移除 @ 前缀
-    let name = rawName.startsWith('@') ? rawName.slice(1) : rawName;
-
-    // 移除 on 前缀（仅当以大写字母开头的 on 前缀时）
-    // FIX: P2-45 使用 charAt 替代非空断言，更安全地访问字符串字符
-    if (name.startsWith('on') && name.length > 2 && /^[A-Za-z]$/.test(name.charAt(2))) {
-      name = name.slice(2);
-    }
-
-    // 移除修饰符后缀（如 .stop.prevent）
-    name = name.replace(EVENT_MODIFIER_RE, '');
-
-    // 转为小写
-    return name.toLowerCase();
+    // 2026-11-07（S08）：共用 common-events 的实现，避免两套前缀/修饰符规则漂移。
+    return sharedNormalizeEventName(rawName);
   }
 
   /**
@@ -166,45 +150,8 @@ export class EventNormalizer<HN extends object = object, HE extends HN = HN> {
    * @returns 修饰符集合
    */
   parseModifiers(rawName: string): ParsedModifiers {
-    const modifiers: ParsedModifiers = {
-      stop: false,
-      prevent: false,
-      capture: false,
-      once: false,
-      self: false,
-      passive: false,
-    };
-
-    // FIX: P2-23 正则表达式缓存 - 模块级预编译正则
-    const RE_EVENT_MODIFIERS = /\.(stop|prevent|capture|once|self|passive)/g;
-    // FIX: P2-41 事件捕获选项支持：支持 .capture 修饰符
-    const modifierMatch = rawName.match(RE_EVENT_MODIFIERS);
-    if (modifierMatch) {
-      for (const mod of modifierMatch) {
-        switch (mod) {
-          case '.stop':
-            modifiers.stop = true;
-            break;
-          case '.prevent':
-            modifiers.prevent = true;
-            break;
-          case '.capture':
-            modifiers.capture = true;
-            break;
-          case '.once':
-            modifiers.once = true;
-            break;
-          case '.self':
-            modifiers.self = true;
-            break;
-          case '.passive':
-            modifiers.passive = true;
-            break;
-        }
-      }
-    }
-
-    return modifiers;
+    // 2026-11-07（S08）：完整修饰符表（含按键/鼠标/系统键）由 common-events 唯一提供。
+    return parseEventModifier(rawName);
   }
 
   // ==========================================================
@@ -220,10 +167,8 @@ export class EventNormalizer<HN extends object = object, HE extends HN = HN> {
    * @returns 缓存 key
    */
   getEventKey(rawName: string): string {
-    const name = this.normalizeEventName(rawName);
-    // FIX: P2-v11-20 添加空字符串检查，避免 name 为空时 name[0] 返回 undefined
-    if (!name) return 'on';
-    return 'on' + name[0]!.toUpperCase() + name.slice(1);
+    // 2026-11-07（S08）：共用 common-events 的实现。
+    return sharedGetEventKey(rawName);
   }
 
   // ==========================================================
@@ -391,17 +336,14 @@ export class EventNormalizer<HN extends object = object, HE extends HN = HN> {
 
     invoker.handler = (event: HostEvent) => {
       if (disposed) return;
-      const modifiers = invoker.parsed.modifiers;
-
-      // `.self` 必须在 stop/prevent **之前**判断（子元素上的事件应完全忽略）
-      if (modifiers.self && event.target !== event.currentTarget) {
+      // 2026-11-07（S08）：修饰符语义共用 common-events 的单一判定函数。
+      if (
+        isEventModifierIntercepted(
+          event as unknown as Event,
+          invoker.parsed.modifiers.modifierNames,
+        )
+      ) {
         return;
-      }
-      if (modifiers.stop) {
-        event.stopPropagation();
-      }
-      if (modifiers.prevent) {
-        event.preventDefault();
       }
 
       if (currentValue) {

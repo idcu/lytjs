@@ -21,23 +21,78 @@ export function isOn(key: string): boolean {
 /** 事件缓存 key 前缀 */
 export const VEI_KEY = '_vei';
 
-/** 事件修饰符正则 */
+/**
+ * 已知的**非按键**修饰符；其余修饰符一律按「按键名」解释（与 Vue 一致）。
+ *
+ * ★ 2026-11-07（S08）：本表是**唯一真源**，`@lytjs/dom-runtime` 等消费方不得再建副本。
+ */
+export const NON_KEY_MODIFIERS: ReadonlySet<string> = new Set([
+  'stop',
+  'prevent',
+  'self',
+  'capture',
+  'once',
+  'passive',
+  'native',
+  'exact',
+  'left',
+  'middle',
+  'right',
+  'ctrl',
+  'shift',
+  'alt',
+  'meta',
+]);
+
+/** 系统修饰键集合（`.ctrl` / `.shift` / `.alt` / `.meta`，`exact` 判定使用）。 */
+export const SYSTEM_MODIFIERS = ['ctrl', 'shift', 'alt', 'meta'] as const;
+
+/** Vue 风格按键别名 → `KeyboardEvent.key` 取值。注意 `.left/right` 同时是鼠标键。 */
+export const KEY_ALIASES: Record<string, string[]> = {
+  enter: ['Enter'],
+  tab: ['Tab'],
+  delete: ['Delete', 'Backspace'],
+  esc: ['Escape'],
+  space: [' ', 'Spacebar'],
+  up: ['ArrowUp'],
+  down: ['ArrowDown'],
+  left: ['ArrowLeft'],
+  right: ['ArrowRight'],
+};
+
+/** 鼠标按键修饰符 → `MouseEvent.button` */
+export const MOUSE_BUTTONS: Record<string, number> = { left: 0, middle: 1, right: 2 };
+
+/**
+ * 事件修饰符正则（保留导出以兼容旧调用方；完整解析见 `parseEventModifier`）。
+ * @deprecated 解析逻辑已改为按 `.` 分段，不依赖该正则。
+ */
 export const EVENT_MODIFIER_RE = /\.(stop|prevent|capture|once|self|passive)(?=\.|$)/g;
+
+/**
+ * 拆分事件名与修饰符后缀。
+ *
+ * 支持格式：@click / onClick / click → base=click；onClick.stop.enter → base=click、modifiers=[stop, enter]
+ *
+ * ⚠️ 2026-11-03 修（P1）：此前第三位只要是字母就剥掉 `on` —— 于是原生事件
+ * `online` / `onLine` 被规范成 **`line`**，`@online`（网络恢复）永远不会触发。
+ * 只在小写 `on` + **大写**字母时才认为是「onXxx」形式（`onClick` / `onMouseenter`）。
+ */
+export function splitEventName(rawName: string): { base: string; modifiers: string[] } {
+  let name = rawName.startsWith('@') ? rawName.slice(1) : rawName;
+  if (name.startsWith('on') && name.length > 2 && /^[A-Z]$/.test(name[2]!)) {
+    name = name.slice(2);
+  }
+  const [base = '', ...modifiers] = name.split('.');
+  return { base, modifiers };
+}
 
 /**
  * 事件名规范化：移除 @/on 前缀和修饰符后缀，转小写。
  * 支持格式：@click / onClick / click → click
  */
 export function normalizeEventName(rawName: string): string {
-  let name = rawName.startsWith('@') ? rawName.slice(1) : rawName;
-  // ⚠️ 2026-11-03 修（P1）：此前第三位只要是字母就剥掉 `on` ——
-  //   于是原生事件 `online` / `onLine` 被规范成 **`line`**，
-  //   `@online`（网络恢复）永远不会触发，且没有任何报错。
-  //   只在小写 `on` + **大写**字母时才认为是「onXxx」形式（`onClick` / `onMouseenter`）。
-  if (name.startsWith('on') && name.length > 2 && /^[A-Z]$/.test(name[2]!)) {
-    name = name.slice(2);
-  }
-  return name.replace(EVENT_MODIFIER_RE, '').toLowerCase();
+  return splitEventName(rawName).base.toLowerCase();
 }
 
 /**
@@ -46,60 +101,129 @@ export function normalizeEventName(rawName: string): string {
  * 支持输入格式：click / onClick / onClick.stop
  */
 export function getEventKey(name: string): string {
-  const baseName = name.split('.')[0]!;
+  const baseName = splitEventName(name).base;
+  if (!baseName) return 'on';
   if (baseName.startsWith('on') && baseName.length > 2 && /^[A-Z]$/.test(baseName[2]!)) {
     return baseName;
   }
   return 'on' + baseName[0]!.toUpperCase() + baseName.slice(1);
 }
 
-/**
- * 解析事件修饰符。
- * 例如：onClick.stop.prevent → { name: 'click', stop: true, prevent: true, ... }
- */
-export function parseEventModifier(rawName: string): {
-  name: string;
+/** 事件修饰符标志位（`modifierNames` 为原始名字数组，供统一语义判定使用）。 */
+export interface EventModifierFlags {
+  /** 原始修饰符名（按出现顺序） */
+  modifierNames: string[];
   stop: boolean;
   prevent: boolean;
   capture: boolean;
   once: boolean;
   self: boolean;
   passive: boolean;
-} {
-  const modifiers = {
+  left: boolean;
+  middle: boolean;
+  right: boolean;
+  ctrl: boolean;
+  shift: boolean;
+  alt: boolean;
+  meta: boolean;
+  exact: boolean;
+}
+
+/** 解析结果：事件名 + 全部修饰符标志位。 */
+export interface ParsedEventModifier extends EventModifierFlags {
+  name: string;
+}
+
+/**
+ * 解析事件修饰符。
+ * 例如：onClick.stop.prevent → { name: 'click', modifierNames: ['stop','prevent'], stop: true, ... }
+ */
+export function parseEventModifier(rawName: string): ParsedEventModifier {
+  const { base, modifiers } = splitEventName(rawName);
+  const flags: EventModifierFlags = {
+    modifierNames: modifiers,
     stop: false,
     prevent: false,
     capture: false,
     once: false,
     self: false,
     passive: false,
+    left: false,
+    middle: false,
+    right: false,
+    ctrl: false,
+    shift: false,
+    alt: false,
+    meta: false,
+    exact: false,
   };
-  const match = rawName.match(EVENT_MODIFIER_RE);
-  if (match) {
-    for (const mod of match) {
-      switch (mod) {
-        case '.stop':
-          modifiers.stop = true;
-          break;
-        case '.prevent':
-          modifiers.prevent = true;
-          break;
-        case '.capture':
-          modifiers.capture = true;
-          break;
-        case '.once':
-          modifiers.once = true;
-          break;
-        case '.self':
-          modifiers.self = true;
-          break;
-        case '.passive':
-          modifiers.passive = true;
-          break;
-      }
+  for (const raw of modifiers) {
+    const mod = raw.toLowerCase();
+    if (mod in flags && mod !== 'modifierNames') {
+      (flags as unknown as Record<string, boolean>)[mod] = true;
     }
   }
-  return { name: normalizeEventName(rawName), ...modifiers };
+  return { name: base.toLowerCase(), ...flags };
+}
+
+/** 修饰符输入：数组（编译器产物）或对象（Signal 路径）。 */
+export type EventModifierInput = readonly string[] | Record<string, boolean>;
+
+function toModifierSet(input: EventModifierInput): Set<string> {
+  if (Array.isArray(input)) return new Set(input as readonly string[]);
+  const record = input as Record<string, boolean>;
+  return new Set(Object.keys(record).filter((key) => Boolean(record[key])));
+}
+
+/**
+ * 判定一次事件是否应被修饰符**拦截**（返回 `true` = 不调用 handler）。
+ *
+ * 两类语义：
+ * - **副作用型**（`prevent` / `stop`）：无条件执行，**不拦截**；
+ * - **条件型**（`self` / 鼠标键 / 系统键 / 按键名 / `exact`）：不满足即拦截。
+ *
+ * ★ 2026-11-07（S08）：vnode（adapter-web）、host（event-normalizer）、
+ * compiler/signal（dom-runtime）三条路径共用本函数，禁止各自再写一份。
+ */
+export function isEventModifierIntercepted(event: Event, input: EventModifierInput): boolean {
+  const mods = toModifierSet(input);
+
+  // `.self` 必须在 stop/prevent **之前**判断（子元素上的事件应完全忽略）
+  if (mods.has('self') && event.target !== event.currentTarget) return true;
+
+  if (mods.has('prevent')) event.preventDefault();
+  if (mods.has('stop')) event.stopPropagation();
+
+  // 鼠标键：`.left` / `.middle` / `.right`（注意与方向键同名，见 NON_KEY_MODIFIERS）
+  const mouseMods = [...mods].filter((m) => m in MOUSE_BUTTONS);
+  if (mouseMods.length > 0) {
+    const button = (event as MouseEvent).button;
+    if (!mouseMods.some((m) => MOUSE_BUTTONS[m] === button)) return true;
+  }
+
+  const sysPressed = (m: string): boolean =>
+    Boolean((event as unknown as Record<string, boolean>)[`${m}Key`]);
+
+  if (mods.has('exact')) {
+    // `.exact`：按下了任一**未被显式列出**的系统键 ⇒ 拦截
+    if (SYSTEM_MODIFIERS.some((m) => sysPressed(m) && !mods.has(m))) return true;
+  } else {
+    // 显式键位修饰符：列出了但没按下 ⇒ 拦截（`.ctrl` 语义）
+    if (SYSTEM_MODIFIERS.some((m) => mods.has(m) && !sysPressed(m))) return true;
+  }
+
+  // 按键名修饰符：`.enter` / `.esc` / 任意 `KeyboardEvent.key` 名；任一命中即放行
+  const keyMods = [...mods].filter((m) => !NON_KEY_MODIFIERS.has(m));
+  if (keyMods.length > 0) {
+    const key = (event as KeyboardEvent).key;
+    const matched = keyMods.some((m) => {
+      const aliases = KEY_ALIASES[m.toLowerCase()] ?? [m];
+      return aliases.some((a) => a === key);
+    });
+    if (!matched) return true;
+  }
+
+  return false;
 }
 
 // ============================================================

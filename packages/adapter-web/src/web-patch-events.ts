@@ -7,29 +7,22 @@
  * 通过对象池复用 invoker 对象，减少内存分配和垃圾回收压力
  */
 
-import { normalizeEventName, getEventKey, parseEventModifier } from '@lytjs/common-events';
+import {
+  getEventKey,
+  normalizeEventName,
+  parseEventModifier,
+  isEventModifierIntercepted,
+  type ParsedEventModifier,
+} from '@lytjs/common-events';
 
 // ============================================================
 // Types
 // ============================================================
 
-/** 事件修饰符解析结果 */
-export interface ParsedEvent {
-  /** 规范化后的事件名，如 'click' */
-  name: string;
-  /** 是否调用 e.stopPropagation() */
-  stop: boolean;
-  /** 是否调用 e.preventDefault() */
-  prevent: boolean;
-  /** 是否使用 capture 模式 */
-  capture: boolean;
-  /** 是否使用 once 模式 */
-  once: boolean;
-  /** 是否仅在 e.target === el 时触发 */
-  self: boolean;
-  /** 是否使用 passive 模式 */
-  passive: boolean;
-}
+/**
+ * 事件修饰符解析结果（2026-11-07 / S08：定义收敛到 `@lytjs/common-events`）。
+ */
+export type ParsedEvent = ParsedEventModifier;
 
 /** 事件 invoker 函数，持有 value 属性用于更新 */
 export interface EventInvoker extends EventListener {
@@ -143,14 +136,10 @@ export function createInvoker(initialValue: (...args: unknown[]) => void): Event
 
   // 创建新的 invoker
   const invoker = ((e: Event) => {
-    const parsed = invoker._parsed;
-    if (parsed) {
-      // ⚠️ 2026-11-03 修（P1）：`.self` 必须在 stop/prevent **之前**判断。
-      //   此前顺序是 stop → prevent → self，于是 `@click.self.stop` 在**子元素**上点击时
-      //   仍然执行了 stopPropagation ⇒ 外层收不到事件（而 self 的语义是「完全忽略这次事件」）。
-      if (parsed.self && e.target !== e.currentTarget) return;
-      if (parsed.stop) e.stopPropagation();
-      if (parsed.prevent) e.preventDefault();
+    // 2026-11-07（S08）：修饰符语义共用 common-events 的单一判定函数。
+    const modifierNames = invoker._parsed?.modifierNames;
+    if (modifierNames && modifierNames.length > 0) {
+      if (isEventModifierIntercepted(e, modifierNames)) return;
     }
     if (invoker.value) {
       invoker.value(e);

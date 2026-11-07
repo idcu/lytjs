@@ -4,6 +4,8 @@
 
 import { effect, stop } from '@lytjs/reactivity';
 import { sanitizeHTML } from '@lytjs/common-security';
+// ★ 2026-11-07（S08）：事件修饰符表与拦截语义的**唯一真源**在 @lytjs/common-events。
+import { isEventModifierIntercepted } from '@lytjs/common-events';
 
 // ==================== 环境检测 ====================
 
@@ -702,40 +704,7 @@ export function addEventListener(
  * FIX: P2-57 使用更具体的事件处理器类型替代宽泛的 Function 类型
  */
 
-/** 已知的**非按键**修饰符；其余修饰符一律按「按键名」解释（与 Vue 一致）。 */
-const NON_KEY_MODIFIERS: ReadonlySet<string> = new Set([
-  'stop',
-  'prevent',
-  'self',
-  'capture',
-  'once',
-  'passive',
-  'native',
-  'exact',
-  'left',
-  'middle',
-  'right',
-  'ctrl',
-  'shift',
-  'alt',
-  'meta',
-]);
-
-/** Vue 风格按键别名 → `KeyboardEvent.key` 取值。注意 `.left/right` 同时是鼠标键，见 MOUSE_BUTTONS。 */
-const KEY_ALIASES: Record<string, string[]> = {
-  enter: ['Enter'],
-  tab: ['Tab'],
-  delete: ['Delete', 'Backspace'],
-  esc: ['Escape'],
-  space: [' ', 'Spacebar'],
-  up: ['ArrowUp'],
-  down: ['ArrowDown'],
-  left: ['ArrowLeft'],
-  right: ['ArrowRight'],
-};
-
-/** 鼠标按键修饰符 → `MouseEvent.button` */
-const MOUSE_BUTTONS: Record<string, number> = { left: 0, middle: 1, right: 2 };
+/** 修饰符表与拦截语义统一由 `@lytjs/common-events` 提供（S08 单一权威）。 */
 
 export function createEventHandler(
   el: unknown,
@@ -748,43 +717,11 @@ export function createEventHandler(
   const realNode = getRealNode(el) as Element;
 
   const mods = modifiers ?? {};
-  // 预先算好修饰符分类，避免每次事件都重新遍历（事件回调在热路径上）
-  const mouseMods = Object.keys(mods).filter((k) => k in MOUSE_BUTTONS);
-  const keyMods = Object.keys(mods).filter((k) => !NON_KEY_MODIFIERS.has(k));
 
   const wrappedHandler = (e: Event) => {
-    if (mods['prevent']) {
-      e.preventDefault();
-    }
-    if (mods['stop']) {
-      e.stopPropagation();
-    }
-
-    // `.self`：只有事件目标就是绑定元素本身时才触发
-    if (mods['self'] && e.target !== e.currentTarget) {
-      return;
-    }
-
-    // 鼠标按键修饰符：`.left` / `.middle` / `.right`
-    if (mouseMods.length > 0) {
-      const button = (e as MouseEvent).button;
-      if (!mouseMods.some((k) => MOUSE_BUTTONS[k] === button)) {
-        return;
-      }
-    }
-
-    // 按键修饰符：任一命中即放行（`@keyup.enter` 只应响应 Enter）
-    if (keyMods.length > 0) {
-      const key = (e as KeyboardEvent).key;
-      const matched = keyMods.some((m) => {
-        const aliases = KEY_ALIASES[m.toLowerCase()] ?? [m];
-        return aliases.some((a) => a === key);
-      });
-      if (!matched) {
-        return;
-      }
-    }
-
+    // 2026-11-07（S08）：`.stop/.prevent/.self/.enter/.exact/.ctrl` 等语义
+    // 与 vnode / host 路径共用同一判定函数，不再各自实现。
+    if (isEventModifierIntercepted(e, mods)) return;
     handler(e);
   };
 
@@ -804,59 +741,6 @@ export function createEventHandler(
 
 // ==================== v-on 修饰符包装（VNode / 编译器产物契约） ====================
 
-/** `exact` 判定用的系统键集合（顺序无关） */
-const SYSTEM_MODIFIERS = ['ctrl', 'shift', 'alt', 'meta'] as const;
-
-/**
- * 判定一次事件是否应被修饰符**拦截**（返回 `true` = 不调用 handler）。
- *
- * 与 `createEventHandler`（Signal 路径，修饰符为**对象**）共用
- * `NON_KEY_MODIFIERS` / `KEY_ALIASES` / `MOUSE_BUTTONS` 三张表，
- * 保证两条渲染路径的修饰符语义**不会漂移**。
- *
- * 两类语义：
- * - **副作用型**（`stop` / `prevent`）：无条件执行，**不拦截**；
- * - **条件型**（`self` / 键位 / 鼠标键 / 按键名 / `exact`）：不满足即拦截。
- */
-function isInterceptedByModifiers(event: Event, modifiers: string[]): boolean {
-  if (modifiers.includes('prevent')) event.preventDefault();
-  if (modifiers.includes('stop')) event.stopPropagation();
-
-  // `.self`：只有事件目标就是绑定元素本身时才放行
-  if (modifiers.includes('self') && event.target !== event.currentTarget) return true;
-
-  // 鼠标键：`.left` / `.middle` / `.right`（注意与方向键同名，见 NON_KEY_MODIFIERS）
-  const mouseMods = modifiers.filter((m) => m in MOUSE_BUTTONS);
-  if (mouseMods.length > 0) {
-    const button = (event as MouseEvent).button;
-    if (!mouseMods.some((m) => MOUSE_BUTTONS[m] === button)) return true;
-  }
-
-  const sysPressed = (m: string): boolean =>
-    Boolean((event as unknown as Record<string, boolean>)[`${m}Key`]);
-
-  if (modifiers.includes('exact')) {
-    // `.exact`：按下了任一**未被显式列出**的系统键 ⇒ 拦截
-    if (SYSTEM_MODIFIERS.some((m) => sysPressed(m) && !modifiers.includes(m))) return true;
-  } else {
-    // 显式键位修饰符：列出了但没按下 ⇒ 拦截（`.ctrl` 语义）
-    if (SYSTEM_MODIFIERS.some((m) => modifiers.includes(m) && !sysPressed(m))) return true;
-  }
-
-  // 按键名修饰符：`.enter` / `.esc` / 任意 `KeyboardEvent.key` 名；任一命中即放行
-  const keyMods = modifiers.filter((m) => !NON_KEY_MODIFIERS.has(m));
-  if (keyMods.length > 0) {
-    const key = (event as KeyboardEvent).key;
-    const matched = keyMods.some((m) => {
-      const aliases = KEY_ALIASES[m.toLowerCase()] ?? [m];
-      return aliases.some((a) => a === key);
-    });
-    if (!matched) return true;
-  }
-
-  return false;
-}
-
 /**
  * 把事件处理函数包上 `v-on` 修饰符语义。
  *
@@ -868,6 +752,9 @@ function isInterceptedByModifiers(event: Event, modifiers: string[]): boolean {
  *   3. `core/src/runtime-helpers.ts`（`new Function` 的注入对象）
  * 这三处的一致性由 `scripts/check-runtime-contract.ts` 守卫。
  *
+ * ★ 2026-11-07（S08）：修饰符判定收敛到 `@lytjs/common-events` 的共享实现，
+ *   与 adapter-web / event-normalizer / Signal 路径完全同语义。
+ *
  * @param fn        原始处理函数（产物中形如 `_ctx.fn`）
  * @param modifiers 修饰符名数组，如 `["stop", "prevent"]`
  * @returns 包装后的处理函数（首参为事件对象，其余参数原样透传）
@@ -877,7 +764,7 @@ export function withModifiers<A extends unknown[]>(
   modifiers: string[],
 ): (...args: A) => unknown {
   return (...args: A) => {
-    if (isInterceptedByModifiers(args[0] as Event, modifiers)) return undefined;
+    if (isEventModifierIntercepted(args[0] as Event, modifiers)) return undefined;
     return fn(...args);
   };
 }

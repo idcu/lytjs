@@ -49,6 +49,7 @@ const { EventNormalizer } = await import(
 const { normalizeEventName, getEventKey, parseEventModifier } = await import(
   `${ROOT}/packages/common/packages/events/dist/index.mjs`
 );
+const dr = await import(`${ROOT}/packages/dom-runtime/dist/index.mjs`);
 
 let pass = 0;
 let fail = 0;
@@ -81,9 +82,10 @@ function domAdapter() {
     },
     patch: (el, name, value) => web.patchEvent(el, name, value),
     removeAll: (el) => web.removeAllEventListeners(el),
-    dispatch: (target, type) => {
+    dispatch: (target, type, init = {}) => {
       // 返回事件对象本身（`dispatchEvent` 的返回值是 boolean，拿不到 defaultPrevented）
-      const event = new w.MouseEvent(type, { bubbles: true, cancelable: true });
+      const Ctor = init.key !== undefined ? w.KeyboardEvent : w.MouseEvent;
+      const event = new Ctor(type, { bubbles: true, cancelable: true, ...init });
       target.dispatchEvent(event);
       return event;
     },
@@ -130,7 +132,7 @@ function hostAdapter() {
     },
     patch: (el, name, value) => normalizer.patchEvent(el, name, value),
     removeAll: (el) => normalizer.removeAllEventListeners(el),
-    dispatch(target, type) {
+    dispatch(target, type, init = {}) {
       // 简化冒泡：从 target 一路到根，capture 先、bubble 后
       const path = [];
       for (let node = target; node; node = node.parent) path.push(node);
@@ -140,6 +142,7 @@ function hostAdapter() {
         currentTarget: null,
         propagationStopped: false,
         defaultPrevented: false,
+        ...init,
         stopPropagation() {
           this.propagationStopped = true;
         },
@@ -339,6 +342,95 @@ section('[3] adapter-web 专属：值对象形态的选项');
   web.patchEvent(el2, 'onClick', { handler: () => captured++, capture: true });
   el2.dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
   check('值对象 {capture:true} 生效', captured === 1, captured);
+}
+
+// ══════════════════════════════════════════════════════════
+section('[4] 三模式对拍：.enter / .ctrl / .ctrl.exact');
+for (const make of [domAdapter, hostAdapter]) {
+  const api = make();
+  const tag = `[${api.name}]`;
+
+  // ① .enter
+  {
+    const el = api.el();
+    let n = 0;
+    api.patch(el, 'onKeyup.enter', () => n++);
+    api.dispatch(el, 'keyup', { key: 'Enter' });
+    api.dispatch(el, 'keyup', { key: 'a' });
+    check(`${tag} .enter 仅 Enter 触发`, n === 1, n);
+  }
+
+  // ② .ctrl
+  {
+    const el = api.el();
+    let n = 0;
+    api.patch(el, 'onKeydown.ctrl', () => n++);
+    api.dispatch(el, 'keydown', { key: 'a', ctrlKey: true });
+    api.dispatch(el, 'keydown', { key: 'a' });
+    check(`${tag} .ctrl 仅在按下 ctrl 时触发`, n === 1, n);
+  }
+
+  // ③ .ctrl.exact（exact 额外拒绝未列出的系统键）
+  {
+    const el = api.el();
+    let n = 0;
+    api.patch(el, 'onKeydown.ctrl.exact', () => n++);
+    api.dispatch(el, 'keydown', { key: 'a', ctrlKey: true });
+    api.dispatch(el, 'keydown', { key: 'a', ctrlKey: true, shiftKey: true });
+    check(`${tag} .ctrl.exact 仅 ctrl（无其他系统键）触发`, n === 1, n);
+  }
+}
+
+// 第三模式：dom-runtime（compiler 产物 withModifiers / Signal createEventHandler 共用同一判定）
+{
+  const mkEvent = (init) => {
+    const event = {
+      target: {},
+      currentTarget: null,
+      defaultPrevented: false,
+      ...init,
+      preventDefault() {
+        this.defaultPrevented = true;
+      },
+      stopPropagation() {},
+    };
+    event.currentTarget = event.target;
+    return event;
+  };
+
+  let n = 0;
+  const wrappedEnter = dr.withModifiers(() => n++, ['enter']);
+  wrappedEnter(mkEvent({ key: 'Enter' }));
+  wrappedEnter(mkEvent({ key: 'a' }));
+  check('[dom-runtime/withModifiers] .enter 仅 Enter 触发', n === 1, n);
+
+  let c = 0;
+  const wrappedCtrl = dr.withModifiers(() => c++, ['ctrl']);
+  wrappedCtrl(mkEvent({ key: 'a', ctrlKey: true }));
+  wrappedCtrl(mkEvent({ key: 'a' }));
+  check('[dom-runtime/withModifiers] .ctrl 仅在按下 ctrl 时触发', c === 1, c);
+
+  let e = 0;
+  const wrappedExact = dr.withModifiers(() => e++, ['ctrl', 'exact']);
+  wrappedExact(mkEvent({ key: 'a', ctrlKey: true }));
+  wrappedExact(mkEvent({ key: 'a', ctrlKey: true, shiftKey: true }));
+  check('[dom-runtime/withModifiers] .ctrl.exact 仅 ctrl 触发', e === 1, e);
+
+  // Signal 路径：对象形态修饰符
+  const el = document.createElement('div');
+  let s = 0;
+  dr.createEventHandler(el, 'keydown', () => s++, { ctrl: true, exact: true });
+  el.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'a', ctrlKey: true }));
+  el.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'a', ctrlKey: true, shiftKey: true }));
+  check('[dom-runtime/createEventHandler] .ctrl.exact 仅 ctrl 触发', s === 1, s);
+
+  const el2 = document.createElement('div');
+  let k = 0;
+  const off = dr.createEventHandler(el2, 'keyup', () => k++, { enter: true });
+  el2.dispatchEvent(new w.KeyboardEvent('keyup', { key: 'Enter' }));
+  el2.dispatchEvent(new w.KeyboardEvent('keyup', { key: 'a' }));
+  off();
+  check('[dom-runtime/createEventHandler] .enter 仅 Enter 触发', k === 1, k);
 }
 
 // ══════════════════════════════════════════════════════════

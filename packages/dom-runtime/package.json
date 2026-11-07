@@ -29,7 +29,8 @@
   "license": "MIT",
   "dependencies": {
     "@lytjs/reactivity": "workspace:*",
-    "@lytjs/common-security": "workspace:*"
+    "@lytjs/common-security": "workspace:*",
+    "@lytjs/common-events": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.5.1",
