@@ -13,4 +13,4 @@ export {
   onDeactivated,
   onRenderTracked,
   onRenderTriggered,
-} from '@lytjs/core-vnode';
+} from '@lytjs/core-vnode/lifecycle';

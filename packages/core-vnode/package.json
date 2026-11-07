@@ -11,6 +11,26 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
+    },
+    "./h": {
+      "types": "./dist/h.d.ts",
+      "import": "./dist/h.mjs",
+      "require": "./dist/h.cjs"
+    },
+    "./directives": {
+      "types": "./dist/directives.d.ts",
+      "import": "./dist/directives.mjs",
+      "require": "./dist/directives.cjs"
+    },
+    "./composition": {
+      "types": "./dist/composition.d.ts",
+      "import": "./dist/composition.mjs",
+      "require": "./dist/composition.cjs"
+    },
+    "./lifecycle": {
+      "types": "./dist/lifecycle.d.ts",
+      "import": "./dist/lifecycle.mjs",
+      "require": "./dist/lifecycle.cjs"
     }
   },
   "files": [

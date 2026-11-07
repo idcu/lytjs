@@ -8,7 +8,7 @@ import type { WritableComputedRef, Ref } from '@lytjs/reactivity';
 
 // 2026-11-07（S07 / ADR 0016）：`useSlots / useAttrs / useModel` 的权威实现收敛到
 // `@lytjs/core-vnode`（同名函数身份一致），本文件只转发。
-export { useSlots, useAttrs, useModel } from '@lytjs/core-vnode';
+export { useSlots, useAttrs, useModel } from '@lytjs/core-vnode/composition';
 
 /**
  * defineModel 运行时实现。

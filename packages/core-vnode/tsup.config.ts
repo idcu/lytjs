@@ -1,7 +1,16 @@
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
-  entry: ['src/index.ts'],
+  // 2026-11-07（S07 回归修复）：除主 barrel 外，为 `@lytjs/core` 的转发提供**细粒度**子入口。
+  // 只导 `h` / `withDirectives` / `useSlots` 等单个符号时走子入口，避免顺带把整份
+  // barrel（含 `compile` 与 web-component 等）拉进首屏静态闭包。
+  entry: {
+    index: 'src/index.ts',
+    h: 'src/h.ts',
+    directives: 'src/directives.ts',
+    composition: 'src/composition.ts',
+    lifecycle: 'src/lifecycle.ts',
+  },
   format: ['esm', 'cjs'],
   dts: true,
   treeshake: true,
