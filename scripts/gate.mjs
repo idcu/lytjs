@@ -72,6 +72,15 @@ const GATES = [
     desc: '依赖方向：按 LAYER_MAP 校验包间依赖，禁止反向与同层交叉（2026-11-07 纳入 gate 单一真源）',
   },
   {
+    name: 'check-public-names',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-public-names.mjs'],
+    approx: '~0.3s',
+    desc:
+      '公开名身份登记册（ADR 0017）：unified 条目必须 owner 唯一 + relay 只转发 + 身份测试存在；' +
+      'registered 条目为显式结构债，只防清单腐烂（2026-11-07 新增）',
+  },
+  {
     name: 'check-dead-packages',
     tier: 'fast',
     cmd: ['tsx', 'scripts/check-dead-packages.ts'],

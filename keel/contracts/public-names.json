@@ -1,0 +1,287 @@
+{
+  "version": 1,
+  "updated": "2026-11-07",
+  "adr": "keel/decisions/0017-public-name-registry.md",
+  "description": "公开名身份登记册。unified 条目由 check-public-names 强制「同名只能一个实现」；registered 条目是已登记的结构债，明确列出但不参与强制（避免把未收敛项伪装成绿）。",
+  "entries": [
+    {
+      "id": "error-boundary",
+      "capability": "ErrorBoundary 与错误边界钩子",
+      "status": "unified",
+      "enforce": true,
+      "ownerFile": "packages/component/src/error-boundary.ts",
+      "names": [
+        {
+          "name": "ErrorBoundary",
+          "line": 253,
+          "relays": [
+            "packages/core/src/error-boundary.ts",
+            "packages/core-vnode/src/index.ts"
+          ]
+        },
+        {
+          "name": "setGlobalErrorReporter",
+          "line": 92,
+          "relays": ["packages/core/src/error-boundary.ts"]
+        },
+        {
+          "name": "getGlobalErrorReporter",
+          "line": 97,
+          "relays": ["packages/core/src/error-boundary.ts"]
+        },
+        {
+          "name": "errorLogManager",
+          "line": 157,
+          "relays": ["packages/core/src/error-boundary.ts"]
+        },
+        {
+          "name": "generateErrorId",
+          "line": 160,
+          "relays": ["packages/core/src/error-boundary.ts"]
+        },
+        {
+          "name": "useErrorHandler",
+          "line": 446,
+          "relays": ["packages/core/src/error-boundary.ts"]
+        },
+        {
+          "name": "useErrorBoundaryReset",
+          "line": 458,
+          "relays": ["packages/core/src/error-boundary.ts"]
+        }
+      ],
+      "identityTest": "packages/core/tests/error-boundary-identity.test.ts",
+      "deletionCondition": "core / core-vnode 侧只允许转发；出现实现逻辑即回退（ADR 0016）。"
+    },
+    {
+      "id": "vnode-h",
+      "capability": "VNode 创建 h / createElement",
+      "status": "unified",
+      "enforce": true,
+      "ownerFile": "packages/core-vnode/src/h.ts",
+      "names": [
+        {
+          "name": "h",
+          "line": 62,
+          "relays": ["packages/core/src/h.ts"]
+        }
+      ],
+      "identityTest": "packages/core/tests/core-vnode-parity.test.ts",
+      "deletionCondition": "core 侧只允许 `export { h } from '@lytjs/core-vnode'`（ADR 0016/S07）。"
+    },
+    {
+      "id": "vnode-directives",
+      "capability": "VNode 指令辅助",
+      "status": "unified",
+      "enforce": true,
+      "ownerFile": "packages/core-vnode/src/directives.ts",
+      "names": [
+        {
+          "name": "withDirectives",
+          "line": 28,
+          "relays": ["packages/core/src/directives.ts"]
+        },
+        {
+          "name": "withMemo",
+          "line": 103,
+          "relays": ["packages/core/src/directives.ts"]
+        }
+      ],
+      "identityTest": "packages/core/tests/core-vnode-parity.test.ts",
+      "deletionCondition": "core 侧只允许转发；出现第二份归一化/缓存逻辑即红。"
+    },
+    {
+      "id": "vnode-composition",
+      "capability": "slots / attrs / model 辅助",
+      "status": "unified",
+      "enforce": true,
+      "ownerFile": "packages/core-vnode/src/composition.ts",
+      "names": [
+        {
+          "name": "useSlots",
+          "line": 15,
+          "relays": ["packages/core/src/composition.ts"]
+        },
+        {
+          "name": "useAttrs",
+          "line": 29,
+          "relays": ["packages/core/src/composition.ts"]
+        },
+        {
+          "name": "useModel",
+          "line": 43,
+          "relays": ["packages/core/src/composition.ts"]
+        }
+      ],
+      "identityTest": "packages/core/tests/core-vnode-parity.test.ts",
+      "deletionCondition": "core 侧只允许转发；出现第二份实现即红。"
+    },
+    {
+      "id": "lifecycle-hooks",
+      "capability": "生命周期钩子",
+      "status": "unified",
+      "enforce": true,
+      "ownerFile": "packages/component/src/lifecycle.ts",
+      "names": [
+        {
+          "name": "onMounted",
+          "line": 104,
+          "relays": ["packages/core-vnode/src/lifecycle.ts", "packages/core/src/lifecycle.ts"]
+        },
+        {
+          "name": "onUpdated",
+          "line": 118,
+          "relays": ["packages/core-vnode/src/lifecycle.ts", "packages/core/src/lifecycle.ts"]
+        },
+        {
+          "name": "onUnmounted",
+          "line": 132,
+          "relays": ["packages/core-vnode/src/lifecycle.ts", "packages/core/src/lifecycle.ts"]
+        },
+        {
+          "name": "onBeforeMount",
+          "line": 146,
+          "relays": ["packages/core-vnode/src/lifecycle.ts", "packages/core/src/lifecycle.ts"]
+        },
+        {
+          "name": "onBeforeUpdate",
+          "line": 160,
+          "relays": ["packages/core-vnode/src/lifecycle.ts", "packages/core/src/lifecycle.ts"]
+        },
+        {
+          "name": "onBeforeUnmount",
+          "line": 174,
+          "relays": ["packages/core-vnode/src/lifecycle.ts", "packages/core/src/lifecycle.ts"]
+        },
+        {
+          "name": "onErrorCaptured",
+          "line": 189,
+          "relays": ["packages/core-vnode/src/lifecycle.ts", "packages/core/src/lifecycle.ts"]
+        },
+        {
+          "name": "onActivated",
+          "line": 209,
+          "relays": ["packages/core-vnode/src/lifecycle.ts", "packages/core/src/lifecycle.ts"]
+        },
+        {
+          "name": "onDeactivated",
+          "line": 221,
+          "relays": ["packages/core-vnode/src/lifecycle.ts", "packages/core/src/lifecycle.ts"]
+        },
+        {
+          "name": "onRenderTracked",
+          "line": 234,
+          "relays": ["packages/core-vnode/src/lifecycle.ts", "packages/core/src/lifecycle.ts"]
+        },
+        {
+          "name": "onRenderTriggered",
+          "line": 254,
+          "relays": ["packages/core-vnode/src/lifecycle.ts", "packages/core/src/lifecycle.ts"]
+        }
+      ],
+      "identityTest": "packages/core/tests/core-vnode-parity.test.ts",
+      "deletionCondition": "core-vnode / core 侧只允许转发 `@lytjs/component`；不再新增本地实现。"
+    },
+    {
+      "id": "event-modifiers",
+      "capability": "事件修饰符判定",
+      "status": "unified",
+      "enforce": true,
+      "ownerFile": "packages/common/packages/events/src/index.ts",
+      "names": [
+        {
+          "name": "isEventModifierIntercepted",
+          "line": 188,
+          "relays": []
+        }
+      ],
+      "identityTest": "scripts/check-event-semantics.mjs",
+      "deletionCondition": "adapter-web / event-normalizer / dom-runtime 不得再实现修饰符判定（S08）。"
+    },
+    {
+      "id": "event-with-modifiers",
+      "capability": "withModifiers 编译器运行时契约",
+      "status": "unified",
+      "enforce": true,
+      "ownerFile": "packages/dom-runtime/src/index.ts",
+      "names": [
+        {
+          "name": "withModifiers",
+          "line": 762,
+          "relays": ["packages/core/src/runtime-helpers.ts"]
+        }
+      ],
+      "identityTest": "packages/core/tests/core-vnode-parity.test.ts",
+      "deletionCondition": "core 侧只允许转发；实现只能留在 dom-runtime（S08）。"
+    },
+    {
+      "id": "slot-helpers",
+      "capability": "slot 归一化 / 渲染辅助",
+      "status": "unified",
+      "enforce": true,
+      "ownerFile": "packages/component/src/slots.ts",
+      "names": [
+        {
+          "name": "normalizeSlotValue",
+          "line": 108,
+          "relays": []
+        },
+        {
+          "name": "renderSlot",
+          "line": 141,
+          "relays": []
+        }
+      ],
+      "identityTest": "packages/component/tests/slots.test.ts",
+      "deletionCondition": "UI 层手写 slot 归一化属于已登记结构债（batch3），框架侧不得出现第二份实现。"
+    },
+    {
+      "id": "create-app",
+      "capability": "应用创建 createApp",
+      "status": "registered",
+      "enforce": false,
+      "ownerFile": "packages/core-vnode/src/create-app.ts",
+      "ownerLine": 48,
+      "replicas": [
+        { "file": "packages/core/src/create-app.ts", "line": 104 },
+        { "file": "packages/core/src/create-app-with-compiler.ts", "line": 58 }
+      ],
+      "identityTest": "packages/core/tests/core-vnode-parity.test.ts",
+      "deletionCondition": "后续任务把 core 两份 create-app 收敛为转发；同包内仅允许一份实现（ADR 0011）。core-signal 为独立渲染模式，不在此条目。"
+    },
+    {
+      "id": "signal-codegen",
+      "capability": "signal codegen",
+      "status": "registered",
+      "enforce": false,
+      "ownerFile": "packages/compiler/src/codegen-signal.ts",
+      "ownerLine": 248,
+      "replicas": [{ "file": "packages/compiler/src/codegen-signal-optimized.ts", "line": 98 }],
+      "decisionRef": "keel/decisions/0015-b01-partial-merge.md",
+      "identityTest": "packages/compiler/tests/codegen-signal.test.ts",
+      "deletionCondition": "ADR 0015 裁定后合并或退休优化版；未裁定前不得新增第三套。"
+    },
+    {
+      "id": "hydration",
+      "capability": "hydration",
+      "status": "registered",
+      "enforce": false,
+      "ownerFile": "packages/adapter-web/src/web-hydration.ts",
+      "ownerLine": 64,
+      "replicas": [{ "file": "packages/renderer/src/hydration/enhanced-hydration.ts", "line": 169 }],
+      "identityTest": "packages/adapter-web/tests/hydration-battery.test.ts",
+      "deletionCondition": "S12 收敛到单一 hydration 写入路径；renderer 侧只允许扩展，不得复制匹配逻辑。"
+    },
+    {
+      "id": "list-diff",
+      "capability": "keyed list diff",
+      "status": "registered",
+      "enforce": false,
+      "ownerFile": "packages/vdom/src/list-diff.ts",
+      "ownerLine": 224,
+      "replicas": [{ "file": "packages/dom-runtime/src/index.ts", "line": 804 }],
+      "identityTest": "packages/dom-runtime/tests/index.test.ts",
+      "deletionCondition": "S12 收敛到同一套 keyed diff 语义；dom-runtime 的 reconcileArray 只允许委托。"
+    }
+  ]
+}

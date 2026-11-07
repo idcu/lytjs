@@ -27,6 +27,8 @@ import {
   onMounted as vnodeOnMounted,
   onActivated as vnodeOnActivated,
 } from '../../core-vnode/src/lifecycle';
+import { withModifiers as coreWithModifiers } from '../src/runtime-helpers';
+import { withModifiers as domRuntimeWithModifiers } from '@lytjs/dom-runtime';
 
 describe('core / core-vnode 同名辅助函数身份一致', () => {
   it('h / createElement', () => {
@@ -47,6 +49,10 @@ describe('core / core-vnode 同名辅助函数身份一致', () => {
   it('生命周期钩子', () => {
     expect(coreOnMounted).toBe(vnodeOnMounted);
     expect(coreOnActivated).toBe(vnodeOnActivated);
+  });
+
+  it('withModifiers（S08 单一权威）', () => {
+    expect(coreWithModifiers).toBe(domRuntimeWithModifiers);
   });
 });
 
