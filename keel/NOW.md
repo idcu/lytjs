@@ -9,34 +9,27 @@ keywords: [硬约束9]
 # NOW · main
 
 ## 当前焦点
-S13/S14 完成，fast + slow 全绿；下一步批次 4。
+S18 完成并推送；C3 待架构人审，`sideEffects` 归批次 0。
 
 ## 11-07 完成
-- **S17** `check-ui-i18n` 扫描范围扩到 **61 组件**（`src/index.ts` 全量导出）：
-  Golden 20 硬编码 **0**；41 个 experimental 欠账 **122 条**登记基线（只减不增）。
-  未宣称已国际化；运行时缺键仍回退 zh-CN → 抛错。fast 53/53、UI 664/664。
-- **S13** `check-compiler-parity` **100/100**、`expectedMismatch` 0；baseline
-  divergent 23→0。语义抽入 `codegen-signal-shared.ts`，两发射器只留输出形态
-  （短别名/形参名/变量名/前缀）；契约与测试未改。
-- **S14 完成**：`format:check` 已用 prettier 修好（ui-a11y 仅 `font-family`
-  换行，语义未变）；bundle 三入口按 owner 签字更新基线（`0020`：93,957 /
-  91,808 / 73,567 B，编译器 dist +2,907 B 归因，A15 上限内）。复查项：日后
-  压体积从编译器输出形态入手，不再抬基线。复跑实测：fast **53/53**
-  （134.4s）· slow **14/14**（446.2s）· bundle **18/18** · format 绿。
-- **S01/S02** gate 委托 `gate.mjs`；check-deps 覆盖 **76/76**。
-- **S06–S12** ErrorBoundary 下沉 component；core-vnode 权威收敛与 S07 体积回归修复
-  （first-screen 90.3→**70.4 KB**、runtime 87.7→**36.6 KB**）；S08 事件修饰符共用；
-  S09 public-names（0017）；S10 复用 `isSafeAttribute`；S11 style 数值（0018）；
-  S12 hydration/list-diff 收敛（52/52、36/36）。
-- ⚠️ `sideEffects:false` 丢弃 builtin-components 副作用，core 包级 dist 测试 5 红，归批次0。
-- **待决 C3**：`@lytjs/ui` 依赖与 ARCHITECTURE:26 冲突，待 owner 裁定。
-
-## 11-06 完成
-- A15 体积预算；B01 对拍 77/100（`0015` 草稿）；B04 契约红 15→0；B05 各 UI 门禁全绿。
+- **S18** 6 处内联 `display:none` 改 `hidden`；Tabs 仅删重复 `.lyt-tabs__header`；
+  Dialog e2e 断言升级为 computed `display`（负控实测变红）。UI 664/664、fast 53/53。
+- **S15/S16** UI composables 5 个；受控 props 17 组件/51 断言；`<select>` 初始值按
+  Property/Attribute 单一判据修复（vdom 延后写表单状态）。
+- **S17** `check-ui-i18n` 扫 61 组件：Golden 20 硬编码 0；experimental 欠账 122 条
+  入基线（只减不增）。
+- **S13/S14** 对拍 100/100、divergent 23→0；bundle 三入口按 `0020` 签字上调；
+  复跑 fast 53/53、slow 14/14、bundle 18/18。
+- **S01/S02** gate 委托；check-deps 覆盖 76/76。
+- **S06–S12** ErrorBoundary 下沉；core-vnode 权威收敛（首屏 70.4 KB、runtime 36.6 KB）；
+  事件修饰符共用；public-names、isSafeAttribute、style 数值、hydration/list-diff 收敛。
+- ⚠️ `sideEffects:false` 丢弃 builtin-components 副作用，core dist 5 红（批次 0）。
+- **待决 C3**：`@lytjs/ui` 5 个运行时依赖、61 文件/167 处 import 与 ARCHITECTURE:26
+  冲突；见 `decisions/pending/0021-c3-ui-dependency-conflict.md`，待架构人审。
 
 ## 下一步
-1. **批次 4 / S15**：UI composables 基础层（`useControlledState/useSlotContent/useOverlay/useFormField/useLocale` + 3 个试点）。
-2. 批次0 余项 S03/S04/S05 + `sideEffects` 构建问题；ssr-island 残留副本。
+1. 批次 0：`sideEffects` 修复方案（待 owner 确认）＋ S03/S04/S05。
+2. 批次 4：S19–S22。
 
 ## 阻塞
 | 卡在 | 绕行 |
