@@ -61,6 +61,14 @@
  *   - `check-integration`      集成链路：Input 不再 emit update:modelValue → v-model 链路必红
  *   - `check-runtime-render`   产物执行：patchAttr 丢弃普通属性 →「void 元素」DOM 断言必红
  *   - `check-compiler-parity`  编译器对拍：优化 codegen 丢静态属性 →「新增分叉」必红
+ *   - `check-render-shapes`    模板形态：keyed 重排不再移动节点 →「keyed 重排：变 CAB」必红
+ *   - `check-component-shapes` 组件形态：Teleport 把子节点挂回宿主 →「内容进入目标容器」必红
+ *   - `check-ssr-client-parity` SSR 一致性：style 对象不转 kebab-case →「style 对象」必红
+ *   - `check-transition-engine` 过渡引擎：finishLeave 不调 done →「leave 的 done 调用一次」必红
+ *   - `check-dialog-a11y`      弹层无障碍：focusTrap 不执行初始聚焦 →「焦点在对话框内」必红
+ *   - `check-plugin-semantics` 插件语义：忽略 installed 幂等检查 →「重复 install 只执行一次」必红
+ *   - `check-hmr`              HMR：register 覆盖而非合并 handler →「先 accept 后 dispose：两者都在」必红
+ *   - `check-consumer-demo`    消费者 demo：emit 只查 props 不查 attrs →「点击后计数变为 1」必红
  *
  * 其余门禁本轮不做注入实验，**如实登记为「未验证」**（见 negative-controls.json），
  * 不假装有反证。新增门禁时必须跑一次 `--sync` 让清单同步，否则本脚本报红。
@@ -1004,6 +1012,158 @@ const CONTROLS = {
         return text.replace(needle, '      void prop;');
       },
       () => expectFail(['node', 'scripts/check-compiler-parity.mjs'], 'check-compiler-parity'),
+    );
+  },
+
+  'check-render-shapes': () => {
+    // 注入：keyed diff 不再移动已匹配节点 ⇒ 重排后顺序仍是 ABC，「keyed 重排：变 CAB」必红
+    const file = join(ROOT, 'packages/vdom/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-render-shapes：缺少 vdom dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle =
+          '      } else if (plan.moved && plan.movedNewIndexes.has(i)) {\n        if (nextChild.el) {\n          ops.move(nextChild, container, anchor, parentComponent, parentSuspense);\n        }\n      }';
+        if (!text.includes(needle)) {
+          throw new Error('check-render-shapes：注入点漂移（找不到 keyed reorder 的 move）');
+        }
+        return text.replace(
+          needle,
+          '      } else if (false) {\n        if (nextChild.el) {\n          ops.move(nextChild, container, anchor, parentComponent, parentSuspense);\n        }\n      }',
+        );
+      },
+      () => expectFail(['node', 'scripts/check-render-shapes.mjs'], 'check-render-shapes'),
+    );
+  },
+
+  'check-component-shapes': () => {
+    // 注入：Teleport 把子节点挂回宿主而非目标容器 ⇒「内容进入目标容器」「宿主内没有该内容」必红
+    const file = join(ROOT, 'packages/vdom/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-component-shapes：缺少 vdom dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle =
+          '        if (child != null) {\n          patch(null, child, target, targetEnd, parentComponent, parentSuspense, isSVG);\n        }';
+        if (!text.includes(needle)) {
+          throw new Error('check-component-shapes：注入点漂移（找不到 Teleport 子节点挂载）');
+        }
+        return text.replace(
+          needle,
+          '        if (child != null) {\n          patch(null, child, container, anchor, parentComponent, parentSuspense, isSVG);\n        }',
+        );
+      },
+      () => expectFail(['node', 'scripts/check-component-shapes.mjs'], 'check-component-shapes'),
+    );
+  },
+
+  'check-ssr-client-parity': () => {
+    // 注入：SSR 序列化 style 对象时不转 kebab-case（fontSize 原样输出）⇒「style 对象」必红
+    const file = join(ROOT, 'packages/ecosystem/packages/ssr-kit/packages/ssr/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-ssr-client-parity：缺少 SSR dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle =
+          '      ([k, v]) => `${k.startsWith("--") ? k : k.replace(/([A-Z])/g, "-$1").toLowerCase()}: ${String(v)}`';
+        if (!text.includes(needle)) {
+          throw new Error('check-ssr-client-parity：注入点漂移（找不到 style 键名转换）');
+        }
+        return text.replace(needle, '      ([k, v]) => `${k}: ${String(v)}`');
+      },
+      () => expectFail(['node', 'scripts/check-ssr-client-parity.mjs'], 'check-ssr-client-parity'),
+    );
+  },
+
+  'check-transition-engine': () => {
+    // 注入：finishLeave 不调用 done ⇒ 离场元素永不被调用方移除，「leave 的 done 调用一次」必红
+    const file = join(ROOT, 'packages/common/packages/transition-engine/dist/index.mjs');
+    if (!existsSync(file))
+      throw new Error('check-transition-engine：缺少 transition-engine dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle =
+          '    try {\n      props.onAfterLeave?.(el);\n    } catch (error) {\n      this.reportHookError("onAfterLeave", error);\n    }\n    done?.();';
+        if (!text.includes(needle)) {
+          throw new Error('check-transition-engine：注入点漂移（找不到 finishLeave 的 done）');
+        }
+        return text.replace(
+          needle,
+          '    try {\n      props.onAfterLeave?.(el);\n    } catch (error) {\n      this.reportHookError("onAfterLeave", error);\n    }',
+        );
+      },
+      () => expectFail(['node', 'scripts/check-transition-engine.mjs'], 'check-transition-engine'),
+    );
+  },
+
+  'check-dialog-a11y': () => {
+    // 注入：focusTrap 不执行初始聚焦 ⇒ 焦点留在 body/触发器，「焦点在对话框内」必红
+    const file = join(ROOT, 'packages/common/packages/a11y/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-dialog-a11y：缺少 a11y dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle = '  focusInitial();\n  function cleanup() {';
+        if (!text.includes(needle)) {
+          throw new Error('check-dialog-a11y：注入点漂移（找不到 focusTrap 的 focusInitial）');
+        }
+        return text.replace(needle, '  function cleanup() {');
+      },
+      () => expectFail(['node', 'scripts/check-dialog-a11y.mjs'], 'check-dialog-a11y'),
+    );
+  },
+
+  'check-plugin-semantics': () => {
+    // 注入：忽略 installed 幂等检查 ⇒ install 每次重跑，「重复 install 只执行一次」必红
+    const file = join(ROOT, 'packages/ecosystem/packages/plugin/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-plugin-semantics：缺少 plugin dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle = '    if (registered.installed) return true;';
+        if (!text.includes(needle)) {
+          throw new Error('check-plugin-semantics：注入点漂移（找不到 installed 幂等检查）');
+        }
+        return text.replace(needle, '    if (false) return true;');
+      },
+      () => expectFail(['node', 'scripts/check-plugin-semantics.mjs'], 'check-plugin-semantics'),
+    );
+  },
+
+  'check-hmr': () => {
+    // 注入：register 覆盖而非合并 handler ⇒ 先注册的 accept 丢失，「先 accept 后 dispose：两者都在」必红
+    const file = join(ROOT, 'packages/ecosystem/packages/ssr-kit/packages/hmr/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-hmr：缺少 HMR dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle =
+          '    this.handlers.set(key, existing ? { ...existing, ...handler } : handler);';
+        if (!text.includes(needle)) {
+          throw new Error('check-hmr：注入点漂移（找不到 register 的合并逻辑）');
+        }
+        return text.replace(needle, '    this.handlers.set(key, handler);');
+      },
+      () => expectFail(['node', 'scripts/check-hmr.mjs'], 'check-hmr'),
+    );
+  },
+
+  'check-consumer-demo': () => {
+    // 注入：emit 只查 props 不查 attrs ⇒ 子组件 bump 到不了父组件，「点击后计数变为 1」必红
+    const file = join(ROOT, 'packages/component/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-consumer-demo：缺少 component dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle =
+          '  const handler = instance.props[handlerName] ?? instance.attrs[handlerName];';
+        if (!text.includes(needle)) {
+          throw new Error('check-consumer-demo：注入点漂移（找不到 emit 的 handler 查找）');
+        }
+        return text.replace(needle, '  const handler = instance.props[handlerName];');
+      },
+      () => expectFail(['node', 'scripts/check-consumer-demo.mjs'], 'check-consumer-demo'),
     );
   },
 };
