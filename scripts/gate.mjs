@@ -383,6 +383,14 @@ const GATES = [
       '无 :param / *、不容忍尾斜杠、缓存无上限。含并发 params 隔离与 405/Allow 判据',
   },
   {
+    name: 'check-negative-controls',
+    tier: 'fast',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-negative-controls.mjs'],
+    approx: '~6s',
+    desc: '★ 门禁负控（S05）：对 S02/S03/受控/样式做注入实验，门禁必须转红；其余门禁如实登记「未验证」。',
+  },
+  {
     name: 'check-integration',
     tier: 'slow',
     cmd: ['node', 'scripts/check-integration.mjs'],
@@ -892,6 +900,18 @@ const listOnly = has('--list');
 const tierArgIdx = argv.findIndex((a) => a === '--tier');
 const tier = tierArgIdx !== -1 ? argv[tierArgIdx + 1] : undefined;
 const names = argv.filter((a) => !a.startsWith('--') && a !== tier);
+
+// 负控入口：`--inject [gate]` 委托给 scripts/check-negative-controls.mjs
+// （支持 `--inject=<gate>` 形式；不带门禁名则跑全部已登记负控）
+const injectIdx = argv.findIndex((a) => a === '--inject');
+const injectEq = argv.find((a) => a.startsWith('--inject='));
+if (injectIdx !== -1 || injectEq) {
+  const target = injectEq ? injectEq.slice('--inject='.length) : argv[injectIdx + 1];
+  const args = ['scripts/check-negative-controls.mjs'];
+  if (target && !target.startsWith('--')) args.push(target);
+  const r = spawnSync(resolveCmd('node'), args, { cwd: ROOT, stdio: 'inherit', env: ENV });
+  process.exit(r.status ?? 1);
+}
 
 if (listOnly) {
   console.log('门禁登记表（tier: fast=快档 / slow=慢档）\n');

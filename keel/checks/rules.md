@@ -14,7 +14,7 @@ keywords: [校验, 规则, 扩展检查, CI, 门禁]
 
 | # | 检查 | 命令 | 级别 | 触发时机 |
 |---|---|---|---|---|
-| 1 | 快档门禁（单一入口：构建顺序 + 依赖 + UI slot + props + alias + 源码卫生 + 覆盖率） | `node scripts/gate.mjs --tier fast` | ❌ fail | 本地 + CI（build job 后置） |
+| 1 | 快档门禁（单一入口） | `node scripts/gate.mjs --tier fast` | ❌ fail | 本地 + CI（build job 后置） |
 | 2 | 契约漂移（产物 import 的绑定名须在导出面） | `node scripts/gate.mjs check-runtime-contract` | ❌ fail | CI（build job 后置）+ 发布前 |
 | 3 | 文档 import 欠账（棘轮） | `node scripts/gate.mjs check-doc-imports` | ❌ fail | CI（build job 后置）+ 发布前 |
 | 4 | UI slot 单节点（红门禁） | `node scripts/gate.mjs check-ui-slot-single-node` | ❌ fail | CI（keel-gates job） |
@@ -25,8 +25,9 @@ keywords: [校验, 规则, 扩展检查, CI, 门禁]
 | 9 | 慢档全量（发布前） | `node scripts/gate.mjs --tier slow` | ❌ fail | 发布前 / 定时任务 |
 | 10 | 源码卫生（`eval(` / `new Function(` / `console.log(` 三条规则 + 显式清单） | `node scripts/gate.mjs check-src-hygiene` | ❌ fail | 本地 fast gate 已含 + CI |
 | 11 | 治理接线（keel CI 三关卡齐全） | `node scripts/gate.mjs check-keel-wiring` | ❌ fail | 本地 fast gate 已含 + CI |
-| 12 | Golden 20 × 七类行为契约（B04 六类 + B05 a11y；报告模式允许红） | `node scripts/check-ui-contracts.mjs` | ❌ fail（登记/源码漂移；`--strict` 时红项也 fail） | 本地（fast）+ 逐组件修复验收 |
+| 12 | Golden 20 × 七类契约（B04/B05） | `node scripts/check-ui-contracts.mjs` | ❌ fail（登记/源码漂移；`--strict` 时红项也 fail） | 本地（fast）+ 验收 |
 | 13 | UI 全量 i18n（双语键一致 + 全量扫描硬编码棘轮） | `node scripts/check-ui-i18n.ts` | ❌ fail（新增硬编码 / 键或占位不一致） | 本地（fast）+ CI |
+| 14 | 门禁负控（S05）：注入必红；其余登记 | `node scripts/gate.mjs --inject` | ❌ fail | 本地 fast gate 已含 + CI |
 
 ## 级别变更记录
 
