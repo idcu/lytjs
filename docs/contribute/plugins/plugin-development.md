@@ -418,23 +418,16 @@ pnpm test:watch
 cd packages/plugins/packages/plugin-xxx
 pnpm build
 
-# 构建所有插件
-pnpm run build:plugins
+# 构建所有包（主仓只有单一构建入口）
+pnpm build
 ```
 
 ### 2. 更新配置文件
 
 #### 更新根目录 package.json
 
-在 `build:plugins` 脚本中添加新插件：
-
-```json
-{
-  "scripts": {
-    "build:plugins": "pnpm --filter '@lytjs/plugin-vite' --filter '@lytjs/plugin-theme' --filter '@lytjs/plugin-logger' --filter '@lytjs/plugin-auth' --filter '@lytjs/plugin-storage' --filter '@lytjs/plugin-i18n' --filter '@lytjs/plugin-xxx' run build"
-  }
-}
-```
+`@lytjs/plugin-*` 已迁出至独立仓库 `lytjs-plugins`，**不再需要**在本仓根
+`package.json` 登记 `build:plugins`（该入口已于 2026-11-08 删除）。
 
 #### 更新插件统一入口
 

@@ -168,7 +168,7 @@ node scripts/gate.mjs --tier slow
 单独运行只用于定位失败项，不能替代 gate 结论。
 
 > 注意：`pnpm build` 已内置 `check-build-order`，并且**不再**默认吞掉构建错误
-> （`--continue-on-error` 仅保留在 `pnpm build:force` 中用于本地排查）。
+> （需要继续构建时用 `tsx scripts/smart-build.ts --continue-on-error` 直接调用）。
 > 2026-08 曾因新抽出的 `@lytjs/config|di|plugin` 未登记顺序表，
 > 导致 component/core 等 21 个包构建失败、38 个测试文件无法加载。
 

@@ -5,7 +5,7 @@
 1. 确保所有核心包已构建：
 
    ```bash
-   pnpm build:core
+   pnpm build
    ```
 
 2. 安装 Playwright 浏览器（首次需要）：

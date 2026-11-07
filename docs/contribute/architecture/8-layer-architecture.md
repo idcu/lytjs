@@ -421,23 +421,11 @@ import { ref, computed } from '@lytjs/reactivity';
 ## 构建命令
 
 ```bash
-# 构建所有
+# 构建所有包（唯一构建入口，内置构建顺序守卫）
 pnpm build
 
-# 构建 L0 基础工具层
-pnpm build:common
-
-# 构建 L1-L3 核心包
-pnpm build:core
-
-# 构建 L6 生态系统
-pnpm build:ecosystem
-
-# 构建 L7 工程化工具
-pnpm build:tools
-
-# 构建 L4 官方插件
-pnpm build:plugins
+# 只构建某个包及其依赖（pnpm 按拓扑顺序）
+pnpm --filter "@lytjs/core..." run build
 ```
 
 ---

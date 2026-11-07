@@ -355,20 +355,11 @@ pnpm install
 ### 开发命令
 
 ```bash
-# 构建所有包
+# 构建所有包（内置构建顺序守卫）
 pnpm build
 
-# 构建核心包
-pnpm build:core
-
-# 构建生态系统包
-pnpm build:ecosystem
-
-# 构建插件
-pnpm build:plugins
-
-# 构建工具包
-pnpm build:tools
+# 只构建某个包及其依赖（pnpm 按拓扑顺序）
+pnpm --filter "@lytjs/core..." run build
 
 # 运行所有测试
 pnpm test
