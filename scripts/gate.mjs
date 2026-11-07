@@ -816,6 +816,16 @@ const GATES = [
     desc: '产物 import 的绑定名必须在所指包的导出面存在（需要 dist）',
   },
   {
+    name: 'check-api-snapshot',
+    tier: 'slow',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-api-snapshot.mjs'],
+    approx: '~0.5s',
+    desc:
+      '★ API 快照（S22）：14 核心 + 25 生态包的 dist/index.d.ts 导出名与 ' +
+      'scripts/api-snapshot.json 逐包比对（不含签名）；任何增删必须显式 `--update` 才通过',
+  },
+  {
     name: 'check-doc-imports',
     tier: 'slow',
     needsDist: true,

@@ -18,6 +18,7 @@
  *   - `check-release-parity`  发布一致性：改一个包版本 → 「76 包版本一致」判据必红
  *   - `check-script-refs`     零引用脚本棘轮（S20）：新增一个零引用脚本 → 必红
  *   - `check-as-unknown`      as unknown as 棘轮（S22）：多写一处 → 必红
+ *   - `check-api-snapshot`    API 快照（S22）：删掉一个导出名 → 必红
  *
  * 其余门禁本轮不做注入实验，**如实登记为「未验证」**（见 negative-controls.json），
  * 不假装有反证。新增门禁时必须跑一次 `--sync` 让清单同步，否则本脚本报红。
@@ -169,6 +170,24 @@ const CONTROLS = {
       () => expectFail(['node', 'scripts/check-as-unknown.mjs'], 'check-as-unknown'),
     );
     utimesSync(file, st.atime, st.mtime);
+  },
+
+  'check-api-snapshot': () => {
+    // S22：从 core 的 dist 类型声明里删掉一个导出名 ⇒ 「与快照一致」判据必须报红。
+    // 只改 dist（恢复原字节）；dist 的 mtime 变新不触发 check-dist-freshness。
+    const file = join(ROOT, 'packages/core/dist/index.d.ts');
+    if (!existsSync(file)) throw new Error('check-api-snapshot：缺少 core dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const patched = text.replace(/^export (?:type )?\{[^,]*,/m, (m) => m.replace(/[^,]*,/, ''));
+        if (patched === text) {
+          throw new Error('check-api-snapshot：注入点漂移（找不到可删的导出名）');
+        }
+        return patched;
+      },
+      () => expectFail(['node', 'scripts/check-api-snapshot.mjs'], 'check-api-snapshot'),
+    );
   },
 };
 
