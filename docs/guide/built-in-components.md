@@ -2,6 +2,60 @@
 
 LytJS 提供了一系列内置组件，用于处理常见的 UI 模式，如缓存、异步加载、传送、过渡动画和错误处理。
 
+## 运行时字符串模板需要注册
+
+内置组件在**编译期模板**中零配置可用：编译器检测到 `<Teleport>`、`<KeepAlive>` 等标签后，
+会直接引入对应实现，无需额外调用。
+
+但**运行时字符串模板**（把模板写在 `template` 字符串里，由运行时编译）不同：模板里的
+`<Teleport>` 会编译为按名字查找，使用前需要调用一次 `registerBuiltinComponents()`。
+
+| 使用方式                                           | 是否需注册       |
+| -------------------------------------------------- | ---------------- |
+| SFC / AOT 编译期模板                               | 否               |
+| `h(Teleport)` 等函数式写法                         | 否               |
+| `components: { Teleport }` 或 `setup` 返回内置组件 | 否               |
+| 运行时 `template` 字符串                           | **是**，调用一次 |
+
+### 最小示例
+
+```ts
+import { createApp, registerBuiltinComponents } from '@lytjs/core';
+
+// 运行时字符串模板使用内置组件前调用一次（幂等，多次调用无副作用）
+registerBuiltinComponents();
+
+const app = createApp({
+  template: '<div><Teleport to="#modal"><span>弹窗内容</span></Teleport></div>',
+});
+
+app.mount('#app');
+```
+
+也可以从 `@lytjs/component` 导入同一个函数：
+
+```ts
+import { registerBuiltinComponents } from '@lytjs/component';
+```
+
+### 迁移说明
+
+- 运行时字符串模板：在应用入口补一次 `registerBuiltinComponents()` 即可，无需逐组件注册。
+- 编译期模板、`h(Teleport)`、通过 `components` / `setup` 注册：不需要改。
+- 若使用多个应用实例，注册是进程级的，调用一次即可覆盖所有应用。
+
+### 未注册时的表现（仅开发态）
+
+未注册时该节点仍不会渲染内容，但开发模式会输出告警（同一组件名只提示一次）：
+
+```text
+[LytJS]: 模板中使用了内置组件 <Teleport>，但内置组件尚未注册，该节点会渲染为空。
+请先调用一次 registerBuiltinComponents()（可从 '@lytjs/core' 或 '@lytjs/component' 导入）。
+说明：编译期模板（AOT）由 codegen 直接 import 内置组件，无需手动注册；运行时字符串模板（template）才需要这一步。
+```
+
+生产构建不输出该告警（避免增加体积），因此请把注册调用放在应用入口，而不是条件分支里。
+
 ## KeepAlive
 
 `<KeepAlive>` 用于缓存组件实例，避免重复创建和销毁，提升性能。
