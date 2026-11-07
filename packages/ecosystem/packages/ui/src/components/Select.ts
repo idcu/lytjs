@@ -67,10 +67,14 @@ export const Select = defineComponent({
     const activeDescendant = signal('');
 
     effect(() => {
-      if (Array.isArray(p.modelValue)) {
-        selectedValue.set(new Set(p.modelValue));
-      } else if (p.modelValue !== '' && p.modelValue !== null && p.modelValue !== undefined) {
-        selectedValue.set(new Set([p.modelValue]));
+      const mv = p.modelValue;
+      if (Array.isArray(mv)) {
+        selectedValue.set(new Set(mv));
+      } else if (mv !== '' && mv !== null && mv !== undefined) {
+        selectedValue.set(new Set([mv]));
+      } else {
+        // 受控：外部清空（'' / null / undefined）时必须一并清掉内部选中集，否则显示仍是旧值。
+        selectedValue.set(new Set());
       }
     });
 

@@ -350,6 +350,25 @@ section('[11] ColorPicker：modelValue 跟随');
 }
 
 // ══════════════════════════════════════════════════════════
+section('[12] Select：modelValue 跟随与清空');
+{
+  const options = [
+    { label: 'A', value: 'a' },
+    { label: 'B', value: 'b' },
+  ];
+  const v = ref('a');
+  const host = await mount(() => h(ui.Select, { modelValue: v.value, options }));
+  const shown = () => text(host.querySelector('.lyt-select__value'));
+  check('Select 初始显示 A', shown() === 'A', shown());
+  v.value = 'b';
+  await sleep();
+  check('外部改 modelValue 后显示 B', shown() === 'B', shown());
+  v.value = '';
+  await sleep();
+  check('外部清空后回到占位符', shown() === '请选择', shown());
+}
+
+// ══════════════════════════════════════════════════════════
 for (const host of hosts) host.remove();
 // jsdom 会留下内部定时器/句柄，进程会一直挂着（实测挂 60s+）⇒ 断言跑完就显式退出
 dom.window.close();
