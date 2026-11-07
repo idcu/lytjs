@@ -9,8 +9,8 @@
 
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
-import { signal, watch } from '@lytjs/reactivity';
 import { getButtonA11yProps, getFormControlA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
+import { useControlledState } from '../composables';
 import { t } from '../locale';
 
 export interface PaginationSetupProps {
@@ -53,28 +53,16 @@ export const Pagination = defineComponent({
     { emit }: { emit: (event: string, ...args: unknown[]) => void },
   ) {
     const p = props as unknown as PaginationSetupProps;
-    const currentPage = signal(p.current);
-    const currentPageSize = signal(p.pageSize);
 
     // ⚠️ 2026-11-03 修（P1）：**受控组件的 prop 变化必须跟随**。
-    //   此前 `signal(p.current)` 只在创建时取一次值，之后父组件把 `current` 重置为 1
-    //   （例如筛选条件变化）时，分页器**仍停在第 5 页** —— 视图与状态不一致，
-    //   而且没有任何报错。`pageSize` 同理（外部改每页条数，页码数量不变）。
-    watch(
-      () => p.current,
-      (v) => {
-        if (typeof v === 'number' && v !== currentPage()) currentPage.set(v);
-      },
-    );
-    watch(
-      () => p.pageSize,
-      (v) => {
-        if (typeof v === 'number' && v !== currentPageSize()) currentPageSize.set(v);
-      },
-    );
+    //   此前只在创建时取一次值，父组件把 `current` 重置为 1（例如筛选条件变化）时，
+    //   分页器仍停在第 5 页 —— 视图与状态不一致，而且没有任何报错。
+    //   跟随逻辑（含 `pageSize`）已收敛到 `composables/useControlledState`。
+    const currentPage = useControlledState({ get: () => p.current });
+    const currentPageSize = useControlledState({ get: () => p.pageSize });
 
     const totalPages = (): number => {
-      return Math.ceil(p.total / currentPageSize());
+      return Math.ceil(p.total / currentPageSize.value());
     };
 
     /**
@@ -85,7 +73,7 @@ export const Pagination = defineComponent({
      */
     const effectiveCurrent = (): number => {
       const last = Math.max(1, totalPages());
-      return Math.min(Math.max(1, currentPage()), last);
+      return Math.min(Math.max(1, currentPage.value()), last);
     };
 
     const getPageRange = (): number[] => {
@@ -115,7 +103,7 @@ export const Pagination = defineComponent({
       currentPage.set(page);
       // 受控用法：`v-model:current` 依赖这个事件（此前**从不 emit** ⇒ v-model 静默无效）
       emit('update:current', page);
-      p.onChange?.(page, currentPageSize());
+      p.onChange?.(page, currentPageSize.value());
     };
 
     const handlePrev = () => {
@@ -294,7 +282,7 @@ export const Pagination = defineComponent({
               'select',
               mergeA11yProps(selectProps, {
                 class: 'lyt-pagination__select',
-                value: currentPageSize(),
+                value: currentPageSize.value(),
                 onChange: handlePageSizeChange,
               }),
               options,

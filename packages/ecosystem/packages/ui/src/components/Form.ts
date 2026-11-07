@@ -8,9 +8,10 @@
  *       成熟度表见 `src/component-status.ts`（单一真相源）。
  */
 
-import { defineComponent, provide, inject } from '@lytjs/component';
+import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
+import { provideFormFieldErrors, useFormField } from '../composables';
 import type {
   FormRules,
   FormSetupProps,
@@ -19,8 +20,6 @@ import type {
   FormItemSlots,
 } from './types';
 
-/** Form → FormItem 的校验结果通道（见 Form setup 里的 provide） */
-const FORM_ERRORS_KEY = Symbol('lyt-form-errors');
 import { mergeA11yProps } from '@lytjs/common-a11y';
 
 export interface FormLocale {
@@ -82,7 +81,7 @@ export const Form = defineComponent({
     //   `validate()` 跑完、`errors` 里有值，但**页面上一个红字都不出现**，
     //   用户以为提交成功了。现在把 errors signal 通过 provide 下发，
     //   FormItem 按自己的 `prop` 取对应字段的错误。
-    provide(FORM_ERRORS_KEY, errors);
+    provideFormFieldErrors(errors);
 
     const validateField = async (field: string): Promise<boolean> => {
       const rules = p.rules[field];
@@ -264,13 +263,12 @@ export const FormItem = defineComponent({
   setup(props: Record<string, unknown>, { slots }: { slots: FormItemSlots }) {
     const p = props as FormItemSetupProps;
 
-    // 从 Form 注入的 errors signal 里取本字段的错误（`prop` 即字段名）
-    const injectedErrors = inject(FORM_ERRORS_KEY, null) as (() => Record<string, string>) | null;
-    const displayError = (): string => {
-      if (p.error) return p.error;
-      if (!injectedErrors || !p.prop) return '';
-      return injectedErrors()[p.prop] ?? '';
-    };
+    // 从 Form 注入的 errors 里取本字段的错误（`prop` 即字段名）；
+    // `error` prop 优先。通道细节见 `composables/useFormField`。
+    const { error: displayError } = useFormField({
+      error: () => p.error,
+      prop: () => p.prop,
+    });
 
     return () => {
       const errorText = displayError();

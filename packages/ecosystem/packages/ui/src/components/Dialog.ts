@@ -15,7 +15,7 @@ import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
 import { signal, watch } from '@lytjs/reactivity';
 import { getDialogA11yProps, getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 import { createOverlayFocus } from './overlay-focus';
-import { t } from '../locale';
+import { useLocale, useOverlay } from '../composables';
 import type { DialogSetupProps, DialogSlots } from './types';
 
 export const Dialog = defineComponent({
@@ -56,6 +56,7 @@ export const Dialog = defineComponent({
     },
   ) {
     const p = props as DialogSetupProps;
+    const { t } = useLocale();
     const visible = signal(p.modelValue);
     // ★ 2026-11-04：控制器要拿的是「当前 DOM 元素」，用可变引用比 signal 直接
     let dialogEl: HTMLElement | null = null;
@@ -63,15 +64,9 @@ export const Dialog = defineComponent({
     // ★ 2026-10-04 新增：`lockScroll` 与 `onBeforeOpen` 此前声明了却从未使用
     //   ⇒ 传了毫无效果（静默失效）。
     //   · `lockScroll`：打开时锁住 `body` 滚动，关闭时恢复
-    //     （实现放在 `onMounted`/`onUnmounted` 之外，避免与焦点管理耦合）。
+    //     （实现收敛到 `useOverlay`，与焦点管理保持解耦）。
     //   · `onBeforeOpen`：与本文件已有的 `onBeforeClose` 对称 —— 返回 `false`
     //     则**阻止打开**（await，允许异步判断）。
-    let scrollLocked = false;
-    const setScrollLocked = (locked: boolean): void => {
-      if (typeof document === 'undefined') return;
-      document.body.style.overflow = locked ? 'hidden' : '';
-      scrollLocked = locked;
-    };
 
     watch(
       () => p.modelValue,
@@ -82,13 +77,13 @@ export const Dialog = defineComponent({
             if (allowed === false) return;
           }
           visible.set(true);
-          if (p.lockScroll) setScrollLocked(true);
+          overlay.lockScroll();
           p.onOpen?.();
-          overlayFocus.activate();
+          overlay.activate();
         } else {
           visible.set(false);
-          if (scrollLocked) setScrollLocked(false);
-          overlayFocus.deactivate();
+          overlay.unlockScroll();
+          overlay.deactivate();
         }
       },
     );
@@ -113,7 +108,7 @@ export const Dialog = defineComponent({
       //   后果：受控用法下点 ESC / 遮罩 / × 后，外部 `modelValue` 仍是 true，
       //   想重开必须先 false 再 true —— 调用方以为关闭成功了。
       emit('update:modelValue', false);
-      if (scrollLocked) setScrollLocked(false);
+      overlay.unlockScroll();
       p.onClose?.();
 
       // 焦点恢复由 `overlayFocus.deactivate()` 完成（它在 `focusTrap` 的 cleanup 里，
@@ -151,13 +146,18 @@ export const Dialog = defineComponent({
       initialFocus: p.initialFocus as string | HTMLElement | undefined,
     });
 
+    const overlay = useOverlay({
+      controller: overlayFocus,
+      lockScroll: () => p.lockScroll,
+    });
+
     // 初始就是打开状态时，`watch` 不会触发（值没有变化）⇒ 这里补一次
     onMounted(() => {
-      if (p.modelValue) overlayFocus.activate();
+      if (p.modelValue) overlay.activate();
     });
 
     onUnmounted(() => {
-      overlayFocus.deactivate();
+      overlay.deactivate();
     });
 
     return () => {

@@ -10,6 +10,7 @@ import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { reactive, computed } from '@lytjs/reactivity';
 import { getSwitchA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
+import { useSlotContent } from '../composables';
 
 /**
  * Switch 组件
@@ -48,6 +49,7 @@ export const Switch = defineComponent({
     const state = reactive({
       focus: false,
     });
+    const slotContent = useSlotContent(slots);
 
     const isChecked = computed(() => {
       return _props.modelValue === _props.activeValue;
@@ -140,48 +142,28 @@ export const Switch = defineComponent({
           ),
         );
       } else if (slots.active && isChecked.value) {
-        const slotContent = slots.active();
-        if (Array.isArray(slotContent)) {
+        const content = slotContent.resolve('active');
+        if (content) {
           coreChildren.push(
             createVNode(
               'span',
               {
                 class: 'lyt-switch__label lyt-switch__label--left',
               },
-              slotContent as VNode[],
-            ),
-          );
-        } else if (slotContent) {
-          coreChildren.push(
-            createVNode(
-              'span',
-              {
-                class: 'lyt-switch__label lyt-switch__label--left',
-              },
-              [slotContent as VNode],
+              content,
             ),
           );
         }
       } else if (slots.inactive && !isChecked.value) {
-        const slotContent = slots.inactive();
-        if (Array.isArray(slotContent)) {
+        const content = slotContent.resolve('inactive');
+        if (content) {
           coreChildren.push(
             createVNode(
               'span',
               {
                 class: 'lyt-switch__label lyt-switch__label--left',
               },
-              slotContent as VNode[],
-            ),
-          );
-        } else if (slotContent) {
-          coreChildren.push(
-            createVNode(
-              'span',
-              {
-                class: 'lyt-switch__label lyt-switch__label--left',
-              },
-              [slotContent as VNode],
+              content,
             ),
           );
         }

@@ -12,6 +12,7 @@ import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import type { AlertType, AlertSetupProps } from './types';
 import { getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
+import { useSlotContent } from '../composables';
 
 export const Alert = defineComponent({
   name: 'LytAlert',
@@ -32,6 +33,7 @@ export const Alert = defineComponent({
 
   setup(props: Record<string, unknown>, { slots, emit }) {
     const _props = props as AlertSetupProps;
+    const slotContent = useSlotContent(slots);
     const handleClose = () => {
       emit('close');
       // ★ 2026-10-04：`emit` 本身就会去 props 里找 `onClose` 并调用（见 component/src/emit.ts）⇒ 紧随其后的直接调用是**重复触发**，已删。
@@ -69,12 +71,8 @@ export const Alert = defineComponent({
       if (slots.title || _props.title) {
         const titleChildren: VNode[] = [];
         if (slots.title) {
-          const slotContent = slots.title();
-          if (Array.isArray(slotContent)) {
-            titleChildren.push(...(slotContent as VNode[]));
-          } else if (slotContent) {
-            titleChildren.push(...[slotContent as VNode]);
-          }
+          const content = slotContent.resolve('title');
+          if (content) titleChildren.push(...content);
         } else if (_props.title) {
           titleChildren.push(createVNode('span', {}, _props.title));
         }
@@ -94,15 +92,9 @@ export const Alert = defineComponent({
 
       // Default slot
       if (slots.default) {
-        const slotContent = slots.default();
-        if (Array.isArray(slotContent)) {
-          contentChildren.push(
-            createVNode('div', { class: 'lyt-alert__message' }, slotContent as VNode[]),
-          );
-        } else if (slotContent) {
-          contentChildren.push(
-            createVNode('div', { class: 'lyt-alert__message' }, [slotContent as VNode]),
-          );
+        const content = slotContent.resolve('default');
+        if (content) {
+          contentChildren.push(createVNode('div', { class: 'lyt-alert__message' }, content));
         }
       }
 

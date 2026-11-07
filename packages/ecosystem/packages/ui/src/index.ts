@@ -32,6 +32,26 @@ export {
 } from './locale';
 export type { UiLocaleKey, UiLocaleMessages, UiLocaleName, UiLocaleParams } from './locale';
 
+// ── composables（S15 基础层）────────────────────────────────────────────
+export {
+  useControlledState,
+  useSlotContent,
+  useOverlay,
+  provideFormFieldErrors,
+  useFormField,
+  useLocale,
+} from './composables';
+export type {
+  ControlledState,
+  UseControlledStateOptions,
+  SlotContentApi,
+  UseOverlayApi,
+  UseOverlayOptions,
+  FormFieldApi,
+  FormFieldOptions,
+  UseLocaleApi,
+} from './composables';
+
 // 组件导出
 export { Button } from './components/Button';
 export { Input } from './components/Input';
