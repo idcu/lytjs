@@ -29,6 +29,12 @@ export { createApp } from './create-app';
 // 避免出现第二个真相源。
 export { Suspense, Teleport, Transition, TransitionGroup, KeepAlive } from '@lytjs/component';
 
+// ── 内置组件登记入口（方案 B2，ADR 0022）────────────────────────────────
+// 运行时字符串模板（`template`）使用内置组件时需显式调用一次；
+// 编译期模板由 codegen 直接 import，无需调用。
+// 只做转出：实现与幂等状态都在 `@lytjs/component`。
+export { registerBuiltinComponents } from '@lytjs/component';
+
 // ── Suspense 相关 API ──────────────────────────────────────────────────
 // ⚠️ 2026-10-03 新增：文档示例写的是 `import { Suspense, useSuspense } from '@lytjs/core'`，
 // 而 `useSuspense` **也不在** core 的转出面里（与内置组件同一类漏转，本轮第三次遇到）。

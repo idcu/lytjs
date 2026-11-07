@@ -51,7 +51,12 @@ export function compileTemplateToRender(
   if (cached) return cached;
 
   clearCompileCache();
-  const result = compile(template, { mode: 'module', filename: options.filename });
+  // ⚠️ 2026-11-07（ADR 0022 / 方案 B2）：这里必须用 `mode: 'function'`。
+  //   产物会被 `stripImports` 剥掉 import 后交给 `new Function`；若用 'module'，
+  //   内置组件标签会变成裸标识符（依赖 import 绑定），剥掉 import 后无从解析。
+  //   function 模式产出 `_ctx.X`，由使用方显式 `registerBuiltinComponents()` 注册；
+  //   未注册时组件实例代理会给出 DEV 告警（不静默渲染为空）。
+  const result = compile(template, { mode: 'function', filename: options.filename });
 
   // ⚠️ import 可能出现在两个位置：vnode 模式的 preamble、signal 模式的内联 code。
   // 只剥其中一处会漏（这正是契约守卫第一版的 bug），故两处都处理。

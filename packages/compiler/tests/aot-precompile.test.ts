@@ -62,4 +62,17 @@ describe('precompileTemplate —— 真 AOT（构建期产出可导入模块源�
     expect(code).toContain("from '@lytjs/vdom'");
     expect(code).not.toContain("from '@lytjs/core'");
   });
+
+  it('内置组件在编译期零配置可用：产物直接 import 实现并使用裸标识符', () => {
+    // ADR 0022 / 方案 B2：AOT 产物由 codegen 直接 import 内置组件，无需运行时注册。
+    const { code } = precompileTemplate(
+      '<div><Teleport to="#x"><b>t</b></Teleport><KeepAlive><b>k</b></KeepAlive></div>',
+    );
+    expect(code).toContain("import { Teleport, KeepAlive } from '@lytjs/component';");
+    expect(code).toMatch(/createElementVNode\(Teleport,/);
+    expect(code).toMatch(/createElementVNode\(KeepAlive,/);
+    // 不得退回需要注册的 `_ctx.X` 路径
+    expect(code).not.toContain('_ctx.Teleport');
+    expect(code).not.toContain('_ctx.KeepAlive');
+  });
 });

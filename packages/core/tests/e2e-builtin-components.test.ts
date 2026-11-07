@@ -33,7 +33,20 @@
  */
 
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { createApp, h, ref, nextTick, Teleport, KeepAlive } from '../src/index';
+import {
+  createApp,
+  h,
+  ref,
+  nextTick,
+  Teleport,
+  KeepAlive,
+  // ⚠️ 2026-11-07（ADR 0022 / 方案 B2）：运行时字符串模板（`template`）使用内置组件
+  //   需显式注册一次；编译期模板（AOT）由 codegen 直接 import，无需调用。
+  //   这是 B2 的行为变更，不是「为让测试变绿而改测试」：未注册时同一份用例 5 红。
+  registerBuiltinComponents,
+} from '../src/index';
+
+registerBuiltinComponents();
 
 const hosts: HTMLElement[] = [];
 

@@ -1,11 +1,12 @@
 // src/builtin-components.ts
-// 内置组件注册表（供组件实例代理解析 `_ctx.Teleport` 这类写法）
+// 内置组件实现登记入口
 //
 // ## 为什么需要它（2026-10-28 修 P0）
 //
-// 编译器对**组件标签**生成的是 `_ctx.Xxx`（见 codegen 的 genVNodeCall：「组件标签也要
-// 前缀化」），而不是 Vue 的 `_resolveComponent("Xxx")`。因此组件实例代理**必须**能
-// 按名字解析出组件对象，否则 `_ctx.Xxx` 恒为 `undefined` ⇒ 该 vnode 静默渲染为空。
+// 编译器（`mode: 'function'`，即运行时字符串模板）对**组件标签**生成的是
+// `_ctx.Xxx`（见 codegen 的 genVNodeCall：「组件标签也要前缀化」），而不是 Vue 的
+// `_resolveComponent("Xxx")`。因此组件实例代理**必须**能按名字解析出组件对象，
+// 否则 `_ctx.Xxx` 恒为 `undefined` ⇒ 该 vnode 静默渲染为空。
 //
 // 代理原本只查两处：局部 `components` → app 级 `components`。
 // **内置组件不在任何一处** ⇒ 模板里写 `<Teleport>` / `<Suspense>` / `<Transition>` /
@@ -24,7 +25,21 @@
 // 本文件要 import 五个实现，而实现（尤其 keep-alive）会回到 component 核心，
 // 于是 `component-proxy` 直接 import 本文件会形成源码级循环依赖。
 // 查表函数与注册表已下沉到 `builtin-registry.ts`（叶子模块），
-// `component-proxy` 只依赖它；本文件在加载时把实现注册进去。
+// `component-proxy` 只依赖它。
+//
+// ## 为什么不再在模块加载时自动注册（2026-11-07，ADR 0022 / 方案 B2）
+//
+// `component/package.json` 声明 `"sideEffects": false`。入口里的**裸副作用 import**
+// 会被 tsup/esbuild 按声明丢弃 —— 实测 dist 中 `registerBuiltin` 出现 **0 次**，
+// 于是模板路径静默失效。只把声明改成保留副作用则五入口 +5.7~6.8 KB、
+// `minimal-app` 突破 A15 硬上限（99,673 > 95,948），故否决。
+//
+// B2 口径：
+// - **编译期模板**：codegen 检测到内置标签后直接 `import { X } from '@lytjs/component'`，
+//   产物引用裸标识符 ⇒ 零配置即用、且只带入实际用到的实现；
+// - **运行时字符串模板**（`template` 字符串）：产物走 `_ctx.X`，由使用方显式调用一次
+//   `registerBuiltinComponents()`；未注册时 `component-proxy` 会给出 DEV 告警
+//   （不会静默渲染为空）。
 
 import { Teleport } from './teleport';
 import { Suspense } from './suspense';
@@ -49,9 +64,26 @@ export const BUILTIN_COMPONENTS: Record<string, unknown> = {
   KeepAlive,
 };
 
-// 注册到叶子表：`BUILTIN_COMPONENTS` 仍是唯一真相，注册只是把同一份数据交给查表模块。
-for (const [name, component] of Object.entries(BUILTIN_COMPONENTS)) {
-  registerBuiltin(name, component);
+let registered = false;
+
+/**
+ * 把内置组件登记进运行期查找表（幂等）。
+ *
+ * 运行时字符串模板（`{ template: '<Teleport …>' }`）需要使用一次；
+ * 编译期模板（AOT / `compile` 产物）由 codegen 直接 import，无需调用。
+ *
+ * 从 `@lytjs/component` 导入；`@lytjs/core` 已透传同名函数。
+ */
+export function registerBuiltinComponents(): void {
+  if (registered) return;
+  for (const [name, component] of Object.entries(BUILTIN_COMPONENTS)) {
+    registerBuiltin(name, component);
+  }
+  registered = true;
 }
 
-export { isBuiltinComponentName, getBuiltinComponent } from './builtin-registry';
+export {
+  isBuiltinComponentName,
+  getBuiltinComponent,
+  BUILTIN_COMPONENT_NAMES,
+} from './builtin-registry';

@@ -9,9 +9,31 @@ import { nextTick } from '@lytjs/common-scheduler';
 import { unref, isRef } from '@lytjs/reactivity';
 import type { ComponentInternalInstance, ComponentPublicInstance } from './types';
 import { forceComponentUpdate } from './force-update';
-import { isBuiltinComponentName, getBuiltinComponent } from './builtin-registry';
-// FIX: DTS build error - VNode 未使用
-// import type { VNode } from '@lytjs/common-vnode';
+import {
+  BUILTIN_COMPONENT_NAMES,
+  isBuiltinComponentName,
+  getBuiltinComponent,
+} from './builtin-registry';
+
+/**
+ * 已告警过的内置组件名。
+ *
+ * 代理的 `get` 在每次 render 都会走到这里，且内置分支**不写 accessCache**
+ * （见下方说明），所以必须自己去重，否则未注册时会刷屏。
+ */
+const warnedBuiltinComponents = new Set<string>();
+
+/** DEV：模板用了内置组件但未注册时给出明确提示（不得静默渲染为空） */
+function warnUnregisteredBuiltin(name: string): void {
+  if (warnedBuiltinComponents.has(name)) return;
+  warnedBuiltinComponents.add(name);
+  warn(
+    `模板中使用了内置组件 <${name}>，但内置组件尚未注册，该节点会渲染为空。\n` +
+      `请先调用一次 registerBuiltinComponents()（可从 '@lytjs/core' 或 '@lytjs/component' 导入）。\n` +
+      `说明：编译期模板（AOT）由 codegen 直接 import 内置组件，无需手动注册；` +
+      `运行时字符串模板（template）才需要这一步。`,
+  );
+}
 
 // ==================== accessCache 常量 ====================
 
@@ -195,9 +217,25 @@ export function createComponentPublicInstance(
       //   （不报错、不告警）。而 `import { Teleport } from '@lytjs/core'` + `h(Teleport)`
       //   一直正常 ⇒「内置组件可用」只在 import 路径上成立，模板路径上是假的。
       //
+      // ⚠️ 2026-11-07（ADR 0022 / 方案 B2）：内置组件改为**按需注册**。名字集合是
+      //   静态清单，与实际注册表无关 —— 未注册时也能识别出「这是内置标签」，
+      //   从而给出 DEV 告警（指向 `registerBuiltinComponents()`），不再静默。
+      //
       // 顺序放在**用户注册之后**：用户可以用同名局部组件覆盖内置组件（与 Vue 一致）。
       // 同样**不写 accessCache**：缓存 `OTHER` 的语义是「未找到」，写进去会让第二次
       // render 直接返回 undefined（见上一段注释）。
+      if (BUILTIN_COMPONENT_NAMES.has(key)) {
+        const builtin = getBuiltinComponent(key);
+        if (builtin !== undefined) {
+          return builtin;
+        }
+        if (__DEV__) {
+          warnUnregisteredBuiltin(key);
+        }
+        return undefined;
+      }
+
+      // 兼容旧判断：手动 `registerBuiltin` 登记过、但不在静态清单里的名字
       if (isBuiltinComponentName(key)) {
         return getBuiltinComponent(key);
       }

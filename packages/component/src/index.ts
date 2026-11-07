@@ -1,9 +1,11 @@
 // src/index.ts
 // @lytjs/component - 主入口文件
 
-// 副作用加载：把内置组件注册进 builtin-registry（component-proxy 只依赖那个叶子表）。
-// 必须在其它导出之前加载，保证通过包入口使用组件系统时表已就绪。
-import './builtin-components';
+// 内置组件登记入口（方案 B2，ADR 0022）
+// ⚠️ 2026-11-07：不再用裸副作用 import。`sideEffects:false` 会让打包器把注册整块丢掉；
+//   改为显式调用 `registerBuiltinComponents()`（幂等）。编译期模板由 codegen 直接 import，
+//   不需要调用；运行时字符串模板（`template`）使用内置组件时需调用一次。
+export { registerBuiltinComponents } from './builtin-components';
 
 // 核心组件 API
 /** 创建组件实例、设置组件、定义组件等核心 API */

@@ -464,6 +464,13 @@ export interface CodegenContext {
   pure: boolean;
   /** 编译期收集到的局部标识符（v-for 别名等），前缀化时排除 */
   locals?: ReadonlySet<string>;
+  /**
+   * 产物形态：`module` 下内置组件标签产出裸标识符 + `import`（AOT）；
+   * 未传 / `function` 下产出 `_ctx.X`（运行时 `new Function`，需显式注册）。
+   */
+  mode?: 'module' | 'function';
+  /** module 模式下实际用到的内置组件名（用于生成 `@lytjs/component` 的 import） */
+  builtinComponents?: Set<string>;
   helper(key: string): string;
   push(code: string, node?: BaseNode): void;
   indent(): void;

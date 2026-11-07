@@ -28,6 +28,7 @@ import { helperNameMap } from './constants';
 import { SourceMapGenerator } from './source-map';
 import { prefixIdentifiers } from './prefix-identifiers';
 import { FRAGMENT_SENTINEL } from './transforms/transform-element';
+import { BUILTIN_COMPONENT_NAMES, BUILTIN_COMPONENT_MODULE } from './builtin-components';
 
 // ============================================================
 // 主生成函数
@@ -55,7 +56,9 @@ export function generate(ast: RootNode, options: CodegenOptions = {}): CodegenRe
   const { context, codeParts, sourceMapGen } = createCodegenContext(ast, options);
 
   // 生成辅助函数导入（前导代码）
-  const preamble = genHelperImports(ast.helpers, options.runtimeModuleName);
+  // ⚠️ 2026-11-07（ADR 0022 / 方案 B2）：内置组件的 import 只能在正文生成**之后**
+  //   才能知道（由 genVNodeCall 收集），因此 preamble 统一延后到函数末尾拼装。
+  const helperImports = genHelperImports(ast.helpers, options.runtimeModuleName);
 
   // 生成提升的变量声明
   //
@@ -119,12 +122,29 @@ export function generate(ast: RootNode, options: CodegenOptions = {}): CodegenRe
 
   const code = codeParts.join('');
 
+  // 前导代码：helper import + 实际用到的内置组件 import（仅 module 模式）
+  const preamble = helperImports + genBuiltinImports(context);
+
   return {
     code,
     preamble,
     ast,
     map: sourceMapGen ? sourceMapGen.toJSON() : undefined,
   };
+}
+
+/**
+ * 生成内置组件的 import（`mode: 'module'` 下由 codegen 直接引入，零配置可用）。
+ *
+ * ⚠️ 只在 module 模式产出：`function` 模式的产物会被 `new Function` 执行，
+ * import 语句不合法（core 的 `template-compiler` 会剥 import，但剥掉后裸标识符
+ * 无从解析），因此 function 模式必须保留 `_ctx.X` + 显式 `registerBuiltinComponents()`。
+ */
+function genBuiltinImports(context: CodegenContext): string {
+  if (context.mode !== 'module') return '';
+  const names = context.builtinComponents;
+  if (!names || names.size === 0) return '';
+  return `import { ${[...names].join(', ')} } from '${BUILTIN_COMPONENT_MODULE}';\n`;
 }
 
 // ============================================================
@@ -214,6 +234,12 @@ function createCodegenContext(
   const context: CodegenContext = {
     // 局部标识符（v-for 别名等）：它们不加 `_ctx.` 前缀
     locals: new Set<string>(ast.localIdentifiers ?? []),
+    // ⚠️ 2026-11-07（ADR 0022 / 方案 B2）：mode 决定内置组件标签的产物形态
+    //   · 'module'：裸标识符 + `import { X } from '@lytjs/component'`（AOT，零配置）
+    //   · 其它/未传：`_ctx.X`（运行时 `new Function`，需显式注册）
+    //   默认不传（等价函数模式），以免改变既有产物快照。
+    mode: options.mode,
+    builtinComponents: new Set<string>(),
     source: ast.loc.source,
     line: 1,
     column: 1,
@@ -411,7 +437,20 @@ function genVNodeCall(node: VNodeCall, context: CodegenContext): void {
     // 这里走 `helper('FRAGMENT')`：既登记 import，又保证产物里是 `Fragment` 而不是字符串。
     context.push(context.helper('FRAGMENT'), node);
   } else if (node.isComponent && typeof tag === 'string') {
-    context.push(prefixIdentifiers(tag, context.locals), node);
+    // ⚠️ 2026-11-07（ADR 0022 / 方案 B2）：module 模式下，内置组件标签走**裸标识符**
+    //   并由 preamble 产出 `import { X } from '@lytjs/component'` ⇒ 零配置可用，
+    //   且只带入实际用到的实现。function 模式（运行时字符串模板）仍走 `_ctx.X`，
+    //   由使用方显式 `registerBuiltinComponents()`（未注册时代理会给 DEV 告警）。
+    if (
+      context.mode === 'module' &&
+      BUILTIN_COMPONENT_NAMES.has(tag) &&
+      !context.locals?.has(tag)
+    ) {
+      context.builtinComponents?.add(tag);
+      context.push(tag, node);
+    } else {
+      context.push(prefixIdentifiers(tag, context.locals), node);
+    }
   } else {
     genNodeExpr(tag, context);
   }

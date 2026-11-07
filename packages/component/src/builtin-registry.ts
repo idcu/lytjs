@@ -10,11 +10,23 @@
 //
 // 这里把「按名字查表」与「组件实现」拆开：
 // - 本文件只有一张表 + 读写函数，谁都不依赖；
-// - `builtin-components.ts` 在模块加载时把实现注册进来；
+// - `builtin-components.ts` 通过显式的 `registerBuiltinComponents()` 把实现注册进来；
 // - `component-proxy.ts` 只 import 本文件。
 //
-// 注册发生的时机：`src/index.ts` 顶部用副作用 import 加载 `builtin-components`，
-// 因此在任何通过包入口使用组件系统的地方，渲染期查表时表已就绪。
+// ⚠️ 2026-11-07（ADR 0022 / 方案 B2）：入口**不再**用副作用 import 自动注册。
+//   `package.json` 声明 `sideEffects:false`，裸 import 会被打包器丢弃（实测 dist 里
+//   `registerBuiltin` 出现 0 次）；改为按需注册后，未用内置组件的入口不再付 ~6 KB。
+//   代价是运行时字符串模板需显式调用一次 `registerBuiltinComponents()`；
+//   编译期模板由 codegen 直接 import 实现，零配置可用。
+
+/** 内置组件名（**静态清单**，与是否已注册无关） */
+export const BUILTIN_COMPONENT_NAMES: ReadonlySet<string> = new Set([
+  'Teleport',
+  'Suspense',
+  'Transition',
+  'TransitionGroup',
+  'KeepAlive',
+]);
 
 const registry = new Map<string, unknown>();
 

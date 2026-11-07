@@ -1,8 +1,8 @@
 {
-  "commit": "b4aace374c0d071fdc81baf872972610f7d748de",
-  "generatedAt": "2026-11-07T12:42:42.687Z",
-  "totalSrcFiles": 443,
-  "coveredSrcFiles": 434,
+  "commit": "6ebd9719572fb774a261a52d52b006750a8ee631",
+  "generatedAt": "2026-11-07T14:14:50.829Z",
+  "totalSrcFiles": 444,
+  "coveredSrcFiles": 435,
   "threshold": 0.975,
   "files": {
     "packages/adapter-web/src/index.ts": true,
@@ -48,6 +48,7 @@
     "packages/common/packages/vnode/src/index.ts": true,
     "packages/common/packages/warn/src/index.ts": true,
     "packages/compiler/src/ast.ts": true,
+    "packages/compiler/src/builtin-components.ts": true,
     "packages/compiler/src/client-server-boundary/index.ts": true,
     "packages/compiler/src/codegen-signal-optimized.ts": true,
     "packages/compiler/src/codegen-signal-shared.ts": true,
