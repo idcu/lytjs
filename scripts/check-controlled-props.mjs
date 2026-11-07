@@ -392,6 +392,21 @@ section('[13] Cascader：modelValue 跟随与清空');
 }
 
 // ══════════════════════════════════════════════════════════
+section('[14] DatePicker：modelValue 跟随与清空');
+{
+  const v = ref('2026-11-05');
+  const host = await mount(() => h(ui.DatePicker, { modelValue: v.value }));
+  const shown = () => text(host.querySelector('.lyt-date-picker__input'));
+  check('DatePicker 初始显示 2026-11-05', shown() === '2026-11-05', shown());
+  v.value = '2026-11-20';
+  await sleep();
+  check('外部改 modelValue 后显示跟随', shown() === '2026-11-20', shown());
+  v.value = null;
+  await sleep();
+  check('外部清空后回到占位符', shown() === '选择日期', shown());
+}
+
+// ══════════════════════════════════════════════════════════
 for (const host of hosts) host.remove();
 // jsdom 会留下内部定时器/句柄，进程会一直挂着（实测挂 60s+）⇒ 断言跑完就显式退出
 dom.window.close();

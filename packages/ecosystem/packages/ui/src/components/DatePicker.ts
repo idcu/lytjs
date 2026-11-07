@@ -10,7 +10,7 @@
 
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
-import { signal } from '@lytjs/reactivity';
+import { effect, signal } from '@lytjs/reactivity';
 import type { DatePickerShortcut, DatePickerSetupProps, DatePickerSlots } from './types';
 
 function getDaysInMonth(year: number, month: number): number {
@@ -75,10 +75,7 @@ export const DatePicker = defineComponent({
     const selectDate = signal<Date | null>(null);
     // ★ 2026-10-04：`modelValue` 此前**声明了但从未使用**（检测器报「部分未接线」）
     //   ⇒ 外部传入的选中值被**完全忽略**，受控用法静默失效。
-    //   现在至少作为**初始值**生效（`Date` / `Date[]` / `string` 三种形态）。
-    //   ⚠️ 语义边界：这是「初始值」而非「完全受控」—— 之后父组件再改 `modelValue`
-    //   不会回灌（那需要额外的 watcher + controlled 判定，属另一步）。
-    const initial = p.modelValue as Date | Date[] | string | null | undefined;
+    //   现为**受控**：初始化与后续 prop 变化都会回灌（`Date` / `Date[]` / `string` 三种形态）。
     const toDate = (v: unknown): Date | null => {
       if (v instanceof Date) return v;
       if (typeof v === 'string' || typeof v === 'number') {
@@ -93,20 +90,23 @@ export const DatePicker = defineComponent({
       }
       return null;
     };
-    const initialDates: Date[] = Array.isArray(initial)
-      ? initial.map(toDate).filter((d): d is Date => d !== null)
-      : [toDate(initial)].filter((d): d is Date => d !== null);
-    const rangeStart = signal<Date | null>(initialDates[0] ?? null);
-    const rangeEnd = signal<Date | null>(initialDates[1] ?? null);
-    // ★ 2026-10-14：上面那句 2026-10-04 的注释声称「三种形态都作为初始值生效」，
-    //   但初始值只喂给了 `rangeStart/rangeEnd` ⇒ **默认的 `type='date'` 拿不到**
-    //   （`getDisplayValue()` 的非范围分支只看 `selectDate()`）⇒ 受控传值后显示仍是占位符。
-    //   此处补上 `selectDate` 的初始化（范围型仍走 rangeStart/rangeEnd，互不影响）。
-    selectDate.set(initialDates[0] ?? null);
+    const rangeStart = signal<Date | null>(null);
+    const rangeEnd = signal<Date | null>(null);
     const showTime = signal(false);
     const currentHours = signal(0);
     const currentMinutes = signal(0);
     const currentSeconds = signal(0);
+
+    // 受控：modelValue 变化（含清空）时回灌选中日期与范围两端。
+    effect(() => {
+      const mv = p.modelValue as unknown;
+      const dates = Array.isArray(mv)
+        ? mv.map(toDate).filter((d): d is Date => d !== null)
+        : [toDate(mv)].filter((d): d is Date => d !== null);
+      rangeStart.set(dates[0] ?? null);
+      rangeEnd.set(dates[1] ?? null);
+      selectDate.set(dates[0] ?? null);
+    });
 
     const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
 
