@@ -9,16 +9,14 @@ keywords: [硬约束9]
 # NOW · main
 
 ## 当前焦点
-S19/S20/S21 完成；S22 首件（`as unknown as` 基线+棘轮）完成，余项待判断；C3 待架构人审。
+S22 完成（API 快照 / 计时分层 / host-contract 前置）；fast 56/56、slow 15/15；C3 待架构人审。
 
 ## 11-08 完成
-- **S21 残留**：删 `verify-build-list.ts`（依赖已删的 `final-publish.ts`）与
-  `check-actual-packages.ts`（硬编码 85 条），职责归 `check-release-parity`。
-- **S20**：引用地图 128/零引用 29；删 27+restore 2+孤儿 1；入口收敛为 `build`；
-  `check-script-refs` 棘轮+负控（基线 0）。
-- **S22 首件**：`as unknown as` 基线 326/123；`check-as-unknown` 棘轮+负控上线；
-  host-contract 与 API 快照仅出判断。
-- 计时断言并发抖动登记 pitfalls，口径待决（未改阈值）。
+- **S21 残留**：删 `verify-build-list.ts` 与 `check-actual-packages.ts`，职责归 `check-release-parity`。
+- **S20**：零引用 29→0（删 27+restore 2+孤儿 1）；入口收敛为 `build`；`check-script-refs` 棘轮+负控。
+- **S22**：`as unknown as` 基线 326/123 + 棘轮+负控；API 快照 39 包/1961 名（slow，`--update`
+  显式）+负控；计时断言按 ADR 0024（<20ms 只报数字，≥20ms 保留）；host-contract ADR 0025
+  维持不接（前置=第二个宿主目标）。
 
 ## 11-07 完成
 - **S19** 16 个 common 死包逐包判定，16/16 命中「已发布/有导出面」⇒ 保留+deprecated，
@@ -35,8 +33,8 @@ S19/S20/S21 完成；S22 首件（`as unknown as` 基线+棘轮）完成，余�
 - **待决 C3**：`@lytjs/ui` 依赖与 ARCHITECTURE:26 冲突，见 0021。
 
 ## 下一步
-1. S22 余项：host-contract 接入判断、API 快照（先出结论再动手）。
-2. 63 项未验证负控：逐项补注入实验，每验一项从 unverified 移入 verified。
+1. 63 项未验证负控：逐项补注入实验，每验一项从 unverified 移入 verified。
+2. S23+：按评估台账确认后启动。
 
 ## 阻塞
 | 卡在 | 绕行 |
