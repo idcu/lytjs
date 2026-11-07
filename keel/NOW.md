@@ -1,8 +1,8 @@
 ---
 scope: now
 status: active
-last-verified: 2026-11-07
-updated: 2026-11-07
+last-verified: 2026-11-08
+updated: 2026-11-08
 keywords: [硬约束9]
 ---
 
@@ -11,6 +11,10 @@ keywords: [硬约束9]
 ## 当前焦点
 S19 完成（16 个 common 死包保留并 deprecated→8.0.0）；S21 裁决走 A 并已完成（接线/dry-run/
 负控/删手工轨/文档切换）；C3 待架构人审。
+
+## 11-08 完成
+- **S21 残留**：删除 `verify-build-list.ts`（运行时依赖已删的 `final-publish.ts`）与
+  `check-actual-packages.ts`（硬编码 85 条）；职责归 `check-release-parity` 计算型检查。
 
 ## 11-07 完成
 - **S19** 16 个 common 死包逐包判定，16/16 命中「已发布/有导出面」⇒ 保留+deprecated，
@@ -28,8 +32,7 @@ S19 完成（16 个 common 死包保留并 deprecated→8.0.0）；S21 裁决走
 
 ## 下一步
 1. S20、S22（按开发计划台账）。
-2. 清理仍引用已删脚本的 `verify-build-list.ts` / `check-actual-packages.ts`（未在本次授权清单）。
-3. 63 项未验证负控：逐项补注入实验，每验一项从 unverified 移入 verified。
+2. 63 项未验证负控：逐项补注入实验，每验一项从 unverified 移入 verified。
 
 ## 阻塞
 | 卡在 | 绕行 |
