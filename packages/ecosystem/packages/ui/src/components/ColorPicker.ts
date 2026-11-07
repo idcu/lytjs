@@ -10,7 +10,7 @@
 
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
-import { signal } from '@lytjs/reactivity';
+import { effect, signal } from '@lytjs/reactivity';
 import type { ColorPickerSetupProps } from './types';
 
 const DEFAULT_PRESETS = [
@@ -112,6 +112,17 @@ export const ColorPicker = defineComponent({
         // 保持原样
       }
     };
+
+    // 受控：modelValue 变化时同步输入框与色板坐标（显示色块本身读 props，已跟随）。
+    effect(() => {
+      const v = p.modelValue;
+      if (typeof v === 'string' && v) {
+        colorInputValue.set(v);
+        updateHslFromHex(v);
+      } else {
+        colorInputValue.set('');
+      }
+    });
 
     const hslToRgb = (h: number, s: number, l: number): number[] => {
       s /= 100;

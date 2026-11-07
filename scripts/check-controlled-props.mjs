@@ -323,6 +323,33 @@ section('[10] TimePicker：modelValue 跟随');
 }
 
 // ══════════════════════════════════════════════════════════
+section('[11] ColorPicker：modelValue 跟随');
+{
+  const v = ref('#ff0000');
+  const host = await mount(() =>
+    h(ui.ColorPicker, { modelValue: v.value, showPreset: false, showHistory: false }),
+  );
+  const trigger = () =>
+    host
+      .querySelector('.lyt-color-picker-trigger')
+      ?.dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
+  trigger();
+  await sleep();
+  const display = () =>
+    host.querySelector('.lyt-color-picker-display')?.getAttribute('style') ?? '';
+  const input = () => host.querySelector('.lyt-color-picker-input input')?.value;
+  check('ColorPicker 初始色块为红', display().includes('rgb(255, 0, 0)'), display());
+  check('ColorPicker 初始输入框值', input() === '#ff0000', input());
+
+  v.value = '#00ff00';
+  await sleep();
+  check('外部改 modelValue 后色块跟随', display().includes('rgb(0, 255, 0)'), display());
+  check('外部改 modelValue 后输入框跟随', input() === '#00ff00', input());
+  trigger();
+  await sleep();
+}
+
+// ══════════════════════════════════════════════════════════
 for (const host of hosts) host.remove();
 // jsdom 会留下内部定时器/句柄，进程会一直挂着（实测挂 60s+）⇒ 断言跑完就显式退出
 dom.window.close();
