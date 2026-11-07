@@ -23,7 +23,8 @@ S18 完成并推送；C3 待架构人审，`sideEffects` 归批次 0。
 - **S01/S02** gate 委托；check-deps 覆盖 76/76。
 - **S06–S12** ErrorBoundary 下沉；core-vnode 权威收敛（首屏 70.4 KB、runtime 36.6 KB）；
   事件修饰符共用；public-names、isSafeAttribute、style 数值、hydration/list-diff 收敛。
-- ⚠️ `sideEffects:false` 丢弃 builtin-components 副作用，core dist 5 红（批次 0）。
+- ⚠️ `sideEffects:false` 丢弃 builtin-components 副作用，core dist 5 红；修复方案
+  B1/B2 见 `decisions/pending/0022-sideeffects-builtin-registration-plan.md`，待确认。
 - **待决 C3**：`@lytjs/ui` 5 个运行时依赖、61 文件/167 处 import 与 ARCHITECTURE:26
   冲突；见 `decisions/pending/0021-c3-ui-dependency-conflict.md`，待架构人审。
 

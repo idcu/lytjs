@@ -26,3 +26,4 @@ keywords: [决策, ADR, 索引]
 | 0019 | hydration 入口转发＋keyed diff 收敛 | active | [0019](0019-hydration-list-diff-authority.md) |
 | 0020 | S13 必要功能增长：三入口基线签字上调 | active | [0020](0020-bundle-baseline-s13-parity-growth.md) |
 | 0021 | C3：UI 依赖与 ARCHITECTURE:26 冲突（待裁） | pending | [0021](pending/0021-c3-ui-dependency-conflict.md) |
+| 0022 | `sideEffects:false` 内置组件注册方案 B1/B2（待确认） | pending | [0022](pending/0022-sideeffects-builtin-registration-plan.md) |
