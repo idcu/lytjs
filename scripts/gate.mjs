@@ -399,10 +399,21 @@ const GATES = [
   {
     name: 'check-negative-controls',
     tier: 'fast',
-    needsDist: true,
-    cmd: ['node', 'scripts/check-negative-controls.mjs'],
-    approx: '~6s',
-    desc: '★ 门禁负控（S05）：对 S02/S03/受控/样式做注入实验，门禁必须转红；其余门禁如实登记「未验证」。',
+    cmd: ['node', 'scripts/check-negative-controls.mjs', '--quick'],
+    approx: '~10s',
+    desc:
+      '负控框架（S05）：每条控制都注入一个真实违规，要求门禁必须转红、恢复后回绿；' +
+      '同时审计「每项门禁都有明确状态（verified / unverified / uninjectable）」。' +
+      '快档只跑秒级控制（--quick），慢控制与重控制分别由 slow 档与显式点名运行',
+  },
+  {
+    name: 'check-negative-controls:slow',
+    tier: 'slow',
+    cmd: ['node', 'scripts/check-negative-controls.mjs', '--slow'],
+    approx: '~3min',
+    desc:
+      '负控慢控制：循环依赖（src/dist）、lint/format 与 2s 以上的行为电池注入实验。' +
+      '分层只改变运行频率，不降低「注入必红、恢复回绿」的判据',
   },
   {
     name: 'check-integration',

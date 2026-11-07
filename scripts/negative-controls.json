@@ -10,11 +10,13 @@
     "check-dead-packages",
     "check-e2e-assertions",
     "check-src-hygiene",
+    "check-ui-slot-single-node",
     "check-ui-props-wiring",
     "check-keel-wiring",
     "check-script-refs",
     "check-as-unknown",
     "check-ui-styles",
+    "check-ui-contracts",
     "check-ui-i18n",
     "check-dist-freshness",
     "check-package-exports",
@@ -33,6 +35,7 @@
     "check-lifecycle-release",
     "check-http-protocol",
     "check-edge-runtime",
+    "check-negative-controls",
     "check-integration",
     "check-runtime-render",
     "check-compiler-parity",
@@ -54,25 +57,22 @@
     "check-web-cssvars",
     "check-config-semantics",
     "check-router-semantics",
+    "check-hydration",
     "check-vitest-alias-dist",
     "check-bundle-size",
     "check-runtime-contract",
     "check-api-snapshot",
-    "check-doc-imports"
-  ],
-  "unverified": [
-    "check-ui-slot-single-node",
-    "check-ui-contracts",
-    "check-negative-controls",
-    "check-hydration",
-    "build",
-    "build:fallback",
+    "check-doc-imports",
     "check-circular",
     "check-circular:src",
-    "type-check",
     "lint:check",
-    "format:check",
-    "test",
-    "test:coverage"
+    "format:check"
+  ],
+  "unverified": ["build", "build:fallback", "type-check", "test", "test:coverage"],
+  "uninjectable": [
+    {
+      "name": "check-negative-controls:slow",
+      "reason": "聚合运行器：本身不产生产物判据，判据由它逐项运行的慢控制覆盖"
+    }
   ]
 }

@@ -69,6 +69,14 @@
  *   - `check-plugin-semantics` 插件语义：忽略 installed 幂等检查 →「重复 install 只执行一次」必红
  *   - `check-hmr`              HMR：register 覆盖而非合并 handler →「先 accept 后 dispose：两者都在」必红
  *   - `check-consumer-demo`    消费者 demo：emit 只查 props 不查 attrs →「点击后计数变为 1」必红
+ *   - `check-ui-slot-single-node` UI slot 单节点：新增只处理数组形态的 slot 分支 →「只处理数组形态」必红
+ *   - `check-negative-controls` 负控审计：给 GATES 临时加一条未登记门禁 →「未登记」必红
+ *   - `check-circular`        循环依赖（dist）：产物入口多 import 一个回指入口的临时模块 →「发现循环依赖」必红
+ *   - `check-circular:src`    循环依赖（源码）：在 vdom src 造 入口→a→b→入口 的真实环 →「新增源码循环」必红
+ *   - `check-hydration`       水合：清理时不再保留服务端 <script> 资源节点 →「根内 hydration data 被保留」必红
+ *   - `lint:check`            eslint：新增一个含未使用变量的 src 文件 → eslint error 必红
+ *   - `format:check`          prettier：新增一个格式不合规的文件 → 「Code style issues」必红
+ *   - `check-ui-contracts`    行为契约：把登记表里一个 pass 格改成 red →「登记表与源码不一致」必红
  *
  * 其余门禁本轮不做注入实验，**如实登记为「未验证」**（见 negative-controls.json），
  * 不假装有反证。新增门禁时必须跑一次 `--sync` 让清单同步，否则本脚本报红。
@@ -133,7 +141,11 @@ function expectFail(cmd, label) {
   const lines = plain.split('\n');
   const hit = lines.findIndex((l) => l.includes('❌'));
   const head =
-    hit >= 0 ? lines[hit] : (lines.find((l) => /Error|error TS|AssertionError/.test(l)) ?? '');
+    hit >= 0
+      ? lines[hit]
+      : (lines.find((l) => /✖|error TS|AssertionError|no-unused-vars|Error:/.test(l)) ??
+        lines.find((l) => /Code style/i.test(l)) ??
+        '');
   // 有些脚本先打印 `❌ 失败：`，具体条目在下一非空行 —— 一并带上，避免「红在哪」变成空白
   const next = hit >= 0 && /[：:]\s*$/.test(head) ? lines.slice(hit + 1).find((l) => l.trim()) : '';
   lastFailure = `${head.trim()}${next ? ` ${next.trim()}` : ''}`.slice(0, 160);
@@ -1166,36 +1178,226 @@ const CONTROLS = {
       () => expectFail(['node', 'scripts/check-consumer-demo.mjs'], 'check-consumer-demo'),
     );
   },
+
+  'check-ui-slot-single-node': () => {
+    // 注入：组件里新增一个只处理数组形态、没有 else 的 slot 分支 ⇒「只处理数组形态」判据必红
+    const file = join(
+      ROOT,
+      'packages/ecosystem/packages/ui/src/components/__negctl-slot-single.ts',
+    );
+    withTempFile(
+      file,
+      [
+        'export function pushSlotContent(slotContent: unknown, children: unknown[]): void {',
+        '  if (Array.isArray(slotContent)) {',
+        '    children.push(...slotContent);',
+        '  }',
+        '}',
+        '',
+      ].join('\n'),
+      () =>
+        expectFail(['tsx', 'scripts/check-ui-slot-single-node.ts'], 'check-ui-slot-single-node'),
+    );
+  },
+
+  'check-negative-controls': () => {
+    // 注入：给 gate.mjs 的 GATES 临时加一条未登记的门禁名 ⇒ 审计「未登记」判据必红
+    withPatchedFile(
+      GATE_PATH,
+      (text) => {
+        const needle = 'const GATES = [';
+        if (!text.includes(needle)) {
+          throw new Error('check-negative-controls：注入点漂移（找不到 GATES 数组）');
+        }
+        return text.replace(
+          needle,
+          `${needle}\n  {\n    name: '__negctl-ghost',\n    tier: 'fast',\n    cmd: ['node', '-e', ''],\n    approx: '~0s',\n    desc: '负控注入：仅登记名字，不接入任何判据',\n  },`,
+        );
+      },
+      () =>
+        expectFail(
+          ['node', 'scripts/check-negative-controls.mjs', '--audit'],
+          'check-negative-controls',
+        ),
+    );
+  },
+
+  'check-circular': () => {
+    // 注入：产物入口多 import 一个回指入口的临时模块（真实环）⇒「发现循环依赖」判据必红
+    const entry = join(ROOT, 'packages/vdom/dist/index.mjs');
+    if (!existsSync(entry)) throw new Error('check-circular：缺少 vdom dist，请先构建');
+    const cycle = join(ROOT, 'packages/vdom/dist/__negctl-cycle.mjs');
+    withTempFile(cycle, 'import "./index.mjs";\nexport const NEGCTL_CYCLE = 1;\n', () =>
+      withPatchedFile(
+        entry,
+        (text) => `import "./__negctl-cycle.mjs";\n${text}`,
+        () => expectFail(['tsx', 'scripts/check-circular.ts'], 'check-circular'),
+      ),
+    );
+  },
+
+  'check-circular:src': () => {
+    // 注入：在 vdom 源码造「入口 → a → b → 入口」的真实循环 ⇒「新增源码循环」判据必红
+    const entry = join(ROOT, 'packages/vdom/src/index.ts');
+    if (!existsSync(entry)) throw new Error('check-circular:src：缺少 packages/vdom/src/index.ts');
+    const a = join(ROOT, 'packages/vdom/src/__negctl-cycle-a.ts');
+    const b = join(ROOT, 'packages/vdom/src/__negctl-cycle-b.ts');
+    withTempFile(a, "import './__negctl-cycle-b';\nexport const NEGCTL_CYCLE_A = 1;\n", () =>
+      withTempFile(b, "import './index';\nexport const NEGCTL_CYCLE_B = 1;\n", () =>
+        withPatchedFile(
+          entry,
+          (text) => `export * from './__negctl-cycle-a';\n${text}`,
+          () => expectFail(['tsx', 'scripts/check-circular.ts', '--src'], 'check-circular:src'),
+        ),
+      ),
+    );
+  },
+
+  'check-hydration': () => {
+    // 注入：水合清理时不再保留服务端 <script> 资源节点 ⇒「根内的 <script type="application/json"> 被保留」必红
+    const file = join(ROOT, 'packages/vdom/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-hydration：缺少 vdom dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle =
+          'return tag === "script" || tag === "style" || tag === "link" || tag === "meta" || tag === "noscript" || tag === "base" || tag === "title";';
+        if (!text.includes(needle)) {
+          throw new Error('check-hydration：注入点漂移（找不到 isPreservedResourceNode）');
+        }
+        return text.replace(
+          needle,
+          'return tag === "style" || tag === "link" || tag === "meta" || tag === "noscript" || tag === "base" || tag === "title";',
+        );
+      },
+      () => expectFail(['node', 'scripts/check-hydration.mjs'], 'check-hydration'),
+    );
+  },
+
+  'lint:check': () => {
+    // 注入：新增一个含未使用变量的 src 文件 ⇒ eslint error 必红
+    const file = join(ROOT, 'packages/core/src/__negctl-lint.ts');
+    withTempFile(
+      file,
+      'export function negctlLint(): number {\n  const unusedValue = 1;\n  return 0;\n}\n',
+      () => expectFail(['pnpm', 'run', 'lint:check'], 'lint:check'),
+    );
+  },
+
+  'format:check': () => {
+    // 注入：新增一个格式不合规的文件 ⇒ prettier「Code style issues」必红
+    const file = join(ROOT, 'packages/core/src/__negctl-format.ts');
+    withTempFile(file, 'export const   negctlFormat =    {a:1,b:2}\n', () =>
+      expectFail(['pnpm', 'run', 'format:check'], 'format:check'),
+    );
+  },
+
+  'check-ui-contracts': () => {
+    // 注入：把登记表里一个 pass 格改成 red（登记与代码漂移）⇒「登记表与源码不一致」判据必红
+    const file = join(ROOT, 'scripts/ui-contracts.json');
+    withPatchedFile(
+      file,
+      (text) => {
+        const reg = JSON.parse(text);
+        for (const name of Object.keys(reg.cells ?? {})) {
+          for (const cap of Object.keys(reg.cells[name])) {
+            const cell = reg.cells[name][cap];
+            if (cell?.status === 'pass') {
+              cell.status = 'red';
+              cell.reason = '负控注入：人为制造登记与代码漂移';
+              return `${JSON.stringify(reg, null, 2)}\n`;
+            }
+          }
+        }
+        throw new Error('check-ui-contracts：注入点漂移（登记表里没有 pass 格）');
+      },
+      () => expectFail(['node', 'scripts/check-ui-contracts.mjs'], 'check-ui-contracts'),
+    );
+  },
 };
 
-/** 审计：gate.mjs 的每一项都必须在清单里，且有明确状态 */
+/**
+ * 控制成本分层（决定门禁那一轮跑哪些）：
+ * - 快档（`--quick`，gate 的 fast 档调用）：只跑秒级控制 + 审计；
+ * - 慢档（`--slow`，gate 的 slow 档调用）：跑十几秒到一分半的控制；
+ * - 重控制（HEAVY）：分钟级（构建 / 全量测试），只在显式点名时运行。
+ *
+ * 分层**不降低判据**：每条控制仍然「注入必红、恢复回绿」，只是运行频率不同。
+ */
+const SLOW_CONTROLS = new Set([
+  // 十几秒到一分半
+  'check-circular',
+  'check-circular:src',
+  'lint:check',
+  'format:check',
+  // 单项 2s 以上的行为电池（放慢档，避免拖慢日常 fast 反馈）
+  'check-integration',
+  'check-render-shapes',
+  'check-component-shapes',
+  'check-ssr-client-parity',
+  'check-dialog-a11y',
+  'check-scaffold',
+  'check-hydration',
+  'check-lifecycle-release',
+]);
+const HEAVY_CONTROLS = new Set(['build', 'build:fallback', 'type-check', 'test', 'test:coverage']);
+
+/** 审计：gate.mjs 的每一项都必须有明确状态（verified / unverified / uninjectable） */
 function audit() {
   const names = gateNames();
   const registry = existsSync(REGISTRY_PATH)
     ? JSON.parse(readFileSync(REGISTRY_PATH, 'utf-8'))
-    : { verified: [], unverified: [] };
+    : { verified: [], unverified: [], uninjectable: [] };
   const verified = new Set(registry.verified ?? []);
   const unverified = new Set(registry.unverified ?? []);
-  const missing = names.filter((n) => !verified.has(n) && !unverified.has(n));
-  const stale = [...verified, ...unverified].filter((n) => !names.includes(n));
+  const uninjectable = new Map((registry.uninjectable ?? []).map((e) => [e.name, e.reason]));
+  const missing = names.filter(
+    (n) => !verified.has(n) && !unverified.has(n) && !uninjectable.has(n),
+  );
+  const stale = [...verified, ...unverified, ...uninjectable.keys()].filter(
+    (n) => !names.includes(n),
+  );
   const bogus = [...verified].filter((n) => !CONTROLS[n]);
+  const blank = [...uninjectable].filter(([, reason]) => !reason?.trim()).map(([n]) => n);
+  const both = [...verified, ...unverified].filter((n) => uninjectable.has(n));
 
   console.log(`负控清单：${names.length} 项门禁`);
   console.log(`  已验证（注入后必红）：${verified.size}`);
   console.log(`  未验证（如实登记）：${unverified.size}`);
+  console.log(`  不可负控（附原因）：${uninjectable.size}`);
   if (missing.length > 0) console.error(`  ❌ 未登记：${missing.join(', ')}`);
   if (stale.length > 0) console.error(`  ❌ 已不存在：${stale.join(', ')}`);
   if (bogus.length > 0) console.error(`  ❌ 标为已验证但没有控制脚本：${bogus.join(', ')}`);
-  return missing.length === 0 && stale.length === 0 && bogus.length === 0;
+  if (blank.length > 0) console.error(`  ❌ 不可负控但没写原因：${blank.join(', ')}`);
+  if (both.length > 0) console.error(`  ❌ 同时出现在两类里：${both.join(', ')}`);
+  return (
+    missing.length === 0 &&
+    stale.length === 0 &&
+    bogus.length === 0 &&
+    blank.length === 0 &&
+    both.length === 0
+  );
 }
 
 function sync() {
   const names = gateNames();
+  const prev = existsSync(REGISTRY_PATH)
+    ? JSON.parse(readFileSync(REGISTRY_PATH, 'utf-8'))
+    : { uninjectable: [] };
+  // 保留既有「不可负控」判定（原因无法自动推导），但只保留仍存在且确实没有控制脚本的
+  const uninjectable = (prev.uninjectable ?? []).filter(
+    (e) => names.includes(e.name) && !CONTROLS[e.name],
+  );
+  const pinned = new Set(uninjectable.map((e) => e.name));
   const verified = names.filter((n) => CONTROLS[n]);
-  const unverified = names.filter((n) => !CONTROLS[n]);
+  const unverified = names.filter((n) => !CONTROLS[n] && !pinned.has(n));
   writeFileSync(
     REGISTRY_PATH,
-    `${JSON.stringify({ updatedAt: new Date().toISOString().slice(0, 10), verified, unverified }, null, 2)}\n`,
+    `${JSON.stringify(
+      { updatedAt: new Date().toISOString().slice(0, 10), verified, unverified, uninjectable },
+      null,
+      2,
+    )}\n`,
   );
   // 生成结果必须与仓库格式一致（否则 `format:check` 会因维护命令而漂移）
   const pretty = spawnSync('prettier', ['--write', REGISTRY_PATH], {
@@ -1207,7 +1409,7 @@ function sync() {
     console.warn('⚠️ prettier 未运行，请手动格式化 scripts/negative-controls.json');
   }
   console.log(
-    `已同步 ${REGISTRY_PATH}：verified ${verified.length} / unverified ${unverified.length}`,
+    `已同步 ${REGISTRY_PATH}：verified ${verified.length} / unverified ${unverified.length} / uninjectable ${uninjectable.length}`,
   );
 }
 
@@ -1220,10 +1422,17 @@ if (argv.includes('--sync')) {
 const auditOk = audit();
 if (argv.includes('--audit')) process.exit(auditOk ? 0 : 1);
 
-const targets =
-  argv.filter((a) => !a.startsWith('--')).length > 0
-    ? argv.filter((a) => !a.startsWith('--'))
-    : Object.keys(CONTROLS);
+const explicit = argv.filter((a) => !a.startsWith('--'));
+let targets;
+if (explicit.length > 0) {
+  targets = explicit;
+} else if (argv.includes('--quick')) {
+  targets = Object.keys(CONTROLS).filter((n) => !SLOW_CONTROLS.has(n) && !HEAVY_CONTROLS.has(n));
+} else if (argv.includes('--slow')) {
+  targets = [...SLOW_CONTROLS].filter((n) => CONTROLS[n]);
+} else {
+  targets = Object.keys(CONTROLS).filter((n) => !HEAVY_CONTROLS.has(n));
+}
 
 let failed = 0;
 for (const name of targets) {
