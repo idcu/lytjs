@@ -280,6 +280,31 @@ section('[8] RadioGroup：modelValue 跟随');
 }
 
 // ══════════════════════════════════════════════════════════
+section('[9] Image：src 跟随并重置错误态');
+{
+  const src = ref('a.png');
+  const host = await mount(() => h(ui.Image, { src: src.value, alt: 'x', preview: false }));
+  const img = () => host.querySelector('.lyt-image-inner');
+  check(
+    'Image 初始 src 为 a.png',
+    img()?.getAttribute('src') === 'a.png',
+    img()?.getAttribute('src'),
+  );
+
+  img()?.dispatchEvent(new w.Event('error'));
+  await sleep();
+  check('加载失败后出现兜底', host.querySelector('.lyt-image-error') !== null);
+
+  src.value = 'b.png';
+  await sleep();
+  check(
+    '外部改 src 后图片跟随且错误态重置',
+    img()?.getAttribute('src') === 'b.png' && host.querySelector('.lyt-image-error') === null,
+    `${img()?.getAttribute('src')} / ${host.querySelector('.lyt-image-error') !== null}`,
+  );
+}
+
+// ══════════════════════════════════════════════════════════
 for (const host of hosts) host.remove();
 // jsdom 会留下内部定时器/句柄，进程会一直挂着（实测挂 60s+）⇒ 断言跑完就显式退出
 dom.window.close();

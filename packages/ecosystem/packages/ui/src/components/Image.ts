@@ -6,7 +6,7 @@
 
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
-import { signal } from '@lytjs/reactivity';
+import { signal, watch } from '@lytjs/reactivity';
 import type { ImageSetupProps } from './types';
 
 export const Image = defineComponent({
@@ -34,6 +34,15 @@ export const Image = defineComponent({
     const isLoaded = signal(false);
     const isError = signal(false);
     const isPreviewVisible = signal(false);
+
+    // 受控：src 变化时必须重置加载/错误态，否则上一张图的失败兜底会一直盖住新图。
+    watch(
+      () => p.src,
+      () => {
+        isLoaded.set(false);
+        isError.set(false);
+      },
+    );
 
     const handleLoad = () => {
       isLoaded.set(true);
