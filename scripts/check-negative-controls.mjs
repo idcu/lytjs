@@ -53,6 +53,14 @@
  *   - `check-runtime-contract` 运行时契约：从 core 导出面删掉 withModifiers → 产物 import 缺导出必红
  *   - `check-api-routes`       文件路由：忽略规则退回子串匹配 →「distribution.ts 未被误伤」必红
  *   - `check-scaffold`         脚手架：store/full 模板不再生成 stores/counter.ts → 文件/相对导入判据必红
+ *   - `check-error-paths`      错误路径：setup 抛错不再交给 errorCaptured → 可达性/不静默判据必红
+ *   - `check-ssr-isolation`    SSR 隔离：store 注册表忽略 pinia →「两个 pinia 的 store 互不共享」必红
+ *   - `check-lifecycle-release` 生命周期释放：卸载不停组件 effect scope →「卸载后 watch 不再触发」必红
+ *   - `check-http-protocol`    HTTP 协议：数组响应头逐项 setHeader →「两条 set-cookie」判据必红
+ *   - `check-edge-runtime`     边缘运行时：404 返回鸭子类型对象 →「404 是真正的 Response」必红
+ *   - `check-integration`      集成链路：Input 不再 emit update:modelValue → v-model 链路必红
+ *   - `check-runtime-render`   产物执行：patchAttr 丢弃普通属性 →「void 元素」DOM 断言必红
+ *   - `check-compiler-parity`  编译器对拍：优化 codegen 丢静态属性 →「新增分叉」必红
  *
  * 其余门禁本轮不做注入实验，**如实登记为「未验证」**（见 negative-controls.json），
  * 不假装有反证。新增门禁时必须跑一次 `--sync` 让清单同步，否则本脚本报红。
@@ -834,6 +842,168 @@ const CONTROLS = {
         return text.replace(needle, '    void counterStore;');
       },
       () => expectFail(['node', 'scripts/check-scaffold.mjs'], 'check-scaffold'),
+    );
+  },
+
+  'check-error-paths': () => {
+    // 注入：setup 抛错后不再交给 handleError ⇒「错误到达 errorCaptured」「未静默」必红
+    const file = join(ROOT, 'packages/component/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-error-paths：缺少 component dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle =
+          '  } catch (err) {\n    handleError(err, instance, "setup function");\n    instance.setupError = err instanceof Error ? err : new Error(String(err));';
+        if (!text.includes(needle)) {
+          throw new Error('check-error-paths：注入点漂移（找不到 runSetup 的 handleError）');
+        }
+        return text.replace(
+          needle,
+          '  } catch (err) {\n    instance.setupError = err instanceof Error ? err : new Error(String(err));',
+        );
+      },
+      () => expectFail(['node', 'scripts/check-error-paths.mjs'], 'check-error-paths'),
+    );
+  },
+
+  'check-ssr-isolation': () => {
+    // 注入：store 注册表忽略 pinia、全部落到进程级 fallback ⇒「A 与 B 不是同一个 store 对象」必红
+    const file = join(ROOT, 'packages/ecosystem/packages/store/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-ssr-isolation：缺少 store dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle = 'function registryFor(pinia) {\n  if (!pinia) return fallbackRegistry;';
+        if (!text.includes(needle)) {
+          throw new Error('check-ssr-isolation：注入点漂移（找不到 registryFor）');
+        }
+        return text.replace(
+          needle,
+          'function registryFor(pinia) {\n  if (true) return fallbackRegistry;',
+        );
+      },
+      () => expectFail(['node', 'scripts/check-ssr-isolation.mjs'], 'check-ssr-isolation'),
+    );
+  },
+
+  'check-lifecycle-release': () => {
+    // 注入：组件卸载时不停自己的 effect scope ⇒「卸载后 watch 不再触发」必红
+    const file = join(ROOT, 'packages/component/dist/index.mjs');
+    if (!existsSync(file))
+      throw new Error('check-lifecycle-release：缺少 component dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle = '  instance.isUnmounted = true;\n  instance.scope?.stop();';
+        if (!text.includes(needle)) {
+          throw new Error('check-lifecycle-release：注入点漂移（找不到 scope.stop）');
+        }
+        return text.replace(needle, '  instance.isUnmounted = true;');
+      },
+      () => expectFail(['node', 'scripts/check-lifecycle-release.mjs'], 'check-lifecycle-release'),
+    );
+  },
+
+  'check-http-protocol': () => {
+    // 注入：数组响应头逐项 setHeader（后一条覆盖前一条）⇒「两条 set-cookie 都要到客户端」必红
+    const file = join(
+      ROOT,
+      'packages/ecosystem/packages/web-framework/packages/http-server/dist/index.mjs',
+    );
+    if (!existsSync(file)) throw new Error('check-http-protocol：缺少 http-server dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle =
+          '      if (Array.isArray(value)) {\n        res.setHeader(key, value.map(String));\n      } else {';
+        if (!text.includes(needle)) {
+          throw new Error('check-http-protocol：注入点漂移（找不到数组头写入）');
+        }
+        return text.replace(
+          needle,
+          '      if (Array.isArray(value)) {\n        for (const item of value) res.setHeader(key, String(item));\n      } else {',
+        );
+      },
+      () => expectFail(['node', 'scripts/check-http-protocol.mjs'], 'check-http-protocol'),
+    );
+  },
+
+  'check-edge-runtime': () => {
+    // 注入：404 直接返回鸭子类型对象（不是 Response）⇒「404 是真正的 Response」必红
+    const file = join(ROOT, 'packages/ecosystem/packages/runtime-edge/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-edge-runtime：缺少 runtime-edge dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle = '      return textResponse("Not Found", 404);';
+        if (!text.includes(needle)) {
+          throw new Error('check-edge-runtime：注入点漂移（找不到 404 分支）');
+        }
+        return text.replace(
+          needle,
+          '      return { status: 404, statusText: "Not Found", headers: {} };',
+        );
+      },
+      () => expectFail(['node', 'scripts/check-edge-runtime.mjs'], 'check-edge-runtime'),
+    );
+  },
+
+  'check-integration': () => {
+    // 注入：Input 的 input 事件不再 emit update:modelValue ⇒「Input 输入 → update:modelValue」必红
+    const file = join(ROOT, 'packages/ecosystem/packages/ui/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-integration：缺少 UI dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle =
+          '    const handleInput = (e) => {\n      const target = e.target;\n      const value = target.value;\n      emit("update:modelValue", value);\n      emit("input", value);\n    };';
+        if (!text.includes(needle)) {
+          throw new Error('check-integration：注入点漂移（找不到 Input 的 handleInput）');
+        }
+        return text.replace(
+          needle,
+          '    const handleInput = (e) => {\n      const target = e.target;\n      const value = target.value;\n      emit("input", value);\n    };',
+        );
+      },
+      () => expectFail(['node', 'scripts/check-integration.mjs'], 'check-integration'),
+    );
+  },
+
+  'check-runtime-render': () => {
+    // 注入：patchAttr 丢弃普通属性 ⇒「void 元素」的 `<img src="x">` DOM 断言必红
+    const file = join(ROOT, 'packages/common/packages/dom/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-runtime-render：缺少 common-dom dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle =
+          '  } else {\n    const strValue = typeof value === "string" ? value : String(value);\n    if (!isSafeAttribute(key, strValue)) {\n      return;\n    }\n    el.setAttribute(key, strValue);\n  }';
+        if (!text.includes(needle)) {
+          throw new Error('check-runtime-render：注入点漂移（找不到 patchAttr 普通属性分支）');
+        }
+        return text.replace(
+          needle,
+          '  } else {\n    const strValue = typeof value === "string" ? value : String(value);\n    if (true) {\n      return;\n    }\n    el.setAttribute(key, strValue);\n  }',
+        );
+      },
+      () => expectFail(['node', 'scripts/check-runtime-render.mjs'], 'check-runtime-render'),
+    );
+  },
+
+  'check-compiler-parity': () => {
+    // 注入：优化 codegen 序列化静态 HTML 时丢掉带值属性 ⇒ 两套产物新增分叉、「新增分叉」必红
+    const file = join(ROOT, 'packages/compiler/dist/index.mjs');
+    if (!existsSync(file)) throw new Error('check-compiler-parity：缺少 compiler dist，请先构建');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle = '      attrs += ` ${prop.name}="${escapeHtmlStatic2(prop.value.content)}"`;';
+        if (!text.includes(needle)) {
+          throw new Error('check-compiler-parity：注入点漂移（找不到优化器静态属性序列化）');
+        }
+        return text.replace(needle, '      void prop;');
+      },
+      () => expectFail(['node', 'scripts/check-compiler-parity.mjs'], 'check-compiler-parity'),
     );
   },
 };
