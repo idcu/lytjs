@@ -407,6 +407,25 @@ section('[14] DatePicker：modelValue 跟随与清空');
 }
 
 // ══════════════════════════════════════════════════════════
+section('[15] TreeSelect：value 跟随与清空');
+{
+  const data = [
+    { label: '节点A', value: 'a' },
+    { label: '节点B', value: 'b' },
+  ];
+  const v = ref('a');
+  const host = await mount(() => h(ui.TreeSelect, { value: v.value, data }));
+  const shown = () => text(host.querySelector('.lyt-tree-select-value'));
+  check('TreeSelect 初始显示节点A', shown() === '节点A', shown());
+  v.value = 'b';
+  await sleep();
+  check('外部改 value 后显示节点B', shown() === '节点B', shown());
+  v.value = '';
+  await sleep();
+  check('外部清空后回到占位符', shown() === '请选择', shown());
+}
+
+// ══════════════════════════════════════════════════════════
 for (const host of hosts) host.remove();
 // jsdom 会留下内部定时器/句柄，进程会一直挂着（实测挂 60s+）⇒ 断言跑完就显式退出
 dom.window.close();
