@@ -14,17 +14,17 @@ keywords: [校验, 规则, 扩展检查, CI, 门禁]
 
 | # | 检查 | 命令 | 级别 | 触发时机 |
 |---|---|---|---|---|
-| 1 | 快档门禁（构建顺序 + UI slot + props + alias + 源码卫生） | `corepack pnpm@11.3.0 check:fast` | ❌ fail | 本地（含需 dist 的 alias 检查） |
-| 2 | 契约漂移（产物 import 的绑定名须在导出面） | `corepack pnpm@11.3.0 check-runtime-contract` | ❌ fail | CI（build job 后置）+ 发布前 |
-| 3 | 文档 import 欠账（棘轮） | `corepack pnpm@11.3.0 check-doc-imports` | ❌ fail | CI（build job 后置）+ 发布前 |
-| 4 | UI slot 单节点（红门禁） | `corepack pnpm@11.3.0 check-ui-slot-single-node` | ❌ fail | CI（keel-gates job） |
-| 5 | UI props 接线（棘轮，基线 `scripts/ui-props-wiring-baseline.txt`） | `corepack pnpm@11.3.0 check-ui-props-wiring` | ❌ fail | CI（keel-gates job） |
-| 6 | 运行时循环依赖（棘轮） | `corepack pnpm@11.3.0 check-circular:src` | ❌ fail | CI（keel-gates job）+ 定时 |
+| 1 | 快档门禁（单一入口：构建顺序 + 依赖 + UI slot + props + alias + 源码卫生 + 覆盖率） | `node scripts/gate.mjs --tier fast` | ❌ fail | 本地 + CI（build job 后置） |
+| 2 | 契约漂移（产物 import 的绑定名须在导出面） | `node scripts/gate.mjs check-runtime-contract` | ❌ fail | CI（build job 后置）+ 发布前 |
+| 3 | 文档 import 欠账（棘轮） | `node scripts/gate.mjs check-doc-imports` | ❌ fail | CI（build job 后置）+ 发布前 |
+| 4 | UI slot 单节点（红门禁） | `node scripts/gate.mjs check-ui-slot-single-node` | ❌ fail | CI（keel-gates job） |
+| 5 | UI props 接线（棘轮，基线 `scripts/ui-props-wiring-baseline.txt`） | `node scripts/gate.mjs check-ui-props-wiring` | ❌ fail | CI（keel-gates job） |
+| 6 | 运行时循环依赖（棘轮） | `node scripts/gate.mjs check-circular:src` | ❌ fail | CI（keel-gates job）+ 定时 |
 | 7 | 构建顺序一致性 | `corepack pnpm@11.3.0 check-build-order` | ❌ fail | CI（build-order job） |
-| 8 | vitest alias 目标存在（防用例静默少跑） | `corepack pnpm@11.3.0 check-vitest-alias-dist` | ❌ fail | CI（build job 后置） |
-| 9 | 慢档全量（发布前） | `corepack pnpm@11.3.0 gate --tier slow` | ❌ fail | 发布前 / 定时任务 |
-| 10 | 源码卫生（`eval(` / `new Function(` / `console.log(` 三条规则 + 显式清单） | `corepack pnpm@11.3.0 check-src-hygiene` | ❌ fail | 本地（`check:fast` 已含）+ CI |
-| 11 | 治理接线（keel CI 三关卡齐全） | `corepack pnpm@11.3.0 check-keel-wiring` | ❌ fail | 本地（`check:fast` 已含）+ CI |
+| 8 | vitest alias 目标存在（防用例静默少跑） | `node scripts/gate.mjs check-vitest-alias-dist` | ❌ fail | CI（build job 后置） |
+| 9 | 慢档全量（发布前） | `node scripts/gate.mjs --tier slow` | ❌ fail | 发布前 / 定时任务 |
+| 10 | 源码卫生（`eval(` / `new Function(` / `console.log(` 三条规则 + 显式清单） | `node scripts/gate.mjs check-src-hygiene` | ❌ fail | 本地 fast gate 已含 + CI |
+| 11 | 治理接线（keel CI 三关卡齐全） | `node scripts/gate.mjs check-keel-wiring` | ❌ fail | 本地 fast gate 已含 + CI |
 | 12 | Golden 20 × 七类行为契约（B04 六类 + B05 a11y；报告模式允许红） | `node scripts/check-ui-contracts.mjs` | ❌ fail（登记/源码漂移；`--strict` 时红项也 fail） | 本地（fast）+ 逐组件修复验收 |
 | 13 | UI 全量 i18n（双语键一致 + 全量扫描硬编码棘轮） | `node scripts/check-ui-i18n.ts` | ❌ fail（新增硬编码 / 键或占位不一致） | 本地（fast）+ CI |
 

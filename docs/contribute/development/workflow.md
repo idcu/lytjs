@@ -147,36 +147,34 @@
 
 ## 阶段 4: 验证与提交
 
-### 必做验证四步曲
+### 必做验证：gate 单一入口
+
+检查清单只维护在 `scripts/gate.mjs`（说明见 [keel/checks/rules.md](../../../keel/checks/rules.md)），
+不要在 CI 或文档里另抄一份命令清单。
 
 ```bash
-# 0. 构建顺序守卫（新增/删除包后必跑）
-#    校验「workspace 包集合 == BUILD_ORDER 集合」且依赖排序正确。
-#    2026-08 曾因新抽出的 @lytjs/config|di|plugin 未登记顺序表，
-#    导致 component/core 等 21 个包构建失败、38 个测试文件无法加载。
-pnpm check-build-order
+# 1. 源码级 fast 门禁：构建顺序/依赖/UI slot/props/alias/源码卫生/覆盖率快照等
+node scripts/gate.mjs --tier fast
 
-# 1. 类型检查（必须通过）
-pnpm type-check
+# 2. 改动产物或打包配置：先构建，再跑 fast 门禁（需 dist 的项会自动校验）
+pnpm build
+node scripts/gate.mjs --tier fast
 
-# 2. 代码检查（分包避免内存溢出）
-pnpm lint:batch
-# 或单个包
-pnpm eslint packages/ecosystem/packages/router/src --max-warnings 0
-
-# 3. 运行测试（必须通过）
-pnpm test
+# 3. 发布前跑慢档全量：build/test/type-check/lint/format/体积等
+node scripts/gate.mjs --tier slow
 ```
+
+`pnpm test`、`pnpm type-check`、`pnpm lint:batch` 都是 gate 内部的成员；
+单独运行只用于定位失败项，不能替代 gate 结论。
 
 > 注意：`pnpm build` 已内置 `check-build-order`，并且**不再**默认吞掉构建错误
 > （`--continue-on-error` 仅保留在 `pnpm build:force` 中用于本地排查）。
+> 2026-08 曾因新抽出的 `@lytjs/config|di|plugin` 未登记顺序表，
+> 导致 component/core 等 21 个包构建失败、38 个测试文件无法加载。
 
 > 单包验证请在仓库根目录执行，例如 `pnpm --filter @lytjs/ssr run build`。
 > 不要在 `packages/common` 或 `packages/ecosystem/packages/ssr-kit` 目录下直接跑 pnpm ——
 > 那两处原有的嵌套 `pnpm-workspace.yaml` 会让 pnpm 误认工作区（已于 2026-09 移除）。
-
-> 门禁真源见 [keel/checks/rules.md](../../../keel/checks/rules.md)；需 dist 的检查项在
-> `pnpm build` 之后运行，其余源码级检查可先行。
 
 ### Git 提交规范
 

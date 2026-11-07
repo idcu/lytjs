@@ -100,14 +100,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: UI slot 单节点（红门禁）
-        run: pnpm run check-ui-slot-single-node
-
-      - name: UI props 接线（报告型棘轮）
-        run: pnpm run check-ui-props-wiring
-
-      - name: 运行时循环依赖（棘轮）
-        run: pnpm run check-circular:src
+      - name: 源码级门禁（gate 登记项：UI slot / props / 循环依赖）
+        run: node scripts/gate.mjs check-ui-slot-single-node check-ui-props-wiring check-circular:src
 
   # 依赖安全审计
   audit:
@@ -282,29 +276,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Check dependency direction
-        run: pnpm run check-deps
-
       - name: Build all packages
         run: pnpm run build
 
-      # 单一真源：CI 在构建后统一执行 fast gate；下方逐项步骤保留，待 S04 清理
+      # 单一真源：CI 在构建后统一执行 fast gate（清单只在 scripts/gate.mjs）
       - name: Fast gate (single source)
         run: node scripts/gate.mjs --tier fast
 
-      # keel 扩展检查（需 dist）：登记见 keel/checks/rules.md
-      - name: 契约漂移（绑定名须在导出面）
-        run: pnpm run check-runtime-contract
-
-      - name: 文档 import 欠账（棘轮）
-        run: pnpm run check-doc-imports
-
-      - name: vitest alias 目标存在（防用例静默少跑）
-        run: pnpm run check-vitest-alias-dist
-
-      # A11：覆盖率快照的时效性与覆盖面（不重跑覆盖率，只校验元数据）
-      - name: 覆盖率快照（≤7 天 + 覆盖全部 src）
-        run: node scripts/check-coverage-snapshot.mjs
+      # 需 dist 但不在 fast 档的登记项：仍通过 gate.mjs 调用，避免 CI 维护第二份命令清单
+      - name: Dist-dependent gates
+        run: node scripts/gate.mjs check-runtime-contract check-doc-imports
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v5

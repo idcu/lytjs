@@ -12,6 +12,8 @@ keywords: [硬约束9]
 S18 完成并推送；C3 待架构人审；`sideEffects` B2 已实施（ADR 0022）。
 
 ## 11-07 完成
+- **S04** CI/文档统一到 `scripts/gate.mjs`：build job 后置 fast gate，dist-only 项按名调用；
+  keel-gates 保留源码子集。
 - **S03** `check-package-deps` 补 `export ... from` 运行时判据；`@lytjs/common`
   聚合包补 `@lytjs/common-constants` 声明（负控先红后绿）。
 - **S18** 6 处内联 `display:none` 改 `hidden`；Tabs 仅删重复 `.lyt-tabs__header`；
@@ -35,7 +37,7 @@ S18 完成并推送；C3 待架构人审；`sideEffects` B2 已实施（ADR 0022
   冲突；见 `decisions/pending/0021-c3-ui-dependency-conflict.md`，待架构人审。
 
 ## 下一步
-1. 批次 0 收尾：S04/S05。
+1. 批次 0 收尾：S05（负控框架）。
 2. 批次 4：S19–S22。
 
 ## 阻塞
