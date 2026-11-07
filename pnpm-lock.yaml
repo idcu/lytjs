@@ -1027,6 +1027,9 @@ importers:
 
   packages/dom-runtime:
     dependencies:
+      '@lytjs/common-algorithm':
+        specifier: workspace:*
+        version: link:../common/packages/algorithm
       '@lytjs/common-events':
         specifier: workspace:*
         version: link:../common/packages/events

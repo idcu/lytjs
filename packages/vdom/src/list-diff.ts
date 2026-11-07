@@ -9,7 +9,7 @@
 import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
 import { isSameVNodeType } from '@lytjs/common-vnode';
 import type { RendererHost } from '@lytjs/host-contract';
-import { getSequence } from '@lytjs/common-algorithm';
+import { planKeyedDiff } from '@lytjs/common-algorithm';
 import { warn } from '@lytjs/common-error';
 import { VDOM_MAX_LIST_DIFF_SIZE } from '@lytjs/common-constants';
 
@@ -441,98 +441,48 @@ export function patchKeyedChildren<HN, HE extends HN>(
   else {
     const s1 = i;
     const s2 = i;
+    const oldCount = e1 - s1 + 1;
+    const newCount = e2 - s2 + 1;
 
-    // 5.1 构建 key -> index 映射
-    const newKeyToIndexMap = new Map<PropertyKey, number>();
-    for (let j = s2; j <= e2; j++) {
-      const key = c2[j]!.key;
-      if (key !== null && key !== undefined) {
-        newKeyToIndexMap.set(key, j);
-      }
-    }
+    // 5.1 配对与最小移动计划：唯一实现在 @lytjs/common-algorithm（ADR 0019）。
+    // 本函数只负责把计划应用到 vnode（patch / unmount / move）。
+    const plan = planKeyedDiff({
+      oldCount,
+      newCount,
+      getOldKey: (offset) => c1[s1 + offset]?.key ?? null,
+      getNewKey: (offset) => c2[s2 + offset]?.key ?? null,
+      getOldTypeKey: (offset) => String(c1[s1 + offset]?.type),
+      getNewTypeKey: (offset) => String(c2[s2 + offset]?.type),
+      isCompatible: (oldOffset, newOffset) =>
+        isSameVNodeType(c1[s1 + oldOffset]!, c2[s2 + newOffset]!),
+    });
 
-    // 5.1b 构建 type -> index 映射（用于无 key 节点的 O(1) 查找）
-    const newTypeMap = new Map<string, number[]>();
-    for (let j = s2; j <= e2; j++) {
-      const child = c2[j];
-      if (child && !child.key) {
-        const typeKey = String(child.type);
-        if (!newTypeMap.has(typeKey)) newTypeMap.set(typeKey, []);
-        newTypeMap.get(typeKey)!.push(j);
-      }
-    }
-
-    let j: number;
-    let patched = 0;
-    const toBePatched = e2 - s2 + 1;
-    let moved = false;
-    let maxNewIndexSoFar = 0;
-
-    // 使用 Int32Array 替代普通数组，减少 GC 压力
-    const newIndexToOldIndexMap = new Int32Array(toBePatched);
-
-    // 5.2 遍历旧节点，复用或卸载
+    // 5.2 遍历旧节点，复用或卸载（保持原有的前后顺序）
     for (i = s1; i <= e1; i++) {
       const prevChild = c1[i];
       // FIX: P2-21 防御性检查
       if (!prevChild) {
         continue;
       }
-      if (patched >= toBePatched) {
-        ops.unmount(prevChild, parentComponent, parentSuspense, true);
-        continue;
-      }
+      const matchedNewIndex = plan.oldMatches[i - s1];
 
-      let newIndex: number | undefined;
-      if (prevChild.key !== null && prevChild.key !== undefined) {
-        newIndex = newKeyToIndexMap.get(prevChild.key);
-      } else {
-        // 无 key 节点：使用 type 映射做 O(1) 查找
-        const typeKey = String(prevChild.type);
-        const candidates = newTypeMap.get(typeKey);
-        if (candidates) {
-          for (const candidateIdx of candidates) {
-            if (
-              newIndexToOldIndexMap[candidateIdx - s2] === 0 &&
-              isSameVNodeType(prevChild, c2[candidateIdx]!)
-            ) {
-              newIndex = candidateIdx;
-              break;
-            }
-          }
-        }
-      }
-
-      if (newIndex === undefined) {
+      if (matchedNewIndex === undefined) {
         ops.unmount(prevChild, parentComponent, parentSuspense, true);
       } else {
-        newIndexToOldIndexMap[newIndex - s2] = i + 1;
-        if (newIndex >= maxNewIndexSoFar) {
-          maxNewIndexSoFar = newIndex;
-        } else {
-          moved = true;
-        }
         ops.patch(
           prevChild,
-          c2[newIndex]!,
+          c2[s2 + matchedNewIndex]!,
           container,
           null,
           parentComponent,
           parentSuspense,
           isSVG,
         );
-        patched++;
       }
     }
 
-    // 5.3 仅在发生移动时计算 LIS
-    // getSequence 接受普通数组，需要从 Int32Array 转换
-    const increasingNewIndexSequence = moved ? getSequence(Array.from(newIndexToOldIndexMap)) : [];
-
-    j = increasingNewIndexSequence.length - 1;
-
-    // 5.4 从后往前遍历，移动或挂载
-    for (i = toBePatched - 1; i >= 0; i--) {
+    // 5.3 从后往前遍历，移动或挂载（movedNewIndexes 已由 plan 用 LIS 求出）
+    for (i = newCount - 1; i >= 0; i--) {
       const nextIndex = s2 + i;
       const nextChild = c2[nextIndex];
       // FIX: P2-21 防御性检查
@@ -540,17 +490,13 @@ export function patchKeyedChildren<HN, HE extends HN>(
       const nextEl = nextIndex + 1 < l2 ? c2[nextIndex + 1]?.el : null;
       const anchor = nextEl ?? fallbackAnchor;
 
-      if (newIndexToOldIndexMap[i] === 0) {
+      if (plan.newIndexToOldIndex[i] === 0) {
         // 新节点，需要挂载
         ops.patch(null, nextChild, container, anchor, parentComponent, parentSuspense, isSVG);
-      } else if (moved) {
-        if (j < 0 || i !== increasingNewIndexSequence[j]!) {
-          // 不在 LIS 中，需要移动
-          if (nextChild.el) {
-            ops.move(nextChild, container, anchor, parentComponent, parentSuspense);
-          }
-        } else {
-          j--;
+      } else if (plan.moved && plan.movedNewIndexes.has(i)) {
+        // 不在 LIS 中，需要移动
+        if (nextChild.el) {
+          ops.move(nextChild, container, anchor, parentComponent, parentSuspense);
         }
       }
     }

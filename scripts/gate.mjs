@@ -81,6 +81,15 @@ const GATES = [
       'SSR/renderer 对危险 URL 与安全 URL 结论一致；S11 起扩展 style 单位',
   },
   {
+    name: 'check-list-diff',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-list-diff.mjs'],
+    approx: '~1.4s',
+    desc:
+      'keyed list diff 两路径对拍（2026-11-07 / S12）：vnode 的 patchKeyedChildren 与 ' +
+      'signal 的 reconcileArray 在同一组列表变化下 DOM 结构、顺序、节点复用一致',
+  },
+  {
     name: 'check-public-names',
     tier: 'fast',
     cmd: ['node', 'scripts/check-public-names.mjs'],

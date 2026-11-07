@@ -31,7 +31,8 @@
     "@lytjs/reactivity": "workspace:*",
     "@lytjs/common-security": "workspace:*",
     "@lytjs/common-events": "workspace:*",
-    "@lytjs/common-string": "workspace:*"
+    "@lytjs/common-string": "workspace:*",
+    "@lytjs/common-algorithm": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.5.1",

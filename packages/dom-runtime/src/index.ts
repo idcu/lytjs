@@ -8,6 +8,9 @@ import { sanitizeHTML, isSafeAttribute } from '@lytjs/common-security';
 import { isEventModifierIntercepted } from '@lytjs/common-events';
 // ★ 2026-11-07（S11 / ADR 0018）：style 序列化与数值策略的唯一真源在 common-string。
 import { camelToKebab, buildStyleString, normalizeStyleValue } from '@lytjs/common-string';
+// ★ 2026-11-07（S12 / ADR 0019）：keyed diff 的配对与最小移动计划唯一实现在 common-algorithm。
+// 本包只负责把计划应用到 signal 路径的 DOM 节点（reconcileArray 不再自建一套匹配算法）。
+import { planKeyedDiff } from '@lytjs/common-algorithm';
 
 // ==================== 环境检测 ====================
 
@@ -762,9 +765,9 @@ export function reconcileArray<T>(
     realParent = parent as Node;
   }
 
-  // 使用 Map 追踪已有节点
-  const existingMap = new Map<string | number, { node: Node; item: T }>();
+  // 按 DOM 顺序记录已有节点及其 key（供共享 diff 计划使用）
   const existingNodes: Node[] = [];
+  const existingKeys: Array<string | number> = [];
 
   // 收集当前 realParent 中已有的 reconcileArray 管理的节点
   // 通过遍历 realParent.childNodes 中 ref 之前的节点
@@ -792,13 +795,11 @@ export function reconcileArray<T>(
     // 从 WeakMap 中获取节点的 reconcile key
     const key = reconcileKeyMap.get(node);
     if (key !== undefined) {
-      existingMap.set(key, { node, item: undefined as unknown as T });
       existingNodes.push(node);
+      existingKeys.push(key);
     }
   }
 
-  // 标记已处理的 key
-  const usedKeys = new Set<string | number>();
   const fragment = document.createDocumentFragment();
 
   // FIX: P1-51 检测新列表中的重复 key，在 DEV 模式下发出警告
@@ -824,33 +825,36 @@ export function reconcileArray<T>(
     }
   }
 
-  // 遍历新列表
+  // keyed diff 的配对与最小移动由共享实现给出（ADR 0019）
+  const plan = planKeyedDiff({
+    oldCount: existingNodes.length,
+    newCount: list.length,
+    getOldKey: (index) => existingKeys[index] ?? null,
+    getNewKey: (index) => options.key(list[index]!),
+  });
+
+  // 遍历新列表：复用 / 更新 / 创建，并按新顺序收集到 fragment
   for (let i = 0; i < list.length; i++) {
     const item = list[i]!;
     const key = options.key(item);
-    usedKeys.add(key);
+    const oldIndexPlusOne = plan.newIndexToOldIndex[i] ?? 0;
 
-    const existing = existingMap.get(key);
-
-    if (existing) {
+    if (oldIndexPlusOne !== 0) {
+      const node = existingNodes[oldIndexPlusOne - 1]!;
       // key 已存在：更新或移动
       if (options.update) {
         // 2026-09-30 修复：把**索引**传给 update —— 否则 `v-for="(item, index)"` 的 index 恒为 undefined
-        options.update(existing.node, item, i);
+        options.update(node, item, i);
       }
       // FIX: P2-43 调用移动动画函数
       if (options.animateMove && nodeIndexMap) {
-        const fromIndex = nodeIndexMap.get(existing.node);
+        const fromIndex = nodeIndexMap.get(node);
         if (fromIndex !== undefined && fromIndex !== i) {
-          options.animateMove(existing.node, fromIndex, i);
+          options.animateMove(node, fromIndex, i);
         }
       }
-      // 标记 item 以便后续 destroy 判断
-      existing.item = item;
       // 将节点移到 fragment 中以重新排序
-      fragment.appendChild(existing.node);
-      // 删除已匹配的 key，防止重复 key 时同一节点被匹配两次
-      existingMap.delete(key);
+      fragment.appendChild(node);
     } else {
       // key 不存在：创建新节点
       // 2026-09-30 修复：同上，create 也要收到索引
@@ -860,17 +864,16 @@ export function reconcileArray<T>(
     }
   }
 
-  // 移除不再存在的节点
-  for (const [key, entry] of existingMap) {
-    if (!usedKeys.has(key)) {
-      if (options.destroy) {
-        options.destroy(entry.node);
-      }
-      // 从 DOM 中移除
-      const parentNode = entry.node.parentNode;
-      if (parentNode) {
-        parentNode.removeChild(entry.node);
-      }
+  // 移除不再存在的节点（plan.oldMatches 中未匹配的旧索引）
+  for (let i = 0; i < existingNodes.length; i++) {
+    if (plan.oldMatches[i] !== undefined) continue;
+    const node = existingNodes[i]!;
+    if (options.destroy) {
+      options.destroy(node);
+    }
+    const parentNode = node.parentNode;
+    if (parentNode) {
+      parentNode.removeChild(node);
     }
   }
 

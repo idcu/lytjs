@@ -25,7 +25,7 @@ export type { DOMRenderer } from './web-dom-renderer';
 // Hydration
 // ============================================================
 
-export { createHydrationFunctions } from './web-hydration';
+export { createHydrationFunctions, hydrateVNodeTree } from './web-hydration';
 export type { HydrationRenderer } from './web-hydration';
 
 // ============================================================

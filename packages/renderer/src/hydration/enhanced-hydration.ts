@@ -71,9 +71,11 @@ function tryCreateApp(component: unknown): App {
 import { getAppFactory, hasAppFactory } from '@lytjs/component';
 type Component = unknown;
 import { warn } from '@lytjs/common-error';
-// ⚠️ 2026-10-02：`hydrateApp` 此前是「DOM 遍历占位」——只数节点 + 摘 `on*` 属性，
-// 从不把 vnode 树与既有 DOM 协调。现复用同包 `ssr-island` 已验证的 `hydrateVNode`。
-import { hydrateVNode, resolveComponentRootVNode } from '../ssr/ssr-island';
+// ★ 2026-11-07（S12 / ADR 0019）：水合匹配的唯一实现是
+// `@lytjs/adapter-web` 的 `hydrateVNodeTree`。本模块不再调用 renderer 内部
+// `ssr-island.ts` 的 `hydrateVNode` 副本，改为转发到该唯一实现。
+import { hydrateVNodeTree } from '@lytjs/adapter-web';
+import { resolveComponentRootVNode } from '../ssr/ssr-island';
 import type { ComponentOptions as IslandComponentOptions } from '../ssr/ssr-island';
 
 // ============================================================
@@ -150,7 +152,7 @@ export interface HydrationStats {
  *
  * 把组件解析为根 vnode 后，与容器中已有的 SSR DOM **逐节点协调**：
  * 匹配的节点复用、文本不一致则更新、缺失的节点新建、多余的节点移除
- * （实现见同包 `ssr-island.ts` 的 `hydrateVNode`，与 Island 水合同一套逻辑）。
+ * （匹配实现为 `@lytjs/adapter-web` 的 `hydrateVNodeTree` —— 全仓唯一实现）。
  *
  * ⚠️ 能力边界（勿把它当"完整客户端接管"）：
  * · 返回的 `app` **未 mount**，因此本函数**不会**接管响应式更新 —— 它只做
@@ -229,7 +231,7 @@ export async function hydrateApp(
  * ⚠️ 2026-10-02 重写：此前本函数**只遍历 DOM**（`createTreeWalker` 数节点 +
  * 对每个 Element 摘掉 `on*`/`@*` 属性），**完全不消费 vnode**，形参 `_app`
  * 全程未使用 ⇒ `hydrateApp` 在"看起来成功"的同时什么也没水合。
- * 现改为：解析组件根 vnode → 复用 `hydrateVNode` 做真实协调。
+ * 现改为：解析组件根 vnode → 委托 `hydrateVNodeTree` 做真实协调。
  * 仅在**解析不出 vnode**（组件既无 `setup` 也无 `render`）时，才回退到
  * 原有的"属性清理"降级路径。
  */
@@ -254,8 +256,8 @@ async function performHydration(
     return;
   }
 
-  // 2) 真实水合：遍历 vnode 树并与既有 DOM 协调（复用 / 更新 / 新建 / 移除）
-  hydrateVNode(container, rootVNode);
+  // 2) 真实水合：委托 `hydrateVNodeTree`（全仓唯一的 hydration 匹配实现）
+  hydrateVNodeTree(rootVNode, container as HTMLElement);
 
   // 3) 水合后统计
   const walker = document.createTreeWalker(

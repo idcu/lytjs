@@ -1,11 +1,11 @@
 ---
 scope: meta
-status: active
+status: archived
 last-verified: 2026-10-05
 keywords: [keel, 接入, 单写回, workbuddy, 冻结]
 type: decision
 created: 2026-10-05
-superseded-by:
+superseded-by: keel/checks/rules.md
 ---
 
 # 0001 接入 keel 并单写回：`.workbuddy` 冻结为存档

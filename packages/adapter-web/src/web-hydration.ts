@@ -474,6 +474,35 @@ function hydrateNode(
 }
 
 // ============================================================
+// hydrateVNodeTree — 上层入口复用的单一匹配实现
+// ============================================================
+
+/**
+ * 用本包的匹配算法水合 vnode 树（**不**建立组件实例 / 响应式 effect）。
+ *
+ * 这是全仓 hydration 匹配逻辑的唯一实现：`createHydrationFunctions` 与
+ * `@lytjs/renderer` 的 `hydrateApp` 都调用它。`createApp().mount({ hydrate: true })`
+ * 走的是 vdom 渲染器自带的交互式水合（会建立 effect），属于另一条产品路径。
+ *
+ * 与 `createHydrationFunctions` 的区别：本函数不带弃用告警，供内部/上层入口复用。
+ *
+ * @param vnode - 待水合的根 vnode
+ * @param container - 容器元素
+ */
+export function hydrateVNodeTree(vnode: VNode, container: HTMLElement): void {
+  const host = new WebRendererHost();
+  const consumed = hydrateNode(vnode, container, 0, host);
+
+  // 根级多余节点：hydrateNode 只在元素内部裁剪，根容器需要在这里统一移除，
+  // 否则 SSR 多渲染的节点会残留在容器尾部。
+  const rootChildren = host.getChildNodes(container);
+  while (rootChildren.length > consumed) {
+    host.remove(rootChildren[rootChildren.length - 1]!);
+    rootChildren.pop();
+  }
+}
+
+// ============================================================
 // createHydrationFunctions
 // ============================================================
 
@@ -506,11 +535,10 @@ export function createHydrationFunctions(
     'createHydrationFunctions() 只做 DOM 匹配，不会建立组件实例与响应式 effect —— ' +
       '用它水合出来的页面点了没反应。请改用 createApp(root).mount(el, { hydrate: true })。',
   );
-  const host = new WebRendererHost();
   const vnodeMap = sharedVnodeMap ?? new WeakMap<Element, VNode | null>();
 
   function hydrate(vnode: VNode, container: HTMLElement): void {
-    hydrateNode(vnode, container, 0, host);
+    hydrateVNodeTree(vnode, container);
     vnodeMap.set(container, vnode);
   }
 

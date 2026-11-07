@@ -207,7 +207,7 @@
       "names": [
         {
           "name": "withModifiers",
-          "line": 703,
+          "line": 706,
           "relays": ["packages/core/src/runtime-helpers.ts"]
         }
       ],
@@ -267,21 +267,21 @@
       "status": "registered",
       "enforce": false,
       "ownerFile": "packages/adapter-web/src/web-hydration.ts",
-      "ownerLine": 64,
-      "replicas": [{ "file": "packages/renderer/src/hydration/enhanced-hydration.ts", "line": 169 }],
+      "ownerLine": 435,
+      "replicas": [{ "file": "packages/renderer/src/ssr/ssr-island.ts", "line": 464 }],
       "identityTest": "packages/adapter-web/tests/hydration-battery.test.ts",
-      "deletionCondition": "S12 收敛到单一 hydration 写入路径；renderer 侧只允许扩展，不得复制匹配逻辑。"
+      "deletionCondition": "S12 已把 app 级入口（adapter-web createHydrationFunctions、renderer hydrateApp）收敛到 hydrateVNodeTree；剩余 ssr-island 的 island 内部副本待后续收敛（不属 S12 范围）。"
     },
     {
       "id": "list-diff",
       "capability": "keyed list diff",
       "status": "registered",
       "enforce": false,
-      "ownerFile": "packages/vdom/src/list-diff.ts",
-      "ownerLine": 224,
-      "replicas": [{ "file": "packages/dom-runtime/src/index.ts", "line": 804 }],
+      "ownerFile": "packages/common/packages/algorithm/src/index.ts",
+      "ownerLine": 118,
+      "replicas": [],
       "identityTest": "packages/dom-runtime/tests/index.test.ts",
-      "deletionCondition": "S12 收敛到同一套 keyed diff 语义；dom-runtime 的 reconcileArray 只允许委托。"
+      "deletionCondition": "S12 已把 keyed 配对 + LIS 最小移动收敛到 planKeyedDiff；vdom 与 dom-runtime 只保留各自的 DOM 应用层。新增 keyed diff 实现必须重新登记。"
     }
   ]
 }
