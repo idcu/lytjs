@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     branches:
-      - main
+      - v7.0.0-dev
 
 concurrency:
   group: release-${{ github.ref }}
