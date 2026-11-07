@@ -12,6 +12,8 @@ keywords: [硬约束9]
 S18 完成并推送；C3 待架构人审；`sideEffects` B2 已实施（ADR 0022）。
 
 ## 11-07 完成
+- **S03** `check-package-deps` 补 `export ... from` 运行时判据；`@lytjs/common`
+  聚合包补 `@lytjs/common-constants` 声明（负控先红后绿）。
 - **S18** 6 处内联 `display:none` 改 `hidden`；Tabs 仅删重复 `.lyt-tabs__header`；
   Dialog e2e 断言升级为 computed `display`（负控实测变红）。UI 664/664、fast 53/53。
 - **S15/S16** UI composables 5 个；受控 props 17 组件/51 断言；`<select>` 初始值按
@@ -33,7 +35,7 @@ S18 完成并推送；C3 待架构人审；`sideEffects` B2 已实施（ADR 0022
   冲突；见 `decisions/pending/0021-c3-ui-dependency-conflict.md`，待架构人审。
 
 ## 下一步
-1. 批次 0 收尾：文档补「运行时 template + 内置组件需注册」；S03/S04/S05。
+1. 批次 0 收尾：S04/S05。
 2. 批次 4：S19–S22。
 
 ## 阻塞

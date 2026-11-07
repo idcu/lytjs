@@ -44,7 +44,8 @@
  *
  * - **运行时导入**（`import ... from` / `import()` / `require()`）⇒ 必须在
  *   `dependencies` 或 `peerDependencies` 里，否则**报错**
- * - **纯类型导入**（`import type ...`，且该文件没有其它运行时导入）⇒ 只**提示**，
+ * - **运行时 re-export**（`export ... from` / `export * from`）⇒ 同上（S03 补充）
+ * - **纯类型导入**（`import type ...` / `export type ... from`，且该文件没有其它运行时导入）⇒ 只**提示**，
  *   不算失败（它不会造成实例重复，但确实缺少类型依赖声明）
  */
 
@@ -123,6 +124,23 @@ function collectImports(file) {
       if (spec.startsWith('@lytjs/')) {
         // `import type { X } from` ⇒ 纯类型；`import { type X } from` 仍是运行时导入（可能混有值）
         if (node.importClause?.isTypeOnly) typeOnly.add(pkgOf(spec));
+        else runtime.add(pkgOf(spec));
+      }
+    }
+    // export ... from 'x' / export * from 'x' / export type { X } from 'x'
+    //
+    // ⚠️ 2026-11-07（S03）：此前只查 `ImportDeclaration`，**漏掉了 re-export**。
+    //   `export { X } from '@lytjs/foo'` 在产物里同样是运行时依赖（值会被 re-export，
+    //   下游 import 时直接引用它）。漏检 ⇒ 正文明明转发了一个未声明的包，门禁却是绿的。
+    //   判据只收紧：`export type` 走类型桶（不产生实例），其余一律按运行时。
+    if (
+      ts.isExportDeclaration(node) &&
+      node.moduleSpecifier &&
+      ts.isStringLiteral(node.moduleSpecifier)
+    ) {
+      const spec = node.moduleSpecifier.text;
+      if (spec.startsWith('@lytjs/')) {
+        if (node.isTypeOnly) typeOnly.add(pkgOf(spec));
         else runtime.add(pkgOf(spec));
       }
     }
