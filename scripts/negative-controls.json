@@ -3,6 +3,7 @@
   "verified": [
     "check-deps",
     "check-script-refs",
+    "check-as-unknown",
     "check-ui-styles",
     "check-package-deps",
     "check-controlled-props",

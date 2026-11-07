@@ -17,6 +17,7 @@
  *   - `check-ui-styles`        样式覆盖：塞一个未在 CSS 里出现的静态类名 → 必红
  *   - `check-release-parity`  发布一致性：改一个包版本 → 「76 包版本一致」判据必红
  *   - `check-script-refs`     零引用脚本棘轮（S20）：新增一个零引用脚本 → 必红
+ *   - `check-as-unknown`      as unknown as 棘轮（S22）：多写一处 → 必红
  *
  * 其余门禁本轮不做注入实验，**如实登记为「未验证」**（见 negative-controls.json），
  * 不假装有反证。新增门禁时必须跑一次 `--sync` 让清单同步，否则本脚本报红。
@@ -33,7 +34,7 @@
  */
 
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync, unlinkSync, utimesSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -155,6 +156,19 @@ const CONTROLS = {
     withTempFile(file, 'export const NEGCTL = 1;\n', () =>
       expectFail(['node', 'scripts/check-script-refs.mjs'], 'check-script-refs'),
     );
+  },
+
+  'check-as-unknown': () => {
+    // S22：在已有计数的源码里多写一处 as unknown as ⇒ 「只减不增」判据必须报红。
+    // 恢复内容后再还原 mtime：否则 check-dist-freshness 会因「src 比 dist 新」误红。
+    const file = join(ROOT, 'packages/vdom/src/patch.ts');
+    const st = statSync(file);
+    withPatchedFile(
+      file,
+      (text) => `${text}\nexport const __negctlAsUnknown = 0 as unknown as string;\n`,
+      () => expectFail(['node', 'scripts/check-as-unknown.mjs'], 'check-as-unknown'),
+    );
+    utimesSync(file, st.atime, st.mtime);
   },
 };
 

@@ -152,6 +152,13 @@ const GATES = [
     desc: '零引用脚本棘轮（S20）：scripts/ 下每个可执行脚本必须有引用方（package.json/CI/gate/文档/其他脚本），基线 0，新增零引用即红',
   },
   {
+    name: 'check-as-unknown',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-as-unknown.mjs'],
+    approx: '~1s',
+    desc: 'as unknown as 棘轮（S22）：packages 各包 src 下每个文件次数不得高于基线（326 处 / 123 文件），只减不增',
+  },
+  {
     name: 'check-ui-styles',
     tier: 'fast',
     cmd: ['tsx', 'scripts/check-ui-styles.ts'],
