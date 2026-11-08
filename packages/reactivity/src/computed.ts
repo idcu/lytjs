@@ -80,12 +80,17 @@ class ComputedRefImpl<T> {
       clearTimeout(this._cacheCleanupTimer);
     }
     // 设置新的定时器，在指定时间后清理缓存
-    this._cacheCleanupTimer = setTimeout(() => {
+    const timer = setTimeout(() => {
       // 如果 effect 已停止，清理缓存值以释放内存
       if (!this.effect.active) {
         this._cleanupCache();
       }
     }, ComputedRefImpl.CACHE_CLEANUP_DELAY);
+    // 库层缺陷修正：Node 的 Timer 默认会**钉住事件循环**，任何消费者（含门禁脚本）
+    // 都会在收尾后空等 60s。浏览器定时器没有 unref（返回数字），因此做存在性保护。
+    // unref 只影响「进程能否退出」，不改变清理语义：进程存活时定时器照常触发。
+    (timer as { unref?: () => void }).unref?.();
+    this._cacheCleanupTimer = timer;
   }
 
   // FIX: P2-6 清理缓存值
