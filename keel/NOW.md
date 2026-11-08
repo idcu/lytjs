@@ -16,6 +16,7 @@ keywords: [S25b, 断言行为化, S30, 缺陷修复]
   - 动态参数 key `f9268d1e`（vnode/SSR 三路计算键）
   - transformOn 死路径：设计如此，见 [residuals](pitfalls/core/residuals.md)
 - 门禁：compiler 54 文件 / 1685 用例；check:fast 57/57；快照 115×2；对拍 115/115。
+- bundle：三修复使首屏闭包 first-screen +426 / minimal-app +395 / runtime-app +391 B，冗余清理 −15/−22/−16；仅 first-screen 超预算（75448 > 75038），签字上调至 75448，见 [ADR 0027](decisions/0027-bundle-first-screen-s30-fixes.md)。
 
 ## S25b 净减 −3 核对（1686→1683，加 2 条回归→1685）
 | 删（形态断言） | 并入 | 覆盖 |

@@ -7,7 +7,6 @@ keywords: [决策, ADR, 索引]
 
 | # | 决策（一句话） | 状态 | → 文件 |
 |---|---|---|---|
-| 0002 | `<Suspense>` fallback 暂缓（4 处耦合） | active | [0002](0002-suspense-fallback-deferred.md) |
 | 0003 | SSR 水合标记默认关（可选开启） | active | [0003](0003-ssr-hydrate-markers-default-off.md) |
 | 0004 | group v-model 暂缓（子组件上报 min/max） | active | [0004](0004-group-vmodel-collaboration-deferred.md) |
 | 0006 | 硬约束 #9：公开开关须产物级断言 | active | [0006](0006-public-switch-assertion.md) |
@@ -31,3 +30,4 @@ keywords: [决策, ADR, 索引]
 | 0024 | S22：计时断言低于 20ms 只报数字，不参与慢档判定 | active | [0024](pending/0024-perf-timing-assertion-thresholds.md) |
 | 0025 | host-contract 暂缓接入：前置=出现第二个宿主目标 | pending | [0025](pending/0025-host-contract-deferred.md) |
 | 0026 | C3 收口：UI 对 L0 叶子两类例外（a11y UI-only） | active | [0026](pending/0026-c3-ui-dependency-exception.md) |
+| 0027 | S30 first-screen 基线上调（+426 B） | active | [0027](0027-bundle-first-screen-s30-fixes.md) |
