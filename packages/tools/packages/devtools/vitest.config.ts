@@ -3,7 +3,8 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const pkgRoot = resolve(__dirname, '../..');
+// devtools → packages/tools/packages → packages/tools → packages（三层）
+const packagesRoot = resolve(__dirname, '../../..');
 
 export default defineConfig({
   // 定义全局变量
@@ -14,9 +15,9 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@lytjs/reactivity': `${pkgRoot}/../../reactivity/dist/index.mjs`,
-      '@lytjs/component': `${pkgRoot}/../../component/dist/index.mjs`,
-      '@lytjs/shared-types': `${pkgRoot}/../../shared-types/dist/index.mjs`,
+      '@lytjs/reactivity': `${packagesRoot}/reactivity/dist/index.mjs`,
+      '@lytjs/component': `${packagesRoot}/component/dist/index.mjs`,
+      '@lytjs/shared-types': `${packagesRoot}/shared-types/dist/index.mjs`,
     },
   },
   test: {

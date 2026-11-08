@@ -12,7 +12,7 @@ keywords: [硬约束9]
 B01d-2 块 3 完成（含校验共享）；fast 56/56 · 88.3s、slow 17/17；C3 待审。
 
 ## 11-08 完成
-- **S21 残留**：删 2 个残留脚本，职责归 `check-release-parity`。
+- **devtools**：vitest alias `../../..` 修正，6 文件/157 用例转绿。
 - **S20**：零引用 29→0（删 27+restore 2+孤儿 1）；入口收敛为 `build`；`check-script-refs` 棘轮+负控。
 - **B01c**：100 模板 × 2 profile 逐字快照（slow）+双侧负控。
 - **B01d-2**：`EmitProfile` + 序列化/8 helper + 校验共享；产物逐字不变。
