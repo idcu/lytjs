@@ -3,34 +3,32 @@ scope: now
 status: active
 last-verified: 2026-11-08
 updated: 2026-11-08
-keywords: [硬约束9]
+keywords: [硬约束9, S23, C3, B01d]
 ---
 
 # NOW · main
 
 ## 当前焦点
-signal 正确性 5/5 清零（vnode 基准，两 profile 同步）；B01d 合并暂停待评估。
+- 门禁 258b4b8d：fast 56/56 142.5s、slow 17/17 861.1s；parity 115、快照 115×2。
+- **B01d 延后**：整包合一延后，共享层抽取继续。重开：优化版契约被 ADR 废弃、`optimizeSignal` 移出公开面、落在 8.0.0 破坏窗口、对拍有可判死单输出负控。留痕缺口：暂停原因仅会话记忆，ADR/pitfalls/eval 无记录。
+- **C3 裁决（三步）**：① vdom 57 处重定向 `@lytjs/core/runtime` 收紧 allowlist；② reactivity 38 处同样重定向；③ a11y 40 + common-is 31 + common-string 1 = 72 处走 UI-only 窄口径文档例外并配 ADR（不扩 core，禁 UI 复制第三套）。
 
-## 11-08 完成
-- **signal 正确性 5/5**（独立语料 + 负控红→绿 + vnode 对比）：①`v-if→v-else` 清理旧节点；②分支内嵌 `v-if/v-else`（含 `tf03`）；③`v-for` 元素内嵌 `v-if` 局部变量；④`template v-for` 内嵌 `v-if`；⑤`v-for`+`v-if` 同元素 WeakMap 崩溃。parity 115、快照 115×2。
-- **alias**：包级守卫 54/216（负控红→绿），修 4 层级错；devtools 6/157 绿。
-- **test 覆盖** 74/77 含 src（2 包无测试不造）；**S20** 零引用 29→0。
-- **两档门禁**（串行，未并行）：fast 56/56、slow 17/17；`check-public-names` 的 replica 行号随 import 漂移已校正到实现行。
-- **B01c/B01d-2** 100 模板×2 逐字；9 个 vnode 族共享（200 份逐字）；**template** 哨兵→`Fragment`（104/104）。
-- **S22** `as unknown as` 326/123 棘轮+负控；API 快照 39/1961；ADR 0024/0025。
+## 下一步（拟定台账，待 owner 确认，编号非既有条目）
+> 来源：evaluation 11-07 §2/§3/§8；原「S23+」悬空引用入档。
 
-## 11-07 完成
-- **S19** 16 个 common 死包保留+deprecated（ADR 0023，8.0.0 删）。
-- **S05** `gate --inject` 负控框架；**S21** 76 包升 7.0.0、`check-release-parity` 绿。
-- **S04/S03** gate 统一、`check-package-deps`；**S18** `hidden`、UI 664/664。
-- **S13/S14** 对拍 100/100；**S01/S02/S06–S12** gate 委托等；**B2** ADR 0022。
-- **待决 C3**：`@lytjs/ui` 与 ARCHITECTURE:26 冲突，见 0021。
+| ID | 目标 → 验收（依赖；串/并行） |
+|---|---|
+| S23 | C3 三步收口 → 0021 pending→已裁、ARCHITECTURE 与 allowlist 一致、注入违禁依赖必红（S02✔；串行） |
+| S24 | P1-6 模块级状态隔离 → 两 app 互不污染、测试红→绿、不改公开 API（无；并行 S25/S26） |
+| S25 | P1-7 测试与实现解耦（`getBlockStackDepth`、`patchFlag===16`、`ctx._instance`、compiler `toContain` 改公开断言）→ fast 绿、产物快照不变（无；并行） |
+| S26 | P1-9 冷仓 type-check 可复现 → 无 dist 跑通或明确失败原因（S22✔；可并行） |
+| S27 | 棘轮+体积单源 → ui-styles/circular 8/ssrThrows 5 只减、CI size 与 bundle baseline 同判据（S18/S20✔；并行 S28/S29） |
+| S28 | 包元数据/工具链统一 → exports 76/76、sideEffects/files 统一并有门禁、pnpm 版本单源（S21✔；可并行） |
+| S29 | 死代码与注释矛盾（render-helpers 注释、transform 死注册、renderer 双名转发）→ 三处清零、fast+slow 绿、公开面变更过快照（无；并行） |
+| S30 | V5/V6 待验证 → 34 个 UI 契约 N/A 逐格分类、changeset 403 dry-run（S21✔；可并行） |
 
-## 下一步
-1. 负控：72 verified / 0 unverified / 1 uninjectable（`--slow` 聚合）。
-2. S23+：按台账确认后启动。
+负控：72 verified / 0 unverified / 1 uninjectable。
 
-## 阻塞
-| 卡在 | 绕行 |
-| --- | --- |
-| 覆盖率并发 / safe-delete 拦 coverage | 单包复核 / reportsDirectory 走仓内 |
+口径偏差：评估 48/48、slow 14、169/160、parity100 → 实测 56/56、slow 17、168/159、115。
+
+阻塞：覆盖率并发/safe-delete → 单包复核/reportsDirectory
