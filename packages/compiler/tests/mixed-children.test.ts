@@ -18,94 +18,117 @@
  *
  * ## 判据
  *
- * 这里断言的是「**内容必须出现在产物里**」，而不是某个具体 helper 的调用形状 ——
- * 因为缺陷的本质就是「内容消失」，与用 `createElementVNode` 还是 `createVNode` 无关。
+ * 断言的是**执行产物后拿到的 VNode 树**：内容是否真的进了 children、结构指令是否
+ * 真的产出分支/列表。缺陷的本质是「内容消失」，用哪个 helper 拼出来与判据无关。
+ * 父节点若被整棵静态提升，模块级求值会引用 `_ctx` ⇒ 执行时直接 ReferenceError，
+ * 因此「能执行且渲染出预期树」本身就覆盖了原先的「不得提升」断言。
  */
 
 import { describe, it, expect } from 'vitest';
-import { compile } from '../src/index';
+import { PatchFlags } from '@lytjs/common-vnode';
+import { asVNode, asVNodeList, renderWith } from './support/execute';
 
-interface Case {
-  name: string;
-  template: string;
-  /** 产物里**必须**出现的片段（缺一即判定为丢节点） */
-  mustContain: string[];
-  /** 产物里**不得**出现的片段 */
-  mustNotContain?: string[];
+function childrenOf(value: unknown): unknown[] {
+  const node = asVNode(value);
+  return Array.isArray(node.children) ? node.children : [node.children];
 }
 
-const CASES: Case[] = [
-  {
-    name: '静态元素 + 纯文本',
-    template: '<div><span/>hello</div>',
-    mustContain: ['"hello"'],
-  },
-  {
-    name: '静态元素 + 插值',
-    template: '<div><span/>{{ msg }}</div>',
-    mustContain: ['toDisplayString(_ctx.msg)'],
-  },
-  {
-    name: '静态元素 + 文本 + 插值',
-    template: '<div><span/>hi {{ msg }}</div>',
-    mustContain: ['"hi "', 'toDisplayString(_ctx.msg)'],
-  },
-  {
-    name: 'v-if + 静态兄弟（v-if 在前）',
-    template: '<div><p v-if="ok">A</p><span>X</span></div>',
-    mustContain: ['_ctx.ok', '"A"'],
-    // 父节点不得被整棵静态提升（提升即意味着动态分支被吞）
-    mustNotContain: ['const _hoisted_1 = createElementVNode("div"'],
-  },
-  {
-    name: 'v-if + 静态兄弟（v-if 在后）',
-    template: '<div><span>X</span><p v-if="ok">A</p></div>',
-    mustContain: ['_ctx.ok', '"A"'],
-  },
-  {
-    name: 'v-for + 静态兄弟',
-    template: '<div><p v-for="i in list">{{ i }}</p><span>X</span></div>',
-    mustContain: ['renderList(_ctx.list', 'toDisplayString(i)'],
-  },
-  {
-    name: 'v-if/v-else 链 + 静态兄弟',
-    template: '<div><span>X</span><p v-if="ok">A</p><p v-else>B</p></div>',
-    mustContain: ['_ctx.ok', '"A"', '"B"'],
-  },
-  {
-    name: '动态属性父节点 + v-if 兄弟（父节点本就不会被提升）',
-    template: '<div :id="x"><p v-if="ok">A</p><span>X</span></div>',
-    mustContain: ['_ctx.ok', '"A"', '_ctx.x'],
-  },
-];
-
 describe('混排子节点不被丢弃（P0 回归）', () => {
-  for (const c of CASES) {
-    it(c.name, () => {
-      const { code } = compile(c.template);
-      for (const frag of c.mustContain) {
-        expect(code, `产物缺少 ${frag}\n---\n${code}`).toContain(frag);
-      }
-      for (const frag of c.mustNotContain ?? []) {
-        expect(code, `产物不应包含 ${frag}\n---\n${code}`).not.toContain(frag);
-      }
-    });
-  }
+  it('静态元素 + 纯文本：文本保留为兄弟节点', () => {
+    const kids = childrenOf(renderWith('<div><span/>hello</div>'));
+    expect(kids).toHaveLength(2);
+    expect(asVNode(kids[0]).type).toBe('span');
+    expect(kids[1]).toBe('hello');
+  });
+
+  it('静态元素 + 插值：插值按上下文求值', () => {
+    const kids = childrenOf(renderWith('<div><span/>{{ msg }}</div>', { msg: 'M' }));
+    expect(kids).toHaveLength(2);
+    expect(asVNode(kids[0]).type).toBe('span');
+    expect(kids[1]).toBe('M');
+  });
+
+  it('静态元素 + 文本 + 插值：三者都在', () => {
+    const kids = childrenOf(renderWith('<div><span/>hi {{ msg }}</div>', { msg: 'M' }));
+    expect(kids).toHaveLength(3);
+    expect(asVNode(kids[0]).type).toBe('span');
+    expect(kids.slice(1)).toEqual(['hi ', 'M']);
+  });
+
+  it('v-if + 静态兄弟（v-if 在前）：两个分支都保留', () => {
+    const shown = childrenOf(
+      renderWith('<div><p v-if="ok">A</p><span>X</span></div>', { ok: true }),
+    );
+    expect(shown).toHaveLength(2);
+    expect(asVNode(shown[0])).toMatchObject({ type: 'p', children: 'A' });
+    expect(asVNode(shown[1])).toMatchObject({ type: 'span', children: 'X' });
+
+    // 条件为假时只收起 v-if 分支，兄弟节点不受影响
+    const hidden = childrenOf(
+      renderWith('<div><p v-if="ok">A</p><span>X</span></div>', { ok: false }),
+    );
+    expect(hidden).toHaveLength(2);
+    expect(hidden[0]).toBeNull();
+    expect(asVNode(hidden[1])).toMatchObject({ type: 'span', children: 'X' });
+  });
+
+  it('v-if + 静态兄弟（v-if 在后）：两个分支都保留', () => {
+    const kids = childrenOf(
+      renderWith('<div><span>X</span><p v-if="ok">A</p></div>', { ok: true }),
+    );
+    expect(kids).toHaveLength(2);
+    expect(asVNode(kids[0])).toMatchObject({ type: 'span', children: 'X' });
+    expect(asVNode(kids[1])).toMatchObject({ type: 'p', children: 'A' });
+  });
+
+  it('v-for + 静态兄弟：列表与兄弟都在', () => {
+    const kids = childrenOf(
+      renderWith('<div><p v-for="i in list">{{ i }}</p><span>X</span></div>', {
+        list: ['n1', 'n2'],
+      }),
+    );
+    expect(kids).toHaveLength(2);
+    const list = asVNodeList(kids[0]);
+    expect(list.map((item) => item.children)).toEqual(['n1', 'n2']);
+    expect(asVNode(kids[1])).toMatchObject({ type: 'span', children: 'X' });
+  });
+
+  it('v-if/v-else 链 + 静态兄弟：按条件选分支，兄弟保留', () => {
+    const tpl = '<div><span>X</span><p v-if="ok">A</p><p v-else>B</p></div>';
+    const truthy = childrenOf(renderWith(tpl, { ok: true }));
+    expect(truthy).toHaveLength(2);
+    expect(asVNode(truthy[0])).toMatchObject({ type: 'span', children: 'X' });
+    expect(asVNode(truthy[1])).toMatchObject({ type: 'p', children: 'A' });
+
+    const falsy = childrenOf(renderWith(tpl, { ok: false }));
+    expect(falsy).toHaveLength(2);
+    expect(asVNode(falsy[1])).toMatchObject({ type: 'p', children: 'B' });
+  });
+
+  it('动态属性父节点 + v-if 兄弟：属性与分支都在', () => {
+    const node = asVNode(
+      renderWith('<div :id="x"><p v-if="ok">A</p><span>X</span></div>', { x: 'id-1', ok: true }),
+    );
+    expect(node.props).toEqual({ id: 'id-1' });
+    const kids = node.children as unknown[];
+    expect(asVNode(kids[0])).toMatchObject({ type: 'p', children: 'A' });
+    expect(asVNode(kids[1])).toMatchObject({ type: 'span', children: 'X' });
+  });
 
   it('混排时不得带 TEXT patchFlag（否则运行时会 setElementText 覆盖数组）', () => {
-    const { code } = compile('<div><span/>{{ msg }}</div>');
-    // TEXT = 1；产物注释形如 `, 1 /* TEXT */`
-    expect(code).not.toMatch(/,\s*1\s*\/\* TEXT \*\//);
+    const node = asVNode(renderWith('<div><span/>{{ msg }}</div>', { msg: 'M' }));
+    expect(node.patchFlag & PatchFlags.TEXT).toBe(0);
   });
 
   it('纯文本子节点仍应保留 TEXT patchFlag（性能优化不能被误伤）', () => {
-    const { code } = compile('<div>{{ msg }}</div>');
-    expect(code).toMatch(/,\s*1\s*\/\* TEXT \*\//);
+    const node = asVNode(renderWith('<div>{{ msg }}</div>', { msg: 'M' }));
+    expect(node.patchFlag & PatchFlags.TEXT).toBe(PatchFlags.TEXT);
   });
 
   it('纯空白文本不产生子节点（避免产物里出现一串空格常量）', () => {
-    const { code } = compile('<div>\n  <span/>\n</div>');
-    expect(code).not.toContain('"\\n  "');
+    const kids = childrenOf(renderWith('<div>\n  <span/>\n</div>'));
+    expect(kids).toHaveLength(1);
+    expect(asVNode(kids[0]).type).toBe('span');
   });
 });
 
@@ -121,40 +144,54 @@ describe('混排子节点不被丢弃（P0 回归）', () => {
 // 注意「v-for + 普通元素」当时是**能用的**（恰好还有 ELEMENT 兜住判据）——
 // 这种「一半能用」的形态最容易让人误判成「只是某个指令偶发」。
 describe('结构指令并列（P0 回归）', () => {
-  it('两个 v-for 并列都必须产出 renderList', () => {
-    const { code } = compile(
-      '<div><i v-for="i in a">{{ i }}</i><b v-for="j in b">{{ j }}</b></div>',
+  it('两个 v-for 并列都必须产出列表', () => {
+    const kids = childrenOf(
+      renderWith('<div><i v-for="i in a">{{ i }}</i><b v-for="j in b">{{ j }}</b></div>', {
+        a: ['a1', 'a2'],
+        b: ['b1'],
+      }),
     );
-    expect(code.match(/renderList\(/g) ?? []).toHaveLength(2);
-    expect(code).toContain('_ctx.a');
-    expect(code).toContain('_ctx.b');
+    expect(kids).toHaveLength(2);
+    expect(asVNodeList(kids[0]).map((item) => item.children)).toEqual(['a1', 'a2']);
+    expect(asVNodeList(kids[1]).map((item) => item.children)).toEqual(['b1']);
   });
 
-  it('两个 v-if 并列都必须产出条件表达式', () => {
-    const { code } = compile('<div><i v-if="a">A</i><b v-if="b">B</b></div>');
-    expect(code).toContain('_ctx.a');
-    expect(code).toContain('_ctx.b');
-    expect(code).toContain('"A"');
-    expect(code).toContain('"B"');
+  it('两个 v-if 并列都必须产出条件分支', () => {
+    const tpl = '<div><i v-if="a">A</i><b v-if="b">B</b></div>';
+    const both = childrenOf(renderWith(tpl, { a: true, b: true }));
+    expect(both.map((item) => asVNode(item).children)).toEqual(['A', 'B']);
+
+    const onlyB = childrenOf(renderWith(tpl, { a: false, b: true }));
+    expect(onlyB[0]).toBeNull();
+    expect(asVNode(onlyB[1]).children).toBe('B');
   });
 
   it('v-for 与 v-if 并列都必须保留', () => {
-    const { code } = compile('<div><i v-for="i in a">{{ i }}</i><b v-if="b">B</b></div>');
-    expect(code).toContain('renderList(');
-    expect(code).toContain('_ctx.b');
+    const kids = childrenOf(
+      renderWith('<div><i v-for="i in a">{{ i }}</i><b v-if="b">B</b></div>', {
+        a: ['a1'],
+        b: true,
+      }),
+    );
+    expect(kids).toHaveLength(2);
+    expect(asVNodeList(kids[0]).map((item) => item.children)).toEqual(['a1']);
+    expect(asVNode(kids[1]).children).toBe('B');
   });
 
   it('v-for + v-if 并列 + 普通元素三者混合', () => {
-    const { code } = compile(
-      '<div><span>s</span><i v-for="i in a">{{ i }}</i><b v-if="b">B</b></div>',
+    const kids = childrenOf(
+      renderWith('<div><span>s</span><i v-for="i in a">{{ i }}</i><b v-if="b">B</b></div>', {
+        a: ['a1'],
+        b: true,
+      }),
     );
-    expect(code).toContain('renderList(');
-    expect(code).toContain('"s"');
-    expect(code).toContain('_ctx.b');
+    expect(kids).toHaveLength(3);
+    expect(asVNode(kids[0]).children).toBe('s');
+    expect(asVNodeList(kids[1]).map((item) => item.children)).toEqual(['a1']);
+    expect(asVNode(kids[2]).children).toBe('B');
   });
 
   it('纯文本 + 插值仍走拼接分支（不得因为改动而回归）', () => {
-    const { code } = compile('<div>a{{ x }}b</div>');
-    expect(code).toContain('toDisplayString(_ctx.x)');
+    expect(asVNode(renderWith('<div>a{{ x }}b</div>', { x: 'X' })).children).toBe('aXb');
   });
 });

@@ -8,6 +8,7 @@ import { transform, builtInTransforms } from '../src/transform';
 import { optimize } from '../src/optimize';
 import { NodeTypes } from '../src/constants';
 import type { ElementNode } from '../src/types';
+import { asVNode, renderWith } from './support/execute';
 
 function compileForOptimize(source: string) {
   const ast = parse(source);
@@ -166,10 +167,9 @@ describe('optimize', () => {
       // 历史 bug：isStatic 判定只检查后代**插值**，漏了后代元素自身的**指令**，
       // 于是 `<div><span :title="t">x</span></div>` 的 div 被误判静态 → 提升成
       // `const _hoisted_1 = ... { "title": _ctx.t } ...` ⇒ 运行时 `_ctx is not defined`。
-      const code = compile('<div><span :title="t">x</span></div>').code;
-      expect(code).not.toMatch(/const _hoisted_\d+ = [\s\S]*?_ctx\./);
-      // 动态绑定仍应正常出现在 render 内
-      expect(code).toContain('_ctx.t');
+      // 执行产物即可判死：模块级引用 `_ctx` 会直接 ReferenceError；能渲染则动态绑定可用。
+      const div = asVNode(renderWith('<div><span :title="t">x</span></div>', { t: 'T' }));
+      expect(asVNode(div.children).props).toEqual({ title: 'T' });
     });
 
     it('后代带事件/条件指令时同样不应提升', () => {

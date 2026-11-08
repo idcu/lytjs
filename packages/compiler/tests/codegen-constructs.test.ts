@@ -18,8 +18,10 @@
  * 并顺带修掉「非简单插值被**静默丢弃**」的隐患。原先受限的模板已全部挪回通用表。
  */
 
+// @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
 import { compile } from '../src';
+import { executeSignal, executeSsr } from './support/execute';
 
 type Mode = { label: string; options: Record<string, unknown> };
 
@@ -186,14 +188,17 @@ describe('compiler codegen · 构造全覆盖批次', () => {
       }
     });
 
-    it('SSR：插值经 String(_ctx.x)', () => {
-      const r = compile(`<div>{{ message }}</div>`, SSR.options as never);
-      expect(r.code).toContain('String(_ctx.message)');
+    it('SSR：插值被求值并转义后写入 HTML', () => {
+      const render = executeSsr(compile(`<div>{{ message }}</div>`, SSR.options as never));
+      expect(render({ message: 'M' })).toBe('<div>M</div>');
     });
 
-    it('v-pre：不编译插值（原文保留）', () => {
-      const r = compile(`<div v-pre>{{ raw }}</div>`, SIGNAL_OPT.options as never);
-      expect(r.code).toContain('{{ raw }}');
+    it('v-pre：不编译插值（原文渲染到 DOM）', () => {
+      const handle = executeSignal(
+        compile(`<div v-pre>{{ raw }}</div>`, SIGNAL_OPT.options as never),
+        { raw: 'compiled' },
+      );
+      expect(handle.text()).toBe('{{ raw }}');
     });
 
     it('事件：@click="fn" 编译为 onClick / createEventHandler', () => {
