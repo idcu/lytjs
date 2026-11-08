@@ -3,7 +3,7 @@ scope: process
 status: active
 severity: P2
 last-verified: 2026-11-09
-triggers: 1
+triggers: 2
 keywords: [package.json, exports, sideEffects, files, packageManager, pnpm]
 ---
 
