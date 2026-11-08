@@ -68,6 +68,11 @@
   border-color: var(--lyt-color-primary);
   color: #ffffff;
 }
+.lyt-button--default {
+  background-color: var(--lyt-bg-color);
+  border-color: var(--lyt-border-color);
+  color: var(--lyt-text-color-regular);
+}
 .lyt-button--success {
   background-color: var(--lyt-color-success);
   border-color: var(--lyt-color-success);

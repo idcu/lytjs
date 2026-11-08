@@ -143,7 +143,6 @@ TimePicker → lyt-time-picker__select
 TimePicker → lyt-time-picker__select-group
 TimePicker → lyt-time-picker__separator
 TimePicker → lyt-time-picker__trigger
-Transfer → lyt-button--default
 Tree → lyt-tree--show-line
 Tree → lyt-tree__empty
 Tree → lyt-tree__node--checked
