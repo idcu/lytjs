@@ -15,6 +15,8 @@ import {
   componentRef as componentRefShared,
   readInterpolationExpr,
   containsElementVNode,
+  containsConditionalNode,
+  normalizeVNodeChildren,
   emitListItemProps as emitListItemPropsShared,
   emitListItemNode as emitListItemNodeShared,
   buildItemComponentPropsShared,
@@ -1369,7 +1371,60 @@ function processCallExpressionOptimized(
 
             const tagInfo = isComponentItem ? null : extractTagFromVNode(vnode);
             if (tagInfo) {
-              if (containsElementVNode(vnode.children)) {
+              if (containsConditionalNode(vnode.children)) {
+                // 列表项内嵌 v-if/v-else：旧实现只认文本/嵌套元素，条件节点整段丢弃。
+                const elVar = genVarName(tagInfo.tag, varCounter);
+                const createLines = [`const ${elVar}=document.createElement('${tagInfo.tag}');`];
+                const updateLines: string[] = [];
+                emitListItemPropsOptimized(
+                  vnode.props,
+                  elVar,
+                  '_el',
+                  itemLocals,
+                  createLines,
+                  updateLines,
+                );
+                const kidList = normalizeVNodeChildren(vnode.children);
+                if (kidList.length === 1) {
+                  const expr = serializeConditionalVNodeOptimized(
+                    kidList[0],
+                    usedRuntime,
+                    options,
+                    itemLocals,
+                  );
+                  if (expr) {
+                    usedRuntime.add('mountVNode');
+                    usedRuntime.add('setHTML');
+                    const mv = getShortName('mountVNode', options.useShortNames ?? true);
+                    const sh = getShortName('setHTML', options.useShortNames ?? true);
+                    createLines.push(`${mv}(${expr},${elVar});`);
+                    // mountVNode 会先清空宿主；条件为假时必须显式清空，否则旧分支残留
+                    updateLines.push(
+                      `{const _v=${expr};if(_v){${mv}(_v,_el);}else{${sh}(_el,'');}}`,
+                    );
+                  }
+                } else {
+                  const kidsCode = serializeVNodeCallChildrenOptimized(
+                    vnode.children,
+                    usedRuntime,
+                    options,
+                    itemLocals,
+                  );
+                  if (kidsCode) {
+                    usedRuntime.add('mountVNode');
+                    usedRuntime.add('createVNode');
+                    usedRuntime.add('Fragment');
+                    const mv = getShortName('mountVNode', options.useShortNames ?? true);
+                    const cv = getShortName('createVNode', options.useShortNames ?? true);
+                    const fg = getShortName('Fragment', options.useShortNames ?? true);
+                    const frag = `${cv}(${fg},null,${kidsCode})`;
+                    createLines.push(`${mv}(${frag},${elVar});`);
+                    updateLines.push(`${mv}(${frag},_el);`);
+                  }
+                }
+                createBody = `${createLines.join('')}return ${elVar};`;
+                updateBody = updateLines.join('');
+              } else if (containsElementVNode(vnode.children)) {
                 // 列表项含嵌套元素（`<li v-for><span>{{x}}</span></li>`）：
                 // 逐层建 DOM，update 侧用 childNodes 下标定位。旧实现只认直接子文本，
                 // 嵌套内容被整段丢弃 ⇒ 每个 li 都是空的。
@@ -2096,6 +2151,7 @@ export function serializeVNodeCallChildOptimized(
       const tx = getShortName('Text', options.useShortNames ?? true);
       return `${cv}(${tx},null,${code})`;
     },
+    textExpression: (exp, scope) => prefixIdentifiers(exp, scope).replace(/\b_ctx\./g, '_c.'),
   });
 }
 

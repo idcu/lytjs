@@ -1013,6 +1013,39 @@
       },
       "expected": "<div><p>A<span data-lyt-if=\"1\" style=\"display:contents\"><span id=\"x\">N</span></span>Z</p></div>",
       "expectedAfter": "<div><p>A<span data-lyt-if=\"1\" style=\"display:contents\"><span id=\"x\">Q</span></span>Z</p></div>"
+    },
+    {
+      "id": "lf01",
+      "group": "列表内嵌条件（v-for + v-if）",
+      "template": "<div><p v-for=\"it in list\" :key=\"it.id\"><span v-if=\"it.show\">{{it.name}}</span></p></div>",
+      "state": {
+        "list": [
+          { "id": 1, "show": true, "name": "a" },
+          { "id": 2, "show": false, "name": "b" },
+          { "id": 3, "show": true, "name": "c" }
+        ]
+      },
+      "update": {
+        "list": [
+          { "id": 1, "show": false, "name": "a" },
+          { "id": 2, "show": true, "name": "b" }
+        ]
+      },
+      "expected": "<div><p><span>a</span></p><p></p><p><span>c</span></p></div>",
+      "expectedAfter": "<div><p></p><p><span>b</span></p></div>"
+    },
+    {
+      "id": "lf01b",
+      "group": "列表内嵌条件（v-for + v-if）",
+      "template": "<div><p v-for=\"(it, i) in list\" :key=\"it\"><b v-if=\"i % 2 === 0\">{{it}}</b><b v-else>{{it}}!</b></p></div>",
+      "state": {
+        "list": ["x", "y", "z"]
+      },
+      "update": {
+        "list": ["x", "y"]
+      },
+      "expected": "<div><p><b>x</b></p><p><b>y!</b></p><p><b>z</b></p></div>",
+      "expectedAfter": "<div><p><b>x</b></p><p><b>y!</b></p></div>"
     }
   ]
 }

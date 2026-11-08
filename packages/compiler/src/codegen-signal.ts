@@ -11,6 +11,8 @@ import {
   componentRef as componentRefShared,
   readInterpolationExpr,
   containsElementVNode,
+  containsConditionalNode,
+  normalizeVNodeChildren,
   emitListItemProps as emitListItemPropsShared,
   emitListItemNode as emitListItemNodeShared,
   buildItemComponentPropsShared,
@@ -1606,8 +1608,43 @@ function processCallExpression(
       const tag = renderItem.tag.replace(/^"|"$/g, '');
       const elVar = genVarName(tag, _varCounter);
       const children = renderItem.children;
+      const kidList = normalizeVNodeChildren(children);
 
-      if (containsElementVNode(children)) {
+      if (containsConditionalNode(children)) {
+        // 列表项内嵌 v-if/v-else：旧实现只认「文本 / 嵌套元素」，条件节点被整段丢弃，
+        // 列表项全部空渲染。这里把选中分支 vnode 挂进列表项元素；
+        // 多子节点时用 Fragment 保持顺序。
+        const createLines = [`const ${elVar} = document.createElement(${JSON.stringify(tag)});`];
+        const updateLines: string[] = [];
+        emitListItemProps(renderItem.props, elVar, '_el', itemLocals, createLines, updateLines);
+        if (kidList.length === 1) {
+          const expr = serializeConditionalVNode(
+            kidList[0],
+            BASE_EMIT_PROFILE.ctxPrefix,
+            itemLocals,
+          );
+          if (expr) {
+            createLines.push(`mountVNode(${expr}, ${elVar});`);
+            // mountVNode 会先清空宿主；条件为假时必须显式清空，否则旧分支残留
+            updateLines.push(
+              `{ const _v = ${expr}; if (_v) { mountVNode(_v, _el); } else { setHTML(_el, ''); } }`,
+            );
+          }
+        } else {
+          const kidsCode = serializeVNodeCallChildren(
+            children,
+            BASE_EMIT_PROFILE.ctxPrefix,
+            itemLocals,
+          );
+          if (kidsCode) {
+            const frag = `createVNode(Fragment, null, ${kidsCode})`;
+            createLines.push(`mountVNode(${frag}, ${elVar});`);
+            updateLines.push(`mountVNode(${frag}, _el);`);
+          }
+        }
+        createBody = `${createLines.join('\n')}\nreturn ${elVar};`;
+        updateBody = updateLines.join('\n');
+      } else if (containsElementVNode(children)) {
         // 列表项含嵌套元素：逐层生成 create/update（旧实现只认直接子文本 ⇒ 子元素整段丢失）
         const createLines = [`const ${elVar} = document.createElement(${JSON.stringify(tag)});`];
         const updateLines: string[] = [];
@@ -1926,6 +1963,7 @@ export function serializeVNodeCallChild(
     vnodeCall: (n, scope) => serializeVNodeCall(n, prefix, scope),
     conditional: (n, scope) => serializeConditionalVNode(n, prefix, scope),
     literalText: (code) => `createVNode(Text,null,${code})`,
+    textExpression: (exp, scope) => prefixIdentifiers(exp, scope),
   });
 }
 

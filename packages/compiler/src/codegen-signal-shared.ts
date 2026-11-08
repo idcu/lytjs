@@ -351,6 +351,24 @@ export function containsElementVNode(node: unknown): boolean {
   return n.type === NodeTypes.VNODE_CALL && typeof n.tag === 'string' && /^["']/.test(n.tag);
 }
 
+/** children 的**直接**层是否有内嵌 `v-if`（`JS_CONDITIONAL_EXPRESSION`，含 COMPOUND 包裹）。 */
+export function containsConditionalNode(node: unknown): boolean {
+  if (node === undefined || node === null || typeof node === 'string') return false;
+  if (Array.isArray(node)) return node.some((n) => containsConditionalNode(n));
+  const n = node as { type?: number; children?: unknown };
+  if (n.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) return true;
+  if (n.type === NodeTypes.COMPOUND_EXPRESSION && Array.isArray(n.children)) {
+    return n.children.some((c) => containsConditionalNode(c));
+  }
+  return false;
+}
+
+/** 把 `VNODE_CALL.children` 归一化成数组（单对象 / 字符串 / undefined）。 */
+export function normalizeVNodeChildren(children: unknown): unknown[] {
+  if (children === undefined || children === null) return [];
+  return Array.isArray(children) ? children : [children];
+}
+
 /** 把表达式改写成当前发射器的上下文前缀形态。 */
 export type ToExpr = (content: string, locals: ReadonlySet<string>) => string;
 
@@ -926,6 +944,8 @@ export interface VNodeCallChildHooks {
   conditional?: (node: unknown, locals: ReadonlySet<string>) => string | null;
   /** 字面量内容（TEXT / 静态 SIMPLE）→ 文本 vnode 代码；code 已是可直接求值的 JS 字面量 */
   literalText?: (code: string) => string;
+  /** 插值表达式前缀化（COMPOUND_EXPRESSION 拼接文本时使用） */
+  textExpression?: (exp: string, locals: ReadonlySet<string>) => string;
 }
 
 /** 子节点 → vnode 构造代码；不能完整还原时返回 null */
@@ -959,6 +979,32 @@ export function serializeVNodeCallChildShared(
   if (node.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
     if (!hooks.conditional) return null;
     return hooks.conditional(child, locals);
+  }
+
+  // COMPOUND_EXPRESSION：`{{x}} + "!"` 这类拼接文本 → 单个文本 vnode
+  if (node.type === NodeTypes.COMPOUND_EXPRESSION) {
+    if (!hooks.literalText || !hooks.textExpression) return null;
+    const compound = child as CompoundExpressionNode;
+    const parts: string[] = [];
+    for (const part of compound.children ?? []) {
+      if (typeof part === 'string') {
+        parts.push(part);
+        continue;
+      }
+      if (part.type === NodeTypes.TEXT) {
+        parts.push(JSON.stringify((part as TextNode).content));
+        continue;
+      }
+      if (part.type === NodeTypes.INTERPOLATION) {
+        const exp = getExpContent((part as InterpolationNode).content as SimpleExpressionNode);
+        if (!exp) return null;
+        parts.push(hooks.textExpression(exp, locals));
+        continue;
+      }
+      return null;
+    }
+    if (!parts.length) return null;
+    return hooks.literalText(`(${parts.join('')})`);
   }
 
   // 插值：JS_CALL_EXPRESSION(TO_DISPLAY_STRING, expr)
