@@ -21,6 +21,13 @@ import {
   buildStaticHtml as buildStaticHtmlShared,
   serializeStaticHtml as serializeStaticHtmlShared,
   serializeBranchHtml as serializeBranchHtmlShared,
+  getStaticAttr,
+  getStaticClass,
+  createSimpleExpressionFor,
+  getTestExpr,
+  findSlotDirective,
+  withScope,
+  toComponentEventKey,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -838,25 +845,6 @@ const BUILTIN_COMPONENTS: ReadonlySet<string> = new Set([
   'Suspense',
 ]);
 
-/** 取元素上的静态属性值（`name="v"`），没有则返回 null。 */
-function getStaticAttr(node: ElementNode, attrName: string): string | null {
-  for (const prop of node.props) {
-    if (prop && prop.type === NodeTypes.ATTRIBUTE && prop.name === attrName && prop.value) {
-      return prop.value.content;
-    }
-  }
-  return null;
-}
-
-function getStaticClass(node: ElementNode): string {
-  for (const prop of node.props) {
-    if (prop && prop.type === NodeTypes.ATTRIBUTE && prop.name === 'class' && prop.value) {
-      return prop.value.content;
-    }
-  }
-  return '';
-}
-
 function processDirectiveOptimized(
   dir: DirectiveNode,
   varName: string,
@@ -1473,27 +1461,6 @@ function processCallExpressionOptimized(
 // Helper 函数
 // ============================================================
 
-function createSimpleExpressionFor(
-  content: string,
-  _loc?: {
-    start: { line: number; column: number; offset: number };
-    end: { line: number; column: number; offset: number };
-    source: string;
-  },
-): SimpleExpressionNode {
-  return {
-    type: NodeTypes.SIMPLE_EXPRESSION,
-    content,
-    isStatic: false,
-    isConstant: false,
-    loc: _loc ?? {
-      start: { line: 1, column: 1, offset: 0 },
-      end: { line: 1, column: 1, offset: 0 },
-      source: content,
-    },
-  };
-}
-
 function findElementIndex(
   elementVars: ElementVarInfo[],
   tag: string,
@@ -1525,16 +1492,6 @@ function getExpContent(node: SimpleExpressionNode | CompoundExpressionNode | und
       return '';
     })
     .join('');
-}
-
-function getTestExpr(test: JSChildNode | string | undefined): string {
-  if (!test) return '';
-  if (typeof test === 'string') return test;
-  if (test.type === NodeTypes.SIMPLE_EXPRESSION) return test.content;
-  if (test.type === NodeTypes.COMPOUND_EXPRESSION) {
-    return getExpContent(test as CompoundExpressionNode);
-  }
-  return '';
 }
 
 function extractTagFromVNode(vnode: VNodeCall): { tag: string; varName: string } | null {
@@ -2271,41 +2228,6 @@ function buildComponentSlotsObjectOptimized(
   return `{${all.join(',')}}`;
 }
 
-/** 插槽指令信息（优化版） */
-interface SlotDirectiveInfo {
-  name: string | null;
-  param: string | null;
-}
-
-/** 从元素 props 里取出 `v-slot` 指令信息 */
-function findSlotDirective(el: ElementNode): SlotDirectiveInfo | null {
-  for (const prop of el.props) {
-    if (!prop || prop.type !== NodeTypes.DIRECTIVE) continue;
-    const dir = prop as DirectiveNode;
-    if (dir.name !== 'slot') continue;
-    const rawName = dir.arg ? getExpContent(dir.arg as SimpleExpressionNode) : null;
-    const rawParam = dir.exp ? getExpContent(dir.exp as SimpleExpressionNode) : null;
-    return {
-      name: rawName && /^[A-Za-z_$][\w$-]*$/.test(rawName) ? rawName : null,
-      param: rawParam && rawParam.trim() ? rawParam.trim() : null,
-    };
-  }
-  return null;
-}
-
-/** 从作用域参数表达式里提取标识符（`p` → [p]；`{ x, y }` → [x, y]） */
-function extractScopeNames(param: string | null): string[] {
-  if (!param) return [];
-  return param.split(/[^A-Za-z0-9_$]+/).filter((x) => x && /^[A-Za-z_$][\w$]*$/.test(x));
-}
-
-/** 把作用域变量并入 locals */
-function withScope(locals: ReadonlySet<string>, param: string | null): Set<string> {
-  const out = new Set(locals);
-  for (const name of extractScopeNames(param)) out.add(name);
-  return out;
-}
-
 /** 递归收集子节点对应的 vnode 构造代码（跳过注释与动态内容） */
 function collectSlotVNodesOptimized(
   children: TemplateChildNode[],
@@ -2408,17 +2330,6 @@ function serializeVNodeElementOptimized(
   const kids = collectSlotVNodesOptimized(node.children, usedRuntime, options, locals);
   const childrenArg = kids.length ? `[${kids.join(',')}]` : 'null';
   return `${cv}(${JSON.stringify(node.tag)},${attrs},${childrenArg})`;
-}
-
-/**
- * 把模板里的事件名转成组件的 prop 键名
- *
- * `click` → `onClick`；`my-event` → `onMyEvent`（kebab 先 camelize）。
- * 与 `@lytjs/component` 的 `toHandlerKey()` 保持同一约定。
- */
-function toComponentEventKey(event: string): string {
-  const camelized = event.replace(/-(\w)/g, (_m, c: string) => c.toUpperCase());
-  return `on${camelized.charAt(0).toUpperCase()}${camelized.slice(1)}`;
 }
 
 /**

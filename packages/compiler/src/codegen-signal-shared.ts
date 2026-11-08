@@ -15,6 +15,7 @@ import type {
   ElementNode,
   TextNode,
   TemplateChildNode,
+  DirectiveNode,
   SimpleExpressionNode,
   CompoundExpressionNode,
   JSChildNode,
@@ -481,6 +482,114 @@ export function emitListItemNode(
     if (emitted) childIdx++;
   }
   return true;
+}
+
+/** 取元素上的静态属性值（`name="v"`），没有则返回 null。 */
+export function getStaticAttr(node: ElementNode, attrName: string): string | null {
+  for (const prop of node.props) {
+    if (prop && prop.type === NodeTypes.ATTRIBUTE && prop.name === attrName && prop.value) {
+      return prop.value.content;
+    }
+  }
+  return null;
+}
+
+/**
+ * 取元素上的**静态** `class` 属性值；没有则返回 `''`。
+ *
+ * ⚠️ 2026-09-30 修复「静态 class 丢失」：`setClass()` 整体替换 class 属性，
+ * 而静态 class 已烧进 createTemplate 的 HTML ⇒ `:class` 一动就把它抹掉。
+ * 修法：静态 class 并入动态取值（`setClass(el, ['a b', _ctx.cls])`）。
+ */
+export function getStaticClass(node: ElementNode): string {
+  for (const prop of node.props) {
+    if (prop && prop.type === NodeTypes.ATTRIBUTE && prop.name === 'class' && prop.value) {
+      return prop.value.content;
+    }
+  }
+  return '';
+}
+
+/** 构造一个 SIMPLE_EXPRESSION 节点；未传 loc 时用占位位置。 */
+export function createSimpleExpressionFor(
+  content: string,
+  _loc?: {
+    start: { line: number; column: number; offset: number };
+    end: { line: number; column: number; offset: number };
+    source: string;
+  },
+): SimpleExpressionNode {
+  return {
+    type: NodeTypes.SIMPLE_EXPRESSION,
+    content,
+    isStatic: false,
+    isConstant: false,
+    loc: _loc ?? {
+      start: { line: 1, column: 1, offset: 0 },
+      end: { line: 1, column: 1, offset: 0 },
+      source: content,
+    },
+  };
+}
+
+/** 取 v-if / v-for 的 test / source 表达式源码文本；非表达式返回空串。 */
+export function getTestExpr(test: JSChildNode | string | undefined): string {
+  if (!test) return '';
+  if (typeof test === 'string') return test;
+  if (test.type === NodeTypes.SIMPLE_EXPRESSION) return test.content;
+  if (test.type === NodeTypes.COMPOUND_EXPRESSION) {
+    return getExpContent(test as CompoundExpressionNode);
+  }
+  return '';
+}
+
+/** 插槽指令信息 */
+export interface SlotDirectiveInfo {
+  /** 插槽名；null 表示未显式指定（组件上的 `v-slot` 无 arg ⇒ 默认插槽） */
+  name: string | null;
+  /** 作用域参数表达式（`p` / `{ x, y }`）；null 表示无 */
+  param: string | null;
+}
+
+/** 从元素 props 里取出 `v-slot` 指令信息（没有则返回 null） */
+export function findSlotDirective(el: ElementNode): SlotDirectiveInfo | null {
+  for (const prop of el.props) {
+    if (!prop || prop.type !== NodeTypes.DIRECTIVE) continue;
+    const dir = prop as DirectiveNode;
+    if (dir.name !== 'slot') continue;
+    const rawName = dir.arg ? getExpContent(dir.arg as SimpleExpressionNode) : null;
+    const rawParam = dir.exp ? getExpContent(dir.exp as SimpleExpressionNode) : null;
+    return {
+      name: rawName && /^[A-Za-z_$][\w$-]*$/.test(rawName) ? rawName : null,
+      param: rawParam && rawParam.trim() ? rawParam.trim() : null,
+    };
+  }
+  return null;
+}
+
+/** 从作用域参数表达式里提取标识符（`p` → [p]；`{ x, y }` → [x, y]） */
+export function extractScopeNames(param: string | null): string[] {
+  if (!param) return [];
+  return param.split(/[^A-Za-z0-9_$]+/).filter((x) => x && /^[A-Za-z_$][\w$]*$/.test(x));
+}
+
+/** 把作用域变量并入 locals，供 `prefixIdentifiers` 排除前缀化 */
+export function withScope(locals: ReadonlySet<string>, param: string | null): Set<string> {
+  const out = new Set(locals);
+  for (const name of extractScopeNames(param)) out.add(name);
+  return out;
+}
+
+/**
+ * 把模板里的事件名转成组件的 prop 键名。
+ *
+ * `click` → `onClick`；`my-event` → `onMyEvent`（kebab 先 camelize）。
+ * 与 `@lytjs/component` 的 `toHandlerKey()` 保持同一约定，否则组件 `emit()` 回查
+ * `props.onXxx` 时会因键名不一致而找不到处理器。
+ */
+export function toComponentEventKey(event: string): string {
+  const camelized = event.replace(/-(\w)/g, (_m, c: string) => c.toUpperCase());
+  return `on${camelized.charAt(0).toUpperCase()}${camelized.slice(1)}`;
 }
 
 /** 生成列表项组件的 props 对象字面量（跳过 :key；字面量原样、表达式按 `toExpr` 前缀化）。 */
