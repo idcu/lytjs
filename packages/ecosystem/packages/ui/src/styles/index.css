@@ -307,6 +307,60 @@
 .lyt-select__option--selected {
   color: var(--lyt-color-primary);
 }
+.lyt-select--open .lyt-select__trigger {
+  border-color: var(--lyt-color-primary);
+}
+.lyt-select--disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.lyt-select__value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lyt-select__value--placeholder {
+  color: var(--lyt-text-color-placeholder);
+}
+.lyt-select__arrow {
+  flex-shrink: 0;
+  margin-left: 8px;
+  color: var(--lyt-text-color-secondary);
+}
+.lyt-select__clear {
+  cursor: pointer;
+  color: var(--lyt-text-color-secondary);
+}
+.lyt-select__check {
+  margin-left: 8px;
+  color: var(--lyt-color-primary);
+}
+.lyt-select__search {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--lyt-border-color-lighter);
+}
+.lyt-select__empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--lyt-text-color-placeholder);
+}
+.lyt-select__option--disabled {
+  cursor: not-allowed;
+  color: var(--lyt-text-color-placeholder);
+}
+.lyt-select__option--highlighted {
+  background-color: var(--lyt-bg-color-page);
+}
+.lyt-select__sro {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
 
 /* ===== Tabs 组件 ===== */
 .lyt-tabs__item {
