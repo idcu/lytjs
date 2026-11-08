@@ -2050,6 +2050,10 @@
   color: var(--lyt-text-color-primary);
   font-weight: 500;
 }
+.lyt-breadcrumb__item--disabled {
+  color: var(--lyt-text-color-placeholder);
+  cursor: not-allowed;
+}
 
 /* ===== Calendar ===== */
 .lyt-calendar {

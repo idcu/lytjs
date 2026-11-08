@@ -7,7 +7,6 @@
 # 加一行前请先想清楚：这个类名是**该补样式**还是**该从组件里删掉**？
 # 两条都不做而只是加进基线，等于把「裸 DOM」正式固化为契约。
 #
-Breadcrumb → lyt-breadcrumb__item--disabled
 Calendar → lyt-calendar-day-number
 Calendar → lyt-calendar-day-view
 Calendar → lyt-calendar-month
