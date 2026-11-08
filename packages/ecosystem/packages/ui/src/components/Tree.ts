@@ -9,8 +9,7 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/core/runtime';
-import { signal } from '@lytjs/reactivity';
+import { createVNode, type VNode, signal } from '@lytjs/core/runtime';
 import { getButtonA11yProps, getInputControlA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 import type { TreeNode, TreeSetupProps } from './types';
 

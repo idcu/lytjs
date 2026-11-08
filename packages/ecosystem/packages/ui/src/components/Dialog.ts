@@ -11,8 +11,7 @@
  */
 
 import { defineComponent, Teleport, onMounted, onUnmounted } from '@lytjs/component';
-import { createVNode, createTextVNode, type VNode } from '@lytjs/core/runtime';
-import { signal, watch } from '@lytjs/reactivity';
+import { createVNode, createTextVNode, type VNode, signal, watch } from '@lytjs/core/runtime';
 import { getDialogA11yProps, getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 import { createOverlayFocus } from './overlay-focus';
 import { useLocale, useOverlay } from '../composables';

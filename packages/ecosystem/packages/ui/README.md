@@ -12,7 +12,7 @@ LytJS 官方 UI 组件库，零第三方依赖，支持主题切换。**61 个�
 
 ## 简介·独立声明
 
-`@lytjs/ui` 是 LytJS 官方 UI 组件库（61 个对外导出，其中 **37 个 stable / 24 个 beta**），**零第三方依赖**，仅构建于 LytJS 核心框架之上（`@lytjs/core/runtime` / `@lytjs/reactivity` / `@lytjs/component` 及通用工具 `@lytjs/common-is` / `@lytjs/common-a11y`），并随框架版本同步演进。按 v6.10 路线图规划，本库将迁出为独立仓库 `lytjs-ui`，保持 API 兼容并提供迁移指南。
+`@lytjs/ui` 是 LytJS 官方 UI 组件库（61 个对外导出，其中 **37 个 stable / 24 个 beta**），**零第三方依赖**，仅构建于 LytJS 核心框架之上（`@lytjs/core/runtime` / `@lytjs/component` 及通用工具 `@lytjs/common-is` / `@lytjs/common-a11y`），并随框架版本同步演进。按 v6.10 路线图规划，本库将迁出为独立仓库 `lytjs-ui`，保持 API 兼容并提供迁移指南。
 
 ## 组件成熟度
 
@@ -45,9 +45,8 @@ Radio、Spin、Switch、Tag。
 
 `@lytjs/ui` 依赖以下包：
 
-- `@lytjs/reactivity` - 响应式系统（signal / computed / reactive / watch）
 - `@lytjs/component` - 组件系统（defineComponent / Props / 生命周期）
-- `@lytjs/core` - 框架核心（`@lytjs/core/runtime` 提供 VNode / createVNode 与 definePlugin）
+- `@lytjs/core` - 框架核心（`@lytjs/core/runtime` 提供 VNode / createVNode / definePlugin 与 signal / reactive / computed / watch / effect）
 - `@lytjs/common-is` - 通用类型判断
 - `@lytjs/common-a11y` - 无障碍辅助（ARIA 属性合并）
 

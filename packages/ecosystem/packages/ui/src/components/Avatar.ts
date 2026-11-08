@@ -6,9 +6,8 @@
 
 import type { AvatarProps, AvatarSlots, AvatarSetupProps } from './types';
 import { defineComponent, type PropType } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/core/runtime';
+import { createVNode, type VNode, signal, watch } from '@lytjs/core/runtime';
 import { isString, isObject } from '@lytjs/common-is';
-import { signal, watch } from '@lytjs/reactivity';
 import { mergeA11yProps } from '@lytjs/common-a11y';
 
 export const Avatar = defineComponent({

@@ -6,9 +6,8 @@
 
 import type { ProgressProps, ProgressSlots, ProgressSetupProps } from './types';
 import { defineComponent, type PropType } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/core/runtime';
+import { createVNode, type VNode, computed } from '@lytjs/core/runtime';
 import { isString, isObject, isArray } from '@lytjs/common-is';
-import { computed } from '@lytjs/reactivity';
 import { t } from '../locale';
 
 export const Progress = defineComponent({

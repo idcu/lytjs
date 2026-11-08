@@ -6,9 +6,8 @@
 
 import type { TooltipProps, TooltipSlots, TooltipSetupProps } from './types';
 import { defineComponent } from '@lytjs/component';
-import { createVNode, createTextVNode, type VNode } from '@lytjs/core/runtime';
+import { createVNode, createTextVNode, type VNode, reactive } from '@lytjs/core/runtime';
 import { isString, isObject } from '@lytjs/common-is';
-import { reactive } from '@lytjs/reactivity';
 import { mergeA11yProps } from '@lytjs/common-a11y';
 
 export const Tooltip = defineComponent({

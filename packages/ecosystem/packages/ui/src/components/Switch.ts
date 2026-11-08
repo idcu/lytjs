@@ -6,9 +6,8 @@
 
 import type { SwitchProps, SwitchSlots, SwitchSetupProps } from './types';
 import { defineComponent } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/core/runtime';
+import { createVNode, type VNode, reactive, computed } from '@lytjs/core/runtime';
 import { isString, isObject } from '@lytjs/common-is';
-import { reactive, computed } from '@lytjs/reactivity';
 import { getSwitchA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 import { useSlotContent } from '../composables';
 

@@ -6,9 +6,8 @@
 
 import type { TagProps, TagSlots, TagSetupProps } from './types';
 import { defineComponent } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/core/runtime';
+import { createVNode, type VNode, reactive } from '@lytjs/core/runtime';
 import { isString, isObject } from '@lytjs/common-is';
-import { reactive } from '@lytjs/reactivity';
 import { getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 import { t } from '../locale';
 

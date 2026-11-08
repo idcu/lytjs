@@ -5,8 +5,7 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/core/runtime';
-import { signal, watch } from '@lytjs/reactivity';
+import { createVNode, type VNode, signal, watch } from '@lytjs/core/runtime';
 import type { ImageSetupProps } from './types';
 
 export const Image = defineComponent({

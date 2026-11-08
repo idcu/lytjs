@@ -7,7 +7,7 @@
  * 与调用顺序不同（例如分页同时更新 `current` / `pageSize`），这里**不隐式 emit**。
  */
 
-import { signal, watch } from '@lytjs/reactivity';
+import { signal, watch } from '@lytjs/core/runtime';
 
 export interface UseControlledStateOptions<T> {
   /** 读取受控 prop（在 render / setup 中调用时保持响应式） */

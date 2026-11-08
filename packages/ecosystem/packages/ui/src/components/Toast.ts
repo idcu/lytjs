@@ -6,9 +6,8 @@
 
 import type { ToastProps, ToastSlots, ToastSetupProps } from './types';
 import { defineComponent } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/core/runtime';
+import { createVNode, type VNode, reactive } from '@lytjs/core/runtime';
 import { isString, isObject } from '@lytjs/common-is';
-import { reactive } from '@lytjs/reactivity';
 
 /**
  * Toast 组件

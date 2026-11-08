@@ -9,8 +9,7 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/core/runtime';
-import { signal } from '@lytjs/reactivity';
+import { createVNode, type VNode, signal } from '@lytjs/core/runtime';
 import { provideFormFieldErrors, useFormField } from '../composables';
 import type {
   FormRules,

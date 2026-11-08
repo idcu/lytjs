@@ -12,7 +12,7 @@
  * t('pagination.total', { total: 100 });
  * ```
  */
-import { reactive } from '@lytjs/reactivity';
+import { reactive } from '@lytjs/core/runtime';
 import {
   FALLBACK_LOCALE,
   UI_LOCALE_MESSAGES,

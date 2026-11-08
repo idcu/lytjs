@@ -23,7 +23,6 @@ export default defineConfig({
     '@lytjs/common-is',
     '@lytjs/common-a11y',
     '@lytjs/common-string',
-    '@lytjs/reactivity',
     '@lytjs/component',
     '@lytjs/core',
     '@lytjs/core/runtime',

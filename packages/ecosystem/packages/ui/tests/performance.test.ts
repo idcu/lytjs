@@ -192,7 +192,7 @@ describe('UI 组件性能基准测试', () => {
 
 describe('响应式性能测试', () => {
   it('signal 创建应该快速', () => {
-    const { signal } = require('@lytjs/reactivity');
+    const { signal } = require('@lytjs/core/runtime');
 
     const start = performance.now();
     const count = signal(0);
@@ -206,7 +206,7 @@ describe('响应式性能测试', () => {
   });
 
   it('computed 创建应该快速', () => {
-    const { signal, computed } = require('@lytjs/reactivity');
+    const { signal, computed } = require('@lytjs/core/runtime');
 
     const count = signal(0);
 

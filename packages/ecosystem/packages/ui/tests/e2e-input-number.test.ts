@@ -24,7 +24,7 @@
 
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { createApp, h } from '@lytjs/core';
-import { signal } from '@lytjs/reactivity';
+import { signal } from '@lytjs/core/runtime';
 import { InputNumber } from '../src/components/InputNumber';
 
 const hosts: HTMLElement[] = [];

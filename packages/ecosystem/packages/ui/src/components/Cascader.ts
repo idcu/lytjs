@@ -9,8 +9,7 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/core/runtime';
-import { effect, signal } from '@lytjs/reactivity';
+import { createVNode, type VNode, effect, signal } from '@lytjs/core/runtime';
 import type { CascaderOption, CascaderSetupProps, CascaderSlots } from './types';
 import {
   getComboboxA11yProps,

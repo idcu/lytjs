@@ -1370,9 +1370,6 @@ importers:
       '@lytjs/core':
         specifier: workspace:*
         version: link:../../../core
-      '@lytjs/reactivity':
-        specifier: workspace:*
-        version: link:../../../reactivity
     devDependencies:
       tsup:
         specifier: ^8.0.0

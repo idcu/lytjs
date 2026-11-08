@@ -15,7 +15,6 @@ export default defineConfig({
   },
   resolve: {
     alias: [
-      { find: /^@lytjs\/reactivity\/(.*)$/, replacement: `${pkgRoot}/reactivity/dist/$1.mjs` },
       { find: '@lytjs/common-is', replacement: `${commonRoot}/is/dist/index.mjs` },
       { find: '@lytjs/common-a11y', replacement: `${commonRoot}/a11y/dist/index.mjs` },
       { find: '@lytjs/common-error', replacement: `${commonRoot}/error/dist/index.mjs` },
@@ -29,7 +28,6 @@ export default defineConfig({
       { find: '@lytjs/common-assertions', replacement: `${commonRoot}/assertions/dist/index.mjs` },
       { find: '@lytjs/shared-types', replacement: `${pkgRoot}/shared-types/dist/index.mjs` },
       { find: '@lytjs/host-contract', replacement: `${pkgRoot}/host-contract/dist/index.mjs` },
-      { find: '@lytjs/reactivity', replacement: `${pkgRoot}/reactivity/dist/index.mjs` },
       { find: '@lytjs/component', replacement: `${pkgRoot}/component/dist/index.mjs` },
       {
         find: '@lytjs/test-utils',

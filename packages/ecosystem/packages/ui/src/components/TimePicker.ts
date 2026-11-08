@@ -9,8 +9,7 @@
  */
 
 import { defineComponent, type PropType } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/core/runtime';
-import { effect, signal } from '@lytjs/reactivity';
+import { createVNode, type VNode, effect, signal } from '@lytjs/core/runtime';
 
 export interface TimePickerSetupProps {
   modelValue: string | [string, string] | null;

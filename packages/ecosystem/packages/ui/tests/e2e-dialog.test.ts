@@ -35,7 +35,7 @@
 
 import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import { createApp, h } from '@lytjs/core';
-import { signal } from '@lytjs/reactivity';
+import { signal } from '@lytjs/core/runtime';
 import { Dialog } from '../src/components/Dialog';
 
 const hosts: HTMLElement[] = [];

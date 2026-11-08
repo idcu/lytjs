@@ -6,9 +6,15 @@
 
 import type { InputNumberProps, InputNumberSlots, InputNumberSetupProps } from './types';
 import { defineComponent } from '@lytjs/component';
-import { createVNode, createTextVNode, type VNode } from '@lytjs/core/runtime';
+import {
+  createVNode,
+  createTextVNode,
+  type VNode,
+  reactive,
+  computed,
+  watch,
+} from '@lytjs/core/runtime';
 import { isString, isObject } from '@lytjs/common-is';
-import { reactive, computed, watch } from '@lytjs/reactivity';
 import { getSpinbuttonA11yProps, getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 import { t } from '../locale';
 
