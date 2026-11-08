@@ -3,22 +3,25 @@ scope: now
 status: active
 last-verified: 2026-11-09
 updated: 2026-11-09
-keywords: [C1, C2, C3, vdom, reactivity, core-runtime, L0例外, B01d]
+keywords: [S25, 测试解耦, vdom, compiler, B01d, C3]
 ---
 
 # NOW · main
 
 ## 当前焦点
-- **C1 已完成（45dd43d0）**：`@lytjs/ui` vdom 清零改指 `@lytjs/core/runtime`。
-- **C2 已完成（72001721）**：UI reactivity 清零（38 src + 6 测试/require）；依赖面剩 `common-* / component / core`。
-- **C3 已完成（ADR 0026）**：文档例外收口。`common-a11y` 立为 UI-only 语义型 L0 叶子例外；`common-is` / `common-string` 立为通用 L0 纯函数叶子；ARCHITECTURE 改为 UI-only 窄例外；0021 已裁并订正实测数字（27/8/19，a11y 14）。
-  - 负控：注入 `@lytjs/ui → @lytjs/dom` → check-deps 红（L6→L1 跨层）；撤销后 76/76 绿。
-- **C1/C2 实测**：fast 56/56；api-snapshot 39/1961；bundle 六入口与 C1 一致（1697/9471/95367/93230/75015/38171）。
-- **B01d 延后**：重开条件与旧台账见 `NOW-history/2026-11-08-S23-S30台账与C3.md`。
+- **S25 测试解耦**：84c70f5a / d751b968 / 7804e7ee。
+  - 类1 `getBlockStackDepth` 18 处 → Block 作用域 LIFO/子节点行为。
+  - 类2 `patchFlag === 16` 1 处 → 公开 `PatchFlags.FULL_PROPS`。
+  - 类3 `ctx._instance` 待决：只写不读，无公开行为可断，未删断言。
+  - 类4 `codegen.test.ts` 56 处产物字符串断言 → 执行产物断 VNode/插槽/双向绑定/缓存；55 改，动态属性名 1 处待决。
+- **实测**：fast 56/56；vdom 573/573；compiler 1686/1686；signal 115×2；parity 115/115、divergent 0；api 39/1961。
+- **alias**：54 个配置文件 / 213 条目标（订正旧记 54/216）。
+- **C1/C2/C3** 已完成，见 NOW-history；B01d 仍延后。
 
 ## 下一步
-1. 无已授权批次待执行；B01d 保持延后，0023 死包删除等 8.0.0 窗口。
-2. 复审条件见 ADR 0026（a11y 出现第二消费方 / is·string 失去 L0 叶子属性 / UI 迁独立仓）。
+1. 待决：动态属性名被写成字面量 key；`_instance` 无读取点（可随 S29 清理）。
+2. compiler 其余 476 处 code/preamble 断言可分批行为化（battery 边界见 check-e2e-assertions）。
+3. 0023 死包删除等 8.0.0 窗口。
 
 ## 阻塞
 - 覆盖率并发/safe-delete → 单包复核/reportsDirectory。
