@@ -1,31 +1,19 @@
 import { defineConfig } from 'vitest/config';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { sharedAliases, sharedDefine, sharedSetupFiles } from '../../vitest.shared';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const packagesRoot = resolve(__dirname, '..');
-const commonRoot = resolve(packagesRoot, 'common/packages');
 
 export default defineConfig({
-  // 定义全局变量
-  define: {
-    __DEV__: 'true',
-    __PROD__: 'false',
-    __TEST__: 'true',
-  },
+  define: sharedDefine,
   resolve: {
-    alias: {
-      '@lytjs/reactivity': resolve(packagesRoot, 'reactivity/dist/index.mjs'),
-      '@lytjs/common-is': `${commonRoot}/is/dist/index.mjs`,
-      '@lytjs/common-scheduler': `${commonRoot}/scheduler/dist/index.mjs`,
-      '@lytjs/common-error': `${commonRoot}/error/dist/index.mjs`,
-      '@lytjs/shared-types': resolve(packagesRoot, 'shared-types/dist/index.mjs'),
-    },
+    alias: sharedAliases,
   },
   test: {
     environment: 'jsdom',
     include: ['tests/**/*.test.ts'],
     globals: true,
-    setupFiles: [resolve(__dirname, 'tests/setup.ts')],
+    setupFiles: [...sharedSetupFiles, resolve(__dirname, 'tests/setup.ts')],
   },
 });

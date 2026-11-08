@@ -1,36 +1,15 @@
 import { defineConfig } from 'vitest/config';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const commonRoot = resolve(__dirname, '../common/packages');
+import { sharedAliases, sharedDefine, sharedSetupFiles } from '../../vitest.shared';
 
 export default defineConfig({
-  // 定义全局变量
-  define: {
-    __DEV__: 'true',
-    __PROD__: 'false',
-    __TEST__: 'true',
-  },
+  define: sharedDefine,
   resolve: {
-    alias: {
-      '@lytjs/common-is': `${commonRoot}/is/dist/index.mjs`,
-      '@lytjs/common-vnode': `${commonRoot}/vnode/dist/index.mjs`,
-      '@lytjs/common-string': `${commonRoot}/string/dist/index.mjs`,
-      '@lytjs/common-events': `${commonRoot}/events/dist/index.mjs`,
-      '@lytjs/common-error': `${commonRoot}/error/dist/index.mjs`,
-      '@lytjs/common-algorithm': `${commonRoot}/algorithm/dist/index.mjs`,
-      '@lytjs/common-constants': `${commonRoot}/constants/dist/index.mjs`,
-      '@lytjs/common-assertions': `${commonRoot}/assertions/dist/index.mjs`,
-      '@lytjs/common-object': `${commonRoot}/object/dist/index.mjs`,
-      '@lytjs/shared-types': resolve(__dirname, '../shared-types/dist/index.mjs'),
-      '@lytjs/host-contract': resolve(__dirname, '../host-contract/dist/index.mjs'),
-      '@lytjs/adapter-web': resolve(__dirname, '../adapter-web/dist/index.mjs'),
-    },
+    alias: sharedAliases,
   },
   test: {
     environment: 'jsdom',
     globals: true,
+    setupFiles: sharedSetupFiles,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

@@ -1,26 +1,15 @@
 import { defineConfig } from 'vitest/config';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const root = dirname(fileURLToPath(import.meta.url));
+import { sharedAliases, sharedDefine, sharedSetupFiles } from '../../vitest.shared';
 
 export default defineConfig({
-  // 定义全局变量
-  define: {
-    __DEV__: 'true',
-    __PROD__: 'false',
-    __TEST__: 'true',
-  },
+  define: sharedDefine,
   resolve: {
-    alias: {
-      '@lytjs/common-is': resolve(root, '../common/packages/is/dist/index.mjs'),
-      '@lytjs/common-dom': resolve(root, '../common/packages/dom/dist/index.mjs'),
-      '@lytjs/common-object': resolve(root, '../common/packages/object/dist/index.mjs'),
-    },
+    alias: sharedAliases,
     conditions: ['import', 'node', 'default'],
   },
   test: {
     environment: 'jsdom',
     globals: true,
+    setupFiles: sharedSetupFiles,
   },
 });

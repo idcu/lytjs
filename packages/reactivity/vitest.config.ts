@@ -1,30 +1,19 @@
 import { defineConfig } from 'vitest/config';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { sharedAliases, sharedDefine, sharedSetupFiles } from '../../vitest.shared';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const commonRoot = resolve(__dirname, '../common/packages');
 
 export default defineConfig({
-  // 定义全局变量
-  define: {
-    __DEV__: 'true',
-    __PROD__: 'false',
-    __TEST__: 'true',
-  },
+  define: sharedDefine,
   resolve: {
-    alias: {
-      '@lytjs/common-is': `${commonRoot}/is/dist/index.mjs`,
-      '@lytjs/common-scheduler': `${commonRoot}/scheduler/dist/index.mjs`,
-      '@lytjs/common-error': `${commonRoot}/error/dist/index.mjs`,
-      '@lytjs/common-constants': `${commonRoot}/constants/dist/index.mjs`,
-      '@lytjs/common-assertions': `${commonRoot}/assertions/dist/index.mjs`,
-    },
+    alias: sharedAliases,
   },
   test: {
     environment: 'node',
     globals: true,
-    setupFiles: [resolve(__dirname, './tests/setup.ts')],
+    setupFiles: [...sharedSetupFiles, resolve(__dirname, './tests/setup.ts')],
     exclude: ['**/node_modules/**', '**/dist/**'],
     testTimeout: 30000,
     hookTimeout: 30000,
