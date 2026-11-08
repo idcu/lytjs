@@ -1046,6 +1046,39 @@
       },
       "expected": "<div><p><b>x</b></p><p><b>y!</b></p><p><b>z</b></p></div>",
       "expectedAfter": "<div><p><b>x</b></p><p><b>y!</b></p></div>"
+    },
+    {
+      "id": "lf02",
+      "group": "列表内嵌条件（v-for + v-if）",
+      "template": "<div><template v-for=\"it in list\" :key=\"it.id\"><span v-if=\"it.show\">{{it.name}}</span></template></div>",
+      "state": {
+        "list": [
+          { "id": 1, "show": true, "name": "a" },
+          { "id": 2, "show": false, "name": "b" },
+          { "id": 3, "show": true, "name": "c" }
+        ]
+      },
+      "update": {
+        "list": [
+          { "id": 1, "show": false, "name": "a" },
+          { "id": 2, "show": true, "name": "b" }
+        ]
+      },
+      "expected": "<div><div><!----><span>a</span><!----></div><div><!----><!----></div><div><!----><span>c</span><!----></div></div>",
+      "expectedAfter": "<div><div><!----><!----></div><div><!----><span>b</span><!----></div></div>"
+    },
+    {
+      "id": "lf02b",
+      "group": "列表内嵌条件（v-for + v-if）",
+      "template": "<div><template v-for=\"(it, i) in list\" :key=\"it\"><span v-if=\"i % 2 === 0\">{{it}}</span><span v-else>{{it}}!</span></template></div>",
+      "state": {
+        "list": ["x", "y", "z"]
+      },
+      "update": {
+        "list": ["x", "y"]
+      },
+      "expected": "<div><div><!----><span>x</span><!----></div><div><!----><span>y!</span><!----></div><div><!----><span>z</span><!----></div></div>",
+      "expectedAfter": "<div><div><!----><span>x</span><!----></div><div><!----><span>y!</span><!----></div></div>"
     }
   ]
 }

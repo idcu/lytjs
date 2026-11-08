@@ -28,6 +28,11 @@
   顺带支持 `COMPOUND_EXPRESSION`（`{{it}}!` 这类拼接文本）。
   新增 parity 语料 `lf01`（对象项条件）、`lf01b`（局部索引 + `v-else` + 拼接文本）；
   负控回退后 parity 4 项红、快照 4 份红；恢复后全绿。
+- **`template v-for` 内嵌 `v-if` 时 Fragment 只剩注释锚点**：模板列表项的子节点此前
+  逐个只走 `serializeVNodeCall`（只认 `VNODE_CALL`），条件节点被丢弃，Fragment 内
+  只剩 `<!---->`。现在子节点改走完整 vnode 序列化，内嵌条件与拼接文本都进 Fragment。
+  新增 parity 语料 `lf02`（对象项条件）、`lf02b`（局部索引 + `v-else`）；
+  负控回退后 parity 4 项红、快照 4 份红；恢复后全绿。
 
 ### 🛠️ 编译器：signal 两套 profile 支持 `<template>` 片段（2026-11-08）
 

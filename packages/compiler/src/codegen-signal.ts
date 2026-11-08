@@ -1579,9 +1579,17 @@ function processCallExpression(
       }
       const slotsArg = kidVNodes.length ? ',{default:()=>[' + kidVNodes.join(',') + ']}' : '';
       if (rawTag === FRAGMENT_SENTINEL) {
-        // `<template v-for>`：容器里挂 Fragment，而不是把哨兵当组件名传入
+        // `<template v-for>`：容器里挂 Fragment，而不是把哨兵当组件名传入。
+        // children 必须走完整 vnode 序列化：内嵌 v-if / 文本 / 拼接文本都经此，
+        // 旧实现逐个 `serializeVNodeCall` 只认 VNODE_CALL，条件节点被丢掉后
+        // Fragment 里只剩注释锚点。
+        const kidsCode = serializeVNodeCallChildren(
+          renderItem.children,
+          BASE_EMIT_PROFILE.ctxPrefix,
+          itemLocals,
+        );
         const fragHost = '_fragHost';
-        const frag = `createVNode(Fragment, null, [${kidVNodes.join(',')}])`;
+        const frag = `createVNode(Fragment, null, ${kidsCode ?? 'null'})`;
         createBody = `const ${fragHost}=document.createElement('div');mountVNode(${frag},${fragHost});return ${fragHost};`;
         // mountVNode 会先清空宿主再挂载，故更新时重挂即可，不会叠加节点
         updateBody = `mountVNode(${frag},_el);`;
