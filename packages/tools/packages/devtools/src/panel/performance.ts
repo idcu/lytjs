@@ -201,7 +201,7 @@ export function startPerformanceMonitoring(): void {
     updatePerformanceMetrics();
   }, performanceConfig.updateInterval);
   // Node 下 unref 存在性保护，避免采样定时器钉住进程退出；采样语义不变。
-  (updateIntervalId as unknown as { unref?: () => void }).unref?.();
+  (updateIntervalId as { unref?: () => void }).unref?.();
 
   sendToPanel({
     type: 'PERFORMANCE_MONITORING_STATUS',

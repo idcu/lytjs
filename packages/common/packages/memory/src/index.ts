@@ -273,7 +273,7 @@ export class MemoryLeakDetector {
     }, this.config.checkInterval);
     // 库层定时器在 Node 下会钉住事件循环，unref 存在性保护（浏览器返回数字，无 unref）。
     // 仅影响「进程能否退出」，不改变清理语义：进程存活时定时器照常触发。
-    (this.checkTimer as unknown as { unref?: () => void }).unref?.();
+    (this.checkTimer as { unref?: () => void }).unref?.();
   }
 
   /**
@@ -546,7 +546,7 @@ export class MemoryPressureMonitor {
       }
     }, checkInterval);
     // 同上：Node 下 unref，避免采样定时器钉住事件循环；采样语义不变。
-    (this.checkTimer as unknown as { unref?: () => void }).unref?.();
+    (this.checkTimer as { unref?: () => void }).unref?.();
   }
 
   stop(): void {
