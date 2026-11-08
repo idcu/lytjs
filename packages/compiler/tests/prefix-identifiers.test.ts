@@ -9,6 +9,7 @@
 import { describe, it, expect } from 'vitest';
 import { prefixIdentifiers } from '../src/prefix-identifiers';
 import { compile } from '../src/index';
+import { asVNode, asVNodeList, execute } from './support/execute';
 
 describe('prefixIdentifiers', () => {
   describe('基本前缀化', () => {
@@ -83,30 +84,37 @@ describe('prefixIdentifiers', () => {
     });
   });
 
-  describe('编译集成（VNode 路径）', () => {
-    it('插值应前缀化', () => {
-      const code = compile('<div>{{ msg }}</div>').code;
-      expect(code).toContain('_ctx.msg');
+  describe('编译集成（VNode 路径，执行产物断言取值）', () => {
+    const mount = (template: string, ctx: Record<string, unknown> = {}): unknown =>
+      execute(compile(template))(ctx);
+
+    it('插值按上下文取值', () => {
+      expect(asVNode(mount('<div>{{ msg }}</div>', { msg: 'M' })).children).toBe('M');
     });
 
-    it('v-bind 应前缀化', () => {
-      const code = compile('<div :title="tip"></div>').code;
-      expect(code).toContain('_ctx.tip');
+    it('v-bind 按上下文取值', () => {
+      expect(asVNode(mount('<div :title="tip"></div>', { tip: 'T' })).props).toEqual({
+        title: 'T',
+      });
     });
 
-    it('v-if 条件应前缀化且分支 children 保留', () => {
-      const code = compile('<div v-if="ok"><span>{{ msg }}</span></div>').code;
-      expect(code).toContain('_ctx.ok');
-      expect(code).toContain('_ctx.msg');
-      expect(code).toContain('"span"');
+    it('v-if 按上下文分支，且分支 children 保留', () => {
+      const tpl = '<div v-if="ok"><span>{{ msg }}</span></div>';
+      const shown = asVNode(mount(tpl, { ok: true, msg: 'M' }));
+      expect(shown.type).toBe('div');
+      const span = asVNode(shown.children);
+      expect(span.type).toBe('span');
+      expect(span.children).toBe('M');
+
+      expect(mount(tpl, { ok: false, msg: 'M' })).toBeNull();
     });
 
-    it('v-for 别名不加前缀、列表表达式加前缀、children 保留', () => {
-      const code = compile('<ul><li v-for="item in items">{{ item.name }}</li></ul>').code;
-      expect(code).toContain('renderList(_ctx.items');
-      expect(code).toContain('item.name');
-      // 注意：`_ctx.items` 里天然包含 `_ctx.item` 子串，必须用词边界判断
-      expect(code).not.toMatch(/_ctx\.item\b(?!s)/);
+    it('v-for 别名不加前缀、列表表达式取上下文、children 保留', () => {
+      const list = mount('<ul><li v-for="item in items">{{ item.name }}</li></ul>', {
+        items: [{ name: 'a' }, { name: 'b' }],
+      });
+      const items = asVNodeList(asVNode(list).children);
+      expect(items.map((item) => item.children)).toEqual(['a', 'b']);
     });
   });
 });
@@ -148,17 +156,20 @@ describe('prefixIdentifiers · 对象简写属性（P0 回归）', () => {
     expect(prefixIdentifiers('f(a, b)')).toBe('_ctx.f(_ctx.a, _ctx.b)');
   });
 
-  it('端到端：:style 简写产物必须是合法 JS（可被 new Function 解析）', () => {
-    const { code } = compile('<div><span :style="{ color }">A</span></div>');
-    expect(code).toContain('color: _ctx.color');
-    expect(code).not.toContain('{ _ctx.color }');
-    // 最强判据：产物真的能被解析（旧行为在这里直接抛 SyntaxError）
-    expect(() => new Function(code.replace(/^import .*$/gm, ''))).not.toThrow();
+  it('端到端：:style 简写产物可执行，且取到上下文里的值', () => {
+    // 旧行为产物是非法 JS（`{ _ctx.color }`），执行会直接 SyntaxError
+    const span = asVNode(
+      asVNode(execute(compile('<div><span :style="{ color }">A</span></div>'))({ color: 'red' }))
+        .children,
+    );
+    expect(span.props).toEqual({ style: { color: 'red' } });
   });
 
-  it('端到端：:class 简写同样合法', () => {
-    const { code } = compile('<div><span :class="{ active }">A</span></div>');
-    expect(code).toContain('active: _ctx.active');
-    expect(() => new Function(code.replace(/^import .*$/gm, ''))).not.toThrow();
+  it('端到端：:class 简写同样可执行并取值', () => {
+    const span = asVNode(
+      asVNode(execute(compile('<div><span :class="{ active }">A</span></div>'))({ active: true }))
+        .children,
+    );
+    expect(span.props).toEqual({ class: { active: true } });
   });
 });

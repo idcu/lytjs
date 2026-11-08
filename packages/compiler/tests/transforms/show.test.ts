@@ -7,6 +7,8 @@ import { NodeTypes } from '../../src/constants';
 import type { DirectiveNode } from '../../src/types';
 import { createMockContext, createShowDirective } from './helpers';
 import { createElement } from '../../src/ast';
+import { compile } from '../../src/index';
+import { asVNode, execute } from '../support/execute';
 
 describe('transformShow', () => {
   describe('基本 v-show 转换', () => {
@@ -24,15 +26,15 @@ describe('transformShow', () => {
     });
 
     it('应该正确处理布尔表达式', () => {
-      const context = createMockContext();
-      const dir = createShowDirective('isActive');
-      const node = createElement('span');
-      const result = transformShow(dir, node, context);
+      const styleOf = (isActive: boolean): unknown =>
+        (
+          asVNode(execute(compile('<span v-show="isActive"></span>'))({ isActive })).props as {
+            style?: { display: unknown };
+          }
+        ).style;
 
-      expect(result.props).toHaveLength(1);
-      expect(result.props[0].key).toBe('style');
-      expect(result.props[0].value).toContain('isActive');
-      expect(result.props[0].value).toContain("display: 'none'");
+      expect(styleOf(true)).toBeUndefined();
+      expect(styleOf(false)).toEqual({ display: 'none' });
     });
   });
 
@@ -78,6 +80,10 @@ describe('transformShow', () => {
     });
 
     it('应该处理三元表达式', () => {
+      // ⚠️ S25b 待修：行为化后发现产物缺括号 ——
+      //   `condition ? true : false ? undefined : { display: 'none' }`
+      // 优先级错误 ⇒ 条件为真时 style 变成 `true`（而不是 undefined）。
+      // 修它要改产物文本，超出本轮「只改测试」范围，故此处保留形态断言并登记。
       const context = createMockContext();
       const dir = createShowDirective('condition ? true : false');
       const node = createElement('div');

@@ -9,6 +9,7 @@
 
 import * as domRuntime from '@lytjs/dom-runtime';
 import * as reactivity from '@lytjs/reactivity';
+import { isEventModifierIntercepted } from '@lytjs/common-events';
 import { compile } from '../../src/index';
 
 export type CompileResult = { code: string; preamble: string };
@@ -59,25 +60,10 @@ export const HELPERS: Record<string, unknown> = {
   },
   resolveDynamicComponent: (component: unknown) => component,
   resolveComponent: (name: string) => name,
-  withModifiers: (fn: (...args: unknown[]) => unknown, modifiers: string[]) => {
-    const guards: Record<string, (event: Record<string, unknown>) => boolean> = {
-      stop: (event) => {
-        event.stopPropagation = () => undefined;
-        return false;
-      },
-      prevent: (event) => {
-        event.preventDefault = () => undefined;
-        return false;
-      },
-      self: (event) => event.target !== event.currentTarget,
-    };
-    return (...args: unknown[]) => {
-      const event = args[0] as Record<string, unknown>;
-      for (const modifier of modifiers) {
-        if (guards[modifier]?.(event)) return undefined;
-      }
-      return fn(...args);
-    };
+  // 复用生产实现的事件修饰符判定（stop/prevent/self/系统键/按键名）
+  withModifiers: (fn: (...args: unknown[]) => unknown, modifiers: string[]) => (event: unknown) => {
+    if (isEventModifierIntercepted(event as Event, modifiers)) return undefined;
+    return fn(event);
   },
   withKeys: (fn: (...args: unknown[]) => unknown, keys: string[]) => (event: unknown) => {
     const key = (event as { key?: string }).key;
@@ -92,10 +78,15 @@ export const HELPERS: Record<string, unknown> = {
   Fragment,
   createSlots: (slots: unknown) => slots,
   renderSlot: (
-    slots: Record<string, (props?: unknown) => unknown>,
+    slots: Record<string, (props?: unknown) => unknown> | undefined,
     name: string,
     props?: unknown,
-  ) => slots[name]?.(props) ?? [],
+    fallback?: unknown,
+  ) => {
+    const slot = slots?.[name];
+    if (slot) return slot(props);
+    return typeof fallback === 'function' ? (fallback as () => unknown)() : fallback;
+  },
   normalizeSlot: (slot: unknown) => slot,
   guardReactiveProps: (props: unknown) => props,
   mergeProps: (...args: Record<string, unknown>[]) => Object.assign({}, ...args),

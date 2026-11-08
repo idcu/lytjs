@@ -4,6 +4,7 @@
 import { describe, it, expect } from 'vitest';
 import { transformOn } from '../../src/transforms/on';
 import { compile } from '../../src/index';
+import { asVNode, execute } from '../support/execute';
 import { createMockContext } from './helpers';
 import { createElement, createSimpleExpression, createDirective } from '../../src/ast';
 
@@ -125,42 +126,66 @@ describe('transformOn', () => {
    * 且前导 import 面（`preamble`）里确实导出了 `withModifiers`。
    * 后者是"契约断裂"的判据 —— 只登记不 import 时产物会 ReferenceError。
    */
-  describe('产物级契约（断言真实产物而非中间 AST）', () => {
-    it('@click.stop：产物调用 withModifiers，且前导 import 面导出了它', () => {
-      const result = compile('<button @click.stop="foo">x</button>');
-      expect(result.code).toContain('withModifiers(');
-      // 守卫型修饰符以数组形态作为第二实参
-      expect(result.code).toContain('["stop"]');
-      // 关键：前导 import 面必须认它
-      expect(result.preamble).toContain('withModifiers');
+  describe('产物级契约（执行产物，断言事件期的真实行为）', () => {
+    const propsOf = (
+      template: string,
+      ctx: Record<string, unknown> = {},
+    ): Record<string, unknown> =>
+      (asVNode(execute(compile(template))(ctx)).props ?? {}) as Record<string, unknown>;
+
+    it('@click.stop：事件冒泡被阻止，处理器仍执行', () => {
+      const calls: string[] = [];
+      const props = propsOf('<button @click.stop="foo">x</button>', {
+        foo: () => calls.push('foo'),
+      });
+      const event = {
+        stopPropagation: () => calls.push('stop'),
+        preventDefault: () => undefined,
+      };
+      (props.onClick as (e: unknown) => void)(event);
+      expect(calls).toEqual(['stop', 'foo']);
     });
 
-    it('@keyup.enter：非 stop/prevent/self 的修饰符**不得**被静默丢弃', () => {
-      // 修复前：handleVOn 只认 stop/prevent/self，`.enter` 被丢弃 ⇒
-      // 产物是裸 `_ctx.onEnter`，任意按键都触发。这是 P0-1 的真实缺陷。
-      const result = compile('<input @keyup.enter="onEnter">');
-      expect(result.code).toContain('withModifiers(');
-      expect(result.code).toContain('["enter"]');
-      expect(result.preamble).toContain('withModifiers');
+    it('@keyup.enter：非 Enter 键被拦截，Enter 放行（修饰符不得被静默丢弃）', () => {
+      const calls: string[] = [];
+      const props = propsOf('<input @keyup.enter="onEnter">', {
+        onEnter: () => calls.push('enter'),
+      });
+      const handler = props.onKeyup as (e: unknown) => void;
+
+      handler({ key: 'a' });
+      expect(calls).toEqual([]);
+
+      handler({ key: 'Enter' });
+      expect(calls).toEqual(['enter']);
     });
 
-    it('@click.once：选项型修饰符产出 { handler, once: true }，且**不**进 withModifiers', () => {
-      const result = compile('<button @click.once="foo">x</button>');
-      expect(result.code).toContain('once: true');
+    it('@click.once：产出 { handler, once }，handler 保持裸引用', () => {
+      const foo = () => undefined;
+      const props = propsOf('<button @click.once="foo">x</button>', { foo });
+      const listener = props.onClick as { handler: unknown; once?: boolean };
+      expect(listener.once).toBe(true);
       // once 是 addEventListener 的选项，不是守卫，不能包进 withModifiers
-      expect(result.code).not.toContain('withModifiers(');
+      expect(listener.handler).toBe(foo);
     });
 
-    it('@click.stop.once：守卫型与选项型**可共存**，各走各的通道', () => {
-      const result = compile('<button @click.stop.once="foo">x</button>');
-      expect(result.code).toContain('handler: withModifiers(_ctx.foo, ["stop"])');
-      expect(result.code).toContain('once: true');
+    it('@click.stop.once：守卫型与选项型共存，各走各的通道', () => {
+      const calls: string[] = [];
+      const props = propsOf('<button @click.stop.once="foo">x</button>', {
+        foo: () => calls.push('foo'),
+      });
+      const listener = props.onClick as { handler: (e: unknown) => void; once?: boolean };
+      expect(listener.once).toBe(true);
+      listener.handler({
+        stopPropagation: () => calls.push('stop'),
+        preventDefault: () => undefined,
+      });
+      expect(calls).toEqual(['stop', 'foo']);
     });
 
-    it('@click（无修饰符）：产物保持裸处理器，不引入额外包装', () => {
-      const result = compile('<button @click="foo">x</button>');
-      expect(result.code).not.toContain('withModifiers(');
-      expect(result.code).toContain('"onClick": _ctx.foo');
+    it('@click（无修饰符）：保持裸处理器，不引入额外包装', () => {
+      const foo = () => undefined;
+      expect(propsOf('<button @click="foo">x</button>', { foo }).onClick).toBe(foo);
     });
   });
 

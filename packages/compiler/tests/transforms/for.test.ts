@@ -5,6 +5,7 @@ import { describe, it, expect } from 'vitest';
 import { NodeTypes } from '../../src/constants';
 import { transformFor } from '../../src/transforms/for';
 import { compile } from '../../src/index';
+import { asVNodeList, execute } from '../support/execute';
 import { createMockContext, runTransform } from './helpers';
 import {
   createElement,
@@ -314,20 +315,24 @@ describe('transformFor', () => {
 // 匹配失败 ⇒ `transformFor` 直接 return，产物里连 renderList 都没有，
 // 模板退化成 `_ctx.a`。
 describe('v-for 解构（P1 回归）', () => {
-  it('{ a, b } in list 必须产出 renderList 与解构语句', () => {
-    const { code } = compile('<div v-for="{ a, b } in list">{{ a }}</div>');
-    expect(code).toContain('renderList(_ctx.list');
-    expect(code).toMatch(/const\s*\{\s*a\s*,\s*b\s*\}\s*=/);
+  it('{ a, b } in list 必须把解构后的值渲染出来', () => {
+    const list = execute(compile('<div v-for="{ a, b } in list">{{ a }}</div>'))({
+      list: [{ a: 'A', b: 'B' }],
+    });
+    expect(asVNodeList(list).map((item) => item.children)).toEqual(['A']);
   });
 
-  it('[x, y] in pairs 同样要产出 renderList', () => {
-    const { code } = compile('<div v-for="[x, y] in pairs">{{ x }}</div>');
-    expect(code).toContain('renderList(_ctx.pairs');
-    expect(code).toMatch(/const\s*\[\s*x\s*,\s*y\s*\]\s*=/);
+  it('[x, y] in pairs 同样要产出列表', () => {
+    const list = execute(compile('<div v-for="[x, y] in pairs">{{ x }}</div>'))({
+      pairs: [['X', 'Y']],
+    });
+    expect(asVNodeList(list).map((item) => item.children)).toEqual(['X']);
   });
 
   it('(item, idx) in list 的既有行为不变', () => {
-    const { code } = compile('<div v-for="(item, idx) in list">{{ item }}</div>');
-    expect(code).toContain('renderList(_ctx.list, (item, idx)');
+    const list = execute(compile('<div v-for="(item, idx) in list">{{ item }}</div>'))({
+      list: ['A'],
+    });
+    expect(asVNodeList(list).map((item) => item.children)).toEqual(['A']);
   });
 });
