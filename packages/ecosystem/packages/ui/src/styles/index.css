@@ -916,6 +916,10 @@
   font-weight: 500;
   margin-bottom: 4px;
 }
+.lyt-alert__message {
+  line-height: 1.5;
+  word-break: break-word;
+}
 .lyt-alert__description {
   font-size: 13px;
   opacity: 0.8;
