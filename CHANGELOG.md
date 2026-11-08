@@ -11,6 +11,17 @@
 - **`v-if` → `v-else` 切换清理旧节点**：此前只有第 0 支在切换时 `remove()` 旧元素，
   进入 `v-else`/`v-else-if` 后旧分支残留在 DOM 且引用丢失。现在所有分支切换都清理。
   新增 parity 语料 `cf01`（含 `expectedAfter` 更新后断言）；负控回退后 parity 与快照双红。
+- **分支内嵌 `v-if/v-else` 不再被丢弃**：元素分支内的条件此前既不参与分支静态 HTML，
+  也不参与分支动态绑定，整段内容（含同级的静态文本）静默消失。现在分支 HTML 为内嵌条件
+  留 `<span data-lyt-if="1" style="display:contents">` 占位，运行期把选中的分支 vnode 挂进占位；
+  分支内嵌 `<template v-if>`（`tf03`）经 vnode 序列化补齐（哨兵映射到 `Fragment`，
+  `isComponent` 误判不再让哨兵当普通标签透出）。
+- 新增 parity 语料 `cf02`（内嵌 `v-if`）、`cf02b`（内嵌 `v-if/v-else`）、
+  `cf02c`（内嵌动态属性 + 插值 + 后续静态兄弟，验证占位顺序与更新），
+  `tf03` 升级为带语义基准（`expected`/`expectedAfter`）。负控回退后 parity 7 项红、
+  快照 8 份红；恢复后全绿。
+- 快照变化仅 `tf03`（本构造）+ 新增 `cf02/2b/2c`：`tf03` 因新增 `Text` 导入与嵌套条件
+  序列化而变，属本修复的必然结果；其余 104 条既有条目逐字不变。
 
 ### 🛠️ 编译器：signal 两套 profile 支持 `<template>` 片段（2026-11-08）
 

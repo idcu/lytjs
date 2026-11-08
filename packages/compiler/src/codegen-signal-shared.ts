@@ -33,6 +33,15 @@ import type {
 export const TEXT_SLOT_COMMENT = '<!--lyt-t-->';
 
 /**
+ * 分支内嵌 `v-if` 的静态挂载点。
+ *
+ * 分支 HTML 是静态串，内嵌条件无法静态确定走向 ⇒ 先留一个**元素**占位，
+ * 运行期把选中的分支 vnode 挂进去。`display:contents` 让占位元素不参与布局，
+ * 与 `<template>` 分支的 Fragment 容器同一套约定。
+ */
+export const CONDITIONAL_HOST_HTML = '<span data-lyt-if="1" style="display:contents"></span>';
+
+/**
  * 发射器输出形态（B01d-1）。
  *
  * 两个入口（`generateSignal` / `generateSignalOptimized`）都只读这里的常量，
@@ -213,6 +222,15 @@ export function serializeBranchHtml(
     return branch.map((item) => serializeBranchHtml(item, hooks)).join('');
   }
   if (branch.type === NodeTypes.INTERPOLATION) return TEXT_SLOT_COMMENT;
+  // transform 把「与 v-if 同级的静态文本」改写成 JS 字面量（如 `"A"`）。
+  // 不处理会被整段丢掉（`<p v-if>A<span v-if>…` 只剩占位）。
+  if (branch.type === NodeTypes.SIMPLE_EXPRESSION) {
+    const code = (branch as SimpleExpressionNode).content.trim();
+    if (!/^(?:"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')$/.test(code)) return '';
+    return escapeHtmlStatic(code.slice(1, -1).replace(/\\(.)/g, '$1'));
+  }
+  // 分支内嵌 v-if / v-else：留元素占位，运行期由分支动态代码挂载 vnode。
+  if (branch.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) return CONDITIONAL_HOST_HTML;
   if (branch.type === NodeTypes.JS_CALL_EXPRESSION) {
     const call = branch as JSCallExpression;
     const callee = typeof call.callee === 'string' ? call.callee : String(call.callee);
@@ -904,6 +922,10 @@ export interface VNodeCallChildHooks {
   textVNode: (exp: string, locals: ReadonlySet<string>) => string;
   element: (node: ElementNode, locals: ReadonlySet<string>) => string | null;
   vnodeCall: (node: unknown, locals: ReadonlySet<string>) => string | null;
+  /** `JS_CONDITIONAL_EXPRESSION`（v-if）→ `(cond ? vnode : null)` */
+  conditional?: (node: unknown, locals: ReadonlySet<string>) => string | null;
+  /** 字面量内容（TEXT / 静态 SIMPLE）→ 文本 vnode 代码；code 已是可直接求值的 JS 字面量 */
+  literalText?: (code: string) => string;
 }
 
 /** 子节点 → vnode 构造代码；不能完整还原时返回 null */
@@ -914,6 +936,30 @@ export function serializeVNodeCallChildShared(
 ): string | null {
   if (!child || typeof child !== 'object') return null;
   const node = child as { type?: number };
+
+  // 静态文本（TEXT 节点 / transform 产出的 JS 字面量 SIMPLE）
+  if (node.type === NodeTypes.TEXT) {
+    if (!hooks.literalText) return null;
+    return hooks.literalText(JSON.stringify((child as TextNode).content));
+  }
+  if (node.type === NodeTypes.SIMPLE_EXPRESSION) {
+    if (!hooks.literalText) return null;
+    const code = (child as SimpleExpressionNode).content.trim();
+    if (
+      !/^(?:"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|-?\d+(?:\.\d+)?|true|false|null|undefined)$/.test(
+        code,
+      )
+    ) {
+      return null;
+    }
+    return hooks.literalText(code);
+  }
+
+  // 嵌套 v-if：交给发射器序列化为 `(cond ? vnode : null)`
+  if (node.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
+    if (!hooks.conditional) return null;
+    return hooks.conditional(child, locals);
+  }
 
   // 插值：JS_CALL_EXPRESSION(TO_DISPLAY_STRING, expr)
   if (node.type === NodeTypes.JS_CALL_EXPRESSION) {

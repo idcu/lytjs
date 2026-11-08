@@ -1513,7 +1513,7 @@ function serializeBranchHTML(
 interface BranchDynamicOp {
   /** 元素在分支内的先序序号：0 = 分支根元素，后续 >0 为其后代。 */
   elementIndex: number;
-  kind: 'attr' | 'class' | 'style' | 'text' | 'component';
+  kind: 'attr' | 'class' | 'style' | 'text' | 'component' | 'conditional';
   slotIndex?: number;
   key?: string;
   expr?: string;
@@ -1653,6 +1653,13 @@ function collectBranchDynamics(
         if (expr) addText(selfIndex, toItemExpr(expr, locals));
         continue;
       }
+      if (c.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
+        // 内嵌 v-if/v-else：静态 HTML 里的元素占位算作一个元素，保持序号对齐。
+        const hostIndex = nextElement++;
+        const expr = serializeConditionalVNodeOptimized(child, usedRuntime, options, locals);
+        if (expr) ops.push({ elementIndex: hostIndex, kind: 'conditional', expr });
+        continue;
+      }
       visit(child);
     }
   };
@@ -1715,6 +1722,16 @@ function buildBranchDynamics(
       updateOps.push(
         `${getShortName('setStyle', options.useShortNames ?? true)}(${el},${op.expr ?? 'undefined'});`,
       );
+      continue;
+    }
+    if (op.kind === 'conditional') {
+      usedRuntime.add('mountVNode');
+      usedRuntime.add('setHTML');
+      const mv = getShortName('mountVNode', options.useShortNames ?? true);
+      const sh = getShortName('setHTML', options.useShortNames ?? true);
+      const stmt = `{const _e=${el};if(_e){const _v=${op.expr ?? 'null'};if(_v){${mv}(_v,_e);}else{${sh}(_e,'');}}}`;
+      createOps.push(stmt);
+      updateOps.push(stmt);
       continue;
     }
     if (op.kind === 'component') {
@@ -2021,12 +2038,13 @@ export function serializeVNodeCallOptimized(
     children: (ch, scope) => serializeVNodeCallChildrenOptimized(ch, usedRuntime, options, scope),
     // 组件 tag 是**裸名**必须前缀化；HTML 标签已是 JSON 字符串。
     // `<template>` 哨兵不当作组件名，改映射到运行时 `Fragment`（与 vnode 路径同语义）。
+    // 哨兵的 `isComponent` 实测为 false，故**必须先判哨兵**，否则会当普通标签透出。
     tag: (tag, isComponent) => {
-      if (!isComponent) return tag;
       if (tag === FRAGMENT_SENTINEL) {
         usedRuntime.add('Fragment');
         return getShortName('Fragment', options.useShortNames ?? true);
       }
+      if (!isComponent) return tag;
       return componentRef(tag);
     },
   });
@@ -2070,6 +2088,14 @@ export function serializeVNodeCallChildOptimized(
     },
     element: (el, scope) => serializeVNodeElementOptimized(el, usedRuntime, options, scope),
     vnodeCall: (n, scope) => serializeVNodeCallOptimized(n, usedRuntime, options, scope),
+    conditional: (n, scope) => serializeConditionalVNodeOptimized(n, usedRuntime, options, scope),
+    literalText: (code) => {
+      usedRuntime.add('createVNode');
+      usedRuntime.add('Text');
+      const cv = getShortName('createVNode', options.useShortNames ?? true);
+      const tx = getShortName('Text', options.useShortNames ?? true);
+      return `${cv}(${tx},null,${code})`;
+    },
   });
 }
 

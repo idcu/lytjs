@@ -951,7 +951,12 @@
         "ok": true,
         "inner": true,
         "msg": "N"
-      }
+      },
+      "update": {
+        "inner": false
+      },
+      "expected": "<div><span data-lyt-frag=\"1\" style=\"display:contents\"><!----><span>N</span><!----></span></div>",
+      "expectedAfter": "<div><span data-lyt-frag=\"1\" style=\"display:contents\"><!----><!----></span></div>"
     },
     {
       "id": "tf04",
@@ -964,6 +969,50 @@
         "ok": false
       },
       "expected": "<div><span data-lyt-frag=\"1\" style=\"display:contents\"><!----><!----></span><span>tail</span></div>"
+    },
+    {
+      "id": "cf02",
+      "group": "条件清理（v-if/v-else）",
+      "template": "<div><p v-if=\"ok\">A<span v-if=\"inner\">N</span></p><p v-else>B</p></div>",
+      "state": {
+        "ok": true,
+        "inner": true
+      },
+      "update": {
+        "inner": false
+      },
+      "expected": "<div><p>A<span data-lyt-if=\"1\" style=\"display:contents\"><span>N</span></span></p></div>",
+      "expectedAfter": "<div><p>A<span data-lyt-if=\"1\" style=\"display:contents\"></span></p></div>"
+    },
+    {
+      "id": "cf02b",
+      "group": "条件清理（v-if/v-else）",
+      "template": "<div><p v-if=\"ok\">A<span v-if=\"inner\">N</span><span v-else>M</span></p><p v-else>B</p></div>",
+      "state": {
+        "ok": true,
+        "inner": true
+      },
+      "update": {
+        "inner": false
+      },
+      "expected": "<div><p>A<span data-lyt-if=\"1\" style=\"display:contents\"><span>N</span></span></p></div>",
+      "expectedAfter": "<div><p>A<span data-lyt-if=\"1\" style=\"display:contents\"><span>M</span></span></p></div>"
+    },
+    {
+      "id": "cf02c",
+      "group": "条件清理（v-if/v-else）",
+      "template": "<div><p v-if=\"ok\">A<span v-if=\"inner\" :id=\"k\">{{msg}}</span>Z</p><p v-else>B</p></div>",
+      "state": {
+        "ok": true,
+        "inner": true,
+        "k": "x",
+        "msg": "N"
+      },
+      "update": {
+        "msg": "Q"
+      },
+      "expected": "<div><p>A<span data-lyt-if=\"1\" style=\"display:contents\"><span id=\"x\">N</span></span>Z</p></div>",
+      "expectedAfter": "<div><p>A<span data-lyt-if=\"1\" style=\"display:contents\"><span id=\"x\">Q</span></span>Z</p></div>"
     }
   ]
 }

@@ -1212,10 +1212,11 @@ function serializeBranchHTML(
 interface BranchDynamicOp {
   /** 目标元素在分支根元素内的**先序索引**（-1 = 分支根元素自身） */
   elementIndex: number;
-  kind: 'text' | 'attr' | 'class' | 'style' | 'component';
+  kind: 'text' | 'attr' | 'class' | 'style' | 'component' | 'conditional';
   /** 文本槽位序号（kind === 'text'） */
   slotIndex?: number;
   key?: string;
+  /** 表达式；kind === 'conditional' 时是 `(cond ? vnode : null)` */
   expr?: string;
   propsCode?: string;
   /** `<template>` 分支（哨兵 tag）：挂载 Fragment 而非组件 */
@@ -1318,6 +1319,14 @@ function collectBranchDynamics(
     for (const kid of kidList) {
       if (!kid || typeof kid !== 'object') continue;
       const k = kid as { type?: number; tag?: unknown };
+      if (k.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
+        // 内嵌 v-if/v-else：静态 HTML 里已留了元素占位（算作一个元素，保持索引对齐），
+        // 运行期把选中的分支 vnode 挂进占位。
+        const childIndex = nextIndex++;
+        const expr = serializeConditionalVNode(kid, BASE_EMIT_PROFILE.ctxPrefix, inheritedLocals);
+        if (expr) ops.push({ elementIndex: childIndex, kind: 'conditional', expr });
+        continue;
+      }
       if (k.type === NodeTypes.VNODE_CALL || k.type === NodeTypes.ELEMENT) {
         const childIndex = nextIndex++;
         visit(kid, childIndex, inheritedLocals);
@@ -1404,6 +1413,15 @@ function buildBranchDynamics(
       // Fragment 的子孙 vnode 由本次 effect 求值构造；分支保持激活时也要重挂一次，
       // 否则 `{{x}}` 等响应式内容不会刷新（mountComponent 自带 effect，无需如此）。
       if (op.fragment) updateLines.push(stmt);
+      continue;
+    }
+
+    if (op.kind === 'conditional') {
+      // 占位元素里挂载选中的分支 vnode；cond 为假时清空占位。
+      const target = access(op.elementIndex);
+      const apply = `{ const _e = ${target}; if (_e) { const _v = ${op.expr}; if (_v) { mountVNode(_v, _e); } else { setHTML(_e, ''); } } }`;
+      createLines.push(apply);
+      updateLines.push(apply);
       continue;
     }
 
@@ -1878,8 +1896,9 @@ export function serializeVNodeCall(
     // ⚠️ `<template>` 在 VNode 模式下编译成哨兵。signal 模式的目标同样是**运行时
     //   `Fragment`**（此前折回字面量 `template` 元素，导致 `<template v-if>` 静默空渲染、
     //   内容丢失）。哨兵不当作组件名，故不参与组件名校验。
+    //   哨兵的 `isComponent` 实测为 false，故**必须先判哨兵**，否则会当普通标签透出。
     tag: (tag, isComponent) =>
-      isComponent ? (tag === FRAGMENT_SENTINEL ? 'Fragment' : `${prefix}${tag}`) : tag,
+      tag === FRAGMENT_SENTINEL ? 'Fragment' : isComponent ? `${prefix}${tag}` : tag,
   });
 }
 
@@ -1905,6 +1924,8 @@ export function serializeVNodeCallChild(
     textVNode: (exp, scope) => `createVNode(Text,null,${prefixIdentifiers(exp, scope)})`,
     element: (el, scope) => serializeVNodeElement(el, prefix, scope),
     vnodeCall: (n, scope) => serializeVNodeCall(n, prefix, scope),
+    conditional: (n, scope) => serializeConditionalVNode(n, prefix, scope),
+    literalText: (code) => `createVNode(Text,null,${code})`,
   });
 }
 
