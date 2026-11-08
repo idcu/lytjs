@@ -1,263 +1,379 @@
 // tests/codegen.test.ts
-// Codegen tests
+// Codegen tests：断言编译产物的**公开可观察行为**（执行后的 render 返回值 / VNode 树），
+// 而不是 `expect(result.code).toContain(...)` 这类绑定产物文本的字符串断言。
 
 import { describe, it, expect } from 'vitest';
 import { compile } from '../src/index';
 
+interface RenderedVNode {
+  __v_isVNode: true;
+  type: unknown;
+  props: Record<string, unknown> | null;
+  children: unknown;
+  patchFlag: number;
+  dynamicChildren: unknown[] | null;
+}
+
+function vnode(
+  type: unknown,
+  props: Record<string, unknown> | null = null,
+  children: unknown = null,
+  patchFlag = 0,
+): RenderedVNode {
+  return { __v_isVNode: true, type, props, children, patchFlag, dynamicChildren: null };
+}
+
+const HELPERS: Record<string, unknown> = {
+  createElementVNode: vnode,
+  createElementBlock: vnode,
+  createBlock: vnode,
+  createVNode: vnode,
+  createTextVNode: (text: unknown) => vnode('#text', null, text),
+  createCommentVNode: (text: unknown) => vnode('#comment', null, text),
+  openBlock: () => undefined,
+  closeBlock: () => [],
+  setBlockTracking: () => undefined,
+  toDisplayString: (value: unknown) => (value == null ? '' : String(value)),
+  renderList: (source: unknown, callback: (item: unknown, index: number) => unknown): unknown[] => {
+    if (source == null) return [];
+    if (typeof source === 'number') {
+      return Array.from({ length: source }, (_, index) => callback(index + 1, index));
+    }
+    if (typeof source === 'string') {
+      return Array.from(source, (item, index) => callback(item, index));
+    }
+    if (Array.isArray(source)) {
+      return source.map((item, index) => callback(item, index));
+    }
+    return [];
+  },
+  resolveDynamicComponent: (component: unknown) => component,
+  resolveComponent: (name: string) => name,
+  Fragment: Symbol('Fragment'),
+};
+
+function importedHelpers(result: ReturnType<typeof compile>): string[] {
+  return [...result.preamble.matchAll(/import\s*\{([^}]*)\}\s*from/g)].flatMap((match) =>
+    match[1]
+      .split(',')
+      .map((name) => name.trim())
+      .filter(Boolean),
+  );
+}
+
+type RenderFn = (ctx: Record<string, unknown>) => unknown;
+
+/** 把编译产物当模块执行（helper 由桩注入），返回 render 函数 */
+function execute(result: ReturnType<typeof compile>): RenderFn {
+  const helpers = importedHelpers(result);
+  const missing = helpers.filter((name) => !(name in HELPERS));
+  if (missing.length > 0) {
+    throw new Error(`测试 harness 未提供 helper 桩：${missing.join(', ')}`);
+  }
+
+  const executable = result.code
+    .replace(/import\s*\{[^}]*\}\s*from\s*'[^']*';?/g, '')
+    .replace(/^export\s+/gm, '');
+
+  const factory = new Function(...helpers, `${executable}\nreturn render;`) as (
+    ...args: unknown[]
+  ) => RenderFn;
+
+  return factory(...helpers.map((name) => HELPERS[name]));
+}
+
+function renderWith(source: string, ctx: Record<string, unknown> = {}): unknown {
+  return execute(compile(source))(ctx);
+}
+
+function asVNode(value: unknown): RenderedVNode {
+  expect(value).toBeTruthy();
+  const result = value as RenderedVNode;
+  expect(result.__v_isVNode).toBe(true);
+  return result;
+}
+
+function asVNodeList(value: unknown): RenderedVNode[] {
+  expect(Array.isArray(value)).toBe(true);
+  return value as RenderedVNode[];
+}
+
 describe('codegen', () => {
   describe('basic codegen', () => {
-    it('should generate render function', () => {
-      const result = compile('<div></div>');
-      expect(result.code).toMatch(/function\s+render\s*\(/);
-      expect(result.code).toMatch(/return\b/);
+    it('should generate a callable render function', () => {
+      const render = execute(compile('<div></div>'));
+      expect(typeof render).toBe('function');
+      expect(asVNode(render({})).type).toBe('div');
     });
 
-    it('should generate createElementVNode call', () => {
-      const result = compile('<div></div>');
-      expect(result.code).toMatch(/createElementVNode\(/);
+    it('should render the element described by the template', () => {
+      const result = asVNode(renderWith('<div></div>'));
+      expect(result.type).toBe('div');
+      expect(result.props).toBeNull();
     });
 
-    it('should generate preamble with imports', () => {
-      const result = compile('<div></div>');
-      expect(result.preamble).toMatch(/\bimport\b/);
-      expect(result.preamble).toMatch(/createElementVNode/);
+    it('should declare helpers needed to execute the generated module', () => {
+      expect(importedHelpers(compile('<div></div>'))).toEqual(
+        expect.arrayContaining(['createElementVNode']),
+      );
     });
 
-    it('should return code and preamble', () => {
+    it('should return executable code and its helper preamble', () => {
       const result = compile('<div></div>');
-      expect(result).toHaveProperty('code');
-      expect(result).toHaveProperty('preamble');
+      expect(typeof result.code).toBe('string');
+      expect(typeof result.preamble).toBe('string');
     });
   });
 
   describe('element codegen', () => {
-    it('should generate correct tag name', () => {
-      const result = compile('<span></span>');
-      expect(result.code).toContain('"span"');
+    it('should render the correct tag name', () => {
+      expect(asVNode(renderWith('<span></span>')).type).toBe('span');
     });
 
-    it('should generate static attributes', () => {
-      const result = compile('<div id="app"></div>');
-      expect(result.code).toContain('"id"');
-      expect(result.code).toContain('"app"');
+    it('should render static attributes as props', () => {
+      expect(asVNode(renderWith('<div id="app"></div>')).props).toEqual({ id: 'app' });
     });
 
-    it('should generate multiple attributes', () => {
-      const result = compile('<div id="app" class="container"></div>');
-      expect(result.code).toContain('"id"');
-      expect(result.code).toContain('"app"');
-      expect(result.code).toContain('"class"');
-      expect(result.code).toContain('"container"');
+    it('should render multiple attributes', () => {
+      expect(asVNode(renderWith('<div id="app" class="container"></div>')).props).toEqual({
+        id: 'app',
+        class: 'container',
+      });
     });
   });
 
   describe('interpolation codegen', () => {
-    it('should generate toDisplayString for interpolation', () => {
-      const result = compile('<div>{{ message }}</div>');
-      expect(result.preamble).toContain('toDisplayString');
+    it('should display interpolation values at render time', () => {
+      const render = execute(compile('<div>{{ message }}</div>'));
+      expect(asVNode(render({ message: 'hello' })).children).toBe('hello');
+      expect(asVNode(render({ message: 0 })).children).toBe('0');
     });
 
-    it('should generate expression content', () => {
-      const result = compile('<div>{{ message }}</div>');
-      expect(result.code).toContain('message');
+    it('should evaluate expressions at render time', () => {
+      expect(asVNode(renderWith('<div>{{ 1 + 2 }}</div>')).children).toBe('3');
     });
   });
 
   describe('v-if codegen', () => {
-    it('should generate conditional expression', () => {
-      const result = compile('<div v-if="show"></div>');
-      expect(result.code).toContain('?');
-      expect(result.code).toContain(':');
+    it('should branch on the condition expression', () => {
+      const render = execute(compile('<div v-if="show"></div>'));
+      expect(asVNode(render({ show: true })).type).toBe('div');
+      expect(render({ show: false })).toBeNull();
     });
 
-    it('should generate v-if/v-else chain', () => {
-      const result = compile('<div v-if="a">A</div><div v-else>B</div>');
-      // 断言两个分支的**内容**都出现 —— 只断言 `?` / `:` 等于没断言
-      //（任何三元都有这两个字符，"整条链丢分支"的 bug 曾因此潜伏）
-      expect(result.code).toContain('A');
-      expect(result.code).toContain('B');
-      expect(result.code).toContain('_ctx.a');
+    it('should render both branches of a v-if/v-else chain', () => {
+      const render = execute(compile('<div v-if="a">A</div><div v-else>B</div>'));
+      expect(asVNode(render({ a: true })).children).toBe('A');
+      expect(asVNode(render({ a: false })).children).toBe('B');
     });
   });
 
   describe('v-for codegen', () => {
-    it('should generate renderList call', () => {
-      const result = compile('<li v-for="item in items"></li>');
-      expect(result.preamble).toContain('renderList');
-      expect(result.code).toContain('renderList');
+    it('should render one element per list item', () => {
+      const list = asVNodeList(
+        renderWith('<li v-for="item in items"></li>', { items: ['a', 'b', 'c'] }),
+      );
+      expect(list).toHaveLength(3);
+      expect(list.map((item) => item.type)).toEqual(['li', 'li', 'li']);
     });
   });
 
   describe('v-model codegen', () => {
-    // ⚠️ 2026-10-27 修正：这条用例此前断言 `<input v-model>` 产出
-    // `modelValue` / `onUpdate:modelValue` —— 那是**把缺陷写成了断言**。
-    // 原生 input 不认这两个名字，正确产物是 `value` + `onInput`（组件形态才是 modelValue）。
-    // 见 packages/compiler/tests/native-v-model.test.ts 的完整回归电池。
-    it('原生 input 应生成 value + onInput（不是 modelValue）', () => {
-      const result = compile('<input v-model="message">');
-      expect(result.code).toContain('"value"');
-      expect(result.code).toContain('"onInput"');
-      expect(result.code).not.toContain('modelValue');
+    // ⚠️ 2026-10-27 修正：原生 input 不认 `modelValue` / `onUpdate:modelValue`，
+    // 正确行为是 `value` + `onInput`；组件形态才是 modelValue。
+    it('native input should bind value + onInput (not modelValue)', () => {
+      const ctx: Record<string, unknown> = { message: 'hi' };
+      const out = asVNode(execute(compile('<input v-model="message">'))(ctx));
+
+      expect(out.props).toMatchObject({ value: 'hi' });
+      expect(out.props).not.toHaveProperty('modelValue');
+
+      (out.props!.onInput as (event: unknown) => void)({ target: { value: 'bye' } });
+      expect(ctx.message).toBe('bye');
     });
 
-    it('组件形态应生成 modelValue 和 onUpdate:modelValue', () => {
-      const result = compile('<MyInput v-model="message" />');
-      expect(result.code).toContain('modelValue');
-      expect(result.code).toContain('onUpdate:modelValue');
+    it('component should bind modelValue and onUpdate:modelValue', () => {
+      const ctx: Record<string, unknown> = { message: 'hi', MyInput: 'MyInputComp' };
+      const out = asVNode(execute(compile('<MyInput v-model="message" />'))(ctx));
+
+      expect(out.type).toBe('MyInputComp');
+      expect(out.props).toMatchObject({ modelValue: 'hi' });
+
+      (out.props!['onUpdate:modelValue'] as (value: unknown) => void)('next');
+      expect(ctx.message).toBe('next');
     });
   });
 
   describe('component codegen', () => {
-    it('should generate component tag without quotes', () => {
-      const result = compile('<MyComponent></MyComponent>');
-      expect(result.code).toContain('MyComponent');
+    it('should resolve the component from the context', () => {
+      const out = asVNode(renderWith('<MyComponent></MyComponent>', { MyComponent: 'MyComp' }));
+      expect(out.type).toBe('MyComp');
     });
   });
 
   describe('text codegen', () => {
-    it('should generate text content', () => {
-      const result = compile('hello');
-      expect(result.code).toContain('"hello"');
+    it('should render text content', () => {
+      expect(renderWith('hello')).toBe('hello');
     });
   });
 
   describe('nested elements', () => {
-    it('should generate nested elements', () => {
-      const result = compile('<div><span></span></div>');
-      expect(result.code).toContain('createElementVNode');
+    it('should render nested elements', () => {
+      const div = asVNode(renderWith('<div><span></span></div>'));
+      expect(div.type).toBe('div');
+      expect(asVNode(div.children).type).toBe('span');
     });
   });
 
   describe('edge cases', () => {
-    it('should handle template with only whitespace', () => {
-      const result = compile('   \n\t  ');
-      // 空白模板 → 渲染函数体为空，且不应产生任何元素
-      expect(result.code).toContain('function render');
-      expect(result.code).not.toContain('createElementVNode');
+    it('should render nothing for a whitespace-only template', () => {
+      expect(renderWith('   \n\t  ')).toBeUndefined();
     });
 
-    it('should handle deeply nested elements', () => {
-      const result = compile('<div><div><div><span>deep</span></div></div></div>');
-      expect(result.code).toContain('createElementVNode');
+    it('should render deeply nested elements', () => {
+      let current = asVNode(renderWith('<div><div><div><span>deep</span></div></div></div>'));
+      expect(current.type).toBe('div');
+      current = asVNode(current.children);
+      expect(current.type).toBe('div');
+      current = asVNode(current.children);
+      expect(current.type).toBe('div');
+      current = asVNode(current.children);
+      expect(current.type).toBe('span');
+      expect(current.children).toBe('deep');
     });
 
-    it('should handle element with special characters in attribute', () => {
-      const result = compile('<div data-value="a &lt; b"></div>');
-      expect(result.code).toContain('data-value');
+    it('should preserve special characters in attributes', () => {
+      expect(asVNode(renderWith('<div data-value="a &lt; b"></div>')).props).toEqual({
+        'data-value': 'a &lt; b',
+      });
     });
 
-    it('should handle multiple v-if/v-else-if/v-else branches', () => {
-      const result = compile('<div v-if="a">A</div><div v-else-if="b">B</div><div v-else>C</div>');
-      // 三个分支的内容都必须出现（回归：丢分支的 bug 只影响 v-else-if 链）
-      expect(result.code).toContain('A');
-      expect(result.code).toContain('B');
-      expect(result.code).toContain('C');
+    it('should render the selected v-if/v-else-if/v-else branch', () => {
+      const render = execute(
+        compile('<div v-if="a">A</div><div v-else-if="b">B</div><div v-else>C</div>'),
+      );
+      expect(asVNode(render({ a: true, b: false })).children).toBe('A');
+      expect(asVNode(render({ a: false, b: true })).children).toBe('B');
+      expect(asVNode(render({ a: false, b: false })).children).toBe('C');
     });
 
-    it('should handle v-for with index', () => {
-      const result = compile('<li v-for="(item, index) in items">{{ index }}: {{ item }}</li>');
-      expect(result.preamble).toContain('renderList');
-      expect(result.code).toContain('index');
+    it('should pass index and item to the v-for body', () => {
+      const list = asVNodeList(
+        renderWith('<li v-for="(item, index) in items">{{ index }}: {{ item }}</li>', {
+          items: ['x', 'y'],
+        }),
+      );
+      expect(list.map((item) => item.children)).toEqual(['0: x', '1: y']);
     });
 
-    it('should handle v-bind shorthand', () => {
-      const result = compile('<div :id="myId"></div>');
-      expect(result.code).toContain('id');
+    it('should bind expression values through v-bind shorthand', () => {
+      expect(asVNode(renderWith('<div :id="myId"></div>', { myId: 'bound' })).props).toEqual({
+        id: 'bound',
+      });
     });
 
-    it('should handle v-on shorthand', () => {
-      const result = compile('<button @click="handleClick">Click</button>');
-      expect(result.code).toContain('onClick');
+    it('should bind handlers through v-on shorthand', () => {
+      const handler = (): void => undefined;
+      const out = asVNode(
+        renderWith('<button @click="handleClick">Click</button>', { handleClick: handler }),
+      );
+      expect(out.props).toMatchObject({ onClick: handler });
+      expect(out.children).toBe('Click');
     });
 
+    // TODO(S25-待决): 动态属性名当前产物是字面量 key（`{"attrName": value}`），
+    // 在「不改产物文本、不先修 codegen 缺陷」的前提下无法行为化；
+    // 保留原字符串断言，待 codegen 修复动态参数后再改为公开行为断言。
     it('should handle dynamic arguments', () => {
       const result = compile('<div:[attrName]="value"></div>');
       expect(result.code).toContain('attrName');
     });
 
-    it('should handle v-slot shorthand', () => {
-      // #default 是默认插槽的简写，编译器会处理为插槽内容
-      // 验证编译成功且生成正确的代码结构
-      const result = compile(
-        '<MyComponent #default="slotProps">{{ slotProps.text }}</MyComponent>',
+    it('should expose v-slot content as a callable slot', () => {
+      const out = asVNode(
+        renderWith('<MyComponent #default="slotProps">{{ slotProps.text }}</MyComponent>', {
+          MyComponent: 'MyComp',
+        }),
       );
-      expect(result.code).toContain('slotProps');
-      expect(result.code).toContain('toDisplayString');
+      expect(out.type).toBe('MyComp');
+      const slots = out.children as Record<string, (props: Record<string, unknown>) => unknown[]>;
+      expect(typeof slots.default).toBe('function');
+      expect(slots.default({ text: 'hello' })).toEqual(['hello']);
     });
 
-    it('should handle comments in template', () => {
-      const result = compile('<div><!-- comment --></div>');
-      // 注释必须**不进入**产物，但宿主元素仍在
-      expect(result.code).not.toContain('comment');
-      expect(result.code).toContain('createElementVNode("div"');
+    it('should drop comments from the rendered tree', () => {
+      const out = asVNode(renderWith('<div><!-- comment --></div>'));
+      expect(out.type).toBe('div');
+      expect(out.children).toBeNull();
     });
 
-    it('should handle mixed v-bind and v-on', () => {
-      const result = compile('<input :value="val" @input="onInput">');
-      expect(result.code).toContain('value');
-      expect(result.code).toContain('onInput');
+    it('should bind mixed v-bind and v-on props', () => {
+      const handler = (): void => undefined;
+      const out = asVNode(
+        renderWith('<input :value="val" @input="onInput">', {
+          val: 'current',
+          onInput: handler,
+        }),
+      );
+      expect(out.props).toEqual({ value: 'current', onInput: handler });
     });
 
     it('should keep v-pre subtree as literals (skip compilation)', () => {
-      const result = compile('<div v-pre>{{ raw }}</div>');
-      // v-pre 的语义是**跳过编译**：插值必须原样保留为文本字面量。
-      // 此前该测试只断言 `toBeDefined()`，掩盖了 v-pre **完全未实现**
-      //（插值被照常编译成 toDisplayString(_ctx.raw)）。
-      expect(result.code).toContain('"{{ raw }}"');
-      expect(result.code).not.toContain('toDisplayString(_ctx.raw)');
+      const out = asVNode(renderWith('<div v-pre>{{ raw }}</div>', { raw: 'compiled' }));
+      expect(out.children).toBe('{{ raw }}');
     });
 
     it('should keep v-pre applied to nested subtrees', () => {
-      const result = compile('<div v-pre><span>{{ raw }}</span></div>');
-      expect(result.code).toContain('"{{ raw }}"');
-      expect(result.code).not.toContain('toDisplayString(_ctx.raw)');
+      const div = asVNode(
+        renderWith('<div v-pre><span>{{ raw }}</span></div>', { raw: 'compiled' }),
+      );
+      expect(asVNode(div.children).children).toBe('{{ raw }}');
     });
 
-    it('should cache v-once subtree lazily in a module-level variable', () => {
-      const result = compile('<div v-once>{{ message }}</div>');
-      // v-once ⇒ 首次渲染求值、之后复用（模块级**惰性**变量）。
-      // 修复前的实现走 hoisting：`const _hoisted_1 = …toDisplayString(_ctx.message)…`
-      // 在**模块级作用域**求值 ⇒ 运行时抛 `_ctx is not defined`。
-      expect(result.code).toContain('let _once_0;');
-      expect(result.code).toMatch(/\(_once_0 \|\| \(_once_0 = /);
-      // 关键：`_ctx.message` 现在出现在 **render 内**（而非模块级常量体里）
-      expect(result.code).toContain('_ctx.message');
-      expect(result.code).not.toMatch(/const _hoisted_\d+ = [\s\S]*?_ctx\./);
+    it('should evaluate v-once lazily and reuse the first render', () => {
+      const render = execute(compile('<div v-once>{{ message }}</div>'));
+      const first = asVNode(render({ message: 'first' }));
+      const second = asVNode(render({ message: 'second' }));
+      expect(first.children).toBe('first');
+      // 命中缓存：后续渲染复用同一个 vnode，而不是重新求值
+      expect(second).toBe(first);
     });
 
-    it('should strip v-cloak but keep compiling the subtree', () => {
-      const result = compile('<div v-cloak>{{ message }}</div>');
-      // v-cloak 只用于初始渲染前的 CSS 隐藏，编译后**必须从产物中消失**，
-      // 但子树照常编译
-      expect(result.code).not.toContain('v-cloak');
-      expect(result.code).toContain('toDisplayString(_ctx.message)');
+    it('should strip v-cloak but keep rendering the subtree', () => {
+      const out = asVNode(renderWith('<div v-cloak>{{ message }}</div>', { message: 'hi' }));
+      expect(out.props).toBeNull();
+      expect(out.children).toBe('hi');
     });
 
-    it('should handle svg element', () => {
-      const result = compile('<svg><circle cx="50" cy="50" r="40"></circle></svg>');
-      expect(result.code).toContain('svg');
+    it('should render svg elements and their attributes', () => {
+      const svg = asVNode(renderWith('<svg><circle cx="50" cy="50" r="40"></circle></svg>'));
+      expect(svg.type).toBe('svg');
+      const circle = asVNode(svg.children);
+      expect(circle.type).toBe('circle');
+      expect(circle.props).toEqual({ cx: '50', cy: '50', r: '40' });
     });
 
-    it('should handle template refs', () => {
-      const result = compile('<div ref="myRef"></div>');
-      expect(result.code).toContain('ref');
+    it('should expose template refs as props', () => {
+      expect(asVNode(renderWith('<div ref="myRef"></div>')).props).toEqual({ ref: 'myRef' });
     });
 
-    it('should handle key attribute', () => {
-      const result = compile('<div :key="itemId"></div>');
-      expect(result.code).toContain('key');
+    it('should expose the key attribute as a prop', () => {
+      expect(asVNode(renderWith('<div :key="itemId"></div>', { itemId: 'k1' })).props).toEqual({
+        key: 'k1',
+      });
     });
 
-    it('should handle is attribute for dynamic component', () => {
-      // ⚠️ 2026-10-28 行为变更：此前断言的是「产物里出现 `is`」—— 即断言
-      //   `<component :is="x">` 被编译成**字面量元素** `<component is="x">`。
-      //   那正是缺陷本身（浏览器把 `<component>` 当未知元素 ⇒ 组件根本没挂）。
-      //   现在 `is` 是**选择器**：作为 vnode 类型，且不再作为 prop 输出。
-      const result = compile('<component :is="componentName"></component>');
-
-      expect(result.code).not.toContain('"component"');
-      expect(result.code).toContain('_ctx.componentName');
-      expect(result.code).not.toContain('"is"');
+    it('should select the dynamic component and not emit an is prop', () => {
+      // 行为变更：`is` 是**选择器**（vnode 类型），不是 prop。
+      // 旧实现把它编译成字面量元素 `<component is="x">`，组件根本不会挂载。
+      const component = { name: 'MyComp' };
+      const out = asVNode(
+        renderWith('<component :is="componentName"></component>', {
+          componentName: component,
+        }),
+      );
+      expect(out.type).toBe(component);
+      expect(out.props).toBeNull();
     });
   });
 });
