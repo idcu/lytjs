@@ -86,9 +86,6 @@ Notification → lyt-notification__content
 Notification → lyt-notification__icon
 Notification → lyt-notification__message
 Notification → lyt-notification__title
-Rate → lyt-rate-star-first
-Rate → lyt-rate-star-second
-Rate → lyt-rate-star-void
 RichTextEditor → lyt-rich-text-editor__content
 RichTextEditor → lyt-rich-text-editor__footer
 RichTextEditor → lyt-rich-text-editor__toolbar-btn

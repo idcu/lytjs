@@ -2758,6 +2758,17 @@
 .lyt-rate-star-half {
   color: var(--lyt-color-warning);
 }
+.lyt-rate-star-void {
+  color: var(--lyt-text-color-placeholder);
+}
+.lyt-rate-star-first,
+.lyt-rate-star-second {
+  position: absolute;
+  inset: 0;
+}
+.lyt-rate-star-second {
+  color: var(--lyt-color-warning);
+}
 .lyt-rate-star-disabled,
 .lyt-rate-disabled .lyt-rate-star {
   cursor: not-allowed;
