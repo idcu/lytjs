@@ -941,7 +941,8 @@
       "update": {
         "list": ["a", "c"]
       },
-      "expected": "<div><div><!----><span>a</span><!----></div><div><!----><span>b</span><!----></div></div>"
+      "expected": "<div><!----><span>a</span><!----><!----><span>b</span><!----></div>",
+      "expectedAfter": "<div><!----><span>a</span><!----><!----><span>c</span><!----></div>"
     },
     {
       "id": "tf03",
@@ -1064,8 +1065,8 @@
           { "id": 2, "show": true, "name": "b" }
         ]
       },
-      "expected": "<div><div><!----><span>a</span><!----></div><div><!----><!----></div><div><!----><span>c</span><!----></div></div>",
-      "expectedAfter": "<div><div><!----><!----></div><div><!----><span>b</span><!----></div></div>"
+      "expected": "<div><!----><span>a</span><!----><!----><!----><!----><span>c</span><!----></div>",
+      "expectedAfter": "<div><!----><!----><!----><span>b</span><!----></div>"
     },
     {
       "id": "lf02b",
@@ -1077,8 +1078,8 @@
       "update": {
         "list": ["x", "y"]
       },
-      "expected": "<div><div><!----><span>x</span><!----></div><div><!----><span>y!</span><!----></div><div><!----><span>z</span><!----></div></div>",
-      "expectedAfter": "<div><div><!----><span>x</span><!----></div><div><!----><span>y!</span><!----></div></div>"
+      "expected": "<div><!----><span>x</span><!----><!----><span>y!</span><!----><!----><span>z</span><!----></div>",
+      "expectedAfter": "<div><!----><span>x</span><!----><!----><span>y!</span><!----></div>"
     },
     {
       "id": "lf03",
@@ -1117,8 +1118,28 @@
           { "id": 2, "show": true, "name": "b" }
         ]
       },
-      "expected": "<div><div><!----><span>a</span><!----></div><div><!----><span>c</span><!----></div></div>",
-      "expectedAfter": "<div><div><!----><span>b</span><!----></div></div>"
+      "expected": "<div><!----><span>a</span><!----><!----><span>c</span><!----></div>",
+      "expectedAfter": "<div><!----><span>b</span><!----></div>"
+    },
+    {
+      "id": "lv01",
+      "group": "模板片段（template）",
+      "template": "<div><template v-for=\"it in list\" :key=\"it.id\"><span>{{it.name}}</span></template></div>",
+      "state": {
+        "list": [
+          { "id": 1, "name": "a" },
+          { "id": 2, "name": "b" },
+          { "id": 3, "name": "c" }
+        ]
+      },
+      "update": {
+        "list": [
+          { "id": 3, "name": "c" },
+          { "id": 1, "name": "a" }
+        ]
+      },
+      "expected": "<div><!----><span>a</span><!----><!----><span>b</span><!----><!----><span>c</span><!----></div>",
+      "expectedAfter": "<div><!----><span>c</span><!----><!----><span>a</span><!----></div>"
     }
   ]
 }

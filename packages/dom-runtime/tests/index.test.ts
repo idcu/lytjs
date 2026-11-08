@@ -624,6 +624,54 @@ describe('@lytjs/dom-runtime', () => {
       expect(container.childNodes[0]!.textContent).toBe('a');
     });
 
+    it('should reconcile a multi-node group per item without a wrapper element', () => {
+      interface Item {
+        id: number;
+        text: string;
+      }
+      const range = (item: Item): Node[] => {
+        const start = document.createComment('');
+        const span = document.createElement('span');
+        span.textContent = item.text;
+        const end = document.createComment('');
+        return [start, span, end];
+      };
+      const render = (list: Item[]) =>
+        reconcileArray(container, list, {
+          key: (item) => item.id,
+          create: range,
+          update: (group, item) => {
+            const nodes = group as Node[];
+            (nodes[1] as HTMLElement).textContent = item.text;
+            return nodes;
+          },
+        });
+
+      render([
+        { id: 1, text: 'a' },
+        { id: 2, text: 'b' },
+      ]);
+      // 每项 3 个节点（注释锚点 + 内容），没有任何包裹元素
+      expect(container.childNodes.length).toBe(6);
+      expect(container.children.length).toBe(2);
+      expect(container.childNodes[4]!.textContent).toBe('b');
+
+      // 重排 + 更新：整组一起移动，锚点不残留、内容不重复
+      render([
+        { id: 2, text: 'B' },
+        { id: 1, text: 'a' },
+      ]);
+      expect(container.childNodes.length).toBe(6);
+      expect(container.children.length).toBe(2);
+      expect(container.children[0]!.textContent).toBe('B');
+      expect(container.children[1]!.textContent).toBe('a');
+
+      // 删除整组
+      render([{ id: 1, text: 'a' }]);
+      expect(container.childNodes.length).toBe(3);
+      expect(container.children.length).toBe(1);
+    });
+
     it('should move items when order changes', () => {
       const list1 = [
         { id: 1, text: 'a' },

@@ -4,6 +4,26 @@
 
 ## [Unreleased]
 
+### 🛠️ 编译器：signal 表示层对齐 vnode（DOM 层级，2026-11-08）
+
+**行为修正（`rendererMode:'signal'`，base 与 `optimizeSignal:true` 同步）**
+
+- **`template v-for` 每项不再产生外层 `<div>`**：此前列表项的 `create` 返回一个
+  `document.createElement('div')` 宿主，渲染结果每项外面都套一层 `div`（与 vnode 路径
+  的元素层级不同）。现在先挂到 `DocumentFragment`，再把 **Fragment 自身的子节点整组**
+  返回（首尾就是 Fragment 的注释锚点），不产生任何元素包裹。
+  为此 `@lytjs/dom-runtime` 的 `reconcileArray` 支持 `create` 返回一组节点（`Node[]`）：
+  整组更新 / 重排 / 删除一起处理，`update` 可返回重建后的新组（内容替换不重插旧节点）。
+- **用户可见影响**：`template v-for` 的 DOM 元素层级与 vnode 路径一致；`:first-child`、
+  `> *`、`children.length`、`querySelectorAll('*')` 的结果不再被每项的外层 `div` 干扰。
+  多出的只有注释锚点（与 Fragment 在 vnode 路径中的锚点相同），不是元素。
+- **快照点名**（既有条目，逐份说明）：`tf02`、`lf02`、`lf02b`、`lf03b` 的 `expected` /
+  `expectedAfter` 与 signal 快照（base + opt 各一份）由「每项外包 `<div>`」变为
+  「首尾注释锚点 + 内容」；新增 `lv01`（`template v-for` 键控重排，含 `expectedAfter`），
+  其 signal 快照与 vnode/SSR 快照为新增条目。除上述 4 条外，其余既有条目逐字不变。
+- **负控**：回退上述 codegen 改动后 parity 10 项红（5 条语料 × 2 profile）、
+  signal 快照红；恢复后全绿。
+
 ### 🛠️ 编译器：signal 条件/列表正确性修复（vnode 为验收基准，2026-11-08）
 
 **行为修正（`rendererMode:'signal'`，base 与 `optimizeSignal:true` 同步）**

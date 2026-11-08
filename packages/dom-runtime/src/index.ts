@@ -721,11 +721,24 @@ export function withModifiers<A extends unknown[]>(
  */
 const reconcileKeyMap = new WeakMap<Node, string | number>();
 
+/** 一组节点（片段项）的**首个**节点 → 整组；用于更新/移动/删除时一起处理。 */
+const reconcileGroupMap = new WeakMap<Node, Node[]>();
+
+/** 组内**非首个**节点：扫描既有子节点时跳过，避免同一项被登记多次。 */
+const reconcileGroupMemberSet = new WeakSet<Node>();
+
 export interface ReconcileOptions<T> {
   key: (item: T) => string | number;
-  create: (item: T, index: number) => Node;
-  update?: (node: Node, item: T, index: number) => void;
-  destroy?: (node: Node) => void;
+  /**
+   * 创建一项。返回单个节点，或一项对应的**一组节点**。
+   *
+   * 组用于「一项不产生包裹元素」的列表（如 signal 模式的 `template v-for`）：
+   * `create` 返回 `[Fragment 起始锚点, …内容, Fragment 结束锚点]`，DOM 层级与
+   * vnode 路径一致（多出的只有注释锚点，没有任何元素）。
+   */
+  create: (item: T, index: number) => Node | Node[];
+  update?: (node: Node | Node[], item: T, index: number) => void | Node[];
+  destroy?: (node: Node | Node[]) => void;
   // FIX: P2-43 移动动画支持：在节点移动时调用该函数
   animateMove?: (node: Node, fromIndex: number, toIndex: number) => void;
 }
@@ -792,9 +805,9 @@ export function reconcileArray<T>(
 
   for (let i = 0; i < endIdx; i++) {
     const node = childNodes[i]!;
-    // 从 WeakMap 中获取节点的 reconcile key
+    // 从 WeakMap 中获取节点的 reconcile key；组内非首节点不重复登记
     const key = reconcileKeyMap.get(node);
-    if (key !== undefined) {
+    if (key !== undefined && !reconcileGroupMemberSet.has(node)) {
       existingNodes.push(node);
       existingKeys.push(key);
     }
@@ -841,10 +854,21 @@ export function reconcileArray<T>(
 
     if (oldIndexPlusOne !== 0) {
       const node = existingNodes[oldIndexPlusOne - 1]!;
+      let group = reconcileGroupMap.get(node) ?? [node];
       // key 已存在：更新或移动
       if (options.update) {
         // 2026-09-30 修复：把**索引**传给 update —— 否则 `v-for="(item, index)"` 的 index 恒为 undefined
-        options.update(node, item, i);
+        // 片段项传入整组节点（`[起始锚点, …内容, 结束锚点]`），单节点项仍传节点本身。
+        // 片段项的 update 会重建区间内容，返回**新的**整组节点；此处同步登记，
+        // 否则后续移动/删除会拿旧的内容节点（已被移除）重新插入，造成重复。
+        const updated = options.update(group.length > 1 ? group : node, item, i);
+        if (Array.isArray(updated) && updated.length > 1) {
+          group = updated;
+          reconcileGroupMap.set(node, group);
+          for (let g = 1; g < group.length; g++) {
+            reconcileGroupMemberSet.add(group[g]!);
+          }
+        }
       }
       // FIX: P2-43 调用移动动画函数
       if (options.animateMove && nodeIndexMap) {
@@ -853,14 +877,22 @@ export function reconcileArray<T>(
           options.animateMove(node, fromIndex, i);
         }
       }
-      // 将节点移到 fragment 中以重新排序
-      fragment.appendChild(node);
+      // 将节点移到 fragment 中以重新排序（片段项整组按序移动）
+      for (const n of group) fragment.appendChild(n);
     } else {
       // key 不存在：创建新节点
       // 2026-09-30 修复：同上，create 也要收到索引
-      const node = options.create(item, i);
-      reconcileKeyMap.set(node, key);
-      fragment.appendChild(node);
+      const created = options.create(item, i);
+      const group = Array.isArray(created) ? created : [created];
+      const first = group[0]!;
+      reconcileKeyMap.set(first, key);
+      if (group.length > 1) {
+        reconcileGroupMap.set(first, group);
+        for (let g = 1; g < group.length; g++) {
+          reconcileGroupMemberSet.add(group[g]!);
+        }
+      }
+      for (const n of group) fragment.appendChild(n);
     }
   }
 
@@ -868,12 +900,15 @@ export function reconcileArray<T>(
   for (let i = 0; i < existingNodes.length; i++) {
     if (plan.oldMatches[i] !== undefined) continue;
     const node = existingNodes[i]!;
+    const group = reconcileGroupMap.get(node) ?? [node];
     if (options.destroy) {
-      options.destroy(node);
+      options.destroy(group.length > 1 ? group : node);
     }
-    const parentNode = node.parentNode;
-    if (parentNode) {
-      parentNode.removeChild(node);
+    for (const n of group) {
+      const parentNode = n.parentNode;
+      if (parentNode) {
+        parentNode.removeChild(n);
+      }
     }
   }
 

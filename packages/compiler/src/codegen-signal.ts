@@ -1609,9 +1609,19 @@ function processCallExpression(
         );
         const fragHost = '_fragHost';
         const frag = `createVNode(Fragment, null, ${kidsCode ?? 'null'})`;
-        createBody = `const ${fragHost}=document.createElement('div');mountVNode(${frag},${fragHost});return ${fragHost};`;
-        // mountVNode 会先清空宿主再挂载，故更新时重挂即可，不会叠加节点
-        updateBody = `mountVNode(${frag},_el);`;
+        // 每项不产生**元素**包裹：挂进 DocumentFragment 后把 Fragment 的子节点整组返回。
+        // 这组节点的首尾就是运行时 Fragment 自身的一对注释锚点，DOM 层级与 vnode 路径一致
+        //（多出的只有注释，没有任何元素）。
+        createBody = `const ${fragHost}=document.createDocumentFragment();mountVNode(${frag},${fragHost});return Array.from(${fragHost}.childNodes);`;
+        // 更新：保留首尾锚点，只替换两者之间的内容。新 Fragment 挂进临时 fragment 后
+        // 跳过它自己的一对新锚点（`_t.firstChild`/`_t.lastChild`），只搬运中间节点。
+        updateBody =
+          `{const _s=_el[0],_e=_el[_el.length-1],_p=_e.parentNode;` +
+          `let _n=_s.nextSibling;while(_n&&_n!==_e){const _x=_n.nextSibling;_p.removeChild(_n);_n=_x;}` +
+          `const _t=document.createDocumentFragment();mountVNode(${frag},_t);` +
+          `let _c=_t.firstChild;if(_c)_c=_c.nextSibling;const _g=[_s];` +
+          `while(_c&&_c!==_t.lastChild){const _x=_c.nextSibling;_p.insertBefore(_c,_e);_g.push(_c);_c=_x;}` +
+          `_g.push(_e);return _g;}`;
       } else {
         createBody =
           'const ' +

@@ -1368,9 +1368,17 @@ function processCallExpressionOptimized(
                 );
                 const fragHost = '_fragHost';
                 const frag = `${cv}(${fg},null,${kidsCode ?? 'null'})`;
-                createBody = `const ${fragHost}=document.createElement('div');mountVNode(${frag},${fragHost});return ${fragHost};`;
-                // mountVNode 会先清空宿主再挂载，更新时重挂即可，不会叠加节点
-                updateBody = `mountVNode(${frag},_el);`;
+                const mv = getShortName('mountVNode', options.useShortNames ?? true);
+                // 每项不产生元素包裹：挂进 DocumentFragment 后返回 Fragment 自身子节点
+                // （首尾是运行时 Fragment 的注释锚点），DOM 层级与 vnode 路径一致。
+                createBody = `const ${fragHost}=document.createDocumentFragment();${mv}(${frag},${fragHost});return Array.from(${fragHost}.childNodes);`;
+                updateBody =
+                  `{const _s=_el[0],_e=_el[_el.length-1],_p=_e.parentNode;` +
+                  `let _n=_s.nextSibling;while(_n&&_n!==_e){const _x=_n.nextSibling;_p.removeChild(_n);_n=_x;}` +
+                  `const _t=document.createDocumentFragment();${mv}(${frag},_t);` +
+                  `let _c=_t.firstChild;if(_c)_c=_c.nextSibling;const _g=[_s];` +
+                  `while(_c&&_c!==_t.lastChild){const _x=_c.nextSibling;_p.insertBefore(_c,_e);_g.push(_c);_c=_x;}` +
+                  `_g.push(_e);return _g;}`;
               } else {
                 usedRuntime.add('mountComponent');
                 const mc = getShortName('mountComponent', options.useShortNames ?? true);
