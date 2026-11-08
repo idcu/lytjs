@@ -25,7 +25,6 @@ import {
   trackDynamicChild,
   isBlock,
   getCurrentBlock,
-  getBlockStackDepth,
   resetBlockStack,
   isFragmentVNode,
   getFragmentChildren,
@@ -559,20 +558,27 @@ describe('Block Tree 边界', () => {
   });
 
   describe('openBlock/closeBlock 嵌套', () => {
-    it('多层嵌套 openBlock/closeBlock 应正确恢复', () => {
-      openBlock(); // depth 1
-      openBlock(); // depth 2
-      openBlock(); // depth 3
-      expect(getBlockStackDepth()).toBe(3);
+    it('多层嵌套 openBlock/closeBlock 应按 LIFO 恢复各层子节点', () => {
+      openBlock();
+      const outer = createVNode('div');
+      trackDynamicChild(outer);
 
-      closeBlock(); // back to 2
-      expect(getBlockStackDepth()).toBe(2);
+      openBlock();
+      const middle = createVNode('span');
+      trackDynamicChild(middle);
 
-      closeBlock(); // back to 1
-      expect(getBlockStackDepth()).toBe(1);
+      openBlock();
+      const inner = createVNode('p');
+      trackDynamicChild(inner);
 
-      closeBlock(); // back to 0
-      expect(getBlockStackDepth()).toBe(0);
+      expect(closeBlock()).toEqual([inner]);
+      expect(getCurrentBlock()).toEqual([middle]);
+
+      expect(closeBlock()).toEqual([middle]);
+      expect(getCurrentBlock()).toEqual([outer]);
+
+      expect(closeBlock()).toEqual([outer]);
+      expect(getCurrentBlock()).toBeNull();
     });
 
     it('嵌套 block 的 dynamicChildren 应各自独立', () => {
@@ -672,8 +678,9 @@ describe('Block Tree 边界', () => {
 
       resetBlockStack();
 
-      expect(getBlockStackDepth()).toBe(0);
       expect(getCurrentBlock()).toBeNull();
+      // 作用域栈也被清空：再关闭不应恢复任何旧作用域
+      expect(closeBlock()).toBeNull();
     });
 
     it('resetBlockStack 后应能正常使用 block', () => {
@@ -681,10 +688,11 @@ describe('Block Tree 边界', () => {
       resetBlockStack();
 
       openBlock();
-      expect(getBlockStackDepth()).toBe(1);
       const vnode = createVNode('span');
       trackDynamicChild(vnode);
       expect(getCurrentBlock()).toEqual([vnode]);
+      expect(closeBlock()).toEqual([vnode]);
+      expect(getCurrentBlock()).toBeNull();
     });
   });
 });

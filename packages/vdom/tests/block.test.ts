@@ -6,7 +6,6 @@ import {
   trackDynamicChild,
   isBlock,
   getCurrentBlock,
-  getBlockStackDepth,
   resetBlockStack,
 } from '../src/block';
 import { createVNode } from '../src/vnode';
@@ -20,24 +19,27 @@ describe('Block Tree runtime', () => {
   // ===== openBlock / closeBlock =====
 
   describe('openBlock / closeBlock', () => {
-    it('should create a new dynamicChildren array on openBlock', () => {
+    it('should create a fresh dynamicChildren scope on openBlock', () => {
       openBlock();
       const block = getCurrentBlock();
       expect(block).toEqual([]);
-      expect(getBlockStackDepth()).toBe(1);
+      // 关闭后回到「无作用域」，而不是残留一个可被误用的收集数组
+      expect(closeBlock()).toEqual([]);
+      expect(getCurrentBlock()).toBeNull();
     });
 
-    it('should restore outer block on closeBlock', () => {
+    it('should restore outer block scope on closeBlock', () => {
       openBlock();
+      const outerChild = createVNode('span');
+      trackDynamicChild(outerChild);
+
       openBlock();
-      expect(getBlockStackDepth()).toBe(2);
+      const innerChild = createVNode('div');
+      trackDynamicChild(innerChild);
 
-      const innerBlock = closeBlock();
-      expect(innerBlock).toEqual([]);
-      expect(getBlockStackDepth()).toBe(1);
-
-      const outerBlock = getCurrentBlock();
-      expect(outerBlock).toEqual([]);
+      // 内层关闭后，外层已收集的子节点必须原样恢复
+      expect(closeBlock()).toEqual([innerChild]);
+      expect(getCurrentBlock()).toEqual([outerChild]);
     });
 
     it('should return null when closing block without open', () => {
@@ -165,34 +167,42 @@ describe('Block Tree runtime', () => {
       openBlock();
       openBlock();
       openBlock();
-      expect(getBlockStackDepth()).toBe(3);
+      trackDynamicChild(createVNode('div'));
 
       resetBlockStack();
       expect(getCurrentBlock()).toBeNull();
-      expect(getBlockStackDepth()).toBe(0);
+      // 已打开的 3 层作用域全部清空：再关闭不应恢复到任何旧作用域
+      expect(closeBlock()).toBeNull();
     });
   });
 
-  // ===== getBlockStackDepth =====
+  // ===== 嵌套作用域可观察行为 =====
 
-  describe('getBlockStackDepth', () => {
-    it('should return 0 initially', () => {
-      expect(getBlockStackDepth()).toBe(0);
+  describe('nested block scopes', () => {
+    it('should have no active scope initially', () => {
+      expect(getCurrentBlock()).toBeNull();
+      expect(closeBlock()).toBeNull();
     });
 
-    it('should return correct depth for nested blocks', () => {
+    it('should restore each nested scope in LIFO order with its own children', () => {
       openBlock();
-      expect(getBlockStackDepth()).toBe(1);
+      const outer = createVNode('div');
+      trackDynamicChild(outer);
+
       openBlock();
-      expect(getBlockStackDepth()).toBe(2);
+      const middle = createVNode('span');
+      trackDynamicChild(middle);
+
       openBlock();
-      expect(getBlockStackDepth()).toBe(3);
-      closeBlock();
-      expect(getBlockStackDepth()).toBe(2);
-      closeBlock();
-      expect(getBlockStackDepth()).toBe(1);
-      closeBlock();
-      expect(getBlockStackDepth()).toBe(0);
+      const inner = createVNode('p');
+      trackDynamicChild(inner);
+
+      expect(closeBlock()).toEqual([inner]);
+      expect(getCurrentBlock()).toEqual([middle]);
+      expect(closeBlock()).toEqual([middle]);
+      expect(getCurrentBlock()).toEqual([outer]);
+      expect(closeBlock()).toEqual([outer]);
+      expect(getCurrentBlock()).toBeNull();
     });
   });
 
