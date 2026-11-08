@@ -938,6 +938,9 @@
   position: relative;
   display: inline-block;
 }
+.lyt-tooltip__trigger {
+  display: inline-block;
+}
 .lyt-tooltip {
   position: absolute;
   padding: 8px 12px;
