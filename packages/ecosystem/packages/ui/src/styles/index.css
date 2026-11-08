@@ -402,6 +402,37 @@
   text-align: center;
   color: var(--lyt-text-color-secondary);
 }
+.lyt-table--border .lyt-table__cell {
+  border: 1px solid var(--lyt-border-color-lighter);
+}
+.lyt-table--stripe .lyt-table__body .lyt-table__row:nth-child(even) {
+  background-color: var(--lyt-bg-color-page);
+}
+.lyt-table__header {
+  background-color: var(--lyt-bg-color-page);
+}
+.lyt-table__body {
+  background-color: var(--lyt-bg-color);
+}
+.lyt-table__row--active {
+  background-color: var(--lyt-color-primary-light-9);
+}
+.lyt-table__cell--selection {
+  width: 48px;
+  text-align: center;
+}
+.lyt-table__cell--sortable {
+  cursor: pointer;
+  user-select: none;
+}
+.lyt-table__empty-row {
+  background-color: var(--lyt-bg-color);
+}
+.lyt-table__empty-cell {
+  padding: 40px;
+  text-align: center;
+  color: var(--lyt-text-color-secondary);
+}
 
 /* ===== Form 组件 ===== */
 .lyt-form {

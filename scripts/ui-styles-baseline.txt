@@ -73,16 +73,6 @@ Menu → lyt-menu__submenu--opened
 Menu → lyt-menu__submenu-item
 Menu → lyt-menu__submenu-list
 Menu → lyt-menu__title
-Table → lyt-table--border
-Table → lyt-table--stripe
-Table → lyt-table__body
-Table → lyt-table__cell--selection
-Table → lyt-table__cell--sortable
-Table → lyt-table__empty-cell
-Table → lyt-table__empty-row
-Table → lyt-table__header
-Table → lyt-table__row
-Table → lyt-table__row--active
 TimePicker → lyt-time-picker__clear
 TimePicker → lyt-time-picker__confirm-btn
 TimePicker → lyt-time-picker__dropdown
