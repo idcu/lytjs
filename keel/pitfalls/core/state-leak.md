@@ -3,7 +3,7 @@ scope: core
 status: active
 severity: P1
 last-verified: 2026-11-09
-triggers: 2
+triggers: 3
 keywords: [模块级状态, 跨app, 全局单例]
 ---
 
