@@ -1,7 +1,7 @@
 ---
 scope: meta
 status: active
-last-verified: 2026-10-14
+last-verified: 2026-11-09
 keywords: [决策, ADR, 索引]
 ---
 
@@ -25,8 +25,9 @@ keywords: [决策, ADR, 索引]
 | 0018 | style 数值不补 px | active | [0018](0018-style-unit-policy.md) |
 | 0019 | hydration 入口转发＋keyed diff 收敛 | active | [0019](0019-hydration-list-diff-authority.md) |
 | 0020 | S13 必要功能增长：三入口基线签字上调 | active | [0020](0020-bundle-baseline-s13-parity-growth.md) |
-| 0021 | C3：UI 依赖与 ARCHITECTURE:26 冲突（待裁） | pending | [0021](pending/0021-c3-ui-dependency-conflict.md) |
+| 0021 | C3：UI 依赖与 ARCHITECTURE:26 冲突（已裁 → 0026） | active | [0021](pending/0021-c3-ui-dependency-conflict.md) |
 | 0022 | `sideEffects:false`：内置组件改显式注册（B2 已实施） | active | [0022](pending/0022-sideeffects-b2-builtin-registration.md) |
 | 0023 | common 域 16 个死包：保留+deprecated，8.0.0 删除 | pending | [0023](pending/0023-common-dead-packages-deprecation.md) |
 | 0024 | S22：计时断言低于 20ms 只报数字，不参与慢档判定 | active | [0024](pending/0024-perf-timing-assertion-thresholds.md) |
 | 0025 | host-contract 暂缓接入：前置=出现第二个宿主目标 | pending | [0025](pending/0025-host-contract-deferred.md) |
+| 0026 | C3 收口：UI 对 L0 叶子两类例外（a11y UI-only） | active | [0026](pending/0026-c3-ui-dependency-exception.md) |
