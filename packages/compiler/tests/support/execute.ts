@@ -9,6 +9,8 @@
 
 import * as domRuntime from '@lytjs/dom-runtime';
 import * as reactivity from '@lytjs/reactivity';
+import * as vdom from '@lytjs/vdom';
+import * as renderer from '@lytjs/renderer';
 import { isEventModifierIntercepted } from '@lytjs/common-events';
 import { sanitizeHTML } from '@lytjs/common-security';
 import { compile } from '../../src/index';
@@ -164,6 +166,8 @@ export function executeSsr(
 const MODULES: Record<string, Record<string, unknown>> = {
   '@lytjs/reactivity': reactivity as unknown as Record<string, unknown>,
   '@lytjs/dom-runtime': domRuntime as unknown as Record<string, unknown>,
+  '@lytjs/vdom': vdom as unknown as Record<string, unknown>,
+  '@lytjs/renderer': renderer as unknown as Record<string, unknown>,
 };
 
 export interface SignalHandle {

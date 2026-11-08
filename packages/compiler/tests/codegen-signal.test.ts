@@ -1,15 +1,23 @@
+// @vitest-environment jsdom
 // tests/codegen-signal.test.ts
-// Signal 模式代码生成测试
+// Signal 模式代码生成测试：执行产物、断言 DOM 上的可观察行为
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { compile as compileImpl } from '../src/index';
+import { executeSignal } from './support/execute';
 
 /**
- * A04/D1：`optimizeSignal` 已默认关闭，而本文件断言的是**优化版产物**的细节。
+ * A04/D1：`optimizeSignal` 已默认关闭，而本文件断言的是**优化版产物**的行为。
  * 因此显式开启（断言本身未改动）；显式传 `optimizeSignal:false` 的用例会覆盖此默认值。
  */
 const compile = (template: string, options: Parameters<typeof compileImpl>[1] = {}) =>
   compileImpl(template, { rendererMode: 'signal', optimizeSignal: true, ...options });
+
+/** 编译 + 在 jsdom 容器里执行，返回 DOM 句柄 */
+const mount = (template: string, ctx: Record<string, unknown> = {}) =>
+  executeSignal(compile(template), ctx);
+
+const htmlOf = (template: string, ctx: Record<string, unknown> = {}) => mount(template, ctx).html();
 
 describe('codegen-signal', () => {
   // ============================================================
@@ -18,50 +26,44 @@ describe('codegen-signal', () => {
 
   describe('static elements', () => {
     it('should generate template string for static elements', () => {
-      const result = compile('<div></div>', { rendererMode: 'signal' });
-      expect(result.code).toContain('"<div></div>"');
+      expect(htmlOf('<div></div>')).toBe('<div></div>');
     });
 
     it('should generate template with static attributes', () => {
-      const result = compile('<div class="app"><h1>Title</h1><p></p></div>', {
-        rendererMode: 'signal',
-      });
-      expect(result.code).toContain('class');
-      expect(result.code).toContain('app');
+      expect(htmlOf('<div class="app"><h1>Title</h1><p></p></div>')).toBe(
+        '<div class="app"><h1>Title</h1><p></p></div>',
+      );
     });
 
     it('should destructure child elements', () => {
-      const result = compile('<div><h1></h1><p></p></div>', { rendererMode: 'signal' });
-      // ⚠️ 2026-09-30 订正：原断言 `const[_1,_2]=_0.children` 把「**从直接子节点**解构」
-      // 固化成契约，但元素变量覆盖的是**全部后代元素（先序）**——用 `children` 在嵌套模板
-      // （深度 ≥ 2）下会解构出 undefined，随后 setText/getRealNode 抛
-      // `Cannot use 'in' operator ... in undefined`（**运行期崩溃**）。
-      // 现断言「走 querySelectorAll 拿全部后代，且以 children 为回退」。
-      expect(result.code).toMatch(/const\[_1,_2\]=Array\.from\(_0\.querySelectorAll\?/);
-      expect(result.code).not.toMatch(/_0\.children;?\n/);
+      // 深度 ≥ 2 时若按「直接子节点」解构，插值宿主会取到 undefined 并崩溃
+      const handle = mount('<div><section><p>{{ msg }}</p></section></div>', { msg: 'deep' });
+      expect(handle.html()).toBe('<div><section><p>deep</p></section></div>');
     });
 
     it('should generate insert call', () => {
-      const result = compile('<div></div>', { rendererMode: 'signal' });
-      expect(result.code).toContain('i(');
-      expect(result.code).toContain('_n');
+      const handle = mount('<div></div>');
+      expect(handle.container.childElementCount).toBe(1);
+      expect(handle.container.firstElementChild?.tagName).toBe('DIV');
     });
 
     it('should import from @lytjs/reactivity and @lytjs/dom-runtime', () => {
-      const result = compile('<div></div>', { rendererMode: 'signal' });
-      expect(result.code).toContain('@lytjs/reactivity');
-      expect(result.code).toContain('@lytjs/dom-runtime');
+      // executeSignal 把产物 import 解析到真实包导出；任一模块/导出缺失都会直接抛错
+      expect(htmlOf('<div></div>')).toBe('<div></div>');
     });
 
     it('should generate render function with _c and _n params', () => {
-      const result = compile('<div></div>', { rendererMode: 'signal' });
-      expect(result.code).toMatch(/export\s+function\s+render\s*\(\s*_c\s*,\s*_n\s*\)/);
+      // render(ctx, container)：上下文决定内容，节点挂进传入容器
+      const handle = mount('<div>{{ msg }}</div>', { msg: 'M' });
+      expect(handle.container.textContent).toBe('M');
     });
 
     it('should generate onCleanup', () => {
-      const result = compile('<div></div>', { rendererMode: 'signal' });
-      expect(result.code).toContain('o(');
-      expect(result.code).toContain('.remove()');
+      const handle = mount('<div></div>');
+      expect(handle.html()).toBe('<div></div>');
+      handle.dispose();
+      // onCleanup 注册的 `_0.remove()` 在销毁时执行
+      expect(handle.html()).toBe('');
     });
   });
 
@@ -74,67 +76,56 @@ describe('codegen-signal', () => {
     // 导致最后插入 children 的是**最内层**节点，首分支被静默丢弃
     //（实测曾产出 `(_c.b?...y...:null)`，`x` 永远不渲染）。
     it('should keep EVERY branch of a v-else-if chain (regression)', () => {
-      const code = compile(
-        '<div><span v-if="a">A</span><span v-else-if="b">B</span><span v-else>C</span></div>',
-        { rendererMode: 'signal' },
-      ).code;
-      // 三个条件/分支的内容都要在产物里出现
-      expect(code).toContain('_c.a');
-      expect(code).toContain('_c.b');
-      expect(code).toContain('A');
-      expect(code).toContain('B');
-      expect(code).toContain('C');
+      const tpl =
+        '<div><span v-if="a">A</span><span v-else-if="b">B</span><span v-else>C</span></div>';
+      expect(mount(tpl, { a: true }).text()).toBe('A');
+      expect(mount(tpl, { a: false, b: true }).text()).toBe('B');
+      expect(mount(tpl, { a: false, b: false }).text()).toBe('C');
     });
 
     it('should generate if statement with effect for v-if', () => {
-      const result = compile('<p v-if="show">hello</p>', { rendererMode: 'signal' });
-      expect(result.code).toContain('e(()=>{');
-      expect(result.code).toContain('if(_c.show)');
-      expect(result.code).toContain('t(');
-      expect(result.code).toContain('i(');
-      expect(result.code).toContain('r(');
+      expect(htmlOf('<p v-if="show">hello</p>', { show: true })).toBe('<p>hello</p>');
     });
 
     it('should show element when v-if condition is true (code level)', () => {
-      const result = compile('<p v-if="show">hello</p>', { rendererMode: 'signal' });
-      expect(result.code).toContain('t(');
-      expect(result.code).toContain('i(');
+      expect(mount('<p v-if="show">hello</p>', { show: true }).text()).toBe('hello');
     });
 
     it('should hide element when v-if condition is false (code level)', () => {
-      const result = compile('<p v-if="show">hello</p>', { rendererMode: 'signal' });
-      expect(result.code).toContain('r(');
+      expect(htmlOf('<p v-if="show">hello</p>', { show: false })).toBe('');
     });
 
     it('should generate v-else branch', () => {
-      const result = compile('<p v-if="show">A</p><p v-else>B</p>', { rendererMode: 'signal' });
-      expect(result.code).toContain('if(_c.show)');
-      expect(result.code).toContain('else');
-      expect(result.code).toContain('e(()=>{');
+      const tpl = '<p v-if="show">A</p><p v-else>B</p>';
+      expect(mount(tpl, { show: true }).text()).toBe('A');
+      expect(mount(tpl, { show: false }).text()).toBe('B');
     });
 
     it('should generate v-else-if chain', () => {
-      const result = compile(
-        '<p v-if="type === 1">A</p><p v-else-if="type === 2">B</p><p v-else>C</p>',
-        { rendererMode: 'signal' },
-      );
-      expect(result.code).toContain('if(_c.');
-      expect(result.code).toContain('else');
-      expect(result.code).toContain('e(()=>{');
+      const tpl = '<p v-if="type === 1">A</p><p v-else-if="type === 2">B</p><p v-else>C</p>';
+      expect(mount(tpl, { type: 1 }).text()).toBe('A');
+      expect(mount(tpl, { type: 2 }).text()).toBe('B');
+      expect(mount(tpl, { type: 3 }).text()).toBe('C');
     });
 
     it('should generate nested v-if (outer condition)', () => {
-      const result = compile('<div v-if="outer"><span v-if="inner">nested</span></div>', {
-        rendererMode: 'signal',
-      });
-      expect(result.code).toContain('if(_c.outer)');
-      expect(result.code).toContain('e(()=>{');
+      const tpl = '<div v-if="outer"><span v-if="inner">nested</span></div>';
+
+      const shown = mount(tpl, { outer: true, inner: true });
+      expect(shown.text()).toBe('nested');
+      expect(shown.container.querySelector('span')).not.toBeNull();
+
+      const innerHidden = mount(tpl, { outer: true, inner: false });
+      expect(innerHidden.text()).toBe('');
+      expect(innerHidden.container.querySelector('span')).toBeNull();
+
+      expect(htmlOf(tpl, { outer: false, inner: true })).toBe('');
     });
 
     it('should generate setText inside v-if when interpolation is present', () => {
-      const result = compile('<p v-if="show">{{ message }}</p>', { rendererMode: 'signal' });
-      expect(result.code).toContain('e(()=>{');
-      expect(result.code).toContain('if(_c.show)');
+      const tpl = '<p v-if="show">{{ message }}</p>';
+      expect(mount(tpl, { show: true, message: 'M' }).text()).toBe('M');
+      expect(mount(tpl, { show: false, message: 'M' }).text()).toBe('');
     });
   });
 
@@ -143,28 +134,25 @@ describe('codegen-signal', () => {
   // ============================================================
 
   describe('v-for', () => {
+    const items = [
+      { id: 1, name: 'a' },
+      { id: 2, name: 'b' },
+    ];
+
     it('should generate reconcileArray for v-for', () => {
-      const result = compile('<li v-for="item in items">{{ item.name }}</li>', {
-        rendererMode: 'signal',
-      });
-      expect(result.code).toContain('n(');
-      expect(result.code).toContain('_c.items');
-      expect(result.code).toContain('key:');
-      expect(result.code).toContain('create:');
+      expect(htmlOf('<li v-for="item in items">{{ item.name }}</li>', { items })).toBe(
+        '<li>a</li><li>b</li>',
+      );
     });
 
     it('should generate document.createElement inside create callback', () => {
-      const result = compile('<li v-for="item in items">{{ item.name }}</li>', {
-        rendererMode: 'signal',
-      });
-      expect(result.code).toContain('document.createElement');
+      const handle = mount('<li v-for="item in items">{{ item.name }}</li>', { items });
+      expect([...handle.container.querySelectorAll('li')]).toHaveLength(2);
     });
 
     it('should generate setText inside create callback', () => {
-      const result = compile('<li v-for="item in items">{{ item.name }}</li>', {
-        rendererMode: 'signal',
-      });
-      expect(result.code).toContain('document.createElement');
+      const handle = mount('<li v-for="item in items">{{ item.name }}</li>', { items });
+      expect(handle.text()).toBe('ab');
     });
   });
 
@@ -174,18 +162,18 @@ describe('codegen-signal', () => {
 
   describe('v-bind', () => {
     it('should generate setClass for :class binding', () => {
-      const result = compile('<div :class="cls"></div>', { rendererMode: 'signal' });
-      expect(result.code).toContain('c(');
+      expect(htmlOf('<div :class="cls"></div>', { cls: 'active' })).toBe(
+        '<div class="active"></div>',
+      );
     });
 
     it('should generate setAttribute for :attr binding', () => {
-      const result = compile('<div :name="nm"></div>', { rendererMode: 'signal' });
-      expect(result.code).toContain('a(');
+      expect(htmlOf('<div :name="nm"></div>', { nm: 'n' })).toBe('<div name="n"></div>');
     });
 
     it('should generate setAttribute for :prop binding', () => {
-      const result = compile('<input :value="val" />', { rendererMode: 'signal' });
-      expect(result.code).toContain('a(');
+      const handle = mount('<input :value="val" />', { val: 'v' });
+      expect(handle.container.querySelector('input')?.getAttribute('value')).toBe('v');
     });
   });
 
@@ -195,25 +183,37 @@ describe('codegen-signal', () => {
 
   describe('v-on', () => {
     it('should generate addEventListener for @click binding', () => {
-      const result = compile('<button @click="handleClick">Click</button>', {
-        rendererMode: 'signal',
+      const calls: string[] = [];
+      const handle = mount('<button @click="handleClick">Click</button>', {
+        handleClick: () => calls.push('click'),
       });
-      expect(result.code).toContain('v(');
-      expect(result.code).toContain('click');
+      handle.container.querySelector('button')!.dispatchEvent(new MouseEvent('click'));
+      expect(calls).toEqual(['click']);
     });
 
     it('should generate addEventListener for multiple event handlers', () => {
-      const result = compile('<div @mouseenter="onEnter" @mouseleave="onLeave"></div>', {
-        rendererMode: 'signal',
+      const calls: string[] = [];
+      const handle = mount('<div @mouseenter="onEnter" @mouseleave="onLeave"></div>', {
+        onEnter: () => calls.push('enter'),
+        onLeave: () => calls.push('leave'),
       });
-      expect(result.code).toContain('v(');
+      const div = handle.container.querySelector('div')!;
+      div.dispatchEvent(new MouseEvent('mouseenter'));
+      div.dispatchEvent(new MouseEvent('mouseleave'));
+      expect(calls).toEqual(['enter', 'leave']);
     });
 
     it('should handle event modifiers', () => {
-      const result = compile('<button @click.stop="handleClick">Stop</button>', {
-        rendererMode: 'signal',
+      const calls: string[] = [];
+      const handle = mount('<button @click.stop="handleClick">Stop</button>', {
+        handleClick: () => calls.push('click'),
       });
-      expect(result.code).toContain('v(');
+      const event = new MouseEvent('click');
+      const stop = vi.spyOn(event, 'stopPropagation');
+      handle.container.querySelector('button')!.dispatchEvent(event);
+      // 修饰符不得被静默丢弃：事件冒泡被阻止，处理器仍执行
+      expect(stop).toHaveBeenCalled();
+      expect(calls).toEqual(['click']);
     });
   });
 
@@ -223,61 +223,83 @@ describe('codegen-signal', () => {
 
   describe('v-model', () => {
     it('should generate value effect for v-model', () => {
-      const result = compile('<input v-model="text" />', { rendererMode: 'signal' });
-      expect(result.code).toContain('e(()=>{');
-      expect(result.code).toContain('.value=_c.text');
+      const handle = mount('<input v-model="text" />', { text: 'M' });
+      expect(handle.container.querySelector('input')!.value).toBe('M');
     });
 
     it('should generate input event listener for v-model', () => {
-      const result = compile('<input v-model="text" />', { rendererMode: 'signal' });
-      expect(result.code).toContain('v(');
-      expect(result.code).toContain('input');
-      expect(result.code).toContain('_c.text=');
+      const ctx: Record<string, unknown> = { text: '' };
+      const handle = mount('<input v-model="text" />', ctx);
+      const input = handle.container.querySelector('input')!;
+      input.value = 'N';
+      input.dispatchEvent(new Event('input'));
+      expect(ctx.text).toBe('N');
     });
 
     it('should generate v-model on textarea', () => {
-      const result = compile('<textarea v-model="content"></textarea>', { rendererMode: 'signal' });
-      expect(result.code).toContain('e(()=>{');
-      expect(result.code).toContain('.value=_c.content');
-      expect(result.code).toContain('v(');
+      const ctx: Record<string, unknown> = { content: 'C' };
+      const handle = mount('<textarea v-model="content"></textarea>', ctx);
+      const textarea = handle.container.querySelector('textarea')!;
+      expect(textarea.value).toBe('C');
+      textarea.value = 'D';
+      textarea.dispatchEvent(new Event('input'));
+      expect(ctx.content).toBe('D');
     });
 
     it('should generate v-model on select', () => {
-      const result = compile('<select v-model="selected"><option>A</option></select>', {
-        rendererMode: 'signal',
-      });
-      expect(result.code).toContain('e(()=>{');
-      expect(result.code).toContain('.value=_c.selected');
-      expect(result.code).toContain('v(');
+      const ctx: Record<string, unknown> = { selected: 'A' };
+      const handle = mount('<select v-model="selected"><option>A</option></select>', ctx);
+      const select = handle.container.querySelector('select')!;
+      expect(select.value).toBe('A');
+      select.value = 'A';
+      select.dispatchEvent(new Event('change'));
+      expect(ctx.selected).toBe('A');
     });
 
     it('should generate v-model with .lazy modifier', () => {
-      const result = compile('<input v-model.lazy="text" />', { rendererMode: 'signal' });
-      // .lazy ⇒ 监听 change 而非 input。
-      // 此前这里只断言"包含函数头"，而该场景其实**完全没编译**：
-      // `v-model.lazy` 被 parser 当成普通属性，原样写进了静态 HTML。
-      expect(result.code).toContain("'change'");
-      expect(result.code).not.toContain("'input'");
-      expect(result.code).not.toContain('v-model');
+      const ctx: Record<string, unknown> = { text: '' };
+      const handle = mount('<input v-model.lazy="text" />', ctx);
+      const input = handle.container.querySelector('input')!;
+
+      // .lazy ⇒ 监听 change 而非 input
+      input.value = 'N';
+      input.dispatchEvent(new Event('input'));
+      expect(ctx.text).toBe('');
+
+      input.dispatchEvent(new Event('change'));
+      expect(ctx.text).toBe('N');
     });
 
     it('should generate v-model with .number modifier', () => {
-      const result = compile('<input v-model.number="count" />', { rendererMode: 'signal' });
-      expect(result.code).toContain('Number($e.target.value)');
-      expect(result.code).not.toContain('v-model');
+      const ctx: Record<string, unknown> = { count: 0 };
+      const handle = mount('<input v-model.number="count" />', ctx);
+      const input = handle.container.querySelector('input')!;
+      input.value = '42';
+      input.dispatchEvent(new Event('input'));
+      expect(ctx.count).toBe(42);
+      expect(typeof ctx.count).toBe('number');
     });
 
     it('should generate v-model with .trim modifier', () => {
-      const result = compile('<input v-model.trim="text" />', { rendererMode: 'signal' });
-      expect(result.code).toContain('.trim()');
-      expect(result.code).not.toContain('v-model');
+      const ctx: Record<string, unknown> = { text: '' };
+      const handle = mount('<input v-model.trim="text" />', ctx);
+      const input = handle.container.querySelector('input')!;
+      input.value = '  x  ';
+      input.dispatchEvent(new Event('input'));
+      expect(ctx.text).toBe('x');
     });
 
     it('should generate v-model with combined modifiers', () => {
-      const result = compile('<input v-model.lazy.number="count" />', { rendererMode: 'signal' });
-      expect(result.code).toContain("'change'"); // .lazy
-      expect(result.code).toContain('Number($e.target.value)'); // .number
-      expect(result.code).not.toContain('v-model');
+      const ctx: Record<string, unknown> = { count: 0 };
+      const handle = mount('<input v-model.lazy.number="count" />', ctx);
+      const input = handle.container.querySelector('input')!;
+
+      input.value = '7';
+      input.dispatchEvent(new Event('input'));
+      expect(ctx.count).toBe(0);
+
+      input.dispatchEvent(new Event('change'));
+      expect(ctx.count).toBe(7);
     });
   });
 
@@ -287,10 +309,10 @@ describe('codegen-signal', () => {
 
   describe('v-show', () => {
     it('should generate style.display effect for v-show', () => {
-      const result = compile('<div v-show="visible">content</div>', { rendererMode: 'signal' });
-      expect(result.code).toContain('e(()=>{');
-      expect(result.code).toContain('style.display');
-      expect(result.code).toContain("_c.visible?'':");
+      const visible = mount('<div v-show="visible">content</div>', { visible: true });
+      expect(visible.container.querySelector('div')!.style.display).toBe('');
+      const hidden = mount('<div v-show="visible">content</div>', { visible: false });
+      expect(hidden.container.querySelector('div')!.style.display).toBe('none');
     });
   });
 
@@ -300,9 +322,7 @@ describe('codegen-signal', () => {
 
   describe('v-text', () => {
     it('should generate setText effect for v-text', () => {
-      const result = compile('<div v-text="content"></div>', { rendererMode: 'signal' });
-      expect(result.code).toContain('e(()=>x(');
-      expect(result.code).toContain('_c.content');
+      expect(mount('<div v-text="content"></div>', { content: '<b>' }).text()).toBe('<b>');
     });
   });
 
@@ -312,9 +332,9 @@ describe('codegen-signal', () => {
 
   describe('v-html', () => {
     it('should generate setHTML effect for v-html', () => {
-      const result = compile('<div v-html="htmlContent"></div>', { rendererMode: 'signal' });
-      expect(result.code).toContain('e(()=>h(');
-      expect(result.code).toContain('_c.htmlContent');
+      expect(htmlOf('<div v-html="htmlContent"></div>', { htmlContent: '<b>x</b>' })).toBe(
+        '<div><b>x</b></div>',
+      );
     });
   });
 
@@ -324,9 +344,7 @@ describe('codegen-signal', () => {
 
   describe('interpolation', () => {
     it('should generate setText with effect for interpolation', () => {
-      const result = compile('<span>{{ message }}</span>', { rendererMode: 'signal' });
-      expect(result.code).toContain('e(()=>x(');
-      expect(result.code).toContain('_c.message');
+      expect(mount('<span>{{ message }}</span>', { message: 'M' }).text()).toBe('M');
     });
   });
 
@@ -335,55 +353,67 @@ describe('codegen-signal', () => {
   // ============================================================
 
   describe('v-if and v-for combinations', () => {
+    const items = [
+      { id: 1, name: 'a' },
+      { id: 2, name: 'b' },
+    ];
+
     it('should generate both v-if and v-for in the same template', () => {
-      const result = compile(
-        `<div>
+      const tpl = `<div>
           <p v-if="show">conditional</p>
           <li v-for="item in items">{{ item.name }}</li>
-        </div>`,
-        { rendererMode: 'signal' },
-      );
-      expect(result.code).toContain('if(_c.show)');
-      expect(result.code).toContain('n(');
-      expect(result.code).toContain('_c.items');
-      expect(result.code).toContain('e(()=>{');
+        </div>`;
+
+      const shown = mount(tpl, { show: true, items });
+      expect(shown.container.querySelector('p')?.textContent).toBe('conditional');
+      expect([...shown.container.querySelectorAll('li')].map((li) => li.textContent)).toEqual([
+        'a',
+        'b',
+      ]);
+
+      const hidden = mount(tpl, { show: false, items });
+      expect(hidden.container.querySelector('p')).toBeNull();
+      expect([...hidden.container.querySelectorAll('li')].map((li) => li.textContent)).toEqual([
+        'a',
+        'b',
+      ]);
     });
 
     it('should generate v-for inside v-if', () => {
-      const result = compile(
-        '<div v-if="show"><li v-for="item in items">{{ item.name }}</li></div>',
-        { rendererMode: 'signal' },
-      );
-      expect(result.code).toContain('if(_c.show)');
-      expect(result.code).toContain('e(()=>{');
+      // ⚠️ S25b 已知缺陷（保留形态断言，不行为化）：优化版 signal codegen 下
+      //   `<div v-if="show"><li v-for=…></li></div>` 的 **v-for 子内容被整体丢弃**
+      //   ——模板被编译成空 `<div></div>`，实测渲染文本为 ''。修它要改产物文本，
+      //   超出本轮「只改测试」范围；此处保留对现有产物形态的守护，并登记待修。
+      const tpl = '<div v-if="show"><li v-for="item in items">{{ item.name }}</li></div>';
+      const code = compile(tpl).code;
+      expect(code).toContain('if(_c.show)');
+      expect(code).toContain('e(()=>{');
     });
 
     it('should generate v-if inside v-for', () => {
-      const result = compile(
-        '<ul><li v-for="item in items"><span v-if="item.active">{{ item.name }}</span></li></ul>',
-        { rendererMode: 'signal' },
+      const tpl =
+        '<ul><li v-for="item in items"><span v-if="item.active">{{ item.name }}</span></li></ul>';
+      const active = [
+        { id: 1, name: 'a', active: true },
+        { id: 2, name: 'b', active: false },
+      ];
+      expect(mount(tpl, { items: active }).text()).toBe('a');
+      expect(mount(tpl, { items: active }).html()).toBe(
+        '<ul><li><span>a</span></li><li></li></ul>',
       );
-      expect(result.code).toContain('n(');
-      expect(result.code).toContain('_c.items');
-      expect(result.code).toContain('e(()=>');
     });
 
     it('should handle multiple v-if blocks on sibling elements', () => {
-      const result = compile('<div><p v-if="a">A</p><p v-if="b">B</p><p v-if="c">C</p></div>', {
-        rendererMode: 'signal',
-      });
-      expect(result.code).toContain('if(_c.');
-      expect(result.code).toContain('e(()=>');
+      const tpl = '<div><p v-if="a">A</p><p v-if="b">B</p><p v-if="c">C</p></div>';
+      expect(mount(tpl, { a: true, b: false, c: true }).text()).toBe('AC');
     });
 
     it('should handle multiple v-for blocks on sibling elements', () => {
-      const result = compile(
-        '<div><li v-for="x in listX">{{ x }}</li><li v-for="y in listY">{{ y }}</li></div>',
-        { rendererMode: 'signal' },
+      const tpl =
+        '<div><li v-for="x in listX">{{ x }}</li><li v-for="y in listY">{{ y }}</li></div>';
+      expect(htmlOf(tpl, { listX: ['1', '2'], listY: ['3'] })).toBe(
+        '<div><li>1</li><li>2</li><li>3</li></div>',
       );
-      expect(result.code).toContain('n(');
-      expect(result.code).toContain('_c.listX');
-      expect(result.code).toContain('_c.listY');
     });
   });
 
@@ -392,9 +422,7 @@ describe('codegen-signal', () => {
   // ============================================================
 
   describe('comprehensive template', () => {
-    it('should generate complete render function for complex template', () => {
-      const result = compile(
-        `<div class="app">
+    const tpl = `<div class="app">
           <h1>{{ title }}</h1>
           <p v-if="show">{{ message }}</p>
           <ul>
@@ -402,14 +430,23 @@ describe('codegen-signal', () => {
           </ul>
           <input v-model="text" />
           <button @click="submit">Submit</button>
-        </div>`,
-        { rendererMode: 'signal' },
-      );
+        </div>`;
 
-      expect(result.code).toContain('export function render(_c,_n)');
-      expect(result.code).toContain('n(');
-      expect(result.code).toContain('if(_c.show)');
-      expect(result.code).toContain('e(()=>');
+    it('should generate complete render function for complex template', () => {
+      const handle = mount(tpl, {
+        title: 'T',
+        show: true,
+        message: 'M',
+        items: [{ id: 1, name: 'a' }],
+        text: 'K',
+        submit: () => undefined,
+      });
+
+      expect(handle.container.querySelector('h1')!.textContent).toBe('T');
+      expect(handle.container.querySelector('p')!.textContent).toBe('M');
+      expect(handle.container.querySelector('li')!.textContent).toBe('a');
+      expect(handle.container.querySelector('input')!.value).toBe('K');
+      expect(handle.container.querySelector('button')!.textContent).toBe('Submit');
     });
 
     it('should return CodegenResult with code and ast', () => {
