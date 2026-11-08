@@ -12,7 +12,8 @@ keywords: [硬约束9]
 B01d-2 块 4 完成（vnode 序列化族 9/9）；C3 待审。
 
 ## 11-08 完成
-- **devtools**：vitest alias `../../..` 修正，6 文件/157 用例转绿。
+- **alias**：守卫扩到包级配置（54 文件/216 条，负控红→绿），修 4 处层级错；devtools 6 文件/157 转绿。
+- **test 覆盖**：74/77 含 src 目录；`host-contract`/`shared-types` 无测试（不造）。
 - **S20**：零引用 29→0（删 27+restore 2+孤儿 1）；入口收敛为 `build`；`check-script-refs` 棘轮+负控。
 - **B01c**：100 模板 × 2 profile 逐字快照（slow）+双侧负控。
 - **B01d-2**：`EmitProfile` + 9 个 vnode 族函数共享；200 份快照逐字、parity 100/100。
@@ -21,14 +22,12 @@ B01d-2 块 4 完成（vnode 序列化族 9/9）；C3 待审。
   计时断言 ADR 0024；host-contract ADR 0025 不接（前置=第二宿主）。
 
 ## 11-07 完成
-- **S19** 16 个 common 死包逐包判定，16/16 命中「已发布/有导出面」⇒ 保留+deprecated，
-  ADR 0023，目标 8.0.0 删除；README 横幅、overview/API/PUBLISH-MANIFEST/棘轮同步。
-- **S05** 负控框架 `gate --inject`；未验证项已按批次清零（见「下一步」）。
-- **S21（A 轨）** access→public、baseBranch/trigger→`v7.0.0-dev`；dry-run 76 包升至 7.0.0，
-  `check-release-parity` 负控先红后绿；已删 5 手工 + 15 孤儿脚本，3 份文档切 changesets。
+- **S19** 16 个 common 死包 16/16「已发布/有导出面」⇒ 保留+deprecated，ADR 0023，8.0.0 删；文档同步。
+- **S05** 负控框架 `gate --inject`；未验证项按批次清零。
+- **S21（A 轨）** access→public、baseBranch/trigger→`v7.0.0-dev`；dry-run 76 包升 7.0.0，`check-release-parity` 红→绿；删 20 脚本，3 文档切 changesets。
 - **S04** CI/文档统一到 `scripts/gate.mjs`；**S03** `check-package-deps` 补 `export ... from`。
 - **S18** 内联 `display:none`→`hidden`，UI 664/664；**S15–S17** composables、受控 51 断言、i18n 基线。
-- **S13/S14** 对拍 100/100；bundle 按 0020 上调；fast 53/53、slow 14/14。
+- **S13/S14** 对拍 100/100；bundle 按 0020；fast 53/53、slow 14/14。
 - **S01/S02/S06–S12** gate 委托、check-deps 76/76、ErrorBoundary 下沉等。
 - **`sideEffects` B2** ADR 0022：`registerBuiltinComponents()`；五入口 18/18。
 - **待决 C3**：`@lytjs/ui` 依赖与 ARCHITECTURE:26 冲突，见 0021。

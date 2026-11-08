@@ -15,7 +15,10 @@ export default defineConfig({
     alias: {
       '@lytjs/common-is': `${commonRoot}/is/dist/index.mjs`,
       '@lytjs/common-string': `${commonRoot}/string/dist/index.mjs`,
-      '@lytjs/metadata': resolve(__dirname, '../../web-framework/packages/metadata/dist/index.mjs'),
+      '@lytjs/metadata': resolve(
+        __dirname,
+        '../../../web-framework/packages/metadata/dist/index.mjs',
+      ),
     },
   },
   test: {

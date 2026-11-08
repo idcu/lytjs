@@ -3,8 +3,9 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const commonRoot = resolve(__dirname, '../../../common/packages');
-const pkgRoot = resolve(__dirname, '../../..');
+// ssr → packages → ssr-kit → packages → ecosystem → packages（五层）
+const commonRoot = resolve(__dirname, '../../../../../common/packages');
+const pkgRoot = resolve(__dirname, '../../../../..');
 
 export default defineConfig({
   // 定义全局变量
