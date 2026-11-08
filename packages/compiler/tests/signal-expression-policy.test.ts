@@ -21,8 +21,10 @@
  *   ② 危险/带副作用的表达式必须**被拒绝**
  */
 
+// @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
 import { compile } from '../src/index';
+import { executeSignal } from './support/execute';
 
 type Variant = {
   name: string;
@@ -96,27 +98,31 @@ describe('Signal 表达式 - 危险写法必须被拒绝（两套 codegen 一致
 
 describe('Signal 表达式 - 标识符必须被正确前缀化（两套 codegen）', () => {
   for (const v of VARIANTS) {
-    const code = (tpl: string) => compile(tpl, v.options as never).code;
-    const p = v.ctx;
+    const mount = (tpl: string, ctx: Record<string, unknown>) =>
+      executeSignal(compile(tpl, v.options as never), ctx);
+    const divOf = (tpl: string, ctx: Record<string, unknown>) =>
+      mount(tpl, ctx).container.querySelector('div')!;
 
     describe(v.name, () => {
       it('对象字面量的 key 不加前缀、值加前缀', () => {
-        expect(code(`<div :class="{ active: ok }">x</div>`)).toContain(`{ active: ${p}.ok }`);
+        expect(divOf(`<div :class="{ active: ok }">x</div>`, { ok: true }).className).toBe(
+          'active',
+        );
+        expect(divOf(`<div :class="{ active: ok }">x</div>`, { ok: false }).className).toBe('');
       });
 
       it('数组元素里的标识符加前缀', () => {
-        expect(code(`<div :class="['a', cls]">x</div>`)).toContain(`['a', ${p}.cls]`);
+        expect(divOf(`<div :class="['a', cls]">x</div>`, { cls: 'b' }).className).toBe('a b');
       });
 
       it('三元与拼接里的标识符加前缀', () => {
-        expect(code(`<div :title="ok ? 'a' : 'b'">x</div>`)).toContain(`${p}.ok ? 'a' : 'b'`);
-        expect(code(`<div :title="a + '!'">x</div>`)).toContain(`${p}.a + '!'`);
+        expect(divOf(`<div :title="ok ? 'a' : 'b'">x</div>`, { ok: true }).title).toBe('a');
+        expect(divOf(`<div :title="ok ? 'a' : 'b'">x</div>`, { ok: false }).title).toBe('b');
+        expect(divOf(`<div :title="a + '!'">x</div>`, { a: 'A' }).title).toBe('A!');
       });
 
       it('字符串字面量内部不被改写', () => {
-        const c = code(`<div :title="'hello world'">x</div>`);
-        expect(c).toContain("'hello world'");
-        expect(c).not.toContain(`'hello ${p}`);
+        expect(divOf(`<div :title="'hello world'">x</div>`, {}).title).toBe('hello world');
       });
     });
   }

@@ -178,6 +178,8 @@ export interface SignalHandle {
   html: () => string;
   /** 当前文本内容 */
   text: () => string;
+  /** 产物导出的 render 函数本身（用于签名/上下文契约断言） */
+  render: (ctx: Record<string, unknown>, container: Node) => () => void;
 }
 
 /**
@@ -227,5 +229,6 @@ export function executeSignal(
     dispose,
     html: () => container.innerHTML,
     text: () => container.textContent ?? '',
+    render,
   };
 }
