@@ -427,8 +427,8 @@ export interface TransformContext {
    * 对照组 `nodeTransforms` 为 1）。透传后 `handleDirective` 会优先消费它。
    *
    * 约定：**只承载用户自定义项**。内建指令（bind/on/model/show）仍走
-   * `transformElement` 内联路径（它产出 AST 节点，而 `builtInDirectiveTransforms`
-   * 里的实现产出的是 `{key,value}` 字符串对，两者形状不兼容）。
+   * `transformElement` 内联路径（它产出 AST 节点，而内建指令转换实现产出的是
+   * `{key,value}` 字符串对，两者形状不兼容）。
    */
   directiveTransforms?: Record<string, DirectiveTransform>;
   filters?: Set<string>;

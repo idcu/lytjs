@@ -4,7 +4,7 @@
 import { describe, it, expect } from 'vitest';
 import { parse } from '../src/parser';
 import { compile } from '../src/index';
-import { transform, builtInTransforms, builtInDirectiveTransforms } from '../src/transform';
+import { transform, builtInTransforms } from '../src/transform';
 import { optimize } from '../src/optimize';
 import { NodeTypes } from '../src/constants';
 import type { ElementNode } from '../src/types';
@@ -13,7 +13,6 @@ function compileForOptimize(source: string) {
   const ast = parse(source);
   transform(ast, {
     nodeTransforms: builtInTransforms,
-    directiveTransforms: builtInDirectiveTransforms,
   });
   optimize(ast);
   return ast;

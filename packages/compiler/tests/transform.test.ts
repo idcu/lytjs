@@ -3,7 +3,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { parse } from '../src/parser';
-import { transform, builtInTransforms, builtInDirectiveTransforms } from '../src/transform';
+import { transform, builtInTransforms } from '../src/transform';
 import { NodeTypes } from '../src/constants';
 import type { ElementNode, JSConditionalExpression } from '../src/types';
 
@@ -11,7 +11,6 @@ function transformTemplate(source: string) {
   const ast = parse(source);
   transform(ast, {
     nodeTransforms: builtInTransforms,
-    directiveTransforms: builtInDirectiveTransforms,
   });
   return ast;
 }

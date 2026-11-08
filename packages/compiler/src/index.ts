@@ -293,7 +293,7 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
 
   // ⚠️ 2026-10-10：这里**只透传用户自定义的** directiveTransforms。
   //
-  // 背景（实证）：`builtInDirectiveTransforms`（bind/on/model/show）此前被合并进
+  // 背景（实证）：内建指令转换注册表（bind/on/model/show）此前被合并进
   // `options.directiveTransforms` 并交给 `transform()`，但 `createTransformContext`
   // 逐字段构造 context、从未消费该字段 ⇒ 整张内建注册表是**死代码**，
   // 且 `compile({ directiveTransforms })` 这个公开选项**静默失效**

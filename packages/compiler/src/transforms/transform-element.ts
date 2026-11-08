@@ -649,8 +649,8 @@ function handleVBind(
  * FIX: P1-30 添加事件修饰符处理，支持 .stop/.prevent/.capture/.once/.self/.passive
  *
  * ⚠️ 2026-10-10 订正：本函数此前挂着一条**与实测相反**的 NOTE，自称
- *   「实际编译时，v-on 会优先走 on.ts 的 transformOn 路径（通过
- *   builtInDirectiveTransforms），此处的 handleVOn 只是备用路径」。
+ *   「实际编译时，v-on 会优先走 on.ts 的 transformOn 路径，
+ *   此处的 handleVOn 只是备用路径」。
  *
  * 实证（探针 `scripts/_probe-directive-transforms.ts`，用完即删）：
  *   `options.directiveTransforms` **完全未被消费** —— 自定义 on/bind/custom 三个

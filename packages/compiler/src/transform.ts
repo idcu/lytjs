@@ -14,7 +14,6 @@ import type {
   TransformContext,
   TransformOptions,
   NodeTransform,
-  DirectiveTransform,
   ParentNode,
   JSChildNode,
   BaseNode,
@@ -367,26 +366,6 @@ export const builtInTransforms: NodeTransform[] = [
   transformVMemo as TransformFn,
   transformElement as TransformFn,
 ];
-
-/**
- * 内建指令转换注册表 —— ⚠️ **当前不参与 `compile()` 编译管线**。
- *
- * 实证（2026-10-10）：`compile()` 只把**用户自定义**的 directiveTransforms
- * 透传进 `TransformContext`；内建 v-bind/v-on/v-model/v-show 一律由
- * `transformElement` 的 `handleDirective` 内联处理（那里产出的是 `JSProperty`
- * AST 节点，而本表里的实现产出 `{key, value}` 纯字符串对，形状不兼容）。
- *
- * 本表保留的原因：① 供 `transforms/*.test.ts` 直接单测；
- * ② 显式传入 `compile({ directiveTransforms: builtInDirectiveTransforms })` 时
- * 会经 registry-first 分支生效（形状由 `normalizeDirectiveProp` 归一化）。
- * 但它**不是**默认路径 —— 改动内建指令行为请改 `transform-element.ts`。
- */
-export const builtInDirectiveTransforms: Record<string, DirectiveTransform> = {
-  bind: transformBind,
-  on: transformOn,
-  model: transformModel,
-  show: transformShow,
-};
 
 // 为向后兼容重新导出各个转换
 export { transformElement, transformIf, transformFor, transformOnce, transformSlot };
