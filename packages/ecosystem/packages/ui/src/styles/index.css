@@ -1432,6 +1432,13 @@
   top: 50%;
   margin-top: -8px;
 }
+.lyt-slider--disabled {
+  opacity: 0.6;
+}
+.lyt-slider--disabled .lyt-slider__runway,
+.lyt-slider--disabled .lyt-slider__button {
+  cursor: not-allowed;
+}
 .lyt-slider--vertical .lyt-slider__button {
   transform: translateY(50%);
   left: 50%;

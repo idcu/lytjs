@@ -114,7 +114,6 @@ Select → lyt-select__search
 Select → lyt-select__sro
 Select → lyt-select__value
 Select → lyt-select__value--placeholder
-Slider → lyt-slider--disabled
 Table → lyt-table--border
 Table → lyt-table--stripe
 Table → lyt-table__body
