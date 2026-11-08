@@ -79,7 +79,7 @@
       "controlled": { "status": "pass" },
       "styles": { "status": "pass" },
       "keyboard": { "status": "n/a", "reason": "无交互" },
-      "a11y": { "status": "n/a", "reason": "无交互、无 aria 语义、无 img" }
+      "a11y": { "status": "pass" }
     },
     "Dialog": {
       "vmodel": { "status": "pass" },

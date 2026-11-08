@@ -2,11 +2,15 @@ import type { ContainerProps, ContainerSlots } from './types';
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/core/runtime';
 import { isString, isObject } from '@lytjs/common-is';
+import { mergeA11yProps } from '@lytjs/common-a11y';
 
 export interface ContainerSetupProps {
   fluid: boolean;
   class: string;
   style: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
 }
 
 export const Container = defineComponent({
@@ -16,6 +20,9 @@ export const Container = defineComponent({
     fluid: { type: Boolean, default: false },
     class: { type: String, default: '' },
     style: { type: String, default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
   },
 
   setup(props: Record<string, unknown>, { slots }: { slots: ContainerSlots }) {
@@ -51,10 +58,17 @@ export const Container = defineComponent({
 
       return createVNode(
         'div',
-        {
-          class: getContainerClass(),
-          style: getContainerStyle(),
-        },
+        mergeA11yProps(
+          {
+            id: p.id,
+            'aria-label': p.ariaLabel,
+            'aria-describedby': p.ariaDescribedBy,
+          },
+          {
+            class: getContainerClass(),
+            style: getContainerStyle(),
+          },
+        ),
         children,
       );
     };
