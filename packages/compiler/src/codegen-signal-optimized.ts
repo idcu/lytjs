@@ -37,6 +37,7 @@ import {
   serializeVNodeCallChildShared,
   serializeVNodeCallChildrenShared,
   serializeVNodeCallShared,
+  serializeVNodeElementShared,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -2118,35 +2119,16 @@ function serializeVNodeElementOptimized(
   options: SignalCodegenOptions,
   locals: ReadonlySet<string> = new Set(),
 ): string {
-  const cv = getShortName('createVNode', options.useShortNames ?? true);
-  usedRuntime.add('createVNode');
-
-  if (node.tagType === ElementTypes.COMPONENT) {
-    const nestedSlots = buildComponentSlotsObjectOptimized(node, usedRuntime, options, locals);
-    const nestedArg = nestedSlots ? `,${nestedSlots}` : '';
-    return `${cv}(${componentRef(node.tag)},${buildComponentPropsObject(node)}${nestedArg})`;
-  }
-
-  // v-show → `style.display` 绑定；元素另有多个 v-show 或表达式缺失时放弃该元素
-  const showDirs = node.props.filter(
-    (pr) => pr.type === NodeTypes.DIRECTIVE && (pr as DirectiveNode).name === 'show',
-  );
-  if (showDirs.length > 1) return '';
-  const showExp = showDirs.length
-    ? getExpContent((showDirs[0] as DirectiveNode).exp as SimpleExpressionNode)
-    : '';
-  if (showDirs.length && !showExp) return '';
-
-  // 元素属性复用一个 props 构造：静态属性 + `:bind` + `@事件`（内部已用 `_c.` 前缀）
-  let attrs = node.props.length ? buildComponentPropsObject(node) : 'null';
-  if (showExp) {
-    const expr = prefixIdentifiers(showExp, locals).replace(/\b_ctx\./g, '_c.');
-    const styleProp = `style:{"display":(${expr}?'':'none')}`;
-    attrs = attrs === 'null' || attrs === '{}' ? `{${styleProp}}` : `{...${attrs},${styleProp}}`;
-  }
-  const kids = collectSlotVNodesOptimized(node.children, usedRuntime, options, locals);
-  const childrenArg = kids.length ? `[${kids.join(',')}]` : 'null';
-  return `${cv}(${JSON.stringify(node.tag)},${attrs},${childrenArg})`;
+  return serializeVNodeElementShared(node, locals, {
+    vnode: getShortName('createVNode', options.useShortNames ?? true),
+    begin: () => usedRuntime.add('createVNode'),
+    propsObject: buildComponentPropsObject,
+    componentTag: componentRef,
+    slots: (el, scope) => buildComponentSlotsObjectOptimized(el, usedRuntime, options, scope),
+    showExpr: (exp, scope) => prefixIdentifiers(exp, scope).replace(/\b_ctx\./g, '_c.'),
+    collectChildren: (children, scope) =>
+      collectSlotVNodesOptimized(children, usedRuntime, options, scope),
+  });
 }
 
 /**

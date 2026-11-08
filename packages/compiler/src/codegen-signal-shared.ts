@@ -1035,3 +1035,63 @@ export function serializeVNodeCallShared(
 
   return `${hooks.vnode}(${hooks.tag(vn.tag, !!vn.isComponent)},${propsCode},${childrenCode})`;
 }
+
+/** 元素 → vnode 序列化时需要发射器注入的差异点 */
+export interface VNodeElementHooks {
+  /** `createVNode` 调用名（完整名 vs 短别名） */
+  vnode: string;
+  /** 入口即调用（优化版在此登记 `createVNode` 的运行时引用） */
+  begin?: () => void;
+  /** props 对象字面量（两版上下文前缀不同） */
+  propsObject: (node: ElementNode) => string;
+  /** 组件裸名 → 带上下文前缀的引用 */
+  componentTag: (tag: string) => string;
+  /** 插槽对象（组件分支专用） */
+  slots: (node: ElementNode, locals: ReadonlySet<string>) => string | null;
+  /** `v-show` 表达式前缀化 */
+  showExpr: (exp: string, locals: ReadonlySet<string>) => string;
+  /** 子内容 → vnode 代码数组 */
+  collectChildren: (children: TemplateChildNode[], locals: ReadonlySet<string>) => string[];
+}
+
+/**
+ * 单个元素 → `createVNode(tag, attrs, children)`（两版共享）。
+ *
+ * - 组件：用占位 tag 的 vnode + 可选插槽对象
+ * - 元素：`v-show` 折成 `style.display`；多个 v-show 或缺表达式时放弃（返回空串）
+ */
+export function serializeVNodeElementShared(
+  node: ElementNode,
+  locals: ReadonlySet<string>,
+  hooks: VNodeElementHooks,
+): string {
+  hooks.begin?.();
+
+  if (node.tagType === ElementTypes.COMPONENT) {
+    // 嵌套组件同样要带自己的插槽
+    const nestedSlots = hooks.slots(node, locals);
+    const nestedArg = nestedSlots ? `,${nestedSlots}` : '';
+    return `${hooks.vnode}(${hooks.componentTag(node.tag)},${hooks.propsObject(node)}${nestedArg})`;
+  }
+
+  // v-show → `style.display` 绑定。若元素另有 style/:style，则放弃该元素
+  //（两个 style 键会互相覆盖，宁可缺失也不静默错渲）
+  const showDirs = node.props.filter(
+    (pr) => pr.type === NodeTypes.DIRECTIVE && (pr as DirectiveNode).name === 'show',
+  );
+  if (showDirs.length > 1) return '';
+  const showExp = showDirs.length
+    ? getExpContent((showDirs[0] as DirectiveNode).exp as SimpleExpressionNode)
+    : '';
+  if (showDirs.length && !showExp) return '';
+
+  // 元素属性复用一个 props 构造：静态属性 + `:bind` + `@事件`（vnode 不需要 HTML 转义）
+  let attrs = node.props.length ? hooks.propsObject(node) : 'null';
+  if (showExp) {
+    const styleProp = `style:{"display":(${hooks.showExpr(showExp, locals)}?'':'none')}`;
+    attrs = attrs === 'null' || attrs === '{}' ? `{${styleProp}}` : `{...${attrs},${styleProp}}`;
+  }
+  const kids = hooks.collectChildren(node.children, locals);
+  const childrenArg = kids.length ? `[${kids.join(',')}]` : 'null';
+  return `${hooks.vnode}(${JSON.stringify(node.tag)},${attrs},${childrenArg})`;
+}

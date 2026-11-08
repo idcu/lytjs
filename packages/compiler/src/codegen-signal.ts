@@ -33,6 +33,7 @@ import {
   serializeVNodeCallChildShared,
   serializeVNodeCallChildrenShared,
   serializeVNodeCallShared,
+  serializeVNodeElementShared,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -1972,33 +1973,14 @@ function serializeVNodeElement(
   prefix: string,
   locals: ReadonlySet<string> = new Set(),
 ): string {
-  if (node.tagType === ElementTypes.COMPONENT) {
-    // 嵌套组件同样要带自己的插槽
-    const nestedSlots = buildComponentSlotsObject(node, prefix, locals);
-    const nestedArg = nestedSlots ? `,${nestedSlots}` : '';
-    return `createVNode(${prefix}${node.tag},${buildComponentPropsObject(node)}${nestedArg})`;
-  }
-
-  // v-show → `style.display` 绑定。若元素另有 style/:style，则放弃该元素
-  //（两个 style 键会互相覆盖，宁可缺失也不静默错渲）
-  const showDirs = node.props.filter(
-    (pr) => pr.type === NodeTypes.DIRECTIVE && (pr as DirectiveNode).name === 'show',
-  );
-  if (showDirs.length > 1) return '';
-  const showExp = showDirs.length
-    ? getExpContent((showDirs[0] as DirectiveNode).exp as SimpleExpressionNode)
-    : '';
-  if (showDirs.length && !showExp) return '';
-
-  // 元素属性复用一个 props 构造：静态属性 + `:bind` + `@事件`（vnode 不需要 HTML 转义）
-  let attrs = node.props.length ? buildComponentPropsObject(node) : 'null';
-  if (showExp) {
-    const styleProp = `style:{"display":(${prefixIdentifiers(showExp, locals)}?'':'none')}`;
-    attrs = attrs === 'null' || attrs === '{}' ? `{${styleProp}}` : `{...${attrs},${styleProp}}`;
-  }
-  const kids = collectSlotVNodes(node.children, prefix, locals);
-  const childrenArg = kids.length ? `[${kids.join(',')}]` : 'null';
-  return `createVNode(${JSON.stringify(node.tag)},${attrs},${childrenArg})`;
+  return serializeVNodeElementShared(node, locals, {
+    vnode: 'createVNode',
+    propsObject: buildComponentPropsObject,
+    componentTag: (tag) => `${prefix}${tag}`,
+    slots: (el, scope) => buildComponentSlotsObject(el, prefix, scope),
+    showExpr: (exp, scope) => prefixIdentifiers(exp, scope),
+    collectChildren: (children, scope) => collectSlotVNodes(children, prefix, scope),
+  });
 }
 
 /**
