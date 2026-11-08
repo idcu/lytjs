@@ -30,8 +30,8 @@ import {
   validateEventName,
   validateComponentName,
   validateIslandDirective,
-  hasUnsupportedSlotDirective,
   buildComponentSlotsObjectShared,
+  collectSlotVNodesShared,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -2196,51 +2196,29 @@ function collectSlotVNodesOptimized(
 ): string[] {
   const cv = getShortName('createVNode', options.useShortNames ?? true);
   const tx = getShortName('Text', options.useShortNames ?? true);
-  const out: string[] = [];
-
-  for (const child of children) {
-    if (!child) continue;
-    if (child.type === NodeTypes.TEXT) {
-      const text = (child as TextNode).content;
-      if (text.trim()) {
-        usedRuntime.add('createVNode');
-        usedRuntime.add('Text');
-        out.push(`${cv}(${tx},null,${JSON.stringify(text)})`);
-      }
-      continue;
-    }
-    // 插值 → 动态文本 vnode
-    if (child.type === NodeTypes.INTERPOLATION) {
-      const exp = getExpContent((child as InterpolationNode).content as SimpleExpressionNode);
-      if (exp) {
-        usedRuntime.add('createVNode');
-        usedRuntime.add('Text');
-        const expr = prefixIdentifiers(exp, locals).replace(/\b_ctx\./g, '_c.');
-        out.push(`${cv}(${tx},null,${expr})`);
-      }
-      continue;
-    }
-    // v-if 的产物是条件表达式（元素已被 transform 替换掉）
-    if (child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
-      const cond = serializeConditionalVNodeOptimized(child, usedRuntime, options, locals);
-      if (cond) out.push(cond);
-      continue;
-    }
-    // v-for 的产物是 RENDER_LIST 调用
-    if (child.type === NodeTypes.JS_CALL_EXPRESSION) {
-      const list = serializeListVNodeOptimized(child, usedRuntime, options, locals);
-      if (list) out.push(list);
-      continue;
-    }
-    if (child.type === NodeTypes.ELEMENT) {
-      const el = child as ElementNode;
-      // 含其它结构性指令（v-for / v-show …）的元素暂不参与插槽编译 —— 宁缺勿错渲
-      if (hasUnsupportedSlotDirective(el)) continue;
-      const elCode = serializeVNodeElementOptimized(el, usedRuntime, options, locals);
-      if (elCode) out.push(elCode);
-    }
-  }
-  return out;
+  return collectSlotVNodesShared(children, locals, {
+    text: (text) => {
+      usedRuntime.add('createVNode');
+      usedRuntime.add('Text');
+      return `${cv}(${tx},null,${JSON.stringify(text)})`;
+    },
+    interpolation: (exp) => {
+      usedRuntime.add('createVNode');
+      usedRuntime.add('Text');
+      const expr = prefixIdentifiers(exp, locals).replace(/\b_ctx\./g, '_c.');
+      return `${cv}(${tx},null,${expr})`;
+    },
+    conditional: (node, scope) =>
+      serializeConditionalVNodeOptimized(
+        node as JSConditionalExpression,
+        usedRuntime,
+        options,
+        scope,
+      ),
+    list: (node, scope) =>
+      serializeListVNodeOptimized(node as JSCallExpression, usedRuntime, options, scope),
+    element: (el, scope) => serializeVNodeElementOptimized(el, usedRuntime, options, scope),
+  });
 }
 
 /** 单个元素 → `createVNode(tag, attrs, children)`（优化版用短别名） */

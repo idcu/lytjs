@@ -16,6 +16,7 @@ import type {
   TextNode,
   TemplateChildNode,
   DirectiveNode,
+  InterpolationNode,
   SimpleExpressionNode,
   CompoundExpressionNode,
   JSChildNode,
@@ -736,4 +737,56 @@ export function buildComponentSlotsObjectShared(
   }
   if (all.length === 0) return null;
   return `{${all.join(',')}}`;
+}
+
+/** 插槽 vnode 收集时需要发射器注入的差异点（前缀 / 短别名 / 递归实现） */
+export interface SlotVNodeHooks {
+  text: (text: string) => string;
+  interpolation: (exp: string) => string;
+  conditional: (node: JSChildNode, locals: ReadonlySet<string>) => string | null;
+  list: (node: JSChildNode, locals: ReadonlySet<string>) => string | null;
+  element: (node: ElementNode, locals: ReadonlySet<string>) => string;
+}
+
+/** 递归收集子节点对应的 vnode 构造代码（跳过注释与动态内容） */
+export function collectSlotVNodesShared(
+  children: TemplateChildNode[],
+  locals: ReadonlySet<string>,
+  hooks: SlotVNodeHooks,
+): string[] {
+  const out: string[] = [];
+  for (const child of children) {
+    if (!child) continue;
+    if (child.type === NodeTypes.TEXT) {
+      const text = (child as TextNode).content;
+      if (text.trim()) out.push(hooks.text(text));
+      continue;
+    }
+    // 插值 → 动态文本 vnode：依赖由 mountComponent 的 effect 追踪，变化即整体重渲染
+    if (child.type === NodeTypes.INTERPOLATION) {
+      const exp = getExpContent((child as InterpolationNode).content as SimpleExpressionNode);
+      if (exp) out.push(hooks.interpolation(exp));
+      continue;
+    }
+    // v-if 的产物是条件表达式（元素已被 transform 替换掉，不再是 ELEMENT）
+    if (child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
+      const cond = hooks.conditional(child as JSChildNode, locals);
+      if (cond) out.push(cond);
+      continue;
+    }
+    // v-for 的产物是 RENDER_LIST 调用
+    if (child.type === NodeTypes.JS_CALL_EXPRESSION) {
+      const list = hooks.list(child as JSChildNode, locals);
+      if (list) out.push(list);
+      continue;
+    }
+    if (child.type === NodeTypes.ELEMENT) {
+      const el = child as ElementNode;
+      // 含 v-show 等暂不支持指令的元素不参与插槽编译 —— 宁可缺失，也不静默错渲
+      if (hasUnsupportedSlotDirective(el)) continue;
+      const elCode = hooks.element(el, locals);
+      if (elCode) out.push(elCode);
+    }
+  }
+  return out;
 }

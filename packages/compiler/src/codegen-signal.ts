@@ -26,8 +26,8 @@ import {
   validateEventName,
   validateComponentName,
   validateIslandDirective,
-  hasUnsupportedSlotDirective,
   buildComponentSlotsObjectShared,
+  collectSlotVNodesShared,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -2069,41 +2069,14 @@ function collectSlotVNodes(
   prefix: string,
   locals: ReadonlySet<string> = new Set(),
 ): string[] {
-  const out: string[] = [];
-  for (const child of children) {
-    if (!child) continue;
-    if (child.type === NodeTypes.TEXT) {
-      const text = (child as TextNode).content;
-      if (text.trim()) out.push(`createVNode(Text,null,${JSON.stringify(text)})`);
-      continue;
-    }
-    // 插值 → 动态文本 vnode：依赖由 mountComponent 的 effect 追踪，变化即整体重渲染
-    if (child.type === NodeTypes.INTERPOLATION) {
-      const exp = getExpContent((child as InterpolationNode).content as SimpleExpressionNode);
-      if (exp) out.push(`createVNode(Text,null,${prefixIdentifiers(exp, locals)})`);
-      continue;
-    }
-    // v-if 的产物是条件表达式（元素已被 transform 替换掉，不再是 ELEMENT）
-    if (child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
-      const cond = serializeConditionalVNode(child, prefix, locals);
-      if (cond) out.push(cond);
-      continue;
-    }
-    // v-for 的产物是 RENDER_LIST 调用
-    if (child.type === NodeTypes.JS_CALL_EXPRESSION) {
-      const list = serializeListVNode(child, prefix, locals);
-      if (list) out.push(list);
-      continue;
-    }
-    if (child.type === NodeTypes.ELEMENT) {
-      const el = child as ElementNode;
-      // 含 v-show 等暂不支持指令的元素不参与插槽编译 —— 宁可缺失，也不静默错渲
-      if (hasUnsupportedSlotDirective(el)) continue;
-      const elCode = serializeVNodeElement(el, prefix, locals);
-      if (elCode) out.push(elCode);
-    }
-  }
-  return out;
+  return collectSlotVNodesShared(children, locals, {
+    text: (text) => `createVNode(Text,null,${JSON.stringify(text)})`,
+    interpolation: (exp) => `createVNode(Text,null,${prefixIdentifiers(exp, locals)})`,
+    conditional: (node, scope) =>
+      serializeConditionalVNode(node as JSConditionalExpression, prefix, scope),
+    list: (node, scope) => serializeListVNode(node as JSCallExpression, prefix, scope),
+    element: (el, scope) => serializeVNodeElement(el, prefix, scope),
+  });
 }
 
 /** 单个元素 → `createVNode(tag, attrs, children)` */
