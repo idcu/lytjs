@@ -9,6 +9,7 @@ import {
   resetBlockStack,
 } from '../src/block';
 import { createVNode } from '../src/vnode';
+import { PatchFlags } from '@lytjs/common-vnode';
 import type { VNode } from '@lytjs/common-vnode';
 
 describe('Block Tree runtime', () => {
@@ -102,9 +103,9 @@ describe('Block Tree runtime', () => {
       expect(block.dynamicChildren).toEqual([]);
     });
 
-    it('should set patchFlag correctly', () => {
-      const block = createBlock('div', null, null, 16);
-      expect(block.patchFlag).toBe(16);
+    it('should forward the requested patchFlag', () => {
+      const block = createBlock('div', null, null, PatchFlags.FULL_PROPS);
+      expect(block.patchFlag).toBe(PatchFlags.FULL_PROPS);
     });
 
     it('should pass props and children to createVNode', () => {
