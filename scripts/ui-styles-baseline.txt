@@ -60,11 +60,6 @@ DatePicker → lyt-date-picker__time-input
 DatePicker → lyt-date-picker__trigger
 DatePicker → lyt-date-picker__week-header
 DatePicker → lyt-date-picker__weekday
-Descriptions → lyt-descriptions-item__content
-Descriptions → lyt-descriptions-item__label
-Descriptions → lyt-descriptions__body
-Descriptions → lyt-descriptions__body--vertical
-Descriptions → lyt-descriptions__header
 Menu → lyt-menu__arrow
 Menu → lyt-menu__arrow--opened
 Menu → lyt-menu__icon

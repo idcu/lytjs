@@ -2305,6 +2305,27 @@
   gap: 0;
   font-size: 14px;
 }
+.lyt-descriptions__header {
+  grid-column: 1 / -1;
+  padding: 8px 12px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--lyt-border-color-lighter);
+}
+.lyt-descriptions__body {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: max-content 1fr;
+  gap: 0;
+}
+.lyt-descriptions__body--vertical {
+  grid-template-columns: 1fr;
+}
+.lyt-descriptions-item__label {
+  color: var(--lyt-text-color-secondary);
+}
+.lyt-descriptions-item__content {
+  color: var(--lyt-text-color-primary);
+}
 .lyt-descriptions-item {
   display: contents;
 }
