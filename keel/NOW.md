@@ -3,24 +3,24 @@ scope: now
 status: active
 last-verified: 2026-11-09
 updated: 2026-11-09
-keywords: [S25, 测试解耦, vdom, compiler, B01d, C3]
+keywords: [S24, 模块级状态, 隔离, transition前缀, useRouter, activePinia]
 ---
 
 # NOW · main
 
 ## 当前焦点
-- **S25 测试解耦**：84c70f5a / d751b968 / 7804e7ee。
-  - 类1 `getBlockStackDepth` 18 处 → Block 作用域 LIFO/子节点行为。
-  - 类2 `patchFlag === 16` 1 处 → 公开 `PatchFlags.FULL_PROPS`。
-  - 类3 `ctx._instance` 待决：只写不读，无公开行为可断，未删断言。
-  - 类4 `codegen.test.ts` 56 处产物字符串断言 → 执行产物断 VNode/插槽/双向绑定/缓存；55 改，动态属性名 1 处待决。
-- **实测**：fast 56/56；vdom 573/573；compiler 1686/1686；signal 115×2；parity 115/115、divergent 0；api 39/1961。
-- **alias**：54 个配置文件 / 213 条目标（订正旧记 54/216）。
-- **C1/C2/C3** 已完成，见 NOW-history；B01d 仍延后。
+- **S24 模块级可变状态隔离**：dfb6e639 / 904e54b6 / fd62af18。三类真实跨 app 泄漏，各配双 app 负控（修复前红→修复后绿）。
+  - transition 前缀 → 组件优先读 `app.config.transitionPrefix`（`fix(component)`）。
+  - router → `useRouter` 先 inject 当前 app 的 `__lytjs_router__`（`fix(core)`）。
+  - store → `useStore` 先 inject 当前 app 的 `__lytjs_pinia__`（`fix(core)`）。
+- **实测**：fast 56/56；core+component 1276/1276；router+store 215/215；API 39/1961 不变；signal 115×2、parity 115/115 未动。
+- **已确认非缺陷**（设计上的进程级单例）：scheduler、warn/dev-mode、SSR `_isSSR`、i18n `state.locale`、DOM 事件委托/批处理、compiler cache、DI 全局根、vdom DOMOps 注册表。
+- **S25 测试解耦**已完成，见 NOW-history；B01d 仍延后。
+- 新坑：[state](pitfalls/core/state-leak.md)。
 
 ## 下一步
-1. 待决：动态属性名被写成字面量 key；`_instance` 无读取点（可随 S29 清理）。
-2. compiler 其余 476 处 code/preamble 断言可分批行为化（battery 边界见 check-e2e-assertions）。
+1. 清理 S25 两个待决（动态属性名字面量、`_instance` 无读取点）。
+2. compiler 余量 476 处 code/preamble 断言分批行为化。
 3. 0023 死包删除等 8.0.0 窗口。
 
 ## 阻塞

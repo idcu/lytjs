@@ -25,12 +25,12 @@ keywords: [坑库, 索引, 转发链, dist, 假绿, 门禁, 负控]
 | 测试绿类型错 | verify | P1 | [typecheck-gap](verify/typecheck-gap.md) |
 | Node≥26 抢 jsdom | verify | P1 | [node26](verify/node26-localstorage-hijacks-jsdom.md) |
 | bench 无数字/NaN | verify | P2 | [vitest-bench](verify/vitest-bench-harness-traps.md) |
-| 0% 覆盖≠死码 | verify | P2 | [coverage-zero-is-not-dead](verify/coverage-zero-is-not-dead.md) |
-| grep 未命中当没有 | verify | P1 | [negative-evidence](verify/negative-evidence.md) |
+| 0% 覆盖≠死码 | verify | P2 | [zero](verify/coverage-zero-is-not-dead.md) |
+| grep 未命中当没有 | verify | P1 | [negative](verify/negative-evidence.md) |
 | 静态HTML复用 | core | P1 | [static-html](core/static-html-slot-reuse.md) |
-| not.toThrow 漏抛 | verify | P2 | [async-throw-escapes](verify/async-throw-escapes.md) |
+| not.toThrow 漏抛 | verify | P2 | [async-throw](verify/async-throw-escapes.md) |
 | src/dist 混用假缺陷 | verify | P1 | [module-identity](verify/module-identity-src-vs-dist.md) |
-| 覆盖率并发作废 | verify | P1 | [coverage-concurrent](verify/coverage-concurrent-runs-clobber-tmp.md) |
+| 覆盖率并发作废 | verify | P1 | [coverage](verify/coverage-concurrent-runs-clobber-tmp.md) |
 | Proxy has 污染取值 | core | P1 | [proxy-has](core/proxy-has-cache-poison.md) |
 | pre-commit 回滚 | process | P2 | [precommit](process/precommit-reverts-working-tree.md) |
 | 批量改 import 吞行 | process | P1 | [import-span](process/import-rewrite-span.md) |
@@ -38,4 +38,5 @@ keywords: [坑库, 索引, 转发链, dist, 假绿, 门禁, 负控]
 | 计时抖动 | verify | P2 | [flaky](verify/timing-flaky-parallel.md) |
 | 负控同源 | verify | P1 | [negctl](verify/negctl-same-source.md) |
 | 子路径内联 | build | P1 | [subpath](build/subpath-external-singleton-blindspot.md) |
-| 测试绑实现细节 | verify | P1 | [impl-coupling](verify/test-impl-coupling.md) |
+| 测试绑实现细节 | verify | P1 | [impl](verify/test-impl-coupling.md) |
+| 状态跨app泄漏 | core | P1 | [state](core/state-leak.md) |
