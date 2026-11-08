@@ -28,7 +28,7 @@ superseded-by:
 
 内核 = **环境失败 ≠ 代码缺陷**：沙箱守卫 / broker IPC / 工具链自检造成的失败，
 **不得**作为改仓库代码或放宽门禁的理由；绕行只落在**本机命令**
-（长任务前台跑、按 `packageManager: pnpm@11.3.0` 建 corepack shim），并登记进该坑。
+（长任务前台跑、按 root package.json 的 `packageManager` 声明建 corepack shim），并登记进该坑。
 随后把坑置 `status: distilled`。
 
 ## 被否掉的选项

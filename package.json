@@ -16,8 +16,7 @@
   },
   "packageManager": "pnpm@11.3.0",
   "engines": {
-    "node": ">=22.0.0",
-    "pnpm": ">=9.0.0"
+    "node": ">=22.0.0"
   },
   "scripts": {
     "env:setup": "node scripts/setup-env.cjs",

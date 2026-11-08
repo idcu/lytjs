@@ -20,7 +20,7 @@ keywords: [校验, 规则, 扩展检查, CI, 门禁]
 | 4 | UI slot 单节点（红门禁） | `node scripts/gate.mjs check-ui-slot-single-node` | ❌ fail | CI（keel-gates job） |
 | 5 | UI props 接线（棘轮，基线 `scripts/ui-props-wiring-baseline.txt`） | `node scripts/gate.mjs check-ui-props-wiring` | ❌ fail | CI（keel-gates job） |
 | 6 | 运行时循环依赖（棘轮） | `node scripts/gate.mjs check-circular:src` | ❌ fail | CI（keel-gates job）+ 定时 |
-| 7 | 构建顺序一致性 | `corepack pnpm@11.3.0 check-build-order` | ❌ fail | CI（build-order job） |
+| 7 | 构建顺序一致性 | `corepack pnpm check-build-order` | ❌ fail | CI（build-order job） |
 | 8 | vitest alias 目标存在（防用例静默少跑） | `node scripts/gate.mjs check-vitest-alias-dist` | ❌ fail | CI（build job 后置） |
 | 9 | 慢档全量（发布前） | `node scripts/gate.mjs --tier slow` | ❌ fail | 发布前 / 定时任务 |
 | 10 | 源码卫生（`eval(` / `new Function(` / `console.log(` 三条规则 + 显式清单） | `node scripts/gate.mjs check-src-hygiene` | ❌ fail | 本地 fast gate 已含 + CI |

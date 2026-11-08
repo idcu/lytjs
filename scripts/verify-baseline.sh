@@ -50,11 +50,11 @@ cd "$(dirname "$0")/.." || exit 1
 # 优先级：corepack(PATH) > corepack(node 同目录) > 全局 pnpm（最后手段，见下方预检）。
 export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 
-# 项目声明 `packageManager: pnpm@11.3.0`，因此**优先能锁版本的方式**（corepack），
+# 项目用 root package.json 的 `packageManager` 声明 pnpm 版本，因此**优先能锁版本的方式**（corepack），
 # 最后才回退全局 pnpm —— 2026-09-24 第二次踩坑：全局 pnpm（新版）报
 #   "Cannot verify the identity of the @pnpm/exe.darwin-x64 native binary:
 #    it is missing from pnpm-lock.yaml"
-# 导致 6 项在 1s 内全红；改由 corepack 提供 pnpm@11.3.0 即可。
+# 导致 6 项在 1s 内全红；改由 corepack 提供 packageManager 声明的 pnpm 即可。
 PNPM=()
 node_path="$(command -v node 2>/dev/null || true)"
 # npm 的全局目录可能是自定义的（本机为 /Volumes/Repos/npm/global），其 bin **不在 PATH**，
@@ -62,21 +62,21 @@ node_path="$(command -v node 2>/dev/null || true)"
 npm_bin="$(npm prefix -g 2>/dev/null || true)/bin"
 
 if command -v corepack >/dev/null 2>&1; then
-  PNPM=(corepack pnpm@11.3.0)
+  PNPM=(corepack pnpm)
 elif [ -n "$node_path" ] && [ -x "$(dirname "$node_path")/corepack" ]; then
-  PNPM=("$(dirname "$node_path")/corepack" pnpm@11.3.0)
+  PNPM=("$(dirname "$node_path")/corepack" pnpm)
 elif [ -n "$npm_bin" ] && [ -x "$npm_bin/corepack" ]; then
-  PNPM=("$npm_bin/corepack" pnpm@11.3.0)
+  PNPM=("$npm_bin/corepack" pnpm)
   echo "ℹ️  使用 npm 全局目录中的 corepack：$npm_bin/corepack"
 elif command -v pnpm >/dev/null 2>&1; then
   PNPM=(pnpm)
-  echo "⚠️  未找到 corepack，回退到全局 pnpm（可能与项目声明的 pnpm@11.3.0 版本不同）。"
+  echo "⚠️  未找到 corepack，回退到全局 pnpm（可能与 packageManager 声明的版本不同）。"
 fi
 
 if [ ${#PNPM[@]} -eq 0 ]; then
   echo "❌ 找不到 corepack 或 pnpm。请准备其一："
   echo "     corepack enable          （corepack 通常随 node 提供）"
-  echo "     或直接安装：npm i -g pnpm@11.3.0"
+  echo "     或启用 corepack：corepack enable"
   exit 127
 fi
 
@@ -96,9 +96,9 @@ if ! "${PNPM[@]}" -v >/dev/null 2>&1; then
     "${PNPM[@]}" -v 2>&1 | sed 's/^/   /'
     echo ""
     echo "常见原因：全局 pnpm 的新版完整性校验（@pnpm/exe 不在 pnpm-lock.yaml）。"
-    echo "推荐修复（直接对齐项目声明的 pnpm@11.3.0）："
+    echo "推荐修复（直接对齐 packageManager 声明的 pnpm 版本）："
     echo "     npm i -g corepack && corepack enable"
-    echo "  然后重跑本脚本。备选：npm i -g pnpm@11.3.0"
+    echo "  然后重跑本脚本。备选：改用与 packageManager 一致的全局 pnpm。"
     exit 127
   fi
 fi

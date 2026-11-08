@@ -9,7 +9,8 @@ keywords: [环境, corepack, pnpm, 沙箱, 密钥]
 
 ## 运行时与包管理
 
-- **无全局 pnpm**：一律 `corepack pnpm@11.3.0 <script>`；提交 shim 见
+- **无全局 pnpm**：一律 `corepack pnpm <script>`（版本由 root package.json 的
+  `packageManager` 唯一声明，corepack 自动读取）；提交 shim 见
   skills/no-global-pnpm-commit.md。
 - Node：跟随仓库 `package.json` engines / CI（如需锁版本在此登记）。
 

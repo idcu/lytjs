@@ -918,20 +918,20 @@ const GATES = [
  *
  * ★ 本机**没有全局 pnpm**（`which pnpm` = not found），而 `corepack` 随 node 自带
  *   ⇒ 凡是用到 `pnpm` 的门禁都会以「退出码 null」失败（进程没起来）。
- *   这里把 `pnpm` 映射成 `corepack pnpm@<版本>`，与仓库既有做法一致。
+ *   这里把 `pnpm` 映射成 `corepack pnpm`：**版本不在本文件硬编码**，
+ *   由 corepack 读取 root package.json 的 `packageManager`（唯一真源）。
  */
-const PNPM_VERSION = '11.3.0';
 function resolveCmd(cmd) {
   if (cmd === 'pnpm') return 'corepack';
   return cmd;
 }
 function pnpmArgs(cmd) {
-  return cmd === 'pnpm' ? [`pnpm@${PNPM_VERSION}`] : [];
+  return cmd === 'pnpm' ? ['pnpm'] : [];
 }
 
 function diagnoseSpawnFailure(cmd, r) {
   if (r.error && r.error.code === 'ENOENT') {
-    const via = cmd === 'pnpm' ? `（已自动改用 corepack pnpm@${PNPM_VERSION}，仍找不到）` : '';
+    const via = cmd === 'pnpm' ? '（已自动改用 corepack pnpm，仍找不到）' : '';
     return `**命令找不到**：${cmd} ${via}`;
   }
   if (r.signal) return `被信号 ${r.signal} 终止`;

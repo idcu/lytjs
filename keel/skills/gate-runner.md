@@ -11,11 +11,11 @@ keywords: [门禁, gate.mjs, 快档, 慢档, nightly]
 ## 用法（单一真相源 `scripts/gate.mjs`）
 
 ```sh
-corepack pnpm@11.3.0 gate:list          # 有哪些门禁、哪一档、实测耗时
-corepack pnpm@11.3.0 gate --tier fast   # 快档：秒级，日常
-corepack pnpm@11.3.0 gate --tier slow   # 慢档：分钟级，发布前 / 定时
-corepack pnpm@11.3.0 gate build format:check   # 按名字跑
-corepack pnpm@11.3.0 gate --tier slow --dry    # 只打印命令
+corepack pnpm gate:list          # 有哪些门禁、哪一档、实测耗时
+corepack pnpm gate --tier fast   # 快档：秒级，日常
+corepack pnpm gate --tier slow   # 慢档：分钟级，发布前 / 定时
+corepack pnpm gate build format:check   # 按名字跑
+corepack pnpm gate --tier slow --dry    # 只打印命令
 ```
 
 ## 要点

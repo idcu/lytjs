@@ -10,12 +10,13 @@ keywords: [pnpm, corepack, shim, husky, commit]
 
 ## 做法
 
-1. 日常一律用 corepack 前缀：`corepack pnpm@11.3.0 <script>`；
+1. 日常一律用 corepack 前缀：`corepack pnpm <script>`（版本由 root package.json 的
+   `packageManager` 唯一声明）；
 2. husky 钩子会调裸 `pnpm` ⇒ 提交前造 shim 并注入 PATH：
 
    ```sh
    mkdir -p ~/.cache/pnpm-shim
-   printf '#!/bin/sh\nexec corepack pnpm@11.3.0 "$@"\n' > ~/.cache/pnpm-shim/pnpm
+   printf '#!/bin/sh\nexec corepack pnpm "$@"\n' > ~/.cache/pnpm-shim/pnpm
    chmod +x ~/.cache/pnpm-shim/pnpm
    PATH="$HOME/.cache/pnpm-shim:$PATH" git commit -F <msgfile>
    ```
