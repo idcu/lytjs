@@ -3,7 +3,7 @@ scope: verify
 status: active
 severity: P1
 last-verified: 2026-11-09
-triggers: 0
+triggers: 1
 keywords: [测试耦合, 内部实现, getBlockStackDepth, patchFlag, _instance, toContain, 产物字符串]
 ---
 
