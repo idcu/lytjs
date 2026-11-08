@@ -1250,8 +1250,8 @@ function processConditionalOptimized(
       const mv = getShortName('mountVNode', options.useShortNames ?? true);
       const cv = getShortName('createVNode', options.useShortNames ?? true);
       const frag = getShortName('Fragment', options.useShortNames ?? true);
-      // 先清空分支壳，再整体重建子树（v-for 源在 effect 内读取，变化即重跑）
-      code += `${ifVarName}El.textContent='';${mv}(${cv}(${frag},null,${mountChildren}),${ifVarName}El);`;
+      // mountVNode 内部会 clearHost，无需再手动清空
+      code += `${mv}(${cv}(${frag},null,${mountChildren}),${ifVarName}El);`;
     }
     code += `}`;
   }
@@ -2237,13 +2237,10 @@ export function serializeVNodeCallChildOptimized(
   options: SignalCodegenOptions,
   locals: ReadonlySet<string> = new Set(),
 ): string | null {
-  // v-for 产物（RENDER_LIST）→ 展开的 vnode 数组，供 v-if 分支子树挂载使用
+  // RENDER_LIST → vnode 数组（复用 serializeListVNodeOptimized）
   const call = child as { type?: number; callee?: unknown } | undefined;
   if (call?.type === NodeTypes.JS_CALL_EXPRESSION && call.callee === 'RENDER_LIST') {
-    return serializeListVNodeShared(child, locals, {
-      vnodeCall: (n, scope) => serializeVNodeCallOptimized(n, usedRuntime, options, scope),
-      srcExpr: (exp, scope) => prefixIdentifiers(exp, scope).replace(/\b_ctx\./g, '_c.'),
-    });
+    return serializeListVNodeOptimized(child, usedRuntime, options, locals);
   }
   return serializeVNodeCallChildShared(child, locals, {
     textVNode: (exp, scope) => {
