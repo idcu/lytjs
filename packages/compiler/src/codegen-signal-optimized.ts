@@ -1282,6 +1282,8 @@ function processCallExpressionOptimized(
     let createBody = '';
     let updateBody = '';
     let renderItem: VNodeCall | null = null;
+    /** `v-for` 与 `v-if` 同元素：renderItem 被 transform 包成条件表达式 */
+    let itemCondition: JSConditionalExpression | null = null;
 
     if (renderFn && typeof renderFn !== 'string' && !Array.isArray(renderFn)) {
       if (renderFn.type === NodeTypes.COMPOUND_EXPRESSION) {
@@ -1304,8 +1306,28 @@ function processCallExpressionOptimized(
         }
         itemLocals = new Set(itemParams);
         for (const child of compound.children) {
+          let vnode: VNodeCall | null = null;
           if (typeof child !== 'string' && child.type === NodeTypes.VNODE_CALL) {
-            const vnode = child as VNodeCall;
+            vnode = child as VNodeCall;
+          } else if (
+            typeof child !== 'string' &&
+            child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION
+          ) {
+            // `<p v-for v-if>`：条件包裹渲染项。旧实现只认 VNODE_CALL ⇒
+            // renderItem 为 null ⇒ create 回调返回 undefined ⇒ WeakMap 键非法
+            // （`Invalid value used as weak map key`）。
+            itemCondition = child as JSConditionalExpression;
+            const consequent = (child as JSConditionalExpression).consequent;
+            if (
+              consequent &&
+              typeof consequent === 'object' &&
+              !Array.isArray(consequent) &&
+              (consequent as { type?: number }).type === NodeTypes.VNODE_CALL
+            ) {
+              vnode = consequent as VNodeCall;
+            }
+          }
+          if (vnode) {
             renderItem = vnode;
 
             // 列表项是**组件**（tag 为裸标识符如 Row；元素的 tag 是带引号字符串 "li"）
@@ -1490,7 +1512,6 @@ function processCallExpressionOptimized(
         }
       }
     }
-
     // :key 优先取用户表达式；缺失时回退 item.id 并提示（与 codegen-signal 非优化版一致）
     keyExpr = extractItemKeyExpr(renderItem, itemLocals);
     if (!keyExpr) {
@@ -1511,9 +1532,17 @@ function processCallExpressionOptimized(
     const ra = getShortName('reconcileArray', options.useShortNames ?? true);
 
     const updatePart = updateBody ? `,update:(_el,${itemParams.join(',')})=>{${updateBody}}` : '';
+    // `v-for` 与 `v-if` 同元素：v-if 等同一项过滤（被隐藏项不创建 DOM，与 vnode 路径一致）。
+    let listCode = renderExpression(source);
+    if (itemCondition) {
+      const cond = getExpContent(itemCondition.test as SimpleExpressionNode);
+      if (cond) {
+        listCode = `(${listCode}).filter((${itemParams.join(',')})=>(${renderExpression(cond, itemLocals)}))`;
+      }
+    }
     dynamicBindings.push({
       varName: containerVar,
-      code: `${e}(()=>${ra}(${containerVar},${renderExpression(source)},{key:(${itemParams.join(',')})=>${keyExpr},create:(${itemParams.join(',')})=>{${createBody}}${updatePart}}));`,
+      code: `${e}(()=>${ra}(${containerVar},${listCode},{key:(${itemParams.join(',')})=>${keyExpr},create:(${itemParams.join(',')})=>{${createBody}}${updatePart}}));`,
     });
   }
 }

@@ -1079,6 +1079,46 @@
       },
       "expected": "<div><div><!----><span>x</span><!----></div><div><!----><span>y!</span><!----></div><div><!----><span>z</span><!----></div></div>",
       "expectedAfter": "<div><div><!----><span>x</span><!----></div><div><!----><span>y!</span><!----></div></div>"
+    },
+    {
+      "id": "lf03",
+      "group": "列表内嵌条件（v-for + v-if）",
+      "template": "<div><p v-for=\"it in list\" v-if=\"it.show\" :key=\"it.id\">{{it.name}}</p></div>",
+      "state": {
+        "list": [
+          { "id": 1, "show": true, "name": "a" },
+          { "id": 2, "show": false, "name": "b" },
+          { "id": 3, "show": true, "name": "c" }
+        ]
+      },
+      "update": {
+        "list": [
+          { "id": 1, "show": false, "name": "a" },
+          { "id": 2, "show": true, "name": "b" }
+        ]
+      },
+      "expected": "<div><p>a</p><p>c</p></div>",
+      "expectedAfter": "<div><p>b</p></div>"
+    },
+    {
+      "id": "lf03b",
+      "group": "列表内嵌条件（v-for + v-if）",
+      "template": "<div><template v-for=\"it in list\" v-if=\"it.show\" :key=\"it.id\"><span>{{it.name}}</span></template></div>",
+      "state": {
+        "list": [
+          { "id": 1, "show": true, "name": "a" },
+          { "id": 2, "show": false, "name": "b" },
+          { "id": 3, "show": true, "name": "c" }
+        ]
+      },
+      "update": {
+        "list": [
+          { "id": 1, "show": false, "name": "a" },
+          { "id": 2, "show": true, "name": "b" }
+        ]
+      },
+      "expected": "<div><div><!----><span>a</span><!----></div><div><!----><span>c</span><!----></div></div>",
+      "expectedAfter": "<div><div><!----><span>b</span><!----></div></div>"
     }
   ]
 }

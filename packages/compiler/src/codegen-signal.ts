@@ -1522,6 +1522,8 @@ function processCallExpression(
     let itemParams: string[] = ['item'];
     let itemLocals: ReadonlySet<string> = new Set(['item']);
     let renderItem: VNodeCall | null = null;
+    /** `v-for` 与 `v-if` 同元素：renderItem 被 transform 包成条件表达式 */
+    let itemCondition: JSConditionalExpression | null = null;
     if (renderFn && typeof renderFn !== 'string' && !Array.isArray(renderFn)) {
       if (renderFn.type === NodeTypes.COMPOUND_EXPRESSION) {
         const compound = renderFn as CompoundExpressionNode;
@@ -1539,6 +1541,23 @@ function processCallExpression(
             }
           } else if (typeof child !== 'string' && child.type === NodeTypes.VNODE_CALL) {
             renderItem = child as VNodeCall;
+          } else if (
+            typeof child !== 'string' &&
+            child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION
+          ) {
+            // `<p v-for v-if>`：条件包裹渲染项。旧实现只认 VNODE_CALL，
+            // renderItem 为 null ⇒ create 回调返回 undefined ⇒ WeakMap 键非法
+            // （`Invalid value used as weak map key`）。
+            itemCondition = child as JSConditionalExpression;
+            const consequent = (child as JSConditionalExpression).consequent;
+            if (
+              consequent &&
+              typeof consequent === 'object' &&
+              !Array.isArray(consequent) &&
+              (consequent as { type?: number }).type === NodeTypes.VNODE_CALL
+            ) {
+              renderItem = consequent as VNodeCall;
+            }
           }
         }
       }
@@ -1763,9 +1782,23 @@ function processCallExpression(
     // 是为 ul/li 列表 demo 特判，换任何根容器都会产出 ReferenceError。
     const containerVar = parentVar ?? BASE_EMIT_PROFILE.containerParam;
 
+    // `v-for` 与 `v-if` 同元素：v-if 等同一项过滤（被隐藏的项不创建 DOM，与 vnode 路径一致）。
+    // filter 回调拿 (item, index)，因此条件里引用索引形参也成立。
+    const sourceCode = prefixIdentifiers(source, locals);
+    let listCode = sourceCode;
+    if (itemCondition) {
+      const cond =
+        typeof itemCondition.test === 'string'
+          ? itemCondition.test
+          : getExpContent(itemCondition.test as SimpleExpressionNode);
+      if (cond) {
+        listCode = `(${sourceCode}).filter((${itemParams.join(', ')}) => (${prefixIdentifiers(cond, itemLocals)}))`;
+      }
+    }
+
     dynamicBindings.push({
       varName: containerVar,
-      code: `effect(() => {\n    reconcileArray(${containerVar}, ${prefixIdentifiers(source, locals)}, {\n      key: (${itemParams.join(', ')}) => ${keyExpr},\n      create: (${itemParams.join(', ')}) => {\n        ${createBody}\n      }${updateBody ? `,\n      update: (_el, ${itemParams.join(', ')}) => {\n        ${updateBody}\n      }` : ''}\n    });\n  });`,
+      code: `effect(() => {\n    reconcileArray(${containerVar}, ${listCode}, {\n      key: (${itemParams.join(', ')}) => ${keyExpr},\n      create: (${itemParams.join(', ')}) => {\n        ${createBody}\n      }${updateBody ? `,\n      update: (_el, ${itemParams.join(', ')}) => {\n        ${updateBody}\n      }` : ''}\n    });\n  });`,
     });
   }
 }

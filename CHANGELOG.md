@@ -33,6 +33,13 @@
   只剩 `<!---->`。现在子节点改走完整 vnode 序列化，内嵌条件与拼接文本都进 Fragment。
   新增 parity 语料 `lf02`（对象项条件）、`lf02b`（局部索引 + `v-else`）；
   负控回退后 parity 4 项红、快照 4 份红；恢复后全绿。
+- **`v-for` 与 `v-if` 同元素抛 `Invalid value used as weak map key`**：transform 把
+  renderItem 包成条件表达式，但列表分支只认 `VNODE_CALL` ⇒ `renderItem` 为 null ⇒
+  `create` 回调返回 `undefined` ⇒ `reconcileArray` 以 `undefined` 作 WeakMap 键。
+  现在识别条件包裹并取 consequent 的 vnode；`v-if` 等同一项过滤
+  （`source.filter((item, index) => cond)`，隐藏项不创建 DOM，与 vnode 路径一致）。
+  新增 parity 语料 `lf03`（元素）、`lf03b`（`template` 列表项）；
+  负控回退后 parity 4 项红、快照 4 份红；恢复后全绿。
 
 ### 🛠️ 编译器：signal 两套 profile 支持 `<template>` 片段（2026-11-08）
 
