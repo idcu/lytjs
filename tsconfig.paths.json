@@ -1,0 +1,115 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@lytjs/platform-adapter": ["packages/ecosystem/packages/platform-adapter/src/index.ts"],
+      "@lytjs/ui": ["packages/ecosystem/packages/ui/src/index.ts"],
+      "@lytjs/compat": ["packages/ecosystem/packages/compat/src/index.ts"],
+      "@lytjs/di": ["packages/ecosystem/packages/di/src/index.ts"],
+      "@lytjs/config": ["packages/ecosystem/packages/config/src/index.ts"],
+      "@lytjs/plugin": ["packages/ecosystem/packages/plugin/src/index.ts"],
+      "@lytjs/middleware": [
+        "packages/ecosystem/packages/web-framework/packages/middleware/src/index.ts"
+      ],
+      "@lytjs/http-server": [
+        "packages/ecosystem/packages/web-framework/packages/http-server/src/index.ts"
+      ],
+      "@lytjs/router-fs": [
+        "packages/ecosystem/packages/web-framework/packages/router-fs/src/index.ts"
+      ],
+      "@lytjs/middleware-auth": [
+        "packages/ecosystem/packages/web-framework/packages/middleware-auth/src/index.ts"
+      ],
+      "@lytjs/middleware-cors": [
+        "packages/ecosystem/packages/web-framework/packages/middleware-cors/src/index.ts"
+      ],
+      "@lytjs/middleware-rate-limit": [
+        "packages/ecosystem/packages/web-framework/packages/middleware-rate-limit/src/index.ts"
+      ],
+      "@lytjs/api": ["packages/ecosystem/packages/web-framework/packages/api/src/index.ts"],
+      "@lytjs/metadata": [
+        "packages/ecosystem/packages/web-framework/packages/metadata/src/index.ts"
+      ],
+      "@lytjs/router": ["packages/ecosystem/packages/web-framework/packages/router/src/index.ts"],
+      "@lytjs/devtools": ["packages/ecosystem/packages/devtools/src/index.ts"],
+      "@lytjs/cache": ["packages/ecosystem/packages/ssr-kit/packages/cache/src/index.ts"],
+      "@lytjs/html-renderer": [
+        "packages/ecosystem/packages/ssr-kit/packages/html-renderer/src/index.ts"
+      ],
+      "@lytjs/hmr": ["packages/ecosystem/packages/ssr-kit/packages/hmr/src/index.ts"],
+      "@lytjs/ssg": ["packages/ecosystem/packages/ssr-kit/packages/ssg/src/index.ts"],
+      "@lytjs/ssr": ["packages/ecosystem/packages/ssr-kit/packages/ssr/src/index.ts"],
+      "@lytjs/cache-isr": ["packages/ecosystem/packages/ssr-kit/packages/cache-isr/src/index.ts"],
+      "@lytjs/runtime-edge": ["packages/ecosystem/packages/runtime-edge/src/index.ts"],
+      "@lytjs/bundler": ["packages/ecosystem/packages/bundler/src/index.ts"],
+      "@lytjs/store": ["packages/ecosystem/packages/store/src/index.ts"],
+      "@lytjs/renderer": ["packages/renderer/src/index.ts"],
+      "@lytjs/host-contract": ["packages/host-contract/src/index.ts"],
+      "@lytjs/test-utils": ["packages/tools/packages/test-utils/src/index.ts"],
+      "@lytjs/cli": ["packages/tools/packages/cli/src/index.ts"],
+      "@lytjs/devtools-extension": ["packages/tools/packages/devtools/src/index.ts"],
+      "@lytjs/core": ["packages/core/src/index.ts"],
+      "@lytjs/shared-types": ["packages/shared-types/src/index.ts"],
+      "@lytjs/core-signal": ["packages/core-signal/src/index.ts"],
+      "@lytjs/web": ["packages/web/src/index.ts"],
+      "@lytjs/component": ["packages/component/src/index.ts"],
+      "@lytjs/adapter-web": ["packages/adapter-web/src/index.ts"],
+      "@lytjs/dom-runtime": ["packages/dom-runtime/src/index.ts"],
+      "@lytjs/common-validate": ["packages/common/packages/validate/src/index.ts"],
+      "@lytjs/common-warn": ["packages/common/packages/warn/src/index.ts"],
+      "@lytjs/common-memory": ["packages/common/packages/memory/src/index.ts"],
+      "@lytjs/common-render-queue": ["packages/common/packages/render-queue/src/index.ts"],
+      "@lytjs/common-cache": ["packages/common/packages/cache/src/index.ts"],
+      "@lytjs/common-dom-helpers": ["packages/common/packages/dom-helpers/src/index.ts"],
+      "@lytjs/common-security": ["packages/common/packages/security/src/index.ts"],
+      "@lytjs/common-constants": ["packages/common/packages/constants/src/index.ts"],
+      "@lytjs/common-path": ["packages/common/packages/path/src/index.ts"],
+      "@lytjs/common-is": ["packages/common/packages/is/src/index.ts"],
+      "@lytjs/common-transition-engine": [
+        "packages/common/packages/transition-engine/src/index.ts"
+      ],
+      "@lytjs/common-vnode": ["packages/common/packages/vnode/src/index.ts"],
+      "@lytjs/common-scheduler": ["packages/common/packages/scheduler/src/index.ts"],
+      "@lytjs/common-raf": ["packages/common/packages/raf/src/index.ts"],
+      "@lytjs/common-assertions": ["packages/common/packages/assertions/src/index.ts"],
+      "@lytjs/common-algorithm": ["packages/common/packages/algorithm/src/index.ts"],
+      "@lytjs/common-storage": ["packages/common/packages/storage/src/index.ts"],
+      "@lytjs/common-env": ["packages/common/packages/env/src/index.ts"],
+      "@lytjs/common-timing": ["packages/common/packages/timing/src/index.ts"],
+      "@lytjs/common-node-cache": ["packages/common/packages/node-cache/src/index.ts"],
+      "@lytjs/common": ["packages/common/packages/common/src/index.ts"],
+      "@lytjs/common-object": ["packages/common/packages/object/src/index.ts"],
+      "@lytjs/common-http": ["packages/common/packages/http/src/index.ts"],
+      "@lytjs/common-async-scheduler": ["packages/common/packages/async-scheduler/src/index.ts"],
+      "@lytjs/common-dom": ["packages/common/packages/dom/src/index.ts"],
+      "@lytjs/common-a11y": ["packages/common/packages/a11y/src/index.ts"],
+      "@lytjs/common-string": ["packages/common/packages/string/src/index.ts"],
+      "@lytjs/common-event-normalizer": ["packages/common/packages/event-normalizer/src/index.ts"],
+      "@lytjs/common-events": ["packages/common/packages/events/src/index.ts"],
+      "@lytjs/common-performance": ["packages/common/packages/performance/src/index.ts"],
+      "@lytjs/common-query": ["packages/common/packages/query/src/index.ts"],
+      "@lytjs/common-error": ["packages/common/packages/error/src/index.ts"],
+      "@lytjs/common-rate-limit": ["packages/common/packages/rate-limit/src/index.ts"],
+      "@lytjs/common-keyboard": ["packages/common/packages/keyboard/src/index.ts"],
+      "@lytjs/reactivity": ["packages/reactivity/src/index.ts"],
+      "@lytjs/core-vnode": ["packages/core-vnode/src/index.ts"],
+      "@lytjs/dom": ["packages/dom/src/index.ts"],
+      "@lytjs/compiler": ["packages/compiler/src/index.ts"],
+      "@lytjs/vdom": ["packages/vdom/src/index.ts"],
+      "@lytjs/compiler/sfc": ["packages/compiler/src/sfc/index.ts"],
+      "@lytjs/compiler/signal": ["packages/compiler/src/signal.ts"],
+      "@lytjs/compiler/ssr": ["packages/compiler/src/ssr.ts"],
+      "@lytjs/compiler/wasm": ["packages/compiler/src/wasm/index.ts"],
+      "@lytjs/core-vnode/composition": ["packages/core-vnode/src/composition.ts"],
+      "@lytjs/core-vnode/directives": ["packages/core-vnode/src/directives.ts"],
+      "@lytjs/core-vnode/h": ["packages/core-vnode/src/h.ts"],
+      "@lytjs/core-vnode/lifecycle": ["packages/core-vnode/src/lifecycle.ts"],
+      "@lytjs/core/runtime": ["packages/core/src/runtime.ts"],
+      "@lytjs/renderer/signal": ["packages/renderer/src/signal/index.ts"],
+      "@lytjs/vdom/diff": ["packages/vdom/src/diff.ts"],
+      "@lytjs/reactivity/*": ["packages/reactivity/src/*"],
+      "@lytjs/core-vnode/*": ["packages/core-vnode/src/*"],
+      "@lytjs/core-signal/*": ["packages/core-signal/src/*"]
+    }
+  }
+}

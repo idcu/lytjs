@@ -2,28 +2,13 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
     "composite": false,
     "incremental": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noUncheckedIndexedAccess": false,
     "isolatedModules": false,
-    "verbatimModuleSyntax": false,
-    "baseUrl": ".",
-    "paths": {
-      "@lytjs/shared-types": ["../shared-types/dist/index.d.ts"],
-      "@lytjs/di": ["../ecosystem/packages/di/dist/index.d.ts"],
-      "@lytjs/reactivity": ["../reactivity/dist/index.d.ts"],
-      "@lytjs/reactivity/scope": ["../reactivity/dist/scope.d.ts"],
-      "@lytjs/reactivity/async": ["../reactivity/dist/async.d.ts"],
-      "@lytjs/vdom": ["../vdom/dist/index.d.ts"],
-      "@lytjs/common-vnode": ["../common/packages/vnode/dist/index.d.ts"],
-      "@lytjs/common-is": ["../common/packages/is/dist/index.d.ts"],
-      "@lytjs/common-scheduler": ["../common/packages/scheduler/dist/index.d.ts"],
-      "@lytjs/common-error": ["../common/packages/error/dist/index.d.ts"],
-      "@lytjs/common-string": ["../common/packages/string/dist/index.d.ts"]
-    }
+    "verbatimModuleSyntax": false
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "tests"]

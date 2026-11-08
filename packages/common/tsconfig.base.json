@@ -1,4 +1,5 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "target": "ES2020",
     "module": "ESNext",
@@ -20,27 +21,7 @@
     "exactOptionalPropertyTypes": false,
     "composite": true,
     "incremental": true,
-    "tsBuildInfoFile": "./dist/.tsbuildinfo",
-    "baseUrl": ".",
-    "paths": {
-      "@lytjs/common-constants": ["./packages/constants/src"],
-      "@lytjs/common-env": ["./packages/env/src"],
-      "@lytjs/common-is": ["./packages/is/src"],
-      "@lytjs/common-string": ["./packages/string/src"],
-      "@lytjs/common-security": ["./packages/security/src"],
-      "@lytjs/common-path": ["./packages/path/src"],
-      "@lytjs/common-events": ["./packages/events/src"],
-      "@lytjs/common-cache": ["./packages/cache/src"],
-      "@lytjs/common-timing": ["./packages/timing/src"],
-      "@lytjs/common-algorithm": ["./packages/algorithm/src"],
-      "@lytjs/common-vnode": ["./packages/vnode/src"],
-      "@lytjs/common-error": ["./packages/error/src"],
-      "@lytjs/common-object": ["./packages/object/src"],
-      "@lytjs/common-scheduler": ["./packages/scheduler/src"],
-      "@lytjs/common-http": ["./packages/http/src"],
-      "@lytjs/common-raf": ["./packages/raf/src"],
-      "@lytjs/common": ["./packages/common/src"]
-    }
+    "tsBuildInfoFile": "./dist/.tsbuildinfo"
   },
   "exclude": ["node_modules", "dist", "**/tests"]
 }

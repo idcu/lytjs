@@ -1,16 +1,7 @@
 {
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "./dist",
-    "baseUrl": ".",
-    "paths": {
-      "@lytjs/common-is": ["../../../common/packages/is/dist/index.d.ts"],
-      "@lytjs/common-a11y": ["../../../common/packages/a11y/dist/index.d.ts"],
-      "@lytjs/component": ["../../../component/dist/index.d.ts"],
-      "@lytjs/core/runtime": ["../../../core/dist/runtime.d.ts"],
-      "@lytjs/renderer": ["../../../renderer/dist/index.d.ts"],
-      "@lytjs/renderer/vapor": ["../../../renderer/dist/vapor/vapor-app.d.ts"]
-    }
+    "outDir": "./dist"
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "tests"]

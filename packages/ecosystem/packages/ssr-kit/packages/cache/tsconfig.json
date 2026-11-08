@@ -1,9 +1,10 @@
 {
+  "extends": "../../../../../../tsconfig.paths.json",
   "compilerOptions": {
     "target": "ES2020",
     "module": "ESNext",
     "moduleResolution": "node",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": ["ES2020", "DOM", "DOM.Iterable", "ES2022.Error"],
     "strict": true,
     "declaration": true,
     "declarationMap": true,
@@ -14,9 +15,9 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "outDir": "./dist",
-    "rootDir": "./src",
     "downlevelIteration": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+  "exclude": ["node_modules", "dist", "**/*.test.ts"],
+  "files": ["../../../../../../env.d.ts"]
 }

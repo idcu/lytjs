@@ -70,6 +70,7 @@ export const sharedAliases: Record<string, string> = {
   '@lytjs/adapter-web': resolve(root, 'packages/adapter-web/src'),
   '@lytjs/dom-runtime': resolve(root, 'packages/dom-runtime/src'),
   '@lytjs/dom': resolve(root, 'packages/dom/src'),
+  '@lytjs/di': resolve(root, 'packages/ecosystem/packages/di/src'),
 };
 
 export const sharedDefine = {

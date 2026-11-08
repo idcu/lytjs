@@ -603,9 +603,6 @@ function hydrateChildVNode(
   if (typeof type === 'string') {
     const tag = type.toLowerCase();
 
-    // FIX: P2-34 缓存 vnodeToSimpleHTML 结果到局部变量，避免重复调用
-    const _vnodeHtml = vnodeToSimpleHTML(vnode);
-
     if (domIndex < existingChildren.length) {
       const existingNode = existingChildren[domIndex];
       if (!existingNode) {
@@ -838,67 +835,6 @@ function createElementFromVNode(vnode: VNode): Element | null {
   }
 
   return el;
-}
-
-/**
- * 简单的 vnode 转 HTML 转换器，用于 Island hydration。
- * 处理基本元素、文本、Fragment 和注释。
- */
-function vnodeToSimpleHTML(vnode: VNode): string {
-  const { type, children } = vnode;
-
-  // 处理 Fragment：渲染每个子节点
-  if (type === Fragment) {
-    if (isArray(children)) {
-      return children.map((child) => (child != null ? vnodeToSimpleHTML(child) : '')).join('');
-    }
-    return '';
-  }
-
-  // 处理 Text vnode
-  if (type === Text) {
-    const text = isString(children) ? children : String(children ?? '');
-    return escapeHtml(text);
-  }
-
-  // 处理 Element vnode
-  if (typeof type === 'string') {
-    const props = vnode.props ?? {};
-    let attrs = '';
-    for (const key in props) {
-      if (key === 'key' || key === 'ref') continue;
-      const value = props[key];
-      if (typeof value === 'boolean' && value) {
-        attrs += ` ${key}`;
-      } else if (value != null && value !== '') {
-        attrs += ` ${key}="${escapeHtml(String(value))}"`;
-      }
-    }
-
-    const tag = type;
-
-    // 渲染子节点
-    let childContent = '';
-    if (children != null) {
-      if (isString(children)) {
-        childContent = escapeHtml(children);
-      } else if (isArray(children)) {
-        childContent = children
-          .map((child) => (child != null ? vnodeToSimpleHTML(child as VNode) : ''))
-          .join('');
-      } else if (typeof children === 'object' && 'type' in (children as object)) {
-        // 单个 VNode 子节点
-        // FIX: P2-batch2-2 添加运行时类型检查，避免不安全的类型断言
-        if (children != null && typeof children === 'object' && 'type' in children) {
-          childContent = vnodeToSimpleHTML(children as unknown as VNode);
-        }
-      }
-    }
-
-    return `<${tag}${attrs}>${childContent}</${tag}>`;
-  }
-
-  return '';
 }
 
 /**

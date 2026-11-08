@@ -1,13 +1,7 @@
 {
   "extends": "../../../../../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "./dist",
-    "baseUrl": ".",
-    "paths": {
-      "@lytjs/middleware": ["../middleware/dist/index.d.ts"],
-      "@lytjs/common-rate-limit": ["../../../../../../common/packages/rate-limit/dist/index.d.ts"],
-      "@lytjs/shared-types": ["../../../../../../shared-types/dist/index.d.ts"]
-    }
+    "outDir": "./dist"
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]

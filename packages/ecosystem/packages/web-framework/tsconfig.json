@@ -1,16 +1,27 @@
 {
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": ".",
     "outDir": "dist"
   },
   "include": ["packages/*/src/**/*", "src/**/*"],
   "references": [
-    { "path": "packages/middleware" },
-    { "path": "packages/middleware-cors" },
-    { "path": "packages/middleware-auth" },
-    { "path": "packages/middleware-rate-limit" },
-    { "path": "packages/http-server" },
-    { "path": "packages/metadata" }
+    {
+      "path": "packages/middleware"
+    },
+    {
+      "path": "packages/middleware-cors"
+    },
+    {
+      "path": "packages/middleware-auth"
+    },
+    {
+      "path": "packages/middleware-rate-limit"
+    },
+    {
+      "path": "packages/http-server"
+    },
+    {
+      "path": "packages/metadata"
+    }
   ]
 }

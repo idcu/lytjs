@@ -198,33 +198,6 @@ export function createSignalRenderer(
 // ============================================================
 
 /**
- * 渲染函数参数接口
- * 定义所有传递给 render 函数的依赖项
- */
-// FIX: DTS build error - 未使用的声明
-interface _RenderParams {
-  effect: unknown;
-  reconcileArray: unknown;
-  createTemplate: unknown;
-  setText: unknown;
-  setHTML: (el: Element, value: string) => void;
-  setAttribute: unknown;
-  setProperty: unknown;
-  setStyle: unknown;
-  setClass: unknown;
-  insert: unknown;
-  remove: unknown;
-  createEventHandler: unknown;
-  onCleanup: unknown;
-  runCleanups: unknown;
-  mountComponent: unknown;
-  createVNode: unknown;
-  Text: unknown;
-  _ctx: Record<string, unknown>;
-  _container: Element;
-}
-
-/**
  * 创建 CSP 兼容的渲染函数包装器
  *
  * 这是本文件唯一使用 new Function() 的位置（严格 CSP 下会直接抛错）。
