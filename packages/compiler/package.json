@@ -12,6 +12,11 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
+    "./sfc": {
+      "types": "./dist/sfc.d.ts",
+      "import": "./dist/sfc.mjs",
+      "require": "./dist/sfc.cjs"
+    },
     "./signal": {
       "types": "./dist/signal.d.ts",
       "import": "./dist/signal.mjs",
@@ -21,11 +26,6 @@
       "types": "./dist/ssr.d.ts",
       "import": "./dist/ssr.mjs",
       "require": "./dist/ssr.cjs"
-    },
-    "./sfc": {
-      "types": "./dist/sfc.d.ts",
-      "import": "./dist/sfc.mjs",
-      "require": "./dist/sfc.cjs"
     },
     "./wasm": {
       "types": "./dist/wasm.d.ts",

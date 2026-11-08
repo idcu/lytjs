@@ -12,20 +12,20 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
-    "./h": {
-      "types": "./dist/h.d.ts",
-      "import": "./dist/h.mjs",
-      "require": "./dist/h.cjs"
+    "./composition": {
+      "types": "./dist/composition.d.ts",
+      "import": "./dist/composition.mjs",
+      "require": "./dist/composition.cjs"
     },
     "./directives": {
       "types": "./dist/directives.d.ts",
       "import": "./dist/directives.mjs",
       "require": "./dist/directives.cjs"
     },
-    "./composition": {
-      "types": "./dist/composition.d.ts",
-      "import": "./dist/composition.mjs",
-      "require": "./dist/composition.cjs"
+    "./h": {
+      "types": "./dist/h.d.ts",
+      "import": "./dist/h.mjs",
+      "require": "./dist/h.cjs"
     },
     "./lifecycle": {
       "types": "./dist/lifecycle.d.ts",
