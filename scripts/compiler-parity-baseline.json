@@ -6,8 +6,8 @@
     "expectedMismatch": []
   },
   "modeParity": {
-    "$comment": "vnode / SSR 产物执行冒烟中**已知**抛错的模板（B01a 起纳入棘轮，只允许减少）。ssrThrows 的 5 条均为动态组件名整段表达式引用了未注入的 comp。",
+    "$comment": "vnode / SSR 产物执行冒烟中**已知**抛错的模板（B01a 起纳入棘轮，只允许减少）。2026-11-09（S27）：SSR codegen 对 kebab 组件名改用方括号（`_ctx[\"my-comp\"]`），原 5 条（cp02/cp06/cp09/kb02/kb03，此前被当成 `_ctx.my - comp`）已不再抛错，基线清空。",
     "vnodeThrows": [],
-    "ssrThrows": ["cp02", "cp06", "cp09", "kb02", "kb03"]
+    "ssrThrows": []
   }
 }

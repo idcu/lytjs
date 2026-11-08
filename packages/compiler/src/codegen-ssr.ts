@@ -274,7 +274,11 @@ function genSSRChildren(children: TemplateChildNode[]): string {
  * 默认插槽即组件的 children（具名/作用域插槽见方案 4.3，后续补）。
  */
 function genSSRComponent(element: ElementNode): string {
-  const compExpr = `_ctx.${element.tag}`;
+  // 简单标识符可直接点取；含连字符的 kebab 组件名必须用方括号，
+  // 否则 `_ctx.my-comp` 会被当成 `_ctx.my - comp`（SSR 执行期 ReferenceError）。
+  const compExpr = /^[A-Za-z_$][\w$]*$/.test(element.tag)
+    ? `_ctx.${element.tag}`
+    : `_ctx[${JSON.stringify(element.tag)}]`;
 
   const propsParts: string[] = [];
   for (const prop of element.props) {
