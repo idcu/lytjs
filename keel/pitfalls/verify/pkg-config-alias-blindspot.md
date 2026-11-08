@@ -24,3 +24,7 @@ keywords: [单包测试, vitest alias, dist, 身份对拍, 假红, core-vnode]
 - 跨包身份 / 生命周期对拍用**根配置**（根 alias 全指 src），单包配置只跑包内断言；
 - 单包测试报红先 `git stash` 复跑基线，区分「既有噪声」与「本次引入」；
 - 修配置属另一类改动，不要为了让它绿而放宽 `toBe` 断言。
+
+## 已修（S31）
+
+core 改 `mergeConfig(根配置,…)`；storage 补根 `setupFiles`（Node≥26 空 localStorage 顶掉 jsdom）；54 份单包配置复跑全绿。

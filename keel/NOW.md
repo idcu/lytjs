@@ -3,27 +3,29 @@ scope: now
 status: active
 last-verified: 2026-11-09
 updated: 2026-11-09
-keywords: [S29, 死代码, _instance, 死注册, 双名导出, deprecated]
+keywords: [S29, S31, 单包测试, vitest alias, setupFiles]
 ---
 
 # NOW · main
 
 ## 当前焦点
-- **S29 死代码与注释矛盾清理**已完成：d51eea43 / ba75eaa4 / aff7cec1 / 2432dd70。
-  - `ctx._instance`：core 与 core-vnode 双包字段/赋值/断言全删，全仓零读取点。
-  - renderList 非整数注释按实现订正（1.5 ⇒ 2 项、2.5 ⇒ 3 项）。
-  - `builtInDirectiveTransforms` 未接入 compile 管线，删除并同步两处测试传参。
-  - `createVaporRenderer` / `VaporRenderer` 在 API 快照内 ⇒ 保留并标 deprecated，8.0.0 移除。
-- **实测**：fast 56/56；受影响五包（core/core-vnode/vdom/compiler/renderer）184 文件 / 3796 用例全绿；
-  API 39/1961；signal 115×2、parity 115/115 未动；dist 已重建。
-- **基线噪声**：单包 `--filter` 跑 core 时 `@lytjs/core-vnode` 未 alias 到 src，身份对拍假红；
-  根配置全绿。见 [pkg-alias](pitfalls/verify/pkg-config-alias-blindspot.md)。
+- **S31 单包测试配置假红**已修：3fa3fdc2（core alias）、5d9c48dc（storage setup）。
+  - core：单包配置自带 dist 别名且缺 `@lytjs/core-vnode` / `core-signal` ⇒ 3 身份对拍
+    + 2 DEV 告警假红；改为 `mergeConfig` 根配置，不再维护第二份别名表。
+  - storage：缺根 `setupFiles`，Node ≥26 空 localStorage 顶掉 jsdom ⇒ 2 用例假红；补齐。
+  - 审计 54 份配置 / 219 条 alias：53 份单包矩阵（除 core）51 绿 1 红（storage），
+    修复后 54/54 单包绿。
+  - 另有 30 份仍指 dist、22 份无 alias，当前不假红，属潜在 stale-dist 风险（未批量改）。
+- **S29 已完成**（d51eea43 / ba75eaa4 / aff7cec1 / 2432dd70）：`_instance`、renderList
+  注释、死注册、双名导出标 deprecated（8.0.0 移除）。
+- **实测**：`pnpm test` 411 文件 / 8769 用例全绿；core 单包 828 全绿；fast 56/56；
+  API 39/1961；signal 115×2、parity 115/115 未动。
 - B01d 仍延后。
 
 ## 下一步
-1. 8.0.0 窗口删除 `createVaporRenderer` / `VaporRenderer` 双名导出。
-2. compiler 余量代码/产物字符串断言分批行为化。
-3. 0023 死包删除等 8.0.0 窗口。
+1. 8.0.0 窗口删除 `createVaporRenderer` / `VaporRenderer`。
+2. 30 份 dist 别名单包配置是否批量对齐 src，待裁决（当前无假红）。
+3. compiler 余量断言行为化；0023 死包删除等 8.0.0。
 
 ## 阻塞
 - 覆盖率并发/safe-delete → 单包复核/reportsDirectory。
