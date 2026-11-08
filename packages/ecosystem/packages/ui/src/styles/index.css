@@ -355,6 +355,15 @@
   flex: 1;
   position: relative;
 }
+.lyt-form-item--error .lyt-form-item__label {
+  color: var(--lyt-color-danger);
+}
+.lyt-form-item__error {
+  padding-top: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--lyt-color-danger);
+}
 
 /* ===== Transition 组件 ===== */
 .fade-transition {

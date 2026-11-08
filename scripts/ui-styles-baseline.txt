@@ -65,8 +65,6 @@ Descriptions → lyt-descriptions-item__label
 Descriptions → lyt-descriptions__body
 Descriptions → lyt-descriptions__body--vertical
 Descriptions → lyt-descriptions__header
-Form → lyt-form-item--error
-Form → lyt-form-item__error
 Image → lyt-image-preview
 Image → lyt-image-preview-trigger
 Input → lyt-input--disabled
