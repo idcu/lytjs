@@ -982,8 +982,8 @@
       "update": {
         "inner": false
       },
-      "expected": "<div><p>A<span data-lyt-if=\"1\" style=\"display:contents\"><span>N</span></span></p></div>",
-      "expectedAfter": "<div><p>A<span data-lyt-if=\"1\" style=\"display:contents\"></span></p></div>"
+      "expected": "<div><p>A<!--lyt-if--><span>N</span><!--lyt-if--></p></div>",
+      "expectedAfter": "<div><p>A<!--lyt-if--><!--lyt-if--></p></div>"
     },
     {
       "id": "cf02b",
@@ -996,8 +996,8 @@
       "update": {
         "inner": false
       },
-      "expected": "<div><p>A<span data-lyt-if=\"1\" style=\"display:contents\"><span>N</span></span></p></div>",
-      "expectedAfter": "<div><p>A<span data-lyt-if=\"1\" style=\"display:contents\"><span>M</span></span></p></div>"
+      "expected": "<div><p>A<!--lyt-if--><span>N</span><!--lyt-if--></p></div>",
+      "expectedAfter": "<div><p>A<!--lyt-if--><span>M</span><!--lyt-if--></p></div>"
     },
     {
       "id": "cf02c",
@@ -1012,8 +1012,8 @@
       "update": {
         "msg": "Q"
       },
-      "expected": "<div><p>A<span data-lyt-if=\"1\" style=\"display:contents\"><span id=\"x\">N</span></span>Z</p></div>",
-      "expectedAfter": "<div><p>A<span data-lyt-if=\"1\" style=\"display:contents\"><span id=\"x\">Q</span></span>Z</p></div>"
+      "expected": "<div><p>A<!--lyt-if--><span id=\"x\">N</span><!--lyt-if-->Z</p></div>",
+      "expectedAfter": "<div><p>A<!--lyt-if--><span id=\"x\">Q</span><!--lyt-if-->Z</p></div>"
     },
     {
       "id": "lf01",

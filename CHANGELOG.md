@@ -22,7 +22,32 @@
   「首尾注释锚点 + 内容」；新增 `lv01`（`template v-for` 键控重排，含 `expectedAfter`），
   其 signal 快照与 vnode/SSR 快照为新增条目。除上述 4 条外，其余既有条目逐字不变。
 - **负控**：回退上述 codegen 改动后 parity 10 项红（5 条语料 × 2 profile）、
-  signal 快照红；恢复后全绿。
+  signal 快照 10 处红；恢复后全绿。
+- **`v-if` 分支内嵌条件的 `<span data-lyt-if style="display:contents">` 改为一对注释锚点**
+  （`<!--lyt-if-->`）：分支内嵌的 `v-if/v-else` 此前必须留一个元素占位，因为
+  `mountVNode()` 需要一个可清空的宿主、动态定位又依赖 `querySelectorAll('*')` 的元素序号。
+  现在改为「注释锚点对 + 临时 `DocumentFragment`」：用 `TreeWalker`（`SHOW_COMMENT=128`）
+  定位第 k 对锚点，清空两锚点之间的内容，把选中分支的 vnode 挂进临时 fragment 后
+  插到结束锚点之前；内嵌条件不再占用元素序号，`querySelectorAll('*')` 的元素索引保持对齐。
+  代价是 `childNodes` 里仍多出两个注释（与 vnode 路径 Fragment 的注释锚点同类），
+  但**元素层级与 vnode 完全一致**。
+- **用户可见影响**：分支内嵌 `v-if` 不再往 `:first-child`、`:nth-child`、`> *`、
+  `children.length`、`querySelectorAll('*')` 的结果里插入占位 `span`；仅
+  `childNodes`/`children` 之外的全节点遍历会看到两个空注释。
+- **快照点名**（既有条目）：`cf02`、`cf02b`、`cf02c` 的 `expected` / `expectedAfter`
+  与 signal 快照（base + opt 各一份）由 `A<span data-lyt-if="1" style="display:contents">
+  …</span>` 变为 `A<!--lyt-if-->…<!--lyt-if-->`，共 6 处；其余条目逐字不变。
+- **负控**：回退注释锚点改动后 parity 6 项红（3 条语料 × 2 profile）、
+  signal 快照 6 处红；恢复后全绿。
+- **为压回首屏体积预算做的等价压缩**（不改 DOM）：`template v-for` 的 Fragment
+  挂载/更新字面量抽到 `codegen-signal-shared.ts`（base/opt 共用一份，产物等价）；
+  `Array.from(x.childNodes)` 改 `[...x.childNodes]`、更新体去掉 `_n` 中转直接
+  `_s.nextSibling`、条件锚点对空值挂载改由 `mountVNode` 自身的空值早返回承担
+  （不再生成 `_v` 临时变量）。首屏实测 **75144 B → 75015 B**（预算 75038 B =
+  基线 73567 B × 1.02），**未上调基线、未写决策记录**。
+- **快照点名（等价压缩）**：`tf02`、`lf02`、`lf02b`、`lf03b`、`lv01` 的 signal
+  快照（base + opt 各一份）文本随上述压缩变化，共 10 处；渲染 DOM 逐字不变。
+  这是 item1 提交时未压缩文本的等价重写，不是新的行为差异。
 
 ### 🛠️ 编译器：signal 条件/列表正确性修复（vnode 为验收基准，2026-11-08）
 

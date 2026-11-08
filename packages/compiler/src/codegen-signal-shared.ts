@@ -33,13 +33,61 @@ import type {
 export const TEXT_SLOT_COMMENT = '<!--lyt-t-->';
 
 /**
- * 分支内嵌 `v-if` 的静态挂载点。
+ * 分支内嵌条件的锚点：一对空注释。
  *
- * 分支 HTML 是静态串，内嵌条件无法静态确定走向 ⇒ 先留一个**元素**占位，
- * 运行期把选中的分支 vnode 挂进去。`display:contents` 让占位元素不参与布局，
- * 与 `<template>` 分支的 Fragment 容器同一套约定。
+ * 注释不是元素，因此分支内嵌 `v-if` 不会在渲染结果里多出任何元素层级
+ *（此前用 `<span data-lyt-if style="display:contents">` 承载，会污染 `:first-child`、
+ * `> *`、`children` 等选择器语义）。运行期把选中的分支 vnode 插到这对锚点之间。
  */
-export const CONDITIONAL_HOST_HTML = '<span data-lyt-if="1" style="display:contents"></span>';
+export const CONDITIONAL_HOST_HTML = '<!--lyt-if--><!--lyt-if-->';
+
+/**
+ * 生成「注释锚点对之间替换内容」的运行期语句（base / opt 共用，字面量只占一份）。
+ *
+ * 用 `TreeWalker`（128 = `SHOW_COMMENT`）定位第 `markerIndex` 对锚点，清空两锚点
+ * 之间的旧内容，把选中分支的 vnode 挂进临时 `DocumentFragment` 后插到结束锚点之前。
+ * `expr` 为假时只清空（等价于条件不成立）。
+ */
+export function buildConditionalAnchorOp(
+  rootVar: string,
+  markerIndex: number,
+  expr: string,
+  mountFn: string,
+): string {
+  const k = markerIndex * 2;
+  return (
+    `{const _w=document.createTreeWalker(${rootVar},128),_t=document.createDocumentFragment();let _n,_s,_e,_i=-1;` +
+    `while(_n=_w.nextNode())if(_n.data=='lyt-if'&&++_i>=${k}){_e=_n;if(_i>${k})break;_s=_n}` +
+    `if(_s&&_e){const _p=_e.parentNode;while(_s.nextSibling!=_e)_p.removeChild(_s.nextSibling);` +
+    `${mountFn}(${expr},_t);_p.insertBefore(_t,_e)}}`
+  );
+}
+
+/**
+ * `template v-for` 每项的创建体：挂进临时 `DocumentFragment`，把 Fragment 自身的
+ * 子节点整组返回（首尾是 Fragment 的注释锚点），**不产生元素包裹**。
+ * base / opt 共用同一份字面量，产物逐字相同。
+ */
+export function buildFragmentMountCreate(fragVar: string, mountFn: string): string {
+  return (
+    `const _fragHost=document.createDocumentFragment();` +
+    `${mountFn}(${fragVar},_fragHost);return [..._fragHost.childNodes]`
+  );
+}
+
+/**
+ * `template v-for` 每项的更新体：保留首尾锚点，只替换两者之间的内容。
+ * 新 Fragment 挂进临时 fragment 后跳过它自己的一对新锚点，只搬运中间节点。
+ */
+export function buildFragmentMountUpdate(fragVar: string, mountFn: string): string {
+  return (
+    `{const _s=_el[0],_e=_el[_el.length-1],_p=_e.parentNode,_t=document.createDocumentFragment();` +
+    `while(_s.nextSibling!=_e)_p.removeChild(_s.nextSibling);` +
+    `${mountFn}(${fragVar},_t);let _c=_t.firstChild.nextSibling;const _g=[_s];` +
+    `while(_c&&_c!=_t.lastChild){const _x=_c.nextSibling;_p.insertBefore(_c,_e);_g.push(_c);_c=_x}` +
+    `_g.push(_e);return _g}`
+  );
+}
 
 /**
  * 发射器输出形态（B01d-1）。

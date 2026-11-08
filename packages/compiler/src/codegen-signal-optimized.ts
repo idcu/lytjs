@@ -23,6 +23,9 @@ import {
   buildStaticHtml as buildStaticHtmlShared,
   serializeStaticHtml as serializeStaticHtmlShared,
   serializeBranchHtml as serializeBranchHtmlShared,
+  buildConditionalAnchorOp,
+  buildFragmentMountCreate,
+  buildFragmentMountUpdate,
   getStaticAttr,
   getStaticClass,
   createSimpleExpressionFor,
@@ -1366,19 +1369,12 @@ function processCallExpressionOptimized(
                   options,
                   itemLocals,
                 );
-                const fragHost = '_fragHost';
                 const frag = `${cv}(${fg},null,${kidsCode ?? 'null'})`;
                 const mv = getShortName('mountVNode', options.useShortNames ?? true);
                 // 每项不产生元素包裹：挂进 DocumentFragment 后返回 Fragment 自身子节点
                 // （首尾是运行时 Fragment 的注释锚点），DOM 层级与 vnode 路径一致。
-                createBody = `const ${fragHost}=document.createDocumentFragment();${mv}(${frag},${fragHost});return Array.from(${fragHost}.childNodes);`;
-                updateBody =
-                  `{const _s=_el[0],_e=_el[_el.length-1],_p=_e.parentNode;` +
-                  `let _n=_s.nextSibling;while(_n&&_n!==_e){const _x=_n.nextSibling;_p.removeChild(_n);_n=_x;}` +
-                  `const _t=document.createDocumentFragment();${mv}(${frag},_t);` +
-                  `let _c=_t.firstChild;if(_c)_c=_c.nextSibling;const _g=[_s];` +
-                  `while(_c&&_c!==_t.lastChild){const _x=_c.nextSibling;_p.insertBefore(_c,_e);_g.push(_c);_c=_x;}` +
-                  `_g.push(_e);return _g;}`;
+                createBody = buildFragmentMountCreate(frag, mv);
+                updateBody = buildFragmentMountUpdate(frag, mv);
               } else {
                 usedRuntime.add('mountComponent');
                 const mc = getShortName('mountComponent', options.useShortNames ?? true);
@@ -1623,6 +1619,8 @@ interface BranchDynamicOp {
   fragment?: boolean;
   /** Fragment 子内容（vnode 代码数组）；仅 fragment 时存在 */
   fragmentChildren?: string;
+  /** 内嵌条件的注释锚点对序号（0 起）；kind === 'conditional' 时存在 */
+  markerIndex?: number;
 }
 
 /** 把 vnode props 对象序列化成运行期对象字面量（供组件挂载使用）。 */
@@ -1658,6 +1656,8 @@ function collectBranchDynamics(
 ): BranchDynamicOp[] {
   const ops: BranchDynamicOp[] = [];
   let nextElement = 0;
+  // 内嵌条件的注释锚点对计数（`<!--lyt-if-->` 不占元素序号）
+  let nextMarker = 0;
   const slotCounters = new Map<number, number>();
   const addText = (elementIndex: number, expr: string): void => {
     const si = slotCounters.get(elementIndex) ?? 0;
@@ -1755,10 +1755,10 @@ function collectBranchDynamics(
         continue;
       }
       if (c.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
-        // 内嵌 v-if/v-else：静态 HTML 里的元素占位算作一个元素，保持序号对齐。
-        const hostIndex = nextElement++;
+        // 内嵌 v-if/v-else：静态 HTML 里留一对注释锚点（不占元素序号）。
+        const markerIndex = nextMarker++;
         const expr = serializeConditionalVNodeOptimized(child, usedRuntime, options, locals);
-        if (expr) ops.push({ elementIndex: hostIndex, kind: 'conditional', expr });
+        if (expr) ops.push({ elementIndex: -1, kind: 'conditional', expr, markerIndex });
         continue;
       }
       visit(child);
@@ -1826,11 +1826,10 @@ function buildBranchDynamics(
       continue;
     }
     if (op.kind === 'conditional') {
+      // 注释锚点对之间替换内容（锚点不是元素，元素层级与 vnode 路径一致）。
       usedRuntime.add('mountVNode');
-      usedRuntime.add('setHTML');
       const mv = getShortName('mountVNode', options.useShortNames ?? true);
-      const sh = getShortName('setHTML', options.useShortNames ?? true);
-      const stmt = `{const _e=${el};if(_e){const _v=${op.expr ?? 'null'};if(_v){${mv}(_v,_e);}else{${sh}(_e,'');}}}`;
+      const stmt = buildConditionalAnchorOp(branchVar, op.markerIndex ?? 0, op.expr ?? 'null', mv);
       createOps.push(stmt);
       updateOps.push(stmt);
       continue;

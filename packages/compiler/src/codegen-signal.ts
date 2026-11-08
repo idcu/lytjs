@@ -19,6 +19,9 @@ import {
   buildStaticHtml as buildStaticHtmlShared,
   serializeStaticHtml as serializeStaticHtmlShared,
   serializeBranchHtml as serializeBranchHtmlShared,
+  buildConditionalAnchorOp,
+  buildFragmentMountCreate,
+  buildFragmentMountUpdate,
   getStaticAttr,
   getStaticClass,
   createSimpleExpressionFor,
@@ -1225,6 +1228,8 @@ interface BranchDynamicOp {
   fragment?: boolean;
   /** Fragment 子内容（vnode 代码数组）；仅 fragment 时存在 */
   fragmentChildren?: string;
+  /** 内嵌条件的注释锚点对序号（0 起）；kind === 'conditional' 时存在 */
+  markerIndex?: number;
 }
 
 /**
@@ -1244,6 +1249,8 @@ function collectBranchDynamics(
 ): BranchDynamicOp[] {
   const ops: BranchDynamicOp[] = [];
   let nextIndex = 0;
+  // 内嵌条件的注释锚点对计数（每处条件在静态 HTML 里留一对 `<!--lyt-if-->`）
+  let nextMarker = 0;
 
   const visit = (raw: unknown, selfIndex: number, inheritedLocals: ReadonlySet<string>): void => {
     if (!raw || typeof raw !== 'object') return;
@@ -1322,11 +1329,11 @@ function collectBranchDynamics(
       if (!kid || typeof kid !== 'object') continue;
       const k = kid as { type?: number; tag?: unknown };
       if (k.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
-        // 内嵌 v-if/v-else：静态 HTML 里已留了元素占位（算作一个元素，保持索引对齐），
-        // 运行期把选中的分支 vnode 挂进占位。
-        const childIndex = nextIndex++;
+        // 内嵌 v-if/v-else：静态 HTML 里留一对注释锚点（不占元素序号）。
+        // 运行期把选中的分支 vnode 插到锚点对之间，元素层级与 vnode 路径一致。
+        const markerIndex = nextMarker++;
         const expr = serializeConditionalVNode(kid, BASE_EMIT_PROFILE.ctxPrefix, inheritedLocals);
-        if (expr) ops.push({ elementIndex: childIndex, kind: 'conditional', expr });
+        if (expr) ops.push({ elementIndex: -1, kind: 'conditional', expr, markerIndex });
         continue;
       }
       if (k.type === NodeTypes.VNODE_CALL || k.type === NodeTypes.ELEMENT) {
@@ -1419,11 +1426,15 @@ function buildBranchDynamics(
     }
 
     if (op.kind === 'conditional') {
-      // 占位元素里挂载选中的分支 vnode；cond 为假时清空占位。
-      const target = access(op.elementIndex);
-      const apply = `{ const _e = ${target}; if (_e) { const _v = ${op.expr}; if (_v) { mountVNode(_v, _e); } else { setHTML(_e, ''); } } }`;
-      createLines.push(apply);
-      updateLines.push(apply);
+      // 注释锚点对之间替换内容（锚点不是元素，元素层级与 vnode 路径一致）。
+      const stmt = buildConditionalAnchorOp(
+        `${ifVar}El`,
+        op.markerIndex ?? 0,
+        op.expr ?? 'null',
+        'mountVNode',
+      );
+      createLines.push(stmt);
+      updateLines.push(stmt);
       continue;
     }
 
@@ -1607,21 +1618,12 @@ function processCallExpression(
           BASE_EMIT_PROFILE.ctxPrefix,
           itemLocals,
         );
-        const fragHost = '_fragHost';
         const frag = `createVNode(Fragment, null, ${kidsCode ?? 'null'})`;
         // 每项不产生**元素**包裹：挂进 DocumentFragment 后把 Fragment 的子节点整组返回。
         // 这组节点的首尾就是运行时 Fragment 自身的一对注释锚点，DOM 层级与 vnode 路径一致
         //（多出的只有注释，没有任何元素）。
-        createBody = `const ${fragHost}=document.createDocumentFragment();mountVNode(${frag},${fragHost});return Array.from(${fragHost}.childNodes);`;
-        // 更新：保留首尾锚点，只替换两者之间的内容。新 Fragment 挂进临时 fragment 后
-        // 跳过它自己的一对新锚点（`_t.firstChild`/`_t.lastChild`），只搬运中间节点。
-        updateBody =
-          `{const _s=_el[0],_e=_el[_el.length-1],_p=_e.parentNode;` +
-          `let _n=_s.nextSibling;while(_n&&_n!==_e){const _x=_n.nextSibling;_p.removeChild(_n);_n=_x;}` +
-          `const _t=document.createDocumentFragment();mountVNode(${frag},_t);` +
-          `let _c=_t.firstChild;if(_c)_c=_c.nextSibling;const _g=[_s];` +
-          `while(_c&&_c!==_t.lastChild){const _x=_c.nextSibling;_p.insertBefore(_c,_e);_g.push(_c);_c=_x;}` +
-          `_g.push(_e);return _g;}`;
+        createBody = buildFragmentMountCreate(frag, 'mountVNode');
+        updateBody = buildFragmentMountUpdate(frag, 'mountVNode');
       } else {
         createBody =
           'const ' +
