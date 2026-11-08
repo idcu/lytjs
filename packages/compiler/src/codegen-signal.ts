@@ -31,6 +31,7 @@ import {
   serializeConditionalVNodeShared,
   serializeListVNodeShared,
   serializeVNodeCallChildShared,
+  serializeVNodeCallChildrenShared,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -1927,25 +1928,10 @@ export function serializeVNodeCallChildren(
   prefix: string,
   locals: ReadonlySet<string> = new Set(),
 ): string | null {
-  if (children === undefined || children === null) return 'null';
-
-  if (typeof children === 'string') {
-    if (!children.trim()) return 'null';
-    return `[createVNode(Text,null,${JSON.stringify(children)})]`;
-  }
-
-  if (Array.isArray(children)) {
-    const parts: string[] = [];
-    for (const ch of children) {
-      const code = serializeVNodeCallChild(ch, prefix, locals);
-      if (code === null) return null;
-      parts.push(code);
-    }
-    return parts.length ? `[${parts.join(',')}]` : 'null';
-  }
-
-  const one = serializeVNodeCallChild(children, prefix, locals);
-  return one === null ? null : `[${one}]`;
+  return serializeVNodeCallChildrenShared(children, locals, {
+    staticText: (text) => `createVNode(Text,null,${JSON.stringify(text)})`,
+    child: (ch, scope) => serializeVNodeCallChild(ch, prefix, scope),
+  });
 }
 
 /** 单个 child → vnode 代码；无法识别返回 null */

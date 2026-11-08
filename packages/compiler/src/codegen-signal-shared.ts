@@ -932,3 +932,36 @@ export function serializeVNodeCallChildShared(
 
   return null;
 }
+
+/** `VNODE_CALL.children` 序列化时需要发射器注入的差异点 */
+export interface VNodeCallChildrenHooks {
+  staticText: (text: string) => string;
+  child: (node: unknown, locals: ReadonlySet<string>) => string | null;
+}
+
+/** `VNODE_CALL.children` → 数组代码；无法完整识别返回 null */
+export function serializeVNodeCallChildrenShared(
+  children: unknown,
+  locals: ReadonlySet<string>,
+  hooks: VNodeCallChildrenHooks,
+): string | null {
+  if (children === undefined || children === null) return 'null';
+
+  if (typeof children === 'string') {
+    if (!children.trim()) return 'null';
+    return `[${hooks.staticText(children)}]`;
+  }
+
+  if (Array.isArray(children)) {
+    const parts: string[] = [];
+    for (const ch of children) {
+      const code = hooks.child(ch, locals);
+      if (code === null) return null;
+      parts.push(code);
+    }
+    return parts.length ? `[${parts.join(',')}]` : 'null';
+  }
+
+  const one = hooks.child(children, locals);
+  return one === null ? null : `[${one}]`;
+}

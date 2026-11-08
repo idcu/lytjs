@@ -35,6 +35,7 @@ import {
   serializeConditionalVNodeShared,
   serializeListVNodeShared,
   serializeVNodeCallChildShared,
+  serializeVNodeCallChildrenShared,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -2057,29 +2058,17 @@ export function serializeVNodeCallChildrenOptimized(
   options: SignalCodegenOptions,
   locals: ReadonlySet<string> = new Set(),
 ): string | null {
-  if (children === undefined || children === null) return 'null';
-
-  if (typeof children === 'string') {
-    if (!children.trim()) return 'null';
+  const staticText = (text: string): string => {
     usedRuntime.add('createVNode');
     usedRuntime.add('Text');
     const cv = getShortName('createVNode', options.useShortNames ?? true);
     const tx = getShortName('Text', options.useShortNames ?? true);
-    return `[${cv}(${tx},null,${JSON.stringify(children)})]`;
-  }
-
-  if (Array.isArray(children)) {
-    const parts: string[] = [];
-    for (const ch of children) {
-      const code = serializeVNodeCallChildOptimized(ch, usedRuntime, options, locals);
-      if (code === null) return null;
-      parts.push(code);
-    }
-    return parts.length ? `[${parts.join(',')}]` : 'null';
-  }
-
-  const one = serializeVNodeCallChildOptimized(children, usedRuntime, options, locals);
-  return one === null ? null : `[${one}]`;
+    return `${cv}(${tx},null,${JSON.stringify(text)})`;
+  };
+  return serializeVNodeCallChildrenShared(children, locals, {
+    staticText,
+    child: (ch, scope) => serializeVNodeCallChildOptimized(ch, usedRuntime, options, scope),
+  });
 }
 
 /** 单个 child → vnode 代码（优化版）；无法识别返回 null */
