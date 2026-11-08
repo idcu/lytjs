@@ -10,6 +10,7 @@
 import * as domRuntime from '@lytjs/dom-runtime';
 import * as reactivity from '@lytjs/reactivity';
 import { isEventModifierIntercepted } from '@lytjs/common-events';
+import { sanitizeHTML } from '@lytjs/common-security';
 import { compile } from '../../src/index';
 
 export type CompileResult = { code: string; preamble: string };
@@ -143,11 +144,21 @@ export function asVNodeList(value: unknown): RenderedVNode[] {
   return value as RenderedVNode[];
 }
 
-/** 执行 ssrMode 产物（代码自带 renderToString / escapeHtml），返回 HTML 字符串 */
-export function executeSsr(result: CompileResult): (ctx: Record<string, unknown>) => string {
+/**
+ * 执行 ssrMode 产物（代码自带 renderToString / escapeHtml），返回 HTML 字符串。
+ *
+ * `sanitizeHTML` 与 `renderComponentVNode` 按设计由**执行方**注入（见 codegen-ssr.ts），
+ * 这里用生产实现 `@lytjs/common-security` 注入，避免测试桩掩盖转义语义。
+ */
+export function executeSsr(
+  result: CompileResult,
+  helpers: Record<string, unknown> = {},
+): (ctx: Record<string, unknown>) => string {
   const executable = result.code.replace(/^export\s+/gm, '').replace(/import[^;]*;/g, '');
-  const factory = new Function(`${executable}\nreturn render;`);
-  return factory() as (ctx: Record<string, unknown>) => string;
+  const names = Object.keys({ sanitizeHTML, ...helpers });
+  const values = Object.values({ sanitizeHTML, ...helpers });
+  const factory = new Function(...names, `${executable}\nreturn render;`);
+  return factory(...values) as (ctx: Record<string, unknown>) => string;
 }
 
 const MODULES: Record<string, Record<string, unknown>> = {

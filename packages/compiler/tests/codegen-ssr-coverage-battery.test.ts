@@ -7,6 +7,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { compile } from '../src/index';
+import { executeSsr } from './support/execute';
 
 /** 编译并返回产物代码（出错即失败，便于定位模板） */
 function ssr(template: string): string {
@@ -107,6 +108,8 @@ describe('codegen-ssr battery: 转义与边界输入', () => {
   });
 
   it('仅插值的模板', () => {
-    expect(ssr('{{ only }}')).toContain('_ctx.only');
+    const render = executeSsr(compile('{{ only }}', { ssrMode: true }));
+    expect(render({ only: 'O' })).toBe('O');
+    expect(render({})).toBe('');
   });
 });
