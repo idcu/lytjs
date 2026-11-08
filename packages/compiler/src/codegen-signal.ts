@@ -32,6 +32,7 @@ import {
   serializeListVNodeShared,
   serializeVNodeCallChildShared,
   serializeVNodeCallChildrenShared,
+  serializeVNodeCallShared,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -1873,53 +1874,26 @@ export function serializeVNodeCall(
   prefix: string,
   locals: ReadonlySet<string> = new Set(),
 ): string | null {
-  const vn = vnode as {
-    type?: number;
-    tag?: unknown;
-    props?: unknown;
-    children?: unknown;
-  };
-  if (!vn || vn.type !== NodeTypes.VNODE_CALL) return null;
-  if (typeof vn.tag !== 'string' || !vn.tag) return null;
-
-  // props：JS_OBJECT_EXPRESSION（key 已是合法代码串，value 需前缀化）
-  let propsCode = 'null';
-  if (vn.props !== undefined && vn.props !== null) {
-    const obj = vn.props as { type?: number; properties?: unknown[] };
-    if (obj.type !== NodeTypes.JS_OBJECT_EXPRESSION || !Array.isArray(obj.properties)) return null;
-    const parts: string[] = [];
-    for (const raw of obj.properties) {
-      const prop = raw as {
-        type?: number;
-        key?: { content?: unknown };
-        value?: { content?: unknown };
-      };
-      if (!prop || prop.type !== NodeTypes.JS_PROPERTY) return null;
-      const keyCode = prop.key && typeof prop.key.content === 'string' ? prop.key.content : null;
-      const valCode =
-        prop.value && typeof prop.value.content === 'string' ? prop.value.content : null;
-      if (keyCode === null || valCode === null) return null;
-      parts.push(`${keyCode}:${prefixIdentifiers(valCode, locals)}`);
-    }
-    propsCode = `{${parts.join(',')}}`;
-  }
-
-  const childrenCode = serializeVNodeCallChildren(vn.children, prefix, locals);
-  if (childrenCode === null) return null;
-
-  // 组件 tag 是**裸名**（如 `Inner`）必须前缀化；HTML 标签已是 JSON 字符串（如 `"div"`）
-  //
-  // ⚠️ 2026-10-28：`<template>` 在 **VNode 模式**下编译成 `Fragment`（见 transform-element
-  //   的 isTemplateTag），但那用的是 vnode 侧的哨兵常量；**signal 模式的渲染器完全没有
-  //   Fragment 概念**（`createSignalRenderer` 走 dom-runtime 的模板槽位），
-  //   把哨兵原样透出去会让组件名校验抛错（实测：`Invalid component name in v-for
-  //   dynamic component: "__LYTJS_FRAGMENT__"`）。
-  //   因此这里退回旧行为（字面量 `template` 元素），并记在报告里：
-  //   **signal 模式暂不支持 Fragment**，`<template v-if>` 在该模式下内容不可见。
-  const rawTag = vn.tag === FRAGMENT_SENTINEL ? JSON.stringify('template') : vn.tag;
-  const tagCode = (vn as { isComponent?: boolean }).isComponent ? `${prefix}${vn.tag}` : rawTag;
-
-  return `createVNode(${tagCode},${propsCode},${childrenCode})`;
+  return serializeVNodeCallShared(vnode, locals, {
+    vnode: 'createVNode',
+    propValue: (exp, scope) => prefixIdentifiers(exp, scope),
+    children: (ch, scope) => serializeVNodeCallChildren(ch, prefix, scope),
+    // 组件 tag 是**裸名**（如 `Inner`）必须前缀化；HTML 标签已是 JSON 字符串（如 `"div"`）
+    //
+    // ⚠️ `<template>` 在 **VNode 模式**下编译成 `Fragment`（见 transform-element
+    //   的 isTemplateTag），但那用的是 vnode 侧的哨兵常量；**signal 模式的渲染器
+    //   完全没有 Fragment 概念**，把哨兵原样透出去会让组件名校验抛错
+    //   （`Invalid component name in v-for dynamic component: "__LYTJS_FRAGMENT__"`）。
+    //   因此这里退回旧行为（字面量 `template` 元素）：**signal 模式暂不支持
+    //   Fragment**，`<template v-if>` 在该模式下内容不可见。
+    //   优化版尚未做此折回 —— 既有分歧，本块按要求保留（统一它会改变优化版产物）。
+    tag: (tag, isComponent) =>
+      isComponent
+        ? `${prefix}${tag}`
+        : tag === FRAGMENT_SENTINEL
+          ? JSON.stringify('template')
+          : tag,
+  });
 }
 
 /** `VNODE_CALL.children` → 数组代码；无法完整识别返回 null */

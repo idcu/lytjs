@@ -36,6 +36,7 @@ import {
   serializeListVNodeShared,
   serializeVNodeCallChildShared,
   serializeVNodeCallChildrenShared,
+  serializeVNodeCallShared,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -2008,47 +2009,15 @@ export function serializeVNodeCallOptimized(
   options: SignalCodegenOptions,
   locals: ReadonlySet<string> = new Set(),
 ): string | null {
-  const vn = vnode as { type?: number; tag?: unknown; props?: unknown; children?: unknown };
-  if (!vn || vn.type !== NodeTypes.VNODE_CALL) return null;
-  if (typeof vn.tag !== 'string' || !vn.tag) return null;
-
-  const cv = getShortName('createVNode', options.useShortNames ?? true);
-  usedRuntime.add('createVNode');
-
-  let propsCode = 'null';
-  if (vn.props !== undefined && vn.props !== null) {
-    const obj = vn.props as { type?: number; properties?: unknown[] };
-    if (obj.type !== NodeTypes.JS_OBJECT_EXPRESSION || !Array.isArray(obj.properties)) return null;
-    const parts: string[] = [];
-    for (const raw of obj.properties) {
-      const prop = raw as {
-        type?: number;
-        key?: { content?: unknown };
-        value?: { content?: unknown };
-      };
-      if (!prop || prop.type !== NodeTypes.JS_PROPERTY) return null;
-      const keyCode = prop.key && typeof prop.key.content === 'string' ? prop.key.content : null;
-      const valCode =
-        prop.value && typeof prop.value.content === 'string' ? prop.value.content : null;
-      if (keyCode === null || valCode === null) return null;
-      const expr = prefixIdentifiers(valCode, locals).replace(/\b_ctx\./g, '_c.');
-      parts.push(`${keyCode}:${expr}`);
-    }
-    propsCode = `{${parts.join(',')}}`;
-  }
-
-  const childrenCode = serializeVNodeCallChildrenOptimized(
-    vn.children,
-    usedRuntime,
-    options,
-    locals,
-  );
-  if (childrenCode === null) return null;
-
-  // 组件 tag 是**裸名**必须前缀化；HTML 标签已是 JSON 字符串
-  const tagCode = (vn as { isComponent?: boolean }).isComponent ? componentRef(vn.tag) : vn.tag;
-
-  return `${cv}(${tagCode},${propsCode},${childrenCode})`;
+  return serializeVNodeCallShared(vnode, locals, {
+    vnode: getShortName('createVNode', options.useShortNames ?? true),
+    begin: () => usedRuntime.add('createVNode'),
+    propValue: (exp, scope) => prefixIdentifiers(exp, scope).replace(/\b_ctx\./g, '_c.'),
+    children: (ch, scope) => serializeVNodeCallChildrenOptimized(ch, usedRuntime, options, scope),
+    // 组件 tag 是**裸名**必须前缀化；HTML 标签已是 JSON 字符串。
+    // （基础实现另有 FRAGMENT_SENTINEL → `"template"` 的折回，本版未做：既有分歧，保留）
+    tag: (tag, isComponent) => (isComponent ? componentRef(tag) : tag),
+  });
 }
 
 /** `VNODE_CALL.children` → 数组代码（优化版）；无法完整识别返回 null */

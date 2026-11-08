@@ -965,3 +965,73 @@ export function serializeVNodeCallChildrenShared(
   const one = hooks.child(children, locals);
   return one === null ? null : `[${one}]`;
 }
+
+/** `VNODE_CALL` 序列化时需要发射器注入的差异点 */
+export interface VNodeCallHooks {
+  /** `createVNode` 调用名（完整名 vs 短别名） */
+  vnode: string;
+  /** 类型校验通过后立即调用（优化版在此登记 `createVNode` 的运行时引用） */
+  begin?: () => void;
+  /** props 值表达式前缀化（两版上下文前缀不同） */
+  propValue: (exp: string, locals: ReadonlySet<string>) => string;
+  /** children 序列化（两版短别名 / import 登记不同） */
+  children: (children: unknown, locals: ReadonlySet<string>) => string | null;
+  /**
+   * tag 代码。组件是裸名（如 `Inner`）需前缀化；元素 tag 已是 JSON 字符串。
+   *
+   * ⚠️ 保留已知分歧（不在本块统一）：基础实现把 `FRAGMENT_SENTINEL` 折回
+   * `"template"`，优化实现原样透出 —— 后者是既有缺陷形态，统一它会改变优化版产物。
+   */
+  tag: (tag: string, isComponent: boolean) => string;
+}
+
+/**
+ * `VNODE_CALL` → `createVNode(tag, props, children)`（两版共享）。
+ *
+ * **严格模式**：任何一段无法识别都让整体返回 null（调用方跳过），
+ * 避免"只渲染一半"这种比不渲染更危险的结果。
+ */
+export function serializeVNodeCallShared(
+  vnode: unknown,
+  locals: ReadonlySet<string>,
+  hooks: VNodeCallHooks,
+): string | null {
+  const vn = vnode as {
+    type?: number;
+    tag?: unknown;
+    props?: unknown;
+    children?: unknown;
+    isComponent?: boolean;
+  };
+  if (!vn || vn.type !== NodeTypes.VNODE_CALL) return null;
+  if (typeof vn.tag !== 'string' || !vn.tag) return null;
+
+  hooks.begin?.();
+
+  // props：JS_OBJECT_EXPRESSION（key 已是合法代码串，value 需前缀化）
+  let propsCode = 'null';
+  if (vn.props !== undefined && vn.props !== null) {
+    const obj = vn.props as { type?: number; properties?: unknown[] };
+    if (obj.type !== NodeTypes.JS_OBJECT_EXPRESSION || !Array.isArray(obj.properties)) return null;
+    const parts: string[] = [];
+    for (const raw of obj.properties) {
+      const prop = raw as {
+        type?: number;
+        key?: { content?: unknown };
+        value?: { content?: unknown };
+      };
+      if (!prop || prop.type !== NodeTypes.JS_PROPERTY) return null;
+      const keyCode = prop.key && typeof prop.key.content === 'string' ? prop.key.content : null;
+      const valCode =
+        prop.value && typeof prop.value.content === 'string' ? prop.value.content : null;
+      if (keyCode === null || valCode === null) return null;
+      parts.push(`${keyCode}:${hooks.propValue(valCode, locals)}`);
+    }
+    propsCode = `{${parts.join(',')}}`;
+  }
+
+  const childrenCode = hooks.children(vn.children, locals);
+  if (childrenCode === null) return null;
+
+  return `${hooks.vnode}(${hooks.tag(vn.tag, !!vn.isComponent)},${propsCode},${childrenCode})`;
+}
