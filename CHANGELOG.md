@@ -4,6 +4,22 @@
 
 ## [Unreleased]
 
+### 🛠️ 编译器：signal 两套 profile 支持 `<template>` 片段（2026-11-08）
+
+**行为修正（`rendererMode:'signal'`，base 与 `optimizeSignal:true` 同步）**
+
+- `<template>` 的 `__LYTJS_FRAGMENT__` 哨兵不再被当作组件名直传，改为映射到运行时
+  `Fragment` 并用 `mountVNode` 挂载：`<template v-if>` 分支此前会抛
+  `ReferenceError: __LYTJS_FRAGMENT__ is not defined`，`<template v-for>` 此前静默产出空项；
+  修复后在两套 profile 下均真实渲染子内容与多项。
+- 分支宿主用 `<span data-lyt-frag="1" style="display:contents">` 承载 Fragment，
+  挂载语义与 vnode 路径一致（Fragment 自身不产生布局盒）。
+- 门禁补齐 4 条 `<template>` 语料（`tf01` v-if / `tf02` v-for / `tf03` 嵌套 / `tf04` 空分支），
+  parity 104/104、signal 快照 104×2 逐字一致；原有 100 模板 × 2 profile 产物
+  **逐字不变**（仅新增条目）。负控：回退「哨兵直传」后 parity 4 条新增分叉、快照 4 份报红。
+- 已知残余：嵌套 `<template v-if>`（`tf03`）在两套 profile 下仍为空渲染（一致），
+  属分支内条件节点的独立缺口，本批未改。
+
 ### 🛠️ 编译器：基础 signal 实现修复 8 处缺陷 + vnode/SSR 对拍安全网（B01a，2026-11-06）
 
 **行为变更（默认路径 `rendererMode:'signal'`，`optimizeSignal` 缺省即走基础实现）**

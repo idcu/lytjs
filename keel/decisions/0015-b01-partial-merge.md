@@ -41,6 +41,16 @@ superseded-by:
 - 收敛条件：优化版契约废弃且 `optimizeSignal` 不再是公开开关时，删优化版发射器；
   在此之前语义只改 shared，禁止两份各写一份。验证：对拍 100/100、fast 53/53。
 
+## 2026-11-08 `<template>` 哨兵按缺陷修（两 profile）
+
+- 缺陷：signal 模式把 `__LYTJS_FRAGMENT__` 当组件名直传，`<template v-if>` 运行期
+  `ReferenceError`、`<template v-for>` 静默空项；运行时零特判 ⇒ 内部表示泄露。
+- 修法：两发射器映射到 `@lytjs/vdom` `Fragment`，`mountVNode(createVNode(Fragment,null,children),host)`；
+  分支宿主 `<span data-lyt-frag style="display:contents">`。`serializeVNodeCall` 折回同步移除。
+- 门禁：新增 tf01/tf02/tf03/tf04；parity 104/104、快照 104×2；原 100×2 逐字不变。
+- 负控：回退直传 ⇒ parity 3 条 base-throws + 1 条分叉、快照 4 条红；恢复回绿。
+- 残余：tf03 嵌套 `<template v-if>` 两 profile 一致空渲染，属独立缺口。
+
 ## 背景与交付
 
 - 原始验收 5 条（权威实现、单权威入口、parity 100、DOM 一致、minimal-app 不增）

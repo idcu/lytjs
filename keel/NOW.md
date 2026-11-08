@@ -9,17 +9,17 @@ keywords: [硬约束9]
 # NOW · main
 
 ## 当前焦点
-B01d-2 块 4 完成（vnode 序列化族 9/9）；C3 待审。
+B01d-2 块 4 完成（9/9）；C3 待审。
 
 ## 11-08 完成
-- **alias**：守卫扩到包级配置（54 文件/216 条，负控红→绿），修 4 处层级错；devtools 6 文件/157 转绿。
-- **test 覆盖**：74/77 含 src 目录；`host-contract`/`shared-types` 无测试（不造）。
-- **S20**：零引用 29→0（删 27+restore 2+孤儿 1）；入口收敛为 `build`；`check-script-refs` 棘轮+负控。
-- **B01c**：100 模板 × 2 profile 逐字快照（slow）+双侧负控。
-- **B01d-2**：`EmitProfile` + 9 个 vnode 族函数共享；200 份快照逐字、parity 100/100。
-- **计时**：computed/memory/devtools 定时器补 `unref()`；fast 174→88.3s。
-- **S22**：`as unknown as` 基线 326/123 + 棘轮+负控；API 快照 39 包/1961 名（slow）+负控；
-  计时断言 ADR 0024；host-contract ADR 0025 不接（前置=第二宿主）。
+- **alias**：包级配置守卫（54/216，负控红→绿），修 4 层级错；devtools 6/157 绿。
+- **test 覆盖**：74/77 含 src；`host-contract`/`shared-types` 无测试（不造）。
+- **S20**：零引用 29→0（27+2+1）；入口收敛 `build`；`check-script-refs` 棘轮。
+- **B01c**：100 模板 × 2 逐字快照（slow）+双侧负控。
+- **B01d-2**：`EmitProfile` + 9 个 vnode 族函数共享；200 份快照逐字、parity 100。
+- **template**：signal 双 profile 哨兵→`Fragment`；4 语料 parity 104/104、原 200 份逐字；嵌套空（登记）。
+- **计时**：computed/memory/devtools 定时器补 `unref()`；fast 88.3s。
+- **S22**：`as unknown as` 基线 326/123 + 棘轮+负控；API 快照 39/1961（slow）+负控；计时 ADR 0024；host-contract ADR 0025 不接（前置=第二宿主）。
 
 ## 11-07 完成
 - **S19** 16 个 common 死包 16/16「已发布/有导出面」⇒ 保留+deprecated，ADR 0023，8.0.0 删；文档同步。

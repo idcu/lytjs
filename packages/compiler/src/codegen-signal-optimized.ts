@@ -41,6 +41,7 @@ import {
   processVNodeCallPropsShared,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
+import { FRAGMENT_SENTINEL } from './transforms/transform-element';
 import { prefixIdentifiers } from './prefix-identifiers';
 import type {
   RootNode,
@@ -99,6 +100,7 @@ const RUNTIME_SHORT_NAMES = {
   // 组件插槽的 vnode 构造（来自 @lytjs/vdom）—— 用大写避开已占用的小写字母
   createVNode: 'V',
   Text: 'T',
+  Fragment: 'F',
 } as const;
 
 // ============================================================
@@ -344,13 +346,16 @@ function generateOptimizedImports(usedRuntime: Set<string>, useShortNames: boole
     if (builtins.length > 0) {
       result += `\nimport{${builtins.join(',')}}from'@lytjs/component';`;
     }
-    if (usedRuntime.has('createVNode') || usedRuntime.has('Text')) {
+    if (usedRuntime.has('createVNode') || usedRuntime.has('Text') || usedRuntime.has('Fragment')) {
       const vdomImports: string[] = [];
       if (usedRuntime.has('createVNode')) {
         vdomImports.push(`createVNode as ${getShortName('createVNode', true)}`);
       }
       if (usedRuntime.has('Text')) {
         vdomImports.push(`Text as ${getShortName('Text', true)}`);
+      }
+      if (usedRuntime.has('Fragment')) {
+        vdomImports.push(`Fragment as ${getShortName('Fragment', true)}`);
       }
       result += `\nimport{${vdomImports.join(',')}}from'@lytjs/vdom';`;
     }
@@ -397,10 +402,11 @@ function generateOptimizedImports(usedRuntime: Set<string>, useShortNames: boole
     if (builtins.length > 0) {
       result += `\nimport{${builtins.join(',')}}from'@lytjs/component';`;
     }
-    if (usedRuntime.has('createVNode') || usedRuntime.has('Text')) {
+    if (usedRuntime.has('createVNode') || usedRuntime.has('Text') || usedRuntime.has('Fragment')) {
       const vdomImports: string[] = [];
       if (usedRuntime.has('createVNode')) vdomImports.push('createVNode');
       if (usedRuntime.has('Text')) vdomImports.push('Text');
+      if (usedRuntime.has('Fragment')) vdomImports.push('Fragment');
       result += `\nimport{${vdomImports.join(',')}}from'@lytjs/vdom';`;
     }
     return result;
@@ -1144,7 +1150,7 @@ function processConditionalOptimized(
   // 分支内动态内容：文本槽位 / 动态属性 / 子组件。旧优化版完全忽略它们。
   const branchDynamics = branches.map((b, i) =>
     buildBranchDynamics(
-      collectBranchDynamics(b.branch, new Set<string>()),
+      collectBranchDynamics(b.branch, new Set<string>(), usedRuntime, options),
       `${ifVarName}El`,
       usedRuntime,
       options,
@@ -1305,9 +1311,6 @@ function processCallExpressionOptimized(
             const rawTag = typeof vnode.tag === 'string' ? vnode.tag : '';
             const isComponentItem = rawTag !== '' && !/^["']/.test(rawTag);
             if (isComponentItem) {
-              usedRuntime.add('mountComponent');
-              const mc = getShortName('mountComponent', options.useShortNames ?? true);
-              const itemProps = buildItemComponentProps(vnode, itemLocals);
               // 列表项的子节点（VNODE_CALL）→ 默认插槽内容。
               // 注意：列表项的 children 是 VNODE_CALL（type 9），且为「单对象」而非数组，
               // 故先归一化为数组再逐项序列化；复用既有的 serializeVNodeCallOptimized
@@ -1324,28 +1327,45 @@ function processCallExpressionOptimized(
                 const code = serializeVNodeCallOptimized(kid, usedRuntime, options, itemLocals);
                 if (code) kidVNodes.push(code);
               }
-              const slotsArg = kidVNodes.length
-                ? ',{default:()=>[' + kidVNodes.join(',') + ']}'
-                : '';
-              const hostVar = '_' + rawTag;
-              createBody =
-                'const ' +
-                hostVar +
-                "=document.createElement('div');" +
-                mc +
-                '(' +
-                componentRef(rawTag) +
-                ',' +
-                itemProps +
-                ',' +
-                hostVar +
-                slotsArg +
-                ');' +
-                'return ' +
-                hostVar +
-                ';';
-              updateBody =
-                mc + '(' + componentRef(rawTag) + ',' + itemProps + ',_el' + slotsArg + ');';
+              if (rawTag === FRAGMENT_SENTINEL) {
+                // `<template v-for>`：容器里挂 Fragment，而不是把哨兵当组件名传入
+                usedRuntime.add('mountVNode');
+                usedRuntime.add('createVNode');
+                usedRuntime.add('Fragment');
+                const cv = getShortName('createVNode', options.useShortNames ?? true);
+                const fg = getShortName('Fragment', options.useShortNames ?? true);
+                const fragHost = '_fragHost';
+                const frag = `${cv}(${fg},null,[${kidVNodes.join(',')}])`;
+                createBody = `const ${fragHost}=document.createElement('div');mountVNode(${frag},${fragHost});return ${fragHost};`;
+                // mountVNode 会先清空宿主再挂载，更新时重挂即可，不会叠加节点
+                updateBody = `mountVNode(${frag},_el);`;
+              } else {
+                usedRuntime.add('mountComponent');
+                const mc = getShortName('mountComponent', options.useShortNames ?? true);
+                const itemProps = buildItemComponentProps(vnode, itemLocals);
+                const slotsArg = kidVNodes.length
+                  ? ',{default:()=>[' + kidVNodes.join(',') + ']}'
+                  : '';
+                const hostVar = '_' + rawTag;
+                createBody =
+                  'const ' +
+                  hostVar +
+                  "=document.createElement('div');" +
+                  mc +
+                  '(' +
+                  componentRef(rawTag) +
+                  ',' +
+                  itemProps +
+                  ',' +
+                  hostVar +
+                  slotsArg +
+                  ');' +
+                  'return ' +
+                  hostVar +
+                  ';';
+                updateBody =
+                  mc + '(' + componentRef(rawTag) + ',' + itemProps + ',_el' + slotsArg + ');';
+              }
             }
 
             const tagInfo = isComponentItem ? null : extractTagFromVNode(vnode);
@@ -1499,6 +1519,10 @@ interface BranchDynamicOp {
   key?: string;
   expr?: string;
   propsCode?: string;
+  /** `<template>` 分支（哨兵 tag）：挂载 Fragment 而非组件 */
+  fragment?: boolean;
+  /** Fragment 子内容（vnode 代码数组）；仅 fragment 时存在 */
+  fragmentChildren?: string;
 }
 
 /** 把 vnode props 对象序列化成运行期对象字面量（供组件挂载使用）。 */
@@ -1529,6 +1553,8 @@ function buildBranchComponentProps(vnode: VNodeCall, locals: ReadonlySet<string>
 function collectBranchDynamics(
   branch: JSChildNode | TemplateChildNode | TemplateChildNode[] | string | undefined,
   locals: ReadonlySet<string>,
+  usedRuntime: Set<string>,
+  options: SignalCodegenOptions,
 ): BranchDynamicOp[] {
   const ops: BranchDynamicOp[] = [];
   let nextElement = 0;
@@ -1559,12 +1585,26 @@ function collectBranchDynamics(
 
     // 组件：tag 是表达式（如 `_c["my-comp"]`），按占位元素挂载。
     if (vnode.tag !== '' && !/^["']/.test(vnode.tag)) {
-      ops.push({
-        elementIndex: nextElement++,
-        kind: 'component',
-        expr: vnode.tag,
-        propsCode: buildBranchComponentProps(vnode, locals),
-      });
+      if (vnode.tag === FRAGMENT_SENTINEL) {
+        // `<template>`：挂载运行时 Fragment；子内容按 vnode 重新序列化。
+        ops.push({
+          elementIndex: nextElement++,
+          kind: 'component',
+          expr: vnode.tag,
+          propsCode: 'null',
+          fragment: true,
+          fragmentChildren:
+            serializeVNodeCallChildrenOptimized(vnode.children, usedRuntime, options, locals) ??
+            'null',
+        });
+      } else {
+        ops.push({
+          elementIndex: nextElement++,
+          kind: 'component',
+          expr: vnode.tag,
+          propsCode: buildBranchComponentProps(vnode, locals),
+        });
+      }
       return;
     }
 
@@ -1679,10 +1719,22 @@ function buildBranchDynamics(
       continue;
     }
     if (op.kind === 'component') {
-      usedRuntime.add('mountComponent');
-      createOps.push(
-        `${getShortName('mountComponent', options.useShortNames ?? true)}(${op.expr ?? 'undefined'},${op.propsCode ?? '{}'},${el});`,
-      );
+      if (op.fragment) {
+        usedRuntime.add('mountVNode');
+        usedRuntime.add('createVNode');
+        usedRuntime.add('Fragment');
+        const cv = getShortName('createVNode', options.useShortNames ?? true);
+        const fg = getShortName('Fragment', options.useShortNames ?? true);
+        const mount = `mountVNode(${cv}(${fg},${op.propsCode ?? 'null'},${op.fragmentChildren ?? 'null'}),${el});`;
+        // Fragment 的子孙 vnode 由 effect 求值构造；分支保持激活时也要重挂刷新内容。
+        createOps.push(mount);
+        updateOps.push(mount);
+      } else {
+        usedRuntime.add('mountComponent');
+        createOps.push(
+          `${getShortName('mountComponent', options.useShortNames ?? true)}(${op.expr ?? 'undefined'},${op.propsCode ?? '{}'},${el});`,
+        );
+      }
     }
   }
 
@@ -1969,8 +2021,15 @@ export function serializeVNodeCallOptimized(
     propValue: (exp, scope) => prefixIdentifiers(exp, scope).replace(/\b_ctx\./g, '_c.'),
     children: (ch, scope) => serializeVNodeCallChildrenOptimized(ch, usedRuntime, options, scope),
     // 组件 tag 是**裸名**必须前缀化；HTML 标签已是 JSON 字符串。
-    // （基础实现另有 FRAGMENT_SENTINEL → `"template"` 的折回，本版未做：既有分歧，保留）
-    tag: (tag, isComponent) => (isComponent ? componentRef(tag) : tag),
+    // `<template>` 哨兵不当作组件名，改映射到运行时 `Fragment`（与 vnode 路径同语义）。
+    tag: (tag, isComponent) => {
+      if (!isComponent) return tag;
+      if (tag === FRAGMENT_SENTINEL) {
+        usedRuntime.add('Fragment');
+        return getShortName('Fragment', options.useShortNames ?? true);
+      }
+      return componentRef(tag);
+    },
   });
 }
 

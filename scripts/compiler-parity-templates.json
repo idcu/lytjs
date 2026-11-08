@@ -904,6 +904,53 @@
       },
       "slots": ["default"],
       "expected": "<main><header>T</header><section><span>slot-ok</span></section></main>"
+    },
+    {
+      "id": "tf01",
+      "group": "模板片段（template）",
+      "template": "<div><template v-if=\"ok\"><span>{{msg}}</span></template><span>tail</span></div>",
+      "state": {
+        "ok": true,
+        "msg": "A"
+      },
+      "update": {
+        "ok": false
+      },
+      "expected": "<div><span data-lyt-frag=\"1\" style=\"display:contents\"><!----><span>A</span><!----></span><span>tail</span></div>"
+    },
+    {
+      "id": "tf02",
+      "group": "模板片段（template）",
+      "template": "<div><template v-for=\"x in list\" :key=\"x\"><span>{{x}}</span></template></div>",
+      "state": {
+        "list": ["a", "b"]
+      },
+      "update": {
+        "list": ["a", "c"]
+      },
+      "expected": "<div><div><!----><span>a</span><!----></div><div><!----><span>b</span><!----></div></div>"
+    },
+    {
+      "id": "tf03",
+      "group": "模板片段（template）",
+      "template": "<div><template v-if=\"ok\"><template v-if=\"inner\"><span>{{msg}}</span></template></template></div>",
+      "state": {
+        "ok": true,
+        "inner": true,
+        "msg": "N"
+      }
+    },
+    {
+      "id": "tf04",
+      "group": "模板片段（template）",
+      "template": "<div><template v-if=\"ok\"></template><span>tail</span></div>",
+      "state": {
+        "ok": true
+      },
+      "update": {
+        "ok": false
+      },
+      "expected": "<div><span data-lyt-frag=\"1\" style=\"display:contents\"><!----><!----></span><span>tail</span></div>"
     }
   ]
 }

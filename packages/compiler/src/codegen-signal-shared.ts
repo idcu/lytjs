@@ -228,6 +228,11 @@ export function serializeBranchHtml(
       // 组件分支（tag 是标识符/表达式）：不能按 HTML 标签名序列化，
       // 输出占位元素，运行期由 mountComponent 挂载真实组件。
       if (vnode.tag !== '' && !/^["']/.test(vnode.tag)) {
+        // `<template>` 哨兵：输出中性容器，运行期挂载 Fragment（不再当组件名使用）。
+        // `display:contents` 让容器不参与布局，尽量贴近 Fragment 的透明语义。
+        if (vnode.tag === FRAGMENT_SENTINEL) {
+          return '<span data-lyt-frag="1" style="display:contents"></span>';
+        }
         return `<lyt-comp data-lyt-comp="${escapeHtmlStatic(vnode.tag)}"></lyt-comp>`;
       }
       const rawTag = vnode.tag.replace(/^"|"$/g, '');

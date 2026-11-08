@@ -99,7 +99,7 @@ const RUNTIME_IMPORT_GROUPS: Array<{ module: string; names: readonly string[] }>
     ],
   },
   { module: '@lytjs/renderer', names: ['mountComponent', 'mountSlotOutlet', 'mountVNode'] },
-  { module: '@lytjs/vdom', names: ['createVNode', 'Text', 'Teleport', 'Suspense'] },
+  { module: '@lytjs/vdom', names: ['createVNode', 'Text', 'Fragment', 'Teleport', 'Suspense'] },
 ];
 
 /**
@@ -1219,6 +1219,10 @@ interface BranchDynamicOp {
   key?: string;
   expr?: string;
   propsCode?: string;
+  /** `<template>` 分支（哨兵 tag）：挂载 Fragment 而非组件 */
+  fragment?: boolean;
+  /** Fragment 子内容（vnode 代码数组）；仅 fragment 时存在 */
+  fragmentChildren?: string;
 }
 
 /**
@@ -1246,12 +1250,27 @@ function collectBranchDynamics(
 
     // 组件：整棵子树交给组件自身渲染
     if (!/^["']/.test(vn.tag)) {
-      ops.push({
-        elementIndex: selfIndex,
-        kind: 'component',
-        expr: vn.tag,
-        propsCode: buildVNodePropsCode(vn, inheritedLocals),
-      });
+      if (vn.tag === FRAGMENT_SENTINEL) {
+        // `<template>`：挂载 Fragment（子内容必须在挂载时按 vnode 重新序列化），
+        // 不能当组件名传给 mountComponent。
+        ops.push({
+          elementIndex: selfIndex,
+          kind: 'component',
+          expr: vn.tag,
+          propsCode: 'null',
+          fragment: true,
+          fragmentChildren:
+            serializeVNodeCallChildren(vn.children, BASE_EMIT_PROFILE.ctxPrefix, inheritedLocals) ??
+            'null',
+        });
+      } else {
+        ops.push({
+          elementIndex: selfIndex,
+          kind: 'component',
+          expr: vn.tag,
+          propsCode: buildVNodePropsCode(vn, inheritedLocals),
+        });
+      }
       return;
     }
 
@@ -1378,10 +1397,14 @@ function buildBranchDynamics(
 
     if (op.kind === 'component') {
       const target = access(op.elementIndex);
-      const apply = `mountComponent(${op.expr}, ${op.propsCode ?? 'null'}, ${target});`;
+      const apply = op.fragment
+        ? `mountVNode(createVNode(Fragment, ${op.propsCode ?? 'null'}, ${op.fragmentChildren ?? 'null'}), ${target});`
+        : `mountComponent(${op.expr}, ${op.propsCode ?? 'null'}, ${target});`;
       const stmt = op.elementIndex < 0 ? apply : `{ const _e = ${target}; if (_e) ${apply} }`;
-      // 只在创建时 mount：mountComponent 自带 effect，重复调用会重复建实例
       createLines.push(stmt);
+      // Fragment 的子孙 vnode 由本次 effect 求值构造；分支保持激活时也要重挂一次，
+      // 否则 `{{x}}` 等响应式内容不会刷新（mountComponent 自带 effect，无需如此）。
+      if (op.fragment) updateLines.push(stmt);
       continue;
     }
 
@@ -1536,23 +1559,32 @@ function processCallExpression(
         if (code) kidVNodes.push(code);
       }
       const slotsArg = kidVNodes.length ? ',{default:()=>[' + kidVNodes.join(',') + ']}' : '';
-      createBody =
-        'const ' +
-        hostVar +
-        " = document.createElement('div');" +
-        'mountComponent(' +
-        componentRef(rawTag) +
-        ',' +
-        itemProps +
-        ',' +
-        hostVar +
-        slotsArg +
-        ');' +
-        'return ' +
-        hostVar +
-        ';';
-      updateBody =
-        'mountComponent(' + componentRef(rawTag) + ',' + itemProps + ',_el' + slotsArg + ');';
+      if (rawTag === FRAGMENT_SENTINEL) {
+        // `<template v-for>`：容器里挂 Fragment，而不是把哨兵当组件名传入
+        const fragHost = '_fragHost';
+        const frag = `createVNode(Fragment, null, [${kidVNodes.join(',')}])`;
+        createBody = `const ${fragHost}=document.createElement('div');mountVNode(${frag},${fragHost});return ${fragHost};`;
+        // mountVNode 会先清空宿主再挂载，故更新时重挂即可，不会叠加节点
+        updateBody = `mountVNode(${frag},_el);`;
+      } else {
+        createBody =
+          'const ' +
+          hostVar +
+          " = document.createElement('div');" +
+          'mountComponent(' +
+          componentRef(rawTag) +
+          ',' +
+          itemProps +
+          ',' +
+          hostVar +
+          slotsArg +
+          ');' +
+          'return ' +
+          hostVar +
+          ';';
+        updateBody =
+          'mountComponent(' + componentRef(rawTag) + ',' + itemProps + ',_el' + slotsArg + ');';
+      }
     } else if (renderItem && typeof renderItem.tag === 'string') {
       const tag = renderItem.tag.replace(/^"|"$/g, '');
       const elVar = genVarName(tag, _varCounter);
@@ -1844,19 +1876,11 @@ export function serializeVNodeCall(
     children: (ch, scope) => serializeVNodeCallChildren(ch, prefix, scope),
     // 组件 tag 是**裸名**（如 `Inner`）必须前缀化；HTML 标签已是 JSON 字符串（如 `"div"`）
     //
-    // ⚠️ `<template>` 在 **VNode 模式**下编译成 `Fragment`（见 transform-element
-    //   的 isTemplateTag），但那用的是 vnode 侧的哨兵常量；**signal 模式的渲染器
-    //   完全没有 Fragment 概念**，把哨兵原样透出去会让组件名校验抛错
-    //   （`Invalid component name in v-for dynamic component: "__LYTJS_FRAGMENT__"`）。
-    //   因此这里退回旧行为（字面量 `template` 元素）：**signal 模式暂不支持
-    //   Fragment**，`<template v-if>` 在该模式下内容不可见。
-    //   优化版尚未做此折回 —— 既有分歧，本块按要求保留（统一它会改变优化版产物）。
+    // ⚠️ `<template>` 在 VNode 模式下编译成哨兵。signal 模式的目标同样是**运行时
+    //   `Fragment`**（此前折回字面量 `template` 元素，导致 `<template v-if>` 静默空渲染、
+    //   内容丢失）。哨兵不当作组件名，故不参与组件名校验。
     tag: (tag, isComponent) =>
-      isComponent
-        ? `${prefix}${tag}`
-        : tag === FRAGMENT_SENTINEL
-          ? JSON.stringify('template')
-          : tag,
+      isComponent ? (tag === FRAGMENT_SENTINEL ? 'Fragment' : `${prefix}${tag}`) : tag,
   });
 }
 
