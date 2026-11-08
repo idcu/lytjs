@@ -48,9 +48,6 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
-# Size limit
-.size-limit.json.tmp
-
 # Root markdown (only keep README, CHANGELOG, CONTRIBUTING)
 # Note: AGENTS.md is intentionally excluded from root markdown rule
 # as it contains project-specific development rules

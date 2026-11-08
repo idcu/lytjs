@@ -54,6 +54,12 @@ const VERBOSE = process.argv.includes('--verbose');
 const RECORD = process.argv.includes('--record');
 const BASELINE_PATH = join(ROOT, 'scripts', 'bundle-baseline.json');
 
+// 根 node_modules 的 `@lytjs/*` 链接不是 pnpm 默认产物（根 package.json 不依赖任何子包），
+// 但本门禁靠裸导入 `@lytjs/core` 真打包。这里幂等补齐链接，保证 CI / 冷仓可复现。
+execFileSync(process.execPath, [join(ROOT, 'scripts', 'link-workspace-packages.mjs')], {
+  stdio: 'ignore',
+});
+
 interface Case {
   name: string;
   /** 说明这个入口代表什么用户场景 */
@@ -84,6 +90,13 @@ interface Baseline {
   };
   entries: Record<string, BaselineEntry>;
 }
+
+// ★ 口径必须等价于「用户装包后打包」：消费者侧不存在本仓 tsconfig 的 `paths`。
+//   S26 起各包 tsconfig 的 paths 指向 `src`（冷仓 type-check 需要），而 esbuild
+//   打包 dist 时会读取该包 tsconfig 并照着 paths 把依赖解析回 src —— 实测
+//   minimal-app 闭包从 29 个 dist 模块变成 160 个源码文件（+4.5 KB gzip）。
+//   这里显式清空 tsconfig 继承，强制走 node resolution（dist），与基线口径一致。
+const CONSUMER_TSCONFIG: { tsconfigRaw: string } = { tsconfigRaw: '{}' };
 
 const CASES: Case[] = [
   {
@@ -156,6 +169,8 @@ interface Result {
   closureChunks?: number;
   /** 首屏静态闭包里是否含编译器（只对切分模式有意义） */
   compilerInClosure?: boolean;
+  /** 被打进闭包的 `.../src/...` 输入（应为空） */
+  srcInputs?: string[];
 }
 
 if (!existsSync(BASELINE_PATH)) {
@@ -249,6 +264,8 @@ const measured: {
   closureChunks?: number;
   /** 切分模式：首屏静态闭包里是否含编译器 */
   compilerInClosure?: boolean;
+  /** 被打进闭包的 `.../src/...` 输入（应为空：消费者只解析 dist） */
+  srcInputs?: string[];
 }[] = [];
 
 for (const c of CASES) {
@@ -261,9 +278,16 @@ for (const c of CASES) {
       platform: 'browser',
       write: false,
       logLevel: 'error',
+      metafile: true,
+      ...CONSUMER_TSCONFIG,
     });
     const code = out.outputFiles[0]?.contents ?? new Uint8Array();
-    measured.push({ name: c.name, raw: code.length, gzip: gzipSync(code).length });
+    measured.push({
+      name: c.name,
+      raw: code.length,
+      gzip: gzipSync(code).length,
+      srcInputs: Object.keys(out.metafile?.inputs ?? {}).filter((p) => /\/src\//.test(p)),
+    });
     continue;
   }
 
@@ -278,6 +302,7 @@ for (const c of CASES) {
     write: false,
     logLevel: 'error',
     metafile: true,
+    ...CONSUMER_TSCONFIG,
   });
 
   const metas = out.metafile?.outputs ?? {};
@@ -322,6 +347,9 @@ for (const c of CASES) {
     entryOnlyGzip,
     closureChunks: closure.size,
     compilerInClosure,
+    srcInputs: [...new Set([...closure].flatMap((k) => Object.keys(metas[k].inputs)))].filter((p) =>
+      /\/src\//.test(p),
+    ),
   });
 }
 
@@ -382,6 +410,7 @@ for (const m of measured) {
     entryOnlyGzip: m.entryOnlyGzip,
     closureChunks: m.closureChunks,
     compilerInClosure: m.compilerInClosure,
+    srcInputs: m.srcInputs,
   });
 }
 
@@ -407,6 +436,17 @@ for (const r of results.filter((x) => x.closureChunks !== undefined)) {
     `${r.name} 的首屏度量覆盖静态闭包（不是只量入口 chunk）`,
     r.closureChunks! >= 2 && r.gzip >= (r.entryOnlyGzip ?? 0),
     `closureChunks=${r.closureChunks}·gzip=${r.gzip}·entryOnly=${r.entryOnlyGzip}`,
+  );
+}
+
+// 消费者口径：闭包里只能是 dist 产物。打包闭包混入 `src` 说明本仓 tsconfig 的
+// `paths` 泄漏到 esbuild 解析（S26 曾因此让 minimal-app 多背 4.5 KB gzip），
+// 那测的就不是「用户装包后的体积」。
+for (const r of results) {
+  check(
+    `${r.name} 的打包闭包只解析 dist（无 src 泄漏）`,
+    (r.srcInputs ?? []).length === 0,
+    `闭包含 ${r.srcInputs?.length ?? 0} 个 src 文件，例：${(r.srcInputs ?? []).slice(0, 3).join(', ')}`,
   );
 }
 
