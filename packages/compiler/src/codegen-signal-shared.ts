@@ -693,3 +693,47 @@ export function buildItemComponentPropsShared(
   }
   return '{' + parts.join(',') + '}';
 }
+
+/**
+ * 把组件的子内容编译为「插槽对象」字面量：`{default:()=>[vnode,...]}`
+ *
+ * 返回 null 表示没有可编译的子内容（此时不传第 4 个参数）。
+ * 首版只覆盖**静态内容**（文本 / 元素 / 嵌套组件）；插值与指令仍不参与插槽编译。
+ */
+export function buildComponentSlotsObjectShared(
+  node: ElementNode,
+  locals: ReadonlySet<string>,
+  collect: (children: TemplateChildNode[], locals: ReadonlySet<string>) => string[],
+): string | null {
+  // 组件自身若带 `v-slot="p"`（无 arg），表示**默认插槽**的作用域参数
+  const ownSlot = findSlotDirective(node);
+  const ownParam = ownSlot && ownSlot.name === null ? ownSlot.param : null;
+
+  const namedSlots: string[] = [];
+  const defaultParts: string[] = [];
+
+  for (const child of node.children) {
+    if (!child) continue;
+
+    // 具名插槽：`<template #name="scope">…</template>` → `"name":(scope)=>[…]`
+    const info = child.type === NodeTypes.ELEMENT ? findSlotDirective(child as ElementNode) : null;
+    if (info && info.name) {
+      const scope = info.param;
+      const parts = collect((child as ElementNode).children, withScope(locals, scope));
+      if (parts.length) {
+        namedSlots.push(`${JSON.stringify(info.name)}:(${scope ?? ''})=>[${parts.join(',')}]`);
+      }
+      continue;
+    }
+
+    // 其余节点归入默认插槽（使用组件自身的作用域参数）
+    defaultParts.push(...collect([child], withScope(locals, ownParam)));
+  }
+
+  const all = [...namedSlots];
+  if (defaultParts.length) {
+    all.push(`default:(${ownParam ?? ''})=>[${defaultParts.join(',')}]`);
+  }
+  if (all.length === 0) return null;
+  return `{${all.join(',')}}`;
+}

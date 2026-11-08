@@ -25,14 +25,13 @@ import {
   getStaticClass,
   createSimpleExpressionFor,
   getTestExpr,
-  findSlotDirective,
-  withScope,
   toComponentEventKey,
   validateAttributeName,
   validateEventName,
   validateComponentName,
   validateIslandDirective,
   hasUnsupportedSlotDirective,
+  buildComponentSlotsObjectShared,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -2183,43 +2182,9 @@ function buildComponentSlotsObjectOptimized(
   options: SignalCodegenOptions,
   locals: ReadonlySet<string> = new Set(),
 ): string | null {
-  // 组件自身若带 `v-slot="p"`（无 arg），表示**默认插槽**的作用域参数
-  const ownSlot = findSlotDirective(node);
-  const ownParam = ownSlot && ownSlot.name === null ? ownSlot.param : null;
-
-  const namedSlots: string[] = [];
-  const defaultParts: string[] = [];
-
-  for (const child of node.children) {
-    if (!child) continue;
-
-    // 具名插槽：`<template #name="scope">…</template>` → `"name":(scope)=>[…]`
-    const info = child.type === NodeTypes.ELEMENT ? findSlotDirective(child as ElementNode) : null;
-    if (info && info.name) {
-      const scope = info.param;
-      const parts = collectSlotVNodesOptimized(
-        (child as ElementNode).children,
-        usedRuntime,
-        options,
-        withScope(locals, scope),
-      );
-      if (parts.length) {
-        namedSlots.push(`${JSON.stringify(info.name)}:(${scope ?? ''})=>[${parts.join(',')}]`);
-      }
-      continue;
-    }
-
-    defaultParts.push(
-      ...collectSlotVNodesOptimized([child], usedRuntime, options, withScope(locals, ownParam)),
-    );
-  }
-
-  const all = [...namedSlots];
-  if (defaultParts.length) {
-    all.push(`default:(${ownParam ?? ''})=>[${defaultParts.join(',')}]`);
-  }
-  if (all.length === 0) return null;
-  return `{${all.join(',')}}`;
+  return buildComponentSlotsObjectShared(node, locals, (children, scope) =>
+    collectSlotVNodesOptimized(children, usedRuntime, options, scope),
+  );
 }
 
 /** 递归收集子节点对应的 vnode 构造代码（跳过注释与动态内容） */
