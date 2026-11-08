@@ -3,6 +3,8 @@
 // Signal 模式代码生成测试：执行产物、断言 DOM 上的可观察行为
 
 import { describe, it, expect, vi } from 'vitest';
+import { reactive } from '@lytjs/reactivity';
+import { Text } from '@lytjs/vdom';
 import { compile as compileImpl } from '../src/index';
 import { executeSignal } from './support/execute';
 
@@ -465,297 +467,446 @@ describe('codegen-signal', () => {
     const opts = { rendererMode: 'signal' as const, optimizeSignal: false };
     const compile = (template: string, _options?: unknown) => compileImpl(template, opts);
 
+    interface MountCall {
+      comp: unknown;
+      props?: Record<string, unknown>;
+      host: Element;
+      slots?: Record<string, (arg?: unknown) => unknown[]>;
+    }
+
+    /** 执行产物并捕获 mountComponent 的实参（组件、props、宿主、插槽） */
+    const mountComponentCalls = (
+      template: string,
+      ctx: Record<string, unknown> = {},
+    ): MountCall[] => {
+      const calls: MountCall[] = [];
+      executeSignal(compile(template), ctx, {
+        mountComponent: (
+          comp: unknown,
+          props: Record<string, unknown>,
+          host: Element,
+          slots?: MountCall['slots'],
+        ) => {
+          calls.push({ comp, props, host, slots });
+        },
+      });
+      return calls;
+    };
+
     it('should emit a <lyt-comp> placeholder instead of a raw component tag', () => {
-      const result = compile('<div><Child/></div>', opts);
-      expect(result.code).toContain('<lyt-comp');
-      // 引号在模板字符串里会被转义，用宽松匹配
-      expect(result.code).toMatch(/data-lyt-comp=\\?"Child\\?"/);
-      // 不能把组件标签原样写进静态模板（运行时才能解析）
-      expect(result.code).not.toMatch(/createTemplate\("[^"]*<Child[ >]/);
+      const Child = {};
+      const calls = mountComponentCalls('<div><Child/></div>', { Child });
+      expect(calls).toHaveLength(1);
+      // 组件标签不能原样进模板：静态壳里是运行时占位元素
+      expect(calls[0].comp).toBe(Child);
+      expect(calls[0].host.tagName).toBe('LYT-COMP');
+      expect(calls[0].host.getAttribute('data-lyt-comp')).toBe('Child');
     });
 
     it('should import mountComponent from @lytjs/renderer when a component is used', () => {
-      const result = compile('<div><Child/></div>', opts);
-      // B01b 回退后产物保持全名：`import{mountComponent}from'@lytjs/renderer';`
-      expect(result.code).toMatch(/mountComponent\}from'@lytjs\/renderer'/);
+      // 产物 import 由 executeSignal 解析到真实 @lytjs/renderer 导出；
+      // 缺少该导出会直接抛错，而不是静默 undefined
+      expect(mountComponentCalls('<div><Child/></div>', { Child: {} })).toHaveLength(1);
     });
 
     it('should NOT import mountComponent when no component is used', () => {
-      const result = compile('<div>text</div>', opts);
-      expect(result.code).not.toContain('mountComponent');
+      expect(mountComponentCalls('<div>text</div>')).toHaveLength(0);
     });
 
     it('should call mountComponent with the ctx component, props object and host element', () => {
-      const result = compile('<div><Child :title="t"/></div>', opts);
-      expect(result.code).toContain('mountComponent(_ctx.Child,{"title":_ctx.t},_lytComp)');
+      const Child = {};
+      const call = mountComponentCalls('<div><Child :title="t"/></div>', { Child, t: 'T' })[0];
+      expect(call.comp).toBe(Child);
+      expect(call.props).toEqual({ title: 'T' });
+      expect(call.host.tagName).toBe('LYT-COMP');
     });
 
     it('should pass static attributes as props (with string values)', () => {
-      const result = compile('<div><Child label="hi"/></div>', opts);
-      expect(result.code).toContain('{"label":"hi"}');
+      const call = mountComponentCalls('<div><Child label="hi"/></div>', { Child: {} })[0];
+      expect(call.props).toEqual({ label: 'hi' });
     });
 
     it('should pass boolean static attributes as true', () => {
-      const result = compile('<div><Child disabled/></div>', opts);
-      expect(result.code).toContain('{"disabled":true}');
+      const call = mountComponentCalls('<div><Child disabled/></div>', { Child: {} })[0];
+      expect(call.props).toEqual({ disabled: true });
     });
 
     it('should support nested components (component inside component)', () => {
-      const result = compile('<div><Outer><Inner/></Outer></div>', opts);
-      // 与优化版行为一致：组件内部子内容不保留为 slots（slots 是未来特性），
-      // 外层组件被识别为组件占位并挂载
-      expect(result.code).toMatch(/data-lyt-comp=\\?"Outer\\?"/);
-      expect(result.code).toContain('mountComponent(_ctx.Outer,{');
+      const Outer = {};
+      const Inner = {};
+      const call = mountComponentCalls('<div><Outer><Inner/></Outer></div>', { Outer, Inner })[0];
+      expect(call.comp).toBe(Outer);
+      const [inner] = call.slots!.default() as Array<{ type: unknown }>;
+      expect(inner.type).toBe(Inner);
     });
 
     it('should produce syntactically valid render function body', () => {
-      const result = compile('<div><Child :title="t"/></div>', opts);
-      const code = result.code;
-      // 从 export function render(_ctx, _container) { 的函数体开始切，避开 import 里的花括号
-      const fnStart = code.indexOf('export function render');
-      const braceStart = code.indexOf('{', fnStart) + 1;
-      const braceEnd = code.lastIndexOf('}');
-      const body = code.slice(braceStart, braceEnd);
-      expect(() => new Function('_ctx', '_container', body)).not.toThrow();
+      const Child = {};
+      expect(() =>
+        mountComponentCalls('<div><Child :title="t"/></div>', { Child, t: 'T' }),
+      ).not.toThrow();
     });
 
     it('should compile component events (@click) into onClick props', () => {
-      const result = compile('<div><Child @click="onClick"/></div>', opts);
-      expect(result.code).toContain('{"onClick":_ctx.onClick}');
+      const onClick = () => undefined;
+      const call = mountComponentCalls('<div><Child @click="onClick"/></div>', {
+        Child: {},
+        onClick,
+      })[0];
+      expect(call.props?.onClick).toBe(onClick);
     });
 
     it('should camelize kebab-case component event names', () => {
-      const result = compile('<div><Child @my-event="fn"/></div>', opts);
-      expect(result.code).toContain('"onMyEvent":_ctx.fn');
+      const fn = () => undefined;
+      const call = mountComponentCalls('<div><Child @my-event="fn"/></div>', {
+        Child: {},
+        fn,
+      })[0];
+      expect(call.props?.onMyEvent).toBe(fn);
     });
 
     it('should support inline arrow handlers on components (single brace set)', () => {
       // 这条同时守护「正则在 `}` 处提前收尾」的历史 bug：箭头函数体必须完整
-      const result = compile('<div><Child @click="() => count++"/></div>', opts);
-      expect(result.code).toContain('"onClick":() => _ctx.count++');
+      const ctx = { Child: {}, count: 0 };
+      const call = mountComponentCalls('<div><Child @click="() => count++"/></div>', ctx)[0];
+      (call.props?.onClick as () => void)();
+      expect(ctx.count).toBe(1);
     });
 
     it('should compile component children into a default slot (vnode form)', () => {
-      const result = compile('<div><Child>hello</Child></div>', opts);
-      expect(result.code).toContain('{default:()=>[createVNode(Text,null,"hello")]}');
+      const call = mountComponentCalls('<div><Child>hello</Child></div>', { Child: {} })[0];
+      const [vnode] = call.slots!.default();
+      expect((vnode as { type: unknown }).type).toBe(Text);
+      expect((vnode as { children: unknown }).children).toBe('hello');
     });
 
     it('should compile nested elements inside slot content as vnodes', () => {
-      const result = compile('<div><Child><span>hi</span></Child></div>', opts);
-      expect(result.code).toContain('createVNode("span",null,[createVNode(Text,null,"hi")])');
+      const call = mountComponentCalls('<div><Child><span>hi</span></Child></div>', {
+        Child: {},
+      })[0];
+      const [span] = call.slots!.default() as Array<{ type: string; children: unknown[] }>;
+      expect(span.type).toBe('span');
+      expect((span.children[0] as { type: unknown }).type).toBe(Text);
+      expect((span.children[0] as { children: unknown }).children).toBe('hi');
     });
 
     it('should NOT pass a slot argument when the component has no children', () => {
-      const result = compile('<div><Child/></div>', opts);
-      expect(result.code).toContain('mountComponent(_ctx.Child,{},_lytComp);');
+      const call = mountComponentCalls('<div><Child/></div>', { Child: {} })[0];
+      expect(call.props).toEqual({});
+      expect(call.slots).toBeUndefined();
     });
 
     it('should import createVNode/Text from @lytjs/vdom only when slots are used', () => {
-      expect(compile('<div><Child>hi</Child></div>', opts).code).toContain("from'@lytjs/vdom'");
-      expect(compile('<div><Child/></div>', opts).code).not.toContain('@lytjs/vdom');
+      const withChild = mountComponentCalls('<div><Child>hi</Child></div>', { Child: {} })[0];
+      expect((withChild.slots!.default()[0] as { __v_isVNode?: boolean }).__v_isVNode).toBe(true);
+
+      // 没有子内容时产物不 import vdom，slots 参数也不存在
+      expect(mountComponentCalls('<div><Child/></div>', { Child: {} })[0].slots).toBeUndefined();
     });
 
     it('should keep nested component slots recursive', () => {
-      const result = compile('<div><Outer><Inner>x</Inner></Outer></div>', opts);
-      expect(result.code).toContain(
-        'createVNode(_ctx.Inner,{},{default:()=>[createVNode(Text,null,"x")]})',
-      );
+      const Outside = { Inner: {} };
+      const call = mountComponentCalls('<div><Outer><Inner>x</Inner></Outer></div>', {
+        Outer: Outside,
+        Inner: Outside.Inner,
+      })[0];
+      const [inner] = call.slots!.default() as Array<{ type: unknown; children: unknown }>;
+      expect(inner.type).toBe(Outside.Inner);
+      const slots = inner.children as Record<string, () => unknown[]>;
+      expect((slots.default()[0] as { children: unknown }).children).toBe('x');
     });
 
     it('should compile slot interpolation into a dynamic text vnode', () => {
-      const result = compile('<div><Child>{{ msg }}</Child></div>', opts);
-      expect(result.code).toContain('{default:()=>[createVNode(Text,null,_ctx.msg)]}');
+      const call = mountComponentCalls('<div><Child>{{ msg }}</Child></div>', {
+        Child: {},
+        msg: 'M',
+      })[0];
+      expect((call.slots!.default()[0] as { children: unknown }).children).toBe('M');
     });
 
     it('should compile slot element bindings and events', () => {
-      const bind = compile('<div><Child><span :title="t">x</span></Child></div>', opts);
-      expect(bind.code).toContain('createVNode("span",{"title":_ctx.t}');
+      const bind = mountComponentCalls('<div><Child><span :title="t">x</span></Child></div>', {
+        Child: {},
+        t: 'T',
+      })[0];
+      expect((bind.slots!.default()[0] as { props: unknown }).props).toEqual({ title: 'T' });
 
-      const on = compile('<div><Child><span @click="fn">x</span></Child></div>', opts);
-      expect(on.code).toContain('createVNode("span",{"onClick":_ctx.fn}');
+      const fn = () => undefined;
+      const on = mountComponentCalls('<div><Child><span @click="fn">x</span></Child></div>', {
+        Child: {},
+        fn,
+      })[0];
+      expect((on.slots!.default()[0] as { props: Record<string, unknown> }).props.onClick).toBe(fn);
     });
 
     it('should compile v-if inside a slot into a conditional vnode', () => {
-      const result = compile('<div><Child><span v-if="ok">x</span></Child></div>', opts);
-      expect(result.code).toContain(
-        '(_ctx.ok?createVNode("span",null,[createVNode(Text,null,"x")]):null)',
-      );
+      const tpl = '<div><Child><span v-if="ok">x</span></Child></div>';
+      const shown = mountComponentCalls(tpl, { Child: {}, ok: true })[0];
+      expect((shown.slots!.default()[0] as { type: unknown }).type).toBe('span');
+
+      const hidden = mountComponentCalls(tpl, { Child: {}, ok: false })[0];
+      expect(hidden.slots!.default()[0]).toBeNull();
     });
 
     it('should keep props and interpolation inside a v-if slot', () => {
-      const withProp = compile(
+      const withProp = mountComponentCalls(
         '<div><Child><span v-if="ok" :title="t">x</span></Child></div>',
-        opts,
-      );
-      expect(withProp.code).toContain('{"title":_ctx.t}');
+        { Child: {}, ok: true, t: 'T' },
+      )[0];
+      expect((withProp.slots!.default()[0] as { props: unknown }).props).toEqual({ title: 'T' });
 
-      const withInterp = compile(
+      const withInterp = mountComponentCalls(
         '<div><Child><span v-if="ok">{{ msg }}</span></Child></div>',
-        opts,
-      );
-      expect(withInterp.code).toContain('createVNode(Text,null,_ctx.msg)');
+        { Child: {}, ok: true, msg: 'M' },
+      )[0];
+      const [span] = withInterp.slots!.default() as Array<{
+        children: Array<{ children: unknown }>;
+      }>;
+      expect(span.children[0].children).toBe('M');
     });
 
     it('should compile v-else inside a slot into the ternary alternate', () => {
-      const result = compile(
-        '<div><Child><span v-if="ok">a</span><span v-else>b</span></Child></div>',
-        opts,
-      );
-      expect(result.code).toContain(':createVNode("span",null,[createVNode(Text,null,"b")])');
+      const tpl = '<div><Child><span v-if="ok">a</span><span v-else>b</span></Child></div>';
+      const yes = mountComponentCalls(tpl, { Child: {}, ok: true })[0];
+      const no = mountComponentCalls(tpl, { Child: {}, ok: false })[0];
+      const textOfSpan = (call: ReturnType<typeof mountComponentCalls>[number]) =>
+        (call.slots!.default()[0] as { children: Array<{ children: unknown }> }).children[0]
+          .children;
+      expect(textOfSpan(yes)).toBe('a');
+      expect(textOfSpan(no)).toBe('b');
     });
 
     it('should compile a v-else-if chain inside a slot into nested ternaries', () => {
-      const result = compile(
-        '<div><Child><span v-if="a">x</span><span v-else-if="b">y</span><span v-else>z</span></Child></div>',
-        opts,
-      );
-      expect(result.code).toContain(
-        '(_ctx.b?createVNode("span",null,[createVNode(Text,null,"y")])',
-      );
-      expect(result.code).toContain(':createVNode("span",null,[createVNode(Text,null,"z")])');
+      const tpl =
+        '<div><Child><span v-if="a">x</span><span v-else-if="b">y</span><span v-else>z</span></Child></div>';
+      const textOfSpan = (call: ReturnType<typeof mountComponentCalls>[number]) =>
+        (call.slots!.default()[0] as { children: Array<{ children: unknown }> }).children[0]
+          .children;
+      expect(textOfSpan(mountComponentCalls(tpl, { Child: {}, a: true })[0])).toBe('x');
+      expect(textOfSpan(mountComponentCalls(tpl, { Child: {}, a: false, b: true })[0])).toBe('y');
+      expect(textOfSpan(mountComponentCalls(tpl, { Child: {}, a: false, b: false })[0])).toBe('z');
     });
 
     it('should SKIP a slot v-if whose content uses an unsupported construct (v-for)', () => {
-      const result = compile(
+      const call = mountComponentCalls(
         '<div><Child><span v-if="ok"><i v-for="x in xs">y</i></span></Child></div>',
-        opts,
-      );
-      expect(result.code).toContain('mountComponent(_ctx.Child,{},_lytComp);');
+        { Child: {}, ok: true, xs: ['1'] },
+      )[0];
+      expect(call.slots).toBeUndefined();
     });
 
     it('should reconstruct nested component markup inside a slot v-if (with tag prefix)', () => {
-      const result = compile('<div><Child><div v-if="ok"><Inner/></div></Child></div>', opts);
-      expect(result.code).toContain('createVNode(_ctx.Inner,null,null)');
+      const Inner = {};
+      const tpl = '<div><Child><div v-if="ok"><Inner/></div></Child></div>';
+      const shown = mountComponentCalls(tpl, { Child: {}, Inner, ok: true })[0];
+      const [wrapper] = shown.slots!.default() as Array<{
+        type: string;
+        children: Array<{ type: unknown }>;
+      }>;
+      expect(wrapper.type).toBe('div');
+      expect(wrapper.children[0].type).toBe(Inner);
+
+      const hidden = mountComponentCalls(tpl, { Child: {}, Inner, ok: false })[0];
+      expect(hidden.slots!.default()[0]).toBeNull();
     });
 
     it('should SKIP a slot element combining v-if with another structural directive (v-show)', () => {
-      const result = compile('<div><Child><span v-if="ok" v-show="s">x</span></Child></div>', opts);
-      expect(result.code).toContain('mountComponent(_ctx.Child,{},_lytComp);');
+      const call = mountComponentCalls(
+        '<div><Child><span v-if="ok" v-show="s">x</span></Child></div>',
+        { Child: {}, ok: true, s: true },
+      )[0];
+      expect(call.slots).toBeUndefined();
     });
 
     it('should render a v-if slot element with no children (null children)', () => {
-      const result = compile('<div><Child><span v-if="ok"></span></Child></div>', opts);
-      expect(result.code).toContain('(_ctx.ok?createVNode("span",null,null):null)');
+      const call = mountComponentCalls('<div><Child><span v-if="ok"></span></Child></div>', {
+        Child: {},
+        ok: true,
+      })[0];
+      expect((call.slots!.default()[0] as { children: unknown }).children).toBeNull();
     });
 
     it('should compile v-show inside a slot into a style.display binding', () => {
-      const result = compile('<div><Child><i v-show="s">y</i></Child></div>', opts);
-      expect(result.code).toContain("style:{\"display\":(_ctx.s?'':'none')}");
+      const ctx: Record<string, unknown> = { Child: {}, s: true };
+      const call = mountComponentCalls('<div><Child><i v-show="s">y</i></Child></div>', ctx)[0];
+      const styleOf = () =>
+        (call.slots!.default()[0] as { props: { style: Record<string, unknown> } }).props.style;
+
+      expect(styleOf().display).toBe('');
+      ctx.s = false;
+      expect(styleOf().display).toBe('none');
     });
 
     it('should compile a top-level v-for slot element into a mapped list', () => {
-      const result = compile('<div><Child><i v-for="x in xs">y</i></Child></div>', opts);
-      expect(result.code).toContain('...(_ctx.xs.map((x)=>createVNode("i"');
+      const call = mountComponentCalls('<div><Child><i v-for="x in xs">y</i></Child></div>', {
+        Child: {},
+        xs: ['1', '2'],
+      })[0];
+      const list = call.slots!.default() as Array<{ type: string }>;
+      expect(list.map((vnode) => vnode.type)).toEqual(['i', 'i']);
     });
 
     it('should compile named slots into separate slot functions', () => {
-      const result = compile(
+      const call = mountComponentCalls(
         '<div><Child><template #header>H</template><template #footer>F</template></Child></div>',
-        opts,
-      );
-      expect(result.code).toContain('"header":()=>[createVNode(Text,null,"H")]');
-      expect(result.code).toContain('"footer":()=>[createVNode(Text,null,"F")]');
+        { Child: {} },
+      )[0];
+      const textOf = (name: 'header' | 'footer') =>
+        (call.slots![name]()[0] as { children: unknown }).children;
+      expect(textOf('header')).toBe('H');
+      expect(textOf('footer')).toBe('F');
     });
 
     it('should pass slot scope params as the slot function argument', () => {
-      const viaTemplate = compile(
-        '<div><Child><template #default="p">{{ p.x }}</template></Child></div>',
-        opts,
-      );
-      expect(viaTemplate.code).toContain('{"default":(p)=>[createVNode(Text,null,p.x)]}');
+      const textOfDefault = (call: ReturnType<typeof mountComponentCalls>[number]) =>
+        (call.slots!.default({ x: 'X' })[0] as { children: unknown }).children;
 
-      const viaComponent = compile('<div><Child v-slot="p">{{ p.x }}</Child></div>', opts);
-      expect(viaComponent.code).toContain('{default:(p)=>[createVNode(Text,null,p.x)]}');
+      expect(
+        textOfDefault(
+          mountComponentCalls(
+            '<div><Child><template #default="p">{{ p.x }}</template></Child></div>',
+            {
+              Child: {},
+            },
+          )[0],
+        ),
+      ).toBe('X');
+      expect(
+        textOfDefault(
+          mountComponentCalls('<div><Child v-slot="p">{{ p.x }}</Child></div>', { Child: {} })[0],
+        ),
+      ).toBe('X');
     });
 
     it('should support destructured slot scope without prefixing the locals', () => {
-      const result = compile(
+      const call = mountComponentCalls(
         '<div><Child><template #item="{ x, y }">{{ x }}</template></Child></div>',
-        opts,
-      );
-      expect(result.code).toContain('{"item":({ x, y })=>[createVNode(Text,null,x)]}');
+        { Child: {} },
+      )[0];
+      const [vnode] = call.slots!.item({ x: 'X', y: 'Y' }) as Array<{ children: unknown }>;
+      expect(vnode.children).toBe('X');
     });
 
     it('should keep named slots and the default slot side by side', () => {
-      const result = compile('<div><Child><template #header>H</template>body</Child></div>', opts);
-      expect(result.code).toContain('"header":()=>[');
-      expect(result.code).toContain('default:()=>[createVNode(Text,null,"body")]');
+      const call = mountComponentCalls(
+        '<div><Child><template #header>H</template>body</Child></div>',
+        { Child: {} },
+      )[0];
+      expect((call.slots!.header()[0] as { children: unknown }).children).toBe('H');
+      expect((call.slots!.default()[0] as { children: unknown }).children).toBe('body');
     });
 
     it('should drop the effect wrapper for v-once (non-optimized, runtime path)', () => {
-      // 运行时 SignalRenderer 走的正是非优化版；此前的实现里 v-once **完全无效**
-      //（插值仍被 effect 包裹），而优化版是对的 —— 典型的「双 codegen 不同步」。
-      const result = compile('<div v-once>{{ msg }}</div>', opts);
-      // 单插值元素直接以元素自身为文本宿主（B01b 去注释），没有 claimTextSlots；
-      // 多插值 / 静态文本 + 插值仍走槽位（见下方守护用例）。
-      expect(result.code).toContain('setText(_div, _ctx.msg);');
-      expect(result.code).not.toContain('effect(() => setText(_div,');
+      // 运行时 SignalRenderer 走的正是非优化版；v-once 若仍被 effect 包裹，
+      // 响应式更新会改写 DOM。用 reactive 上下文验证「不订阅」。
+      const state = reactive({ msg: 'A' });
+      const handle = executeSignal(compile('<div v-once>{{ msg }}</div>'), state);
+      expect(handle.text()).toBe('A');
+      state.msg = 'B';
+      expect(handle.text()).toBe('A');
     });
 
     it('should propagate v-once down the subtree (non-optimized)', () => {
-      const result = compile('<div v-once><span>{{ msg }}</span></div>', opts);
-      expect(result.code).toContain('setText(_span, _ctx.msg);');
-      expect(result.code).not.toContain('effect(() => setText(_span,');
+      const state = reactive({ msg: 'A' });
+      const handle = executeSignal(compile('<div v-once><span>{{ msg }}</span></div>'), state);
+      expect(handle.text()).toBe('A');
+      state.msg = 'B';
+      expect(handle.text()).toBe('A');
     });
 
     it('should still wrap ordinary interpolations with effect (non-optimized)', () => {
-      const result = compile('<div>{{ msg }}</div>', opts);
-      expect(result.code).toContain('effect(() => setText(_div, _ctx.msg));');
+      const state = reactive({ msg: 'A' });
+      const handle = executeSignal(compile('<div>{{ msg }}</div>'), state);
+      expect(handle.text()).toBe('A');
+      state.msg = 'B';
+      expect(handle.text()).toBe('B');
     });
 
     it('should keep text slots for multiple interpolations (B01b 去注释只对单插值生效)', () => {
-      const result = compile('<div>{{ a }}-{{ b }}</div>', opts);
-      expect(result.code).toContain('claimTextSlots(_div)');
-      // 多插值仍由 effect 包裹，故调用本身不带结尾分号（`…_ctx.a));`）
-      expect(result.code).toContain('setText(_divSlots[0], _ctx.a)');
-      expect(result.code).toContain('setText(_divSlots[1], _ctx.b)');
+      const state = reactive({ a: 'a', b: 'b' });
+      const handle = executeSignal(compile('<div>{{ a }}-{{ b }}</div>'), state);
+      expect(handle.text()).toBe('a-b');
+      state.a = 'x';
+      expect(handle.text()).toBe('x-b');
+      state.b = 'y';
+      expect(handle.text()).toBe('x-y');
     });
 
     it('should keep text slots when static text precedes an interpolation (B01b)', () => {
-      const result = compile('<div>Hi {{ name }}</div>', opts);
-      expect(result.code).toContain('claimTextSlots(_div)');
+      const state = reactive({ name: 'A' });
+      const handle = executeSignal(compile('<div>Hi {{ name }}</div>'), state);
+      expect(handle.text()).toBe('Hi A');
+      state.name = 'B';
+      expect(handle.text()).toBe('Hi B');
     });
 
     it('should treat blank-only slot content inside v-if as null children', () => {
-      const result = compile('<div><Child><span v-if="ok"> </span></Child></div>', opts);
-      expect(result.code).toContain('(_ctx.ok?createVNode("span",null,null):null)');
+      const call = mountComponentCalls('<div><Child><span v-if="ok"> </span></Child></div>', {
+        Child: {},
+        ok: true,
+      })[0];
+      expect((call.slots!.default()[0] as { children: unknown }).children).toBeNull();
     });
 
     it('should compile v-for inside a slot into a spread-mapped list', () => {
-      const result = compile(
+      const call = mountComponentCalls(
         '<div><Child><li v-for="item in items">{{ item.name }}</li></Child></div>',
-        opts,
-      );
-      expect(result.code).toContain(
-        '...(_ctx.items.map((item)=>createVNode("li",null,[createVNode(Text,null,item.name)])))',
-      );
+        {
+          Child: {},
+          items: [
+            { id: 1, name: 'a' },
+            { id: 2, name: 'b' },
+          ],
+        },
+      )[0];
+      const list = call.slots!.default() as Array<{
+        type: string;
+        children: Array<{ children: unknown }>;
+      }>;
+      expect(list.map((vnode) => vnode.type)).toEqual(['li', 'li']);
+      expect(list.map((vnode) => vnode.children[0].children)).toEqual(['a', 'b']);
     });
 
     it('should support (item, index) and :key inside a slot v-for', () => {
-      const result = compile(
+      const call = mountComponentCalls(
         '<div><Child><li v-for="(item, i) in items" :key="item.id">{{ item.name }}</li></Child></div>',
-        opts,
-      );
-      expect(result.code).toContain('(_ctx.items.map((item,i)=>createVNode("li",{"key":item.id}');
+        {
+          Child: {},
+          items: [
+            { id: 1, name: 'a' },
+            { id: 2, name: 'b' },
+          ],
+        },
+      )[0];
+      const list = call.slots!.default() as Array<{ props: Record<string, unknown> }>;
+      expect(list.map((vnode) => vnode.props.key)).toEqual([1, 2]);
     });
 
     it('should keep the loop variable UNPREFIXED and recurse nested elements in slot v-for', () => {
-      const result = compile(
+      const call = mountComponentCalls(
         '<div><Child><li v-for="item in items"><b>{{ item.n }}</b></li></Child></div>',
-        opts,
-      );
-      // 循环变量 item 不能被加 `_ctx.` 前缀
-      expect(result.code).toContain('createVNode("b",null,[createVNode(Text,null,item.n)])');
-      expect(result.code).not.toContain('_ctx.item.');
+        { Child: {}, items: [{ id: 1, n: 'a' }] },
+      )[0];
+      const [li] = call.slots!.default() as Array<{
+        children: Array<{ type: string; children: Array<{ children: unknown }> }>;
+      }>;
+      // 循环变量 item 不能被加 `_ctx.` 前缀，否则取不到 item.n（渲染成 'undefined'）
+      expect(li.children[0].type).toBe('b');
+      expect(li.children[0].children[0].children).toBe('a');
     });
 
     it('should mix static siblings with a slot v-for', () => {
-      const result = compile(
+      const call = mountComponentCalls(
         '<div><Child><span>head</span><li v-for="x in xs">{{ x }}</li></Child></div>',
-        opts,
-      );
-      expect(result.code).toContain('createVNode("span",null,[createVNode(Text,null,"head")])');
-      expect(result.code).toContain('...(_ctx.xs.map((x)=>createVNode("li"');
+        { Child: {}, xs: ['1', '2'] },
+      )[0];
+      const list = call.slots!.default() as Array<{
+        type: string;
+        children: Array<{ children: unknown }>;
+      }>;
+      expect(list[0].type).toBe('span');
+      expect(list[0].children[0].children).toBe('head');
+      expect(list.slice(1).map((vnode) => vnode.children[0].children)).toEqual(['1', '2']);
     });
   });
 });

@@ -187,6 +187,7 @@ export interface SignalHandle {
 export function executeSignal(
   result: CompileResult,
   ctx: Record<string, unknown> = {},
+  helpers: Record<string, unknown> = {},
 ): SignalHandle {
   const bindings: Array<[string, unknown]> = [];
   const body = result.code.replace(
@@ -197,6 +198,10 @@ export function executeSignal(
       for (const part of spec.split(',')) {
         const [original, local] = part.trim().split(/\s+as\s+/);
         if (!original) continue;
+        if (original in helpers) {
+          bindings.push([local ?? original, helpers[original]]);
+          continue;
+        }
         if (!(original in mod)) {
           throw new Error(`模块 ${moduleName} 未导出 ${original}`);
         }
