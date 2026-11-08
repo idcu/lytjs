@@ -3,7 +3,7 @@
 
 import type { AppConfig, DOMRenderer, VNode } from './types';
 import { createAppContext as createBaseAppContext } from '@lytjs/component';
-import type { AppContext as BaseAppContext, ComponentInternalInstance } from '@lytjs/component';
+import type { AppContext as BaseAppContext } from '@lytjs/component';
 
 /**
  * Core AppContext extends the base AppContext from @lytjs/component
@@ -13,7 +13,6 @@ export interface AppContext extends BaseAppContext {
   renderer: DOMRenderer | null;
   _vnode: VNode | null;
   _container: Element | null;
-  _instance: ComponentInternalInstance | null;
 }
 
 /**
@@ -30,7 +29,6 @@ export function createAppContext(): AppContext {
     renderer: null,
     _vnode: null,
     _container: null,
-    _instance: null,
   };
 }
 

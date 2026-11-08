@@ -47,11 +47,6 @@ describe('createAppContext', () => {
     expect(ctx._container).toBeNull();
   });
 
-  it('创建的上下文 _instance 应为 null', () => {
-    const ctx = createAppContext();
-    expect(ctx._instance).toBeNull();
-  });
-
   it('config.performance 默认应为 false', () => {
     const ctx = createAppContext();
     expect(ctx.config.performance).toBe(false);

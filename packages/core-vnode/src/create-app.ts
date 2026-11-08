@@ -137,9 +137,6 @@ export function createApp(
         // FIX: DTS build error - 跨包类型不兼容
         (rootVNode as { component: unknown }).component = instance;
 
-        // 保存根实例引用，用于卸载生命周期钩子
-        context._instance = instance;
-
         // 使用组件感知的 DOM 渲染器（装配见 `component-renderer.ts`，与 `web-component.ts` 共用）。
         // 说明：@lytjs/component 与 @lytjs/vdom（经 @lytjs/common-vnode）各自声明了一份
         // 同名的 ComponentInternalInstance，二者结构不等价；跨包桥接在 helper 内部完成。
@@ -216,7 +213,6 @@ export function createApp(
       // 清理 globalProperties
       context.config.globalProperties = {};
 
-      context._instance = null;
       context.renderer = null;
     },
 

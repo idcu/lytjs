@@ -445,7 +445,6 @@ export function createApp(
       // 清理 globalProperties
       context.config.globalProperties = {};
 
-      context._instance = null;
       context.renderer = null;
     },
 
@@ -561,9 +560,6 @@ export function createApp(
     // FIX: DTS build error - 跨包 ComponentInternalInstance 类型不兼容（component vs common-vnode），
     // 使用类型断言绕过，运行时类型是正确的
     rootVNode.component = instance as unknown as typeof rootVNode.component;
-
-    // 保存根实例引用，用于卸载生命周期钩子
-    context._instance = instance;
 
     // 使用增强的渲染器进行渲染
     if (effectiveMode !== 'vnode') {
