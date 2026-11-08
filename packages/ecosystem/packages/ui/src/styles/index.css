@@ -2612,6 +2612,61 @@
   background: #ecf5ff;
   color: var(--lyt-color-primary);
 }
+.lyt-menu__item,
+.lyt-menu__submenu-item,
+.lyt-menu__submenu {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 18px;
+  color: var(--lyt-text-color-regular);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.lyt-menu__item--active {
+  color: var(--lyt-color-primary);
+  background-color: var(--lyt-color-primary-light-9);
+}
+.lyt-menu__item--disabled {
+  color: var(--lyt-text-color-placeholder);
+  cursor: not-allowed;
+}
+.lyt-menu__item--focused {
+  outline: 2px solid var(--lyt-color-primary-light-7);
+  outline-offset: -2px;
+}
+.lyt-menu__submenu-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lyt-menu__arrow {
+  margin-left: auto;
+  transition: transform 0.2s;
+}
+.lyt-menu__arrow--opened {
+  transform: rotate(180deg);
+}
+.lyt-menu__icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.lyt-menu__title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lyt-menu__sro {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
 
 /* ===== Message ===== */
 .lyt-message-container {
