@@ -30,6 +30,7 @@ import {
   collectSlotVNodesShared,
   serializeConditionalVNodeShared,
   serializeListVNodeShared,
+  serializeVNodeCallChildShared,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -1953,30 +1954,11 @@ export function serializeVNodeCallChild(
   prefix: string,
   locals: ReadonlySet<string> = new Set(),
 ): string | null {
-  if (!child || typeof child !== 'object') return null;
-  const node = child as { type?: number };
-
-  // 插值：JS_CALL_EXPRESSION(TO_DISPLAY_STRING, expr)
-  if (node.type === NodeTypes.JS_CALL_EXPRESSION) {
-    const call = child as { callee?: unknown; arguments?: unknown[] };
-    if (call.callee !== 'TO_DISPLAY_STRING') return null;
-    const arg = (call.arguments && call.arguments[0]) as SimpleExpressionNode | undefined;
-    const exp = arg && typeof arg.content === 'string' ? arg.content : null;
-    if (!exp) return null;
-    return `createVNode(Text,null,${prefixIdentifiers(exp, locals)})`;
-  }
-
-  // 嵌套元素
-  if (node.type === NodeTypes.ELEMENT) {
-    return serializeVNodeElement(child as ElementNode, prefix, locals);
-  }
-
-  // 嵌套 vnode（transform 已把子元素转成 VNODE_CALL，与 v-if 的 consequent 同类）
-  if (node.type === NodeTypes.VNODE_CALL) {
-    return serializeVNodeCall(child, prefix, locals);
-  }
-
-  return null;
+  return serializeVNodeCallChildShared(child, locals, {
+    textVNode: (exp, scope) => `createVNode(Text,null,${prefixIdentifiers(exp, scope)})`,
+    element: (el, scope) => serializeVNodeElement(el, prefix, scope),
+    vnodeCall: (n, scope) => serializeVNodeCall(n, prefix, scope),
+  });
 }
 
 /**

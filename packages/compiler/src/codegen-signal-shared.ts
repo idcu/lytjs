@@ -893,3 +893,42 @@ export function serializeListVNodeShared(
 
   return `...(${hooks.srcExpr(src, locals)}.map((${params.join(',')})=>${inner}))`;
 }
+
+/** 单个 vnode 子节点序列化时需要发射器注入的差异点 */
+export interface VNodeCallChildHooks {
+  textVNode: (exp: string, locals: ReadonlySet<string>) => string;
+  element: (node: ElementNode, locals: ReadonlySet<string>) => string | null;
+  vnodeCall: (node: unknown, locals: ReadonlySet<string>) => string | null;
+}
+
+/** 子节点 → vnode 构造代码；不能完整还原时返回 null */
+export function serializeVNodeCallChildShared(
+  child: unknown,
+  locals: ReadonlySet<string>,
+  hooks: VNodeCallChildHooks,
+): string | null {
+  if (!child || typeof child !== 'object') return null;
+  const node = child as { type?: number };
+
+  // 插值：JS_CALL_EXPRESSION(TO_DISPLAY_STRING, expr)
+  if (node.type === NodeTypes.JS_CALL_EXPRESSION) {
+    const call = child as { callee?: unknown; arguments?: unknown[] };
+    if (call.callee !== 'TO_DISPLAY_STRING') return null;
+    const arg = (call.arguments && call.arguments[0]) as SimpleExpressionNode | undefined;
+    const exp = arg && typeof arg.content === 'string' ? arg.content : null;
+    if (!exp) return null;
+    return hooks.textVNode(exp, locals);
+  }
+
+  // 嵌套元素
+  if (node.type === NodeTypes.ELEMENT) {
+    return hooks.element(child as ElementNode, locals);
+  }
+
+  // 嵌套 vnode（transform 已把子元素转成 VNODE_CALL，与 v-if 的 consequent 同类）
+  if (node.type === NodeTypes.VNODE_CALL) {
+    return hooks.vnodeCall(child, locals);
+  }
+
+  return null;
+}

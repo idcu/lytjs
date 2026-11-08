@@ -34,6 +34,7 @@ import {
   collectSlotVNodesShared,
   serializeConditionalVNodeShared,
   serializeListVNodeShared,
+  serializeVNodeCallChildShared,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -2088,33 +2089,18 @@ export function serializeVNodeCallChildOptimized(
   options: SignalCodegenOptions,
   locals: ReadonlySet<string> = new Set(),
 ): string | null {
-  if (!child || typeof child !== 'object') return null;
-  const node = child as { type?: number };
-
-  if (node.type === NodeTypes.JS_CALL_EXPRESSION) {
-    const call = child as { callee?: unknown; arguments?: unknown[] };
-    if (call.callee !== 'TO_DISPLAY_STRING') return null;
-    const arg = (call.arguments && call.arguments[0]) as SimpleExpressionNode | undefined;
-    const exp = arg && typeof arg.content === 'string' ? arg.content : null;
-    if (!exp) return null;
-    usedRuntime.add('createVNode');
-    usedRuntime.add('Text');
-    const cv = getShortName('createVNode', options.useShortNames ?? true);
-    const tx = getShortName('Text', options.useShortNames ?? true);
-    const expr = prefixIdentifiers(exp, locals).replace(/\b_ctx\./g, '_c.');
-    return `${cv}(${tx},null,${expr})`;
-  }
-
-  if (node.type === NodeTypes.ELEMENT) {
-    return serializeVNodeElementOptimized(child as ElementNode, usedRuntime, options, locals);
-  }
-
-  // 嵌套 vnode（transform 已把子元素转成 VNODE_CALL）
-  if (node.type === NodeTypes.VNODE_CALL) {
-    return serializeVNodeCallOptimized(child, usedRuntime, options, locals);
-  }
-
-  return null;
+  return serializeVNodeCallChildShared(child, locals, {
+    textVNode: (exp, scope) => {
+      usedRuntime.add('createVNode');
+      usedRuntime.add('Text');
+      const cv = getShortName('createVNode', options.useShortNames ?? true);
+      const tx = getShortName('Text', options.useShortNames ?? true);
+      const expr = prefixIdentifiers(exp, scope).replace(/\b_ctx\./g, '_c.');
+      return `${cv}(${tx},null,${expr})`;
+    },
+    element: (el, scope) => serializeVNodeElementOptimized(el, usedRuntime, options, scope),
+    vnodeCall: (n, scope) => serializeVNodeCallOptimized(n, usedRuntime, options, scope),
+  });
 }
 
 /**
