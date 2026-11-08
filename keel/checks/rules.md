@@ -1,7 +1,7 @@
 ---
 scope: meta
 status: active
-last-verified: 2026-10-05
+last-verified: 2026-11-09
 keywords: [校验, 规则, 扩展检查, CI, 门禁]
 ---
 
@@ -23,11 +23,12 @@ keywords: [校验, 规则, 扩展检查, CI, 门禁]
 | 7 | 构建顺序一致性 | `corepack pnpm check-build-order` | ❌ fail | CI（build-order job） |
 | 8 | vitest alias 目标存在（防用例静默少跑） | `node scripts/gate.mjs check-vitest-alias-dist` | ❌ fail | CI（build job 后置） |
 | 9 | 慢档全量（发布前） | `node scripts/gate.mjs --tier slow` | ❌ fail | 发布前 / 定时任务 |
-| 10 | 源码卫生（`eval(` / `new Function(` / `console.log(` 三条规则 + 显式清单） | `node scripts/gate.mjs check-src-hygiene` | ❌ fail | 本地 fast gate 已含 + CI |
+| 10 | 源码卫生（三条规则 + 显式清单） | `node scripts/gate.mjs check-src-hygiene` | ❌ fail | 本地 fast gate 已含 + CI |
 | 11 | 治理接线（keel CI 三关卡齐全） | `node scripts/gate.mjs check-keel-wiring` | ❌ fail | 本地 fast gate 已含 + CI |
-| 12 | Golden 20 × 七类契约（B04/B05） | `node scripts/check-ui-contracts.mjs` | ❌ fail（登记/源码漂移；`--strict` 时红项也 fail） | 本地（fast）+ 验收 |
-| 13 | UI 全量 i18n（双语键一致 + 全量扫描硬编码棘轮） | `node scripts/check-ui-i18n.ts` | ❌ fail（新增硬编码 / 键或占位不一致） | 本地（fast）+ CI |
+| 12 | Golden 20 × 七类契约（B04/B05） | `node scripts/check-ui-contracts.mjs` | ❌ fail（登记/漂移/严格模式） | fast+验收 |
+| 13 | UI 全量 i18n（棘轮） | `node scripts/check-ui-i18n.ts` | ❌ fail（新增硬编码 / 键或占位不一致） | 本地（fast）+ CI |
 | 14 | 门禁负控（S05）：注入必红；其余登记 | `node scripts/gate.mjs --inject` | ❌ fail | 本地 fast gate 已含 + CI |
+| 15 | 包元数据口径 S28 | `node scripts/gate.mjs check-package-metadata` | ❌ fail | fast+CI |
 
 ## 级别变更记录
 

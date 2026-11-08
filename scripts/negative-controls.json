@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-07",
+  "updatedAt": "2026-11-08",
   "verified": [
     "check-lockfile",
     "check-build-order",
@@ -20,6 +20,7 @@
     "check-ui-i18n",
     "check-dist-freshness",
     "check-package-exports",
+    "check-package-metadata",
     "check-consumer-demo",
     "check-examples",
     "check-render-shapes",

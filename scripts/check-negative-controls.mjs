@@ -569,6 +569,29 @@ const CONTROLS = {
     );
   },
 
+  'check-package-metadata': () => {
+    // 把 @lytjs/core 改回历史不一致口径：exports 子路径排到 "." 之前、
+    // sideEffects 改 true、files 丢掉 src ⇒ 三条判据都必须报红
+    const file = join(ROOT, 'packages/core/package.json');
+    withPatchedFile(
+      file,
+      (text) => {
+        const pkg = JSON.parse(text);
+        if (!pkg.exports?.['./runtime'] || !pkg.exports?.['.']) {
+          throw new Error('check-package-metadata：注入点漂移（@lytjs/core 的 exports 结构变了）');
+        }
+        pkg.exports = {
+          './runtime': pkg.exports['./runtime'],
+          '.': pkg.exports['.'],
+        };
+        pkg.sideEffects = true;
+        pkg.files = ['dist'];
+        return `${JSON.stringify(pkg, null, 2)}\n`;
+      },
+      () => expectFail(['node', 'scripts/check-package-metadata.mjs'], 'check-package-metadata'),
+    );
+  },
+
   'check-coverage-snapshot': () => {
     // 把快照里的 commit 改成不存在的 sha ⇒ 「commit 必须真实存在」必红
     const file = join(ROOT, 'scripts/coverage-snapshot.json');

@@ -208,6 +208,16 @@ const GATES = [
       '能被 require 且导出非空（单测走源码 alias，发现不了"消费者 import 不到"，2026-11-01 新增）',
   },
   {
+    name: 'check-package-metadata',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-package-metadata.mjs'],
+    approx: '~0.3s',
+    desc:
+      '包元数据口径（S28）：76 包 exports 键序（"." 首 / 子路径字典序 / "./package.json" 末 / ' +
+      '条件 types→import→require）、sideEffects（纯包 false，发 CSS 的包 ["**/*.css"]）、' +
+      'files（dist+src+bin 入口）；pnpm 版本只允许 root packageManager 一处',
+  },
+  {
     name: 'check-consumer-demo',
     tier: 'fast',
     cmd: ['node', 'scripts/check-consumer-demo.mjs'],
