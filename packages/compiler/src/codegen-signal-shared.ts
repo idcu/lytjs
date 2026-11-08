@@ -580,6 +580,16 @@ export function withScope(locals: ReadonlySet<string>, param: string | null): Se
   return out;
 }
 
+/** 元素是否带有插槽编译尚不支持的结构性指令（只认 v-bind / v-on / v-show） */
+export function hasUnsupportedSlotDirective(node: ElementNode): boolean {
+  for (const prop of node.props) {
+    if (!prop || prop.type !== NodeTypes.DIRECTIVE) continue;
+    const name = (prop as DirectiveNode).name;
+    if (name !== 'bind' && name !== 'on' && name !== 'show') return true;
+  }
+  return false;
+}
+
 /**
  * 把模板里的事件名转成组件的 prop 键名。
  *

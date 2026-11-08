@@ -32,6 +32,7 @@ import {
   validateEventName,
   validateComponentName,
   validateIslandDirective,
+  hasUnsupportedSlotDirective,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -2269,22 +2270,12 @@ function collectSlotVNodesOptimized(
     if (child.type === NodeTypes.ELEMENT) {
       const el = child as ElementNode;
       // 含其它结构性指令（v-for / v-show …）的元素暂不参与插槽编译 —— 宁缺勿错渲
-      if (hasUnsupportedSlotDirectiveOptimized(el)) continue;
+      if (hasUnsupportedSlotDirective(el)) continue;
       const elCode = serializeVNodeElementOptimized(el, usedRuntime, options, locals);
       if (elCode) out.push(elCode);
     }
   }
   return out;
-}
-
-/** 元素是否带有插槽编译尚不支持的结构性指令（只认 v-bind / v-on） */
-function hasUnsupportedSlotDirectiveOptimized(node: ElementNode): boolean {
-  for (const prop of node.props) {
-    if (!prop || prop.type !== NodeTypes.DIRECTIVE) continue;
-    const name = (prop as DirectiveNode).name;
-    if (name !== 'bind' && name !== 'on' && name !== 'show') return true;
-  }
-  return false;
 }
 
 /** 单个元素 → `createVNode(tag, attrs, children)`（优化版用短别名） */

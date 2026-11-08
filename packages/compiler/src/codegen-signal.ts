@@ -28,6 +28,7 @@ import {
   validateEventName,
   validateComponentName,
   validateIslandDirective,
+  hasUnsupportedSlotDirective,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -2136,21 +2137,6 @@ function collectSlotVNodes(
     }
   }
   return out;
-}
-
-/**
- * 元素是否带有插槽编译尚不支持的结构性指令
- *
- * 目前插槽只支持 `v-bind` 与 `v-on`；`v-if`/`v-for`/`v-show` 等若被静默忽略，
- * 会导致「本不该渲染的内容被渲染」，因此这里主动判定并让调用方跳过整个元素。
- */
-function hasUnsupportedSlotDirective(node: ElementNode): boolean {
-  for (const prop of node.props) {
-    if (!prop || prop.type !== NodeTypes.DIRECTIVE) continue;
-    const name = (prop as DirectiveNode).name;
-    if (name !== 'bind' && name !== 'on' && name !== 'show') return true;
-  }
-  return false;
 }
 
 /** 单个元素 → `createVNode(tag, attrs, children)` */
