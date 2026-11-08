@@ -34,6 +34,7 @@ import {
   serializeVNodeCallShared,
   serializeVNodeElementShared,
   buildComponentPropsObjectShared,
+  processVNodeCallPropsShared,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -754,48 +755,10 @@ function processVNodeCallProps(
   dynamicBindings: Array<{ varName: string; code: string }>,
   locals: ReadonlySet<string> = new Set(),
 ): void {
-  if (!vnode.props || vnode.props.type !== NodeTypes.JS_OBJECT_EXPRESSION) return;
-
-  const objExpr = vnode.props as JSObjectExpression;
-  for (const prop of objExpr.properties) {
-    if (prop.type !== NodeTypes.JS_PROPERTY) continue;
-    const jsProp = prop as JSProperty;
-    if (
-      jsProp.key.type !== NodeTypes.SIMPLE_EXPRESSION ||
-      jsProp.value.type !== NodeTypes.SIMPLE_EXPRESSION
-    ) {
-      continue;
-    }
-
-    const key = (jsProp.key as SimpleExpressionNode).content.replace(/^"|"$/g, '');
-    const value = (jsProp.value as SimpleExpressionNode).content;
-
-    if (key === 'textContent') {
-      // v-text 转换后的结果
-      dynamicBindings.push({
-        varName,
-        code: `effect(() => setText(${varName}, ${prefixIdentifiers(value, locals)}));`,
-      });
-    } else if (key === 'innerHTML') {
-      // v-html 转换后的结果。
-      // 消毒由 @lytjs/dom-runtime 的 setHTML 统一负责（写入前调用 sanitizeHTML），
-      // 与 vnode 模式的 `innerHTML: sanitizeHTML(x)` 共用同一真相源；
-      // 一致性由 scripts/check-security-html.mjs 门禁逐字比对两种模式。
-      dynamicBindings.push({
-        varName,
-        code: `effect(() => setHTML(${varName}, ${prefixIdentifiers(value, locals)}));`,
-      });
-    } else if (key === 'modelValue') {
-      // v-model 转换后的结果 - 已在 processDirective 中处理
-      // 跳过
-    } else if (key.startsWith('onUpdate:')) {
-      // v-model 的更新事件 - 已在 processDirective 中处理
-      // 跳过
-    } else if (key.startsWith('on')) {
-      // v-on 转换后的结果 - 已在 processDirective 中处理
-      // 跳过
-    }
-  }
+  processVNodeCallPropsShared(vnode, varName, dynamicBindings, locals, {
+    text: (v, value, scope) => `effect(() => setText(${v}, ${prefixIdentifiers(value, scope)}));`,
+    html: (v, value, scope) => `effect(() => setHTML(${v}, ${prefixIdentifiers(value, scope)}));`,
+  });
 }
 
 // ============================================================

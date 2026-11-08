@@ -1142,3 +1142,53 @@ export function buildComponentPropsObjectShared(
 
   return `{${parts.join(',')}}`;
 }
+
+/** `processVNodeCallProps` 需要注入的差异点（指令名分发之外的发射形态） */
+export interface VNodeCallPropsHooks {
+  /** `v-text` → 动态绑定代码（基础版传 locals，优化版历史实现未传） */
+  text: (varName: string, value: string, locals: ReadonlySet<string>) => string;
+  /** `v-html` → 动态绑定代码 */
+  html: (varName: string, value: string, locals: ReadonlySet<string>) => string;
+}
+
+/**
+ * 处理 `v-text` / `v-html` 转换后的 VNODE_CALL props（两版共享）。
+ *
+ * `modelValue` / `onUpdate:` / 其它 `on*` 已在 processDirective 处理，这里跳过。
+ */
+export function processVNodeCallPropsShared(
+  vnode: VNodeCall,
+  varName: string,
+  dynamicBindings: Array<{ varName: string; code: string }>,
+  locals: ReadonlySet<string>,
+  hooks: VNodeCallPropsHooks,
+): void {
+  if (!vnode.props || vnode.props.type !== NodeTypes.JS_OBJECT_EXPRESSION) return;
+
+  const objExpr = vnode.props as JSObjectExpression;
+  for (const prop of objExpr.properties) {
+    if (prop.type !== NodeTypes.JS_PROPERTY) continue;
+    const jsProp = prop as JSProperty;
+    if (
+      jsProp.key.type !== NodeTypes.SIMPLE_EXPRESSION ||
+      jsProp.value.type !== NodeTypes.SIMPLE_EXPRESSION
+    ) {
+      continue;
+    }
+
+    const key = (jsProp.key as SimpleExpressionNode).content.replace(/^"|"$/g, '');
+    const value = (jsProp.value as SimpleExpressionNode).content;
+
+    if (key === 'textContent') {
+      // v-text 转换后的结果
+      dynamicBindings.push({ varName, code: hooks.text(varName, value, locals) });
+    } else if (key === 'innerHTML') {
+      // v-html 转换后的结果。
+      // 消毒由 @lytjs/dom-runtime 的 setHTML 统一负责（写入前调用 sanitizeHTML），
+      // 与 vnode 模式的 `innerHTML: sanitizeHTML(x)` 共用同一真相源；
+      // 一致性由 scripts/check-security-html.mjs 门禁逐字比对两种模式。
+      dynamicBindings.push({ varName, code: hooks.html(varName, value, locals) });
+    }
+    // modelValue / onUpdate: / 其它 on*：已在 processDirective 处理，跳过
+  }
+}

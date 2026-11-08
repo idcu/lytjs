@@ -38,6 +38,7 @@ import {
   serializeVNodeCallShared,
   serializeVNodeElementShared,
   buildComponentPropsObjectShared,
+  processVNodeCallPropsShared,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -1053,46 +1054,25 @@ function processVNodeCallPropsOptimized(
   usedRuntime: Set<string>,
   options: SignalCodegenOptions,
 ): void {
-  if (!vnode.props || vnode.props.type !== NodeTypes.JS_OBJECT_EXPRESSION) return;
-
-  const objExpr = vnode.props as JSObjectExpression;
-  for (const prop of objExpr.properties) {
-    if (prop.type !== NodeTypes.JS_PROPERTY) continue;
-    const jsProp = prop as JSProperty;
-    if (
-      jsProp.key.type !== NodeTypes.SIMPLE_EXPRESSION ||
-      jsProp.value.type !== NodeTypes.SIMPLE_EXPRESSION
-    ) {
-      continue;
-    }
-
-    const key = (jsProp.key as SimpleExpressionNode).content.replace(/^"|"$/g, '');
-    const value = (jsProp.value as SimpleExpressionNode).content;
-
-    if (key === 'textContent') {
+  processVNodeCallPropsShared(vnode, varName, dynamicBindings, new Set(), {
+    text: (v, value) => {
       usedRuntime.add('effect');
       usedRuntime.add('setText');
       const e = getShortName('effect', options.useShortNames ?? true);
       const st = getShortName('setText', options.useShortNames ?? true);
-      dynamicBindings.push({
-        varName,
-        // ⚠️ 2026-09-30 修复：此处此前直接用**裸** `${value}`（transform 把 `v-text="msg"`
-        // 变成 `textContent: msg`），既未前缀化 ⇒ 产物里是裸标识符 `msg`
-        // ⇒ `ReferenceError: msg is not defined`（若恰好与短名同名还会取错值）。
-        code: `${e}(()=>${st}(${varName},${renderExpression(value)}));`,
-      });
-    } else if (key === 'innerHTML') {
+      // ⚠️ 既有分歧（按块 5 规则保留，不硬合）：此处未传 locals，
+      //    v-text 出现在 v-for/插槽作用域内时会误前缀成 `_c.item`。
+      return `${e}(()=>${st}(${v},${renderExpression(value)}));`;
+    },
+    html: (v, value) => {
       usedRuntime.add('effect');
       usedRuntime.add('setHTML');
       const e = getShortName('effect', options.useShortNames ?? true);
       const sh = getShortName('setHTML', options.useShortNames ?? true);
-      dynamicBindings.push({
-        varName,
-        // 同上：`v-html="h"` 的 transform 产物同样是裸表达式，必须前缀化。
-        code: `${e}(()=>${sh}(${varName},${renderExpression(value)}));`,
-      });
-    }
-  }
+      // 同上：`v-html="h"` 的 transform 产物同样是裸表达式，必须前缀化。
+      return `${e}(()=>${sh}(${v},${renderExpression(value)}));`;
+    },
+  });
 }
 
 // ============================================================
