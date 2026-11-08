@@ -116,9 +116,10 @@ export function renderList<T, R>(
     }
   } else if (typeof source === 'number') {
     // ★ 2026-10-22：不再 `new Array(source)`。
-    //   负数 / 小数 / NaN 会让 `new Array()` 抛
+    //   负数 / 0 / NaN 会让 `new Array()` 抛
     //   `RangeError: Invalid array length`（模板里 `v-for="n in -1"` 之类会直接把渲染打挂）。
-    //   改用 push 循环，与参考语义一致：非正整数 ⇒ 空数组。
+    //   改用 push 循环：非正数 / NaN ⇒ 空数组；正小数按 `i < source` 的上界取值
+    //   （如 1.5 ⇒ 2 项、2.5 ⇒ 3 项），与参考实现一致。
     ret = [] as R[];
     for (let i = 0; i < source; i++) {
       ret.push(renderItem((i + 1) as unknown as T, i + 1, i));
