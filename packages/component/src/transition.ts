@@ -86,7 +86,18 @@ export const Transition: ComponentOptions = {
   //     `performLeaveTransition`（不复制第二套过渡逻辑）。
   setup(props: Record<string, unknown>, { slots }: SetupContext) {
     const instance = getCurrentInstance();
-    const transitionProps = props as TransitionProps<unknown>;
+    // S24：过渡类名前缀按 **app 实例** 隔离。
+    // 此前 `performEnterTransition` 只拿到 `props`，未传 `name` 时会回落到
+    // `@lytjs/vdom` 的模块级 `globalTransitionPrefix` —— 两个 app 同时挂载时，
+    // 后设置的前缀会污染另一个 app 的所有过渡类名。
+    // 这里优先取当前 app 的 `config.transitionPrefix`，显式 `name` 仍然最高优先级。
+    const configPrefix = (instance?.appContext?.config as Record<string, unknown> | undefined)
+      ?.transitionPrefix;
+    const appTransitionPrefix = typeof configPrefix === 'string' ? configPrefix : undefined;
+    const transitionProps =
+      props.name === undefined && appTransitionPrefix !== undefined
+        ? (Object.assign({}, props, { name: appTransitionPrefix }) as TransitionProps<unknown>)
+        : (props as TransitionProps<unknown>);
     const mode = (props.mode as string | undefined) ?? 'default';
 
     // ============================================================

@@ -9,7 +9,7 @@ import { createVNode } from '@lytjs/vdom';
 import type { FLIPState, TransitionProps, VNode } from '@lytjs/vdom';
 import { createFLIPState, beforeUpdate, afterUpdate } from '@lytjs/vdom';
 import { performEnterTransition, performLeaveTransition } from '@lytjs/vdom';
-import { onUpdated } from './lifecycle';
+import { getCurrentInstance, onUpdated } from './lifecycle';
 
 // ==================== TransitionGroup Props ====================
 
@@ -71,7 +71,16 @@ export const TransitionGroup: ComponentOptions = {
   },
 
   setup(props: Record<string, unknown>, { slots }: SetupContext) {
-    const transitionProps = props as unknown as TransitionProps<Element>;
+    // S24：与 `<Transition>` 一致，过渡类名前缀按 app 实例隔离；
+    // 未显式传 `name` 时优先取当前 app 的 `config.transitionPrefix`。
+    const instance = getCurrentInstance();
+    const configPrefix = (instance?.appContext?.config as Record<string, unknown> | undefined)
+      ?.transitionPrefix;
+    const appTransitionPrefix = typeof configPrefix === 'string' ? configPrefix : undefined;
+    const transitionProps =
+      props.name === undefined && appTransitionPrefix !== undefined
+        ? (Object.assign({}, props, { name: appTransitionPrefix }) as TransitionProps<Element>)
+        : (props as TransitionProps<Element>);
 
     /** 上一帧的子 vnode（FLIP 需要它来量「改之前」的位置） */
     let prevChildren: VNode[] = [];
@@ -103,7 +112,7 @@ export const TransitionGroup: ComponentOptions = {
     // FLIP 的后半段：patch 完成后量新位置并对移动过的元素施加位移
     onUpdated(() => {
       if (!flipState) return;
-      const name = (props.name as string | undefined) ?? 'v';
+      const name = (props.name as string | undefined) ?? appTransitionPrefix ?? 'v';
       const moveClass = (props.moveClass as string | undefined) ?? `${name}-move`;
       afterUpdate(flipState, collectElements(prevChildren), moveClass);
       flipState = null;

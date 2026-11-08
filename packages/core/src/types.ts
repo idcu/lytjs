@@ -80,6 +80,14 @@ export interface AppConfig extends BaseAppConfig {
   globalProperties: Record<string, unknown>;
   isCustomElement?: (tag: string) => boolean;
   compilerOptions?: Record<string, unknown>;
+  /**
+   * 本 app 的过渡类名前缀（S24）。
+   *
+   * 不设置时回落到 `@lytjs/vdom` 的进程级默认前缀（由 `setTransitionPrefix` 修改）。
+   * 设置后只影响当前 app 的 `<Transition>` / `<TransitionGroup>`，避免多个 app
+   * 同时挂载时互相污染。
+   */
+  transitionPrefix?: string;
 }
 
 // ==================== App Options ====================
