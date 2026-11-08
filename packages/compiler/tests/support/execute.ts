@@ -83,7 +83,11 @@ export const HELPERS: Record<string, unknown> = {
     const key = (event as { key?: string }).key;
     return key && keys.includes(key) ? fn(event) : undefined;
   },
-  withDirectives: (vnodeValue: unknown) => vnodeValue,
+  // 运行时据此在挂载/更新时调用指令钩子；这里原样挂到 VNode 上供断言。
+  withDirectives: (vnodeValue: unknown, directives: unknown[]) => {
+    (vnodeValue as { __directives?: unknown[] }).__directives = directives;
+    return vnodeValue;
+  },
   resolveDirective: (name: string) => name,
   Fragment,
   createSlots: (slots: unknown) => slots,

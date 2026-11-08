@@ -18,81 +18,104 @@
  * 文本子节点侥幸存活（字符串不需要子节点 codegen）—— 于是又是「一半能用」：
  * `<p v-else>B</p>` 正常，`<p v-else><i>B</i></p>` 空白。
  *
- * 修法：把链的构建推到**链尾**（`chainEnd` 的 exit 一定晚于所有前序兄弟），
- * 此时每个分支的 codegenNode 都已就绪，直接取用。
+ * 判据：执行产物，按条件逐分支断言**渲染出来的树**。
  */
 import { describe, it, expect } from 'vitest';
 import { compile } from '../src/index';
+import { Fragment, asVNode, asVNodeList, execute, type RenderedVNode } from './support/execute';
+
+const mount = (template: string, ctx: Record<string, unknown>): RenderedVNode =>
+  asVNode(execute(compile(template))(ctx));
+
+const childrenOf = (node: RenderedVNode): unknown[] =>
+  Array.isArray(node.children) ? node.children : [node.children];
+
+/** 取 `<div>` 的第一个子节点（条件链/列表产物） */
+const firstChild = (template: string, ctx: Record<string, unknown>): RenderedVNode =>
+  asVNode(childrenOf(mount(template, ctx))[0]);
 
 describe('v-if 链的分支内容（P0 回归）', () => {
-  it('v-else 分支里的元素子节点不得丢失', () => {
-    const { code } = compile('<div><p v-if="ok"><b>A</b></p><p v-else><i>B</i></p></div>');
+  const tpl = '<div><p v-if="ok"><b>A</b></p><p v-else><i>B</i></p></div>';
 
-    expect(code).toContain('createElementVNode("b", null, "A")');
-    expect(code).toContain('createElementVNode("i", null, "B")');
-    expect(code).toContain('_ctx.ok');
+  it('v-else 分支里的元素子节点不得丢失', () => {
+    const truthy = firstChild(tpl, { ok: true });
+    expect(truthy.type).toBe('p');
+    expect(asVNode(truthy.children).type).toBe('b');
+    expect(asVNode(truthy.children).children).toBe('A');
+
+    const falsy = firstChild(tpl, { ok: false });
+    expect(falsy.type).toBe('p');
+    expect(asVNode(falsy.children).type).toBe('i');
+    expect(asVNode(falsy.children).children).toBe('B');
   });
 
   it('v-else-if 中间分支的元素子节点同样不得丢失', () => {
-    const { code } = compile(
-      '<div><p v-if="a"><b>1</b></p><p v-else-if="b"><i>2</i></p><p v-else><u>3</u></p></div>',
-    );
+    const chain =
+      '<div><p v-if="a"><b>1</b></p><p v-else-if="b"><i>2</i></p><p v-else><u>3</u></p></div>';
 
-    expect(code).toContain('createElementVNode("b", null, "1")');
-    expect(code).toContain('createElementVNode("i", null, "2")');
-    expect(code).toContain('createElementVNode("u", null, "3")');
-    expect(code).toContain('_ctx.a');
-    expect(code).toContain('_ctx.b');
+    expect(asVNode(firstChild(chain, { a: true, b: false }).children).type).toBe('b');
+    expect(asVNode(firstChild(chain, { a: false, b: true }).children).type).toBe('i');
+    expect(asVNode(firstChild(chain, { a: false, b: false }).children).type).toBe('u');
   });
 
   it('三个分支的嵌套结构都保留（含插值）', () => {
-    const { code } = compile(
-      '<div><div v-if="a"><span>{{ a }}</span></div><div v-else><span>{{ b }}</span></div></div>',
-    );
+    const nested =
+      '<div><div v-if="a"><span>{{ a }}</span></div><div v-else><span>{{ b }}</span></div></div>';
 
-    expect((code.match(/toDisplayString/g) ?? []).length).toBeGreaterThanOrEqual(2);
+    const truthy = firstChild(nested, { a: 'A', b: 'B' });
+    expect(truthy.type).toBe('div');
+    expect(asVNode(truthy.children).children).toBe('A');
+
+    const falsy = firstChild(nested, { a: '', b: 'B' });
+    expect(falsy.type).toBe('div');
+    expect(asVNode(falsy.children).children).toBe('B');
   });
 
   it('v-else 分支里再嵌 v-if 也要保留', () => {
-    const { code } = compile(
-      '<div><p v-if="a">A</p><p v-else><b v-if="b">B</b><i v-else>C</i></p></div>',
-    );
+    const nested = '<div><p v-if="a">A</p><p v-else><b v-if="b">B</b><i v-else>C</i></p></div>';
 
-    expect(code).toContain('_ctx.b');
-    expect(code).toContain('"B"');
-    expect(code).toContain('"C"');
+    expect(firstChild(nested, { a: true, b: false }).children).toBe('A');
+
+    const truthy = asVNode(childrenOf(firstChild(nested, { a: false, b: true }))[0]);
+    expect(truthy.type).toBe('b');
+    expect(truthy.children).toBe('B');
+
+    const falsy = asVNode(childrenOf(firstChild(nested, { a: false, b: false }))[0]);
+    expect(falsy.type).toBe('i');
+    expect(falsy.children).toBe('C');
   });
 
   it('文本分支仍走原路径（不得因为改动而回归）', () => {
-    const { code } = compile('<div><p v-if="ok">A</p><p v-else>B</p></div>');
-
-    expect(code).toContain('"A"');
-    expect(code).toContain('"B"');
+    const textOnly = '<div><p v-if="ok">A</p><p v-else>B</p></div>';
+    expect(firstChild(textOnly, { ok: true }).children).toBe('A');
+    expect(firstChild(textOnly, { ok: false }).children).toBe('B');
   });
 });
 
 describe('<template> 编译成 Fragment（P0 回归）', () => {
-  it('`<template v-if>` 不得产出字面量 template 元素', () => {
-    const { code, preamble } = compile('<div><template v-if="ok">A</template></div>');
-
-    expect(code).toContain('Fragment');
-    expect(code).not.toContain('"template"');
-    expect(preamble).toContain('Fragment');
-  });
-
-  it('`<template v-for>` 同样', () => {
-    const { code, preamble } = compile(
-      '<div><template v-for="x in list"><i>{{ x }}</i></template></div>',
+  it('`<template v-if>` 渲染成 Fragment，而不是字面量 template 元素', () => {
+    const fragment = asVNode(
+      childrenOf(mount('<div><template v-if="ok">A</template></div>', { ok: true }))[0],
     );
-
-    expect(code).toContain('Fragment');
-    expect(code).not.toContain('"template"');
-    expect(preamble).toContain('Fragment');
+    expect(fragment.type).toBe(Fragment);
+    expect(fragment.type).not.toBe('template');
+    // children 必须是数组（不能退化成整段文本）
+    expect(fragment.children).toEqual(['A']);
   });
 
-  it('Fragment 的 children 必须是数组（不能退化成整段文本）', () => {
-    const { code } = compile('<div><template v-if="ok">A</template></div>');
-
-    expect(code).toMatch(/Fragment, null, \[/);
+  it('`<template v-for>` 每一项各自渲染成 Fragment', () => {
+    const fragments = asVNodeList(
+      childrenOf(
+        mount('<div><template v-for="x in list"><i>{{ x }}</i></template></div>', {
+          list: ['a', 'b'],
+        }),
+      ),
+    );
+    expect(fragments).toHaveLength(2);
+    expect(fragments.every((fragment) => fragment.type === Fragment)).toBe(true);
+    expect(fragments.map((fragment) => asVNodeList(fragment.children)[0].children)).toEqual([
+      'a',
+      'b',
+    ]);
   });
 });
