@@ -837,3 +837,59 @@ export function serializeConditionalVNodeShared(
 
   return `(${hooks.testExpr(testExp, locals)}?${inner}:${alternate})`;
 }
+
+/** 列表 vnode 序列化时需要发射器注入的差异点 */
+export interface ListVNodeHooks {
+  vnodeCall: (node: unknown, locals: ReadonlySet<string>) => string | null;
+  srcExpr: (exp: string, locals: ReadonlySet<string>) => string;
+}
+
+/**
+ * `RENDER_LIST` 调用（v-for 产物）→ `...((source).map((item,i)=>vnode))`
+ *
+ * 循环变量作为 `locals` 传入表达式前缀化，避免 `item.id` 被误加前缀。
+ * 严格模式：任一段无法完整还原即整体返回 null。
+ */
+export function serializeListVNodeShared(
+  node: unknown,
+  locals: ReadonlySet<string>,
+  hooks: ListVNodeHooks,
+): string | null {
+  const call = node as { type?: number; callee?: unknown; arguments?: unknown[] };
+  if (!call || call.type !== NodeTypes.JS_CALL_EXPRESSION) return null;
+  if (call.callee !== 'RENDER_LIST') return null;
+
+  const args = call.arguments;
+  if (!Array.isArray(args) || args.length < 2) return null;
+
+  const srcNode = args[0] as SimpleExpressionNode | undefined;
+  const src = srcNode && typeof srcNode.content === 'string' ? srcNode.content : null;
+  if (!src) return null;
+
+  const fn = args[1] as { type?: number; children?: unknown[] };
+  if (!fn || fn.type !== NodeTypes.COMPOUND_EXPRESSION || !Array.isArray(fn.children)) return null;
+
+  // 箭头函数头（含参数名），例如 "(item, i) => { "
+  const head = fn.children.find((c): c is string => typeof c === 'string' && c.includes('=>'));
+  if (!head) return null;
+  const paramMatch = /^\s*\(?\s*([^)]*?)\s*\)?\s*=>/.exec(head);
+  if (!paramMatch) return null;
+  const params = (paramMatch[1] ?? '')
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean);
+  if (params.length === 0) return null;
+
+  const vnodeNode = fn.children.find(
+    (c) => !!c && typeof c === 'object' && (c as { type?: number }).type === NodeTypes.VNODE_CALL,
+  );
+  if (!vnodeNode) return null;
+
+  const innerLocals = new Set(locals);
+  for (const param of params) innerLocals.add(param);
+
+  const inner = hooks.vnodeCall(vnodeNode, innerLocals);
+  if (!inner) return null;
+
+  return `...(${hooks.srcExpr(src, locals)}.map((${params.join(',')})=>${inner}))`;
+}

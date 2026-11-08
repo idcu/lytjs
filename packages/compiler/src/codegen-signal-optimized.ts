@@ -33,6 +33,7 @@ import {
   buildComponentSlotsObjectShared,
   collectSlotVNodesShared,
   serializeConditionalVNodeShared,
+  serializeListVNodeShared,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -1974,43 +1975,10 @@ export function serializeListVNodeOptimized(
   options: SignalCodegenOptions,
   locals: ReadonlySet<string> = new Set(),
 ): string | null {
-  const call = node as { type?: number; callee?: unknown; arguments?: unknown[] };
-  if (!call || call.type !== NodeTypes.JS_CALL_EXPRESSION) return null;
-  if (call.callee !== 'RENDER_LIST') return null;
-
-  const args = call.arguments;
-  if (!Array.isArray(args) || args.length < 2) return null;
-
-  const srcNode = args[0] as SimpleExpressionNode | undefined;
-  const src = srcNode && typeof srcNode.content === 'string' ? srcNode.content : null;
-  if (!src) return null;
-
-  const fn = args[1] as { type?: number; children?: unknown[] };
-  if (!fn || fn.type !== NodeTypes.COMPOUND_EXPRESSION || !Array.isArray(fn.children)) return null;
-
-  const head = fn.children.find((c): c is string => typeof c === 'string' && c.includes('=>'));
-  if (!head) return null;
-  const paramMatch = /^\s*\(?\s*([^)]*?)\s*\)?\s*=>/.exec(head);
-  if (!paramMatch) return null;
-  const params = (paramMatch[1] ?? '')
-    .split(',')
-    .map((x) => x.trim())
-    .filter(Boolean);
-  if (params.length === 0) return null;
-
-  const vnodeNode = fn.children.find(
-    (c) => !!c && typeof c === 'object' && (c as { type?: number }).type === NodeTypes.VNODE_CALL,
-  );
-  if (!vnodeNode) return null;
-
-  const innerLocals = new Set(locals);
-  for (const param of params) innerLocals.add(param);
-
-  const inner = serializeVNodeCallOptimized(vnodeNode, usedRuntime, options, innerLocals);
-  if (!inner) return null;
-
-  const srcExpr = prefixIdentifiers(src, locals).replace(/\b_ctx\./g, '_c.');
-  return `...(${srcExpr}.map((${params.join(',')})=>${inner}))`;
+  return serializeListVNodeShared(node, locals, {
+    vnodeCall: (n, scope) => serializeVNodeCallOptimized(n, usedRuntime, options, scope),
+    srcExpr: (exp, scope) => prefixIdentifiers(exp, scope).replace(/\b_ctx\./g, '_c.'),
+  });
 }
 
 /**
