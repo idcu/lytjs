@@ -16,7 +16,7 @@ B01d-2 落地（静态序列化共享）；fast 56/56 · 88.3s、slow 17/17；C3
 - **S20**：零引用 29→0（删 27+restore 2+孤儿 1）；入口收敛为 `build`；`check-script-refs` 棘轮+负控。
 - **B01c**：100 模板 × 2 profile 逐字快照（slow）+双侧负控。
 - **B01d-1/2**：`EmitProfile` 常量 + 静态序列化共享；产物逐字不变。
-- **计时**：`ComputedRefImpl` 60s 定时器补 `unref()`；fast 174→88.3s。
+- **计时**：computed/memory/devtools 定时器补 `unref()`；fast 174→88.3s。
 - **S22**：`as unknown as` 基线 326/123 + 棘轮+负控；API 快照 39 包/1961 名（slow）+负控；
   计时断言 ADR 0024；host-contract ADR 0025 不接（前置=第二宿主）。
 
