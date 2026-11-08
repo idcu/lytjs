@@ -25,7 +25,6 @@ import {
   getStaticClass,
   createSimpleExpressionFor,
   getTestExpr,
-  toComponentEventKey,
   validateAttributeName,
   validateEventName,
   validateComponentName,
@@ -38,6 +37,7 @@ import {
   serializeVNodeCallChildrenShared,
   serializeVNodeCallShared,
   serializeVNodeElementShared,
+  buildComponentPropsObjectShared,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -1935,36 +1935,9 @@ function buildItemProps(
  * 事件（v-on）暂不参与（Vapor 组件事件绑定留待后续版本）。
  */
 function buildComponentPropsObject(node: ElementNode): string {
-  const parts: string[] = [];
-
-  for (const prop of node.props) {
-    if (!prop) continue;
-    if (prop.type === NodeTypes.ATTRIBUTE) {
-      const value = prop.value ? JSON.stringify(prop.value.content) : 'true';
-      parts.push(`${JSON.stringify(prop.name)}:${value}`);
-      continue;
-    }
-    if (prop.type === NodeTypes.DIRECTIVE) {
-      const dir = prop as DirectiveNode;
-      if (!dir.arg || !dir.exp) continue;
-      const key = getExpContent(dir.arg as SimpleExpressionNode);
-      const raw = getExpContent(dir.exp as SimpleExpressionNode);
-      if (!key || !raw) continue;
-      const expr = prefixIdentifiers(raw, new Set()).replace(/\b_ctx\./g, '_c.');
-
-      if (dir.name === 'bind') {
-        parts.push(`${JSON.stringify(key)}:${expr}`);
-        continue;
-      }
-
-      // 组件事件：@click="fn" → `onClick: _c.fn`（与 emit()/toHandlerKey() 约定对齐）
-      if (dir.name === 'on') {
-        parts.push(`${JSON.stringify(toComponentEventKey(key))}:${expr}`);
-      }
-    }
-  }
-
-  return `{${parts.join(',')}}`;
+  return buildComponentPropsObjectShared(node, {
+    expr: (raw) => prefixIdentifiers(raw, new Set()).replace(/\b_ctx\./g, '_c.'),
+  });
 }
 
 /**

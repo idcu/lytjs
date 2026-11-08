@@ -1095,3 +1095,50 @@ export function serializeVNodeElementShared(
   const childrenArg = kids.length ? `[${kids.join(',')}]` : 'null';
   return `${hooks.vnode}(${JSON.stringify(node.tag)},${attrs},${childrenArg})`;
 }
+
+/** 组件 props 对象构造时唯一需要注入的差异：上下文前缀 */
+export interface ComponentPropsHooks {
+  expr: (raw: string) => string;
+}
+
+/**
+ * 构造传给组件的 props 对象字面量（两版共享）。
+ *
+ * 静态属性直接 JSON；`:bind` 与 `@事件` 走 `expr` 注入（基础版 `_ctx.`、优化版 `_c.`）。
+ */
+export function buildComponentPropsObjectShared(
+  node: ElementNode,
+  hooks: ComponentPropsHooks,
+): string {
+  const parts: string[] = [];
+
+  for (const prop of node.props) {
+    if (!prop) continue;
+    if (prop.type === NodeTypes.ATTRIBUTE) {
+      const value = prop.value ? JSON.stringify(prop.value.content) : 'true';
+      parts.push(`${JSON.stringify(prop.name)}:${value}`);
+      continue;
+    }
+    if (prop.type === NodeTypes.DIRECTIVE) {
+      const dir = prop as DirectiveNode;
+      if (!dir.arg || !dir.exp) continue;
+      const key = getExpContent(dir.arg as SimpleExpressionNode);
+      const raw = getExpContent(dir.exp as SimpleExpressionNode);
+      if (!key || !raw) continue;
+
+      if (dir.name === 'bind') {
+        parts.push(`${JSON.stringify(key)}:${hooks.expr(raw)}`);
+        continue;
+      }
+
+      // 组件事件：@click="fn" → `onClick: _ctx.fn`
+      // 与 @lytjs/component 的 emit()/toHandlerKey() 约定对齐 —— 事件以 `onXxx`
+      // 形式作为 prop 传入，组件内部 emit('click') 时会回查 props/attrs.onClick。
+      if (dir.name === 'on') {
+        parts.push(`${JSON.stringify(toComponentEventKey(key))}:${hooks.expr(raw)}`);
+      }
+    }
+  }
+
+  return `{${parts.join(',')}}`;
+}
