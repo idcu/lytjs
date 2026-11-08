@@ -9,7 +9,7 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/vdom';
+import { createVNode, type VNode } from '@lytjs/core/runtime';
 import { effect, signal } from '@lytjs/reactivity';
 import type { ColorPickerSetupProps } from './types';
 

@@ -14,7 +14,7 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/vdom';
+import { createVNode, type VNode } from '@lytjs/core/runtime';
 import { signal, effect } from '@lytjs/reactivity';
 import { getComboboxA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 import type { SelectOption, SelectSetupProps } from './types';

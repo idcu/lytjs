@@ -6,7 +6,7 @@
 
 import type { SpinProps, SpinSlots, SpinSetupProps } from './types';
 import { defineComponent, onUnmounted } from '@lytjs/component';
-import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
+import { createVNode, createTextVNode, type VNode } from '@lytjs/core/runtime';
 import { isString, isObject } from '@lytjs/common-is';
 import { reactive, watch } from '@lytjs/reactivity';
 import { mergeA11yProps } from '@lytjs/common-a11y';

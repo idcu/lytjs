@@ -14,7 +14,7 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/vdom';
+import { createVNode, type VNode } from '@lytjs/core/runtime';
 import { signal } from '@lytjs/reactivity';
 import { mergeA11yProps } from '@lytjs/common-a11y';
 

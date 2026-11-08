@@ -10,7 +10,7 @@
  */
 import { describe, it, expect, afterEach } from 'vitest';
 import { createApp, h } from '@lytjs/core';
-import { createVNode, createTextVNode } from '@lytjs/vdom';
+import { createVNode, createTextVNode } from '@lytjs/core/runtime';
 import { Pagination } from '../src/components/Pagination';
 import { Empty } from '../src/components/Empty';
 import { FALLBACK_LOCALE, UI_LOCALE_MESSAGES, getUiLocale, setUiLocale, t } from '../src/locale';

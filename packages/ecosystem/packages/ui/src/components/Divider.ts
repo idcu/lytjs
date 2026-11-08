@@ -1,6 +1,6 @@
 import type { DividerProps, DividerSlots, DividerSetupProps } from './types';
 import { defineComponent } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/vdom';
+import { createVNode, type VNode } from '@lytjs/core/runtime';
 import { isString, isObject } from '@lytjs/common-is';
 import { mergeA11yProps } from '@lytjs/common-a11y';
 

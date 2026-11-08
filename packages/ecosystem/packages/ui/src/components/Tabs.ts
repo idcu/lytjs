@@ -10,7 +10,7 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
+import { createVNode, createTextVNode, type VNode } from '@lytjs/core/runtime';
 import { signal } from '@lytjs/reactivity';
 import {
   getTablistA11yProps,

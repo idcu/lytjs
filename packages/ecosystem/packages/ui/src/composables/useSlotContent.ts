@@ -9,7 +9,7 @@
  * - `[vnode]`：插槽返回单个节点。
  */
 
-import type { VNode } from '@lytjs/vdom';
+import type { VNode } from '@lytjs/core/runtime';
 
 type SlotFn = (...args: unknown[]) => unknown;
 

@@ -4,7 +4,7 @@
  * UI 组件库的核心类型定义
  */
 
-import type { VNode, Component } from '@lytjs/vdom';
+import type { VNode } from '@lytjs/core/runtime';
 
 // ===== 通用类型 =====
 
@@ -2295,7 +2295,7 @@ export interface PopconfirmSetupProps extends Record<string, unknown> {
   onCancel?: () => void;
 }
 
-export type { VNode, Component };
+export type { VNode };
 
 // ===== RichTextEditor 富文本编辑器组件 =====
 

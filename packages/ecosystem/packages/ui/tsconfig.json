@@ -8,7 +8,7 @@
       "@lytjs/common-a11y": ["../../../common/packages/a11y/dist/index.d.ts"],
       "@lytjs/reactivity": ["../../../reactivity/dist/index.d.ts"],
       "@lytjs/component": ["../../../component/dist/index.d.ts"],
-      "@lytjs/vdom": ["../../../vdom/dist/index.d.ts"],
+      "@lytjs/core/runtime": ["../../../core/dist/runtime.d.ts"],
       "@lytjs/renderer": ["../../../renderer/dist/index.d.ts"],
       "@lytjs/renderer/vapor": ["../../../renderer/dist/vapor/vapor-app.d.ts"]
     }

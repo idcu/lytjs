@@ -10,7 +10,7 @@
 
 import type { RadioGroupProps, RadioGroupSlots, RadioGroupSetupProps } from './types';
 import { defineComponent, type PropType } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/vdom';
+import { createVNode, type VNode } from '@lytjs/core/runtime';
 import { isString, isObject } from '@lytjs/common-is';
 import { signal, watch } from '@lytjs/reactivity';
 import { getGroupA11yProps, mergeA11yProps } from '@lytjs/common-a11y';

@@ -8,7 +8,7 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/vdom';
+import { createVNode, type VNode } from '@lytjs/core/runtime';
 import { getButtonA11yProps, getFormControlA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 import { useControlledState } from '../composables';
 import { t } from '../locale';

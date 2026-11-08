@@ -11,7 +11,7 @@
 import type { CheckboxGroupProps, CheckboxGroupSlots, CheckboxGroupSetupProps } from './types';
 import { defineComponent, type PropType } from '@lytjs/component';
 import { signal, watch } from '@lytjs/reactivity';
-import { createVNode, type VNode } from '@lytjs/vdom';
+import { createVNode, type VNode } from '@lytjs/core/runtime';
 import { isString, isObject } from '@lytjs/common-is';
 import { mergeA11yProps } from '@lytjs/common-a11y';
 

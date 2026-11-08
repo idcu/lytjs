@@ -9,7 +9,7 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
+import { createVNode, createTextVNode, type VNode } from '@lytjs/core/runtime';
 import { signal } from '@lytjs/reactivity';
 import { isString, isObject } from '@lytjs/common-is';
 import { getFormControlA11yProps, getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';

@@ -9,7 +9,7 @@
  */
 
 import { defineComponent, type PropType } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/vdom';
+import { createVNode, type VNode } from '@lytjs/core/runtime';
 import { isString } from '@lytjs/common-is';
 import { signal } from '@lytjs/reactivity';
 

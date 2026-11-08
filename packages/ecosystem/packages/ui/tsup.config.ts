@@ -25,8 +25,8 @@ export default defineConfig({
     '@lytjs/common-string',
     '@lytjs/reactivity',
     '@lytjs/component',
-    '@lytjs/vdom',
     '@lytjs/core',
+    '@lytjs/core/runtime',
   ],
   onSuccess: () => {
     // 复制 CSS 文件到 dist 目录

@@ -366,17 +366,11 @@ const ALLOWED_CROSS_LAYER: Record<string, Set<string>> = {
   '@lytjs/ssg': new Set(['@lytjs/common-*']),
   '@lytjs/html-renderer': new Set(['@lytjs/common-*']),
   '@lytjs/devtools-extension': new Set(['@lytjs/common-*', '@lytjs/reactivity']),
-  // UI 组件库是 L6 消费端：61 个组件直接调用 `createVNode`/`signal`/`reactive`，
-  // 并依赖 `component` 的 slots 与 `core` 的 definePlugin。
+  // UI 组件库是 L6 消费端：61 个组件直接调用 `@lytjs/core/runtime` 的 `createVNode`
+  // 与 `signal`/`reactive`，并依赖 `component` 的 slots 与 `core` 的 definePlugin。
   // ⚠️ 与 `keel/ARCHITECTURE.md:26`「上层只依赖 core 与 component」冲突（C3）；
   // 此处**只登记现状并留痕**，不在 S02 内改架构文档，也不擅自把 UI 降层。
-  '@lytjs/ui': new Set([
-    '@lytjs/common-*',
-    '@lytjs/reactivity',
-    '@lytjs/vdom',
-    '@lytjs/component',
-    '@lytjs/core',
-  ]),
+  '@lytjs/ui': new Set(['@lytjs/common-*', '@lytjs/reactivity', '@lytjs/component', '@lytjs/core']),
 };
 
 // 允许同层交叉依赖的包（聚合包等特殊情况）

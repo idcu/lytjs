@@ -80,6 +80,7 @@ export default defineConfig({
       '@lytjs/host-contract': resolve(root, 'packages/host-contract/src'),
       '@lytjs/vdom': resolve(root, 'packages/vdom/src'),
       '@lytjs/vdom/transition': resolve(root, 'packages/vdom/src/transition.ts'),
+      '@lytjs/core/runtime': resolve(root, 'packages/core/src/runtime.ts'),
       '@lytjs/core': resolve(root, 'packages/core/src'),
       '@lytjs/reactivity': resolve(root, 'packages/reactivity/src'),
       '@lytjs/reactivity/scope': resolve(root, 'packages/reactivity/src/scope.ts'),

@@ -9,7 +9,7 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/vdom';
+import { createVNode, type VNode } from '@lytjs/core/runtime';
 import type { AlertType, AlertSetupProps } from './types';
 import { getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 import { useSlotContent } from '../composables';
