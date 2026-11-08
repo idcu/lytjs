@@ -2405,6 +2405,15 @@
 .lyt-image-round {
   border-radius: 50%;
 }
+.lyt-image-preview-trigger {
+  display: inline-block;
+  cursor: zoom-in;
+}
+.lyt-image-preview {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+}
 .lyt-image-placeholder,
 .lyt-image-error {
   display: flex;
