@@ -21,7 +21,7 @@ describe('transformShow', () => {
       expect(result.props).toHaveLength(1);
       expect(result.props[0]).toEqual({
         key: 'style',
-        value: "visible ? undefined : { display: 'none' }",
+        value: "(visible) ? undefined : { display: 'none' }",
       });
     });
 
@@ -46,7 +46,7 @@ describe('transformShow', () => {
       const result = transformShow(dir, node, context);
 
       expect(result.props).toHaveLength(1);
-      expect(result.props[0].value).toBe("a && b ? undefined : { display: 'none' }");
+      expect(result.props[0].value).toBe("(a && b) ? undefined : { display: 'none' }");
     });
 
     it('应该处理带比较运算符的表达式', () => {
@@ -56,7 +56,7 @@ describe('transformShow', () => {
       const result = transformShow(dir, node, context);
 
       expect(result.props).toHaveLength(1);
-      expect(result.props[0].value).toBe("count > 0 ? undefined : { display: 'none' }");
+      expect(result.props[0].value).toBe("(count > 0) ? undefined : { display: 'none' }");
     });
 
     it('应该处理带方法调用的表达式', () => {
@@ -66,7 +66,7 @@ describe('transformShow', () => {
       const result = transformShow(dir, node, context);
 
       expect(result.props).toHaveLength(1);
-      expect(result.props[0].value).toBe("isVisible() ? undefined : { display: 'none' }");
+      expect(result.props[0].value).toBe("(isVisible()) ? undefined : { display: 'none' }");
     });
 
     it('应该处理带属性访问的表达式', () => {
@@ -76,21 +76,21 @@ describe('transformShow', () => {
       const result = transformShow(dir, node, context);
 
       expect(result.props).toHaveLength(1);
-      expect(result.props[0].value).toBe("user.loggedIn ? undefined : { display: 'none' }");
+      expect(result.props[0].value).toBe("(user.loggedIn) ? undefined : { display: 'none' }");
     });
 
     it('应该处理三元表达式', () => {
-      // ⚠️ S25b 待修：行为化后发现产物缺括号 ——
-      //   `condition ? true : false ? undefined : { display: 'none' }`
-      // 优先级错误 ⇒ 条件为真时 style 变成 `true`（而不是 undefined）。
-      // 修它要改产物文本，超出本轮「只改测试」范围，故此处保留形态断言并登记。
-      const context = createMockContext();
-      const dir = createShowDirective('condition ? true : false');
-      const node = createElement('div');
-      const result = transformShow(dir, node, context);
+      // 回归：曾直接拼 `${exp} ? …`，三元右结合导致 `a ? b : c ? undefined : …`
+      // 优先级错误 —— 条件为真时 style 取 `true` 而不是不设 style。
+      const styleOf = (ctx: Record<string, unknown>): unknown =>
+        (
+          asVNode(execute(compile('<div v-show="cond ? a : b"></div>'))(ctx)).props as {
+            style?: unknown;
+          }
+        ).style;
 
-      expect(result.props).toHaveLength(1);
-      expect(result.props[0].value).toContain('condition ? true : false');
+      expect(styleOf({ cond: true, a: true, b: false })).toBeUndefined();
+      expect(styleOf({ cond: false, a: true, b: false })).toEqual({ display: 'none' });
     });
   });
 
@@ -183,7 +183,7 @@ describe('transformShow', () => {
 
       const styleValue = result.props[0].value;
       // 验证三元表达式结构
-      expect(styleValue).toMatch(/^\S+\s*\?\s*undefined\s*:\s*\{ display: 'none' \}$/);
+      expect(styleValue).toMatch(/^\(.+\)\s*\?\s*undefined\s*:\s*\{ display: 'none' \}$/);
     });
   });
 });

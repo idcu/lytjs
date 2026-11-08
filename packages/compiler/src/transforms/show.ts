@@ -16,7 +16,8 @@ export const transformShow: DirectiveTransform = (dir, _node, _context) => {
 
   props.push({
     key: 'style',
-    value: expContent + " ? undefined : { display: 'none' }",
+    // 必须加括号：exp 可能是三元 / 逻辑表达式，直接拼会让 `?:` 右结合改变语义
+    value: `(${expContent}) ? undefined : { display: 'none' }`,
   });
 
   return { props };

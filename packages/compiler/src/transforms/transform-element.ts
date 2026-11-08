@@ -911,7 +911,9 @@ function handleVShow(
       createObjectProperty(
         createSimpleExpression('"style"', true, prop.loc, true),
         createConditionalExpression(
-          createSimpleExpression(expContent, false, prop.loc, false),
+          // 加括号：exp 可能是三元/逻辑表达式，裸拼会因 `?:` 右结合改变语义
+          //   `a ? b : c ? undefined : …` ⇒ 条件为真时 style 取 `true`
+          createSimpleExpression(`(${expContent})`, false, prop.loc, false),
           createSimpleExpression('undefined', true, prop.loc, true),
           createObjectExpression(
             [
