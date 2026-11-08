@@ -3,7 +3,7 @@ scope: now
 status: active
 last-verified: 2026-11-09
 updated: 2026-11-09
-keywords: [S28, S29, S31, S32, 包元数据, pnpm 单源, 单包测试, vitest alias, setupFiles]
+keywords: [S26, S28, 包元数据, pnpm 单源, vitest alias, type-check, 冷仓, tsconfig]
 ---
 
 # NOW · main
@@ -20,13 +20,11 @@ keywords: [S28, S29, S31, S32, 包元数据, pnpm 单源, 单包测试, vitest a
     红→绿：`❌ 3 处不一致 … exports 的 "." 必须是第一个键`。
   - 验收：fast 57/57、check-lockfile/package-exports 绿、API 39/1961 不变、
     根测试 411/8769 绿、type-check 绿。
-- **S32 单包配置统一 src 口径**已修：ca869f07（共享源）、37120e3b（A）、ead06043（B）、
-  a75f3835（C）、9986e63f（负控）。
-  - `vitest.shared.ts` 导出 sharedAliases / sharedDefine / sharedSetupFiles；
-    根配置改为引用；30 份 dist 别名单包配置改为 `alias: sharedAliases`。
-  - 54 份单包矩阵 54/54 全绿；API 39/1961；signal 115×2、parity 115/115 未动。
-- S31 已修：3fa3fdc2（core 继承根配置）、5d9c48dc（storage setupFiles）。
-- S29 已完成（d51eea43 / ba75eaa4 / aff7cec1 / 2432dd70）。
+- **S26 冷仓 type-check 自洽**已修：ac1859bd。
+  - 唯一 `tsconfig.paths.json` 全指各包 src；包级去 dist paths/baseUrl/rootDir；
+    根 env.d.ts 注入各 program；补 `@lytjs/di` alias；删 renderer 两处死代码。
+  - 零 dist 冷仓：71 包 0 error；常规 type-check 绿、fast 57/57、411/8769 绿。
+- S29/S31/S32 已归档：NOW-history/2026-11-09-S26冷仓typecheck.md。
 - 新坑：pitfalls/process/package-metadata-drift.md（包元数据/工具链多源）。
 - B01d 仍延后。
 
