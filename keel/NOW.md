@@ -16,7 +16,7 @@ B01d-1 落地（EmitProfile 常量）；fast 56/56、slow 17/17；C3 待审。
 - **S20**：零引用 29→0（删 27+restore 2+孤儿 1）；入口收敛为 `build`；`check-script-refs` 棘轮+负控。
 - **B01c**：100 模板 × 2 profile 逐字快照（slow）+双侧负控；fast 151.7s（上限 180s），
   超出移最慢注入到 slow，只改频率。
-- **B01d-1**：`EmitProfile` 常量 + 双入口接线；200 份产物逐字不变、快照哈希不变。
+- **B01d-1/2**：`EmitProfile` 常量 + 静态序列化共享；产物逐字不变。
 - **S22**：`as unknown as` 基线 326/123 + 棘轮+负控；API 快照 39 包/1961 名（slow）+负控；
   计时断言 ADR 0024；host-contract ADR 0025 不接（前置=第二宿主）。
 

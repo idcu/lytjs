@@ -1053,17 +1053,33 @@ const CONTROLS = {
   },
 
   'check-compiler-parity': () => {
-    // 注入：优化 codegen 序列化静态 HTML 时丢掉带值属性 ⇒ 两套产物新增分叉、「新增分叉」必红
+    // 注入：优化实现的静态模板多写一个属性 ⇒ 两套产物执行后的 DOM 新增分叉，「新增分叉」必红。
+    // 注意：静态序列化逻辑 B01d-2 已迁入共享层，改共享层会让两侧同变（分叉不产生），
+    // 因此注入点必须落在**仅优化实现**的适配层（buildStaticHTMLOptimized）。
     const file = join(ROOT, 'packages/compiler/dist/index.mjs');
     if (!existsSync(file)) throw new Error('check-compiler-parity：缺少 compiler dist，请先构建');
     withPatchedFile(
       file,
       (text) => {
-        const needle = '      attrs += ` ${prop.name}="${escapeHtmlStatic2(prop.value.content)}"`;';
+        const needle = [
+          'function buildStaticHTMLOptimized(children, elementVars) {',
+          '  return buildStaticHtml(children, (node, tag, isComponent) => {',
+          '    const varName = `_${elementVars.length}`;',
+          '    elementVars.push(isComponent ? { varName, tag } : { varName, tag, node });',
+          '    return varName;',
+          '  });',
+          '}',
+        ].join('\n');
         if (!text.includes(needle)) {
-          throw new Error('check-compiler-parity：注入点漂移（找不到优化器静态属性序列化）');
+          throw new Error('check-compiler-parity：注入点漂移（找不到优化器静态模板适配层）');
         }
-        return text.replace(needle, '      void prop;');
+        const patched = needle
+          .replace('  return buildStaticHtml(', '  const __negctlHtml = buildStaticHtml(')
+          .replace(
+            / {2}\}\);\n\}$/,
+            "  });\n  return __negctlHtml.replace('>', ' __negctl=\"1\">');\n}",
+          );
+        return text.replace(needle, patched);
       },
       () => expectFail(['node', 'scripts/check-compiler-parity.mjs'], 'check-compiler-parity'),
     );

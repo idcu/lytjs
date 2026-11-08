@@ -255,8 +255,8 @@
       "status": "registered",
       "enforce": false,
       "ownerFile": "packages/compiler/src/codegen-signal.ts",
-      "ownerLine": 248,
-      "replicas": [{ "file": "packages/compiler/src/codegen-signal-optimized.ts", "line": 124 }],
+      "ownerLine": 165,
+      "replicas": [{ "file": "packages/compiler/src/codegen-signal-optimized.ts", "line": 125 }],
       "decisionRef": "keel/decisions/0015-b01-partial-merge.md",
       "identityTest": "packages/compiler/tests/codegen-signal.test.ts",
       "deletionCondition": "ADR 0015 裁定后合并或退休优化版；未裁定前不得新增第三套。"
