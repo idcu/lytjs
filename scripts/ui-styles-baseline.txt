@@ -117,10 +117,6 @@ TimePicker → lyt-time-picker__select
 TimePicker → lyt-time-picker__select-group
 TimePicker → lyt-time-picker__separator
 TimePicker → lyt-time-picker__trigger
-Tree → lyt-tree--show-line
-Tree → lyt-tree__empty
-Tree → lyt-tree__node--checked
-Tree → lyt-tree__node--selected
 Upload → lyt-upload__content
 Upload → lyt-upload__file
 Upload → lyt-upload__file-name

@@ -508,6 +508,20 @@
 .lyt-tree__checkbox--checked {
   color: var(--lyt-color-primary);
 }
+.lyt-tree--show-line .lyt-tree__node {
+  border-left: 1px dashed var(--lyt-border-color-lighter);
+}
+.lyt-tree__node--selected .lyt-tree__node-content {
+  background-color: var(--lyt-color-primary-light-9);
+}
+.lyt-tree__node--checked .lyt-tree__node-content {
+  color: var(--lyt-color-primary);
+}
+.lyt-tree__empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--lyt-text-color-placeholder);
+}
 
 /* ===== Icon 组件 ===== */
 .lyt-icon {
