@@ -385,7 +385,11 @@ export async function createSignalRenderer(
 export type { SignalRenderer } from './signal/signal-renderer';
 
 // Vapor 渲染器（Signal 渲染器的别名）
-/** 创建 Vapor 模式渲染器（Signal 渲染器的别名） */
+/**
+ * 创建 Vapor 模式渲染器（`createSignalRenderer` 的别名，两者实现完全相同）。
+ *
+ * @deprecated 等价双名导出，计划在 8.0.0 移除；新代码请使用 `createSignalRenderer`。
+ */
 // FIX: DTS build error - 修复参数数量
 export async function createVaporRenderer(
   template: string = '',
@@ -394,6 +398,7 @@ export async function createVaporRenderer(
   const { createSignalRenderer: _createSignalRenderer } = await import('./signal/signal-renderer');
   return _createSignalRenderer(template, context);
 }
+/** @deprecated 等价双名导出，计划在 8.0.0 移除；请使用 `SignalRenderer`。 */
 export type { SignalRenderer as VaporRenderer } from './signal/signal-renderer';
 
 // Vapor 应用 API
