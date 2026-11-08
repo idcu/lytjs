@@ -15,6 +15,7 @@ signal 正确性 5/5 清零（vnode 基准，两 profile 同步）；B01d 合并
 - **signal 正确性 5/5**（独立语料 + 负控红→绿 + vnode 对比）：①`v-if→v-else` 清理旧节点；②分支内嵌 `v-if/v-else`（含 `tf03`）；③`v-for` 元素内嵌 `v-if` 局部变量；④`template v-for` 内嵌 `v-if`；⑤`v-for`+`v-if` 同元素 WeakMap 崩溃。parity 114、快照 114×2。
 - **alias**：包级守卫 54/216（负控红→绿），修 4 层级错；devtools 6/157 绿。
 - **test 覆盖** 74/77 含 src（2 包无测试不造）；**S20** 零引用 29→0。
+- **两档门禁**（串行，未并行）：fast 56/56、slow 17/17；`check-public-names` 的 replica 行号随 import 漂移已校正到实现行。
 - **B01c/B01d-2** 100 模板×2 逐字；9 个 vnode 族共享（200 份逐字）；**template** 哨兵→`Fragment`（104/104）。
 - **S22** `as unknown as` 326/123 棘轮+负控；API 快照 39/1961；ADR 0024/0025。
 
