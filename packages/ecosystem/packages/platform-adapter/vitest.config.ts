@@ -1,31 +1,14 @@
 import { defineConfig } from 'vitest/config';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const commonRoot = resolve(__dirname, '../../../common/packages');
-const pkgRoot = resolve(__dirname, '../../..');
+import { sharedAliases, sharedDefine, sharedSetupFiles } from '../../../../vitest.shared';
 
 export default defineConfig({
-  // 定义全局变量
-  define: {
-    __DEV__: 'true',
-    __PROD__: 'false',
-    __TEST__: 'true',
-  },
+  define: sharedDefine,
   resolve: {
-    alias: [
-      { find: '@lytjs/common-is', replacement: `${commonRoot}/is/dist/index.mjs` },
-      { find: '@lytjs/common-constants', replacement: `${commonRoot}/constants/dist/index.mjs` },
-      { find: '@lytjs/common-vnode', replacement: `${commonRoot}/vnode/dist/index.mjs` },
-      { find: '@lytjs/shared-types', replacement: `${pkgRoot}/shared-types/dist/index.mjs` },
-      { find: '@lytjs/vdom', replacement: `${pkgRoot}/vdom/dist/index.mjs` },
-      { find: '@lytjs/reactivity', replacement: `${pkgRoot}/reactivity/dist/index.mjs` },
-      { find: '@lytjs/component', replacement: `${pkgRoot}/component/dist/index.mjs` },
-    ],
+    alias: sharedAliases,
   },
   test: {
     environment: 'node',
     globals: true,
+    setupFiles: sharedSetupFiles,
   },
 });

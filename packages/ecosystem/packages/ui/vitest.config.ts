@@ -1,43 +1,15 @@
 import { defineConfig } from 'vitest/config';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const commonRoot = resolve(__dirname, '../../../common/packages');
-const pkgRoot = resolve(__dirname, '../../..');
+import { sharedAliases, sharedDefine, sharedSetupFiles } from '../../../../vitest.shared';
 
 export default defineConfig({
-  // 定义全局变量
-  define: {
-    __DEV__: 'true',
-    __PROD__: 'false',
-    __TEST__: 'true',
-  },
+  define: sharedDefine,
   resolve: {
-    alias: [
-      { find: '@lytjs/common-is', replacement: `${commonRoot}/is/dist/index.mjs` },
-      { find: '@lytjs/common-a11y', replacement: `${commonRoot}/a11y/dist/index.mjs` },
-      { find: '@lytjs/common-error', replacement: `${commonRoot}/error/dist/index.mjs` },
-      { find: '@lytjs/common-constants', replacement: `${commonRoot}/constants/dist/index.mjs` },
-      { find: '@lytjs/common-scheduler', replacement: `${commonRoot}/scheduler/dist/index.mjs` },
-      { find: '@lytjs/common-vnode', replacement: `${commonRoot}/vnode/dist/index.mjs` },
-      { find: '@lytjs/common-string', replacement: `${commonRoot}/string/dist/index.mjs` },
-      { find: '@lytjs/common-object', replacement: `${commonRoot}/object/dist/index.mjs` },
-      { find: '@lytjs/common-algorithm', replacement: `${commonRoot}/algorithm/dist/index.mjs` },
-      { find: '@lytjs/common-events', replacement: `${commonRoot}/events/dist/index.mjs` },
-      { find: '@lytjs/common-assertions', replacement: `${commonRoot}/assertions/dist/index.mjs` },
-      { find: '@lytjs/shared-types', replacement: `${pkgRoot}/shared-types/dist/index.mjs` },
-      { find: '@lytjs/host-contract', replacement: `${pkgRoot}/host-contract/dist/index.mjs` },
-      { find: '@lytjs/component', replacement: `${pkgRoot}/component/dist/index.mjs` },
-      {
-        find: '@lytjs/test-utils',
-        replacement: `${pkgRoot}/tools/packages/test-utils/dist/index.mjs`,
-      },
-    ],
+    alias: sharedAliases,
   },
   test: {
     environment: 'node',
     globals: true,
+    setupFiles: sharedSetupFiles,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
