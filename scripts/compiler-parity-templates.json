@@ -906,6 +906,19 @@
       "expected": "<main><header>T</header><section><span>slot-ok</span></section></main>"
     },
     {
+      "id": "cf01",
+      "group": "条件清理（v-if/v-else）",
+      "template": "<div><p v-if=\"ok\">A</p><p v-else>B</p></div>",
+      "state": {
+        "ok": true
+      },
+      "update": {
+        "ok": false
+      },
+      "expected": "<div><p>A</p></div>",
+      "expectedAfter": "<div><p>B</p></div>"
+    },
+    {
       "id": "tf01",
       "group": "模板片段（template）",
       "template": "<div><template v-if=\"ok\"><span>{{msg}}</span></template><span>tail</span></div>",

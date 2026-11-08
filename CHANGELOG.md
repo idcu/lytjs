@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+### 🛠️ 编译器：signal 条件/列表正确性修复（vnode 为验收基准，2026-11-08）
+
+**行为修正（`rendererMode:'signal'`，base 与 `optimizeSignal:true` 同步）**
+
+- **`v-if` → `v-else` 切换清理旧节点**：此前只有第 0 支在切换时 `remove()` 旧元素，
+  进入 `v-else`/`v-else-if` 后旧分支残留在 DOM 且引用丢失。现在所有分支切换都清理。
+  新增 parity 语料 `cf01`（含 `expectedAfter` 更新后断言）；负控回退后 parity 与快照双红。
+
 ### 🛠️ 编译器：signal 两套 profile 支持 `<template>` 片段（2026-11-08）
 
 **行为修正（`rendererMode:'signal'`，base 与 `optimizeSignal:true` 同步）**

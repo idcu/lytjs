@@ -1176,9 +1176,8 @@ function processConditionalOptimized(
       code += `if(${renderExpression(branchInfo.condition)})`;
     }
     code += `{if(${ifVarName}Idx!==${i}){`;
-    if (i === 0) {
-      code += `if(${ifVarName}El){${rm}(${ifVarName}El);${ifVarName}El=null;}`;
-    }
+    // 所有分支切换都要清理旧节点（此前只清理第 0 支，v-if → v-else 会残留 DOM）
+    code += `if(${ifVarName}El){${rm}(${ifVarName}El);${ifVarName}El=null;}`;
     code += `${ifVarName}El=${ct}(${JSON.stringify(branchHTML)}).firstElementChild;`;
     code += `if(!${ifVarName}El)${ifVarName}El=document.createComment('');`;
     const target = anchorVar ? `${containerVar},${anchorVar}` : containerVar;

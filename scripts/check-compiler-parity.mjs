@@ -398,22 +398,28 @@ for (const entry of TEMPLATES) {
   const same = pair.a.err === pair.b.err && pair.a.dom === pair.b.dom;
   let sameAfterUpdate = same;
   let afterDom = null;
+  let afterErr = null;
 
   if (entry.update) {
     if (!pair.a.err && !pair.b.err) {
-      Object.assign(pair.a.ctx, entry.update);
-      Object.assign(pair.b.ctx, entry.update);
-      await tick();
-      const da = pair.a.container.innerHTML.trim();
-      const db = pair.b.container.innerHTML.trim();
-      afterDom = { a: da, b: db };
-      sameAfterUpdate = da === db;
+      try {
+        Object.assign(pair.a.ctx, entry.update);
+        Object.assign(pair.b.ctx, entry.update);
+        await tick();
+        const da = pair.a.container.innerHTML.trim();
+        const db = pair.b.container.innerHTML.trim();
+        afterDom = { a: da, b: db };
+        sameAfterUpdate = da === db;
+      } catch (e) {
+        afterErr = e instanceof Error ? e.message : String(e);
+        sameAfterUpdate = false;
+      }
     } else {
       sameAfterUpdate = false;
     }
   }
 
-  const isSame = same && sameAfterUpdate;
+  const isSame = same && sameAfterUpdate && afterErr === null;
   const kind = isSame ? 'same' : classify(pair);
 
   report.groups[entry.group] = report.groups[entry.group] ?? { total: 0, same: 0, divergent: 0 };
@@ -438,6 +444,7 @@ for (const entry of TEMPLATES) {
       a: pair.a.err ? `THROW: ${pair.a.err}` : pair.a.dom,
       b: pair.b.err ? `THROW: ${pair.b.err}` : pair.b.dom,
       after: afterDom,
+      afterErr,
     });
     if (!divergentIds.includes(entry.id)) {
       fail(
@@ -467,6 +474,18 @@ for (const entry of TEMPLATES) {
       `${entry.id} 已符合人工语义基准，请从 compiler-parity-baseline.json 的 expectedMismatch 移除`,
       '棘轮只允许减少',
     );
+  }
+
+  // 更新后语义基准（可选）：只对基础实现 A 断言更新后的 DOM。
+  // 仅靠 A/B 对拍无法发现“两实现同样错”的情况，这里是修复类语料的真实语义断言。
+  if (entry.expectedAfter !== undefined) {
+    const actualAfter = afterErr ? `THROW: ${afterErr}` : afterDom?.a;
+    if (actualAfter !== entry.expectedAfter) {
+      fail(
+        `${entry.id}（${entry.group}）更新后≠人工语义基准`,
+        `实际: ${JSON.stringify(actualAfter)}\n     基准: ${JSON.stringify(entry.expectedAfter)}`,
+      );
+    }
   }
 }
 

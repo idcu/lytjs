@@ -1127,13 +1127,12 @@ function processConditional(
     code += `{\n`;
     code += `      if (${ifVarName}Active !== ${i}) {\n`;
 
-    // 移除之前的分支元素
-    if (i === 0) {
-      code += `        if (${ifVarName}El) {\n`;
-      code += `          remove(${ifVarName}El);\n`;
-      code += `          ${ifVarName}El = null;\n`;
-      code += `        }\n`;
-    }
+    // 移除之前的分支元素（所有分支都要清理，不能只清理第 0 支：
+    // v-if → v-else 切换时旧节点会残留在 DOM 里，且后续再也拿不到引用）
+    code += `        if (${ifVarName}El) {\n`;
+    code += `          remove(${ifVarName}El);\n`;
+    code += `          ${ifVarName}El = null;\n`;
+    code += `        }\n`;
 
     // 创建并插入新分支元素
     code += `        ${ifVarName}El = createTemplate(${JSON.stringify(branchHTML)}).firstElementChild;\n`;
