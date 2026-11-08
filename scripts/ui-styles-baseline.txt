@@ -95,13 +95,6 @@ Table → lyt-table__empty-row
 Table → lyt-table__header
 Table → lyt-table__row
 Table → lyt-table__row--active
-Tabs → lyt-tabs__add-btn
-Tabs → lyt-tabs__close
-Tabs → lyt-tabs__item--disabled
-Tabs → lyt-tabs__item--drop
-Tabs → lyt-tabs__label
-Tabs → lyt-tabs__nav
-Tabs → lyt-tabs__sro
 TimePicker → lyt-time-picker__clear
 TimePicker → lyt-time-picker__confirm-btn
 TimePicker → lyt-time-picker__dropdown

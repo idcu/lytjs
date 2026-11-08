@@ -2945,6 +2945,44 @@
 .lyt-tab-pane {
   padding: 14px 2px;
 }
+.lyt-tabs__nav {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 4px;
+  overflow-x: auto;
+}
+.lyt-tabs__label {
+  display: inline-block;
+}
+.lyt-tabs__close {
+  margin-left: 4px;
+  cursor: pointer;
+  opacity: 0.6;
+}
+.lyt-tabs__item--disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.lyt-tabs__item--drop {
+  border-left: 2px solid var(--lyt-color-primary);
+}
+.lyt-tabs__add-btn {
+  padding: 4px 8px;
+  border: none;
+  background: transparent;
+  color: var(--lyt-text-color-secondary);
+  cursor: pointer;
+}
+.lyt-tabs__sro {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
 
 /* ===== Upload ===== */
 .lyt-upload {
