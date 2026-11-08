@@ -14,7 +14,7 @@ keywords: [S29, 死代码, _instance, 死注册, 双名导出, deprecated]
   - renderList 非整数注释按实现订正（1.5 ⇒ 2 项、2.5 ⇒ 3 项）。
   - `builtInDirectiveTransforms` 未接入 compile 管线，删除并同步两处测试传参。
   - `createVaporRenderer` / `VaporRenderer` 在 API 快照内 ⇒ 保留并标 deprecated，8.0.0 移除。
-- **实测**：fast 56/56；core+core-vnode 917、vdom 573、compiler 1654、renderer 652；
+- **实测**：fast 56/56；受影响五包（core/core-vnode/vdom/compiler/renderer）184 文件 / 3796 用例全绿；
   API 39/1961；signal 115×2、parity 115/115 未动；dist 已重建。
 - **基线噪声**：单包 `--filter` 跑 core 时 `@lytjs/core-vnode` 未 alias 到 src，身份对拍假红；
   根配置全绿。见 [pkg-alias](pitfalls/verify/pkg-config-alias-blindspot.md)。
