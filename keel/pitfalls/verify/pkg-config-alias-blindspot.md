@@ -3,7 +3,7 @@ scope: verify
 status: active
 severity: P1
 last-verified: 2026-11-09
-triggers: 1
+triggers: 2
 keywords: [单包测试, vitest alias, dist, 身份对拍, 假红, core-vnode]
 ---
 
