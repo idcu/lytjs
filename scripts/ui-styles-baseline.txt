@@ -65,12 +65,6 @@ Descriptions → lyt-descriptions-item__label
 Descriptions → lyt-descriptions__body
 Descriptions → lyt-descriptions__body--vertical
 Descriptions → lyt-descriptions__header
-Input → lyt-input--disabled
-Input → lyt-input--focused
-Input → lyt-input__clear
-Input → lyt-input__password
-Input → lyt-input__prefix
-Input → lyt-input__suffix
 Menu → lyt-menu__arrow
 Menu → lyt-menu__arrow--opened
 Menu → lyt-menu__icon

@@ -164,6 +164,27 @@
   border: none;
   outline: none;
 }
+.lyt-input--focused .lyt-input__wrapper {
+  border-color: var(--lyt-color-primary);
+}
+.lyt-input--disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.lyt-input__prefix,
+.lyt-input__suffix {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--lyt-text-color-secondary);
+}
+.lyt-input__clear,
+.lyt-input__password {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--lyt-text-color-secondary);
+}
 
 /* ===== Dialog 组件 ===== */
 .lyt-dialog__wrapper {
