@@ -1,29 +1,15 @@
 import { defineConfig } from 'vitest/config';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const commonRoot = resolve(__dirname, '../../../../../common/packages');
+import { sharedAliases, sharedDefine, sharedSetupFiles } from '../../../../../../vitest.shared';
 
 export default defineConfig({
-  define: {
-    __DEV__: 'true',
-    __PROD__: 'false',
-    __TEST__: 'true',
-  },
+  define: sharedDefine,
   resolve: {
-    alias: {
-      '@lytjs/common-is': `${commonRoot}/is/dist/index.mjs`,
-      '@lytjs/common-string': `${commonRoot}/string/dist/index.mjs`,
-      '@lytjs/metadata': resolve(
-        __dirname,
-        '../../../web-framework/packages/metadata/dist/index.mjs',
-      ),
-    },
+    alias: sharedAliases,
   },
   test: {
     environment: 'node',
     globals: true,
+    setupFiles: sharedSetupFiles,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
