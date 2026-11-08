@@ -1090,6 +1090,31 @@ function processVNodeCallPropsOptimized(
 // 优化的条件表达式处理
 // ============================================================
 
+/** 分支子树里是否有 v-for 产物（RENDER_LIST 调用）——静态 HTML 序列化会整体丢弃它 */
+function containsListCall(node: unknown, depth = 0): boolean {
+  if (!node || typeof node !== 'object' || depth > 24) return false;
+  const candidate = node as {
+    type?: unknown;
+    callee?: unknown;
+    children?: unknown;
+    consequent?: unknown;
+    alternate?: unknown;
+    arguments?: unknown;
+  };
+  if (candidate.type === NodeTypes.JS_CALL_EXPRESSION && candidate.callee === 'RENDER_LIST') {
+    return true;
+  }
+  for (const key of ['children', 'consequent', 'alternate', 'arguments'] as const) {
+    const value = candidate[key];
+    if (Array.isArray(value)) {
+      if (value.some((item) => containsListCall(item, depth + 1))) return true;
+    } else if (value && typeof value === 'object' && containsListCall(value, depth + 1)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function processConditionalOptimized(
   node: JSConditionalExpression,
   varCounter: Map<string, number>,
@@ -1167,14 +1192,39 @@ function processConditionalOptimized(
   );
   const slotDecls = slotVars.map((v) => `,${v}=null`).join('');
 
+  // v-for 的产物（RENDER_LIST）会被静态 HTML 序列化整体丢弃。
+  // 对这类分支改用 vnode 子树挂载：分支壳仍走静态 HTML，子节点由
+  // createVNode(Fragment) + mountVNode 在 effect 内重建。
+  const vnodeChildrenCodes = branches.map((b) => {
+    const branchNode = b.branch as { type?: unknown; children?: unknown } | undefined;
+    if (!branchNode || Array.isArray(branchNode) || branchNode.type !== NodeTypes.VNODE_CALL) {
+      return null;
+    }
+    if (!containsListCall(branchNode.children)) return null;
+    return serializeVNodeCallChildrenOptimized(branchNode.children, usedRuntime, options);
+  });
+
   let code = `let ${ifVarName}El=null,${ifVarName}Idx=-1${slotDecls};${e}(()=>{`;
   const branchHTMLs: string[] = [];
 
   for (let i = 0; i < branches.length; i++) {
     const branchInfo = branches[i]!;
-    const branchHTML = serializeBranchHTML(branchInfo.branch);
-    branchHTMLs.push(branchHTML);
     const dyn = branchDynamics[i]!;
+    // 仅当分支没有其它动态内容时才走 vnode 子树挂载，避免与文本槽位/属性绑定互相覆盖
+    const mountChildren =
+      vnodeChildrenCodes[i] &&
+      dyn.declarations.length === 0 &&
+      dyn.createOps.length === 0 &&
+      dyn.updateOps.length === 0
+        ? vnodeChildrenCodes[i]
+        : null;
+    const branchHTML = mountChildren
+      ? serializeBranchHTML({
+          ...(branchInfo.branch as JSChildNode),
+          children: [],
+        } as JSChildNode)
+      : serializeBranchHTML(branchInfo.branch);
+    branchHTMLs.push(branchHTML);
 
     if (i > 0) code += 'else ';
     if (branchInfo.condition !== null) {
@@ -1193,6 +1243,16 @@ function processConditionalOptimized(
     code += `}`;
     // 分支已激活时，每次 effect 都要刷新动态属性 / 文本。
     code += dyn.updateOps.join('');
+    if (mountChildren) {
+      usedRuntime.add('mountVNode');
+      usedRuntime.add('createVNode');
+      usedRuntime.add('Fragment');
+      const mv = getShortName('mountVNode', options.useShortNames ?? true);
+      const cv = getShortName('createVNode', options.useShortNames ?? true);
+      const frag = getShortName('Fragment', options.useShortNames ?? true);
+      // 先清空分支壳，再整体重建子树（v-for 源在 effect 内读取，变化即重跑）
+      code += `${ifVarName}El.textContent='';${mv}(${cv}(${frag},null,${mountChildren}),${ifVarName}El);`;
+    }
     code += `}`;
   }
 
@@ -2177,6 +2237,14 @@ export function serializeVNodeCallChildOptimized(
   options: SignalCodegenOptions,
   locals: ReadonlySet<string> = new Set(),
 ): string | null {
+  // v-for 产物（RENDER_LIST）→ 展开的 vnode 数组，供 v-if 分支子树挂载使用
+  const call = child as { type?: number; callee?: unknown } | undefined;
+  if (call?.type === NodeTypes.JS_CALL_EXPRESSION && call.callee === 'RENDER_LIST') {
+    return serializeListVNodeShared(child, locals, {
+      vnodeCall: (n, scope) => serializeVNodeCallOptimized(n, usedRuntime, options, scope),
+      srcExpr: (exp, scope) => prefixIdentifiers(exp, scope).replace(/\b_ctx\./g, '_c.'),
+    });
+  }
   return serializeVNodeCallChildShared(child, locals, {
     textVNode: (exp, scope) => {
       usedRuntime.add('createVNode');

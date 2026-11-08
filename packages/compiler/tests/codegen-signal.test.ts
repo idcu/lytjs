@@ -382,14 +382,22 @@ describe('codegen-signal', () => {
     });
 
     it('should generate v-for inside v-if', () => {
-      // ⚠️ S25b 已知缺陷（保留形态断言，不行为化）：优化版 signal codegen 下
-      //   `<div v-if="show"><li v-for=…></li></div>` 的 **v-for 子内容被整体丢弃**
-      //   ——模板被编译成空 `<div></div>`，实测渲染文本为 ''。修它要改产物文本，
-      //   超出本轮「只改测试」范围；此处保留对现有产物形态的守护，并登记待修。
+      // 回归：分支静态 HTML 序列化曾把 RENDER_LIST 子节点整体丢弃，
+      // 产物退化成空 `<div></div>`，列表内容完全不渲染。
       const tpl = '<div v-if="show"><li v-for="item in items">{{ item.name }}</li></div>';
-      const code = compile(tpl).code;
-      expect(code).toContain('if(_c.show)');
-      expect(code).toContain('e(()=>{');
+      const items = [
+        { id: 1, name: 'a' },
+        { id: 2, name: 'b' },
+      ];
+
+      const shown = mount(tpl, { show: true, items });
+      expect([...shown.container.querySelectorAll('li')].map((li) => li.textContent)).toEqual([
+        'a',
+        'b',
+      ]);
+
+      const hidden = mount(tpl, { show: false, items });
+      expect(hidden.container.querySelector('li')).toBeNull();
     });
 
     it('should generate v-if inside v-for', () => {

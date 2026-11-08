@@ -268,12 +268,15 @@ describe('Signal 模式 - 子组件（两版 codegen 均已支持挂载）', () 
     expect(textOf({ a: false, b: false })).toBe('z');
   });
 
-  it('插槽内 v-if 内容含 v-for 时整体跳过', () => {
+  it('插槽内 v-if 内容含 v-for 时应展开为 vnode 列表', () => {
     const call = mountComponentCalls(
       '<div><Child><span v-if="ok"><i v-for="x in xs">y</i></span></Child></div>',
       { Child: {}, ok: true, xs: ['1'] },
     )[0];
-    expect(call.slots).toBeUndefined();
+    const branch = call.slots!.default()[0] as { type: string; children: Array<{ type: string }> };
+    expect(branch.type).toBe('span');
+    expect(branch.children).toHaveLength(1);
+    expect(branch.children[0].type).toBe('i');
   });
 
   it('插槽内 v-if 空内容应生成 null children', () => {
