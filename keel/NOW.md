@@ -3,32 +3,23 @@ scope: now
 status: active
 last-verified: 2026-11-08
 updated: 2026-11-08
-keywords: [硬约束9, S23, C3, B01d]
+keywords: [C1, vdom, core-runtime, C2, C3, B01d]
 ---
 
 # NOW · main
 
 ## 当前焦点
-- 门禁 258b4b8d：fast 56/56 142.5s、slow 17/17 861.1s；parity 115、快照 115×2。
-- **B01d 延后**：整包合一延后，共享层抽取继续。重开：优化版契约被 ADR 废弃、`optimizeSignal` 移出公开面、落在 8.0.0 破坏窗口、对拍有可判死单输出负控。留痕缺口：暂停原因仅会话记忆，ADR/pitfalls/eval 无记录。
-- **C3 裁决（三步）**：① vdom 57 处重定向 `@lytjs/core/runtime` 收紧 allowlist；② reactivity 38 处同样重定向；③ a11y 40 + common-is 31 + common-string 1 = 72 处走 UI-only 窄口径文档例外并配 ADR（不扩 core，禁 UI 复制第三套）。
+- **C1 已完成（45dd43d0）**：`@lytjs/ui` vdom 清零（58 文件 = 55 运行时 + 2 type-only + 1 测试）改指 `@lytjs/core/runtime`；删除 vdom 的 `Component` 类型；package/tsup/tsconfig/vitest/README/allowlist/锁文件同批收紧。
+  - 盲区核对：tests 目录 0 残留；`dist/index.mjs` 与 `dist/index.d.ts` 0 处 `@lytjs/vdom`；UI allowlist 已无 vdom。
+  - 门禁：UI type-check/build 绿；fast 56/56；lockfile/package-deps/deps/freshness/alias 绿；api-snapshot 1961 名不变；bundle 六入口在 2% 预算内（与 baseline 差异来自 970e3b30 后 core/vdom/compiler 提交，非本批）。
+  - 新坑：`pitfalls/build/subpath-external-singleton-blindspot.md`。
+- **C2 待启动**：reactivity 38 处 → `@lytjs/core/runtime`（signal/watch/reactive/computed/effect 5 符号全被覆盖）。
+- **C3 待启动**：a11y 40 + common-is 31 + common-string 1 = 72 处文档例外 + ADR。口径拆分：a11y 为 UI-only 语义叶子；is/string 为通用 L0 叶子（不写“UI 语义强绑定”）。
+- **B01d 延后**：重开条件与旧台账见 `NOW-history/2026-11-08-S23-S30台账与C3.md`。
 
-## 下一步（拟定台账，待 owner 确认，编号非既有条目）
-> 来源：evaluation 11-07 §2/§3/§8；原「S23+」悬空引用入档。
+## 下一步
+1. C2：重定向 reactivity 并收紧 UI 依赖（期望：dist 无 `@lytjs/reactivity`，check-package-deps 0 提示）。
+2. C3：ARCHITECTURE 窄口径 + ADR + 订正 0021（a11y 符号 11→14、覆盖口径 24/23 已过时）。
 
-| ID | 目标 → 验收（依赖；串/并行） |
-|---|---|
-| S23 | C3 三步收口 → 0021 pending→已裁、ARCHITECTURE 与 allowlist 一致、注入违禁依赖必红（S02✔；串行） |
-| S24 | P1-6 模块级状态隔离 → 两 app 互不污染、测试红→绿、不改公开 API（无；并行 S25/S26） |
-| S25 | P1-7 测试与实现解耦（`getBlockStackDepth`、`patchFlag===16`、`ctx._instance`、compiler `toContain` 改公开断言）→ fast 绿、产物快照不变（无；并行） |
-| S26 | P1-9 冷仓 type-check 可复现 → 无 dist 跑通或明确失败原因（S22✔；可并行） |
-| S27 | 棘轮+体积单源 → ui-styles/circular 8/ssrThrows 5 只减、CI size 与 bundle baseline 同判据（S18/S20✔；并行 S28/S29） |
-| S28 | 包元数据/工具链统一 → exports 76/76、sideEffects/files 统一并有门禁、pnpm 版本单源（S21✔；可并行） |
-| S29 | 死代码与注释矛盾（render-helpers 注释、transform 死注册、renderer 双名转发）→ 三处清零、fast+slow 绿、公开面变更过快照（无；并行） |
-| S30 | V5/V6 待验证 → 34 个 UI 契约 N/A 逐格分类、changeset 403 dry-run（S21✔；可并行） |
-
-负控：72 verified / 0 unverified / 1 uninjectable。
-
-口径偏差：评估 48/48、slow 14、169/160、parity100 → 实测 56/56、slow 17、168/159、115。
-
-阻塞：覆盖率并发/safe-delete → 单包复核/reportsDirectory
+## 阻塞
+- 覆盖率并发/safe-delete → 单包复核/reportsDirectory。
