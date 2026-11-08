@@ -476,17 +476,18 @@ const CONTROLS = {
 
   'check-vitest-alias-dist': () => {
     // 加一条指向不存在目录的 alias ⇒ 「每个 alias 目标都必须存在」必红
-    const file = join(ROOT, 'vitest.config.ts');
+    // S32 起别名表在 vitest.shared.ts（根配置只引用），注入点随之迁移。
+    const file = join(ROOT, 'vitest.shared.ts');
     withPatchedFile(
       file,
       (text) => {
-        const needle = 'alias: {';
+        const needle = 'export const sharedAliases: Record<string, string> = {';
         if (!text.includes(needle)) {
           throw new Error('check-vitest-alias-dist：注入点漂移（找不到 alias 块）');
         }
         return text.replace(
           needle,
-          `${needle}\n      '@lytjs/__negctl-missing': resolve(root, 'packages/__negctl-missing/src'),`,
+          `${needle}\n  '@lytjs/__negctl-missing': resolve(root, 'packages/__negctl-missing/src'),`,
         );
       },
       () => expectFail(['tsx', 'scripts/check-vitest-alias-dist.ts'], 'check-vitest-alias-dist'),
