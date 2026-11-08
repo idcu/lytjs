@@ -93,6 +93,28 @@ describe('codegen-ssr battery: 属性与样式数值（px 分支）', () => {
   }
 });
 
+describe('codegen-ssr battery: 动态参数（运行期属性名）', () => {
+  // 回归：动态参数 `:[attrName]` 曾被 `JSON.stringify` 成字面量 key，
+  // 产物里属性名恒为 `attrName`（`<div attrName="T">`），与表达式无关。
+  it('元素属性名按表达式求值', () => {
+    const render = executeSsr(compile('<div :[name]="x"></div>', { ssrMode: true }));
+    expect(render({ name: 'title', x: 'T' })).toBe('<div title="T"></div>');
+    expect(render({ name: 'data-role', x: 'R' })).toBe('<div data-role="R"></div>');
+  });
+
+  it('组件 props 的 key 按表达式求值', () => {
+    const seen: unknown[] = [];
+    const render = executeSsr(compile('<Child :[name]="x" />', { ssrMode: true }), {
+      renderComponentVNode: (type: unknown, props: unknown) => {
+        seen.push(props);
+        return { tag: 'child', props: null, children: null };
+      },
+    });
+    expect(render({ Child: 'Child', name: 'title', x: 'T' })).toBe('<child></child>');
+    expect(seen[0]).toEqual({ title: 'T' });
+  });
+});
+
 describe('codegen-ssr battery: 转义与边界输入', () => {
   it('属性值中的特殊字符被转义', () => {
     const code = ssr('<div title="a&amp;b">&lt;x&gt;</div>');

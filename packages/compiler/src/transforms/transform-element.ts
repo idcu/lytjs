@@ -618,9 +618,17 @@ function handleVBind(
       expContent !== undefined
         ? createSimpleExpression(expContent, false, prop.loc, false)
         : createSimpleExpression('undefined', true, prop.loc, true);
+    // `:[attrName]` 是动态参数：key 必须求值（计算键），
+    // 不能 JSON.stringify 成字面量 `"attrName"`。
+    const isDynamicArg =
+      prop.arg !== undefined &&
+      prop.arg.type === NodeTypes.SIMPLE_EXPRESSION &&
+      !(prop.arg as SimpleExpressionNode).isStatic;
     properties.push(
       createObjectProperty(
-        createSimpleExpression(JSON.stringify(argContent), true, prop.loc, true),
+        isDynamicArg
+          ? createSimpleExpression(`[${argContent}]`, false, prop.loc, false)
+          : createSimpleExpression(JSON.stringify(argContent), true, prop.loc, true),
         valueExpr,
       ),
     );

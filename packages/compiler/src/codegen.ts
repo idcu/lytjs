@@ -569,7 +569,12 @@ function genProperty(node: JSProperty, context: CodegenContext): void {
   }
 
   if (key.type === NodeTypes.SIMPLE_EXPRESSION) {
-    context.push(key.content, node);
+    // 非静态 key（动态参数 `:[attrName]`）必须先前缀化再输出计算键
+    if ((key as SimpleExpressionNode).isStatic) {
+      context.push(key.content, node);
+    } else {
+      genExpression(key as SimpleExpressionNode, context);
+    }
   } else {
     genNode(key, context);
   }

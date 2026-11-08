@@ -286,9 +286,14 @@ function genSSRComponent(element: ElementNode): string {
       const v = prop.value ? JSON.stringify(prop.value.content) : 'true';
       propsParts.push(`${JSON.stringify(prop.name)}:${v}`);
     } else if (prop.type === NodeTypes.DIRECTIVE && prop.name === 'bind') {
-      const arg = prop.arg ? (prop.arg as SimpleExpressionNode).content : undefined;
+      const argNode = prop.arg as SimpleExpressionNode | undefined;
+      const arg = argNode?.content;
       const exp = prop.exp ? (prop.exp as SimpleExpressionNode).content : undefined;
-      if (arg && exp) propsParts.push(`${JSON.stringify(arg)}:${px(exp)}`);
+      if (arg && exp) {
+        // 动态参数 `:[attrName]` 用计算键，属性名在运行期求值
+        const key = argNode && !argNode.isStatic ? `[${px(arg)}]` : JSON.stringify(arg);
+        propsParts.push(`${key}:${px(exp)}`);
+      }
     }
   }
   const propsCode = propsParts.length ? `{${propsParts.join(',')}}` : 'null';
@@ -408,6 +413,10 @@ function genSSRElement(element: ElementNode): string {
       if (prop.name === 'bind') {
         const argContent = prop.arg ? (prop.arg as SimpleExpressionNode).content : undefined;
         const expContent = prop.exp ? (prop.exp as SimpleExpressionNode).content : undefined;
+        const isDynamicArg =
+          !!prop.arg &&
+          (prop.arg as SimpleExpressionNode).type === NodeTypes.SIMPLE_EXPRESSION &&
+          !(prop.arg as SimpleExpressionNode).isStatic;
         // FIX: P2-17 对 v-bind 属性值进行 HTML 转义，防止 XSS 攻击
         if (argContent && expContent) {
           // class / style 需要**归一化**：数组与对象形式（`:class="['a',{'b':ok}]"`）
@@ -424,7 +433,17 @@ function genSSRElement(element: ElementNode): string {
           } else {
             valueExpr = `String(${px(expContent)})`;
           }
-          propParts.push(`' ${argContent}="' + escapeHtml(${valueExpr}) + '"'`);
+          if (isDynamicArg) {
+            // 动态参数 `:[attrName]`：属性名在运行期求值；class/style 仍需归一化
+            const nameExpr = `String(${px(argContent)})`;
+            const normalized =
+              `(${nameExpr} === 'class' ? normalizeClass(${px(expContent)})` +
+              ` : ${nameExpr} === 'style' ? normalizeStyle(${px(expContent)})` +
+              ` : String(${px(expContent)}))`;
+            propParts.push(`' ' + ${nameExpr} + '="' + escapeHtml(${normalized}) + '"'`);
+          } else {
+            propParts.push(`' ${argContent}="' + escapeHtml(${valueExpr}) + '"'`);
+          }
         }
       }
       // v-html: output raw HTML content as children (not as attribute)

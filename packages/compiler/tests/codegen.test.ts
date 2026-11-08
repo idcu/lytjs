@@ -189,12 +189,13 @@ describe('codegen', () => {
       expect(out.children).toBe('Click');
     });
 
-    // TODO(S25-待决): 动态属性名当前产物是字面量 key（`{"attrName": value}`），
-    // 在「不改产物文本、不先修 codegen 缺陷」的前提下无法行为化；
-    // 保留原字符串断言，待 codegen 修复动态参数后再改为公开行为断言。
     it('should handle dynamic arguments', () => {
-      const result = compile('<div:[attrName]="value"></div>');
-      expect(result.code).toContain('attrName');
+      // 回归：动态参数名曾被 JSON.stringify 成字面量 key（`{"attrName": value}`），
+      // 属性名完全不求值；正确产物应为计算键 `[_ctx.attrName]`。
+      const out = asVNode(
+        renderWith('<div :[attrName]="value">x</div>', { attrName: 'title', value: 'T' }),
+      );
+      expect(out.props).toEqual({ title: 'T' });
     });
 
     it('should expose v-slot content as a callable slot', () => {
