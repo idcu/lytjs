@@ -27,7 +27,7 @@ import {
   RE_V_DIRECTIVE_MODIFIERS_ONLY,
   RE_QUOTED_ATTR_VALUE,
   RE_UNQUOTED_ATTR_VALUE,
-} from './parser-base';
+} from './parser-shared';
 
 // ============================================================
 // Parse attribute or directive

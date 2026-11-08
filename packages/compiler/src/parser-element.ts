@@ -16,7 +16,7 @@ import {
   isComponentTag,
   getEndTagRegex,
   RE_TAG_NAME,
-} from './parser-base';
+} from './parser-shared';
 import { parseChildren } from './parser-children';
 import { parseAttribute } from './parser-attribute';
 

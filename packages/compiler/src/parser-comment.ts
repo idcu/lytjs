@@ -3,7 +3,7 @@
 
 import type { CommentNode, ParserContext } from './types';
 import { createComment } from './ast';
-import { advanceBy, getCursor, getSelection } from './parser-base';
+import { advanceBy, getCursor, getSelection } from './parser-shared';
 
 // ============================================================
 // Parse comment

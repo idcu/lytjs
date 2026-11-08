@@ -5,7 +5,7 @@ import { NodeTypes, TextModes } from './constants';
 import { warn } from '@lytjs/common-error';
 import type { TextNode, TemplateChildNode, ParentNode, ParserContext } from './types';
 
-import { advanceBy, getCursor, getSelection, RE_DOCTYPE } from './parser-base';
+import { advanceBy, getCursor, getSelection, RE_DOCTYPE } from './parser-shared';
 import { createText } from './ast';
 
 import { parseComment } from './parser-comment';
