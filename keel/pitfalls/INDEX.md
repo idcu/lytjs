@@ -44,3 +44,5 @@ keywords: [坑库, 索引, 假绿, 门禁, 负控]
 |元数据多源|process|P2|[meta-drift](process/package-metadata-drift.md)|
 |体积突然变胖|build|P1|[paths-leak](build/tsconfig-paths-leak-into-bundler.md)|
 |脚手架 TS2307 vite|verify|P2|[root-dep](verify/undeclared-root-dep-gate.md)|
+|编译器残留缺陷|core|P1|[residual](core/residuals.md)|
+|dist mtime|verify|P2|[mtime](verify/dist-mtime.md)|
