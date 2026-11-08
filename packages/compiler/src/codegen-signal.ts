@@ -24,6 +24,10 @@ import {
   findSlotDirective,
   withScope,
   toComponentEventKey,
+  validateAttributeName,
+  validateEventName,
+  validateComponentName,
+  validateIslandDirective,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -792,9 +796,6 @@ function processVNodeCallProps(
 // 处理指令节点
 // ============================================================
 
-// FIX: P1-1~3 Signal 模式代码注入防护 - 表达式白名单验证
-const VALID_EXPRESSION = /^[a-zA-Z_$][a-zA-Z0-9_$]*(\.([a-zA-Z_$][a-zA-Z0-9_$]*))*$/;
-
 /**
  * 危险/带副作用的表达式模式（黑名单）。
  * 模板表达式默认**信任**（模板由开发者书写），只拦这些：
@@ -802,11 +803,6 @@ const VALID_EXPRESSION = /^[a-zA-Z_$][a-zA-Z0-9_$]*(\.([a-zA-Z_$][a-zA-Z0-9_$]*)
  */
 const DANGEROUS_EXPRESSION =
   /;|=>|\bfunction\b|\bnew\s|\bimport\b|\brequire\b|\bdelete\b|\bthrow\b|\bawait\b|(^|[^=!<>])\b[a-zA-Z_$][\w$]*\s*=(?!=)/;
-
-// FIX: P1-S1, P1-S2 属性名和事件名验证正则
-const VALID_ATTRIBUTE_NAME = /^[a-zA-Z][a-zA-Z0-9-:]*$/;
-const VALID_EVENT_NAME = /^[a-zA-Z][a-zA-Z0-9-]*$/;
-const VALID_COMPONENT_NAME = /^[a-zA-Z][a-zA-Z0-9-]*$/;
 
 function validateExpression(exp: string | undefined, context: string): void {
   if (!exp) return;
@@ -831,46 +827,8 @@ function validateArgContent(arg: string | undefined): void {
   }
 }
 
-// FIX: P1-S1: v-bind 动态属性名验证
-function validateAttributeName(name: string | undefined, context: string): void {
-  if (!name) return;
-  if (!VALID_ATTRIBUTE_NAME.test(name)) {
-    throw new Error(
-      `[lytjs/compiler] Invalid attribute name in ${context}: "${name}". Only alphanumeric characters, hyphens, and colons are allowed.`,
-    );
-  }
-}
-
-// FIX: P1-S2: v-on 事件名验证
-function validateEventName(name: string | undefined, context: string): void {
-  if (!name) return;
-  if (!VALID_EVENT_NAME.test(name)) {
-    throw new Error(
-      `[lytjs/compiler] Invalid event name in ${context}: "${name}". Only alphanumeric characters and hyphens are allowed.`,
-    );
-  }
-}
-
-// FIX: P1-S6: 动态组件名验证
-function validateComponentName(name: string | undefined, context: string): void {
-  if (!name) return;
-  if (!VALID_COMPONENT_NAME.test(name)) {
-    throw new Error(
-      `[lytjs/compiler] Invalid component name in ${context}: "${name}". Only alphanumeric characters and hyphens are allowed.`,
-    );
-  }
-}
-
-// FIX: P1-S8: v-island 指令验证
-function validateIslandDirective(exp: string | undefined, context: string): void {
-  if (!exp) return;
-  // v-island 指令只允许简单的布尔表达式或属性访问
-  if (!VALID_EXPRESSION.test(exp) && exp !== 'true' && exp !== 'false') {
-    throw new Error(
-      `[lytjs/compiler] Invalid v-island expression in ${context}: "${exp}". Only simple property access or boolean literals are allowed.`,
-    );
-  }
-}
+// FIX: P1-S1/S2/S6/S8：属性名 / 事件名 / 组件名 / v-island 校验统一在
+// `codegen-signal-shared.ts` 实现，两套发射器共用同一判据与错误文案。
 
 /**
  * handler 表达式是否为「成员路径」（方法引用）：`fn` / `obj.fn` / `a.b.c`。

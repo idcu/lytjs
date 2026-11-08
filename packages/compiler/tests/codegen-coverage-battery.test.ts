@@ -394,6 +394,18 @@ const THROWS: Tpl[] = [
     variants: ['base', 'opt', 'optShort'],
     throws: true,
   },
+  {
+    name: 'invalid-component-name',
+    tpl: '<component v-if="ok" is="bad_name" />',
+    variants: ['base', 'opt', 'optShort'],
+    throws: true,
+  },
+  {
+    name: 'invalid-island-expression',
+    tpl: '<div v-island="x(y)">y</div>',
+    variants: ['base', 'opt', 'optShort'],
+    throws: true,
+  },
 ];
 
 // ============================================================================
@@ -516,3 +528,29 @@ describe('coverage battery: signal modes', () => compileAll(SIGNAL));
 describe('coverage battery: throw validators', () => compileAll(THROWS));
 describe('coverage battery: ssr mode', () => compileAll(SSR));
 describe('coverage battery: optimize modes', () => compileAll(OPTIMIZE));
+
+function captureError(fn: () => void): string {
+  try {
+    fn();
+  } catch (e) {
+    return e instanceof Error ? e.message : String(e);
+  }
+  return '';
+}
+
+describe('negative control: opt 与 base 走同一校验路径', () => {
+  const CASES: Array<[string, string]> = [
+    ['component', '<component v-if="ok" is="bad_name" />'],
+    ['attribute', '<div :[a b]="x">y</div>'],
+    ['event', '<div @[a b]="fn">x</div>'],
+    ['island', '<div v-island="x(y)">y</div>'],
+  ];
+  for (const [name, tpl] of CASES) {
+    it(`${name}: optimizeSignal:true 与基础版错误文案逐字一致`, () => {
+      const baseErr = captureError(() => compile(tpl, VARIANTS.base.options as never));
+      const optErr = captureError(() => compile(tpl, VARIANTS.opt.options as never));
+      expect(baseErr).toBeTruthy();
+      expect(optErr).toBe(baseErr);
+    });
+  }
+});

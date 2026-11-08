@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+### 🐛 修复 `optimizeSignal:true` 缺失的校验（B01d-2 块 3 后续，2026-11-08）
+
+- 优化版此前对 `v-island` 非法表达式、静态 `is="bad_name"` 动态组件名不报错，
+  且 `v-bind` / `v-on` 非法名的报错文案与基础版不一致。现将四个校验器
+  （`validateComponentName` / `validateAttributeName` / `validateEventName` /
+  `validateIslandDirective`）下沉到 `codegen-signal-shared.ts`，两版共用同一判据与文案。
+- **行为修正**：`optimizeSignal:true` 现在与基础版同样报错（错误文案逐字相同）；
+  合法模板产物不变（200 份快照逐字一致、`check-compiler-parity` 100/100）。
+- 回归：`codegen-coverage-battery` 新增 4 组 base/opt 错误文案逐字对照。
+
 ### 🔐 `v-html` 的 signal 产物标注消毒责任（A09，2026-11-05）
 
 - `codegen-signal` 的 `innerHTML` / `html` 分支仍生成 `setHTML(el, x)`；消毒由

@@ -28,6 +28,10 @@ import {
   findSlotDirective,
   withScope,
   toComponentEventKey,
+  validateAttributeName,
+  validateEventName,
+  validateComponentName,
+  validateIslandDirective,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -793,9 +797,6 @@ function processElementOptimized(
 const DANGEROUS_EXPRESSION =
   /;|=>|\bfunction\b|\bnew\s|\bimport\b|\brequire\b|\bdelete\b|\bthrow\b|\bawait\b|(^|[^=!<>])\b[a-zA-Z_$][\w$]*\s*=(?!=)/;
 
-const VALID_ATTRIBUTE_NAME = /^[a-zA-Z][a-zA-Z0-9-:]*$/;
-const VALID_EVENT_NAME = /^[a-zA-Z][a-zA-Z0-9-]*$/;
-
 function validateExpression(exp: string | undefined, context: string): void {
   if (!exp) return;
   if (DANGEROUS_EXPRESSION.test(exp)) {
@@ -825,13 +826,6 @@ function renderHandlerExpression(exp: string, locals: ReadonlySet<string> = new 
   return `($event) => { ${renderExpression(exp, new Set([...locals, '$event']))}; }`;
 }
 
-/**
- * 取元素上的**静态** `class` 属性值（`class="a b"`）；没有则返回 `''`。
- *
- * ⚠️ 2026-09-30 修复「静态 class 丢失」：`setClass()` 是**整体替换** class 属性，
- * 而静态 class 已被烧进 createTemplate 的 HTML 里 ⇒ `:class` 一动就把静态的那部分抹掉。
- * 修法：把静态 class 并入动态取值（`setClass(el, ['a b', _c.cls])`，`setClass` 内部会 normalize）。
- */
 /**
  * **内置组件**：这些标签不从 ctx 取，而是由 codegen 直接从 `@lytjs/component` 导入
  * （与 Vue 一致 —— 使用方无需手动注册 `<Teleport/>` / `<KeepAlive/>` 等）。
@@ -870,17 +864,15 @@ function processDirectiveOptimized(
       : `'${argContent}'`
     : "''";
 
-  if (dir.name === 'bind' && argContent && !VALID_ATTRIBUTE_NAME.test(argContent)) {
-    throw new Error(
-      `[lytjs/compiler] Invalid attribute name: "${argContent}"` +
-        `\n  Suggestion: Attribute names must start with a letter and contain only letters, numbers, or hyphens.`,
-    );
+  // 与基础实现同一校验路径（判据与错误文案均来自共享层）
+  if (dir.name === 'bind' && argContent) {
+    validateAttributeName(argContent, `v-bind:${argContent}`);
   }
-  if (dir.name === 'on' && argContent && !VALID_EVENT_NAME.test(argContent)) {
-    throw new Error(
-      `[lytjs/compiler] Invalid event name: "${argContent}"` +
-        `\n  Suggestion: Event names must start with a letter and contain only letters, numbers, or hyphens.`,
-    );
+  if (dir.name === 'on' && argContent) {
+    validateEventName(argContent, `v-on:${argContent}`);
+  }
+  if (dir.name === 'island') {
+    validateIslandDirective(expContent, 'v-island');
   }
 
   switch (dir.name) {
@@ -1507,7 +1499,8 @@ function serializeBranchHTML(
 ): string {
   return serializeBranchHtmlShared(branch, {
     serializeStaticElement: (el) => serializeStaticHTMLOptimized(el, []),
-    // 优化实现历史上不校验动态组件名，保持原状（不传 = 跳过校验）
+    // 与基础实现一致：校验动态组件名（P1-S6）
+    validateDynamicComponentName: (tag) => validateComponentName(tag, 'v-for dynamic component'),
     stripStaticQuotes: (value) => value.replace(/^"|"$/g, ''),
   });
 }

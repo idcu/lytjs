@@ -592,6 +592,53 @@ export function toComponentEventKey(event: string): string {
   return `on${camelized.charAt(0).toUpperCase()}${camelized.slice(1)}`;
 }
 
+// FIX: P1-S1, P1-S2 属性名和事件名验证正则
+const VALID_ATTRIBUTE_NAME = /^[a-zA-Z][a-zA-Z0-9-:]*$/;
+const VALID_EVENT_NAME = /^[a-zA-Z][a-zA-Z0-9-]*$/;
+const VALID_COMPONENT_NAME = /^[a-zA-Z][a-zA-Z0-9-]*$/;
+/** v-island 只允许简单属性访问或布尔字面量。 */
+const VALID_ISLAND_EXPRESSION = /^[a-zA-Z_$][a-zA-Z0-9_$]*(\.([a-zA-Z_$][a-zA-Z0-9_$]*))*$/;
+
+/** FIX: P1-S1 v-bind 动态属性名验证（两套发射器共用同一判据与错误文案）。 */
+export function validateAttributeName(name: string | undefined, context: string): void {
+  if (!name) return;
+  if (!VALID_ATTRIBUTE_NAME.test(name)) {
+    throw new Error(
+      `[lytjs/compiler] Invalid attribute name in ${context}: "${name}". Only alphanumeric characters, hyphens, and colons are allowed.`,
+    );
+  }
+}
+
+/** FIX: P1-S2 v-on 事件名验证。 */
+export function validateEventName(name: string | undefined, context: string): void {
+  if (!name) return;
+  if (!VALID_EVENT_NAME.test(name)) {
+    throw new Error(
+      `[lytjs/compiler] Invalid event name in ${context}: "${name}". Only alphanumeric characters and hyphens are allowed.`,
+    );
+  }
+}
+
+/** FIX: P1-S6 动态组件名验证。 */
+export function validateComponentName(name: string | undefined, context: string): void {
+  if (!name) return;
+  if (!VALID_COMPONENT_NAME.test(name)) {
+    throw new Error(
+      `[lytjs/compiler] Invalid component name in ${context}: "${name}". Only alphanumeric characters and hyphens are allowed.`,
+    );
+  }
+}
+
+/** FIX: P1-S8 v-island 指令验证。 */
+export function validateIslandDirective(exp: string | undefined, context: string): void {
+  if (!exp) return;
+  if (!VALID_ISLAND_EXPRESSION.test(exp) && exp !== 'true' && exp !== 'false') {
+    throw new Error(
+      `[lytjs/compiler] Invalid v-island expression in ${context}: "${exp}". Only simple property access or boolean literals are allowed.`,
+    );
+  }
+}
+
 /** 生成列表项组件的 props 对象字面量（跳过 :key；字面量原样、表达式按 `toExpr` 前缀化）。 */
 export function buildItemComponentPropsShared(
   vnode: VNodeCall,
