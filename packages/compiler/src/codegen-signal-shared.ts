@@ -790,3 +790,50 @@ export function collectSlotVNodesShared(
   }
   return out;
 }
+
+/** 条件 vnode 序列化时需要发射器注入的差异点 */
+export interface ConditionalVNodeHooks {
+  vnodeCall: (node: unknown, locals: ReadonlySet<string>) => string | null;
+  conditional: (node: unknown, locals: ReadonlySet<string>) => string | null;
+  testExpr: (exp: string, locals: ReadonlySet<string>) => string;
+}
+
+/**
+ * `JS_CONDITIONAL_EXPRESSION`（v-if 在 Signal 模式的 transform 产物）→ `(cond ? vnode : null)`
+ *
+ * 返回 null 表示无法完整还原（此时调用方跳过，不下发半成品）。
+ */
+export function serializeConditionalVNodeShared(
+  node: unknown,
+  locals: ReadonlySet<string>,
+  hooks: ConditionalVNodeHooks,
+): string | null {
+  const cond = node as { test?: unknown; consequent?: unknown; alternate?: unknown };
+  if (!cond || !cond.test) return null;
+
+  const testExp = getExpContent(cond.test as SimpleExpressionNode);
+  if (!testExp) return null;
+
+  const inner = hooks.vnodeCall(cond.consequent, locals);
+  if (!inner) return null;
+
+  // alternate 有两种形态：`v-else` 是 VNODE_CALL、`v-else-if` 是嵌套的
+  // JS_CONDITIONAL_EXPRESSION（递归处理）。
+  let alternate = 'null';
+  if (cond.alternate) {
+    const altType = (cond.alternate as { type?: number }).type;
+    if (altType === NodeTypes.VNODE_CALL) {
+      const alt = hooks.vnodeCall(cond.alternate, locals);
+      if (!alt) return null;
+      alternate = alt;
+    } else if (altType === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
+      const alt = hooks.conditional(cond.alternate, locals);
+      if (!alt) return null;
+      alternate = alt;
+    } else {
+      return null;
+    }
+  }
+
+  return `(${hooks.testExpr(testExp, locals)}?${inner}:${alternate})`;
+}

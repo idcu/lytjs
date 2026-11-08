@@ -28,6 +28,7 @@ import {
   validateIslandDirective,
   buildComponentSlotsObjectShared,
   collectSlotVNodesShared,
+  serializeConditionalVNodeShared,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -1885,34 +1886,11 @@ export function serializeConditionalVNode(
   prefix: string,
   locals: ReadonlySet<string> = new Set(),
 ): string | null {
-  const cond = node as { test?: unknown; consequent?: unknown; alternate?: unknown };
-  if (!cond || !cond.test) return null;
-
-  const testExp = getExpContent(cond.test as SimpleExpressionNode);
-  if (!testExp) return null;
-
-  const inner = serializeVNodeCall(cond.consequent, prefix, locals);
-  if (!inner) return null;
-
-  // alternate 有两种形态：`v-else` 是 VNODE_CALL、`v-else-if` 是嵌套的
-  // JS_CONDITIONAL_EXPRESSION（递归处理）。
-  let alternate = 'null';
-  if (cond.alternate) {
-    const altType = (cond.alternate as { type?: number }).type;
-    if (altType === NodeTypes.VNODE_CALL) {
-      const alt = serializeVNodeCall(cond.alternate, prefix, locals);
-      if (!alt) return null;
-      alternate = alt;
-    } else if (altType === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
-      const alt = serializeConditionalVNode(cond.alternate, prefix, locals);
-      if (!alt) return null;
-      alternate = alt;
-    } else {
-      return null;
-    }
-  }
-
-  return `(${prefixIdentifiers(testExp, locals)}?${inner}:${alternate})`;
+  return serializeConditionalVNodeShared(node, locals, {
+    vnodeCall: (n, scope) => serializeVNodeCall(n, prefix, scope),
+    conditional: (n, scope) => serializeConditionalVNode(n, prefix, scope),
+    testExpr: (exp, scope) => prefixIdentifiers(exp, scope),
+  });
 }
 
 /**

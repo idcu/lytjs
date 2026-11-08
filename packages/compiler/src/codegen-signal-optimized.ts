@@ -32,6 +32,7 @@ import {
   validateIslandDirective,
   buildComponentSlotsObjectShared,
   collectSlotVNodesShared,
+  serializeConditionalVNodeShared,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -2023,34 +2024,11 @@ export function serializeConditionalVNodeOptimized(
   options: SignalCodegenOptions,
   locals: ReadonlySet<string> = new Set(),
 ): string | null {
-  const cond = node as { test?: unknown; consequent?: unknown; alternate?: unknown };
-  if (!cond || !cond.test) return null;
-
-  const testExp = getExpContent(cond.test as SimpleExpressionNode);
-  if (!testExp) return null;
-
-  const inner = serializeVNodeCallOptimized(cond.consequent, usedRuntime, options, locals);
-  if (!inner) return null;
-
-  // alternate：`v-else` 是 VNODE_CALL；`v-else-if` 是嵌套的条件表达式（递归）
-  let alternate = 'null';
-  if (cond.alternate) {
-    const altType = (cond.alternate as { type?: number }).type;
-    if (altType === NodeTypes.VNODE_CALL) {
-      const alt = serializeVNodeCallOptimized(cond.alternate, usedRuntime, options, locals);
-      if (!alt) return null;
-      alternate = alt;
-    } else if (altType === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
-      const alt = serializeConditionalVNodeOptimized(cond.alternate, usedRuntime, options, locals);
-      if (!alt) return null;
-      alternate = alt;
-    } else {
-      return null;
-    }
-  }
-
-  const expr = prefixIdentifiers(testExp, locals).replace(/\b_ctx\./g, '_c.');
-  return `(${expr}?${inner}:${alternate})`;
+  return serializeConditionalVNodeShared(node, locals, {
+    vnodeCall: (n, scope) => serializeVNodeCallOptimized(n, usedRuntime, options, scope),
+    conditional: (n, scope) => serializeConditionalVNodeOptimized(n, usedRuntime, options, scope),
+    testExpr: (exp, scope) => prefixIdentifiers(exp, scope).replace(/\b_ctx\./g, '_c.'),
+  });
 }
 
 /** `VNODE_CALL` → `${cv}(tag, props, children)`（优化版；严格模式，失败即 null） */
