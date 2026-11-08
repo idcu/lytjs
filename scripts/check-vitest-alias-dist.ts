@@ -40,6 +40,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const CONFIG = resolve(ROOT, 'vitest.config.ts');
+// S32 起别名表抽到 vitest.shared.ts，根配置只引用。两者都解析一遍，避免守卫失效。
+const SHARED = resolve(ROOT, 'vitest.shared.ts');
 
 interface AliasEntry {
   name: string;
@@ -200,11 +202,17 @@ async function main(): Promise<void> {
   }
 
   // ── 根配置（保持原有静态解析与已知问题棘轮）──────────────────────
-  const src = readFileSync(CONFIG, 'utf-8');
-  const entries = collectAliasTargets(src);
+  // 别名表已抽到 vitest.shared.ts 时，根配置本身不再含 alias 条目，改为解析共享源。
+  let entries = collectAliasTargets(readFileSync(CONFIG, 'utf-8'));
+  const aliasSource = entries.length > 0 ? 'vitest.config.ts' : 'vitest.shared.ts';
+  if (entries.length === 0 && existsSync(SHARED)) {
+    entries = collectAliasTargets(readFileSync(SHARED, 'utf-8'));
+  }
 
   if (entries.length === 0) {
-    console.log('⚠️  未从 vitest.config.ts 解析到任何 @lytjs/* alias —— 守卫已失效？');
+    console.log(
+      '⚠️  未从 vitest.config.ts / vitest.shared.ts 解析到任何 @lytjs/* alias —— 守卫已失效？',
+    );
     process.exit(1);
   }
 
@@ -254,7 +262,7 @@ async function main(): Promise<void> {
   }
 
   console.log(
-    `✅ 根配置：${entries.length} 个 @lytjs/* alias 目标全部存在（测试不会因缺 dist 而静默少跑）` +
+    `✅ 根配置（${aliasSource}）：${entries.length} 个 @lytjs/* alias 目标全部存在（测试不会因缺 dist 而静默少跑）` +
       (knownHit > 0
         ? `\n   ℹ️  另有 ${knownHit} 个**已登记**的已知问题（见 scripts/vitest-alias-known-issues.txt）`
         : ''),
