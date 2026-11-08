@@ -73,9 +73,6 @@ Menu → lyt-menu__submenu--opened
 Menu → lyt-menu__submenu-item
 Menu → lyt-menu__submenu-list
 Menu → lyt-menu__title
-RichTextEditor → lyt-rich-text-editor__content
-RichTextEditor → lyt-rich-text-editor__footer
-RichTextEditor → lyt-rich-text-editor__toolbar-btn
 Select → lyt-select--disabled
 Select → lyt-select--open
 Select → lyt-select__arrow

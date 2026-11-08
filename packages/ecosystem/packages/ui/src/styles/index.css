@@ -2890,6 +2890,27 @@
   border-bottom: 1px solid var(--lyt-border-color-lighter);
   background: #fafafa;
 }
+.lyt-rich-text-editor__toolbar-btn {
+  padding: 4px 8px;
+  border: none;
+  border-radius: var(--lyt-border-radius-small);
+  background: transparent;
+  color: var(--lyt-text-color-regular);
+  cursor: pointer;
+}
+.lyt-rich-text-editor__toolbar-btn:hover {
+  background: var(--lyt-bg-color-page);
+}
+.lyt-rich-text-editor__content {
+  flex: 1;
+  min-height: 160px;
+}
+.lyt-rich-text-editor__footer {
+  padding: 6px 8px;
+  border-top: 1px solid var(--lyt-border-color-lighter);
+  font-size: 12px;
+  color: var(--lyt-text-color-secondary);
+}
 
 /* ===== Tabs ===== */
 .lyt-tabs {
