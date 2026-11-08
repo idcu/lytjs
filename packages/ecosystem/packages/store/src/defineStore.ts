@@ -18,6 +18,7 @@ import type {
 } from './types';
 import { signal, batch, reactive, effect, stop, isRef } from '@lytjs/reactivity';
 import { warn } from '@lytjs/common-error';
+import { inject } from '@lytjs/core';
 import { getActivePinia } from './pinia';
 
 /**
@@ -112,6 +113,22 @@ function registryFor(pinia: Pinia | undefined | null): StoreRegistry {
     registries.set(pinia as unknown as object, r);
   }
   return r;
+}
+
+/**
+ * 解析 `useStore()` 应归属的 pinia（S24）。
+ *
+ * 优先级：显式入参 > 当前组件所属 app 的 provide > 模块级 activePinia。
+ *
+ * 修复前只读 `activePinia`：两个 app 同时 `app.use(pinia)` 时，后安装的会覆盖
+ * 全局，先安装那个 app 的组件拿到的也是**同一个 store**。`pinia.install` 早已
+ * 把实例写入 `app.provide('__lytjs_pinia__')`，这里只需在当前实例上下文里取回。
+ * 组件外部（无实例）仍回落到 activePinia，纯客户端单例语义不变。
+ */
+function resolvePinia(pinia?: Pinia | null): Pinia | undefined {
+  if (pinia) return pinia;
+  const appPinia = inject<Pinia>('__lytjs_pinia__');
+  return appPinia ?? getActivePinia() ?? undefined;
 }
 
 // ==================== 状态值处理 ====================
@@ -241,9 +258,9 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
     return function useStore(
       pinia?: Pinia,
     ): SS & Store<Id, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>> {
-      // Get active pinia if not provided
+      // Get active pinia if not provided（S24：先取当前 app provide，再回落全局）
       if (!pinia) {
-        pinia = getActivePinia();
+        pinia = resolvePinia();
       }
       // ★ 2026-11-03：注册表按 pinia 隔离（此前只按 id ⇒ SSR 跨请求串数据）
       if (!pinia) warnNoPiniaOnce(id);
@@ -561,7 +578,11 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
     };
   } else {
     const options = optionsOrSetup;
-    return function useStore(pinia = getActivePinia()): Store<Id, S, G, A> {
+    return function useStore(pinia?: Pinia): Store<Id, S, G, A> {
+      // S24：先取当前 app provide 的 pinia，再回落模块级 activePinia
+      if (!pinia) {
+        pinia = resolvePinia();
+      }
       // ★ 2026-11-03：注册表按 pinia 隔离（此前只按 id ⇒ SSR 跨请求串数据）
       if (!pinia) warnNoPiniaOnce(id);
       const registry = registryFor(pinia);
