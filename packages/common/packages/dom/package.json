@@ -21,7 +21,7 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "src"
   ],
   "sideEffects": false,
   "engines": {
