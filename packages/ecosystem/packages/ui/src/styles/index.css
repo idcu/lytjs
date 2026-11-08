@@ -1997,6 +1997,10 @@
   transition: background-color 0.2s;
 }
 
+.lyt-tree-node-wrapper {
+  display: block;
+}
+
 .lyt-tree-node:hover {
   background-color: var(--lyt-fill-color-light);
 }

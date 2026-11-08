@@ -147,7 +147,6 @@ Tree → lyt-tree--show-line
 Tree → lyt-tree__empty
 Tree → lyt-tree__node--checked
 Tree → lyt-tree__node--selected
-TreeSelect → lyt-tree-node-wrapper
 Upload → lyt-upload__content
 Upload → lyt-upload__file
 Upload → lyt-upload__file-name
