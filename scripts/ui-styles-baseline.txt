@@ -78,9 +78,6 @@ Menu → lyt-menu__submenu--opened
 Menu → lyt-menu__submenu-item
 Menu → lyt-menu__submenu-list
 Menu → lyt-menu__title
-Message → lyt-message__close
-Message → lyt-message__content
-Message → lyt-message__icon
 Notification → lyt-notification__close
 Notification → lyt-notification__content
 Notification → lyt-notification__icon

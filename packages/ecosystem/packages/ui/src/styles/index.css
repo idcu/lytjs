@@ -2524,6 +2524,25 @@
   opacity: 0;
   transition: opacity var(--lyt-transition-duration) ease;
 }
+.lyt-message__icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  font-size: 16px;
+}
+.lyt-message__content {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.5;
+}
+.lyt-message__close {
+  margin-left: 8px;
+  cursor: pointer;
+  opacity: 0.6;
+}
+.lyt-message__close:hover {
+  opacity: 1;
+}
 
 /* ===== Modal ===== */
 .lyt-modal__overlay {
