@@ -2644,6 +2644,9 @@
   width: 330px;
 }
 .lyt-notification {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
   padding: 14px 16px;
   border-radius: var(--lyt-border-radius-base);
   background: var(--lyt-bg-color);
@@ -2651,6 +2654,33 @@
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
   font-size: 14px;
   color: var(--lyt-text-color-primary);
+}
+.lyt-notification__icon {
+  flex-shrink: 0;
+  font-size: 20px;
+  line-height: 1;
+}
+.lyt-notification__content {
+  flex: 1;
+  min-width: 0;
+}
+.lyt-notification__title {
+  margin-bottom: 4px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.lyt-notification__message {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--lyt-text-color-regular);
+}
+.lyt-notification__close {
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  opacity: 0.6;
 }
 
 /* ===== Pagination ===== */
