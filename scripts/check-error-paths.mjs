@@ -579,3 +579,7 @@ if (fail > 0) {
   for (const f of failures) console.log(`  · ${f}`);
   process.exit(1);
 }
+// 显式正常退出：`ComputedRefImpl` 的 60s 缓存清理定时器没有 unref，会把 Node 的事件循环
+// 多留住 60s（实测本门禁 31 条断言 1.0s 跑完，进程却到 61.4s 才退出）。
+// 断言结果已在上面全部打印，这里退出不影响判据，只去掉无意义的空等。
+process.exit(0);
