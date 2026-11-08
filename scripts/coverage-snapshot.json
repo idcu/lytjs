@@ -1,8 +1,8 @@
 {
-  "commit": "6ebd9719572fb774a261a52d52b006750a8ee631",
-  "generatedAt": "2026-11-07T14:14:50.829Z",
-  "totalSrcFiles": 444,
-  "coveredSrcFiles": 435,
+  "commit": "c19f105a575f0d5321452f4986a08f8543e18c39",
+  "generatedAt": "2026-11-08T20:38:25.725Z",
+  "totalSrcFiles": 445,
+  "coveredSrcFiles": 436,
   "threshold": 0.975,
   "files": {
     "packages/adapter-web/src/index.ts": true,
@@ -66,6 +66,7 @@
     "packages/compiler/src/parser-children.ts": true,
     "packages/compiler/src/parser-comment.ts": true,
     "packages/compiler/src/parser-element.ts": true,
+    "packages/compiler/src/parser-shared.ts": true,
     "packages/compiler/src/parser-text.ts": true,
     "packages/compiler/src/parser.ts": true,
     "packages/compiler/src/prefix-identifiers.ts": true,
