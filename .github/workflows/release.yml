@@ -85,7 +85,10 @@ jobs:
       # 发布后更新文档
       - name: Build Docs
         if: steps.changesets.outputs.published == 'true'
-        run: pnpm run docs:build
+        # N17：vitepress 是 docs 包的 devDependency，根 node_modules 无此二进制，
+        # 旧的 `pnpm run docs:build` 在发布流程里必然 not found（假绿）。
+        working-directory: docs
+        run: pnpm run build
 
       - name: Deploy Docs to GitHub Pages
         if: steps.changesets.outputs.published == 'true'

@@ -436,9 +436,19 @@ try {
     });
     let stdout = '';
     let stderr = '';
+    let spawnError = '';
+    let earlyExit = null;
     child.stdout.on('data', (d) => (stdout += d));
     child.stderr.on('data', (d) => (stderr += d));
-    const exited = new Promise((resolveExit) => child.once('exit', resolveExit));
+    // ★ 2026-11-10（N15）：此前未监听 spawn error / 提前退出，进程起不来时
+    //   while 会空转到 30s deadline，且 stdout/stderr 都空 ⇒ 偶发 3 条红却无从诊断。
+    child.on('error', (e) => (spawnError = String(e)));
+    const exited = new Promise((resolveExit) =>
+      child.once('exit', (code) => {
+        earlyExit = code;
+        resolveExit(code);
+      }),
+    );
 
     let status = null;
     let body = '';
@@ -446,8 +456,13 @@ try {
     const deadline = Date.now() + 30_000;
     try {
       while (Date.now() < deadline) {
+        // 进程已经挂了就别再空转，把诊断信息留给下面的断言
+        if (spawnError || earlyExit !== null) break;
         try {
-          const res = await fetch(`http://127.0.0.1:${port}/`);
+          // 单次 fetch 必须有超时：否则半开连接会把整个重试循环卡死
+          const res = await fetch(`http://127.0.0.1:${port}/`, {
+            signal: AbortSignal.timeout(2_000),
+          });
           status = res.status;
           body = await res.text();
           // 拿到任何响应就停：渲染错误是确定性的，重试只会拖慢失败反馈
@@ -463,8 +478,21 @@ try {
       if (child.exitCode === null) child.kill('SIGKILL');
     }
 
-    check('服务器启动并打印监听日志', /running at http:\/\/localhost:/.test(stdout), stdout.trim());
-    check(`首页返回 200（实际 ${status ?? '无响应'}）`, status === 200, lastError || stderr.trim());
+    const diagnostics = [
+      spawnError,
+      earlyExit === null ? '' : `server exited early (code=${earlyExit})`,
+      stderr.trim(),
+      stdout.trim(),
+    ]
+      .filter(Boolean)
+      .join(' | ');
+
+    check(
+      '服务器启动并打印监听日志',
+      /running at http:\/\/localhost:/.test(stdout),
+      diagnostics || '(无输出)',
+    );
+    check(`首页返回 200（实际 ${status ?? '无响应'}）`, status === 200, lastError || diagnostics);
     check(
       '首页包含 App 的期望文本 "Hello LytJS!"',
       body.includes('Hello LytJS!'),

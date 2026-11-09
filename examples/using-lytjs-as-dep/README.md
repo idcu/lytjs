@@ -244,19 +244,23 @@ console.log(count.value); // 1
 console.log(double.value); // 2
 ```
 
-#### Signal (推荐，性能更好)
+#### Signal
+
+> **契约订正（2026-11-10）**：`signal()` 返回的是**可调用对象**，不是 `{ value }`。
+> 读取用 `count()`，写入用 `count.set(v)` / `count.update(fn)`；下面旧示例的
+> `.value` 恒为 `undefined`，照抄会静默失效。
 
 ```javascript
 import { signal, computed, effect } from '@lytjs/reactivity';
 
 const count = signal(0);
-const double = computed(() => count.value * 2);
+const double = computed(() => count() * 2);
 
 effect(() => {
-  console.log('Count changed:', count.value);
+  console.log('Count changed:', count());
 });
 
-count.value++;
+count.set(count() + 1);
 ```
 
 ### 2. 组件定义

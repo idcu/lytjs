@@ -69,6 +69,19 @@
 pnpm add @lytjs/core
 ```
 
+### 用脚手架新建项目
+
+```bash
+# 当前可用（仓库内，未发布独立 create-lyt 包）：
+node packages/tools/packages/cli/lyt-cli.js create my-app --template default
+cd my-app && npm install && npm run dev
+```
+
+> **首公里口径（2026-11-10）**：`npx create-lyt` 需要一个名为 `create-lyt` 的独立 npm 包，
+> 它随 N14 首次发布才会出现（ADR 0028 的 D3 四前置尚未满足），**现在直接跑会 E404**。
+> `@lytjs/cli` 已注册 `create-lyt` bin 别名，安装该包后本地 `npx create-lyt` 可用。
+> 生成的 6 个模板由 `check-scaffold` 做真生成 + `tsc --noEmit` + SSR 起服务断言。
+
 <!-- release-parity: npm=6.9.6 repo=6.9.6 planned=7.0.0 branch=v7.0.0-dev -->
 
 > ⚠️ **注意版本**：npm 上发布的是 **6.9.6**，本仓库 76 个包的版本也是 **6.9.6**，开发分支为 `v7.0.0-dev`（计划版本 **7.0.0**），**npm 产物与本仓库不是同一份代码**。

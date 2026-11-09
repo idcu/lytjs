@@ -96,6 +96,34 @@ check(
   /KNOWN_FAIL = new Set<string>\(\[\]\)/.test(signalTest),
 );
 
+// ── 4. 文档「照抄即失败」的写法不得回写（N15）──────────────
+// `signal()` 返回可调用对象（没有 .value）；npm 上没有 `lytjs` 包、
+// 仓内也没有 createSSRApp。这两处旧示例会让新用户静默踩坑。
+const COPY_PASTE_TRAPS = [
+  [
+    'packages/ecosystem/packages/ssr-kit/packages/ssr/README.md',
+    // 只禁**可复制的代码写法**；正文里「本仓没有 createSSRApp」的说明是必要的口径提示
+    ['import { createSSRApp }', 'createSSRApp(App', "from 'lytjs';"],
+  ],
+];
+for (const [file, needles] of COPY_PASTE_TRAPS) {
+  const text = read(file);
+  for (const needle of needles) {
+    check(`${file} 不含「${needle}」`, !text.includes(needle), '照抄会静默失败');
+  }
+}
+
+// ★ `count.value++` 在**用 ref() 的小节里是合法写法**，全文件 contains 会误伤。
+// 判据必须落在 `#### Signal` 小节的代码块里：signal() 没有 .value。
+const examplesDoc = read('examples/using-lytjs-as-dep/README.md');
+const signalSection = examplesDoc.split(/^#### Signal/m)[1]?.split(/^### /m)[0] ?? '';
+const signalCode = signalSection.match(/```javascript([\s\S]*?)```/)?.[1] ?? '';
+check(
+  'Signal 示例代码块不含 .value',
+  signalCode.length > 0 && !signalCode.includes('.value'),
+  'signal() 用 count()/set()/update()，不是 .value',
+);
+
 console.log(
   ok ? '\n✅ check-stale-capability-claims 通过\n' : '\n❌ check-stale-capability-claims 失败\n',
 );

@@ -1,0 +1,38 @@
+name: Docs Build (PR gate)
+
+# N17（2026-11-10）：此前只有 push develop 才构建 docs 站，PR 改坏文档
+# 要等合并后部署阶段才暴露。新增一条**只构建、不部署**的 PR 门禁。
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - '.github/workflows/docs.yml'
+      - '.github/workflows/docs-pr.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # 与 docs.yml 保持同一安装口径：vitepress 是 docs 包的 devDependency，
+      # 根 node_modules 里没有它的二进制，所以构建必须在 docs/ 下执行。
+      - name: Install docs dependencies
+        run: pnpm install --filter @lytjs/docs --no-frozen-lockfile
+
+      - name: Build documentation (PR gate)
+        run: cd docs && pnpm run build

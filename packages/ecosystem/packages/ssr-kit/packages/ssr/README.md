@@ -87,12 +87,16 @@ async function renderPage(url: string) {
 
 将应用渲染为 HTML 字符串。
 
-```typescript
-import { renderToString } from '@lytjs/ssr';
-import { createSSRApp } from 'lytjs';
+> **契约订正（2026-11-10）**：本仓**没有** `createSSRApp`，npm 上也没有 `lytjs` 包。
+> 服务端渲染用 `createApp` + `renderToString(h(App))`；`renderToString` 接收的是
+> vnode / 组件 vnode，不是 app 实例。
 
-const app = createSSRApp(App, { props: { initialData } });
-const html = await renderToString(app);
+```typescript
+import { createApp, h } from '@lytjs/core';
+import { renderToString } from '@lytjs/ssr';
+
+const app = createApp(App);
+const html = await renderToString(h(App, { initialData }));
 ```
 
 #### `renderToHtml(app, options)`
@@ -407,12 +411,16 @@ export function ProductList({ products }) {
 
 ## 服务端渲染集成
 
+> **契约订正（2026-11-10）**：下面两段集成示例此前用了不存在的
+> `createSSRApp from 'lytjs'`，并把 app 实例传给渲染函数。`@lytjs/ssr` 的
+> `renderToHtml` / `renderToStream` 接收的是 **vnode**（`h(App, props)`），不是 app 实例。
+
 ### Express 集成
 
 ```typescript
 import express from 'express';
 import { renderToHtml } from '@lytjs/ssr';
-import { createSSRApp } from 'lytjs';
+import { h } from '@lytjs/core';
 import { createRouter, createMemoryHistory } from '@lytjs/router';
 import App from './App';
 
@@ -424,9 +432,9 @@ app.get('*', async (req, res) => {
     routes: getRoutes(),
   });
 
-  const lytApp = createSSRApp(App, { router });
+  const vnode = h(App, { router });
 
-  const html = await renderToHtml(lytApp, {
+  const html = renderToHtml(vnode, {
     title: 'LytJS SSR',
     lang: 'zh-CN',
   });
@@ -442,7 +450,7 @@ app.listen(3000);
 ```typescript
 import Koa from 'koa';
 import { renderToStream } from '@lytjs/ssr';
-import { createSSRApp } from 'lytjs';
+import { h } from '@lytjs/core';
 import { createRouter, createMemoryHistory } from '@lytjs/router';
 import App from './App';
 
@@ -454,8 +462,8 @@ app.use(async (ctx) => {
     routes: getRoutes(),
   });
 
-  const lytApp = createSSRApp(App, { router });
-  const stream = await renderToStream(lytApp);
+  const vnode = h(App, { router });
+  const stream = renderToStream(vnode);
 
   ctx.type = 'text/html';
   ctx.body = stream;

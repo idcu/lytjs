@@ -6,7 +6,8 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "bin": {
-    "lyt": "./lyt-cli.js"
+    "lyt": "./lyt-cli.js",
+    "create-lyt": "./create-lyt.js"
   },
   "exports": {
     ".": {
@@ -19,7 +20,8 @@
   "files": [
     "dist",
     "src",
-    "lyt-cli.js"
+    "lyt-cli.js",
+    "create-lyt.js"
   ],
   "sideEffects": false,
   "scripts": {

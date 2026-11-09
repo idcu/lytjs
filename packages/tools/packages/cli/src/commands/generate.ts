@@ -183,7 +183,7 @@ const title = ref(props.title || '${data.pascalName}');
  * @created ${data.date}
  */
 
-import { h, ${tsOnly ? 'signal' : 'signal'} } from '@lytjs/core';
+import { h, signal } from '@lytjs/core';
 ${styleImport}
 
 ${
