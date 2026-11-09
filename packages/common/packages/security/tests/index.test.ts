@@ -73,6 +73,20 @@ describe('isSafeAttribute', () => {
     expect(isSafeAttribute('src', 'javascript:void(0)')).toBe(false);
   });
 
+  // N09（2026-11-10）：实体编码的冒号/字母能绕过「按原始串取协议」的判定。
+  // SSR 输出的 HTML 会被浏览器解码，客户端 setAttribute 写的是字面值，两侧必须都拦。
+  it('should return false for entity-encoded javascript: URLs', () => {
+    expect(isSafeAttribute('href', 'javascript&#58;alert(1)')).toBe(false);
+    expect(isSafeAttribute('href', 'javascript&#x3a;alert(1)')).toBe(false);
+    expect(isSafeAttribute('href', 'java&#115;cript&#58;alert(1)')).toBe(false);
+  });
+
+  // 防假阳性：查询串里的合法 & 实体、以及合法的 poster，不能被误拦。
+  it('should keep safe URLs containing entities', () => {
+    expect(isSafeAttribute('href', 'https://example.com/a?x=1&amp;y=2')).toBe(true);
+    expect(isSafeAttribute('poster', 'https://example.com/p.png')).toBe(true);
+  });
+
   it('should return false for vbscript: URLs', () => {
     expect(isSafeAttribute('href', 'vbscript:msgbox(1)')).toBe(false);
   });

@@ -143,6 +143,29 @@ const DANGEROUS_URL_ATTRS = new Set([
  */
 const ALLOWED_URL_PROTOCOLS = new Set(['http:', 'https:', 'mailto:', 'tel:', '#', '']);
 
+/**
+ * 仅用于**协议判定**的实体解码（N09）：HTML 属性里的 `javascript&#58;alert(1)`
+ * 在 SSR 输出的 HTML 中会被浏览器解码成可执行的 `javascript:`，而客户端
+ * `setAttribute` 写入的是字面值。若只按原始串判协议，SSR 会拦、客户端会写，
+ * 造成安全结论与水合结果都不一致。这里复用 `DECODE_MAP`（与 sanitizeHTML
+ * 同一真相源）解码后再取协议；**写入 DOM 的值仍是原始字符串**，不改变输出。
+ *
+ * 注：`DECODE_MAP` 在文件后部声明，但本函数只在模块初始化完成后被调用，
+ * 不存在 TDZ 问题。
+ */
+function decodeForProtocolCheck(value: string): string {
+  if (!value.includes('&')) return value;
+  let decoded = value;
+  for (let i = 0; i < 5; i++) {
+    const prev = decoded;
+    for (const [re, repl] of DECODE_MAP) {
+      decoded = decoded.replace(re, repl as (substring: string, ...args: string[]) => string);
+    }
+    if (decoded === prev) break;
+  }
+  return decoded;
+}
+
 // ============================================================
 // isSafeAttribute
 // ============================================================
@@ -164,7 +187,10 @@ export function isSafeAttribute(attrName: string, attrValue: string): boolean {
 
   // 2. Check URL-type attributes
   if (DANGEROUS_URL_ATTRS.has(lowerName)) {
-    const trimmed = (attrValue ?? '').trim().toLowerCase();
+    // N09：先解码实体再取协议，防止 `javascript&#58;` / `java&#115;cript:` 绕过。
+    const trimmed = decodeForProtocolCheck(attrValue ?? '')
+      .trim()
+      .toLowerCase();
     const protocolMatch = trimmed.match(/^([a-z]+:|#)/);
     const protocol = protocolMatch?.[1] ?? '';
     if (!ALLOWED_URL_PROTOCOLS.has(protocol)) {

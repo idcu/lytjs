@@ -28,6 +28,9 @@ export function isValidHTMLElementTag(tag: string): boolean {
 
 // 安全：携带 URL 且需要协议验证的属性
 // 提取为模块级常量以避免每次渲染时重新创建
+// N09（2026-11-10）：与 `@lytjs/common-security` 的 DANGEROUS_URL_ATTRS 对齐。
+// 此前 SSR 漏了 poster / background，会把 `poster="javascript:…"` 原样写进 HTML，
+// 而客户端两条路径都会拦截 ⇒ 安全结论与水合结果分叉。
 export const URL_ATTRS = new Set([
   'href',
   'src',
@@ -36,6 +39,8 @@ export const URL_ATTRS = new Set([
   'xlink:href',
   'data',
   'srcdoc',
+  'poster',
+  'background',
 ]);
 
 // 命名实体解码常量
