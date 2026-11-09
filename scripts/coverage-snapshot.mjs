@@ -80,12 +80,15 @@ const files = {};
 for (const rel of srcFiles) files[rel] = covered.has(rel);
 
 const commit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim();
+// 口径声明取单一真相源（N01 / ADR 0028）：生成侧与校验侧共用，禁止两处各写一遍。
+const { COVERAGE_BASIS } = await import('./coverage-basis.mjs');
 const snapshot = {
   commit,
   generatedAt: new Date().toISOString(),
   totalSrcFiles: srcFiles.length,
   coveredSrcFiles: srcFiles.filter((f) => files[f]).length,
   threshold: THRESHOLD,
+  basis: COVERAGE_BASIS,
   files,
 };
 

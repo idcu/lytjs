@@ -4,6 +4,13 @@
   "totalSrcFiles": 445,
   "coveredSrcFiles": 436,
   "threshold": 0.975,
+  "basis": {
+    "authoritative": "vitest-thresholds",
+    "authoritativeLabel": "coverage.include 全分母（棘轮 lines/statements 66.5、functions 72.2、branches 86.2）",
+    "auxiliary": "instrumented-files",
+    "auxiliaryLabel": "coverage/index.html 已插桩文件口径（如 87.91%，分母更窄，不可当作全仓覆盖率）",
+    "rule": "对外文档/报告只引用 authoritative；引用 auxiliary 必须逐处标注「已插桩文件口径」"
+  },
   "files": {
     "packages/adapter-web/src/index.ts": true,
     "packages/adapter-web/src/web-dom-renderer.ts": true,

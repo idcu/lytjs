@@ -139,5 +139,26 @@ if (ratio < threshold) {
   );
 }
 
+// ── 5. 口径声明（N01 / ADR 0028）────────────────────────────
+// 防止「已插桩文件口径 87.9%」被当成「全仓覆盖率」对外引用。
+// 真相源在 scripts/coverage-basis.mjs，生成侧与校验侧共用同一份常量。
+const { COVERAGE_BASIS, VALID_AUTHORITATIVE } = await import('./coverage-basis.mjs');
+const declared = snapshot.basis;
+console.log(`  口径声明        ${declared?.authoritative ?? '(缺失)'}`);
+if (!declared || !VALID_AUTHORITATIVE.includes(declared.authoritative)) {
+  ok = fail(
+    `快照缺少合法 basis.authoritative（应为 ${VALID_AUTHORITATIVE.join(' / ')}）—— 重新运行 node scripts/coverage-snapshot.mjs`,
+  );
+} else {
+  if (
+    declared.authoritative !== COVERAGE_BASIS.authoritative ||
+    declared.rule !== COVERAGE_BASIS.rule
+  ) {
+    ok = fail('快照口径声明与 scripts/coverage-basis.mjs 真相源不一致（禁止手改快照）');
+  }
+  console.log(`  对外口径        ${COVERAGE_BASIS.authoritativeLabel}`);
+  console.log(`  辅助口径        ${COVERAGE_BASIS.auxiliaryLabel}`);
+}
+
 console.log(ok ? '\n✅ check-coverage-snapshot 通过\n' : '\n❌ check-coverage-snapshot 失败\n');
 process.exit(ok ? 0 : 1);

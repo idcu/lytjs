@@ -7,3 +7,5 @@ CHANGELOG.md
 examples/*/bundle.js
 # keel 上下文基座：排版与字节预算由 keel-lint 管（ADR 0017 链式挂载），禁止 prettier 重排
 keel/
+# vitest 运行时临时产物（与 .gitignore / eslint.config.js ignores 三处同加，N04）
+vitest.config.ts.timestamp-*.mjs

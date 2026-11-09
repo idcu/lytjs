@@ -2,6 +2,7 @@
   "expectedNpmVersion": "6.9.6",
   "expectedPackageVersion": "6.9.6",
   "plannedVersion": "7.0.0",
+  "expectedBranch": "v7.0.0-dev",
   "tagAtHead": null,
   "baselineTag": "v6.7.0",
   "reason": "v7.0.0 尚在 v7.0.0-dev 分支开发，未发布 npm；首次发布由 C01 在 owner 显式授权后执行。",

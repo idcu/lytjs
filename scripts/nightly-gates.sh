@@ -6,9 +6,9 @@
 # 无人值守时段跑，不占用开发反馈路径。
 #
 # 用法：
-#   bash scripts/nightly-gates.sh              # 慢档全跑
-#   bash scripts/nightly-gates.sh --no-cov     # 用 test 代替 test:coverage
-#   bash scripts/nightly-gates.sh --only lint  # 只跑名字里含 "lint" 的项
+#   bash scripts/nightly-gates.sh                    # 慢档全跑
+#   bash scripts/nightly-gates.sh --no-cov          # 用 test 代替 test:coverage
+#   bash scripts/nightly-gates.sh --only lint:check # 只跑一个按 gate 登记名指定的门禁
 #
 # ── cron 示例（每天 03:17 跑，把输出落盘）────────────────────────
 #   17 3 * * *  cd /Volumes/Data/lytjs/lytjs && bash scripts/nightly-gates.sh \
@@ -21,35 +21,52 @@
 #     StandardOutPath: /tmp/lytjs-nightly.log
 #
 # ⚠️ 退出码：任一门禁失败即非 0 ⇒ cron / CI 能据此报警。
-# ⚠️ 本机注意：`build` 与 `test:coverage` 在**当前沙箱环境**里会被宿主的
-#    safe-delete 守卫拦住（bundle-require 清缓存触发，详见审计文档 §五十六），
-#    在原生终端 / CI 容器里跑则正常。
+#
+# ★ 2026-11-09 实测留痕（N05 / ADR 0028）：`node scripts/gate.mjs build`
+#   exit=0 / 355.3s（76 包全量构建通过）。旧注释所称「当前沙箱 build 与
+#   test:coverage 被 safe-delete 守卫拦住」是当时的环境限制，**已解除**；
+#   后续若在别的环境失败，按 ADR 0008 先判环境还是代码，不要放宽判据阈值。
 
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
-GATE_ARGS=(--tier slow)
+# 清理异常退出残留的 vitest 临时产物（只删一天前的；三处 ignore 已同步，N04）
+find . -maxdepth 1 -name 'vitest.config.ts.timestamp-*.mjs' -mtime +1 -delete 2>/dev/null || true
 
-for arg in "$@"; do
-  case "$arg" in
+GATE_ARGS=(--tier slow)
+ONLY_NAME=''
+
+# 用 while + shift 解析：`--only <name>` 必须消费掉后面的门禁名。
+# 旧实现把名字当「未知参数」退出 2，且 `--filter-later` 从未被 gate 支持（N05）。
+while [ $# -gt 0 ]; do
+  case "$1" in
     --no-cov)
       # 用 test 代替 test:coverage（覆盖率棘轮在正式 CI 里跑）
-      GATE_ARGS=(test build check-runtime-contract check-doc-imports type-check lint:check format:check check-circular)
+      GATE_ARGS=(test build check-runtime-contract check-doc-imports type-check lint:check format:check check-circular check-circular:src)
+      shift
       ;;
     --only)
-      GATE_ARGS=(--tier slow --filter-later)
+      shift
+      if [ $# -eq 0 ]; then
+        echo "错误：--only 需要一个 gate 登记名，例如 --only lint:check" >&2
+        exit 2
+      fi
+      ONLY_NAME="$1"
+      shift
       ;;
-    *) echo "未知参数：$arg" >&2; exit 2 ;;
+    *)
+      echo "未知参数：$1" >&2
+      exit 2
+      ;;
   esac
 done
 
-echo "════ lytjs 定时门禁 ════  开始于 $(date '+%F %T')"
-if [ "${GATE_ARGS[0]}" = "--tier" ]; then
-  node scripts/gate.mjs --tier slow
-else
-  # shellcheck disable=SC2086
-  node scripts/gate.mjs "${GATE_ARGS[@]}"
+if [ -n "$ONLY_NAME" ]; then
+  GATE_ARGS=("$ONLY_NAME")
 fi
+
+echo "════ lytjs 定时门禁 ════  开始于 $(date '+%F %T')"
+node scripts/gate.mjs "${GATE_ARGS[@]}"
 status=$?
 
 echo "════ 结束于 $(date '+%F %T') · 退出码 $status"

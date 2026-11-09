@@ -106,6 +106,12 @@ export default defineConfig({
       // 阈值随棘轮上调至 lines/statements 66.5、functions 72.2、branches 86.2
       //（小数口径：整数 59/69/85 已是实测值的下界，收紧到小数才真正锁住当前水平、防回退）。
       // 规则：只允许上调，不允许为了让 CI 变绿而下调。
+      //
+      // ★ 口径声明（N01 / ADR 0028，真相源 scripts/coverage-basis.mjs）：
+      //   本 thresholds 的分母是上面 include 展开后的**全部源码文件**（含未被测试加载的
+      //   文件），是唯一对外有效的覆盖率口径。`coverage/index.html` 显示的约 87.9%
+      //   只统计**已插桩文件**，分母更窄，两者相差约 21 个百分点 —— 不是回退、也不是
+      //   数据错误，但**不可**拿后者宣称「全仓覆盖率」。对外引用见 coverage-basis.mjs。
       thresholds: {
         lines: 66.5,
         functions: 72.2,

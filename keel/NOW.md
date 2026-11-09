@@ -28,8 +28,8 @@ keywords: [S25b, 断言行为化, S30, 缺陷修复]
 结论：三条均为可被更强断言完全覆盖的形态断言，无唯一覆盖面丢失。
 
 ## 下一步
-1. 6 个空样式组件补设计（DatePicker/TimePicker/ColorPicker/Cascader/Upload/Calendar）。
-2. 8.0.0 窗口删 createVaporRenderer / VaporRenderer。
+- 依 [ADR 0028](decisions/0028-owner-authorized-strategy-decisions.md)（owner 授权全权拍板）全量推进：批次 0 口径收口 → 批次 1 单一权威 → 批次 2 首公里 → 批次 3 差异化。
+- 6 个空样式组件补设计；8.0.0 删 createVaporRenderer / VaporRenderer 与 optimizeSignal。
 
 ## 阻塞
 - 覆盖率并发/safe-delete → 单包复核/reportsDirectory。

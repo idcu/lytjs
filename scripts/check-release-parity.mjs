@@ -239,6 +239,42 @@ check(
     : 'expiresOn 不是合法日期',
 );
 
+// ── 6. README 版本声明可机器校验（N02 / ADR 0028）───────────
+// 此前 README 只有一句人工文案「两者不是同一份代码」，改 JSON 或改文档都不会红。
+// 现在要求 README 里有一个结构化锚点，四个字段分别与 expectation / 包版本 / 当前分支比对。
+const readme = readFileSync(join(ROOT, 'README.md'), 'utf8');
+const decl = readme.match(
+  /<!--\s*release-parity:\s*npm=(\S+)\s+repo=(\S+)\s+planned=(\S+)\s+branch=(\S+)\s*-->/,
+);
+check(
+  'README 存在可解析的 release-parity 锚点',
+  Boolean(decl),
+  '缺少 <!-- release-parity: npm=… repo=… planned=… branch=… -->',
+);
+if (decl) {
+  const [, npmDecl, repoDecl, plannedDecl, branchDecl] = decl;
+  // 当前 git 分支只作信息输出：CI checkout 常是 detached HEAD，把它当判据会假红。
+  // 真相源是 expectation.expectedBranch，README 必须与声明一致（记忆：假阳性比漏报更致命）。
+  const currentBranch = git(['branch', '--show-current']).trim();
+  console.log(
+    `  当前 git 分支    ${currentBranch || '(detached HEAD)'}（声明 ${expect.expectedBranch ?? '未声明'}）`,
+  );
+  const mismatches = [];
+  if (npmDecl !== expect.expectedNpmVersion)
+    mismatches.push(`npm ${npmDecl} != ${expect.expectedNpmVersion}`);
+  if (repoDecl !== versions[0]) mismatches.push(`repo ${repoDecl} != ${versions[0]}`);
+  if (plannedDecl !== expect.plannedVersion)
+    mismatches.push(`planned ${plannedDecl} != ${expect.plannedVersion}`);
+  if (expect.expectedBranch && branchDecl !== expect.expectedBranch) {
+    mismatches.push(`branch ${branchDecl} != ${expect.expectedBranch}`);
+  }
+  check(
+    'README 版本声明与 expectation / 包版本一致',
+    mismatches.length === 0,
+    mismatches.join('; '),
+  );
+}
+
 // ── 汇总 ────────────────────────────────────────────────────
 // 「声明状态成立」（ok）与「三方真的一致」（parity）是两件事：
 // 未发布阶段允许前者为 true、后者必须如实为 false（评估 M5：100% / false）。

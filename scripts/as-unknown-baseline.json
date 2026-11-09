@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-11-07",
-  "total": 326,
+  "updatedAt": "2026-11-09",
+  "total": 324,
   "files": {
     "packages/adapter-web/src/web-host-extended.ts": 1,
     "packages/adapter-web/src/web-host.ts": 2,
@@ -35,7 +35,7 @@
     "packages/component/src/slots.ts": 2,
     "packages/component/src/suspense.ts": 1,
     "packages/component/src/teleport.ts": 1,
-    "packages/component/src/transition-group.ts": 5,
+    "packages/component/src/transition-group.ts": 4,
     "packages/component/src/transition.ts": 1,
     "packages/core-signal/src/create-app.ts": 2,
     "packages/core-vnode/src/component-renderer.ts": 2,
@@ -105,7 +105,7 @@
     "packages/reactivity/src/reactive.ts": 2,
     "packages/renderer/src/client/server-components-client.ts": 1,
     "packages/renderer/src/signal/signal-renderer.ts": 1,
-    "packages/renderer/src/ssr/ssr-island.ts": 4,
+    "packages/renderer/src/ssr/ssr-island.ts": 3,
     "packages/renderer/src/ssr/ssr-renderer.ts": 1,
     "packages/renderer/src/vapor/mount-component.ts": 4,
     "packages/renderer/src/vapor/vapor-hmr.ts": 1,

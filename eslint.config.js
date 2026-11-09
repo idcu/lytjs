@@ -16,6 +16,8 @@ export default tseslint.config(
       'packages/_templates/**',
       // 示例目录里的 esbuild 打包产物（与 .gitignore / .prettierignore 保持一致）
       'examples/*/bundle.js',
+      // vitest 运行时临时产物（与 .gitignore / .prettierignore 三处同加，N04）
+      'vitest.config.ts.timestamp-*.mjs',
     ],
   },
 

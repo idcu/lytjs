@@ -69,7 +69,10 @@
 pnpm add @lytjs/core
 ```
 
-> ⚠️ **注意版本**：npm 上发布的是 **6.9.6**，本仓库当前为 `v7.0.0-dev`，**两者不是同一份代码**。
+<!-- release-parity: npm=6.9.6 repo=6.9.6 planned=7.0.0 branch=v7.0.0-dev -->
+
+> ⚠️ **注意版本**：npm 上发布的是 **6.9.6**，本仓库 76 个包的版本也是 **6.9.6**，开发分支为 `v7.0.0-dev`（计划版本 **7.0.0**），**npm 产物与本仓库不是同一份代码**。
+> 上面这行注释是 `check-release-parity` 的机器校验锚点：四个字段必须与 `scripts/release-parity-expectation.json`、包版本、当前分支一致，改动版本号时四处同步修改。
 > 想看本仓库的最新能力，请**从仓库跑**，见 [小白上手（基于仓库）](./docs/getting-started/for-beginners.md)。
 >
 > ℹ️ 关于 `__DEV__` 与开发期诊断（2026-11-04 更新）：
