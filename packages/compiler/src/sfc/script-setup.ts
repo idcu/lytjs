@@ -33,6 +33,8 @@ export interface ScriptSetupResult {
   propsDecl?: string;
   /** `emits: <emitsDecl>`，无则 undefined */
   emitsDecl?: string;
+  /** 正文里用到 `defineExpose` ⇒ 生成的 setup 需要解构 `expose`（N12） */
+  usesExpose: boolean;
   /** 编译期错误（有值即应中止，不产出代码） */
   errors: string[];
 }
@@ -144,9 +146,15 @@ export function compileScriptSetup(content: string): ScriptSetupResult {
     if (!emitsDecl) emitsDecl = (args ?? '').trim() || '[]';
   }
 
-  // 3) `defineExpose` 无法在无实例上下文里表达，明确报错而不是静默丢弃
-  if (/\bdefineExpose\s*\(/.test(body)) {
-    errors.push('defineExpose() 暂不支持：本框架的组件实例没有暴露句柄（expose）机制。');
+  // 3) `defineExpose` 接管道（N12，2026-11-10）：
+  //    运行时 `createSetupContext()` 已实现 `expose()`（component-setup.ts:491），
+  //    旧注释所称「没有 expose 机制」是假阳性。这里只把调用名改写为 setup
+  //    第二参里的 `__expose`，**不解析参数**（嵌套对象/箭头函数交给 JS 自己解析），
+  //    避免正则截断字面量。compile.ts 会按 usesExpose 决定是否扩展 setup 签名，
+  //    因此不使用 defineExpose 的产物形态一字不变。
+  const usesExpose = /\bdefineExpose\s*\(/.test(body);
+  if (usesExpose) {
+    body = body.replace(/\bdefineExpose\s*\(/g, '__expose(');
   }
 
   // 4) 顶层 export 在 `<script setup>` 里没有语义
@@ -176,6 +184,7 @@ export function compileScriptSetup(content: string): ScriptSetupResult {
     bindings: [...bindings],
     propsDecl,
     emitsDecl,
+    usesExpose,
     errors,
   };
 }

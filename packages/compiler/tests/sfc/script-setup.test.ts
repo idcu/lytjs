@@ -82,6 +82,42 @@ const a = 42
     expect(code).toContain('return { a }');
   });
 
+  it('defineExpose 改写为 setup context 的 __expose（N12）', () => {
+    const code = gen(`<template><div/></template>
+<script setup>
+const value = 1
+defineExpose({ value })
+</script>`);
+    expect(code).toContain('setup(__props, { emit: __emit, expose: __expose })');
+    expect(code).toContain('__expose({ value })');
+    expect(code).not.toContain('defineExpose(');
+    expect(code).toContain('return { value }');
+  });
+
+  it('defineExpose 产物真跑：expose 回调确实收到暴露值', () => {
+    const code = gen(`<template><div/></template>
+<script setup>
+const value = 1
+defineExpose({ value })
+</script>`);
+    // 产物含 import / export；剥离后注入模板 helper，真正执行 setup 再断言。
+    const body = code.replace(/^import[^\n]*$/gm, '').replace(/^export default/m, 'return');
+    const factory = new Function('createElementVNode', body);
+    const component = factory(() => ({})) as {
+      setup: (props: unknown, ctx: unknown) => unknown;
+    };
+    expect(typeof component.setup).toBe('function');
+    const exposed: Record<string, unknown> = {};
+    component.setup(
+      {},
+      {
+        emit: () => {},
+        expose: (o: Record<string, unknown>) => Object.assign(exposed, o),
+      },
+    );
+    expect(exposed.value).toBe(1);
+  });
+
   it('泛型 defineProps<...>() → 编译期报错（不产半成品）', () => {
     expect(() =>
       gen(`<template><div/></template>

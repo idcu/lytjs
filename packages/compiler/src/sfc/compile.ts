@@ -274,7 +274,11 @@ function generateModuleCode(opts: ModuleCodeOptions): string {
     lines.push('export default {');
     for (const f of fields) lines.push(`  ${f},`);
 
-    lines.push('  setup(__props, { emit: __emit }) {');
+    // N12：只有正文用到 defineExpose 才扩展签名，其余产物形态保持不变。
+    const setupContext = setupInfo.usesExpose
+      ? '{ emit: __emit, expose: __expose }'
+      : '{ emit: __emit }';
+    lines.push(`  setup(__props, ${setupContext}) {`);
     if (setupInfo.propsDecl) lines.push('    const props = __props;');
     if (setupInfo.emitsDecl) lines.push('    const emit = __emit;');
     if (setupInfo.setupBody) {

@@ -250,6 +250,17 @@
       "deletionCondition": "后续任务把 core 两份 create-app 收敛为转发；同包内仅允许一份实现（ADR 0011）。core-signal 为独立渲染模式，不在此条目。"
     },
     {
+      "id": "create-app-signal",
+      "capability": "signal 模式应用创建 createApp",
+      "status": "registered",
+      "enforce": false,
+      "ownerFile": "packages/core-signal/src/create-app.ts",
+      "ownerLine": 29,
+      "replicas": [],
+      "identityTest": "packages/core/tests/core-vnode-parity.test.ts",
+      "deletionCondition": "core-signal 是独立渲染模式的收窄变体（ADR 0011 刻意不合并）；8.0.0 窗口随 VaporRenderer 一起评估下线，届时删除本条目。"
+    },
+    {
       "id": "signal-codegen",
       "capability": "signal codegen",
       "status": "registered",
