@@ -29,7 +29,7 @@ keywords: [S25b, 断言行为化, S30, 缺陷修复]
 
 ## 下一步
 - 依 [ADR 0028](decisions/0028-owner-authorized-strategy-decisions.md) 全量推进；台账见 [NOW-history/11-10](NOW-history/2026-11-10-owner-decisions-batch0-1.md)。
-- 批次 0（N01–N06）与**批次 1（N07–N13）均已收官**，6 次提交已 push；待办转批次 2（N14–N21）→ 批次 3（N22–N26）。
+- 批次 0（N01–N06）与**批次 1（N07–N13）均已收官**，改动已分批提交并 push；待办转批次 2（N14–N21）→ 批次 3（N22–N26）。
 - 6 个空样式组件补设计；8.0.0 删 createVaporRenderer / VaporRenderer 与 optimizeSignal。
 
 ## 阻塞
