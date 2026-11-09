@@ -457,15 +457,29 @@ h(KeepAlive, { max: 10 }, () => h(currentComponent));
 
 #### SuspenseProps
 
+> **口径订正（2026-11-10）**：`fallback` **不是 prop**，而是 `<Suspense>` 的第二个
+> child / `fallback` slot。此前本表把 Vue 风格的 `default?` / `fallback?` 写成
+> `SuspenseProps` 字段，与真实实现不符；真实定义见
+> `packages/component/src/suspense.ts` 的 `SuspenseProps`。
+
 ```ts
 interface SuspenseProps {
-  /** 默认内容（异步加载完成后显示） */
-  default?: SlotFunction;
-  /** 加载中显示的 fallback 内容 */
-  fallback?: SlotFunction;
   /** 超时时间（毫秒） */
   timeout?: number;
+  /** 边界事件回调：当前 vdom shapeFlag 分派下不创建组件实例，暂无可见效果 */
+  onResolve?: () => void;
+  onPending?: () => void;
+  onError?: (error: Error) => void;
 }
+```
+
+两种写法均可（2026-11-10 真跑复核）：
+
+```html
+<Suspense>
+  <AsyncPanel />
+  <template #fallback>Loading...</template>
+</Suspense>
 ```
 
 #### SuspenseAsyncState

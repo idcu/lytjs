@@ -99,6 +99,15 @@ const GATES = [
       'registered 条目为显式结构债，只防清单腐烂（2026-11-07 新增）',
   },
   {
+    name: 'check-stale-capability-claims',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-stale-capability-claims.mjs'],
+    approx: '~0.2s',
+    desc:
+      '已证伪能力结论不得回写（N10 / N11）：Suspense fallback 与 signal 内置组件已有真跑判据，' +
+      'README / API 文档 / 源码注释不得再声称未修，判据不得降级为 it.fails',
+  },
+  {
     name: 'check-signal-authority',
     tier: 'fast',
     cmd: ['node', 'scripts/check-signal-authority.mjs'],

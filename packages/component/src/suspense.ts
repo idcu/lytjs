@@ -95,16 +95,16 @@ export const Suspense: ComponentOptions = {
   // 而本组件**没有 render**（`setup` 返回的是 `{ boundary }` 对象）
   // ⇒ 模板与渲染函数里一律渲染为空。
   //
-  // ⚠️ **已知缺口（2026-10-03 实测，勿当已修）**：
-  // ① **fallback 从未出现**。`patchSuspense` 在**挂载子组件之前**就检查
-  //    `defaultBranch.isAsyncPlaceholder`，而该标记是子组件 `setupComponent`
-  //    时才设的 ⇒ 检查时恒为 false ⇒ 直接挂 default，**永远走不到 fallback 分支**。
-  //    这是**顺序缺口**，要修需改 vdom 的 `mountSuspense`（先挂载探测、再决定）。
-  // ② **只支持数组形态的 children**。实测 `{ default, fallback }` 这种 slots 对象
-  //    形态经 vdom 的 `resolveSuspenseChildren` 解析不出内容 ⇒ 渲染为空；
-  //    `[defaultChild, fallbackChild]` 数组形态正常。
-  // ③ 组件 `setup`（含 `registerSuspenseLinker` 与 `{ boundary }`）在按 shapeFlag
-  //    分派时**不会执行** ⇒ `useSuspense` 找不到可挂接的边界。
+  // ★ 2026-11-10 复核：下面 ①② 的「已知缺口」已于 2026-10-29~11-03 修复，
+  //   请勿再按缺口处置（原文保留作留痕）。判据：
+  //   packages/core/tests/e2e-suspense-fallback.test.ts（7 例，首帧 fallback、
+  //   兑现切回、slots 对象、嵌套异步、切回后响应式仍活）与
+  //   e2e-suspense-vnode.test.ts（4 例），本会话真跑 11/11 绿。
+  // ① fallback 已可用：`patch-suspense.ts` 改为「先挂 default，再读 pendingCount」，
+  //   并补了 switchToFallback / switchToDefault 与迟到回调忽略。
+  // ② children 支持数组 `[default, fallback]` 与 slots 对象两种形态（`first()` 归一化）。
+  // ③ 仍成立：shapeFlag 分派下组件 `setup` 不执行 ⇒ `useSuspense` 的
+  //   onPending/onResolve/onError 边界回调无可见效果；**只影响回调，不影响 fallback**。
   __vnodeType: SuspenseVNodeType,
 
   props: {
@@ -417,6 +417,10 @@ let currentSuspenseBoundary: SuspenseAsyncState | null = null;
  * （`vdom` 的 `mountSuspense` 里那段 `suspenseLinker` 桥接也因此是死代码）。
  * ⇒ **本函数目前真正有用的是「返回这个 Promise」**；`onPending` / `onResolve` /
  * `onError` 回调要等 `<Suspense>` 能作为组件实例挂载后才生效。
+ *
+ * ★ 2026-11-10 边界澄清：这只影响 `useSuspense` 的**边界回调**。
+ * `fallback` 的显示/切回由 `vdom/src/patch-suspense.ts` 的 `pendingCount` 独立完成，
+ * 不依赖 linker，已由 `e2e-suspense-fallback.test.ts` 7 例真跑钉住。
  *
  * ## 不支持什么
  *

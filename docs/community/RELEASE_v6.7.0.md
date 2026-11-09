@@ -149,6 +149,12 @@ stream.pipeTo(response);
 
 ### 使用 Suspense
 
+> **历史档案口径提示（2026-11-10 补）**：下方是 v6.7.0 当时的示例，其中
+> `fallback={...}` 是 JSX 写法，**不适用于当前框架**：`fallback` 不是 prop，
+> 而是 `<Suspense>` 的第二个 child / `fallback` slot；`SuspenseProps` 只有
+> `timeout` 与三个边界回调。当前能力状态以 README 能力表与
+> `packages/core/tests/e2e-suspense-fallback.test.ts` 为准。
+
 ```typescript
 import { Suspense, useSuspense } from '@lytjs/core';
 

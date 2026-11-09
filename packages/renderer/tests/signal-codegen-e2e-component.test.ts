@@ -24,16 +24,22 @@ const VARIANTS: Variant[] = [
 const codeOf = (tpl: string, v: Variant) => compile(tpl, v.options as never).code;
 const mount = (tpl: string, v: Variant, ctx: unknown) => mountSignal(codeOf(tpl, v), ctx);
 
-/** ⚠️ 已知缺陷清单（真跑才暴露）；修好后自动翻红 ⇒ 请移出清单 */
 /**
- * ⚠️ **已知缺口**（本批新发现，`it.fails` 钉住，修好会自动翻红）：
+ * ★ 2026-11-10 复核：下面两段「已知缺口」注释是 2026-10-01 的历史记录，
+ *   **已不再成立**。`KNOWN_FAIL` 为空集 ⇒ 全部用例走普通 `it`；本文件 22 例
+ *   （含 Teleport / Transition / Suspense / 多根组件）真跑全绿 ⇒ 已自愈。
+ *   保留原文只为留痕，勿据此再改生产代码（N11 判据已转为正向断言）。
+ */
+/** 【历史·已修复】已知缺陷清单（真跑才暴露）；修好后自动翻红 ⇒ 请移出清单 */
+/**
+ * 【历史·已修复】**已知缺口**（本批新发现，`it.fails` 钉住，修好会自动翻红）：
  * `Teleport` / `Transition` / `Suspense` 三个内置组件虽已能**被正确导入**（解析层已对齐 Vue），
  * 但在 signal 的 `mountComponent` 挂载路径下**渲染为空** —— 属**组件实现层**问题：
  * 它们各自有额外契约（Teleport 需移动节点、Transition 需过渡钩子、Suspense 需异步边界），
  * 与「往容器里 mount 一棵 vnode」的当前路径尚未对接。`KeepAlive` 已验证可用。
  */
 /**
- * ⚠️ **已知缺陷清单**（`it.fails`，修好会自动翻红）。
+ * 【历史·已修复】已知缺陷清单（`it.fails`，修好会自动翻红）。
  *
  * 2026-10-01 定位的**根因**（同时解释 `Transition` 为何渲染为空）：
  * **组件渲染函数返回「vnode 数组」时渲染为空** —— 对照实验三种写法
