@@ -35,9 +35,9 @@ export interface LytPluginOptions {
    * 是否在产出的 JS 末尾追加**运行时 style 注入**片段（默认 `true`）。
    *
    * ⚠️ 已知限制：本包不做 CSS 抽取，样式由运行时注入 `<style>` 标签。
-   * 需要构建期 CSS 抽取 / HMR 样式热更请改用 `@lytjs/plugin-vite`
-   * （已迁出至独立仓库）。设为 `false` 时 `transformSFC()` 只在返回值里
-   * 给出 `css` 字段，由调用方自行处理。
+   * 构建期 CSS 抽取 / HMR 样式热更**尚未实现**（N16 排期，见 ADR 0028）；
+   * 仓内**不存在** `@lytjs/plugin-vite`（13 个插件已迁出独立仓且未 link）。
+   * 设为 `false` 时 `transformSFC()` 只在返回值里给出 `css` 字段，由调用方自行处理。
    */
   injectCss?: boolean;
 }

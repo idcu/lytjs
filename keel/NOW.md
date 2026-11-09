@@ -28,7 +28,8 @@ keywords: [S25b, 断言行为化, S30, 缺陷修复]
 结论：三条均为可被更强断言完全覆盖的形态断言，无唯一覆盖面丢失。
 
 ## 下一步
-- 依 [ADR 0028](decisions/0028-owner-authorized-strategy-decisions.md)（owner 授权全权拍板）全量推进：批次 0 口径收口 → 批次 1 单一权威 → 批次 2 首公里 → 批次 3 差异化。
+- 依 [ADR 0028](decisions/0028-owner-authorized-strategy-decisions.md) 全量推进；台账见 [NOW-history/11-10](NOW-history/2026-11-10-owner-decisions-batch0-1.md)。
+- 已完成批次 0（N01–N06）与 N07 / N13 / CLI 口径修正；待办批次 1 余项 → 批次 2 → 批次 3。
 - 6 个空样式组件补设计；8.0.0 删 createVaporRenderer / VaporRenderer 与 optimizeSignal。
 
 ## 阻塞

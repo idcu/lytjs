@@ -693,9 +693,10 @@ export async function generate(options: GenerateOptions): Promise<void> {
   logger.info('  --template=sfc : Single File Component (.lyt)');
   logger.warning(
     '⚠️ `--template=sfc` 生成的是 `.lyt` SFC，需要构建期插件才能编译；' +
-      '而 `@lytjs/plugin-vite` 已迁出本仓（见 ../plugins），当前**无法在仓内编译**。' +
-      '建议改用 `--template=functional`，或手写 `.ts` + `template` 字符串' +
-      '（运行时模板编译已支持，无需插件）。',
+      '仓内可用 `@lytjs/bundler` 的 `createVitePlugin()`（目前只有 transform 钩子，' +
+      '暂无 HMR / CSS 抽取，见 ADR 0028 的 N16）。' +
+      '也可改用 `--template=functional` 或手写 `.ts` + `template` 字符串' +
+      '（运行时模板编译已支持，无需插件）。注意：`@lytjs/plugin-vite` 已迁出独立仓，本仓不存在。',
   );
   logger.info('  --template=functional : Functional component');
   logger.info('  --language=js : JavaScript output');
