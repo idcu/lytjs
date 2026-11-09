@@ -40,10 +40,25 @@ keywords: [ADR0028, 拍板, N01, N07, 门禁, 批次0, 批次1]
 - `check-dist-freshness` 曾因负控注入用 `cp` 还原更新了 `adapter-web/src` 的 mtime 而变红；按纪律重建该包 dist 后绿 ⇒ **负控还原要顺手复核产物新鲜度**。
 - keel pre-commit 拦下过一次提交：新 ADR 超 4800 B、INDEX 超 3000 B、decisions 目录 21>20。处置 = 压缩内容 + `budget.env` 的 `MAX_DIR_FILES` 20→24（只调目录容量，质量判据不变，见 ADR 0028）。**未使用 --no-verify**。
 
+## 2026-11-10 续：批次 1 收官（4 次提交，均已 push）
+
+| ID | 结论 | 判据 |
+|---|---|---|
+| N08 | ErrorBoundary 已 unified、createApp 是 ADR 0011 刻意结构债 ⇒ **不动实现**；补 `create-app-signal` registered 登记与 `capturePromiseRejections` 口径 | `check-public-names` 绿、api-snapshot 绿 |
+| N09 | **修真实安全分叉**：SSR `URL_ATTRS` 漏 `poster/background`（负控证实会输出 `poster="javascript:..."`）；客户端 `isSafeAttribute` 不解码实体 ⇒ 三路径结论分叉 | `check-render-parity` 4→16 条；两项 dist 负控均红；security 45 例 / SSR 36 例绿 |
+| N10/N11 | **真跑证伪两条旧结论**：Suspense fallback 已实现（7+4 例绿）、signal 内置组件与多根组件已自愈（22 例绿）。只订正文档/注释，不动运行时 | 新增 `check-stale-capability-claims`（15 断言）；负控「回写旧结论」「判据降级 `it.fails(`」均红 |
+| N12 | `defineExpose` 接管道（运行时 `expose()` 已存在）；**只有用到它才扩展 setup 签名**，其余产物形态一字不变 | SFC 全量 61 例绿，含产物真跑断言；负控 `usesExpose=false` 使两条判据红 |
+| N13 | 57 项快档分三批真跑全绿 | 见批次 0 记录 |
+
+**关键教训**：三个任务的共同底色是「代码已演进、注释没跟上」。动手前先真跑判据证伪，
+否则会把已实现的能力改坏。门禁自身也曾报 3 个假红（`ErrorBoundaryProps` 合法拥有
+`fallback?`、注释里的 `it.fails`、`KNOWN_FAIL ? it.fails : it` 分支），已按**小节作用域**
+与实际调用正则 `it.fails\s*\(` 收窄。
+
 ## 未完成（后续批次）
 
-- 批次 1 余项：N08 core/core-vnode 与 ErrorBoundary 单一权威、N09 三模式 DOM 写入全量对拍、N10 Suspense 实现或收回承诺、N11 signal 路径内置组件、N12 script setup TS 泛型。
 - 批次 2：N14 首次发布（需 D3 四前置）、N15 CLI 从 npm 五分钟跑通、N16 Vite 插件回仓、N17 docs 站、N18 三个真实应用、N19 Golden 20 冻结、N20 i18n/a11y/主题、N21 DevTools 二选一。
 - 批次 3：N22 AOT、N23 ≤60 KB、N24 js-framework-benchmark 提交、N25 安全白皮书、N26 8.0.0 清理。
+- N12 残留：`defineProps<T>()` 未做（需 TS 类型解析，正则假支持会静默产出错误 props）。
 
-**N07 已解除最大单点依赖**；后续 N09/N22 可并行推进。
+**批次 1 已收官**；批次 2 的 N14 需 owner 按 D3 四前置确认后才执行发布。
