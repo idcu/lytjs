@@ -23,13 +23,13 @@ superseded-by:
 
 **收敛，本轮不做破坏性导出删除。**
 
-- 生产可用面 = 20 个 stable（ADR 0013 已冻结）；其余 44 个如实标 experimental，
+- 生产可用面 = 20 个 stable（ADR 0013 已冻结）；其余 41 个如实标 experimental，
   README / docs / 组件页写明「不承诺生产可用」。
 - 保留导出；移出默认导出排入 8.0.0（N26），届时须有 codemod / 迁移示例。
 - 禁止扩组件数；进 stable 必须过六类行为契约（v-model / slots / events /
   controlled props / 样式命中 / 键盘路径）。
 
-理由：当前 21 stable / 44 experimental，扩到 80 只会放大小半成品率；
+理由：当前 20 stable / 41 experimental，扩到 80 只会放大小半成品率；
 最大失血点是「用户不知道哪些能用」，不是「少一个组件」。
 
 ## D2 · B01d / optimizeSignal：语义已收敛，公开开关 8.0.0 下线

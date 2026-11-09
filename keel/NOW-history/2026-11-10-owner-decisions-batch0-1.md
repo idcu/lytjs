@@ -13,7 +13,7 @@ keywords: [ADR0028, 拍板, N01, N07, 门禁, 批次0, 批次1]
 
 | 编号 | 裁决 |
 |---|---|
-| D1 | Golden 20 是唯一生产可用承诺；44 个 experimental 保留导出但如实标注，8.0.0 再评估移出 |
+| D1 | Golden 20 是唯一生产可用承诺；41 个 experimental 保留导出但如实标注，8.0.0 再评估移出 |
 | D2 | B01d 不删发射器：ADR 0015 已实现「单语义 + 双形态」；optimizeSignal 标 @deprecated，8.0.0 下线 |
 | D3 | 授权首次真实发布，但带四个硬前置（slow 全绿 / fast 全绿 / 豁免声明 / changeset 覆盖） |
 | D4 | 12 个月内不追生态规模、无官方 benchmark 前不宣称高性能 |
@@ -55,9 +55,22 @@ keywords: [ADR0028, 拍板, N01, N07, 门禁, 批次0, 批次1]
 `fallback?`、注释里的 `it.fails`、`KNOWN_FAIL ? it.fails : it` 分支），已按**小节作用域**
 与实际调用正则 `it.fails\s*\(` 收窄。
 
+## 批次 2 进展（2026-11-10 第三轮「继续」）
+
+| ID | 结论 |
+|---|---|
+| N15 部分 | `check-scaffold` 的 SSR 启动判据曾偶发 3 条红（未监听 spawn error / 提前退出、fetch 无超时）⇒ 加固后连跑 3 次 113/113 全绿。修 `create-lyt.js`（原指向不存在的 `dist/create.js`）、给 `@lytjs/cli` 注册 `create-lyt` bin 别名、修 generate.ts 恒等三元；订正两处「照抄即失败」文档（`signal().value`、`createSSRApp from 'lytjs'`）并扩进 `check-stale-capability-claims`。README 写明 `npx create-lyt` **当前 E404**，给出仓库内可用命令。 |
+| N17 部分 | 新增 `.github/workflows/docs-pr.yml`（PR 只构建不部署）；修 `release.yml` 的 Build Docs（原用根 `pnpm run docs:build`，但 vitepress 只在 `docs/` 的 devDependencies ⇒ 必然 not found）。 |
+| N19 口径 | 实测 `check-component-status`：**20 stable / 41 experimental / 61 导出**，Golden 20 冻结门禁已存在且有负控 ⇒ 不改名单。此前文档里「21 stable / 44 experimental」是 grep 误数，已批量订正 6 个文件共 14 处。 |
+| N21 登记 | **二选一未决**：浏览器扩展无 `manifest.json`；tools 侧与 ecosystem 侧 DevTools API 签名冲突（takeSnapshot/createSnapshot、restoreSnapshot 对象 vs 索引）；`reactivity` 的 `getSignals/getEffects` 仍返回空数组。两条路本轮都不安全（改 reactivity 会牵动全仓 signal 门禁；下线会引发 workspace/docs/path 连锁）⇒ 只登记状态，不改代码。若后续必须二选一，「下线」风险低于「最小可用」。 |
+
+### N15 真实阻塞（未解）
+- `npx create-lyt` 解析的是**名为 `create-lyt` 的独立 npm 包**（实测 E404），不是 `@lytjs/cli` 的 bin 别名。要真正跑通需 N14 发布该包。
+- `check-scaffold` 用本仓 `node_modules` 软链代替 `npm install`，**未验证真实安装链路**；[7] 只覆盖 SSR 起服务，非 SSR 模板的 `vite dev/build` 与浏览器页面文本未覆盖。
+
 ## 未完成（后续批次）
 
-- 批次 2：N14 首次发布（需 D3 四前置）、N15 CLI 从 npm 五分钟跑通、N16 Vite 插件回仓、N17 docs 站、N18 三个真实应用、N19 Golden 20 冻结、N20 i18n/a11y/主题、N21 DevTools 二选一。
+- 批次 2 剩余：N14 首次发布（需 D3 四前置）、N16 Vite 插件回仓、N18 三个真实应用、N20 i18n/a11y/主题、N21 DevTools 二选一、N15 的独立 `create-lyt` 包与客户端 vite 判据。
 - 批次 3：N22 AOT、N23 ≤60 KB、N24 js-framework-benchmark 提交、N25 安全白皮书、N26 8.0.0 清理。
 - N12 残留：`defineProps<T>()` 未做（需 TS 类型解析，正则假支持会静默产出错误 props）。
 
