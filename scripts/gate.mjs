@@ -99,6 +99,15 @@ const GATES = [
       'registered 条目为显式结构债，只防清单腐烂（2026-11-07 新增）',
   },
   {
+    name: 'check-signal-authority',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-signal-authority.mjs'],
+    approx: '~0.2s',
+    desc:
+      'signal codegen 单语义权威（N07 / ADR 0028）：默认路径不走优化发射器、' +
+      '四个校验器只在 shared 定义、两发射器共用共享层、optimizeSignal 带 @deprecated',
+  },
+  {
     name: 'check-dead-packages',
     tier: 'fast',
     cmd: ['tsx', 'scripts/check-dead-packages.ts'],

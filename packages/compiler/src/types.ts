@@ -351,12 +351,13 @@ export interface CompilerOptions extends ParserOptions, TransformOptions, Codege
   /** SSR 编译模式：启用后跳过客户端专用指令（v-on, v-model, v-show），生成 renderToString 格式代码 */
   ssrMode?: boolean;
   /**
-   * Signal 模式代码优化
+   * Signal 模式代码优化（实验路径）
    * 启用后使用优化版本的代码生成器（短导入别名、合并 effect、短变量名）。
    *
-   * **默认 false**（A04/D1，2026-11-05）：优化版与基础实现存在语义分叉（会静默丢内容），
-   * 仅保留显式开启入口；待 B01 完成两版合一后再评估默认值。
-   * 决策记录见 `keel/decisions/0012-signal-optimizer-default-off.md`。
+   * **默认 false**。语义真源已下沉 `codegen-signal-shared.ts`，两发射器只差产物形态；
+   * 默认路径走基础实现。8.0.0 破坏窗口将移除本选项与优化发射器（ADR 0028）。
+   *
+   * @deprecated 仅内部实验使用，新代码不要传此选项；见 ADR 0028 / 0015 / 0012。
    */
   optimizeSignal?: boolean;
 }

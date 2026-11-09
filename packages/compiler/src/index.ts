@@ -319,11 +319,10 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
   if (ssrMode) {
     codegenResult = generateSSR(ast, options);
   } else if (options.rendererMode === 'signal' || options.rendererMode === 'vapor') {
-    // A04 / D1：signal/vapor 默认走**语义正确**的基础实现。
-    // `codegen-signal-optimized` 目前与基础实现存在语义分叉（会静默丢内容，
-    // 例如 `{{msg}}` 根级文本、v-if 分支的动态属性），因此只保留**显式开启**入口，
-    // 默认关闭。两者合一（parity）安排在 B01，届时才可重新评估默认值。
-    // 决策记录见 keel/decisions/。
+    // ADR 0028：单语义 + 双形态。语义真源在 codegen-signal-shared.ts，
+    // 两发射器只注入前缀与文本兜底（对拍 100/100、parity 115/115）。
+    // 默认走基础实现；优化版仅作内部实验，8.0.0 移除公开选项与发射器。
+    // 结构性不变量由 check-signal-authority 门禁守住。
     if (options.optimizeSignal === true) {
       codegenResult = generateSignalOptimized(ast, options);
     } else {
