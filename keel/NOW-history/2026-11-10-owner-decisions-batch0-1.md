@@ -66,7 +66,22 @@ keywords: [ADR0028, 拍板, N01, N07, 门禁, 批次0, 批次1]
 
 ### N15 真实阻塞（未解）
 - `npx create-lyt` 解析的是**名为 `create-lyt` 的独立 npm 包**（实测 E404），不是 `@lytjs/cli` 的 bin 别名。要真正跑通需 N14 发布该包。
-- `check-scaffold` 用本仓 `node_modules` 软链代替 `npm install`，**未验证真实安装链路**；[7] 只覆盖 SSR 起服务，非 SSR 模板的 `vite dev/build` 与浏览器页面文本未覆盖。
+- `check-scaffold` 用本仓 `node_modules` 软链代替 `npm install`，**未验证真实安装链路**；浏览器页面文本（jsdom / Playwright）仍未覆盖。
+
+### N15 客户端构建判据已补（2026-11-10 第四轮「继续」）
+
+- 实测 6 个模板 `vite build` **全部 exit=0**（SSR 产物在 `dist/client`）⇒ 客户端构建链路本就通，只是门禁没覆盖。
+- `check-scaffold` 新增 `[6.5]` 段：6 模板 × 4 条断言（build 通过 / 产物含 index.html / 保留 `#app` 挂载点 / 含 JS chunk），总断言 113 → **137**。
+- 负控：把模板入口改指向 `/src/__missing__.ts` ⇒ 31 条断言变红（6 个 build + 产物形态）；还原后 137/137 绿、`check-dist-freshness` 绿。
+- **仍未覆盖**：真实 npm 安装链路、浏览器 DOM 文本断言。
+
+### N18 进场发现（下一轮入口，本轮不改）
+
+`examples/using-lytjs-as-dep/` 是仓内唯一自带 package.json + vite.config 的独立示例工程，
+实测 `vite build` exit=0，**但 `index.html` 只有一个内联 `<script type="module">`，
+`main.js` 从未被引用**（产物仅 10.88 KB 手写计数器）。也就是说「TodoApp」根本不加载，
+构建绿是自证式假绿。接通前必须先用 jsdom / Playwright 真跑 `main.js` 并断言 `#app` 文本，
+否则会把一个可能跑不起来的入口改成默认入口。下一轮先做这个对照实验，再建 3 个真实应用。
 
 ## 未完成（后续批次）
 

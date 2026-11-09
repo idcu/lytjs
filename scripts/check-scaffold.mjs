@@ -420,6 +420,41 @@ try {
   }
 
   // ══════════════════════════════════════════════════════════
+  section('[6.5] 客户端产物真的能构建（vite build）');
+  //
+  // [6] 只证明类型层成立，[7] 只证明 SSR 起服务能返回 HTML。
+  // 生成项目的**客户端构建链路**此前完全没有被门禁覆盖：模板引用不存在的
+  // 入口、缺 index.html、依赖解析失败，都不会让任何判据变红 ⇒ 用户 `npm run build`
+  // 才第一次撞墙。这里对 6 个模板真跑一次 vite build 并断言产物形态。
+  // 实测（2026-11-10）：6 个模板均可构建，SSR 产物落在 dist/client。
+  for (const template of TEMPLATES) {
+    const p = projects[template];
+    const result = spawnSync(join(BIN, 'vite'), ['build'], {
+      cwd: p.dir,
+      encoding: 'utf-8',
+      timeout: 120_000,
+    });
+    const output = `${result.stdout ?? ''}${result.stderr ?? ''}`.trim();
+    check(
+      `[${template}] vite build 通过`,
+      result.status === 0,
+      output.split('\n').slice(-8).join('\n') || `exit=${result.status}`,
+    );
+
+    const outDir = template === 'ssr' ? join(p.dir, 'dist', 'client') : join(p.dir, 'dist');
+    const htmlPath = join(outDir, 'index.html');
+    const html = existsSync(htmlPath) ? readFileSync(htmlPath, 'utf8') : '';
+    check(`[${template}] 产物含 index.html`, html.length > 0, htmlPath);
+    check(`[${template}] 产物保留 #app 挂载点`, /id=["']app["']/.test(html), html.slice(0, 160));
+
+    const assetsDir = join(outDir, 'assets');
+    const jsAssets = existsSync(assetsDir)
+      ? readdirSync(assetsDir).filter((f) => f.endsWith('.js'))
+      : [];
+    check(`[${template}] 产物含 JS chunk`, jsAssets.length > 0, assetsDir);
+  }
+
+  // ══════════════════════════════════════════════════════════
   section('[7] SSR 模板：真的启动服务，首页必须 200 且含预期内容');
   //
   // ⚠️ 2026-11-05 实测：模板只导出 `render` 而不注入模板编译器时，
