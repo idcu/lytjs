@@ -2,6 +2,28 @@
 
 > 本示例展示如何将 LytJS 作为第三方依赖引入到你的项目中，并使用 AI 辅助开发流程。
 
+## 本目录就是一个可运行的应用（2026-11-10 更新）
+
+```bash
+cd examples/using-lytjs-as-dep
+npm install          # 或使用仓库根已有的 node_modules
+npm run dev          # http://localhost:3000
+npm run build        # 产物在 dist/
+npm run preview
+```
+
+页面上半部分是内联的响应式计数器演示，下半部分是 `main.js` 挂载的 **TodoApp**：
+`ref` / `computed` 数据层 + `v-model` / `v-for` / `v-if` 模板 + localStorage 持久化，
+支持添加、完成、筛选、删除。
+
+**行为判据**：`todo-app.test.ts`（jsdom 真跑，断言首屏、输入、添加、完成、
+筛选、删除与 localStorage），由 `check-examples` 保证它不会消失。
+
+> **对照实验实锤**：旧版 `index.html` 没有引用 `main.js`，`vite build` 却照样绿，
+> 产物只有 10.88 KB 的内联计数器；旧 `main.js` 用 options 形式的 `defineStore` +
+> 带参 `useTodoStore(pinia)`，真跑时 getter 的 `state` 为 undefined ⇒ 挂载失败、页面空白。
+> 现已按本仓稳定契约重写并接通入口，构建产物包含 `Todo List`（4 个 chunk）。
+
 ---
 
 ## 📚 目录

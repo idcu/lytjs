@@ -151,6 +151,45 @@ if (srcPenetration.size > 0) {
   console.log('');
 }
 
+// ── N18：独立示例工程必须真的加载主入口，且有行为判据 ──────────
+// `vite build` 绿不代表应用跑起来了：2026-11-10 实测 using-lytjs-as-dep 的
+// index.html 只有内联计数器，main.js 从未被引用，产物 10.88 KB、TodoApp 完全
+// 缺席。这类「自证式假绿」必须靠结构判据拦住，而不是等用户打开页面才发现。
+const standalone = [];
+for (const entry of readdirSync(EXAMPLES, { withFileTypes: true })) {
+  if (!entry.isDirectory() || SKIP_DIRS.has(entry.name)) continue;
+  const dir = join(EXAMPLES, entry.name);
+  if (existsSync(join(dir, 'package.json'))) standalone.push(dir);
+}
+for (const dir of standalone) {
+  const label = relative(REPO, dir);
+  const htmlPath = join(dir, 'index.html');
+  const html = existsSync(htmlPath) ? readFileSync(htmlPath, 'utf8') : '';
+  const srcs = [...html.matchAll(/<script[^>]*\bsrc=["']([^"']+)["']/g)].map((m) => m[1]);
+  const local = srcs.filter((s) => s.startsWith('/') && !s.startsWith('//'));
+
+  if (local.length === 0) {
+    fail += 1;
+    console.log(`❌ ${label}/index.html 没有加载任何项目内主入口（构建绿但应用不加载）\n`);
+  }
+  for (const s of local) {
+    if (!existsSync(join(dir, s.slice(1)))) {
+      fail += 1;
+      console.log(`❌ ${label}/index.html 引用了不存在的入口 ${s}\n`);
+    }
+  }
+
+  const tests = readdirSync(dir).filter((f) => /\.test\.(ts|js|mjs)$/.test(f));
+  if (tests.length === 0) {
+    fail += 1;
+    console.log(`❌ ${label} 是独立示例工程却没有行为判据（*.test.ts）\n`);
+  } else {
+    console.log(
+      `   ✅ ${label} 主入口 ${local.join(', ') || '(无)'}，行为判据 ${tests.join(', ')}`,
+    );
+  }
+}
+
 if (fail === 0) {
   console.log('✅ 通过：所有示例的 @lytjs 导入均可解析，无穿透源码的相对导入\n');
 } else {

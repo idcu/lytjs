@@ -237,5 +237,13 @@
       console.log('💡 count:', count);
       console.log('💡 doubleCount:', doubleCount);
     </script>
+
+    <!--
+      N18（2026-11-10）：真实应用入口。
+      此前 main.js 从未被引用 —— vite build 绿，但产物里只有上面的内联计数器，
+      声称的 TodoApp 根本不加载。现在由 todo-app.test.ts 真跑断言 DOM 行为。
+    -->
+    <div id="app"></div>
+    <script type="module" src="/main.js"></script>
   </body>
 </html>

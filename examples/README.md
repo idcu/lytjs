@@ -26,18 +26,18 @@
 
 ### 可运行（推荐）
 
-| 示例                                                   | 要点                                     |
-| ------------------------------------------------------ | ---------------------------------------- |
-| [`getting-started/`](./getting-started/)               | Node 直跑；SSR 与客户端初始结构一致      |
-| [`counter/`](./counter/)                               | `createApp` + 模板 + 响应式              |
-| [`complete-todo/`](./complete-todo/)                   | 组件化 + 状态                            |
-| [`admin-dashboard/`](./admin-dashboard/)               | 复杂布局 + 组件组合                      |
-| [`plugins-demo/`](./plugins-demo/)                     | `definePlugin` / `app.use` / schema 校验 |
-| [`slots-demo/`](./slots-demo/)                         | 具名插槽 / 作用域插槽 / 插槽内 v-for     |
-| [`hello/`](./hello/) · [`my-first/`](./my-first/)      | 最小 `createApp` 示例                    |
-| [`ssr-complete-example.ts`](./ssr-complete-example.ts) | SSR + 流式渲染                           |
-| [`using-lytjs-as-dep/`](./using-lytjs-as-dep/)         | 把 LytJS 当外部依赖用（含 Vite 配置）    |
-| [`ui-components/`](./ui-components/)                   | UI 组件展示（静态页）                    |
+| 示例                                                   | 要点                                                                                             |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| [`getting-started/`](./getting-started/)               | Node 直跑；SSR 与客户端初始结构一致                                                              |
+| [`counter/`](./counter/)                               | `createApp` + 模板 + 响应式                                                                      |
+| [`complete-todo/`](./complete-todo/)                   | 组件化 + 状态                                                                                    |
+| [`admin-dashboard/`](./admin-dashboard/)               | 复杂布局 + 组件组合                                                                              |
+| [`plugins-demo/`](./plugins-demo/)                     | `definePlugin` / `app.use` / schema 校验                                                         |
+| [`slots-demo/`](./slots-demo/)                         | 具名插槽 / 作用域插槽 / 插槽内 v-for                                                             |
+| [`hello/`](./hello/) · [`my-first/`](./my-first/)      | 最小 `createApp` 示例                                                                            |
+| [`ssr-complete-example.ts`](./ssr-complete-example.ts) | SSR + 流式渲染                                                                                   |
+| [`using-lytjs-as-dep/`](./using-lytjs-as-dep/)         | **可运行的真实应用**：TodoApp（数据层 + 模板 + localStorage + 行为判据），含 Vite 配置与部署说明 |
+| [`ui-components/`](./ui-components/)                   | UI 组件展示（静态页）                                                                            |
 
 ### 「响应式库」用法（不经过 createApp）
 

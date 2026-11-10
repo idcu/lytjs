@@ -83,6 +83,28 @@ keywords: [ADR0028, 拍板, N01, N07, 门禁, 批次0, 批次1]
 构建绿是自证式假绿。接通前必须先用 jsdom / Playwright 真跑 `main.js` 并断言 `#app` 文本，
 否则会把一个可能跑不起来的入口改成默认入口。下一轮先做这个对照实验，再建 3 个真实应用。
 
+### N18 第 1 个真实应用已落地（2026-11-10 第五轮「继续」）
+
+**对照实验结论（实锤）**：jsdom 真跑旧 `main.js` ⇒
+`defineStore` options 形式 + `useTodoStore(pinia)` 带参导致 getter 的 `state` 为
+undefined，`remainingCount` 读 `.todos` 抛 TypeError，`mount('#app')` 失败、
+`#app` 为空。⇒ **不能接通旧入口，必须重写**（若硬接通，用户打开就是白屏）。
+
+**已交付**：
+- 按稳定契约重写 `main.js`：`createApp` + `ref`/`computed` + 模板指令，
+  localStorage 持久化，不依赖 store options 形式与 `@lytjs/ui`；含添加/完成/筛选/删除。
+- `index.html` 补 `<div id="app">` 与 `<script src="/main.js">`；构建产物从
+  「仅 10.88 KB 内联计数器」变为 4 个 chunk、其中一个含 `Todo List`。
+- 新增正式判据 `todo-app.test.ts`：jsdom 真跑首屏 → 输入 → 添加 → 完成 →
+  筛选 → 删除 → localStorage，全部断言真实 DOM 文本（1 例绿，8.3s）。
+- `check-examples` 新增结构判据：带 package.json 的独立示例工程必须
+  ① index.html 加载项目内主入口且该文件存在；② 有 `*.test.ts` 行为判据。
+  两项负控（删入口引用 / 拿走判据）均变红并还原。
+- README 补运行与部署说明、对照实验结论；examples 总览同步。
+
+**N18 目标「3 个真实应用」进度：1/3**。剩余 2 个需后续批次（建议按
+「路由看板」「数据表 + 异步数据」两种形态各建一个独立工程，各配行为判据）。
+
 ## 未完成（后续批次）
 
 - 批次 2 剩余：N14 首次发布（需 D3 四前置）、N16 Vite 插件回仓、N18 三个真实应用、N20 i18n/a11y/主题、N21 DevTools 二选一、N15 的独立 `create-lyt` 包与客户端 vite 判据。
