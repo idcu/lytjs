@@ -102,7 +102,7 @@ undefined，`remainingCount` 读 `.todos` 抛 TypeError，`mount('#app')` 失败
   两项负控（删入口引用 / 拿走判据）均变红并还原。
 - README 补运行与部署说明、对照实验结论；examples 总览同步。
 
-**N18 目标「3 个真实应用」进度：2/3**（第 2 个见下节）。
+**N18 目标「3 个真实应用」进度：3/3 完成**（第 2、3 个见下两节）。
 
 ### N18 第 2 个真实应用已落地 + 挖出一个「伪装成渲染器缺陷」的根因（第六轮）
 
@@ -144,9 +144,48 @@ src 口径判据互补，两个都必要。
 **顺带修正**：`packages/tools/packages/cli/create-lyt.js` 模式 644 → 755
 （package.json 已把它声明为 bin，可执行位本就该有；由 `pnpm install` 落地）。
 
+### N18 第 3 个真实应用已落地 + 抓到「kebab 属性/事件静默失效」（第七轮）
+
+**新工程** `examples/data-table/`：订单分析表，专门覆盖前两个示例都没碰的
+**子组件 props 下行 / emit 上行**。
+- `components/DataTable.js`：props（rows/columns/sortKey/sortDir/emptyText）
+  + `emit('sortChange')`；`main.js`：搜索 / 状态筛选 / 表头排序 / 分页 / 空态，
+  排序在**原始数值**上做（展示层才格式化，否则按「¥1,000」字符串排会错）。
+- `api.js`：种子 LCG 生成 47 条订单，**不用 `Math.random()`** —— 随机数据下
+  「金额升序第一名是谁」无法预先算出，只能反抄当前输出，判据就废了。
+
+**判据** `data-table.test.ts`：10 段断言（首屏 loading → 数据到达 → 点表头排序 →
+再点翻转 → 不可排序列不响应 → 翻页 → 关键词筛选且页数重置 → 叠加状态筛选 →
+空态 → 清空恢复）。期望值全部从数据源独立算出。
+
+**★ 负控同时充当缺陷实锤**：把 `@sortChange` 改成 `@sort-change` ⇒ 排序整条链路
+**静默失效**，判据红在 `expected undefined to be '▲'`。
+
+**★ N28（新增，高优先级）**：模板里给子组件绑定多词属性/事件，kebab-case 写法
+**静默失效**，必须写 camelCase。实测：
+
+| 写法 | 结果 |
+| -- | -- |
+| `:sortKey="k"` | prop 收到值，且不落到 DOM 属性 |
+| `:sort-key="k"` | prop 停在默认值，`sort-key` 原样渲染成 DOM 属性 |
+| `@sortChange` | emit 送达父组件 |
+| `@sort-change` | 编译成监听器键 `onSort-change`，而 emit 查找 `onSortChange` |
+
+根因：`@lytjs/compiler` 不 camelize kebab 属性名，而 `@lytjs/component` 的 `emit`
+会 camelize —— 两头口径不一致。**与 Vue 习惯相反且全程无警告**，对从 Vue 迁来的
+用户就是「东西不生效但也不报错」。
+- 修复应落**运行时**而非编译器：编译器无法静态区分「组件 prop」与「原生元素属性」
+  （`<div :data-foo-bar>` 必须保持 kebab）。落点：`initProps` 对声明 prop 增加
+  kebab 回退匹配 + attrs 归类同步排除；`emit` 的 handler 查找增加
+  「`on` + 首字母大写的原始事件名」回退。改完需重建 `packages/component` dist。
+- 验收方式：把 `examples/data-table/` 的绑定全部换成 kebab 写法，判据仍应全绿。
+
 ## 未完成（后续批次）
 
-- 批次 2 剩余：N14 首次发布（需 D3 四前置）、N16 Vite 插件回仓、N18 第 3 个真实应用、N20 i18n/a11y/主题、N21 DevTools 二选一、N15 的独立 `create-lyt` 包与客户端 vite 判据。
+- 批次 2 剩余：N14 首次发布（需 D3 四前置）、N16 Vite 插件回仓、N20 i18n/a11y/主题、N21 DevTools 二选一、N15 的独立 `create-lyt` 包与客户端 vite 判据。**N18 已完成 3/3**。
+- **N28（本轮新增）**：kebab-case 属性/事件静默失效（详见上节）。落点是
+  `packages/component` 的 `initProps` 与 `emit`，改完必须重建该包 dist；
+  验收 = 把 `examples/data-table/` 的绑定换成 kebab 写法后判据仍全绿。
 - **N27（本轮新增）**：补齐 `vitest.shared.ts` 的 31 条缺失 alias（store / ui / config /
   devtools / ssr / ssg / web / api …）。做法必须**逐包加 + 跑该包相关测试**，不能批量刷：
   每加一条都可能把「原本吃发布副本侥幸通过」的用例切到 src 上暴露真实问题。

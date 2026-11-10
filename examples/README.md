@@ -38,6 +38,7 @@
 | [`ssr-complete-example.ts`](./ssr-complete-example.ts) | SSR + 流式渲染                                                                                   |
 | [`using-lytjs-as-dep/`](./using-lytjs-as-dep/)         | **可运行的真实应用**：TodoApp（数据层 + 模板 + localStorage + 行为判据），含 Vite 配置与部署说明 |
 | [`router-dashboard/`](./router-dashboard/)             | **可运行的真实应用**：多页面运营看板（hash 路由 + 动态参数 + 异步表格 + 404 兜底 + 行为判据）    |
+| [`data-table/`](./data-table/)                         | **可运行的真实应用**：订单分析表（子组件 props+emit + 排序/筛选/分页/空态 + 行为判据）           |
 | [`ui-components/`](./ui-components/)                   | UI 组件展示（静态页）                                                                            |
 
 ### 「响应式库」用法（不经过 createApp）

@@ -154,6 +154,19 @@ importers:
         specifier: ^1.0.0
         version: 1.6.4(@algolia/client-search@5.52.1)(@types/node@22.19.19)(postcss@8.5.15)(search-insights@2.17.3)(typescript@5.9.3)
 
+  examples/data-table:
+    dependencies:
+      '@lytjs/core':
+        specifier: ^6.9.6
+        version: 6.9.6
+      '@lytjs/reactivity':
+        specifier: ^6.9.6
+        version: 6.9.6
+    devDependencies:
+      vite:
+        specifier: ^5.0.0
+        version: 5.4.21(@types/node@22.19.19)
+
   examples/router-dashboard:
     dependencies:
       '@lytjs/core':
