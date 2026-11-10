@@ -177,15 +177,35 @@ src 口径判据互补，两个都必要。
 - 修复应落**运行时**而非编译器：编译器无法静态区分「组件 prop」与「原生元素属性」
   （`<div :data-foo-bar>` 必须保持 kebab）。落点：`initProps` 对声明 prop 增加
   kebab 回退匹配 + attrs 归类同步排除；`emit` 的 handler 查找增加
-  「`on` + 首字母大写的原始事件名」回退。改完需重建 `packages/component` dist。
+  「`on` + 首字母大写的 kebab 事件名」回退。改完需重建 `packages/component` dist。
 - 验收方式：把 `examples/data-table/` 的绑定全部换成 kebab 写法，判据仍应全绿。
+
+**✅ N28 已修（同轮）**：
+- `initProps`：声明 prop 先查 camelCase，未命中再查 `camelToKebab(key)`；
+  attrs 归类时把「已作为 prop 消费的 kebab 键」排除（否则会漏成 DOM 属性）。
+- `emit`：handler 查找在 `onSortChange` 未命中时，再查
+  `on` + 首字母大写的 **kebab** 事件名（`sortChange` → `onSort-change`）。
+- 新增 `packages/component/tests/kebab-name-interop.test.ts` 7 条判据：
+  两种写法都通、camel 优先、**未声明的 kebab 属性必须照旧进 attrs**
+  （`data-id` / `aria-label`，这条是防「修过头」的反向锁）。
+- 端到端验收已执行：`examples/data-table/` 的绑定改成 kebab 后判据全绿；
+  改回修复前逻辑则红在 `expected undefined to be '▲'`。
+- 回归：component 包 24 文件 / 454 例全绿；已重建该包 dist。
+  `check-dist-freshness` / `check-package-exports` / `check-runtime-contract` /
+  `check-examples` 四项全绿。
+
+**★ 这一轮自己踩的坑（值得记）**：第一版 `emit` 回退写成「`on` + 首字母大写的
+**原始**事件名」—— 对 camelCase 事件算出来恰好等于 `handlerName`，等于没加回退，
+但**单测全绿**（因为我只测了 `emit('sort-change')` 这一侧，没测 `emit('sortChange')`
+配 `@sort-change`）。是端到端判据（`called=0`）把它抓出来的。
+⇒ 教训：**双向矩阵要测全**（{camel,kebab} 事件 × {camel,kebab} 绑定），
+只测一条对角线等于没测。
 
 ## 未完成（后续批次）
 
 - 批次 2 剩余：N14 首次发布（需 D3 四前置）、N16 Vite 插件回仓、N20 i18n/a11y/主题、N21 DevTools 二选一、N15 的独立 `create-lyt` 包与客户端 vite 判据。**N18 已完成 3/3**。
-- **N28（本轮新增）**：kebab-case 属性/事件静默失效（详见上节）。落点是
-  `packages/component` 的 `initProps` 与 `emit`，改完必须重建该包 dist；
-  验收 = 把 `examples/data-table/` 的绑定换成 kebab 写法后判据仍全绿。
+- **N28 已修（本轮）**：kebab 属性/事件现已与 camelCase 等价（详见上节），
+  落点 `packages/component` 的 `initProps` 与 `emit`，dist 已重建。
 - **N27（本轮新增）**：补齐 `vitest.shared.ts` 的 31 条缺失 alias（store / ui / config /
   devtools / ssr / ssg / web / api …）。做法必须**逐包加 + 跑该包相关测试**，不能批量刷：
   每加一条都可能把「原本吃发布副本侥幸通过」的用例切到 src 上暴露真实问题。

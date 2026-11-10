@@ -6,10 +6,10 @@
  * 不是把当前渲染结果抄进断言 —— 后者是自证式假绿：即使排序根本没生效，
  * 抄下来的「第一名」也会一直等于它自己。
  *
- * ⚠️ 本文件同时锁住一条**当前实现的限制**：模板里给子组件绑定多词属性/事件
- * 必须用 camelCase（`:sortKey` / `@sortChange`）。kebab-case 写法会静默失效，
- * 原因与判据见 N28（keel 台账）。若将来 N28 修好，把下面这些绑定换成
- * kebab-case 后本判据仍应全绿 —— 那正是修复的验收方式。
+ * ★ 本文件同时是 N28 的**端到端验收**：`main.js` 给 `<DataTable>` 绑定的正是
+ * kebab-case（`:sort-key` / `@sort-change`）。修复前这套绑定会静默失效
+ * （prop 停在默认值、事件送不到处理器），本判据第 ③ 段就会红在
+ * `expected undefined to be '▲'`；修复后全绿。
  */
 import { describe, it, expect } from 'vitest';
 import { ORDERS, formatMoney, statusLabel } from './api.js';

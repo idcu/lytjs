@@ -2,6 +2,7 @@
 // 组件实例创建、setup 和 props 初始化
 
 import { isFunction, isObject, hasOwn, NOOP, EMPTY_OBJ, isPromise } from '@lytjs/common-is';
+import { camelToKebab, kebabToCamel } from '@lytjs/common-string';
 import { warn } from '@lytjs/common-error';
 import { proxyRefs, signal, effectScope } from '@lytjs/reactivity';
 import type {
@@ -433,7 +434,12 @@ export function initProps(
   // 处理声明的 props
   for (const key in propsOptions) {
     if (hasOwn(propsOptions, key)) {
-      const value = raw[key];
+      // ★ 2026-11-10（N28）：kebab-case 回退。
+      //   模板里 `:sort-key="x"` 编译出的键是 `sort-key`，而组件声明的是 `sortKey`。
+      //   此前只做 `raw[key]` 精确匹配 ⇒ **prop 静默停在默认值**，同时 `sort-key`
+      //   被当成普通 attr 落到根元素上（`<span sort-key="amount">`），
+      //   与 Vue 的 kebab↔camel 约定相反，且**不报错、不警告**。
+      const value = hasOwn(raw, key) ? raw[key] : raw[camelToKebab(key)];
       props[key] = resolvePropValue(propsOptions[key]!, value, instance, key);
     }
   }
@@ -441,9 +447,11 @@ export function initProps(
   // 收集 attrs（未声明的 props）
   const attrs: Record<string, unknown> = {};
   for (const key in raw) {
-    if (hasOwn(raw, key) && !hasOwn(propsOptions, key)) {
-      attrs[key] = raw[key];
-    }
+    if (!hasOwn(raw, key) || hasOwn(propsOptions, key)) continue;
+    // 已被同名 camelCase prop 消费的 kebab 键不再进 attrs（否则会漏到 DOM 属性）
+    const camelized = kebabToCamel(key);
+    if (camelized !== key && hasOwn(propsOptions, camelized)) continue;
+    attrs[key] = raw[key];
   }
 
   // ★★ 防环关键（2026-10-04）：**内容没变就整体不替换**。

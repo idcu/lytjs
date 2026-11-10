@@ -1,15 +1,14 @@
 /**
  * 可复用数据表组件（子组件形态：props 下行 + emit 上行）。
  *
- * ⚠️ 模板里绑定本组件的多词属性/事件必须用 **camelCase**：
- *    正确：`:sortKey="…"`  `@sortChange="…"`
- *    无效：`:sort-key="…"` `@sort-change="…"`
+ * 属性/事件两种写法都支持（2026-11-10 修复 N28 后）：
+ *   camelCase：`:sortKey="…"`   `@sortChange="…"`   ← Vue 模板里更常见
+ *   kebab-case：`:sort-key="…"` `@sort-change="…"`  ← 本示例采用，与 Vue 习惯一致
  *
- * 原因是 `@lytjs/compiler` 不把 kebab-case 属性名 camelize（实测
- * `@sort-change` 会编译成监听器键 `onSort-change`，而 `emit('sort-change')`
- * 查找的是 `onSortChange`），且**不报警**：prop 静默保持默认值、连字符事件
- * 静默不触发。已记为 N28（见 keel 台账），修复应落在运行时而非编译器
- * —— 编译器无法静态区分「组件 prop」与「原生元素属性」。
+ * 修复前 kebab 写法会**静默失效**（prop 停在默认值、事件永远送不到处理器），
+ * 根因是编译器不 camelize 属性名、而 emit 会 camelize。修法落在运行时：
+ * `initProps` 增加 kebab 回退并把已消费的键从 attrs 排除，`emit` 增加
+ * 「on + 首字母大写的 kebab 事件名」回退。详见 N28（keel 台账）。
  */
 export const DataTable = {
   name: 'DataTable',

@@ -2,7 +2,7 @@
 // 事件发射系统
 
 import { isFunction, hasOwn, isArray } from '@lytjs/common-is';
-import { kebabToCamel } from '@lytjs/common-string';
+import { kebabToCamel, camelToKebab } from '@lytjs/common-string';
 import { warn } from '@lytjs/common-error';
 import type { ComponentInternalInstance } from './types';
 import { handleError } from './lifecycle';
@@ -63,7 +63,20 @@ export function emit(instance: ComponentInternalInstance, event: string, ...args
   const handlerName = toHandlerKey(event);
 
   // 先在 props 中查找处理器，再在 attrs 中查找
-  const handler = instance.props[handlerName] ?? instance.attrs[handlerName];
+  let handler = instance.props[handlerName] ?? instance.attrs[handlerName];
+  if (!isFunction(handler) && event) {
+    // ★ 2026-11-10（N28）：kebab 事件名回退。
+    //   `@lytjs/compiler` **不** camelize 模板属性名 ⇒ 模板里写 `@sort-change`
+    //   生成的键是 `onSort-change`，而上面的 `toHandlerKey` 查的是 `onSortChange`
+    //   ⇒ 连字符事件**永远送不到处理器**，且不报错、不警告。
+    //   这里再按「on + 首字母大写的 kebab 事件名」查一次（`sortChange` →
+    //   `onSort-change`），两种写法都能收到。
+    //   ⚠️ 上一版误写成「on + 原始事件名」，对 camelCase 事件算出来与
+    //   `handlerName` 相同 ⇒ 等于没加回退（实测 called=0 就是这个原因）。
+    const kebab = camelToKebab(event);
+    const rawKey = `on${kebab[0]!.toUpperCase()}${kebab.slice(1)}`;
+    handler = instance.props[rawKey] ?? instance.attrs[rawKey];
+  }
   if (isFunction(handler)) {
     try {
       handler(...args);

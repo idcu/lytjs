@@ -37,29 +37,28 @@ data-table/
 **负控**：把 `@sortChange` 改成 `@sort-change` ⇒ 排序整条链路静默失效，判据红在
 `expected undefined to be '▲'`。这条负控同时是下面那个缺陷的实锤证据。
 
-## ⚠️ 必须用 camelCase 绑定多词属性/事件
+## 属性/事件命名：两种写法都支持
 
 ```html
-<!-- 正确：当前实现下唯一有效的写法 -->
-<DataTable :sortKey="sortKey" :sortDir="sortDir" @sortChange="onSortChange" />
-
-<!-- 无效：静默失效，不报错、不警告 -->
+<!-- 本示例采用的写法（与 Vue 模板习惯一致） -->
 <DataTable :sort-key="sortKey" :sort-dir="sortDir" @sort-change="onSortChange" />
+
+<!-- 等价写法 -->
+<DataTable :sortKey="sortKey" :sortDir="sortDir" @sortChange="onSortChange" />
 ```
 
-实测（2026-11-10）：
+2026-11-10 之前**只有 camelCase 有效**：kebab-case 会静默失效 —— prop 停在默认值
+且反被当普通属性渲染到 DOM；事件被编译成 `onSort-change` 而 `emit` 查找
+`onSortChange`，永远送不到处理器。全程不报错、不警告。
 
-| 写法            | 结果                                                                 |
-| --------------- | -------------------------------------------------------------------- |
-| `:sortKey="k"`  | ✅ prop 收到 `k`，不落到 DOM 属性                                    |
-| `:sort-key="k"` | ❌ prop 停在默认值，且 `sort-key` 原样渲染成 DOM 属性                |
-| `@sortChange`   | ✅ emit 送达父组件                                                   |
-| `@sort-change`  | ❌ 编译成监听器键 `onSort-change`，而 `emit` 查找的是 `onSortChange` |
+根因是编译器不 camelize 属性名、而 `emit` 会 camelize，两头口径不一致。
+修复落在**运行时**而非编译器（编译器无法静态区分「组件 prop」与「原生元素属性」，
+`<div :data-foo-bar>` 必须保持 kebab）：`initProps` 增加 kebab 回退并把已消费的键
+从 attrs 排除，`emit` 增加「on + 首字母大写的 kebab 事件名」回退。
 
-根因：`@lytjs/compiler` 不把 kebab-case 属性名 camelize，而 `@lytjs/component` 的
-`emit` 会 camelize —— 两头口径不一致。与 Vue 习惯相反，且**全程无警告**。
-已记为 **N28**（见 `keel/NOW-history/2026-11-10-owner-decisions-batch0-1.md`）。
-修复应落在运行时：编译器无法静态区分「组件 prop」与「原生元素属性」。
+**验收**：本示例现在用的就是 kebab 写法，判据全绿即证明修复有效；
+`packages/component/tests/kebab-name-interop.test.ts` 另有 7 条单元判据覆盖两种写法，
+并锁住「未声明的 kebab 属性必须照旧进 attrs」（`data-id` / `aria-label`）。
 
 ## 数据结构为什么用种子随机
 

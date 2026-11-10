@@ -137,10 +137,10 @@ const App = {
         <DataTable
           :rows="displayRows"
           :columns="columns"
-          :sortKey="sortKey"
-          :sortDir="sortDir"
-          emptyText="没有匹配的数据"
-          @sortChange="onSortChange"
+          :sort-key="sortKey"
+          :sort-dir="sortDir"
+          empty-text="没有匹配的数据"
+          @sort-change="onSortChange"
         />
         <div class="pager">
           <button type="button" class="prev" @click="prevPage">上一页</button>
