@@ -1,0 +1,20 @@
+{
+  "name": "lytjs-router-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "运营看板：使用 @lytjs/router 的多页面真实应用示例",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@lytjs/core": "^6.9.6",
+    "@lytjs/reactivity": "^6.9.6",
+    "@lytjs/router": "^6.9.6"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}

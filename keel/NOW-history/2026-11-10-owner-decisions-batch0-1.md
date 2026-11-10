@@ -102,12 +102,55 @@ undefined，`remainingCount` 读 `.todos` 抛 TypeError，`mount('#app')` 失败
   两项负控（删入口引用 / 拿走判据）均变红并还原。
 - README 补运行与部署说明、对照实验结论；examples 总览同步。
 
-**N18 目标「3 个真实应用」进度：1/3**。剩余 2 个需后续批次（建议按
-「路由看板」「数据表 + 异步数据」两种形态各建一个独立工程，各配行为判据）。
+**N18 目标「3 个真实应用」进度：2/3**（第 2 个见下节）。
+
+### N18 第 2 个真实应用已落地 + 挖出一个「伪装成渲染器缺陷」的根因（第六轮）
+
+**新工程** `examples/router-dashboard/`：多页面运营看板（hash 路由）。
+概览（异步统计）→ 订单列表（异步表格）→ 订单详情（动态参数）→ 404 兜底。
+`api.js` 数据层 + 4 个页面组件 + 路由表 + 外壳；`pnpm-lock` 已登记新 importer。
+
+**真构建**：`vite build` exit=0，60 模块 / 4 chunk，入口 chunk 含全部页面文案
+（运营看板 / 经营概览 / 订单列表 / 订单详情 / 页面不存在 / 待发货）。
+注意它构建的是**已发布 npm 6.9.6**（带 integrity 的 tarball），与下面的
+src 口径判据互补，两个都必要。
+
+**判据** `router-dashboard.test.ts`：一条链路九段断言（首屏 loading → 数据到达 →
+点导航切换 → 点行内链接进详情 → 不存在的 id → 未匹配路径兜底 → 浏览器后退 →
+刷新语义），全部断言真实 DOM 文本。连跑 3 次绿。
+
+**时序纪律（写进文件头，防后来者退回固定 sleep）**：三处异步实测 ——
+① `app.mount()` 是 async 且示例不 await ⇒ DOM 要等一个宏任务；
+② hash 写入比视图切换晚一个微任务；③ `history.back()` 经 popstate 约 6ms。
+一律 `waitFor(条件)` 轮询；`loading` 分支用 `MutationObserver` 记「是否出现过」，
+而不是抓某一瞬间的快照（抓快照会与 40ms 数据到达赛跑，实测就是这么红的）。
+
+**负控**：兜底路由改成 Vue 写法 `/:pathMatch(.*)*` ⇒ 判据红在
+`expected undefined to be '/no-such-page'`（catch-all 未命中）；还原后绿。
+
+**★ 根因（本轮最大收获）**：`@lytjs/router` **不在 `vitest.shared.ts` 的 alias 表**里
+⇒ 测试解析到 `node_modules` 里已发布的 6.9.6 副本，它自带一份已发布的
+`@lytjs/vdom`；而 `@lytjs/core` 走 `packages/vdom/src` ⇒ **两个 vdom 实例**。
+症状极具误导性：`RouterLink` / `RouterView` 打出「component mounted」却
+**渲染不出任何 DOM**，中间态还会「先有内容又被清空」，看起来像渲染器缺陷。
+补一行 alias 后立刻正常（nav=2 / main=1，且不再出现清空批次）。
+- 该陷阱**只在示例目录有了自己的 node_modules 后暴露**：`pnpm install` 之前
+  `@lytjs/router` 从根 node_modules 解析（workspace 链接），之后从示例自己的
+  node_modules 解析（发布副本）⇒ 同一份代码行为突变。这类「解析路径依赖目录位置」
+  的坑不会让任何类型检查变红。
+- **同类缺口仍有 31 个包**（api / store / ui / config / devtools / ssr / ssg / web …）：
+  任何测试 import 它们都会拿到发布副本。已记为 **N27**。
+
+**顺带修正**：`packages/tools/packages/cli/create-lyt.js` 模式 644 → 755
+（package.json 已把它声明为 bin，可执行位本就该有；由 `pnpm install` 落地）。
 
 ## 未完成（后续批次）
 
-- 批次 2 剩余：N14 首次发布（需 D3 四前置）、N16 Vite 插件回仓、N18 三个真实应用、N20 i18n/a11y/主题、N21 DevTools 二选一、N15 的独立 `create-lyt` 包与客户端 vite 判据。
+- 批次 2 剩余：N14 首次发布（需 D3 四前置）、N16 Vite 插件回仓、N18 第 3 个真实应用、N20 i18n/a11y/主题、N21 DevTools 二选一、N15 的独立 `create-lyt` 包与客户端 vite 判据。
+- **N27（本轮新增）**：补齐 `vitest.shared.ts` 的 31 条缺失 alias（store / ui / config /
+  devtools / ssr / ssg / web / api …）。做法必须**逐包加 + 跑该包相关测试**，不能批量刷：
+  每加一条都可能把「原本吃发布副本侥幸通过」的用例切到 src 上暴露真实问题。
+  优先级最高的三个：store（示例 package.json 已声明）、ui（56 个组件）、web。
 - 批次 3：N22 AOT、N23 ≤60 KB、N24 js-framework-benchmark 提交、N25 安全白皮书、N26 8.0.0 清理。
 - N12 残留：`defineProps<T>()` 未做（需 TS 类型解析，正则假支持会静默产出错误 props）。
 

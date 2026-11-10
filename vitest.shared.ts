@@ -62,6 +62,13 @@ export const sharedAliases: Record<string, string> = {
   '@lytjs/reactivity/async': resolve(root, 'packages/reactivity/src/async.ts'),
   '@lytjs/renderer': resolve(root, 'packages/renderer/src'),
   '@lytjs/component': resolve(root, 'packages/component/src'),
+  // ecosystem：示例 / 集成测试会直接 import 这些包。
+  // ⚠️ 2026-11-10 实证：`@lytjs/router` 曾漏在此表外 ⇒ 解析到 node_modules 里
+  // 已发布的 6.9.6 副本，它自带一份已发布的 `@lytjs/vdom`，而 core 走的是
+  // `packages/vdom/src` ⇒ **两个 vdom 实例**，`RouterLink` / `RouterView`
+  // 报「component mounted」却渲染不出任何 DOM（vnode 的跨实例品牌判定失败）。
+  // 症状极具误导性（看起来像渲染器缺陷），根因只是缺一行别名。
+  '@lytjs/router': resolve(root, 'packages/ecosystem/packages/web-framework/packages/router/src'),
   // 子路径 alias 必须先于主包 alias 生效，且目标指 src
   '@lytjs/compiler/sfc': resolve(root, 'packages/compiler/src/sfc/index.ts'),
   '@lytjs/compiler': resolve(root, 'packages/compiler/src'),
