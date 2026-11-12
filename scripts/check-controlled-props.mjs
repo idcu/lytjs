@@ -415,7 +415,7 @@ section('[15] TreeSelect：value 跟随与清空');
     { label: '节点B', value: 'b' },
   ];
   const v = ref('a');
-  const host = await mount(() => h(ui.TreeSelect, { value: v.value, data }));
+  const host = await mount(() => h(ui.TreeSelect, { modelValue: v.value, data }));
   const shown = () => text(host.querySelector('.lyt-tree-select-value'));
   check('TreeSelect 初始显示节点A', shown() === '节点A', shown());
   v.value = 'b';
