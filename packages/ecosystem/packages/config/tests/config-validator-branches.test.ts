@@ -232,6 +232,32 @@ describe('ConfigValidator 分支补测', () => {
       expect(paths).toContain('age');
     });
 
+    it('对象级 required 列表：缺失必填属性必须报错（改前静默通过）', () => {
+      const schema: ConfigSchema<Record<string, unknown>> = {
+        type: 'object',
+        object: {
+          properties: { host: { type: 'string' }, port: { type: 'number' } },
+          required: ['host', 'port'],
+        },
+      };
+      const report = validateConfig({ host: 'localhost' }, schema);
+      expect(report.valid).toBe(false);
+      expect(report.errors.map((e) => e.path)).toEqual(['port']);
+      expect(report.errors[0]!.code).toBe('required');
+    });
+
+    it('扁平 schema 顶层 required 数组同样生效（JSON Schema 惯例写法）', () => {
+      const schema = {
+        type: 'object',
+        properties: { token: { type: 'string' } },
+        required: ['token'],
+      } as unknown as ConfigSchema;
+      const report = validateConfig({}, schema);
+      expect(report.valid).toBe(false);
+      expect(report.errors[0]!.path).toBe('token');
+      expect(report.errors[0]!.code).toBe('required');
+    });
+
     it('additionalProperties: false ⇒ 未声明键报错', () => {
       const schema: ConfigSchema<Record<string, unknown>> = {
         type: 'object',

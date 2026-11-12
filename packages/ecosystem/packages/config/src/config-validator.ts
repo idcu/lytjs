@@ -417,6 +417,11 @@ export class ConfigValidator {
       );
     }
 
+    // 对象级 required 列表（JSON Schema 写法）。
+    // 此前只检查属性自身的 `required: true`，`object.required: ['port']` 与扁平
+    // 写法的顶层 `required: ['port']` 都被**完全忽略** ⇒ 缺必填项仍 valid。
+    const requiredKeys = new Set(objectSchema.required ?? []);
+
     // 检查每个属性
     for (const [key, propertySchema] of Object.entries(objectSchema.properties || {})) {
       const propertyPath = path ? `${path}.${key}` : key;
@@ -425,8 +430,22 @@ export class ConfigValidator {
       if (propertyValue !== undefined) {
         const propertyReport = this.validate(propertyValue, propertySchema, propertyPath);
         errors.push(...propertyReport.errors);
-      } else if (propertySchema.required) {
+      } else if (propertySchema.required || requiredKeys.has(key)) {
         errors.push(this.createError(propertyPath, 'required', `Property "${key}" is required`));
+        requiredKeys.delete(key);
+      }
+    }
+
+    // required 列表中未在 properties 声明的键也要检查
+    for (const key of requiredKeys) {
+      if (obj[key] === undefined) {
+        errors.push(
+          this.createError(
+            path ? `${path}.${key}` : key,
+            'required',
+            `Property "${key}" is required`,
+          ),
+        );
       }
     }
 
