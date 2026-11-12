@@ -235,9 +235,11 @@ const RE_DANGEROUS_OPEN_CLOSE_TAG = new RegExp(
   `<\\/?(${DANGEROUS_TAG_PATTERN})\\b(?:[^>"']|"[^"]*"|'[^']*')*>`,
   'gi',
 );
-const RE_EVENT_HANDLER_ATTR = /(<[^>]*?)\s+on[a-zA-Z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi;
-const RE_EVENT_HANDLER_ATTR_NOVALUE = /(<[^>]*?)\s+on[a-zA-Z]+(?=\s|>|\/>)/gi;
-const RE_EVENT_HANDLER_ATTR_UNQUOTED = /(<[^>]*?)\s+on[a-zA-Z]+\s*=\s*(?![\s"'])([^\s>]+)/gi;
+// 属性分隔符除了空白还可以是 `/`（如 `<svg/onload=alert(1)>`、`<img/src=x/onerror=…>`）。
+// 只识别空白会让 `/on*` 形态整条绕过。
+const RE_EVENT_HANDLER_ATTR = /(<[^>]*?)[\s/]+on[a-zA-Z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi;
+const RE_EVENT_HANDLER_ATTR_NOVALUE = /(<[^>]*?)[\s/]+on[a-zA-Z]+(?=\s|>|\/>)/gi;
+const RE_EVENT_HANDLER_ATTR_UNQUOTED = /(<[^>]*?)[\s/]+on[a-zA-Z]+\s*=\s*(?![\s"'])([^\s>]+)/gi;
 const URI_ATTRS =
   'href|src|action|formaction|xlink:href|data|codebase|cite|background|poster|dynsrc|lowsrc';
 const RE_URI_ATTR = new RegExp(`(?:(${URI_ATTRS})\\s*=\\s*)(?:"([^"]*)"|'([^']*)')`, 'gi');
@@ -263,8 +265,22 @@ const RE_DANGEROUS_INJECT_ATTR =
   /\s+(?:srcdoc|formaction|xlink:href)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi;
 
 const DECODE_MAP: [RegExp, string | ((substring: string, ...args: string[]) => string)][] = [
-  [/&#x0*([0-9a-fA-F]+);/g, (_: string, code: string) => String.fromCodePoint(parseInt(code, 16))],
-  [/&#0*([0-9]+);/g, (_: string, code: string) => String.fromCodePoint(parseInt(code, 10))],
+  [
+    /&#x0*([0-9a-fA-F]+);/g,
+    (match: string, code: string) => {
+      const cp = parseInt(code, 16);
+      // 越界码点（如 &#x110000;）会让 String.fromCodePoint 抛 RangeError，
+      // 保持原样返回，交由后续步骤按普通文本处理。
+      return Number.isFinite(cp) && cp >= 0 && cp <= 0x10ffff ? String.fromCodePoint(cp) : match;
+    },
+  ],
+  [
+    /&#0*([0-9]+);/g,
+    (match: string, code: string) => {
+      const cp = parseInt(code, 10);
+      return Number.isFinite(cp) && cp >= 0 && cp <= 0x10ffff ? String.fromCodePoint(cp) : match;
+    },
+  ],
   [/&amp;/gi, '&'],
   [/&lt;/gi, '<'],
   [/&gt;/gi, '>'],
@@ -272,6 +288,11 @@ const DECODE_MAP: [RegExp, string | ((substring: string, ...args: string[]) => s
   [/&apos;/gi, "'"],
   [/&#x27;/gi, "'"],
   [/&#x22;/gi, '"'],
+  // 命名实体缺项会让 `javascript&colon;`、`java&Tab;script:`、
+  // `java&NewLine;script:` 绕过协议判定，必须与其余实体一起解码。
+  [/&colon;/gi, ':'],
+  [/&tab;/gi, '\t'],
+  [/&newline;/gi, '\n'],
 ];
 
 /**

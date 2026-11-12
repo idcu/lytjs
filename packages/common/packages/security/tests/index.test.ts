@@ -296,4 +296,30 @@ describe('sanitizeHTML', () => {
     const result = sanitizeHTML(input);
     expect(result).not.toContain('formaction');
   });
+
+  // 负控（P0-1）：`/` 也能分隔事件属性，`<svg/onload=…>` 不得只按空白分隔来判断。
+  // 修复前：正则要求 `\s+on…`，`/onload` 不匹配 ⇒ 原样输出并执行。
+  it('should strip slash-separated event handlers', () => {
+    expect(sanitizeHTML('<svg/onload=alert(1)>').toLowerCase()).not.toContain('onload');
+    expect(sanitizeHTML('<img/src=x/onerror=alert(1)>').toLowerCase()).not.toContain('onerror');
+    expect(sanitizeHTML('<svg/onload>').toLowerCase()).not.toContain('onload');
+  });
+
+  // 负控（P0-1）：命名实体解码缺 `&colon;` / `&Tab;` / `&NewLine;`，
+  // `javascript&colon;` 等可绕过协议判定。修复前实体保持原样，不会被中和。
+  it('should decode named entities before protocol checks', () => {
+    expect(sanitizeHTML('<a href="javascript&colon;alert(1)">x</a>')).not.toContain('&colon;');
+    expect(sanitizeHTML('<a href="javascript&colon;alert(1)">x</a>')).not.toContain('javascript');
+    expect(sanitizeHTML('<a href="java&Tab;script:alert(1)">x</a>')).not.toContain('javascript');
+    expect(sanitizeHTML('<a href="java&NewLine;script:alert(1)">x</a>')).not.toContain(
+      'javascript',
+    );
+  });
+
+  // 负控（P0-1）：数字实体越界时 `String.fromCodePoint` 抛 RangeError，
+  // sanitizeHTML 不应因恶意实体崩溃。
+  it('should not throw on out-of-range numeric entities', () => {
+    expect(() => sanitizeHTML('<p>&#x110000;</p>')).not.toThrow();
+    expect(() => sanitizeHTML('<p>&#9999999999;</p>')).not.toThrow();
+  });
 });
