@@ -3,7 +3,7 @@ scope: verify
 status: active
 severity: P2
 last-verified: 2026-11-13
-triggers: 2
+triggers: 3
 keywords: [test, 偶发, 固定等待, 时序竞争]
 ---
 
