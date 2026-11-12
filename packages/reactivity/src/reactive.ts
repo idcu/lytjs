@@ -6,7 +6,15 @@ import { isObject, hasChanged, hasOwn, isSymbol, isMap, isSet } from '@lytjs/com
 import { warn } from '@lytjs/common-error';
 import { unsafeCast } from '@lytjs/common-assertions';
 import { ReactiveFlags, TrackOpTypes, TriggerOpTypes, ITERATE_KEY } from './constants';
-import { track, trigger, pauseTracking, resetTracking, isIntegerKey } from './effect';
+import {
+  track,
+  trigger,
+  pauseTracking,
+  resetTracking,
+  isIntegerKey,
+  beginTriggerBatch,
+  endTriggerBatch,
+} from './effect';
 import type { UnwrapNestedRefs, DeepReadonly } from './types';
 import { toRaw, isRef } from './shared';
 import { isSignal } from './signal';
@@ -99,15 +107,46 @@ arrayTraverseMethods.forEach((method) => {
   const originMethod = Array.prototype[method] as (...args: unknown[]) => unknown;
   arrayInstrumentations[method] = function (this: unknown[], ...args: unknown[]) {
     const arr = toRaw(this);
+    // ★ 2026-11-12 修（R-P0-2）：这些方法都可能**在尾部之前**插入/删除元素
+    //   （shift/unshift/splice 会搬移后续索引，pop 会删除末尾索引），
+    //   而此前只补一次 `trigger(ADD, ITERATE_KEY)` ⇒ 阅读 `arr[i]` 的 effect
+    //   一个都不重跑（实测 shift 后 arr[0] 仍是旧值）。
+    //
+    //   与 sort/reverse 分支同策略：先快照，改完逐索引比较，只对真正变化的
+    //   索引补触发。新增索引用 ADD，搬移/覆盖/删除用 SET；缩短后越界的旧索引
+    //   也要比（读到 undefined 的订阅者需重跑）。
+    const before = arr.slice();
+
     pauseTracking();
+    let result: unknown;
     try {
-      const result = originMethod.apply(arr, args);
-      // 只触发一次 ADD 类型的 ITERATE_KEY，这样会同时收集 length 和 ITERATE_KEY 的依赖！
-      trigger(arr, TriggerOpTypes.ADD, ITERATE_KEY);
-      return result;
+      result = originMethod.apply(arr, args);
     } finally {
       resetTracking();
     }
+
+    const len = arr.length;
+    const changedIndices: number[] = [];
+    const scanLen = Math.max(before.length, len);
+    for (let i = 0; i < scanLen; i++) {
+      if (before[i] !== arr[i]) changedIndices.push(i);
+    }
+
+    // 一次数组变更只应让同一个 effect 重跑一次：多个索引触发 + 迭代触发
+    // 若直接串行执行，读 `length` / `join()` 的 effect 会被触发 2~N 次
+    // （既有用例「pop should trigger a single update」即锁定该语义）。
+    beginTriggerBatch();
+    try {
+      for (const i of changedIndices) {
+        trigger(arr, i < before.length ? TriggerOpTypes.SET : TriggerOpTypes.ADD, String(i));
+      }
+      // 迭代依赖：ADD 在 trigger 内部会自动带上数组的 'length' 依赖
+      trigger(arr, TriggerOpTypes.ADD, ITERATE_KEY);
+    } finally {
+      endTriggerBatch();
+    }
+
+    return result;
   };
 });
 

@@ -372,3 +372,71 @@ describe('reactive', () => {
     expect(fn).toHaveBeenCalledTimes(1); // 不应再次调用
   });
 });
+
+/**
+ * R-P0-2：数组变异方法必须触发**被改动索引**上的依赖。
+ *
+ * 回归背景（2026-11-12）：`push/pop/shift/unshift/splice` 在 raw 数组上执行后
+ * 只补了一次 `trigger(ADD, ITERATE_KEY)`，被搬移/删除/新增的索引上订阅的
+ * effect 一个都不会重跑 ⇒ 读 `arr[0]` 的视图在 `shift()` 后永远停在旧值。
+ */
+describe('数组变异方法的索引级触发（R-P0-2）', () => {
+  it('★ shift 后读取被搬移索引的 effect 必须重跑', () => {
+    const arr = reactive([1, 2, 3]);
+    let seen: number | undefined;
+    effect(() => {
+      seen = arr[0];
+    });
+    expect(seen).toBe(1);
+
+    arr.shift();
+    expect(seen).toBe(2);
+  });
+
+  it('★ pop 后读取已删除索引的 effect 必须重跑（读到 undefined）', () => {
+    const arr = reactive([1, 2, 3]);
+    let seen: number | undefined = 0;
+    effect(() => {
+      seen = arr[2];
+    });
+    expect(seen).toBe(3);
+
+    arr.pop();
+    expect(seen).toBeUndefined();
+  });
+
+  it('★ splice 插入/删除后的索引必须触发', () => {
+    const arr = reactive(['a', 'b', 'c']);
+    let seen: string | undefined;
+    effect(() => {
+      seen = arr[1];
+    });
+    expect(seen).toBe('b');
+
+    arr.splice(1, 1, 'x', 'y');
+    expect(seen).toBe('x');
+  });
+
+  it('★ unshift 后原有索引的值变化必须触发', () => {
+    const arr = reactive([1, 2]);
+    let seen: number | undefined;
+    effect(() => {
+      seen = arr[0];
+    });
+
+    arr.unshift(0);
+    expect(seen).toBe(0);
+  });
+
+  it('★ push 前读到 undefined 的新索引，push 后必须重跑', () => {
+    const arr = reactive<number[]>([1]);
+    let seen: number | undefined = -1;
+    effect(() => {
+      seen = arr[1];
+    });
+    expect(seen).toBeUndefined();
+
+    arr.push(2);
+    expect(seen).toBe(2);
+  });
+});
