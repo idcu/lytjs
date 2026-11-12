@@ -64,7 +64,7 @@ export function parseElement(context: ParserContext): ElementNode | undefined {
     textMode = TextModes.RAWTEXT;
   }
 
-  parseChildren(context, element, textMode);
+  parseChildren(context, element, textMode, textMode === TextModes.RAWTEXT ? tag : undefined);
 
   if (context.source.startsWith(`</`)) {
     const endTagMatch = context.source.match(getEndTagRegex(tag));

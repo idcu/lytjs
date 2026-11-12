@@ -513,4 +513,29 @@ describe('parser', () => {
       expect(ifDir.name).toBe('if');
     });
   });
+
+  // 负控（P0-2）：RAWTEXT（script/style/...）内部出现裸 `<` 或 `{{` 时，
+  // parseText 返回空串且游标不前进 ⇒ parseChildren 无限循环并持续 push 空文本节点。
+  describe('RAWTEXT termination', () => {
+    it('should not hang on a raw `<` inside <script>', () => {
+      const ast = parse('<script>a<b</script>');
+      const el = ast.children[0] as ElementNode;
+      expect(el.tag).toBe('script');
+      expect((el.children[0] as TextNode).content).toBe('a<b');
+    });
+
+    it('should not hang on `{{` inside <style>', () => {
+      const ast = parse('<style>a{{x}}</style>');
+      const el = ast.children[0] as ElementNode;
+      expect(el.tag).toBe('style');
+      expect((el.children[0] as TextNode).content).toBe('a{{x}}');
+    });
+
+    it('should keep a non-matching `</b>` inside <script> as text', () => {
+      const ast = parse('<script>if (a</b>) {}</script>');
+      const el = ast.children[0] as ElementNode;
+      expect(el.tag).toBe('script');
+      expect((el.children[0] as TextNode).content).toBe('if (a</b>) {}');
+    });
+  });
 });

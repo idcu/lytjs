@@ -21,12 +21,32 @@ import { parseElement } from './parser-element';
 // parseChildren back. This is safe with ES modules because all function references
 // are resolved at runtime (after all modules are loaded), not at import time.
 
-export function parseChildren(context: ParserContext, parent: ParentNode, mode: number): void {
+export function parseChildren(
+  context: ParserContext,
+  parent: ParentNode,
+  mode: number,
+  rawTagName?: string,
+): void {
   let nodes: TemplateChildNode[] = [];
 
-  while (!isEnd(context, mode)) {
+  while (!isEnd(context, mode, rawTagName)) {
     const s = context.source;
     let node: TemplateChildNode | undefined;
+
+    // P0-2：RAWTEXT（script/style/textarea 之外的原始文本）唯一的终止符是
+    // 匹配的 `</tag`。`<` 与 `{{` 在原始文本里都是普通字符，若交给 parseText
+    // （以 `<`/`{{` 为终止符），source 以 `<` 开头时会 advanceBy(0) ⇒ 无限循环
+    // 并持续 push 空文本节点。
+    if (isRAWTEXTMode(mode) && rawTagName) {
+      const closeIndex = findRawTextEnd(s, rawTagName);
+      const contentEnd = closeIndex === -1 ? s.length : closeIndex;
+      if (contentEnd > 0) {
+        const start = getCursor(context);
+        nodes.push(createText(s.slice(0, contentEnd), getSelection(context, start)));
+        advanceBy(context, contentEnd);
+      }
+      continue;
+    }
 
     if (mode === TextModes.DATA || mode === TextModes.RCDATA) {
       if (s.startsWith('<!--')) {
@@ -161,7 +181,28 @@ function isDATAMode(mode: number): mode is typeof TextModes.DATA {
   return mode === TextModes.DATA;
 }
 
-function isEnd(context: ParserContext, mode: number): boolean {
+/**
+ * 查找原始文本（RAWTEXT）中匹配的结束标签 `</tag` 的起始下标。
+ * `<` 后必须紧跟 `/tag`，且 tag 之后是空白、`>`、`/` 或文件尾，
+ * 否则视为普通文本（例如 `<script>` 里的 `</b>` 不是结束标签）。
+ */
+function findRawTextEnd(source: string, tagName: string): number {
+  const lower = source.toLowerCase();
+  const needle = `</${tagName.toLowerCase()}`;
+  let from = 0;
+  while (from <= lower.length) {
+    const idx = lower.indexOf(needle, from);
+    if (idx === -1) return -1;
+    const next = source[idx + needle.length];
+    if (next === undefined || next === '>' || next === '/' || /\s/.test(next)) {
+      return idx;
+    }
+    from = idx + needle.length;
+  }
+  return -1;
+}
+
+function isEnd(context: ParserContext, mode: number, rawTagName?: string): boolean {
   const s = context.source;
   // FIX: P2-7 使用类型守卫进行模式检查
   if (isDATAMode(mode)) {
@@ -170,6 +211,11 @@ function isEnd(context: ParserContext, mode: number): boolean {
       return !!match;
     }
     return !s;
+  }
+  // RAWTEXT 只认匹配的结束标签；其他 `</x` 属于文本内容，不能提前终止。
+  if (isRAWTEXTMode(mode) && rawTagName) {
+    if (!s) return true;
+    return findRawTextEnd(s, rawTagName) === 0;
   }
   if (isRCDATAMode(mode) || isRAWTEXTMode(mode) || isCDATAMode(mode)) {
     if (s.startsWith('</')) {
