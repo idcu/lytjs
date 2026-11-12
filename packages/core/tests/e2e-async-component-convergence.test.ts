@@ -24,8 +24,6 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const flush = (ms = 40): Promise<void> => new Promise((r) => setTimeout(r, ms));
-
 const Comp = { name: 'Real', render: () => h('div', { class: 'real' }, 'REAL') };
 const ErrComp = { name: 'Err', render: () => h('div', { class: 'err' }, 'ERR') };
 
@@ -93,10 +91,11 @@ describe('defineAsyncComponent — retry 契约（onError(error, retry, fail, at
     });
 
     const host = await mount(() => h(w as never));
-    await flush(80);
 
-    expect(attemptsSeen).toEqual([1]);
-    expect(host.querySelector('.real')).toBeTruthy();
+    await vi.waitFor(() => {
+      expect(attemptsSeen).toEqual([1]);
+      expect(host.querySelector('.real')?.textContent).toBe('REAL');
+    });
   });
 
   it('★ 恒失败且 onError 恒 retry() ⇒ 重试有上限，最终显示 errorComponent', async () => {
@@ -116,11 +115,12 @@ describe('defineAsyncComponent — retry 契约（onError(error, retry, fail, at
     });
 
     const host = await mount(() => h(w as never));
-    await flush(120);
 
-    expect(calls).toBe(3); // MAX_ATTEMPTS = 3：不会无限重试
-    expect(attemptsSeen).toEqual([1, 2, 3]);
-    expect(host.querySelector('.err')).toBeTruthy();
+    await vi.waitFor(() => {
+      expect(calls).toBe(3); // MAX_ATTEMPTS = 3：不会无限重试
+      expect(attemptsSeen).toEqual([1, 2, 3]);
+      expect(host.querySelector('.err')?.textContent).toBe('ERR');
+    });
   });
 
   it('★ onError 调 fail() ⇒ 显示 errorComponent', async () => {
@@ -134,9 +134,10 @@ describe('defineAsyncComponent — retry 契约（onError(error, retry, fail, at
     });
 
     const host = await mount(() => h(w as never));
-    await flush(60);
 
-    expect(host.querySelector('.err')).toBeTruthy();
+    await vi.waitFor(() => {
+      expect(host.querySelector('.err')?.textContent).toBe('ERR');
+    });
   });
 
   it('★ 只声明 (error) 的旧用法 ⇒ 立即进入错误态（零回归，不等待决策）', async () => {
@@ -151,10 +152,11 @@ describe('defineAsyncComponent — retry 契约（onError(error, retry, fail, at
     });
 
     const host = await mount(() => h(w as never));
-    await flush(60);
 
-    expect(seen).toEqual(['legacy']);
-    expect(host.querySelector('.err')).toBeTruthy();
+    await vi.waitFor(() => {
+      expect(seen).toEqual(['legacy']);
+      expect(host.querySelector('.err')?.textContent).toBe('ERR');
+    });
   });
 
   it('★ loader 返回非法值 ⇒ 按失败处理（core 版下沉的校验）', async () => {
@@ -165,8 +167,9 @@ describe('defineAsyncComponent — retry 契约（onError(error, retry, fail, at
     });
 
     const host = await mount(() => h(w as never));
-    await flush(60);
 
-    expect(host.querySelector('.err')).toBeTruthy();
+    await vi.waitFor(() => {
+      expect(host.querySelector('.err')?.textContent).toBe('ERR');
+    });
   });
 });
