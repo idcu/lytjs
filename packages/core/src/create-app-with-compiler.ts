@@ -22,11 +22,31 @@
 // 注入本身幂等，重复调用只是一次布尔判断。
 
 import { setTemplateCompiler } from '@lytjs/component';
-import { createApp as baseCreateApp } from './create-app';
+import { createAppInternal } from './create-app';
+import type { DOMRendererLoader, SignalRendererFactory } from './create-app';
 import { compileTemplateToRender } from './template-compiler';
 import type { App, AppOptions, Component } from './types';
 
 let compilerInstalled = false;
+
+/**
+ * 主入口的惰性渲染器入口。
+ *
+ * 走 `@lytjs/renderer/app`（DOM + signal 的**合并**子路径）：拆成两条动态
+ * import 会让消费者的首屏静态闭包被切成 3 个 chunk（实测 gzip +807 B）。
+ * 包根的 `import('@lytjs/renderer')` 会把 vapor / server 等全部内联（实测
+ * minimal-app 多出 ~14 KB gzip），同样不可取。
+ */
+const loadRenderers = () => import('@lytjs/renderer/app');
+
+const signalRendererFactory: SignalRendererFactory = async (template, ctx) => {
+  const { createSignalRenderer } = await loadRenderers();
+  return createSignalRenderer(template, ctx);
+};
+
+// create-consumer 的 DOMRendererOptions 用 common-vnode 的轻量实例类型，
+// 与 core 注入的 component 实例形状不兼容；运行时按注入对象解释，这里只桥接类型。
+const loadDOMRenderer = loadRenderers as unknown as DOMRendererLoader;
 
 /**
  * **显式**注入运行时模板编译器（幂等）。
@@ -51,9 +71,11 @@ export function installTemplateCompiler(): void {
 /**
  * 带运行时模板编译能力的 `createApp`。
  *
- * 与 `@lytjs/core/runtime` 的同名函数**行为完全一致**，唯一差别是：
- * 这里会在首次调用时把 `compileTemplateToRender` 注入 `@lytjs/component`，
- * 使 `options.template` 生效。
+ * 与 `@lytjs/core/runtime` 的同名函数相比，这里多两件事：
+ *   ① 首次调用时把 `compileTemplateToRender` 注入 `@lytjs/component`，使
+ *      组件 `options.template`（vnode 模式）生效；
+ *   ② 向实现注入 signal 渲染器工厂，使 `rendererMode: 'signal'` 的模板字符串
+ *      也能编译（runtime 入口没有这个工厂，会抛出可操作的错误）。
  */
 export function createApp(
   rootComponent: Component,
@@ -61,8 +83,16 @@ export function createApp(
   options?: AppOptions,
 ): App {
   installTemplateCompiler();
-  return baseCreateApp(rootComponent, rootProps, options);
+  return createAppInternal(
+    rootComponent,
+    rootProps,
+    options,
+    signalRendererFactory,
+    loadDOMRenderer,
+  );
 }
 
-// 其余导出（类型、辅助函数等）与 runtime 版一致，直接转发。
-export * from './create-app';
+// 类型转发：`createAppInternal` / 渲染器工厂类型是入口包装的公共签名，
+// 但**不再** `export * from './create-app'` —— 那会把内部实现函数暴露到
+// `@lytjs/core` 的公开导出面（API 快照会出现非刻意的漂移）。
+export type { DOMRendererLoader, SignalRendererFactory } from './create-app';

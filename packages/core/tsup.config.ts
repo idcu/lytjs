@@ -23,6 +23,10 @@ export default defineConfig({
     '@lytjs/vdom',
     '@lytjs/compiler',
     '@lytjs/renderer',
+    // tsup 的包名 external 不保证覆盖子路径（见 keel/pitfalls/build/subpath-external-singleton-blindspot.md）
+    '@lytjs/renderer/dom',
+    '@lytjs/renderer/signal',
+    '@lytjs/renderer/app',
     '@lytjs/component',
     '@lytjs/core-vnode',
     '@lytjs/common-is',

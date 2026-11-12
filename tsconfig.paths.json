@@ -106,6 +106,8 @@
       "@lytjs/core-vnode/lifecycle": ["packages/core-vnode/src/lifecycle.ts"],
       "@lytjs/core/runtime": ["packages/core/src/runtime.ts"],
       "@lytjs/renderer/signal": ["packages/renderer/src/signal/index.ts"],
+      "@lytjs/renderer/dom": ["packages/renderer/src/dom/dom-renderer.ts"],
+      "@lytjs/renderer/app": ["packages/renderer/src/app.ts"],
       "@lytjs/vdom/diff": ["packages/vdom/src/diff.ts"],
       "@lytjs/reactivity/*": ["packages/reactivity/src/*"],
       "@lytjs/core-vnode/*": ["packages/core-vnode/src/*"],

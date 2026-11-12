@@ -52,31 +52,42 @@ import type { SignalRenderer } from '@lytjs/renderer';
 //   · 主入口 `@lytjs/core` 的 `createApp` 来自那个模块（含编译器，`template` 可用）；
 //   · 新入口 `@lytjs/core/runtime` 直接用本模块（不含编译器，需 AOT 预编译）。
 // 这样「只用 ref/h、不调 createApp」的包也能被完整 tree-shake 掉编译器。
+//
+// ⚠️ 2026-11-13（打包契约）：**signal 模板编译也走同一条注入缝**，但它必须
+//   按 app 实例传入，而不是模块全局注册 —— 同进程里先调用主入口、再调用
+//   runtime 入口时，全局注册会让 runtime 静默拿到编译器（实测同一 vitest 进程
+//   即可复现），「runtime 不含编译器」就名存实亡。现在 runtime 恒传 `null`，
+//   signal 模式会得到一条指向正确路径的错误（见 `mountWithSignalMode`）。
+//
+//   vnode 主路径的 DOM 渲染器同理不再取 `@lytjs/renderer` 的 namespace
+//   （那会让 barrel 全部导出保持 live，signal/vapor 发射链顶层 import
+//   `@lytjs/compiler`，把整个编译器拖进 runtime 产物）。
 // ---------------------------------------------------------------------------
 
-let createSignalRenderer:
-  | ((template: string, ctx: Record<string, unknown>) => Promise<SignalRenderer>)
-  | null = null;
-let createDOMRenderer: ((options?: unknown) => unknown) | null = null;
+/**
+ * Signal 模式渲染器的注入点。
+ *
+ * `@lytjs/core/runtime` **不提供**运行时 signal 模板编译：它的 createApp 以
+ * `null` 传入（见 `createApp`）。主入口 `@lytjs/core` 由
+ * `./create-app-with-compiler` 在调用时注入 `@lytjs/renderer/signal` 的同步实现。
+ */
+export type SignalRendererFactory = (
+  template: string,
+  ctx: Record<string, unknown>,
+) => Promise<SignalRenderer>;
 
-async function getSignalRenderer() {
-  if (!createSignalRenderer) {
-    const renderer = await import('@lytjs/renderer');
-    createSignalRenderer = renderer.createSignalRenderer as (
-      template: string,
-      ctx: Record<string, unknown>,
-    ) => Promise<SignalRenderer>;
-  }
-  return createSignalRenderer;
-}
-
-async function getDOMRenderer() {
-  if (!createDOMRenderer) {
-    const renderer = await import('@lytjs/renderer');
-    createDOMRenderer = renderer.createDOMRenderer as (options?: unknown) => unknown;
-  }
-  return createDOMRenderer;
-}
+/**
+ * DOM 渲染器的**惰性加载器**。
+ *
+ * 由入口注入而不是在本模块里写死 `import('@lytjs/renderer/dom')`：
+ * `@lytjs/core` 主入口需要把 DOM 与 signal 收进**同一个**动态入口（见
+ * `@lytjs/renderer/app`），而 `@lytjs/core/runtime` 只能加载 DOM —— 两者若共用同一条
+ * 写死的动态 import，主入口要么多出一个 entry point（静态闭包被切成 3 个 chunk，
+ * 实测 gzip +807 B），要么让 runtime 的产物被内联进 signal 的编译器。
+ */
+export type DOMRendererLoader = () => Promise<{
+  createDOMRenderer: (options?: unknown) => unknown;
+}>;
 
 /**
  * 注入 App 工厂（供 `@lytjs/renderer` 的 `hydrateApp` / `hydrateVisible` / `safeHydrate`）。
@@ -95,19 +106,49 @@ async function getDOMRenderer() {
  * 代价：`hydrateApp` 若在**从未调用过 `createApp`** 的情况下被使用，拿到的 `app` 为 null
  *   （水合本身不受影响，见 renderer 的 `tryCreateApp`）。
  */
-function installAppFactoryOnce(): void {
+function installAppFactoryOnce(
+  signalRendererFactory: SignalRendererFactory | null,
+  loadDOMRenderer: DOMRendererLoader | null,
+): void {
   if (!hasAppFactory()) {
-    setAppFactory((component) => createApp(component as never));
+    setAppFactory((component) =>
+      createAppInternal(
+        component as never,
+        null,
+        undefined,
+        signalRendererFactory,
+        loadDOMRenderer,
+      ),
+    );
   }
 }
 
-export function createApp(
+/**
+ * 不含编译器（`@lytjs/core/runtime`）入口的 `createApp`。
+ *
+ * vnode 模式完全可用；`template` 是否可用取决于 `@lytjs/component` 的编译器
+ * 注入点（runtime 入口不注入）；signal 模式没有渲染器工厂 ⇒ `mount()` 明确抛错。
+ *
+ * 实际入口包装在 `./runtime.ts`（它负责注入 DOM 加载器）。
+ */
+
+/**
+ * @internal 承载 createApp 的实现。
+ *
+ * `signalRendererFactory` 为 `null` 表示当前入口不提供 signal 模板编译能力
+ * （`@lytjs/core/runtime`）；主入口由 `./create-app-with-compiler` 注入。
+ */
+export function createAppInternal(
   rootComponent: Component,
-  rootProps: Record<string, unknown> | null = null,
-  options?: AppOptions,
+  rootProps: Record<string, unknown> | null,
+  options: AppOptions | undefined,
+  signalRendererFactory: SignalRendererFactory | null,
+  loadDOMRenderer: DOMRendererLoader | null,
 ): App {
   // 注册 App 工厂（幂等，仅首次生效）—— 供 renderer 的水合 API 取用。
-  installAppFactoryOnce();
+  // 这里直接复用 createAppInternal 与同一份注入参数：不要再引用 runtime 的
+  // `createApp` 包装，否则主入口的闭包会无谓地保留一条 runtime 专用边。
+  installAppFactoryOnce(signalRendererFactory, loadDOMRenderer);
 
   // FIX: P2-36 全局配置继承机制：
   // 如果提供了父 app context，子 app 继承父 app 的全局配置
@@ -298,6 +339,16 @@ export function createApp(
         throw new Error(
           `[LytJS] Failed to mount app: cannot find element matching selector "${rootContainer}". ` +
             `Make sure the target element exists in the DOM before calling app.mount().`,
+        );
+      }
+
+      // 没有 DOM 渲染器加载器的 App 只能用于插件安装（PluginTester），挂载会明确失败，
+      // 而不是拖着一个不存在的渲染路径跑到一半。
+      if (effectiveMode !== 'signal' && !loadDOMRenderer) {
+        throw new Error(
+          `[LytJS] 该 App 未配置 DOM 渲染器（PluginTester 创建的测试 App 只用于 ` +
+            `app.use()/config，不加载渲染器）。需要挂载请使用 @lytjs/core 或 ` +
+            `@lytjs/core/runtime 的 createApp()。`,
         );
       }
 
@@ -531,6 +582,12 @@ export function createApp(
     container: Element,
     hydrate: boolean = false,
   ): Promise<ComponentPublicInstance> {
+    // 先把 DOM 渲染器模块取进来，**再**跑 setup：
+    // 渲染器是惰性子路径（`@lytjs/renderer/app`），首次挂载要等模块加载；
+    // 若在 setup 之后才 await，`async setup` 的定时器会在模块加载期间兑现，
+    // 首帧就会跳过「兑现前」的状态（实测 10ms setup 对 24ms 冷加载）。
+    const { createDOMRenderer } = await loadDOMRenderer!();
+
     // 通过组件系统的标准流程创建根 vnode
     const rootVNode = createVNode(rootComponent, rootProps);
 
@@ -565,8 +622,7 @@ export function createApp(
     if (effectiveMode !== 'vnode') {
       throw new Error('[LytJS] Invalid renderer mode');
     }
-    const domRendererFn = await getDOMRenderer();
-    const renderer = domRendererFn!({
+    const renderer = createDOMRenderer({
       setupChildComponent(childVNode: VNode, parentComponent: ComponentInternalInstance | null) {
         const childInstance = createComponentInstance(childVNode, parentComponent);
         // 从父组件或根组件继承 appContext
@@ -671,6 +727,18 @@ export function createApp(
       );
     }
 
+    // ⚠️ 2026-11-13：runtime 入口不再静默借用 renderer 的编译器。
+    //   没有工厂 ⇒ 直接给出可操作的错误，而不是挂载到一半才失败。
+    if (!signalRendererFactory) {
+      throw new Error(
+        `[LytJS] rendererMode: 'signal' 需要运行时模板编译器，但当前 createApp 来自 ` +
+          `'@lytjs/core/runtime'（不含编译器）。请改用以下任一方式：\n` +
+          `  ① import { createApp } from '@lytjs/core'（主入口自带编译器）；\n` +
+          `  ② 用 @lytjs/compiler 预编译模板；\n` +
+          `  ③ 显式引入 '@lytjs/renderer/signal' 的 createSignalRenderer 自行驱动渲染。`,
+      );
+    }
+
     // 构建上下文对象：合并 data、setup 返回值和 props
     //
     // ⚠️ 2026-10-27 修（P1-6）：此前是**普通对象** `{ ...rootProps }`，`data()` 的返回值
@@ -746,9 +814,8 @@ export function createApp(
       beforeMount.call(ctx);
     }
 
-    // 创建 Signal 渲染器
-    const signalRendererFn = await getSignalRenderer();
-    signalRenderer = await signalRendererFn(template, ctx);
+    // 创建 Signal 渲染器（工厂已在入口处判空）
+    signalRenderer = await signalRendererFactory(template, ctx);
     signalRenderer.render(container);
 
     _isMounted = true;

@@ -82,3 +82,22 @@ v7.0.0 核心止血批次（A 阶段 A01–A14）。
 - 修复静默丢内容 / 静默 no-op 类缺陷（编译器、signal 渲染、CLI、core-signal setup 契约）。
 - 补齐验证链：锁文件、构建顺序、循环依赖、覆盖率快照、发布一致性、E2E。
 - 行为变更与取舍见根 CHANGELOG.md「v7 未发布」章节与 ADR 0012/0013。
+
+### 破坏性变更：`@lytjs/core/runtime` 不再包含编译器
+
+`@lytjs/core/runtime` 的 `createApp` 此前通过 `import('@lytjs/renderer')` 的
+namespace 取渲染器，导致 signal/vapor 发射链把整个 `@lytjs/compiler` 拖进产物
+（runtime-app 从 33,481 B 涨到 94,170 B gzip）。现在：
+
+- `@lytjs/core/runtime` 的产物闭包**不含** `compiler/dist`，由 bundle 门禁硬断言守卫；
+- `rendererMode: 'signal'` + `template` 字符串在该入口下**抛出可操作错误**
+  （指向 `@lytjs/core` 主入口 / `@lytjs/compiler` 预编译 / `@lytjs/renderer/signal`），
+  不再静默借用编译器；
+- `@lytjs/core` 主入口行为不变：`template` 与 `createAppWithCompiler` 路径均可用。
+
+迁移：需要运行时 signal 模板编译请改用 `import { createApp } from '@lytjs/core'`，
+或显式引入 `@lytjs/renderer/signal`。详见 ADR 0030。
+
+- `@lytjs/renderer` 新增子路径导出 `./app`：`createDOMRenderer`、`createSignalRenderer`
+  与类型 `SignalRenderer`（刻意新增，供 core 用单一动态入口同时取 DOM 与 signal；
+  包根 barrel 的导出面未变）。

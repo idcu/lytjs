@@ -38,6 +38,7 @@ keywords: [坑库, 索引, 假绿, 门禁, 负控]
 | 计时抖动 | [flaky](verify/timing-flaky-parallel.md) |
 | 负控同源 | [negctl](verify/negctl-same-source.md) |
 | 子路径内联 | [subpath](build/subpath-external-singleton-blindspot.md) |
+| runtime 变胖 | [ns](build/namespace-dynamic-import-retains-all.md) |
 | 绑实现 | [impl](verify/test-impl-coupling.md) |
 | 跨app泄漏 | [state](core/state-leak.md) |
 | 单包假红 | [pkg](verify/pkg-config-alias-blindspot.md) |

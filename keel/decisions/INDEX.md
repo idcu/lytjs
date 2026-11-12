@@ -11,7 +11,7 @@ keywords: [决策, ADR, 索引]
 | 0004 | group v-model 暂缓（子组件上报 min/max） | active | [0004](0004-group-vmodel-collaboration-deferred.md) |
 | 0006 | 硬约束 #9：公开开关须产物级断言 | active | [0006](0006-public-switch-assertion.md) |
 | 0007 | common 子包只收敛同名不同实现 | active | [0007](0007-common-package-merge-scope.md) |
-| 0008 | 环境类失败不改仓库（内核进人审） | active | [0008](0008-env-failure-not-code-defect.md) |
+| 0008 | 环境类失败不改仓库 | active | [0008](0008-env-failure-not-code-defect.md) |
 | 0009 | 已蒸馏坑移入 archive | active | [0009](0009-pitfall-archive-out-of-retrieval.md) |
 | 0010 | 缺陷按 ADR 修复+守卫 | active | [0010](0010-registered-defects-fix-vs-tradeoff.md) |
 | 0011 | 同名 API 单一权威 | active | [0011](0011-single-authoritative-implementation.md) |
@@ -24,12 +24,13 @@ keywords: [决策, ADR, 索引]
 | 0018 | style 数值不补 px | active | [0018](0018-style-unit-policy.md) |
 | 0019 | hydration 入口转发 | active | [0019](0019-hydration-list-diff-authority.md) |
 | 0020 | S13 必要增长：基线签字上调 | active | [0020](0020-bundle-baseline-s13-parity-growth.md) |
-| 0021 | C3：UI 依赖冲突（已裁 → 0026） | active | [0021](pending/0021-c3-ui-dependency-conflict.md) |
+| 0021 | C3：UI 依赖冲突→0026 | active | [0021](pending/0021-c3-ui-dependency-conflict.md) |
 | 0022 | `sideEffects:false`：内置组件显式注册 | active | [0022](pending/0022-sideeffects-b2-builtin-registration.md) |
-| 0023 | 16 个死包：保留+deprecated，8.0.0 删除 | pending | [0023](pending/0023-common-dead-packages-deprecation.md) |
-| 0024 | S22：短时断言只报数字，不参与慢档 | active | [0024](pending/0024-perf-timing-assertion-thresholds.md) |
-| 0025 | host-contract 暂缓：等第二个宿主目标 | pending | [0025](pending/0025-host-contract-deferred.md) |
-| 0026 | C3 收口：UI 对 L0 叶子例外 | active | [0026](pending/0026-c3-ui-dependency-exception.md) |
-| 0027 | S30 first-screen 基线上调（+426 B） | active | [0027](0027-bundle-first-screen-s30-fixes.md) |
+| 0023 | 死包保留 deprecated，8.0 删 | pending | [0023](pending/0023-common-dead-packages-deprecation.md) |
+| 0024 | S22：短时断言只报数字 | active | [0024](pending/0024-perf-timing-assertion-thresholds.md) |
+| 0025 | host-contract 暂缓 | pending | [0025](pending/0025-host-contract-deferred.md) |
+| 0026 | C3：UI 对 L0 叶子例外 | active | [0026](pending/0026-c3-ui-dependency-exception.md) |
+| 0027 | S30 first-screen 基线上调 | active | [0027](0027-bundle-first-screen-s30-fixes.md) |
 | 0028 | 战略拍板：边界 / B01d / 发布 / 口径 | active | [0028](0028-owner-authorized-strategy-decisions.md) |
-| 0029 | first-screen-runtime 基线上调（+182 B） | active | [0029](0029-bundle-first-screen-runtime-baseline.md) |
+| 0029 | first-screen-runtime 基线上调 | active | [0029](0029-bundle-first-screen-runtime-baseline.md) |
+| 0030 | core/runtime 不含编译器 | active | [0030](0030-runtime-entry-no-compiler-contract.md) |

@@ -14,6 +14,9 @@ export default defineConfig({
     //   包根的 `createSignalRenderer` 是 async 懒加载包装，需要同步实例的调用方
     //   此前只能相对穿透到 src（示例因此不可移植）。本入口把同步版暴露为包 API。
     'signal/index': 'src/signal/index.ts',
+    // ★ 2026-11-13：`createApp` 所需的 DOM + signal 渲染器合并入口。
+    //   拆成两条动态 import 会让消费者首屏静态闭包多切一个 chunk（见 src/app.ts）。
+    app: 'src/app.ts',
   },
   format: ['esm', 'cjs'],
   dts: {

@@ -89,7 +89,7 @@ describe('KeepAlive 端到端（真实渲染链）', () => {
       },
     });
 
-    app.mount(host);
+    await app.mount(host);
     await flush();
 
     // ① 初次渲染：ChildA 挂载
@@ -150,7 +150,7 @@ describe('KeepAlive 端到端（真实渲染链）', () => {
       },
     });
 
-    app.mount(host);
+    await app.mount(host);
     await flush();
     expect(host.innerHTML).toContain('>A<');
 
@@ -205,7 +205,7 @@ describe('KeepAlive 端到端（真实渲染链）', () => {
       },
     });
 
-    app.mount(host);
+    await app.mount(host);
     await flush();
     expect(host.innerHTML).toContain('>A<');
 
@@ -264,7 +264,7 @@ describe('KeepAlive 端到端（真实渲染链）', () => {
       },
     });
 
-    app.mount(host);
+    await app.mount(host);
     await flush();
     expect(host.innerHTML).toContain('>A<');
     expect(aSetupCount).toBe(1);
@@ -322,7 +322,7 @@ describe('KeepAlive 端到端（真实渲染链）', () => {
       },
     });
 
-    app.mount(host);
+    await app.mount(host);
     await flush();
     expect(host.innerHTML).toContain('>A<');
 
@@ -378,7 +378,7 @@ describe('KeepAlive 端到端（真实渲染链）', () => {
       },
     });
 
-    app.mount(host);
+    await app.mount(host);
     await flush();
     which.value = 'b';
     await flush();
@@ -429,7 +429,7 @@ describe('KeepAlive 端到端（真实渲染链）', () => {
       },
     });
 
-    app.mount(host);
+    await app.mount(host);
     await flush();
     // 切到 B：A 被停用并缓存（尚未 unmount）
     which.value = 'b';
@@ -490,7 +490,7 @@ describe('KeepAlive 端到端（真实渲染链）', () => {
       },
     });
 
-    app.mount(host);
+    await app.mount(host);
     await flush();
     expect(host.innerHTML).toContain('>G<');
 
@@ -545,7 +545,7 @@ describe('KeepAlive 端到端（真实渲染链）', () => {
       },
     });
 
-    app.mount(host);
+    await app.mount(host);
     await flush();
 
     // 依次访问 A → B → C，max=3 ⇒ 三者都留在缓存里（各 setup 一次）

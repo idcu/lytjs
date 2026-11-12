@@ -180,16 +180,16 @@ console.log(store.double); // 2
 
 ## 包导入路径速查
 
-| 包名                  | 导入路径              | 主要导出                                                                                    |
-| --------------------- | --------------------- | ------------------------------------------------------------------------------------------- |
-| `@lytjs/core`         | `@lytjs/core`         | `createApp`, `h`, `ref`, `computed`, `installTemplateCompiler`, `renderToString`, `compile` |
-| `@lytjs/core/runtime` | `@lytjs/core/runtime` | 同上但**不含编译器**（体积小 52KB），不支持 `template` 选项                                 |
-| `@lytjs/reactivity`   | `@lytjs/reactivity`   | `ref`, `reactive`, `computed`, `watch`, `effectScope`                                       |
-| `@lytjs/component`    | `@lytjs/component`    | `defineComponent`, `defineAsyncComponent`, `provide`, `inject`                              |
-| `@lytjs/compiler`     | `@lytjs/compiler`     | `compile`, `compileTemplateToRender`                                                        |
-| `@lytjs/ssr`          | `@lytjs/ssr`          | `renderToString`, `renderToStringAsync`, `renderToStream`, `generateStaticPages`            |
-| `@lytjs/store`        | `@lytjs/store`        | `defineStore`, `createPinia`, `storeToRefs`                                                 |
-| `@lytjs/vdom`         | `@lytjs/vdom`         | `createVNode`, `Fragment`, `Text`, `Comment`, `Teleport`, `Suspense`                        |
+| 包名                  | 导入路径              | 主要导出                                                                                                        |
+| --------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `@lytjs/core`         | `@lytjs/core`         | `createApp`, `h`, `ref`, `computed`, `installTemplateCompiler`, `renderToString`, `compile`                     |
+| `@lytjs/core/runtime` | `@lytjs/core/runtime` | 同上但**不含编译器**（体积小 52KB），不支持 `template` 选项；`rendererMode:'signal'` + 模板字符串会抛可操作错误 |
+| `@lytjs/reactivity`   | `@lytjs/reactivity`   | `ref`, `reactive`, `computed`, `watch`, `effectScope`                                                           |
+| `@lytjs/component`    | `@lytjs/component`    | `defineComponent`, `defineAsyncComponent`, `provide`, `inject`                                                  |
+| `@lytjs/compiler`     | `@lytjs/compiler`     | `compile`, `compileTemplateToRender`                                                                            |
+| `@lytjs/ssr`          | `@lytjs/ssr`          | `renderToString`, `renderToStringAsync`, `renderToStream`, `generateStaticPages`                                |
+| `@lytjs/store`        | `@lytjs/store`        | `defineStore`, `createPinia`, `storeToRefs`                                                                     |
+| `@lytjs/vdom`         | `@lytjs/vdom`         | `createVNode`, `Fragment`, `Text`, `Comment`, `Teleport`, `Suspense`                                            |
 
 > ⚠️ **`h` 不在 `@lytjs/vdom` 里**。`@lytjs/vdom` 只导出 `createVNode`；
 > `h` 由 `@lytjs/core` 导出。若组件只用 `createVNode` 构建视图（不写 `template`），
@@ -202,7 +202,7 @@ console.log(store.double); // 2
 1. **SSR 单独使用时必须注入编译器**：`createApp()` 内部会自动注入，但纯 SSR 进程不创建 app，需手动调 `installTemplateCompiler()`。
 2. **`mount()` 返回 Promise**：在 Node 环境中不 await 可能导致空白页且不报错。
 3. **模板表达式只支持简单属性路径**：`@click="count = count + 1"` 会编译报错，请在 `setup` 里定义方法再绑定。
-4. **`@lytjs/core` vs `@lytjs/core/runtime`**：主入口含编译器（82KB gzip），runtime 入口不含（8.9KB gzip）。AOT 预编译或只用 `render()` 函数的用户选 runtime 入口。
+4. **`@lytjs/core` vs `@lytjs/core/runtime`**：主入口含编译器（82KB gzip），runtime 入口不含（8.9KB gzip）。AOT 预编译或只用 `render()` 函数的用户选 runtime 入口。runtime 入口下 `rendererMode:'signal'` 的模板字符串会**抛错**并指向主入口 / `@lytjs/compiler` / `@lytjs/renderer/signal`（ADR 0030）。
 
 ## 项目状态
 

@@ -27,7 +27,7 @@ import { setTemplateCompiler } from '@lytjs/component';
 import * as mainEntry from '../src/index';
 import * as runtimeEntry from '../src/runtime';
 import { createApp as createAppWithCompiler } from '../src/create-app-with-compiler';
-import { createApp as createAppRuntime } from '../src/create-app';
+import { createApp as createAppRuntime } from '../src/runtime';
 
 const tick = (ms = 20): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
@@ -84,6 +84,39 @@ describe('@lytjs/core 的两个入口（P1-N 回归）', () => {
 
     expect(host.querySelector('.ok')).not.toBeNull();
     expect(host.textContent).toContain('hi');
+  });
+
+  // 双向测试 ②：主入口的 signal 模板编译必须正常出结果
+  it('主入口的 createApp 支持 rendererMode: signal 的模板字符串', async () => {
+    const app = createAppWithCompiler({ template: '<div class="sig">hi</div>' } as never, null, {
+      rendererMode: 'signal',
+    } as never);
+    const host = makeHost();
+    await app.mount(host);
+
+    expect(host.querySelector('.sig')).not.toBeNull();
+    expect(host.textContent).toContain('hi');
+  }, 20_000);
+
+  // 双向测试 ①：runtime 入口的 signal 模板编译必须给出可操作错误
+  it('runtime 的 createApp 在 signal 模式下抛出可操作错误（不静默降级）', async () => {
+    // 先调用主入口：signal 工厂是按实例注入的，不应泄漏给 runtime 入口
+    createAppWithCompiler({ render: () => null } as never);
+
+    const app = createAppRuntime({ template: '<div>hi</div>' } as never, null, {
+      rendererMode: 'signal',
+    } as never);
+    const host = makeHost();
+
+    const err = await app.mount(host).then(
+      () => null,
+      (e: unknown) => e as Error,
+    );
+    expect(err).toBeInstanceOf(Error);
+    expect(err!.message).toContain('@lytjs/core');
+    expect(err!.message).toContain('@lytjs/renderer/signal');
+    // 没有静默降级：容器里不应出现任何内容
+    expect(host.childNodes).toHaveLength(0);
   });
 
   it('runtime 的 createApp 不注入编译器 ⇒ template 不生效且有 DEV 告警', async () => {

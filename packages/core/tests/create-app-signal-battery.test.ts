@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { createApp } from '../src/create-app';
+import { createApp } from '../src/create-app-with-compiler';
 
 let container: HTMLElement;
 let logs: string[];

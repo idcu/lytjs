@@ -17,6 +17,11 @@
       "import": "./dist/client/index.mjs",
       "require": "./dist/client/index.cjs"
     },
+    "./app": {
+      "types": "./dist/app.d.ts",
+      "import": "./dist/app.mjs",
+      "require": "./dist/app.cjs"
+    },
     "./dom": {
       "types": "./dist/dom.d.ts",
       "import": "./dist/dom.mjs",

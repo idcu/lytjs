@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 
 import type { EnhancedPlugin, App } from './types';
-import { createApp } from './create-app';
+import { createAppInternal } from './create-app';
 import { h } from './h';
 import type { ConfigSchema, ConfigValidationReport, ConfigTransformReport } from './config-schema';
 import { ConfigTransformer, transformConfig } from './config-transformer';
@@ -276,9 +276,13 @@ export class PluginTester {
     //   入口会连带加载 compiler 等一大串模块，在整套测试并行跑时首次导入可能久到超时
     //   （实测：单跑 30ms，整包并行时 5s 超时）。这里直接静态引用实际需要的两个模块，
     //   依赖方向是 `plugin-sdk → create-app / h`，不存在循环。
-    const app = createApp({
-      render: () => h('div'),
-    });
+    //
+    // ⚠️ 2026-11-13：不注入 DOM 渲染器加载器（第 5 个参数为 `null`）。
+    //   本测试器只用于 `app.use()` / `app.config`，从不挂载；而任何一条指向
+    //   DOM/signal 渲染器的动态 import 都会让 `@lytjs/core` 主入口多出一个
+    //   entry point（首屏静态闭包 3 个 chunk），或把 signal 的编译器拖进
+    //   runtime 产物。挂载会得到一条明确的错误（见 `mount()` 的入口检查）。
+    const app = createAppInternal({ render: () => h('div') }, null, undefined, null, null);
 
     // ★ 2026-10-24：`appConfig` 此前**完全被忽略**（选项声明了但没有任何消费点）。
     //   `globalProperties` 直接挂到 app.config 上；同批的 `performance` 已于 2026-10-25

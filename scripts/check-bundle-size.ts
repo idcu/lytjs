@@ -169,6 +169,8 @@ interface Result {
   closureChunks?: number;
   /** 首屏静态闭包里是否含编译器（只对切分模式有意义） */
   compilerInClosure?: boolean;
+  /** 产物是否含编译器模块（非切分模式：闭包即整包） */
+  compilerIncluded?: boolean;
   /** 被打进闭包的 `.../src/...` 输入（应为空） */
   srcInputs?: string[];
 }
@@ -264,6 +266,8 @@ const measured: {
   closureChunks?: number;
   /** 切分模式：首屏静态闭包里是否含编译器 */
   compilerInClosure?: boolean;
+  /** 非切分模式：整包是否含编译器 */
+  compilerIncluded?: boolean;
   /** 被打进闭包的 `.../src/...` 输入（应为空：消费者只解析 dist） */
   srcInputs?: string[];
 }[] = [];
@@ -286,6 +290,13 @@ for (const c of CASES) {
       name: c.name,
       raw: code.length,
       gzip: gzipSync(code).length,
+      // 只看「真正进了产物」的字节：esbuild 会为了解析依赖读入一些模块，随后
+      // 完整 tree-shake（bytesInOutput = 0），那不算产物包含编译器。
+      compilerIncluded: Object.values(out.metafile?.outputs ?? {}).some((o) =>
+        Object.entries(o.inputs ?? {}).some(
+          ([p, info]) => p.includes('compiler/dist') && info.bytesInOutput > 0,
+        ),
+      ),
       srcInputs: Object.keys(out.metafile?.inputs ?? {}).filter((p) => /\/src\//.test(p)),
     });
     continue;
@@ -410,6 +421,7 @@ for (const m of measured) {
     entryOnlyGzip: m.entryOnlyGzip,
     closureChunks: m.closureChunks,
     compilerInClosure: m.compilerInClosure,
+    compilerIncluded: m.compilerIncluded,
     srcInputs: m.srcInputs,
   });
 }
@@ -454,6 +466,15 @@ check(
   'first-screen-runtime 的首屏静态闭包不含编译器',
   results.find((r) => r.name === 'first-screen-runtime')?.compilerInClosure === false,
   '`@lytjs/core/runtime` 的静态闭包里出现了编译器 —— runtime 入口的意义就是不带编译器',
+);
+
+// 非切分口径的硬断言：`runtime-app` 是 `splitting: false` 的整包，
+// 编译器一旦被任何一条运行路径接回来，这里必须红。
+check(
+  'runtime-app 的产物不含编译器模块',
+  results.find((r) => r.name === 'runtime-app')?.compilerIncluded === false,
+  '`@lytjs/core/runtime` 的产物闭包里出现了 compiler/dist —— runtime 入口的契约是「不含编译器」；' +
+    "检查 core 是否又用 `import('@lytjs/renderer')` 的 namespace 取 DOM / signal 渲染器",
 );
 
 const firstScreen = results.find((r) => r.name === 'first-screen');

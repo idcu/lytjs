@@ -11,6 +11,20 @@
 import { describe, it, expect } from 'vitest';
 
 const tick = () => new Promise((r) => setTimeout(r, 30));
+/**
+ * 轮询等待首帧落地。
+ *
+ * `main.js` 的 `createApp(...).mount('#app')` 没有 `await`，而渲染器是**动态**
+ * 加载的（`@lytjs/renderer/app`），冷启动耗时随并行负载波动 —— 固定 30ms
+ * 在慢机 / 全量并行下会偶发读到空容器。这里等条件成立，不猜延时。
+ */
+const waitFor = async (check: () => boolean, timeoutMs = 10_000): Promise<void> => {
+  const start = Date.now();
+  while (!check()) {
+    if (Date.now() - start > timeoutMs) throw new Error('waitFor timeout');
+    await tick();
+  }
+};
 const click = (el: Element) => el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 const buttonByText = (root: Element, text: string) =>
   Array.from(root.querySelectorAll('button')).find((b) => b.textContent?.trim() === text);
@@ -21,9 +35,9 @@ describe('using-lytjs-as-dep · TodoApp 真实行为', () => {
     document.body.innerHTML = '<div id="app"></div>';
 
     await import('./main.js');
-    await tick();
 
     const host = document.querySelector('#app') as HTMLElement;
+    await waitFor(() => (host.textContent ?? '').includes('Todo List'));
     expect(host.textContent).toContain('Todo List');
     expect(host.textContent).toContain('待办 0 项');
 

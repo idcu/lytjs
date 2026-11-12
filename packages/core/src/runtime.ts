@@ -11,13 +11,39 @@
 // evaluation/LYTJS_体积归因_2026-11-06.md）
 //
 // 本入口与主入口的**唯一差别**是 `createApp` 不带模板编译器：
-//   · 本入口：`template` 不可用（会得到一条明确的 DEV 告警，不是静默空白）
+//   · 本入口：`template` 不可用（vnode 模式得到一条明确的 DEV 告警；
+//     `rendererMode:'signal'` 下直接抛可操作错误并指向 `@lytjs/core` 主入口，
+//     不再静默借用 renderer 的编译器 —— 见 ADR 0030）
 //   · 主入口：`template` 可用
 // 其余导出面**逐字一致**（同一份 barrel，避免两处清单漂移）。
 //
 // 用法：`import { createApp } from '@lytjs/core/runtime'`
 
-export { createApp } from './create-app';
+import { createAppInternal } from './create-app';
+import type { DOMRendererLoader } from './create-app';
+import type { App, AppOptions, Component } from './types';
+
+// 跨包类型断言：`@lytjs/renderer/dom` 的 `DOMRendererOptions` 用的是
+// common-vnode 的轻量实例类型，与 core 注入的 component 实例类型不兼容；
+// 运行时由 createDOMRenderer 自己按注入对象解释，这里只做形状桥接。
+const loadDOMRenderer: DOMRendererLoader = async () =>
+  (await import('@lytjs/renderer/dom')) as unknown as Awaited<ReturnType<DOMRendererLoader>>;
+
+/**
+ * 不含编译器的 `createApp`。
+ *
+ * `signalRendererFactory` 恒为 `null` ⇒ `rendererMode: 'signal'` 会抛出指向
+ * `@lytjs/core` 主入口的可操作错误，而不是静默降级。
+ * DOM 加载器只取 `@lytjs/renderer/dom`（不经过含 signal 的 `./renderers`），
+ * 编译器因此不会进入本入口的产物。
+ */
+export function createApp(
+  rootComponent: Component,
+  rootProps: Record<string, unknown> | null = null,
+  options?: AppOptions,
+): App {
+  return createAppInternal(rootComponent, rootProps, options, null, loadDOMRenderer);
+}
 
 // ── 内置组件 ────────────────────────────────────────────────────────────
 // ⚠️ 2026-10-02 新增：此前 core **完全没有**转出内置组件。后果实测：

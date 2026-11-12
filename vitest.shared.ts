@@ -60,6 +60,11 @@ export const sharedAliases: Record<string, string> = {
   '@lytjs/reactivity': resolve(root, 'packages/reactivity/src'),
   '@lytjs/reactivity/scope': resolve(root, 'packages/reactivity/src/scope.ts'),
   '@lytjs/reactivity/async': resolve(root, 'packages/reactivity/src/async.ts'),
+  // 子路径 alias 必须先于主包 alias：`@lytjs/renderer` 的字符串 alias 会按前缀
+  // 命中 `@lytjs/renderer/dom`，拼成 `packages/renderer/src/dom`（目录）而解析失败。
+  '@lytjs/renderer/dom': resolve(root, 'packages/renderer/src/dom/dom-renderer.ts'),
+  '@lytjs/renderer/signal': resolve(root, 'packages/renderer/src/signal/index.ts'),
+  '@lytjs/renderer/app': resolve(root, 'packages/renderer/src/app.ts'),
   '@lytjs/renderer': resolve(root, 'packages/renderer/src'),
   '@lytjs/component': resolve(root, 'packages/component/src'),
   // ecosystem：示例 / 集成测试会直接 import 这些包。
