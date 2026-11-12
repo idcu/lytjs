@@ -17,8 +17,8 @@
  *
  * | 类 | 判据 |
  * |---|---|
- * | vmodel | 值类 prop 存在，且源码 emit `update:<prop>` |
- * | slots | `types.ts` 声明的每个插槽都被渲染函数读取 |
+ * | vmodel | 值类 prop 存在，且 AST 中存在真实的 emit('update:<prop>') 调用（注释/字符串里的同形文本不算） |
+ * | slots | `types.ts` 声明的每个插槽都被渲染函数以 `slots.x` / `slots['x']` / 解构读取（AST 级，注释不算） |
  * | events | 声明的每个 `onX` 回调要么被 `p.onX` 调用，要么 emit 同名事件 |
  * | controlled | 有值类 prop + 内部 signal/reactive + 无 watch ⇒ 红；无受控 prop 但有内部状态 ⇒ n/a |
  * | styles | 源码里的每个静态 `lyt-*` 类名在 `styles/index.css` 有规则 |
@@ -33,6 +33,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import ts from 'typescript';
 
 const ROOT = path.resolve(new URL('..', import.meta.url).pathname);
 const UI = path.join(ROOT, 'packages/ecosystem/packages/ui/src');
@@ -87,6 +88,78 @@ function hasProp(src, prop) {
   return new RegExp(`\\n    ${prop}: \\{`).test(src);
 }
 
+// ── AST 同构判据 ─────────────────────────────────────────────────────────
+// 旧探针是对源码做子串匹配：注释、字符串、文档示例里的 `emit('update:x'` /
+// `slots.header` 都会让探针误判为「已实现」。这里改为解析同一份 TS 源码的
+// AST —— 与打包器看到的语法结构一致 —— 只认真的调用/属性读取。
+const AST_CACHE = new Map();
+
+function astOf(name, src) {
+  if (!AST_CACHE.has(name)) {
+    AST_CACHE.set(
+      name,
+      ts.createSourceFile(`${name}.ts`, src, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS),
+    );
+  }
+  return AST_CACHE.get(name);
+}
+
+/** 遍历 AST（含当前节点）。 */
+function walk(node, fn) {
+  fn(node);
+  ts.forEachChild(node, (child) => walk(child, fn));
+}
+
+function stringArg(node) {
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text;
+  return null;
+}
+
+/** 收集真实 emit 调用的事件名（忽略注释与普通字符串）。 */
+function emittedEvents(name, src) {
+  const events = new Set();
+  walk(astOf(name, src), (node) => {
+    if (!ts.isCallExpression(node)) return;
+    const callee = node.expression;
+    const isEmit =
+      (ts.isIdentifier(callee) && callee.text === 'emit') ||
+      (ts.isPropertyAccessExpression(callee) && callee.name.text === 'emit');
+    if (!isEmit || node.arguments.length === 0) return;
+    const event = stringArg(node.arguments[0]);
+    if (event) events.add(event);
+  });
+  return events;
+}
+
+/** 收集插槽的真实读取：slots.x / slots['x'] / const { x } = slots。 */
+function slotReads(name, src) {
+  const used = new Set();
+  walk(astOf(name, src), (node) => {
+    if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression)) {
+      if (node.expression.text === 'slots') used.add(node.name.text);
+      return;
+    }
+    if (ts.isElementAccessExpression(node) && ts.isIdentifier(node.expression)) {
+      if (node.expression.text !== 'slots') return;
+      const key = stringArg(node.argumentExpression);
+      if (key) used.add(key);
+      return;
+    }
+    if (
+      ts.isVariableDeclaration(node) &&
+      ts.isObjectBindingPattern(node.name) &&
+      node.initializer
+    ) {
+      if (!ts.isIdentifier(node.initializer) || node.initializer.text !== 'slots') return;
+      for (const element of node.name.elements) {
+        const key = element.propertyName ?? element.name;
+        if (ts.isIdentifier(key)) used.add(key.text);
+      }
+    }
+  });
+  return used;
+}
+
 function declaredSlots(name) {
   const m = TYPES.match(new RegExp(`export interface ${name}Slots\\s*\\{([\\s\\S]*?)\\n\\}`));
   if (!m) return null;
@@ -116,7 +189,8 @@ function probeVmodel(name, src) {
   if (valueProps.length === 0) {
     return { status: 'n/a', detail: '无值类 prop' };
   }
-  const missing = valueProps.filter((p) => !src.includes(`emit('update:${p}'`));
+  const emitted = emittedEvents(name, src);
+  const missing = valueProps.filter((p) => !emitted.has(`update:${p}`));
   return {
     status: missing.length === 0 ? 'pass' : 'red',
     detail: missing.length === 0 ? valueProps.join(',') : `未 emit update:${missing.join(',')}`,
@@ -126,7 +200,7 @@ function probeVmodel(name, src) {
 function probeSlots(name, src) {
   const declared = declaredSlots(name);
   if (!declared) return { status: 'n/a', detail: '无插槽接口' };
-  const used = new Set([...src.matchAll(/slots\.(\w+)/g)].map((m) => m[1]));
+  const used = slotReads(name, src);
   const unused = declared.filter((k) => !used.has(k));
   return {
     status: unused.length === 0 ? 'pass' : 'red',
