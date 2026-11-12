@@ -3,7 +3,7 @@ scope: verify
 status: active
 severity: P2
 last-verified: 2026-11-13
-triggers: 1
+triggers: 2
 keywords: [test, 偶发, 未复现, 原始输出]
 ---
 
