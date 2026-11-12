@@ -1705,7 +1705,10 @@ function processCallExpression(
           // 不能引用 create 内的局部变量名
           updateBody = `_el.textContent = ${textCode};`;
         } else if (typeof children === 'string') {
-          const escaped = children.replace(/'/g, "\\'").replace(/\\/g, '\\\\');
+          // ⚠️ 必须先转义反斜杠再转义单引号：顺序颠倒时 `it's a\b` 会先变成
+          //   `it\'s a\b`，再被反斜杠转义二次处理成 `it\\'s a\\b`，
+          //   产物 `'it\\'s a\\b'` 语法错误（`Unexpected identifier 's'`）。
+          const escaped = children.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
           createBody += `${elVar}.textContent = '${escaped}';`;
         }
 

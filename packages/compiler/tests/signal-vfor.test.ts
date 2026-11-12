@@ -86,6 +86,18 @@ describe('Signal 模式 - v-for 项内容', () => {
     ).toEqual(['static', 'static']);
   });
 
+  it('静态文本含反斜杠与引号时应正确转义（C-04）', () => {
+    // 文本字面量同时含单引号与反斜杠：转义顺序颠倒会先产出 `\'`，
+    // 再被反斜杠转义二次处理成 `\\\'`，最终源码 `'it\\'s a\\b'` 语法错误。
+    const raw = "it's a\\b";
+    // 缺陷在基础实现（`optimizeSignal` 默认关闭）的列表项发射路径。
+    const handle = executeSignal(
+      compile(`<ul><li v-for="item in items">${raw}</li></ul>`, { optimizeSignal: false }),
+      { items: sample() },
+    );
+    expect(itemsOf(handle).map((li) => li.textContent)).toEqual([raw, raw]);
+  });
+
   it('动态属性应写入 create 与 update', () => {
     const state = reactive({
       items: [{ id: 1, title: 'T', name: 'a' }],
