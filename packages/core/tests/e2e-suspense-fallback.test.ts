@@ -28,8 +28,8 @@
  * 5. **嵌套**异步（default 是个包一层的元素，里面才是 async 组件）同样要显示 fallback；
  * 6. 多个异步子组件：**全部**兑现后才切回 default。
  */
-import { describe, it, expect, afterEach } from 'vitest';
-import { createApp, h, Suspense } from '../src/index';
+import { describe, it, expect, afterEach, vi } from 'vitest';
+import { createApp, h, nextTick, Suspense } from '../src/index';
 
 const hosts: HTMLElement[] = [];
 afterEach(() => {
@@ -79,11 +79,10 @@ describe('Suspense fallback（P0 回归）', () => {
 
     expect(host.querySelector('#fallback')).not.toBeNull();
 
-    await wait(200);
-
-    expect(host.querySelector('#fallback')).toBeNull();
-    expect(host.querySelector('#content')).not.toBeNull();
-    expect(host.textContent).toContain('msg=DATA');
+    await vi.waitFor(() => {
+      expect(host.querySelector('#fallback')).toBeNull();
+      expect(host.querySelector('#content')?.textContent).toBe('msg=DATA');
+    });
   });
 
   it('同步子组件：不显示 fallback', async () => {
@@ -95,10 +94,11 @@ describe('Suspense fallback（P0 回归）', () => {
           h('div', { key: 'fb', id: 'fallback' }, 'LOADING'),
         ]),
     } as never).mount(host);
-    await wait(30);
 
-    expect(host.querySelector('#sync')).not.toBeNull();
-    expect(host.querySelector('#fallback')).toBeNull();
+    await vi.waitFor(() => {
+      expect(host.querySelector('#sync')?.textContent).toBe('SYNC');
+      expect(host.querySelector('#fallback')).toBeNull();
+    });
   });
 
   it('`{ default, fallback }` slots 对象形态能渲染（此前恒为空）', async () => {
@@ -110,10 +110,10 @@ describe('Suspense fallback（P0 回归）', () => {
           fallback: () => [h('div', { id: 'fallback' }, 'LOADING')],
         }),
     } as never).mount(host);
-    await wait(30);
 
-    expect(host.querySelector('#s')).not.toBeNull();
-    expect(host.textContent).toContain('SYNC');
+    await vi.waitFor(() => {
+      expect(host.querySelector('#s')?.textContent).toBe('SYNC');
+    });
   });
 
   it('嵌套异步：default 包一层元素、里面才是 async 组件，同样要显示 fallback', async () => {
@@ -128,17 +128,23 @@ describe('Suspense fallback（P0 回归）', () => {
 
     expect(host.querySelector('#fallback')).not.toBeNull();
 
-    await wait(200);
-
-    expect(host.querySelector('#fallback')).toBeNull();
-    expect(host.querySelector('#wrap')).not.toBeNull();
-    expect(host.textContent).toContain('msg=DATA');
+    await vi.waitFor(() => {
+      expect(host.querySelector('#fallback')).toBeNull();
+      expect(host.querySelector('#wrap')).not.toBeNull();
+      expect(host.textContent).toContain('msg=DATA');
+    });
   });
 
   it('多个异步子组件：全部兑现后才切回 default', async () => {
+    let fastResolved = false;
+    let releaseSlow!: () => void;
+    const slowGate = new Promise<void>((resolve) => {
+      releaseSlow = resolve;
+    });
     const Fast = {
       async setup() {
-        await wait(30);
+        await wait(10);
+        fastResolved = true;
         return { msg: 'FAST' };
       },
       render(ctx: { msg?: string }) {
@@ -147,7 +153,7 @@ describe('Suspense fallback（P0 回归）', () => {
     };
     const Slow = {
       async setup() {
-        await wait(120);
+        await slowGate;
         return { msg: 'SLOW' };
       },
       render(ctx: { msg?: string }) {
@@ -169,14 +175,17 @@ describe('Suspense fallback（P0 回归）', () => {
 
     expect(host.querySelector('#fallback')).not.toBeNull();
 
-    // 快的那个兑现了，但慢的还没 —— 必须**继续**显示 fallback
-    await wait(70);
+    // 快的那个已兑现、慢的仍挂起 —— 必须**继续**显示 fallback
+    await vi.waitFor(() => expect(fastResolved).toBe(true));
+    await nextTick();
     expect(host.querySelector('#fallback')).not.toBeNull();
 
-    await wait(200);
-    expect(host.querySelector('#fallback')).toBeNull();
-    expect(host.textContent).toContain('fast=FAST');
-    expect(host.textContent).toContain('slow=SLOW');
+    releaseSlow();
+    await vi.waitFor(() => {
+      expect(host.querySelector('#fallback')).toBeNull();
+      expect(host.textContent).toContain('fast=FAST');
+      expect(host.textContent).toContain('slow=SLOW');
+    });
   });
 
   it('切回 default 后，其内部仍是活的（响应式更新照常生效）', async () => {
@@ -200,11 +209,13 @@ describe('Suspense fallback（P0 回归）', () => {
         h(Suspense as never, null, [h(AsyncWithRef as never, { key: 'c' }), Fallback()]),
     } as never).mount(host);
 
-    await wait(150);
-    expect(host.textContent).toContain('n=0');
+    await vi.waitFor(() => {
+      expect(host.textContent).toContain('n=0');
+    });
 
     n.value = 7;
-    await wait(50);
-    expect(host.textContent).toContain('n=7');
+    await vi.waitFor(() => {
+      expect(host.textContent).toContain('n=7');
+    });
   });
 });
