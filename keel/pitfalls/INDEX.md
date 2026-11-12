@@ -47,6 +47,6 @@ keywords: [坑库, 索引, 假绿, 门禁, 负控]
 | 残留缺陷 | [residual](core/residuals.md) |
 | dist mtime | [mtime](verify/dist-mtime.md) |
 | 快照落后 HEAD | [cov-age](verify/coverage-snapshot-commit-staleness.md) |
-| 体积测旧 dist | [stale](verify/bundle-gate-reads-stale-dist.md) |
+| 体积/行为测旧 dist | [stale](verify/bundle-gate-reads-stale-dist.md) |
 | 负控锚点漂移 | [anchor](verify/negative-control-anchor-drift.md) |
 | 子串假通过 | [substr](verify/substring-probe-comment-false-pass.md) |
