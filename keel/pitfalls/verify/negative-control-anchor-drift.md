@@ -3,7 +3,7 @@ scope: verify
 status: active
 severity: P1
 last-verified: 2026-11-12
-triggers: 1
+triggers: 2
 keywords: [负控, negative-control, 锚点漂移, 注入, 假绿, anchor]
 ---
 

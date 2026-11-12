@@ -3,7 +3,7 @@ scope: verify
 status: active
 severity: P2
 last-verified: 2026-11-12
-triggers: 1
+triggers: 2
 keywords: [覆盖率, coverage, snapshot, 快照, 过期, commit 年龄]
 ---
 

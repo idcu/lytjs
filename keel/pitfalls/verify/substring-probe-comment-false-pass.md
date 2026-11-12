@@ -3,7 +3,7 @@ scope: verify
 status: active
 severity: P1
 last-verified: 2026-11-12
-triggers: 1
+triggers: 2
 keywords: [子串匹配, substring, AST, 探针, 假通过, 注释]
 ---
 

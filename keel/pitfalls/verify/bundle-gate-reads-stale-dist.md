@@ -3,7 +3,7 @@ scope: verify
 status: active
 severity: P1
 last-verified: 2026-11-12
-triggers: 1
+triggers: 2
 keywords: [bundle, 体积门禁, dist, 归因, 首屏, stale]
 ---
 
