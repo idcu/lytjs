@@ -23,7 +23,7 @@ export interface TreeSelectNode {
 export interface TreeSelectSetupProps {
   data: TreeSelectNode[];
   /** 单选为标量；multiple 时为数组 */
-  value: string | number | (string | number)[];
+  modelValue: string | number | (string | number)[];
   placeholder: string;
   multiple: boolean;
   clearable: boolean;
@@ -49,7 +49,7 @@ export const TreeSelect = defineComponent({
 
   props: {
     data: { type: Array as () => TreeSelectNode[], default: () => [] },
-    value: {
+    modelValue: {
       type: [String, Number, Array] as unknown as PropType<string | number | (string | number)[]>,
       default: '',
     },
@@ -82,7 +82,7 @@ export const TreeSelect = defineComponent({
 
     /** 多选当前值（非数组入参按空集处理） */
     const multiValues = (): (string | number)[] =>
-      Array.isArray(_props.value) ? _props.value : [];
+      Array.isArray(_props.modelValue) ? _props.modelValue : [];
 
     function getAllNodeKeys(nodes: TreeSelectNode[]): (string | number)[] {
       const keys: (string | number)[] = [];
@@ -147,7 +147,7 @@ export const TreeSelect = defineComponent({
     };
 
     const selectedNode = (): TreeSelectNode | null => {
-      const v = _props.value;
+      const v = _props.modelValue;
       if (typeof v !== 'string' && typeof v !== 'number') return null;
       return findNodeByValue(_props.data, v);
     };
@@ -158,11 +158,11 @@ export const TreeSelect = defineComponent({
 
     const handleClear = () => {
       if (_props.multiple) {
-        emit('update:value', []);
+        emit('update:modelValue', []);
         _props.onChange?.([], null as unknown as TreeSelectNode);
         return;
       }
-      emit('update:value', '');
+      emit('update:modelValue', '');
       _props.onChange?.('' as unknown as string | number, null as unknown as TreeSelectNode);
     };
 
@@ -176,11 +176,11 @@ export const TreeSelect = defineComponent({
         const next = current.includes(nodeValue)
           ? current.filter((v) => v !== nodeValue)
           : [...current, nodeValue];
-        emit('update:value', next);
+        emit('update:modelValue', next);
         _props.onChange?.(next, node);
         return;
       }
-      emit('update:value', nodeValue);
+      emit('update:modelValue', nodeValue);
       _props.onChange?.(nodeValue, node);
       visible.set(false);
     };
@@ -221,7 +221,7 @@ export const TreeSelect = defineComponent({
       const isExpanded = filterQuery().length > 0 || keys.includes(nodeKey);
       const isSelected = _props.multiple
         ? multiValues().includes(nodeKey)
-        : nodeKey === _props.value;
+        : nodeKey === _props.modelValue;
       const hasChildren = node.children && node.children.length > 0;
 
       const nodeChildren: VNode[] = [];

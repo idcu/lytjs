@@ -14,7 +14,7 @@ export const Transfer = defineComponent({
 
   props: {
     data: { type: Array as () => TransferOption[], default: () => [] },
-    value: { type: Array as () => (string | number)[], default: () => [] },
+    modelValue: { type: Array as () => (string | number)[], default: () => [] },
     filterable: { type: Boolean, default: false },
     filterPlaceholder: { type: String, default: '请输入搜索内容' },
     titles: { type: Array as () => string[], default: () => ['源列表', '目标列表'] },
@@ -36,13 +36,13 @@ export const Transfer = defineComponent({
 
     const leftData = () => {
       return (_props.data as TransferOption[]).filter(
-        (item) => !(_props.value as (string | number)[]).includes(item.key),
+        (item) => !(_props.modelValue as (string | number)[]).includes(item.key),
       );
     };
 
     const rightData = () => {
       return (_props.data as TransferOption[]).filter((item) =>
-        (_props.value as (string | number)[]).includes(item.key),
+        (_props.modelValue as (string | number)[]).includes(item.key),
       );
     };
 
@@ -61,17 +61,17 @@ export const Transfer = defineComponent({
     };
 
     const handleMoveToRight = () => {
-      const newValues = [...(_props.value as (string | number)[]), ...leftCheckedKeys()];
-      emit('update:value', newValues);
+      const newValues = [...(_props.modelValue as (string | number)[]), ...leftCheckedKeys()];
+      emit('update:modelValue', newValues);
       _props.onChange?.(newValues, 'right', leftCheckedKeys());
       leftCheckedKeys.set([]);
     };
 
     const handleMoveToLeft = () => {
-      const newValues = (_props.value as (string | number)[]).filter(
+      const newValues = (_props.modelValue as (string | number)[]).filter(
         (key) => !rightCheckedKeys().includes(key),
       );
-      emit('update:value', newValues);
+      emit('update:modelValue', newValues);
       _props.onChange?.(newValues, 'left', rightCheckedKeys());
       rightCheckedKeys.set([]);
     };

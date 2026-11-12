@@ -15,8 +15,8 @@
  *  C)【已修】过滤曾不自动展开，父级未展开时深层命中不可见 ⇒ 过滤期间
  *     强制展开命中父链（renderNode 以 filterQuery 非空判展开）。
  *  D)【已修】`selectedLabel` signal 只写不读（死代码）⇒ 已删除。
- *  E)【取舍→owner】value 是受控 prop（`update:value` 契约成立且工作正常），
- *     非受控静态 value 下选择后展示不变是受控模式固有语义 ⇒ 维持现状待决。
+ *  E)【已修】运行时曾只认 `value` / `update:value`，与公开类型及编译器展开的
+ *     `modelValue` / `update:modelValue` 不一致 ⇒ `v-model` 完全失效；现按公开契约对齐。
  */
 
 import { describe, it, expect, afterEach, vi } from 'vitest';
@@ -60,7 +60,7 @@ async function mountTreeSelect(
   document.body.appendChild(host);
   hosts.push(host);
   const value = signal<string | number | (string | number)[]>(
-    (props.value as string | number | (string | number)[]) ?? '',
+    (props.modelValue as string | number | (string | number)[]) ?? '',
   );
   const userOnChange = props.onChange as
     | ((v: string | number | (string | number)[], n: TreeSelectNode) => void)
@@ -71,7 +71,7 @@ async function mountTreeSelect(
         h(TreeSelect as never, {
           data,
           ...props,
-          value: value(),
+          modelValue: value(),
           onChange: (v: string | number | (string | number)[], n: TreeSelectNode) => {
             userOnChange?.(v, n);
             value.set(v);
@@ -181,7 +181,7 @@ describe('TreeSelect — 渲染与 a11y', () => {
   });
 
   it('value 命中时展示对应 label（跨层级反查）', async () => {
-    const host = await mountTreeSelect({ value: 'hz' });
+    const host = await mountTreeSelect({ modelValue: 'hz' });
     expect(q(host, '.lyt-tree-select-value')!.textContent).toBe('杭州');
   });
 });
@@ -243,7 +243,7 @@ describe('TreeSelect — 选择（受控）', () => {
   });
 
   it('选中节点带 is-selected 类名', async () => {
-    const host = await mountTreeSelect({ value: 'nb', defaultExpandAll: true });
+    const host = await mountTreeSelect({ modelValue: 'nb', defaultExpandAll: true });
     await open(host);
     const selected = q(host, '.lyt-tree-node.is-selected')!;
     expect(selected.textContent).toContain('宁波');
@@ -277,7 +277,12 @@ describe('TreeSelect — 选择（受控）', () => {
     await createApp({
       setup() {
         return () =>
-          h(TreeSelect as never, { data: DATA, value: 'cq', onChange, defaultExpandAll: true });
+          h(TreeSelect as never, {
+            data: DATA,
+            modelValue: 'cq',
+            onChange,
+            defaultExpandAll: true,
+          });
       },
     } as never).mount(host);
     await tick(30);
@@ -305,7 +310,7 @@ describe('TreeSelect — 选择（受控）', () => {
 describe('TreeSelect — 清除', () => {
   it('clearable 且有值时渲染 ×，点击后 emit 空值 + onChange("", null)', async () => {
     const onChange = vi.fn();
-    const host = await mountTreeSelect({ value: 'cq', clearable: true, onChange });
+    const host = await mountTreeSelect({ modelValue: 'cq', clearable: true, onChange });
     const clearBtn = q(host, '.lyt-tree-select-clear')!;
     expect(clearBtn.getAttribute('aria-label')).toBe('清除');
     clearBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -317,7 +322,7 @@ describe('TreeSelect — 清除', () => {
   });
 
   it('clearable=false 或无值时不渲染清除按钮', async () => {
-    const host1 = await mountTreeSelect({ value: 'cq' });
+    const host1 = await mountTreeSelect({ modelValue: 'cq' });
     expect(q(host1, '.lyt-tree-select-clear')).toBeNull();
     const host2 = await mountTreeSelect({ clearable: true });
     expect(q(host2, '.lyt-tree-select-clear')).toBeNull();
@@ -375,12 +380,44 @@ describe('TreeSelect — 过滤', () => {
   });
 });
 
+describe('TreeSelect — v-model 契约', () => {
+  it('modelValue 驱动回显，选择后经 update:modelValue 回写', async () => {
+    // 模板 `v-model` 被编译器展开为 modelValue + onUpdate:modelValue；
+    // 运行时此前只认 value / update:value ⇒ 初始值不回显、选择也不回写。
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    hosts.push(host);
+    const model = signal<string | number>('hz');
+    await createApp({
+      setup() {
+        return () =>
+          h(TreeSelect as never, {
+            data: DATA,
+            modelValue: model(),
+            'onUpdate:modelValue': (v: string | number) => model.set(v),
+            defaultExpandAll: true,
+          });
+      },
+    } as never).mount(host);
+    await tick(30);
+
+    // 初始值 'hz' 应回显「杭州」
+    expect(q(host, '.lyt-tree-select-value')!.textContent).toBe('杭州');
+
+    await open(host);
+    const cq = qa(host, '.lyt-tree-node').findIndex((n) => n.textContent?.includes('重庆'));
+    await clickNode(host, cq);
+    expect(model()).toBe('cq');
+    expect(q(host, '.lyt-tree-select-value')!.textContent).toBe('重庆');
+  });
+});
+
 describe('TreeSelect — 多选（修复怪癖 A）', () => {
   it('多次点击累加选中：onChange 收到数组、下拉保持展开、标签拼接展示', async () => {
     const onChange = vi.fn();
     const host = await mountTreeSelect({
       multiple: true,
-      value: [],
+      modelValue: [],
       onChange,
       defaultExpandAll: true,
     });
@@ -402,7 +439,7 @@ describe('TreeSelect — 多选（修复怪癖 A）', () => {
     const onChange = vi.fn();
     const host = await mountTreeSelect({
       multiple: true,
-      value: ['cq'],
+      modelValue: ['cq'],
       onChange,
       defaultExpandAll: true,
     });
@@ -419,7 +456,7 @@ describe('TreeSelect — 多选（修复怪癖 A）', () => {
     const onChange = vi.fn();
     const host = await mountTreeSelect({
       multiple: true,
-      value: ['hz', 'cq'],
+      modelValue: ['hz', 'cq'],
       clearable: true,
       onChange,
     });
@@ -435,7 +472,7 @@ describe('TreeSelect — 多选（修复怪癖 A）', () => {
     const onChange = vi.fn();
     const host = await mountTreeSelect({
       multiple: true,
-      value: [],
+      modelValue: [],
       onChange,
       defaultExpandAll: true,
     });
