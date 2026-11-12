@@ -1217,13 +1217,15 @@ function serializeBranchHTML(
 interface BranchDynamicOp {
   /** 目标元素在分支根元素内的**先序索引**（-1 = 分支根元素自身） */
   elementIndex: number;
-  kind: 'text' | 'attr' | 'class' | 'style' | 'component' | 'conditional';
+  kind: 'text' | 'attr' | 'class' | 'style' | 'component' | 'conditional' | 'list';
   /** 文本槽位序号（kind === 'text'） */
   slotIndex?: number;
   key?: string;
-  /** 表达式；kind === 'conditional' 时是 `(cond ? vnode : null)` */
+  /** 表达式；kind === 'conditional' 时是 `(cond ? vnode : null)`；kind === 'list' 时是列表源 */
   expr?: string;
   propsCode?: string;
+  /** `reconcileArray` 的 key/create/update 对象字面量；仅 kind === 'list' 时存在 */
+  listOptions?: string;
   /** `<template>` 分支（哨兵 tag）：挂载 Fragment 而非组件 */
   fragment?: boolean;
   /** Fragment 子内容（vnode 代码数组）；仅 fragment 时存在 */
@@ -1336,6 +1338,24 @@ function collectBranchDynamics(
         if (expr) ops.push({ elementIndex: -1, kind: 'conditional', expr, markerIndex });
         continue;
       }
+      if (k.type === NodeTypes.JS_CALL_EXPRESSION) {
+        // 分支内的 v-for（RENDER_LIST）：静态 HTML 里只有宿主元素，列表项由运行期创建。
+        // 不收进分支动态代码 ⇒ 整段列表消失（宿主元素空壳）。
+        const call = kid as JSCallExpression;
+        const callee = typeof call.callee === 'string' ? call.callee : String(call.callee);
+        if (callee === 'RENDER_LIST' || callee === 'renderList') {
+          const binding = buildReconcileArrayCode(call, new Map(), inheritedLocals);
+          if (binding) {
+            ops.push({
+              elementIndex: selfIndex,
+              kind: 'list',
+              expr: binding.listCode,
+              listOptions: binding.options,
+            });
+          }
+        }
+        continue;
+      }
       if (k.type === NodeTypes.VNODE_CALL || k.type === NodeTypes.ELEMENT) {
         const childIndex = nextIndex++;
         visit(kid, childIndex, inheritedLocals);
@@ -1385,6 +1405,10 @@ function buildBranchDynamics(
   const declLines: string[] = [];
   const createLines: string[] = [];
   const updateLines: string[] = [];
+  // 列表插入会改变 `querySelectorAll('*')` 的序号，故延后到所有「按序号定位」的
+  // 操作（文本槽位 / 属性 / 条件 / 组件）之后再执行。
+  const listCreate: string[] = [];
+  const listUpdate: string[] = [];
   const claimed = new Set<number>();
   const pad = '        ';
 
@@ -1438,6 +1462,17 @@ function buildBranchDynamics(
       continue;
     }
 
+    if (op.kind === 'list') {
+      // 分支内的 v-for：宿主元素是 elementIndex 指向的静态元素（-1 = 分支根元素）。
+      // create / update 共用同一段 reconcileArray（update 由外层 effect 重跑驱动）。
+      const target = access(op.elementIndex);
+      const call = `reconcileArray(${target}, ${op.expr}, ${op.listOptions});`;
+      const stmt = op.elementIndex < 0 ? call : `{ const _e = ${target}; if (_e) ${call} }`;
+      listCreate.push(stmt);
+      listUpdate.push(stmt);
+      continue;
+    }
+
     const target = access(op.elementIndex);
     const apply =
       op.kind === 'class'
@@ -1449,6 +1484,9 @@ function buildBranchDynamics(
     createLines.push(stmt);
     updateLines.push(stmt);
   }
+
+  createLines.push(...listCreate);
+  updateLines.push(...listUpdate);
 
   return {
     declarations: declLines.join('\n'),
@@ -1509,14 +1547,11 @@ function buildItemComponentProps(vnode: VNodeCall, locals: ReadonlySet<string>):
 // 处理 JSCallExpression（v-for 转换结果）
 // ============================================================
 
-function processCallExpression(
+function buildReconcileArrayCode(
   node: JSCallExpression,
-  _varCounter: Map<string, number>,
-  _elementVars: Array<{ varName: string; tag: string }>,
-  dynamicBindings: Array<{ varName: string; code: string }>,
-  parentVar?: string,
+  varCounter: Map<string, number>,
   locals: ReadonlySet<string> = new Set(),
-): void {
+): { listCode: string; options: string } | null {
   const callee = typeof node.callee === 'string' ? node.callee : String(node.callee);
 
   // RENDER_LIST 是 v-for 转换后的 callee
@@ -1526,7 +1561,7 @@ function processCallExpression(
     const renderFn = node.arguments[1];
 
     const source = getTestExpr(sourceExpr as JSChildNode | string | undefined);
-    if (!source) return;
+    if (!source) return null;
 
     // 从箭头函数（COMPOUND_EXPRESSION）中提取 item 变量名与渲染项 VNodeCall
     let itemVar = 'item';
@@ -1645,7 +1680,7 @@ function processCallExpression(
       }
     } else if (renderItem && typeof renderItem.tag === 'string') {
       const tag = renderItem.tag.replace(/^"|"$/g, '');
-      const elVar = genVarName(tag, _varCounter);
+      const elVar = genVarName(tag, varCounter);
       const children = renderItem.children;
       const kidList = normalizeVNodeChildren(children);
 
@@ -1688,7 +1723,7 @@ function processCallExpression(
         const createLines = [`const ${elVar} = document.createElement(${JSON.stringify(tag)});`];
         const updateLines: string[] = [];
         emitListItemProps(renderItem.props, elVar, '_el', itemLocals, createLines, updateLines);
-        emitListItemNode(children, elVar, '_el', itemLocals, _varCounter, createLines, updateLines);
+        emitListItemNode(children, elVar, '_el', itemLocals, varCounter, createLines, updateLines);
         createBody = `${createLines.join('\n')}\nreturn ${elVar};`;
         updateBody = updateLines.join('\n');
       } else {
@@ -1792,10 +1827,6 @@ function processCallExpression(
     }
 
     const keyExpr = userKeyExpr ?? `${itemVar}.id`;
-    // 容器变量：render 的第二个形参叫 _container（见本文件 :164 生成的
-    // `export function render(_ctx, _container)`）。此处曾写死 '_ul'，
-    // 是为 ul/li 列表 demo 特判，换任何根容器都会产出 ReferenceError。
-    const containerVar = parentVar ?? BASE_EMIT_PROFILE.containerParam;
 
     // `v-for` 与 `v-if` 同元素：v-if 等同一项过滤（被隐藏的项不创建 DOM，与 vnode 路径一致）。
     // filter 回调拿 (item, index)，因此条件里引用索引形参也成立。
@@ -1811,11 +1842,47 @@ function processCallExpression(
       }
     }
 
-    dynamicBindings.push({
-      varName: containerVar,
-      code: `effect(() => {\n    reconcileArray(${containerVar}, ${listCode}, {\n      key: (${itemParams.join(', ')}) => ${keyExpr},\n      create: (${itemParams.join(', ')}) => {\n        ${createBody}\n      }${updateBody ? `,\n      update: (_el, ${itemParams.join(', ')}) => {\n        ${updateBody}\n      }` : ''}\n    });\n  });`,
-    });
+    const options = `{
+      key: (${itemParams.join(', ')}) => ${keyExpr},
+      create: (${itemParams.join(', ')}) => {
+        ${createBody}
+      }${
+        updateBody
+          ? `,
+      update: (_el, ${itemParams.join(', ')}) => {
+        ${updateBody}
+      }`
+          : ''
+      }
+    }`;
+    return { listCode, options };
   }
+  return null;
+}
+
+/** 顶层 v-for：在 render 里直接 `effect(() => reconcileArray(...))`。 */
+function processCallExpression(
+  node: JSCallExpression,
+  varCounter: Map<string, number>,
+  _elementVars: Array<{ varName: string; tag: string }>,
+  dynamicBindings: Array<{ varName: string; code: string }>,
+  parentVar?: string,
+  locals: ReadonlySet<string> = new Set(),
+): void {
+  const callee = typeof node.callee === 'string' ? node.callee : String(node.callee);
+  if (callee !== 'RENDER_LIST' && callee !== 'renderList') return;
+
+  const binding = buildReconcileArrayCode(node, varCounter, locals);
+  if (!binding) return;
+
+  // 容器变量：render 的第二个形参叫 _container（见本文件 :164 生成的
+  // `export function render(_ctx, _container)`）。此处曾写死 '_ul'，
+  // 是为 ul/li 列表 demo 特判，换任何根容器都会产出 ReferenceError。
+  const containerVar = parentVar ?? BASE_EMIT_PROFILE.containerParam;
+  dynamicBindings.push({
+    varName: containerVar,
+    code: `effect(() => {\n    reconcileArray(${containerVar}, ${binding.listCode}, ${binding.options});\n  });`,
+  });
 }
 
 // ============================================================

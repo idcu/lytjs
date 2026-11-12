@@ -916,5 +916,28 @@ describe('codegen-signal', () => {
       expect(list[0].children[0].children).toBe('head');
       expect(list.slice(1).map((vnode) => vnode.children[0].children)).toEqual(['1', '2']);
     });
+
+    it('should render v-for inside a v-if branch (C-05)', () => {
+      // 分支 HTML 是静态串，列表项必须由分支动态代码创建；
+      // 收集器此前只递归元素/内嵌条件，RENDER_LIST 整段被跳过 ⇒ 列表消失。
+      const state = reactive({
+        show: true,
+        items: [
+          { id: 1, name: 'a' },
+          { id: 2, name: 'b' },
+        ],
+      });
+      const handle = executeSignal(
+        compile(
+          '<div><ul v-if="show"><li v-for="item in items" :key="item.id">{{ item.name }}</li></ul></div>',
+        ),
+        state,
+      );
+      expect(handle.html()).toBe('<div><ul><li>a</li><li>b</li></ul></div>');
+
+      // 分支保持激活时，列表源变化要跟随
+      state.items.push({ id: 3, name: 'c' });
+      expect(handle.html()).toBe('<div><ul><li>a</li><li>b</li><li>c</li></ul></div>');
+    });
   });
 });
