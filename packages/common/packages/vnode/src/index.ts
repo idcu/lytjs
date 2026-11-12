@@ -233,15 +233,19 @@ export interface ComponentInternalInstance {
   type: VNodeTypes;
   parent: ComponentInternalInstance | null;
   root: ComponentInternalInstance;
-  vnode: VNode;
-  subTree: VNode;
+  // vnode/subTree 可空、ctx 用 object：让 @lytjs/component 的实例在结构上可赋值给本接口，
+  // 无需 vdom/core 再用双断言桥接（类型守卫见 component/src/types.ts 与 core/src/create-app.ts）。
+  vnode: VNode | null;
+  subTree: VNode | null;
   props: Record<string, unknown>;
   attrs: Record<string, unknown>;
   slots: Record<string, unknown>;
   refs: Record<string, unknown>;
   setupState: Record<string, unknown>;
   data: Record<string, unknown>;
-  ctx: Record<string, unknown>;
+  // 用 object 而非 Record<string, unknown>：component 的 ctx 是没有索引签名的
+  // ComponentPublicInstance；vdom 只把它当不透明对象转交（组件 ref 取值）。
+  ctx: object;
   /** `expose()` 暴露给 ref 的对象；由 @lytjs/component 在实例上写入。 */
   exposed?: Record<string, unknown> | null;
   emit: (event: string, ...args: unknown[]) => void;

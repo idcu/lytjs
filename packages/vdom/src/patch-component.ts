@@ -50,7 +50,7 @@ function normalizeFragmentScalars(children: unknown[]): unknown[] {
 // FIX: P1-09 定义 ComponentInternalRuntimeProps 接口替代 as unknown as Record，
 // 提供更精确的类型安全访问组件内部属性
 interface ComponentInternalRuntimeProps {
-  render?: (ctx: Record<string, unknown>) => VNode;
+  render?: (ctx: object) => VNode;
   name?: string;
   inheritAttrs?: boolean;
   errorCaptured?: (err: Error, instance: unknown, info: string) => boolean | void;
@@ -155,10 +155,8 @@ export function createComponentPatch<HN, HE extends HN>(
     //
     //   现在：没有 render 时不再 return，而是继续建立 effect（首帧渲染 null）；
     //   update 里每次按当前 `component.render` 取值 —— 兑现后 update() 就能拿到真 render。
-    const resolveRenderFn = ():
-      | ((ctx: Record<string, unknown>) => VNode | VNode[] | null | undefined)
-      | undefined =>
-      (component as unknown as { render?: (ctx: Record<string, unknown>) => VNode }).render ??
+    const resolveRenderFn = (): ((ctx: object) => VNode | VNode[] | null | undefined) | undefined =>
+      (component as unknown as { render?: (ctx: object) => VNode }).render ??
       (component.type as ComponentInternalRuntimeProps).render;
 
     const renderFn = resolveRenderFn();

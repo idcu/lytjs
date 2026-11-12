@@ -2,6 +2,7 @@
 // All type definitions for @lytjs/component
 
 import type { VNode } from '@lytjs/vdom';
+import type { ComponentInternalInstance as VNodeComponentInternalInstance } from '@lytjs/common-vnode';
 import type { EffectScope } from '@lytjs/reactivity';
 import type { BaseAppContext } from '@lytjs/shared-types';
 import type {
@@ -257,3 +258,12 @@ export interface ComponentInternalInstance
     ComponentRenderState,
     ComponentContextState,
     ComponentParentState {}
+
+// ── 类型层守门（编译期，零运行时）──────────────────────────────────────────
+// `@lytjs/vdom` 的渲染器钩子按 common-vnode 的轻量实例接收回调；本包的实例必须
+// 保持可赋值给它，否则只能靠双重断言桥接。改回窄类型会在此处编译失败。
+type AssertAssignable<T extends U, U> = T;
+declare const _componentInstanceAssignableToVNodeInstance: AssertAssignable<
+  ComponentInternalInstance,
+  VNodeComponentInternalInstance
+>;
