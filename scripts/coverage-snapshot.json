@@ -1,8 +1,8 @@
 {
-  "commit": "ef71dfe84ecc2250b170f2b073eb7073a239287c",
-  "generatedAt": "2026-11-12T12:23:55.966Z",
-  "totalSrcFiles": 445,
-  "coveredSrcFiles": 436,
+  "commit": "0043813094e9bb949e5812dea37db57c6ca21cbd",
+  "generatedAt": "2026-11-12T19:21:05.560Z",
+  "totalSrcFiles": 446,
+  "coveredSrcFiles": 437,
   "threshold": 0.975,
   "basis": {
     "authoritative": "vitest-thresholds",
@@ -376,6 +376,7 @@
     "packages/reactivity/src/signal.ts": true,
     "packages/reactivity/src/types.ts": true,
     "packages/reactivity/src/watch.ts": true,
+    "packages/renderer/src/app.ts": true,
     "packages/renderer/src/client/server-components-client.ts": true,
     "packages/renderer/src/data/data-fetching.ts": true,
     "packages/renderer/src/dom/dom-renderer.ts": true,
