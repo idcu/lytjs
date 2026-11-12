@@ -51,4 +51,4 @@ keywords: [坑库, 索引, 假绿, 门禁, 负控]
 | 体积/行为测旧 dist | [stale](verify/bundle-gate-reads-stale-dist.md) |
 | 负控锚点漂移 | [anchor](verify/negative-control-anchor-drift.md) |
 | 子串假通过 | [substr](verify/substring-probe-comment-false-pass.md) |
-| test 偶发未复现 | [once](verify/test-once-unreproduced.md) |
+| test 首帧固定等待 | [once](verify/test-once-unreproduced.md) |

@@ -4,25 +4,27 @@ status: active
 severity: P2
 last-verified: 2026-11-13
 triggers: 2
-keywords: [test, 偶发, 未复现, 原始输出]
+keywords: [test, 偶发, 固定等待, 时序竞争]
 ---
 
 ## 症状
 
-`pnpm test` 曾失败一次且未留原始输出，复跑全绿，一度被记为「环境抖动」。
+`pnpm test` 偶发失败：`examples/using-lytjs-as-dep/todo-app.test.ts` 首屏断言
+`expected '' to contain 'Todo List'`；复跑可能全绿，一度记为「环境抖动」。
 
 ## 证据（2026-11-13 CST）
 
-- 命令 `pnpm test`：01:35:35 门禁跑 423 文件/8833 例全绿（/tmp/lytjs-test-item1.log）；
-  01:37:22、01:38:35 两次复跑同样全绿（/tmp/lytjs-test-item3-run{2,3}.log）。
-- 本轮 3 次均未复现；原始失败输出缺失，无法定位。
+- 01:35–01:38 三次全量绿（423 文件；原始失败输出缺失）。
+- 03:0x 实验：把等待改回固定 30ms，全量并行连跑 5 轮 → **5/5 复现**同一断言；
+  改回条件轮询后全量绿（/tmp/repro-{1..5}.log）。
 
 ## 根因
 
-未知。失败时未落盘 stdout/stderr，只留「失败过一次」的口头记录。
+固定 30ms 等待 vs 动态加载的时序竞争：`main.js` 未 await `mount()`，而渲染器
+`@lytjs/renderer/app` 冷加载在并行负载下 >30ms，首帧尚未落地。
+见 [todo-app.test.ts](../../../examples/using-lytjs-as-dep/todo-app.test.ts) 与
+[ADR 0030](../../decisions/0030-runtime-entry-no-compiler-contract.md)。
 
 ## 正解
 
-- 不接受「环境抖动」结论：未复现 ≠ 已排除。
-- 再出现必须先落盘原始输出（`pnpm test > /tmp/x.log 2>&1`），记录命令、时间、失败用例全名与断言差异。
-- 不能复现也要在报告写明「未复现」及上述证据，不得静默。
+- 首帧断言等条件（轮询），不猜延时；新代码优先 `await app.mount()`。失败必须落盘原始输出；未复现 ≠ 已排除，复现后写明轮次与日志路径。
