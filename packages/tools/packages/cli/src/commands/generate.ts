@@ -276,7 +276,7 @@ ${
     return response.json();
   }
 
-  async update(id)${tsOnly ? ': Promise<any>' : ''} {
+  async update(id, ${tsOnly ? 'data: any' : 'data'})${tsOnly ? ': Promise<any>' : ''} {
     const response = await fetch(\`\${this.baseUrl}/${data.kebabName}s/\${id}\`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },

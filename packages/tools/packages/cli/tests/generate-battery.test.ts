@@ -164,6 +164,25 @@ describe('generate：七种类型都能落盘', () => {
   }
 });
 
+// ==================== service 模板自洽性 ====================
+
+describe('generate：service 模板参数自洽', () => {
+  it('update 方法体引用的 data 必须在形参里声明（否则 ReferenceError）', async () => {
+    await generate({ type: 'service', name: 'Order' });
+
+    const content = read('src/services/order.ts');
+    const match = content.match(/async update\(([^)]*)\)/);
+    expect(match).not.toBeNull();
+    const params = match![1]!
+      .split(',')
+      .map((s) => s.trim().split(':')[0]!.trim())
+      .filter(Boolean);
+    // 方法体里用了 JSON.stringify(data)，形参必须含 data
+    expect(content).toContain('JSON.stringify(data)');
+    expect(params).toEqual(['id', 'data']);
+  });
+});
+
 // ==================== 未知类型 ====================
 
 describe('generate：未知类型', () => {
