@@ -120,6 +120,16 @@ export const Switch = defineComponent({
 
       const coreChildren: VNode[] = [];
 
+      // ★ 2026-11-12（P1）：`active` 插槽只在选中态渲染，而随包 CSS 在选中态
+      //   隐藏 `--left`（`.lyt-switch--checked .lyt-switch__label--left`）⇒
+      //   原先统一挂 `--left` 导致 active 插槽永远不可见。改为：
+      //   选中态插槽走 `--right`（与 activeText 的可见副本一致），
+      //   未选中态插槽保持 `--left`。
+      const activeSlotContent =
+        isChecked.value && !_props.activeText ? slotContent.resolve('active') : null;
+      const inactiveSlotContent =
+        !isChecked.value && !_props.inactiveText ? slotContent.resolve('inactive') : null;
+
       if (isChecked.value && _props.activeText) {
         coreChildren.push(
           createVNode(
@@ -140,32 +150,16 @@ export const Switch = defineComponent({
             [createVNode('span', {}, _props.inactiveText)],
           ),
         );
-      } else if (slots.active && isChecked.value) {
-        const content = slotContent.resolve('active');
-        if (content) {
-          coreChildren.push(
-            createVNode(
-              'span',
-              {
-                class: 'lyt-switch__label lyt-switch__label--left',
-              },
-              content,
-            ),
-          );
-        }
-      } else if (slots.inactive && !isChecked.value) {
-        const content = slotContent.resolve('inactive');
-        if (content) {
-          coreChildren.push(
-            createVNode(
-              'span',
-              {
-                class: 'lyt-switch__label lyt-switch__label--left',
-              },
-              content,
-            ),
-          );
-        }
+      } else if (inactiveSlotContent) {
+        coreChildren.push(
+          createVNode(
+            'span',
+            {
+              class: 'lyt-switch__label lyt-switch__label--left',
+            },
+            inactiveSlotContent,
+          ),
+        );
       }
 
       const buttonChildren: VNode[] = [];
@@ -208,6 +202,16 @@ export const Switch = defineComponent({
               class: 'lyt-switch__label lyt-switch__label--right',
             },
             [createVNode('span', {}, _props.inactiveText)],
+          ),
+        );
+      } else if (activeSlotContent) {
+        coreChildren.push(
+          createVNode(
+            'span',
+            {
+              class: 'lyt-switch__label lyt-switch__label--right',
+            },
+            activeSlotContent,
           ),
         );
       }
