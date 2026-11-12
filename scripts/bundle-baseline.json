@@ -1,13 +1,13 @@
 {
   "tolerance": 0.02,
   "stage": "A15（体积预算回到真实基线）",
-  "recordedOn": "2026-11-09",
-  "measuredCommit": "c99a2478",
+  "recordedOn": "2026-11-12",
+  "measuredCommit": "c26a284d",
   "approval": {
     "signer": "owner",
-    "on": "2026-11-09",
-    "scope": "S30 缺陷修复使首屏闭包 +426 B：仅上调实际红的 first-screen 至 75448 B；其余入口基线不动，minimal-app 硬上限 93.7 KB 不变。",
-    "decisionRecord": "keel/decisions/0027-bundle-first-screen-s30-fixes.md"
+    "on": "2026-11-12",
+    "scope": "S35 P0 修复使 first-screen-runtime 达 38346 B：仅上调该入口基线至 37648 B（预算 38400 B，留 54 B 避免逐笔裁决，不留给功能增长）；其余入口与 minimal-app 硬上限不变。",
+    "decisionRecord": "keel/decisions/0029-bundle-first-screen-runtime-baseline.md"
   },
   "entries": {
     "vdom-only": { "baselineBytes": 1697, "ceilingBytes": null },
@@ -15,6 +15,6 @@
     "minimal-app": { "baselineBytes": 93957, "ceilingBytes": 95948 },
     "runtime-app": { "baselineBytes": 91808, "ceilingBytes": null },
     "first-screen": { "baselineBytes": 75448, "ceilingBytes": null },
-    "first-screen-runtime": { "baselineBytes": 37466, "ceilingBytes": null }
+    "first-screen-runtime": { "baselineBytes": 37648, "ceilingBytes": null }
   }
 }
