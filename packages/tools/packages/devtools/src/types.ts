@@ -25,6 +25,11 @@ export interface ComponentTreeNode {
 
 // ===== Signal Inspection =====
 
+export interface SignalAccessor {
+  get: () => unknown;
+  set: (value: unknown) => void;
+}
+
 export interface SignalInfo {
   id: string;
   name: string;
@@ -32,6 +37,8 @@ export interface SignalInfo {
   type: 'ref' | 'reactive' | 'computed' | 'signal';
   dependencies: string[];
   dependents: string[];
+  /** 可选：真实响应式源；存在时面板取值/改值都经它读写 */
+  accessor?: SignalAccessor;
 }
 
 export interface StoreInspection {

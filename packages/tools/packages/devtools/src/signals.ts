@@ -5,6 +5,15 @@
 
 export type SignalType = 'ref' | 'reactive' | 'computed' | 'signal';
 
+/**
+ * 真实响应式源的读写通道。
+ * 面板改值若只写注册表快照，真实 ref/signal 不会变、依赖它的 effect 也不重跑。
+ */
+export interface SignalAccessor {
+  get: () => unknown;
+  set: (value: unknown) => void;
+}
+
 export interface SignalInfo {
   id: string;
   name: string;
@@ -13,6 +22,8 @@ export interface SignalInfo {
   componentId?: string;
   dependencies?: string[];
   dependents?: string[];
+  /** 可选：真实响应式源；存在时取值/改值都经它读写 */
+  accessor?: SignalAccessor;
 }
 
 const signals = new Map<string, SignalInfo>();
@@ -58,7 +69,8 @@ export function getSignalById(id: string): SignalInfo | undefined {
  */
 export function getSignalValue(id: string): unknown {
   const signal = signals.get(id);
-  return signal?.value;
+  if (!signal) return undefined;
+  return signal.accessor ? signal.accessor.get() : signal.value;
 }
 
 /**
@@ -67,7 +79,13 @@ export function getSignalValue(id: string): unknown {
 export function setSignalValue(id: string, value: unknown): boolean {
   const signal = signals.get(id);
   if (!signal) return false;
-  signal.value = value;
+  if (signal.accessor) {
+    signal.accessor.set(value);
+    // 以真实源回读为准：accessor 可能做归一化或拒绝写入
+    signal.value = signal.accessor.get();
+  } else {
+    signal.value = value;
+  }
   return true;
 }
 

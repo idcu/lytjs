@@ -9,6 +9,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+import { ref, effect } from '@lytjs/reactivity';
 import {
   setNestedValue,
   getNestedValue,
@@ -205,6 +206,38 @@ describe('applyStateEdit / undoLastEdit', () => {
 
     expect(r.success).toBe(true);
     expect(getSignalValue('s1')).toBe(1);
+  });
+
+  it('★ 改值必须写回真实 signal，而不只是注册表副本', () => {
+    // 面板编辑链路：applyStateEdit → setSignalValue。若注册表里只存值快照，
+    // 面板显示变了、真实 ref 不动，依赖它的 effect 也不会重跑。
+    const real = ref(1);
+    let seen = 0;
+    effect(() => {
+      seen = real.value;
+    });
+    registerComponent({ id: 'c1', name: 'Counter', props: {} } as never);
+    registerSignal({
+      id: 's1',
+      name: 'Counter_count',
+      value: real.value,
+      type: 'ref',
+      dependencies: [],
+      dependents: [],
+      accessor: {
+        get: () => real.value,
+        set: (v: unknown) => {
+          real.value = v as number;
+        },
+      },
+    } as never);
+
+    const r = applyStateEdit('c1', 'Counter_count', 5);
+
+    expect(r.success).toBe(true);
+    expect(real.value).toBe(5);
+    expect(seen).toBe(5);
+    expect(getSignalValue('s1')).toBe(5);
   });
 
   it('没有可撤销的编辑 ⇒ 明确报错', () => {

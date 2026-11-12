@@ -7,7 +7,7 @@
 
 import type { SignalInfo } from '../types';
 import { getComponentById } from '../component-tree';
-import { setSignalValue, getSignals } from '../signals';
+import { setSignalValue, getSignalValue, getSignals } from '../signals';
 import { sendToPanel, onPanelMessage } from '../bridge';
 import { recordEvent } from '../events';
 
@@ -98,7 +98,8 @@ export function extractComponentState(componentId: string): ComponentState | nul
     ) {
       state[signal.name] = {
         type: signal.type,
-        value: signal.value,
+        // 取真实源当前值（有 accessor 时不以注册表快照为准）
+        value: getSignalValue(signal.id),
         editable: signal.type !== 'computed',
         path: signal.name,
       };
