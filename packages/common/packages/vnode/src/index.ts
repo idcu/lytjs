@@ -242,6 +242,8 @@ export interface ComponentInternalInstance {
   setupState: Record<string, unknown>;
   data: Record<string, unknown>;
   ctx: Record<string, unknown>;
+  /** `expose()` 暴露给 ref 的对象；由 @lytjs/component 在实例上写入。 */
+  exposed?: Record<string, unknown> | null;
   emit: (event: string, ...args: unknown[]) => void;
   isMounted: boolean;
   isUnmounted: boolean;

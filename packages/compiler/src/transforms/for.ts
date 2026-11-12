@@ -250,17 +250,19 @@ export function transformFor(
     bodyParts.push(' return ');
     bodyParts.push(renderItemExpr as TemplateChildNode);
 
-    const renderListCall = createCallExpression('RENDER_LIST', [
+    // P0-3：记录 renderList 调用与来源元素的关联，供 if.ts 构建条件链时反查。
+    // 用纯类型交叉声明携带符号键，赋值保持直接下标写法（编译后无额外运行时开销）。
+    type BranchRenderListCall = ReturnType<typeof createCallExpression> & {
+      [FOR_BRANCH_ELEMENT]?: unknown;
+    };
+    const renderListCall: BranchRenderListCall = createCallExpression('RENDER_LIST', [
       createSimpleExpression(right, false, forExp.loc, false),
       createCompoundExpression(
         [`(${itemVar}${indexVar ? `, ${indexVar}` : ''}) => {`, ...bodyParts, ` }`],
         forExp.loc,
       ),
     ]);
-    // P0-3：记录 renderList 调用与来源元素的关联，供 if.ts 构建条件链时反查。
-    // 用 Reflect.set 写入符号键，替代原先的双重断言写法：
-    // 对普通对象与直接下标赋值语义一致（可写/可枚举/可配置），且不需要类型断言。
-    Reflect.set(renderListCall, FOR_BRANCH_ELEMENT, element);
+    renderListCall[FOR_BRANCH_ELEMENT] = element;
 
     // FIX: P2-10 renderListCall 是 JSCallExpression，需要转换为 TemplateChildNode
     // 此处断言是安全的，因为 v-for 转换结果会被 replaceNode 替换到父节点的 children 中
