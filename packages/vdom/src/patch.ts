@@ -446,8 +446,14 @@ export function createRenderer<HN, HE extends HN>(
 
   /** 组件 ref 的目标值：优先 `expose()` 暴露的对象，否则公共实例代理。 */
   function resolveComponentRefValue(component: ComponentInternalInstance): unknown {
-    const instance = component as unknown as { exposed?: unknown; ctx?: unknown };
-    return instance.exposed ?? instance.ctx ?? component;
+    // `exposed` 在 common-vnode 的最小实例接口里未声明（由 component 包补充），
+    // 用 `in` 做真实类型收窄，无需双重断言。取值语义与原先的
+    // `instance.exposed ?? instance.ctx ?? component` 完全一致（null/undefined 同属 nullish）。
+    if ('exposed' in component) {
+      const exposed: unknown = component.exposed;
+      return exposed ?? component.ctx ?? component;
+    }
+    return component.ctx ?? component;
   }
 
   /** 清空 vnode.ref（字符串删键、函数回调 null、对象置 value=null）。 */

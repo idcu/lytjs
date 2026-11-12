@@ -258,7 +258,9 @@ export function transformFor(
       ),
     ]);
     // P0-3：记录 renderList 调用与来源元素的关联，供 if.ts 构建条件链时反查。
-    (renderListCall as unknown as Record<symbol, unknown>)[FOR_BRANCH_ELEMENT] = element;
+    // 用 Reflect.set 写入符号键，替代原先的双重断言写法：
+    // 对普通对象与直接下标赋值语义一致（可写/可枚举/可配置），且不需要类型断言。
+    Reflect.set(renderListCall, FOR_BRANCH_ELEMENT, element);
 
     // FIX: P2-10 renderListCall 是 JSCallExpression，需要转换为 TemplateChildNode
     // 此处断言是安全的，因为 v-for 转换结果会被 replaceNode 替换到父节点的 children 中
