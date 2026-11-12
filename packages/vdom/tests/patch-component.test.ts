@@ -183,9 +183,11 @@ describe('createComponentPatch', () => {
 
     it('正常渲染时应调用 render 函数并 patch subTree', () => {
       const container = document.createElement('div');
+      // 真实渲染产物在挂载前 el 为 null（挂载由 patch 写入）；
+      // 若预置 el，会被视为「已挂载的共享提升 vnode」而克隆（见 P0-6）。
       const subTree = {
         type: 'div',
-        el: document.createElement('div'),
+        el: null,
         children: null,
         props: null,
       } as unknown as VNode;
@@ -516,12 +518,16 @@ describe('createComponentPatch', () => {
     it('vnode.el 应指向 subTree 的根元素', () => {
       const container = document.createElement('div');
       const subTreeEl = document.createElement('div');
+      // 真实流程：render 产出的 vnode 初始 el=null，patch 挂载时写入根元素。
       const subTree = {
         type: 'div',
-        el: subTreeEl,
+        el: null,
         children: null,
         props: null,
       } as unknown as VNode;
+      vi.mocked(ctx.patch).mockImplementation((_n1, n2) => {
+        (n2 as VNode).el = subTreeEl;
+      });
 
       const componentType = {
         name: 'ElComp',
@@ -636,7 +642,8 @@ describe('render 返回 null/undefined（空渲染）', () => {
   const asDiv = (): VNode =>
     ({
       type: 'div',
-      el: document.createElement('div'),
+      // 真实渲染产物挂载前 el 为 null；预置 el 会被当作已挂载的共享提升 vnode（P0-6）。
+      el: null,
       children: null,
       props: null,
     }) as unknown as VNode;

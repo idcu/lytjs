@@ -209,6 +209,18 @@ export function createComponentPatch<HN, HE extends HN>(
       return cloned;
     };
 
+    // P0-6：静态提升（hoisted）vnode 是**模块级共享对象**，`render()` 每次返回同一个。
+    // 它一旦被挂载过，`el` 就指向某个实例的 DOM；其他实例/后续渲染直接复用会让
+    // 各自的 `component.subTree` 都指向同一个 el ⇒ 卸载任一实例会按别人的 el 删 DOM。
+    // 与 Vue 的 cloneIfMounted 一致：已挂载过的对象必须先克隆并清空 el/anchor。
+    const cloneIfMounted = (vnode: VNode): VNode => {
+      if (vnode.el == null) return vnode;
+      const cloned = cloneVNode(vnode);
+      cloned.el = null;
+      cloned.anchor = null;
+      return cloned;
+    };
+
     const update = () => {
       // ⚠️ 声明为 `VNode | null`：`render()` 可以合法地返回 null/undefined（空渲染），
       //    下方有专门分支处理（此前这里声明为 `VNode`，把 null 当成不可能 ⇒ 见该分支注释）。
@@ -331,6 +343,11 @@ export function createComponentPatch<HN, HE extends HN>(
         } else {
           throw renderError;
         }
+      }
+
+      // P0-6：在应用 attrs / 挂载之前，把已挂载过的共享提升对象克隆成实例私有。
+      if (subTree) {
+        subTree = cloneIfMounted(subTree);
       }
 
       // 应用 inheritAttrs：将实例的 attrs 合并到根 VNode props
