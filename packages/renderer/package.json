@@ -12,15 +12,15 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
-    "./client": {
-      "types": "./dist/client/index.d.ts",
-      "import": "./dist/client/index.mjs",
-      "require": "./dist/client/index.cjs"
-    },
     "./app": {
       "types": "./dist/app.d.ts",
       "import": "./dist/app.mjs",
       "require": "./dist/app.cjs"
+    },
+    "./client": {
+      "types": "./dist/client/index.d.ts",
+      "import": "./dist/client/index.mjs",
+      "require": "./dist/client/index.cjs"
     },
     "./dom": {
       "types": "./dist/dom.d.ts",
