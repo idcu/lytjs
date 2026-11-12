@@ -486,17 +486,29 @@ export function createRouter(options: RouterOptions): Router {
 
   // Listen to history changes (popstate/hashchange)
   options.history.listen((to, _from, info) => {
-    if (info.type === 'pop') {
-      // Re-resolve the route for the new location
-      const { matched, params, meta } = resolveRoute(to.path);
-      const newLocation: RouteLocationNormalized = {
-        ...to,
-        params,
-        matched: matched.map((m) => m.record),
-        meta: { ...meta, ...to.meta },
-      };
-      currentRoute.set(newLocation);
-    }
+    if (info.type !== 'pop') return;
+    // Re-resolve the route for the new location
+    const { matched, params, meta } = resolveRoute(to.path);
+    const newLocation: RouteLocationNormalized = {
+      ...to,
+      params,
+      matched: matched.map((m) => m.record),
+      meta: { ...meta, ...to.meta },
+    };
+    // P0-7：浏览器前进/后退必须走完整导航管线（beforeEach / beforeRouteLeave /
+    // beforeEnter / beforeResolve / 重定向 / afterEach），不能直接 set。
+    // replace=true：pop 已改变历史栈位置，守卫通过后只替换当前条目，
+    // 不能再 push（否则每次前进/后退都会堆叠新条目）。
+    void (async () => {
+      const failure = await navigate(newLocation, true);
+      if (failure) {
+        // 被守卫中止/拒绝时，地址栏已在 popstate 中变成目标页，
+        // 必须恢复到当前已授权的路由，避免停留在被拒绝的 URL。
+        await options.history.replace(currentRoute());
+      }
+    })().catch((err) => {
+      error(`[router] popstate 导航失败: ${String(err)}`);
+    });
   });
 
   const router: Router = {

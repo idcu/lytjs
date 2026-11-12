@@ -20,7 +20,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { createRouter } from '../src/router';
-import { createMemoryHistory } from '../src/history';
+import { createMemoryHistory, createWebHistory } from '../src/history';
 import { NavigationFailureType } from '../src/types';
 import { getOrCreateAsyncViewComponent } from '../src/components/RouterView';
 
@@ -102,6 +102,58 @@ describe('路由守卫（P0 回归）', () => {
 
     expect(failure).toBeUndefined();
     expect(router.currentRoute().path).toBe('/a');
+  });
+});
+
+// ============================================================
+// 负控（P0-7）：popstate（浏览器前进/后退）不能绕开导航管线
+// ============================================================
+describe('popstate 必须走完整导航管线（P0 回归）', () => {
+  const makeWebRouter = () =>
+    createRouter({
+      history: createWebHistory(),
+      routes: [
+        { path: '/', name: 'home', component: Blank },
+        { path: '/a', name: 'a', component: Blank },
+        { path: '/login', name: 'login', component: Blank },
+        { path: '/admin', name: 'admin', component: Blank, meta: { requiresAuth: true } },
+      ],
+    });
+
+  const waitPop = (): Promise<void> => new Promise((r) => setTimeout(r, 30));
+
+  it('退回到受保护页时 beforeEach 的跳转必须生效', async () => {
+    window.history.replaceState(null, '', '/');
+    const router = makeWebRouter();
+    router.beforeEach((to) => (to.meta.requiresAuth ? '/login' : undefined));
+
+    await router.push('/a');
+    expect(router.currentRoute().path).toBe('/a');
+
+    // 模拟浏览器前进/后退：地址栏已改变，随后派发 popstate。
+    window.history.replaceState(null, '', '/admin');
+    window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
+    await waitPop();
+
+    // 未修复：popstate 监听器直接 currentRoute.set('/admin')，守卫被完全绕过。
+    expect(router.currentRoute().path).toBe('/login');
+    router.options.history.destroy();
+  });
+
+  it('后退被 next(false) 拦截时，路由与地址栏都回到原处', async () => {
+    window.history.replaceState(null, '', '/');
+    const router = makeWebRouter();
+    router.beforeEach((to, _from, next) => (to.path === '/admin' ? next(false) : next()));
+
+    await router.push('/a');
+    window.history.replaceState(null, '', '/admin');
+    window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
+    await waitPop();
+
+    expect(router.currentRoute().path).toBe('/a');
+    // 被拒绝的 URL 不应停留在地址栏。
+    expect(window.location.pathname).toBe('/a');
+    router.options.history.destroy();
   });
 });
 

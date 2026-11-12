@@ -374,6 +374,8 @@ describe('createRouter', () => {
       await router.push('/users');
       await router.push('/posts');
       router.back();
+      // P0-7 后 popstate 走完整导航管线（含异步守卫），路由更新是异步的。
+      await new Promise((r) => setTimeout(r, 0));
       expect(router.currentRoute().path).toBe('/users');
     });
 
@@ -381,7 +383,9 @@ describe('createRouter', () => {
       await router.push('/users');
       await router.push('/posts');
       router.back();
+      await new Promise((r) => setTimeout(r, 0));
       router.forward();
+      await new Promise((r) => setTimeout(r, 0));
       expect(router.currentRoute().path).toBe('/posts');
     });
 
