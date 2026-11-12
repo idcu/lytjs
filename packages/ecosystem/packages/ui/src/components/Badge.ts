@@ -86,6 +86,9 @@ export const Badge = defineComponent({
           },
           {
             class: ['lyt-badge', p.class as string].filter(Boolean).join(' '),
+            // ★ 2026-11-12（P1）：`style` prop 早已声明却从未被消费 ⇒ 静默失效。
+            //   与 `class` 一样落到根 span；空串由 patchStyle 处理为「移除 style 属性」。
+            style: p.style,
           },
         ),
         children,
