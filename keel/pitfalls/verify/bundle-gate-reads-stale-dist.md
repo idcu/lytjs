@@ -3,7 +3,7 @@ scope: verify
 status: active
 severity: P1
 last-verified: 2026-11-13
-triggers: 3
+triggers: 4
 keywords: [dist, stale, 假绿, bundle, controlled-props]
 ---
 
