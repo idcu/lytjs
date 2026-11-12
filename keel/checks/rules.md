@@ -1,62 +1,75 @@
 ---
 scope: meta
 status: active
-last-verified: 2026-11-09
+last-verified: 2026-11-12
 keywords: [校验, 规则, 扩展检查, CI, 门禁]
 ---
 
 # 扩展检查（项目自定）
 
-> Keel 内核只做通用检查（`keel-lint.sh`）。本文件登记**本仓真实可执行**的门禁命令。
-> 每条规则必须写得出一个可执行命令；写不出命令的，不是检查项，是愿望。
+> Keel 内核只做通用检查（`keel-lint.sh`）。本文件与 `scripts/gate.mjs` 的
+> `GATES` **逐条对齐**（2026-11-12：76 条 = 59 fast + 17 slow）。
+> 门禁名、命令、描述、耗时以 `scripts/gate.mjs` 为单一真源，本文件只做清单核对。
+> 单条执行：`node scripts/gate.mjs <name>`；整档：`--tier fast` / `--tier slow`。
 
-## 已声明的扩展检查
+## 已登记的扩展检查（76）
 
-| # | 检查 | 命令 | 级别 | 触发时机 |
-|---|---|---|---|---|
-| 1 | 快档门禁（单一入口） | `node scripts/gate.mjs --tier fast` | ❌ fail | 本地 + CI（build job 后置） |
-| 2 | 契约漂移（产物 import 的绑定名须在导出面） | `node scripts/gate.mjs check-runtime-contract` | ❌ fail | CI（build job 后置）+ 发布前 |
-| 3 | 文档 import 欠账（棘轮） | `node scripts/gate.mjs check-doc-imports` | ❌ fail | CI（build job 后置）+ 发布前 |
-| 4 | UI slot 单节点（红门禁） | `node scripts/gate.mjs check-ui-slot-single-node` | ❌ fail | CI（keel-gates job） |
-| 5 | UI props 接线（棘轮，基线 `scripts/ui-props-wiring-baseline.txt`） | `node scripts/gate.mjs check-ui-props-wiring` | ❌ fail | CI（keel-gates job） |
-| 6 | 运行时循环依赖（棘轮） | `node scripts/gate.mjs check-circular:src` | ❌ fail | CI（keel-gates job）+ 定时 |
-| 7 | 构建顺序一致性 | `corepack pnpm check-build-order` | ❌ fail | CI（build-order job） |
-| 8 | vitest alias 目标存在（防用例静默少跑） | `node scripts/gate.mjs check-vitest-alias-dist` | ❌ fail | CI（build job 后置） |
-| 9 | 慢档全量（发布前） | `node scripts/gate.mjs --tier slow` | ❌ fail | 发布前 / 定时任务 |
-| 10 | 源码卫生（三条规则 + 显式清单） | `node scripts/gate.mjs check-src-hygiene` | ❌ fail | 本地 fast gate 已含 + CI |
-| 11 | 治理接线（keel CI 三关卡齐全） | `node scripts/gate.mjs check-keel-wiring` | ❌ fail | 本地 fast gate 已含 + CI |
-| 12 | Golden 20 × 七类契约（B04/B05） | `node scripts/check-ui-contracts.mjs` | ❌ fail（登记/漂移/严格模式） | fast+验收 |
-| 13 | UI 全量 i18n（棘轮） | `node scripts/check-ui-i18n.ts` | ❌ fail（新增硬编码 / 键或占位不一致） | 本地（fast）+ CI |
-| 14 | 门禁负控（S05）：注入必红；其余登记 | `node scripts/gate.mjs --inject` | ❌ fail | 本地 fast gate 已含 + CI |
-| 15 | 包元数据口径 S28 | `node scripts/gate.mjs check-package-metadata` | ❌ fail | fast+CI |
+**fast（59，只读源码、无需 dist）**
+
+check-lockfile、check-build-order、check-deps、check-render-parity、check-list-diff、
+check-public-names、check-stale-capability-claims、check-signal-authority、
+check-dead-packages、check-e2e-assertions、check-src-hygiene、check-ui-slot-single-node、
+check-ui-props-wiring、check-keel-wiring、check-script-refs、check-as-unknown、
+check-ui-styles、check-ui-contracts、check-ui-i18n、check-dist-freshness、
+check-package-exports、check-package-metadata、check-consumer-demo、check-examples、
+check-render-shapes、check-component-status、check-component-shapes、check-render-cost、
+check-ssr-client-parity、check-package-deps、check-error-paths、check-di、check-cache、
+check-ssr-isolation、check-lifecycle-release、check-http-protocol、check-edge-runtime、
+check-negative-controls、check-compiler-parity、check-hmr、check-scaffold、
+check-api-routes、check-transition-engine、check-event-semantics、check-controlled-props、
+check-dialog-a11y、check-dev-warnings、check-plugin-semantics、check-store-semantics、
+check-reactivity-semantics、check-security-html、check-core-signal-contract、
+check-coverage-snapshot、check-release-parity、check-web-cssvars、check-config-semantics、
+check-router-semantics、check-hydration、check-vitest-alias-dist
+
+**slow（17，需要 dist 或全量执行）**
+
+check-negative-controls:slow、check-integration、check-runtime-render、check-bundle-size、
+build、build:fallback、check-runtime-contract、check-api-snapshot、
+check-signal-profile-snapshot、check-doc-imports、check-circular、check-circular:src、
+type-check、lint:check、format:check、test、test:coverage
+
+级别：全部 ❌ fail；触发时机以 `scripts/gate.mjs` 的 `tier` 与 CI job 为准。
 
 ## 级别变更记录
 
-- **2026-10-10｜新增 #10 源码卫生（`check-src-hygiene.ts`）**
-  `compiler/src/optimizations/index.ts` 曾用 `eval()` 做伪优化（P2-3）。现扫描 `src/**/*.ts`，
-  三条规则各配显式清单（须写理由），未清单化即 exit 1。
+- **2026-11-12｜清单真源对齐**
+  此前只登记 15 条聚合项，与 `gate.mjs` 的 76 条不一致；现逐条登记全部
+  门禁名（59 fast / 17 slow），补上此前漏登记的
+  `check-stale-capability-claims`、`check-signal-authority`。
+  负控表同步为 75 verified + 1 uninjectable（`check-negative-controls:slow`）。
 
-- **2026-10-10｜#5 UI props 接线：⚠️ warn → ❌ fail（收紧）**
-  升级前该脚本**恒 exit 0**（只是打印报告），既不拦新增也无豁免。现按棘轮改造：
-  既有欠账进 `scripts/ui-props-wiring-baseline.txt`，门禁**只拦新增**；升级当口欠账为 0。
-  本次是**收紧**（告警降级才会让人无视全部告警）。
+- **2026-10-10｜源码卫生（`check-src-hygiene`）**
+  `compiler/src/optimizations/index.ts` 曾用 `eval()` 做伪优化（P2-3）。
+  现扫描 `src/**/*.ts`，三条规则各配显式清单（须写理由），未清单化即 exit 1。
 
-- **2026-10-11｜新增 #11 治理接线（`check-keel-wiring.ts`）**
-  此前 `test-lint.sh` 只在 `install.sh` 跑、CI 无 ⇒ 改 `keel-lint.sh` 可静默腐烂。
-  修法：接进 `keel.yml` 并断言接线在；实测移除 test-lint ⇒ exit 1。
+- **2026-10-10｜UI props 接线：⚠️ warn → ❌ fail（收紧）**
+  升级前该脚本恒 exit 0；现按棘轮改造：既有欠账进
+  `scripts/ui-props-wiring-baseline.txt`，只拦新增，升级当口欠账为 0。
 
-- **2026-11-06｜新增 #12 Golden 20 六类契约（B04），#13 i18n（B05）**
-  `check-ui-contracts.mjs` 对 20 组件 × 6 类逐格从源码推导，再与 `scripts/ui-contracts.json` 比对；
-  初始 15 红全部登记原因（无 skip），`--strict` 用于逐组件验收。
-  **B05 扩到七类 140 格**（新增 a11y：alt/role/aria-*/焦点管理/tab 顺序/aria-expanded 动态）；
-  初始 a11y 18 pass / 1 红（Avatar）/ 1 N/A，修复后 19/0/1。
-  `check-ui-i18n.ts` 扫描 CJK 字面量与 `aria-label`/`alt` 行内字面量，棘轮
-  `scripts/ui-i18n-baseline.txt`（27 → 0）；两套 locale 键与 `{param}` 占位必须一致。
+- **2026-10-11｜治理接线（`check-keel-wiring`）**
+  此前 `test-lint.sh` 只在 `install.sh` 跑、CI 无。修法：接进 `keel.yml`
+  并断言接线在；实测移除 test-lint ⇒ exit 1。
+
+- **2026-11-06｜Golden 20 六类契约 + i18n**
+  `check-ui-contracts` 逐格从源码推导后与 `scripts/ui-contracts.json` 比对，
+  初始 15 红全部登记原因（无 skip）；B05 扩到七类 140 格（a11y 修后 19/0/1）。
+  `check-ui-i18n` 扫描 CJK 字面量，棘轮基线 27 → 0。
 
 ## CI 接入状态（诚实说明）
 
 - `keel-gates` job（`ci.yml`）：源码级检查，**无需 dist**，每次 push/PR 跑；
-- `build` job 后置 3 项：需要 dist ⇒ 必须排在 `pnpm run build` 之后（不在无构建环境跑）；
+- `build` job 后置项：需要 dist ⇒ 必须排在 `pnpm run build` 之后；
 - `keel.yml`：基座自身（`keel-lint` + 钩子本体），零依赖 bash 直跑；
 - 定时兜底：`scripts/nightly-gates.sh`（慢档全量；发布前手动 `gate --tier slow`）。
 
