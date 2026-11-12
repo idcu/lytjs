@@ -44,9 +44,9 @@ const signalRendererFactory: SignalRendererFactory = async (template, ctx) => {
   return createSignalRenderer(template, ctx);
 };
 
-// create-consumer 的 DOMRendererOptions 用 common-vnode 的轻量实例类型，
-// 与 core 注入的 component 实例形状不兼容；运行时按注入对象解释，这里只桥接类型。
-const loadDOMRenderer = loadRenderers as unknown as DOMRendererLoader;
+// `@lytjs/renderer/app` 与 `@lytjs/renderer/dom` 转出同一个 `createDOMRenderer`
+// 声明，因此合并入口的模块类型可直接满足 `DOMRendererLoader`，无需断言。
+const loadDOMRenderer: DOMRendererLoader = loadRenderers;
 
 /**
  * **显式**注入运行时模板编译器（幂等）。

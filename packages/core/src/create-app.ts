@@ -85,9 +85,20 @@ export type SignalRendererFactory = (
  * 写死的动态 import，主入口要么多出一个 entry point（静态闭包被切成 3 个 chunk，
  * 实测 gzip +807 B），要么让 runtime 的产物被内联进 signal 的编译器。
  */
-export type DOMRendererLoader = () => Promise<{
-  createDOMRenderer: (options?: unknown) => unknown;
-}>;
+export type DOMRendererLoader = () => Promise<typeof import('@lytjs/renderer/dom')>;
+
+// ── 类型层守门（编译期，零运行时）──────────────────────────────────────────
+// 两个渲染器入口的模块类型必须都能喂给 `DOMRendererLoader`；任一不再满足时
+// 此处编译失败，防止有人为过编译又把双重断言补回来。
+type AssertAssignable<T extends U, U> = T;
+declare const _domEntryModuleSatisfiesLoader: AssertAssignable<
+  typeof import('@lytjs/renderer/dom'),
+  Awaited<ReturnType<DOMRendererLoader>>
+>;
+declare const _appEntryModuleSatisfiesLoader: AssertAssignable<
+  typeof import('@lytjs/renderer/app'),
+  Awaited<ReturnType<DOMRendererLoader>>
+>;
 
 /**
  * 注入 App 工厂（供 `@lytjs/renderer` 的 `hydrateApp` / `hydrateVisible` / `safeHydrate`）。

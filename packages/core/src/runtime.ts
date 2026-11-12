@@ -23,11 +23,11 @@ import { createAppInternal } from './create-app';
 import type { DOMRendererLoader } from './create-app';
 import type { App, AppOptions, Component } from './types';
 
-// 跨包类型断言：`@lytjs/renderer/dom` 的 `DOMRendererOptions` 用的是
-// common-vnode 的轻量实例类型，与 core 注入的 component 实例类型不兼容；
-// 运行时由 createDOMRenderer 自己按注入对象解释，这里只做形状桥接。
-const loadDOMRenderer: DOMRendererLoader = async () =>
-  (await import('@lytjs/renderer/dom')) as unknown as Awaited<ReturnType<DOMRendererLoader>>;
+// 类型说明：`DOMRendererLoader` 直接采用 `@lytjs/renderer/dom` 的真实模块类型
+// （`type` 导入，运行时零成本）。vdom 的轻量实例类型是 component 实例的**结构超类型**
+// （见 common-vnode 的 vnode/subTree 可空与 ctx 不透明声明），因此注入的 component
+// 实例回调按正常方法双变即可适配，不需要断言桥接。
+const loadDOMRenderer: DOMRendererLoader = () => import('@lytjs/renderer/dom');
 
 /**
  * 不含编译器的 `createApp`。
