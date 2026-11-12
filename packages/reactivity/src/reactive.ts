@@ -4,7 +4,6 @@
 
 import { isObject, hasChanged, hasOwn, isSymbol, isMap, isSet } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
-import { unsafeCast } from '@lytjs/common-assertions';
 import { ReactiveFlags, TrackOpTypes, TriggerOpTypes, ITERATE_KEY } from './constants';
 import {
   track,
@@ -125,20 +124,16 @@ arrayTraverseMethods.forEach((method) => {
       resetTracking();
     }
 
-    const len = arr.length;
-    const changedIndices: number[] = [];
-    const scanLen = Math.max(before.length, len);
-    for (let i = 0; i < scanLen; i++) {
-      if (before[i] !== arr[i]) changedIndices.push(i);
-    }
-
     // 一次数组变更只应让同一个 effect 重跑一次：多个索引触发 + 迭代触发
     // 若直接串行执行，读 `length` / `join()` 的 effect 会被触发 2~N 次
     // （既有用例「pop should trigger a single update」即锁定该语义）。
+    const len = arr.length;
     beginTriggerBatch();
     try {
-      for (const i of changedIndices) {
-        trigger(arr, i < before.length ? TriggerOpTypes.SET : TriggerOpTypes.ADD, String(i));
+      for (let i = 0; i < Math.max(before.length, len); i++) {
+        if (before[i] !== arr[i]) {
+          trigger(arr, i < before.length ? TriggerOpTypes.SET : TriggerOpTypes.ADD, String(i));
+        }
       }
       // 迭代依赖：ADD 在 trigger 内部会自动带上数组的 'length' 依赖
       trigger(arr, TriggerOpTypes.ADD, ITERATE_KEY);
@@ -170,9 +165,6 @@ arrayTraverseMethods.forEach((method) => {
           trigger(arr, TriggerOpTypes.SET, String(i));
         }
       }
-      if (before.length !== len) {
-        trigger(arr, TriggerOpTypes.SET, 'length');
-      }
 
       // 迭代 / length 依赖照旧
       trigger(arr, TriggerOpTypes.ADD, ITERATE_KEY);
@@ -184,13 +176,7 @@ arrayTraverseMethods.forEach((method) => {
 });
 
 // 处理所有其他数组方法，绑定到原始数组以避免原型访问问题
-const skipMethods = new Set([
-  'constructor',
-  'toString',
-  'toLocaleString',
-  'valueOf',
-  'Symbol(Symbol.iterator)',
-]);
+const skipMethods = new Set(['constructor', 'toString', 'toLocaleString', 'valueOf']);
 const arrayMethods = Object.getOwnPropertyNames(Array.prototype) as (string &
   keyof Array<unknown>)[];
 arrayMethods.forEach((method) => {
@@ -211,55 +197,19 @@ arrayMethods.forEach((method) => {
 
 // ==================== 辅助常量 ====================
 
+// Symbol 的静态属性值既有 symbol（内置 well-known symbol）也有函数（for / keyFor 等），
+// 用 `isSymbol` 一次性筛掉非 symbol 值即可，无需额外的键名黑名单。
 const builtInSymbols = new Set<symbol>(
   Object.getOwnPropertyNames(Symbol)
-    .filter((key) => key !== 'arguments' && key !== 'caller')
-    .map((key) => {
-      // Object.getOwnPropertyNames 返回 string[]，而 Symbol 的属性值类型为 symbol，
-      // 但 TypeScript 将 Symbol 视为 Function，其索引签名为 unknown。
-      // 使用索引签名访问 Symbol[key] 返回 unknown，需要类型断言。
-      const value = unsafeCast<symbol>((Symbol as unknown as Record<string, unknown>)[key]);
-      return isSymbol(value) ? value : undefined;
-    })
-    .filter((sym): sym is symbol => sym !== undefined),
+    .map((key) => (Symbol as unknown as Record<string, unknown>)[key])
+    .filter(isSymbol),
 );
-
-function isNonTrackableKey(key: string | symbol): boolean {
-  return key === '__proto__' || key === '__v_isRef';
-}
-
-/**
- * 集合（Map/Set）变更的统一触发入口。
- *
- * dep 槽位声明为 `string | symbol`，但 `depsMap` 运行期就是普通 `Map`，
- * 能承载**任意键**——`Map.get(objKey)` 正是按对象本体 track 的。
- *
- * ★ 2026-11-12 修（R-P0-3）：此前用 `toTriggerKey` 把非 string/symbol 键
- * （`Map<object, T>` 的对象键、`Set<number>` 的 number 键）直接丢弃，而 `SET`
- * 又没有 undefined 键的回退分支 ⇒ `map.set(objKey, v)` **完全不触发**，
- * 读 `map.get(objKey)` 的 effect 永远停在旧值（实测 seen 停在 1）。
- *
- * 现在原样交给 `trigger`：
- * - `ADD` / `DELETE`：`trigger` 对非数组目标会自动补 `ITERATE_KEY`
- *   （size / 迭代订阅者照旧收到，不依赖这里再补一次）；
- * - `SET`：只命中 key 级 dep，不会惊动 size 订阅者（size 确实没变）。
- */
-function triggerCollectionMutation(
-  target: object,
-  type: string,
-  key: unknown,
-  newValue?: unknown,
-  oldValue?: unknown,
-): void {
-  trigger(target, type, key as string | symbol, newValue, oldValue);
-}
 
 // ==================== createReactiveObject ====================
 
 function createReactiveObject(
   target: Target,
   isReadonlyFlag: boolean,
-  _isShallow: boolean,
   baseHandlers: ProxyHandler<Target>,
   collectionHandlers: ProxyHandler<Target>,
   proxyMap: WeakMap<Target, ReactiveProxy<Target>>,
@@ -313,7 +263,8 @@ function createMutableHandler(isReadonly: boolean, isShallow: boolean): ProxyHan
 
       const res = Reflect.get(target, key, _receiver);
 
-      if (isSymbol(key) ? builtInSymbols.has(key) : isNonTrackableKey(key)) {
+      // `__proto__` / `__v_isRef` 不参与依赖收集
+      if (isSymbol(key) ? builtInSymbols.has(key) : key === '__proto__' || key === '__v_isRef') {
         return res;
       }
 
@@ -465,6 +416,21 @@ function createMutableHandler(isReadonly: boolean, isShallow: boolean): ProxyHan
 // Map/Set 的迭代 key（复用 ITERATE_KEY 以保持一致性）
 // 使用与 mutable handler 相同的 ITERATE_KEY，确保 collection 和 object 的迭代追踪行为一致。
 
+// 集合（Map/Set）变更统一走 `trigger`。
+//
+// dep 槽位声明为 `string | symbol`，但 `depsMap` 运行期就是普通 `Map`，
+// 能承载**任意键**——`Map.get(objKey)` 正是按对象本体 track 的。
+//
+// ★ 2026-11-12 修（R-P0-3）：此前用 `toTriggerKey` 把非 string/symbol 键
+// （`Map<object, T>` 的对象键、`Set<number>` 的 number 键）直接丢弃，而 `SET`
+// 又没有 undefined 键的回退分支 ⇒ `map.set(objKey, v)` **完全不触发**，
+// 读 `map.get(objKey)` 的 effect 永远停在旧值（实测 seen 停在 1）。
+//
+// 现在原样交给 `trigger`：
+// - `ADD` / `DELETE`：`trigger` 对非数组目标会自动补 `ITERATE_KEY`
+//   （size / 迭代订阅者照旧收到，不依赖这里再补一次）；
+// - `SET`：只命中 key 级 dep，不会惊动 size 订阅者（size 确实没变）。
+
 function createCollectionHandler(isReadonly: boolean, isShallow: boolean): ProxyHandler<Target> {
   return {
     get(target, key, _receiver) {
@@ -533,10 +499,10 @@ function createCollectionHandler(isReadonly: boolean, isShallow: boolean): Proxy
                   //   `map.size` / `keys()` 恰好追踪 ITERATE_KEY；此前一律用 SET，
                   //   所以读 size 的 effect 永远不重跑（实测 sizes === [1]）。
                   //   已有的 key 改值仍是 SET（size 不变，不该惊动迭代类订阅者）。
-                  triggerCollectionMutation(
+                  trigger(
                     target,
                     hadKey ? TriggerOpTypes.SET : TriggerOpTypes.ADD,
-                    args[0],
+                    args[0] as string | symbol,
                     args[1],
                     oldValue,
                   );
@@ -548,7 +514,7 @@ function createCollectionHandler(isReadonly: boolean, isShallow: boolean): Proxy
                 const result = res.apply(target, args);
                 // ADD 已包含 ITERATE_KEY 依赖（effect.ts 的 trigger 分支），
                 // 再显式触发一次会让 size/迭代类 effect 一次变更跑两遍。
-                if (!had) triggerCollectionMutation(target, TriggerOpTypes.ADD, args[0], args[0]);
+                if (!had) trigger(target, TriggerOpTypes.ADD, args[0] as string | symbol, args[0]);
                 return result;
               } else if (key === 'delete') {
                 // Map/Set.delete: 已有 hadKey 检查
@@ -556,7 +522,7 @@ function createCollectionHandler(isReadonly: boolean, isShallow: boolean): Proxy
                 const result = res.apply(target, args);
                 if (hadKey) {
                   // DELETE 同样已包含 ITERATE_KEY 依赖；显式重复会双跑。
-                  triggerCollectionMutation(target, TriggerOpTypes.DELETE, args[0]);
+                  trigger(target, TriggerOpTypes.DELETE, args[0] as string | symbol);
                 }
                 return result;
               } else if (key === 'clear') {
@@ -627,7 +593,6 @@ export function reactive<T extends object>(target: T): UnwrapNestedRefs<T> {
   return createReactiveObject(
     target,
     false,
-    false,
     mutableHandlers,
     mutableCollectionHandlers,
     reactiveMap,
@@ -638,7 +603,6 @@ export function shallowReactive<T extends object>(target: T): T {
   return createReactiveObject(
     target,
     false,
-    true,
     shallowReactiveHandlers,
     shallowCollectionHandlers,
     shallowReactiveMap,
@@ -649,7 +613,6 @@ export function readonly<T extends object>(target: T): DeepReadonly<UnwrapNested
   return createReactiveObject(
     target,
     true,
-    false,
     readonlyHandlers,
     readonlyCollectionHandlers,
     readonlyMap,
@@ -659,7 +622,6 @@ export function readonly<T extends object>(target: T): DeepReadonly<UnwrapNested
 export function shallowReadonly<T extends object>(target: T): Readonly<T> {
   return createReactiveObject(
     target,
-    true,
     true,
     shallowReadonlyHandlers,
     shallowReadonlyCollectionHandlers,
