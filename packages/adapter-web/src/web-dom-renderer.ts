@@ -11,7 +11,6 @@
 import { createRenderer } from '@lytjs/vdom';
 import type { VNode, RendererOptions } from '@lytjs/vdom';
 import type { ComponentInternalInstance, SuspenseBoundary } from '@lytjs/vdom';
-import { withFirstRenderOptimization } from '@lytjs/reactivity';
 import { WebRendererHost } from './web-host';
 // FIX: DTS build error - removeAllEventListeners 暂时未使用
 // import { removeAllEventListeners } from './web-patch-events';
@@ -458,10 +457,15 @@ export function createDOMRenderer(
         // Patch 到容器
         const existing = vnodeMap.get(container) ?? null;
         if (existing === null) {
-          // 首次挂载：包裹 withFirstRenderOptimization 跳过依赖收集
-          withFirstRenderOptimization(() => {
-            renderer.patch(null, vnode, container);
-          });
+          // ⚠️ 2026-11-12 修（R-P0-4）：首帧**不能**跳过依赖收集。
+          //
+          // 此前这里包了 `withFirstRenderOptimization`，而 `trackEffect` 在窗口内
+          // 直接 return ⇒ 组件渲染 effect 首帧读到的状态一个都没订阅，挂载后
+          // state 变更**永不更新**（实测 `n=0` 冻结，见
+          // `core-vnode/tests/component-renderer-first-render.test.ts`）。
+          //
+          // 首帧的「省一次依赖收集」换不来任何收益：订阅缺失就是功能缺失。
+          renderer.patch(null, vnode, container);
         } else {
           // 后续更新：正常 patch，依赖正常收集
           renderer.patch(existing, vnode, container);
