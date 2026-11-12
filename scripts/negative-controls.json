@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-08",
+  "updatedAt": "2026-11-12",
   "verified": [
     "check-lockfile",
     "check-build-order",
@@ -7,6 +7,8 @@
     "check-render-parity",
     "check-list-diff",
     "check-public-names",
+    "check-stale-capability-claims",
+    "check-signal-authority",
     "check-dead-packages",
     "check-e2e-assertions",
     "check-src-hygiene",

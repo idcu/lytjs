@@ -70,6 +70,8 @@
  *   - `check-plugin-semantics` 插件语义：忽略 installed 幂等检查 →「重复 install 只执行一次」必红
  *   - `check-hmr`              HMR：register 覆盖而非合并 handler →「先 accept 后 dispose：两者都在」必红
  *   - `check-consumer-demo`    消费者 demo：emit 只查 props 不查 attrs →「点击后计数变为 1」必红
+ *   - `check-signal-authority` signal 单语义权威：基础发射器不再引用共享语义层 → 必红
+ *   - `check-stale-capability-claims` 过时能力结论：把已证伪表述写回 README → 必红
  *   - `check-ui-slot-single-node` UI slot 单节点：新增只处理数组形态的 slot 分支 →「只处理数组形态」必红
  *   - `check-negative-controls` 负控审计：给 GATES 临时加一条未登记门禁 →「未登记」必红
  *   - `check-circular`        循环依赖（dist）：产物入口多 import 一个回指入口的临时模块 →「发现循环依赖」必红
@@ -1251,13 +1253,52 @@ const CONTROLS = {
       file,
       (text) => {
         const needle =
-          '  const handler = instance.props[handlerName] ?? instance.attrs[handlerName];';
-        if (!text.includes(needle)) {
+          '  let handler = instance.props[handlerName] ?? instance.attrs[handlerName];';
+        const kebab = '    handler = instance.props[rawKey] ?? instance.attrs[rawKey];';
+        if (!text.includes(needle) || !text.includes(kebab)) {
           throw new Error('check-consumer-demo：注入点漂移（找不到 emit 的 handler 查找）');
         }
-        return text.replace(needle, '  const handler = instance.props[handlerName];');
+        // 两处 attrs 兜底都要去掉：只改第一处时 kebab 分支仍会从 attrs 命中原 handler。
+        return text
+          .replace(needle, '  let handler = instance.props[handlerName];')
+          .replace(kebab, '    handler = instance.props[rawKey];');
       },
       () => expectFail(['node', 'scripts/check-consumer-demo.mjs'], 'check-consumer-demo'),
+    );
+  },
+
+  'check-signal-authority': () => {
+    // 注入：基础发射器不再引用共享语义层 ⇒「引用 codegen-signal-shared」必红
+    const file = join(ROOT, 'packages/compiler/src/codegen-signal.ts');
+    withPatchedFile(
+      file,
+      (text) => {
+        const needle = "} from './codegen-signal-shared';";
+        if (!text.includes(needle)) {
+          throw new Error('check-signal-authority：注入点漂移（找不到共享语义层 import）');
+        }
+        return text.replace(needle, "} from './codegen-signal-shared-missing';");
+      },
+      () => expectFail(['node', 'scripts/check-signal-authority.mjs'], 'check-signal-authority'),
+    );
+  },
+
+  'check-stale-capability-claims': () => {
+    // 注入：把已证伪的结论写回 README ⇒「不含 fallback 从未出现」必红
+    const file = join(ROOT, 'README.md');
+    withPatchedFile(
+      file,
+      (text) => {
+        if (!text.includes('# Lyt')) {
+          throw new Error('check-stale-capability-claims：注入点漂移（README 标题缺失）');
+        }
+        return `${text}\nfallback 从未出现\n`;
+      },
+      () =>
+        expectFail(
+          ['node', 'scripts/check-stale-capability-claims.mjs'],
+          'check-stale-capability-claims',
+        ),
     );
   },
 
