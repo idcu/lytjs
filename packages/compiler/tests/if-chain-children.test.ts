@@ -92,6 +92,36 @@ describe('v-if 链的分支内容（P0 回归）', () => {
   });
 });
 
+/**
+ * P0-3 负控：`v-else` / `v-else-if` 与 `v-for` 同元素。
+ *
+ * 此前 `transformIf` 对任何带 v-for 的元素直接 return，链尾无人构建，
+ * 链首又因不在链尾而提前返回 ⇒ 两个分支**同时无条件渲染**。
+ * 判据执行 vnode 产物，断言每个条件下渲染出来的文本，且不残留另一分支。
+ */
+describe('v-else / v-else-if + v-for 条件链（P0 回归）', () => {
+  const textOf = (node: unknown): string => {
+    if (node === null || node === undefined) return '';
+    if (typeof node === 'string') return node;
+    if (Array.isArray(node)) return node.map(textOf).join('');
+    return textOf((node as RenderedVNode).children);
+  };
+
+  it('v-else + v-for 作为 alternate：条件成立时不得渲染列表', () => {
+    const tpl = '<div><p v-if="ok">A</p><p v-else v-for="i in list">{{ i }}</p></div>';
+    expect(textOf(mount(tpl, { ok: true, list: [1, 2] }))).toBe('A');
+    expect(textOf(mount(tpl, { ok: false, list: [1, 2] }))).toBe('12');
+  });
+
+  it('v-else-if + v-for 位于链中：三个分支互斥且列表只在该分支渲染', () => {
+    const tpl =
+      '<div><p v-if="type === 1">A</p><p v-else-if="type === 2" v-for="i in list">{{ i }}</p><p v-else>C</p></div>';
+    expect(textOf(mount(tpl, { type: 1, list: [1, 2] }))).toBe('A');
+    expect(textOf(mount(tpl, { type: 2, list: [1, 2] }))).toBe('12');
+    expect(textOf(mount(tpl, { type: 3, list: [1, 2] }))).toBe('C');
+  });
+});
+
 describe('<template> 编译成 Fragment（P0 回归）', () => {
   it('`<template v-if>` 渲染成 Fragment，而不是字面量 template 元素', () => {
     const fragment = asVNode(

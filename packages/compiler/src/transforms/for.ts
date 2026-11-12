@@ -27,6 +27,18 @@ import { warn } from '@lytjs/common-error';
 // FIX: DTS build error - RE_SIMPLE_VFOR 移到模块级
 const RE_SIMPLE_VFOR = /^(\S+)\s+(?:in|of)\s+(.+)$/;
 
+// P0-3：v-else / v-else-if + v-for 的分支在 exit 时会被替换成 renderList 调用，
+// 父节点里不再有对应的 ElementNode。if.ts 构建条件链时需要从这个调用反查回
+// 元素（判定 else-if 条件、取分支节点），故在调用节点上挂一个不可枚举的关联。
+// 用 Symbol 键，序列化 / 遍历 / codegen 都不会看到它。
+const FOR_BRANCH_ELEMENT = Symbol('lytjs.forBranchElement');
+
+/** 若 `node` 是 v-for 生成的 renderList 调用，返回其来源元素。 */
+export function getForBranchElement(node: unknown): ElementNode | undefined {
+  if (!node || typeof node !== 'object') return undefined;
+  return (node as Record<symbol, ElementNode | undefined>)[FOR_BRANCH_ELEMENT];
+}
+
 /**
  * 类型守卫：检查 codegenNode 是否为 VNodeCall。
  */
@@ -245,6 +257,8 @@ export function transformFor(
         forExp.loc,
       ),
     ]);
+    // P0-3：记录 renderList 调用与来源元素的关联，供 if.ts 构建条件链时反查。
+    (renderListCall as unknown as Record<symbol, unknown>)[FOR_BRANCH_ELEMENT] = element;
 
     // FIX: P2-10 renderListCall 是 JSCallExpression，需要转换为 TemplateChildNode
     // 此处断言是安全的，因为 v-for 转换结果会被 replaceNode 替换到父节点的 children 中

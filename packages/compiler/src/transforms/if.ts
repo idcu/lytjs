@@ -15,6 +15,7 @@ import type {
 import { createSimpleExpression, createConditionalExpression } from '../ast';
 import { getExpContent, findDirective } from './helpers';
 import { transformElement } from './transform-element';
+import { getForBranchElement } from './for';
 
 /**
  * 类型守卫：检查节点是否为 JSConditionalExpression。
@@ -26,6 +27,17 @@ function isJSConditionalExpression(node: unknown): node is JSConditionalExpressi
     node !== null &&
     (node as JSConditionalExpression).type === NodeTypes.JS_CONDITIONAL_EXPRESSION
   );
+}
+
+/**
+ * P0-3：链扫描同时接受两类槽位——
+ * - 普通分支：仍是 ElementNode；
+ * - v-else / v-else-if + v-for 分支：已被 for.ts 替换成 renderList 调用，
+ *   通过标记反查回来源元素。
+ */
+function asChainElement(node: TemplateChildNode): ElementNode | undefined {
+  if (node.type === NodeTypes.ELEMENT) return node as ElementNode;
+  return getForBranchElement(node);
 }
 
 export function transformIf(
@@ -42,10 +54,19 @@ export function transformIf(
   //   否则条件链会覆盖掉 for.ts 生成的 `renderList(...)`，产物变成裸
   //   `(i > 1 ? li : null)` —— `i` 不在渲染函数作用域里 ⇒ 运行期 ReferenceError。
   //   语义拍板：v-for 优先、v-if 逐项过滤，由 for.ts 的 ifCondition 分支实现。
-  if (findDirective(element, 'for')) return;
+  //
+  // ⚠️ P0-3：但 `v-else` / `v-else-if` + `v-for` 的分支必须继续参与条件链。
+  //   此前这里对所有带 v-for 的元素直接 return，导致链尾（v-else/v-else-if 分支）
+  //   没有 exit 回调构建 conditional ⇒ v-if 与 v-else 两个分支同时无条件渲染。
+  //   仅当元素**自身是 v-if 链首**时才让位给 for.ts。
+  if (findDirective(element, 'for') && findDirective(element, 'if')) return;
 
   const parent = context.parent;
   if (!parent) return;
+
+  // 进入阶段记录自身下标：带 v-for 的分支在 exit 时已被 for.ts 替换成
+  // renderList 调用，`children.indexOf(node)` 会得到 -1，无法用于链尾判定。
+  const selfIndex = parent.children.indexOf(node as TemplateChildNode);
 
   // 推迟到 exit 回调执行：v-if 链的分支元素若在 transform 阶段就被移出 children，
   // 分支内部的子节点永远不会被遍历 —— 它们的 codegenNode 不会生成，
@@ -54,7 +75,9 @@ export function transformIf(
     const parentRef = parent;
 
     const siblings = parentRef.children;
-    const currentIndex = siblings.indexOf(node as TemplateChildNode);
+    const foundIndex = siblings.indexOf(node as TemplateChildNode);
+    // 带 v-for 的分支自身已被 for.ts 替换，退回进入阶段记录的下标。
+    const currentIndex = foundIndex === -1 ? selfIndex : foundIndex;
 
     // 查找链中的第一个 v-if
     // FIX: 只有 v-else-if 和 v-else 可以和前面的 v-if 组成链
@@ -72,8 +95,8 @@ export function transformIf(
         if (typeof text !== 'string' || !text.trim()) continue;
         break;
       }
-      if (sibling && sibling.type === NodeTypes.ELEMENT) {
-        const sibElement = sibling as ElementNode;
+      const sibElement = sibling ? asChainElement(sibling as TemplateChildNode) : undefined;
+      if (sibElement) {
         const hasIf = !!findDirective(sibElement, 'if');
         const hasElseIf = !!findDirective(sibElement, 'else-if');
         const hasElse = !!findDirective(sibElement, 'else');
@@ -126,8 +149,8 @@ export function transformIf(
         if (typeof text !== 'string' || !text.trim()) continue;
         break;
       }
-      if (sib.type !== NodeTypes.ELEMENT) break;
-      const el = sib as ElementNode;
+      const el = asChainElement(sib);
+      if (!el) break;
       if (!findDirective(el, 'else-if') && !findDirective(el, 'else')) break;
       chainEnd = i;
     }
@@ -159,9 +182,8 @@ export function transformIf(
         break;
       }
 
-      if (sibling.type !== NodeTypes.ELEMENT) break;
-
-      const sibElement = sibling as ElementNode;
+      const sibElement = asChainElement(sibling);
+      if (!sibElement) break;
       const sibIf = findDirective(sibElement, 'if');
       const sibElseIf = findDirective(sibElement, 'else-if');
       const sibElse = findDirective(sibElement, 'else');
@@ -184,7 +206,10 @@ export function transformIf(
 
       // 分支元素此时应已有 codegenNode（链尾的 exit 晚于所有前序兄弟）。
       // 兜底：万一遍历顺序变了，仍手动转一次（对纯文本分支有效）。
-      if (!sibElement.codegenNode) {
+      // 带 v-for 的分支已由 for.ts 在更早的 exit 里替换成 renderList 调用，
+      // 槽位与元素不再是同一对象，必须直接取槽位，否则会丢失列表语义。
+      const isReplacedForBranch = sibling !== sibElement;
+      if (!sibElement.codegenNode && !isReplacedForBranch) {
         const savedParent = context.parent;
         context.parent = parent;
         try {
@@ -194,8 +219,8 @@ export function transformIf(
         }
       }
 
-      if (!sibElement.codegenNode) continue;
-      const branchNode = sibElement.codegenNode as VNodeCall;
+      if (isReplacedForBranch === false && !sibElement.codegenNode) continue;
+      const branchNode = (isReplacedForBranch ? sibling : sibElement.codegenNode) as VNodeCall;
 
       if (sibIf || sibElseIf) {
         const testExpr = sibIf?.exp ?? sibElseIf?.exp;
