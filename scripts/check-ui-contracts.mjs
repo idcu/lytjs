@@ -18,7 +18,7 @@
  * | 类 | 判据 |
  * |---|---|
  * | vmodel | 值类 prop 存在，且 AST 中存在真实的 emit('update:<prop>') 调用（注释/字符串里的同形文本不算） |
- * | slots | `types.ts` 声明的每个插槽都被渲染函数以 `slots.x` / `slots['x']` / 解构读取（AST 级，注释不算） |
+ * | slots | `types.ts` 声明的每个插槽都被渲染函数以 `slots.x` / `slots['x']` / 解构 / `xxx.resolve('x')` 读取（AST 级，注释不算） |
  * | events | 声明的每个 `onX` 回调要么被 `p.onX` 调用，要么 emit 同名事件 |
  * | controlled | 有值类 prop + 内部 signal/reactive + 无 watch ⇒ 红；无受控 prop 但有内部状态 ⇒ n/a |
  * | styles | 源码里的每个静态 `lyt-*` 类名在 `styles/index.css` 有规则 |
@@ -131,7 +131,7 @@ function emittedEvents(name, src) {
   return events;
 }
 
-/** 收集插槽的真实读取：slots.x / slots['x'] / const { x } = slots。 */
+/** 收集插槽的真实读取：slots.x / slots['x'] / const { x } = slots / xxx.resolve('x')。 */
 function slotReads(name, src) {
   const used = new Set();
   walk(astOf(name, src), (node) => {
@@ -143,6 +143,21 @@ function slotReads(name, src) {
       if (node.expression.text !== 'slots') return;
       const key = stringArg(node.argumentExpression);
       if (key) used.add(key);
+      return;
+    }
+    // 间接读取形态：`slotContent.resolve('active')`（useSlotContent 封装）。
+    // 只认真实 CallExpression + 字符串字面量首参；注释与普通字符串不是调用节点，
+    // 因此不会造成「源码里出现 resolve('x') 就算 pass」的假阳性。
+    if (ts.isCallExpression(node)) {
+      const callee = node.expression;
+      if (
+        ts.isPropertyAccessExpression(callee) &&
+        callee.name.text === 'resolve' &&
+        node.arguments.length === 1
+      ) {
+        const key = stringArg(node.arguments[0]);
+        if (key) used.add(key);
+      }
       return;
     }
     if (
