@@ -435,6 +435,38 @@ export function createRenderer<HN, HE extends HN>(
   const suspenseAPI = createSuspensePatch<HN, HE>(ctx);
 
   // ============================================================
+  // 组件 ref 接线（R-P0-5）
+  // ============================================================
+  //
+  // 元素 ref 由 `patch-element.ts` 的 `setRef` 处理；组件 vnode 此前**两头都断**：
+  //   · 挂载侧：`mountComponent` 之后没有任何 setRef ⇒ 对象/串/函数 ref 全是 null；
+  //   · 卸载侧：组件分支在通用的 ref 清理代码**之前** return ⇒ 永远不会清空。
+  //
+  // 这里与元素侧保持对称：挂载写值，卸载/换 ref 时清空。
+
+  /** 组件 ref 的目标值：优先 `expose()` 暴露的对象，否则公共实例代理。 */
+  function resolveComponentRefValue(component: ComponentInternalInstance): unknown {
+    const instance = component as unknown as { exposed?: unknown; ctx?: unknown };
+    return instance.exposed ?? instance.ctx ?? component;
+  }
+
+  /** 清空 vnode.ref（字符串删键、函数回调 null、对象置 value=null）。 */
+  function clearVNodeRef(vnode: VNode, parentComponent: ComponentInternalInstance | null): void {
+    if (!vnode.ref || !parentComponent) return;
+    elementAPI.setRef(null, vnode.ref, parentComponent);
+    if (typeof vnode.ref === 'string') {
+      // 字符串 ref 的既有卸载语义是**删键**（不是留一个 null 值）
+      delete parentComponent.refs[vnode.ref];
+    }
+  }
+
+  /** 把组件实例写进 ref。 */
+  function setComponentRef(vnode: VNode, parentComponent: ComponentInternalInstance | null): void {
+    if (!vnode.ref || !parentComponent || !vnode.component) return;
+    elementAPI.setRef(resolveComponentRefValue(vnode.component), vnode.ref, parentComponent);
+  }
+
+  // ============================================================
   // patch - 核心 diff 入口
   // ============================================================
 
@@ -551,6 +583,13 @@ export function createRenderer<HN, HE extends HN>(
             console.warn(`[lytjs/patch] 跳过组件更新 "${compName}"：props 和 slots 未变化`);
           }
         }
+
+        // R-P0-5：同一组件换 ref（含从无到有 / 从有到无）时，先清旧再写新。
+        // 与元素侧 `patchElement` 的 `n1.ref !== n2.ref` 分支同义。
+        if (n2.ref !== n1.ref) {
+          clearVNodeRef(n1, parentComponent);
+          setComponentRef(n2, parentComponent);
+        }
       } else if (n2ShapeFlag & ShapeFlags.TELEPORT) {
         teleportAPI.patchTeleport(
           n1,
@@ -590,6 +629,8 @@ export function createRenderer<HN, HE extends HN>(
         suspenseAPI.mountSuspense(n2, container, anchor, parentComponent, parentSuspense, isSVG);
       } else if (n2.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
         componentAPI.mountComponent(n2, container, anchor, parentComponent, parentSuspense, isSVG);
+        // R-P0-5：挂载完成后把实例写进 ref（与元素侧 mountElement 的 setRef 对称）
+        setComponentRef(n2, parentComponent);
       }
     }
   }
@@ -648,6 +689,8 @@ export function createRenderer<HN, HE extends HN>(
       }
       // unmounted 语义上在 DOM 移除**之后**触发
       invokeUnmountedHook?.(component as ComponentInternalInstance);
+      // R-P0-5：组件分支此前在这里直接 return，通用的 ref 清理代码永远走不到
+      clearVNodeRef(vnode, parentComponent);
       return;
     }
 
@@ -715,16 +758,8 @@ export function createRenderer<HN, HE extends HN>(
       cleanupElementEvents(el as unknown as Node);
     }
 
-    // 卸载时清理 string refs
-    if (vnode.ref && parentComponent) {
-      if (typeof vnode.ref === 'string') {
-        delete parentComponent.refs[vnode.ref];
-      } else if (typeof vnode.ref === 'function') {
-        vnode.ref(null);
-      } else if (vnode.ref !== null && typeof vnode.ref === 'object' && 'value' in vnode.ref) {
-        (vnode.ref as { value: unknown }).value = null;
-      }
-    }
+    // 卸载时清理 ref（字符串删键 / 函数回调 null / 对象置 null）
+    clearVNodeRef(vnode, parentComponent);
 
     if (doRemove) {
       if (el) {

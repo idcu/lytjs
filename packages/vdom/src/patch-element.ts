@@ -169,7 +169,7 @@ export interface ElementPatchAPI<HN, _HE extends HN> {
   ) => void;
   mountTextNode: (vnode: VNode, container: HN, anchor: HN | null) => void;
   mountCommentNode: (vnode: VNode, container: HN, anchor: HN | null) => void;
-  setRef: (el: HN, ref: unknown, parentComponent: ComponentInternalInstance) => void;
+  setRef: (el: unknown, ref: unknown, parentComponent: ComponentInternalInstance) => void;
 }
 
 /**
@@ -199,7 +199,7 @@ export function createElementPatch<HN, HE extends HN>(
    * - 函数 ref：调用并传入元素
    * - 对象 ref（refImpl）：设置其 .value
    */
-  function setRef(el: HN, ref: unknown, parentComponent: ComponentInternalInstance): void {
+  function setRef(el: unknown, ref: unknown, parentComponent: ComponentInternalInstance): void {
     if (typeof ref === 'string') {
       parentComponent.refs[ref] = el;
     } else if (typeof ref === 'function') {
@@ -765,7 +765,7 @@ export function createElementPatch<HN, HE extends HN>(
     //   这类缺陷没有任何报错：`ref` 回调不调用，使用者只看到「ref 是 null」。
     if (n1.ref !== n2.ref) {
       if (n1.ref && parentComponent) {
-        setRef(null as unknown as HN, n1.ref, parentComponent);
+        setRef(null, n1.ref, parentComponent);
       }
       if (n2.ref && parentComponent) {
         setRef(el, n2.ref, parentComponent);

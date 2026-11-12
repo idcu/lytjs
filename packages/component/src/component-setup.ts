@@ -448,6 +448,11 @@ export function initProps(
   const attrs: Record<string, unknown> = {};
   for (const key in raw) {
     if (!hasOwn(raw, key) || hasOwn(propsOptions, key)) continue;
+    // ★ 2026-11-12（R-P0-5）：`ref` 是 vnode 保留字段，**不能**当 attr 透传。
+    //   否则组件根元素会收到同一个 ref ⇒ 挂载时函数 ref 被调用两次
+    //   （先收到根 DOM、再收到组件实例），对象 ref 也会在「元素」与「实例」之间反复覆盖。
+    //   Vue 的 isReservedProp 同样把 ref/key 排除在 attrs 之外。
+    if (key === 'ref') continue;
     // 已被同名 camelCase prop 消费的 kebab 键不再进 attrs（否则会漏到 DOM 属性）
     const camelized = kebabToCamel(key);
     if (camelized !== key && hasOwn(propsOptions, camelized)) continue;
