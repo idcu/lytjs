@@ -63,8 +63,50 @@ const RE_DECL_DESTRUCT = /(?:^|\n)(?:const|let|var)\s*[{[][\s\S]*?[}\]]\s*=/g;
 const RE_DECL_FN = /(?:^|\n)(?:async\s+)?function\s+([A-Za-z_$][\w$]*)/g;
 const RE_DECL_CLASS = /(?:^|\n)class\s+([A-Za-z_$][\w$]*)/g;
 
-/** 从解构模式里取出绑定名（`const { a, b: c, d = 1 } = x`） */
-function destructuredNames(pattern: string): string[] {
+/**
+ * P0-5：取出一条 import 语句引入的**运行时**绑定名。
+ *
+ * import 只被提升到模块作用域；模板通过 setup 的返回值解析 `_ctx.X`，
+ * 因此这些名字必须进入 bindings，否则 `<Foo/>` 会解析成 undefined（静默渲染成原生元素）。
+ * `import type` 与内联 `type` 说明符在运行期不存在，必须排除，避免 return 里出现未定义变量。
+ */
+function importedBindings(statement: string): string[] {
+  const s = statement.replace(/^import\s+/, '').trim();
+  // `import type ...` 整体只在类型层生效
+  if (/^type\s/.test(s)) return [];
+
+  const fromIdx = s.lastIndexOf(' from ');
+  const clause = fromIdx === -1 ? s : s.slice(0, fromIdx);
+  const names: string[] = [];
+
+  // 默认导入：子句开头的标识符
+  const def = clause.match(/^([A-Za-z_$][\w$]*)\s*(?:,|$)/);
+  if (def) names.push(def[1]!);
+
+  // 命名空间导入：`* as ns`
+  const ns = clause.match(/\*\s*as\s+([A-Za-z_$][\w$]*)/);
+  if (ns) names.push(ns[1]!);
+
+  // 命名导入：`{ a, b as c, type T }`
+  const braced = clause.match(/\{([\s\S]*?)\}/);
+  if (braced) {
+    for (const part of braced[1]!.split(',')) {
+      const seg = part.trim();
+      if (!seg || /^type\s/.test(seg)) continue;
+      const renamed = seg
+        .split(/\s+as\s+/)
+        .pop()!
+        .trim();
+      if (/^[A-Za-z_$][\w$]*$/.test(renamed)) names.push(renamed);
+    }
+  }
+
+  return names;
+}
+
+/** 从解构模式里取出绑定名（`const { a, b: c, d = 1 } = x`） */ function destructuredNames(
+  pattern: string,
+): string[] {
   // ⚠️ 匹配串以 `(?:^|\n)` 开头，可能带前导换行 —— 必须用 `^\s*` 剥掉，
   //   否则 `const ` 前缀残留 ⇒ 第一个绑定名被解析成 `const  x` 而丢弃（实测只返回了 y）。
   const inner = pattern.replace(/^\s*(?:const|let|var)\s*/, '');
@@ -170,6 +212,10 @@ export function compileScriptSetup(content: string): ScriptSetupResult {
 
   // 5) 收集绑定名
   const bindings = new Set<string>();
+  // import 已提升到模块作用域，但模板只认 setup 的返回值，需要一并 return。
+  for (const statement of imports) {
+    for (const name of importedBindings(statement)) bindings.add(name);
+  }
   for (const m of body.matchAll(RE_DECL_ASSIGN)) bindings.add(m[1]!);
   for (const m of body.matchAll(RE_DECL_FN)) bindings.add(m[1]!);
   for (const m of body.matchAll(RE_DECL_CLASS)) bindings.add(m[1]!);

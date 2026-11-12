@@ -41,6 +41,69 @@ const n = ref(0)
     expect(importIdx).toBeLessThan(setupIdx);
   });
 
+  // 负控（P0-5）：此前 import 只提升到模块作用域，未进入 bindings ⇒ setup 的
+  // return 为空，模板里的 `<Foo/>` 解析成 `_ctx.Foo === undefined`，静默渲染成空/原生元素。
+  // 判据同时覆盖 return 绑定清单（含 type-only 排除）与真实 render 产物的 type。
+  it('import 的运行时绑定必须进入模板作用域（P0 回归）', () => {
+    const code = gen(`<template><Foo :n="1" /></template>
+<script setup>
+import Foo from './Foo'
+import { a, b as c } from './x'
+import type { T } from './t'
+import { type U, d } from './z'
+const e = 1
+</script>`);
+
+    const returned = [...code.matchAll(/return \{([^}]*)\}/g)]
+      .pop()![1]
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    expect(returned).toEqual(['Foo', 'a', 'c', 'd', 'e']);
+
+    // 运行时层：执行 setup + render，`<Foo/>` 必须解析到组件对象。
+    const body = code
+      .replace(/^import Foo from '\.\/Foo'$/m, 'const Foo = __Foo;')
+      .replace(/^import \{ a, b as c \} from '\.\/x'$/m, 'const a = __a, c = __c;')
+      .replace(/^import type [^\n]*$/gm, '')
+      .replace(/^import \{ type U, d \} from '\.\/z'$/m, 'const d = __d;')
+      .replace(/^import[^\n]*$/gm, '')
+      .replace(/^export default/m, 'const __component =');
+    const createBlock = (type: unknown, props: unknown, children: unknown) => ({
+      type,
+      props,
+      children,
+    });
+    const factory = new Function(
+      '__Foo',
+      '__a',
+      '__c',
+      '__d',
+      'createBlock',
+      'openBlock',
+      'setBlockTracking',
+      `${body}\nreturn { __component, render };`,
+    );
+    const Foo = { name: 'Foo' };
+    const { __component, render } = factory(
+      Foo,
+      1,
+      2,
+      3,
+      createBlock,
+      () => {},
+      () => {},
+    );
+    const bindings = __component.setup({}, { emit: () => {} }) as Record<string, unknown>;
+    expect(bindings.Foo).toBe(Foo);
+
+    const ctx = new Proxy(bindings, {
+      get: (target, key) => (typeof key === 'string' && key in target ? target[key] : undefined),
+    });
+    const vnode = render(ctx, []) as { type: unknown };
+    expect(vnode.type).toBe(Foo);
+  });
+
   it('defineProps → options.props + setup 里拿到 props', () => {
     const code = gen(`<template><p>{{ title }}</p></template>
 <script setup>
