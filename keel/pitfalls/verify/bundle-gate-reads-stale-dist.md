@@ -22,5 +22,6 @@ keywords: [dist, stale, 假绿, bundle, controlled-props]
 
 - 引用任何门禁结论前先跑 `check-dist-freshness`；stale 时结论作废。
 - 收口前先 build，再跑门禁；归因时 checkout 旧提交 + 重建复测。
-- 评估（待裁决）：不做 fast 全局硬前置（+300s）；建议 fast 入口 0.5s
-  预检，stale 即拒跑读 dist 项，并把 slow 的 bundle 移到 build 后。
+- 已实施（2026-11-13）：fast 入口首项 `check-dist-freshness`，stale 即拒跑
+  needsDist 项（反证：touch src 后 fast 38 绿/1 红/20 跳过、退出 1；正常路径
+  121.0→121.2s）；slow 的 bundle 已移到 build/build:fallback 之后。

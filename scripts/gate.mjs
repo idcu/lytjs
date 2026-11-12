@@ -49,6 +49,16 @@ const ENV = { ...process.env, PATH: `${BIN}:${process.env.PATH ?? ''}` };
 const GATES = [
   // ── 快档：只读源码、不需要 dist ──────────────────────────────
   {
+    name: 'check-dist-freshness',
+    tier: 'fast',
+    cmd: ['tsx', 'scripts/check-dist-freshness.ts'],
+    approx: '~0.5s',
+    desc:
+      '★ 产物新鲜度（fast 档硬前置）：dist 必须比 src 新 —— vitest 的 47 条 alias 指向 dist，' +
+      'dist 过期时「测试全绿」证明的是旧产物。stale 时本档**拒跑**所有 needsDist 项（2026-10-31；' +
+      '2026-11-13 提升为硬前置，见 ADR/坑 bundle-gate-reads-stale-dist）',
+  },
+  {
     name: 'check-lockfile',
     tier: 'fast',
     cmd: ['node', 'scripts/check-lockfile.mjs'],
@@ -206,15 +216,6 @@ const GATES = [
       '★ Golden 20 i18n（B05）：zh-CN / en-US 键集合与 `{param}` 占位必须一致、文案不得为空串；' +
       '组件源码里面向用户的硬编码文案（含 CJK 字面量与 ariaLabel/alt）零新增 —— ' +
       '既有欠账棘轮在 scripts/ui-i18n-baseline.txt（Golden 20 逐组件迁移到 src/locale/messages.ts）',
-  },
-  {
-    name: 'check-dist-freshness',
-    tier: 'fast',
-    cmd: ['tsx', 'scripts/check-dist-freshness.ts'],
-    approx: '~0.5s',
-    desc:
-      '★ 产物新鲜度：dist 必须比 src 新 —— vitest 的 47 条 alias 指向 dist，' +
-      'dist 过期时「测试全绿」证明的是旧产物（2026-10-31）',
   },
   {
     name: 'check-package-exports',
@@ -818,18 +819,6 @@ const GATES = [
       '用例一个都不跑（但「Tests N passed」看起来仍像通过）',
   },
   {
-    name: 'check-bundle-size',
-    tier: 'slow',
-    cmd: ['tsx', 'scripts/check-bundle-size.ts'],
-    approx: '~8s',
-    desc:
-      '★ 真实产物体积（esbuild 真打包 + gzip）：实测值与 `scripts/bundle-baseline.json` 的' +
-      '**基线 + ≤2% 波动**比较，基线只能下调；上调须 owner 签字 + keel/decisions 记录。' +
-      'minimal-app 本阶段硬上限 93.7 KB（实测 89.2 KB）；首屏按「入口 + 静态 import 闭包」计' +
-      '（实测 69.3 KB，编译器在闭包内——已知债务，留给 B03）',
-    needsDist: true,
-  },
-  {
     name: 'build',
     tier: 'slow',
     cmd: ['pnpm', 'run', 'build'],
@@ -845,6 +834,20 @@ const GATES = [
       '★ **兜底构建**：不经过 smart-build，逐包 tsup + 拓扑排序。' +
       '在本机用它替代 `build`（后者被 safe-delete 守卫按轮次限额拦住）；' +
       '⚠️ 需在「干净的一轮」里跑，或在无该守卫的 CI 容器里跑',
+  },
+  {
+    name: 'check-bundle-size',
+    tier: 'slow',
+    cmd: ['tsx', 'scripts/check-bundle-size.ts'],
+    approx: '~8s',
+    desc:
+      '★ 真实产物体积（esbuild 真打包 + gzip）：实测值与 `scripts/bundle-baseline.json` 的' +
+      '**基线 + ≤2% 波动**比较，基线只能下调；上调须 owner 签字 + keel/decisions 记录。' +
+      'minimal-app 本阶段硬上限 93.7 KB；首屏按「入口 + 静态 import 闭包」计' +
+      '（编译器在闭包内——已知债务，留给 B03）。' +
+      '★ 2026-11-13 起排在 `build` / `build:fallback` **之后**：它量真实产物，必须建立在「刚构建过」之上，' +
+      '否则量的可能是旧 dist（见坑 bundle-gate-reads-stale-dist）',
+    needsDist: true,
   },
   {
     name: 'check-runtime-contract',
@@ -1028,6 +1031,11 @@ console.log(
 
 let pass = 0;
 const failed = [];
+const skipped = [];
+// ★ fast 档硬前置：`check-dist-freshness`（登记表第一位）的结论。
+//   null = 本次没跑；true/false = 通过/过期。过期时拒跑所有 needsDist 项，
+//   避免「在旧 dist 上得出全绿/全红」的假结论（坑 bundle-gate-reads-stale-dist）。
+let distFresh = null;
 const started = Date.now();
 
 for (const g of selected) {
@@ -1036,6 +1044,14 @@ for (const g of selected) {
   console.log('─'.repeat(60));
   if (dry) {
     console.log(`  would run: ${g.cmd.join(' ')}\n`);
+    continue;
+  }
+  if (g.tier === 'fast' && g.needsDist && distFresh === false) {
+    skipped.push(g.name);
+    console.log(
+      `\n⏭ ${g.name} 跳过：dist 不新鲜（前置 check-dist-freshness 未通过），` +
+        `拒绝在旧产物上运行\n`,
+    );
     continue;
   }
   const t0 = Date.now();
@@ -1055,6 +1071,7 @@ for (const g of selected) {
     const why = r.status === null ? diagnoseSpawnFailure(g.cmd[0], r) : `退出码 ${r.status}`;
     console.log(`\n❌ ${g.name} 失败（${dt}s，${why}）\n`);
   }
+  if (g.name === 'check-dist-freshness') distFresh = r.status === 0;
 }
 
 const total = ((Date.now() - started) / 1000).toFixed(1);
@@ -1062,9 +1079,13 @@ console.log('═'.repeat(60));
 if (dry) {
   console.log(`dry-run：共 ${selected.length} 项，未实际执行。`);
 } else {
-  console.log(`结果：✅ ${pass} 项通过 · ❌ ${failed.length} 项失败 · 耗时 ${total}s`);
+  console.log(
+    `结果：✅ ${pass} 项通过 · ❌ ${failed.length} 项失败 · ⏭ ${skipped.length} 项跳过 · ` +
+      `耗时 ${total}s`,
+  );
   if (failed.length > 0) console.log(`失败项：${failed.join(', ')}`);
+  if (skipped.length > 0) console.log(`跳过项（dist 不新鲜）：${skipped.join(', ')}`);
 }
 console.log('═'.repeat(60));
 
-process.exit(failed.length > 0 ? 1 : 0);
+process.exit(failed.length > 0 || skipped.length > 0 ? 1 : 0);
