@@ -103,6 +103,29 @@ function normalizePath(path: string): string {
 }
 
 /**
+ * 查找路径中的不安全片段
+ *
+ * @description
+ * 页面 path 最终会经 `join(outDir, filePath)` 落盘，`'..'` 段会逃出输出目录
+ * （`/../escape` → `<outDir>/../escape/index.html`）。此前的校验只检查
+ * `startsWith('/')`，因此存在路径穿越。
+ *
+ * @param path - 待检查的路径
+ * @returns 第一个不安全片段；全部安全时返回 null
+ */
+function findUnsafePathSegment(path: string): string | null {
+  if (path.includes('\0')) {
+    return '\0';
+  }
+  for (const segment of path.split(/[/\\]/)) {
+    if (segment === '..' || segment === '.') {
+      return segment;
+    }
+  }
+  return null;
+}
+
+/**
  * 将路径转换为文件路径
  *
  * @description
@@ -111,8 +134,13 @@ function normalizePath(path: string): string {
  *
  * @param path - 规范化后的路径
  * @returns 文件路径
+ * @throws 路径包含 `..` / `.` / NUL 等会逃出输出目录的片段时抛错
  */
 function pathToFilePath(path: string): string {
+  const unsafe = findUnsafePathSegment(path);
+  if (unsafe !== null) {
+    throw new Error(`非法的页面路径 "${path}": 包含不安全的路径片段 "${unsafe}"`);
+  }
   if (path === '/') {
     return '/index.html';
   }
@@ -397,6 +425,13 @@ export function validatePages(pages: SSGPage[]): string[] {
     // 检查路径合法性
     if (isString(pagePath) && !pagePath.startsWith('/')) {
       errors.push(`页面 "${pagePath}": path 必须以 / 开头`);
+    } else if (isString(pagePath)) {
+      const unsafe = findUnsafePathSegment(pagePath);
+      if (unsafe !== null) {
+        errors.push(
+          `页面 "${pagePath}": 路径片段 "${unsafe}" 非法，会写出输出目录（禁止 . / .. / NUL）`,
+        );
+      }
     }
   }
 
@@ -410,6 +445,8 @@ export function validatePages(pages: SSGPage[]): string[] {
   for (let i = 0; i < pages.length; i++) {
     const p = pages[i];
     if (!p || !isString(p.path) || !p.path) continue;
+    // 不安全路径已在上面报错；这里跳过，避免 pathToFilePath 抛错中断聚合。
+    if (findUnsafePathSegment(p.path) !== null) continue;
     const key = pathToFilePath(normalizePath(p.path));
     const prev = seen.get(key);
     if (prev !== undefined) {

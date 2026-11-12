@@ -71,3 +71,39 @@ describe('@lytjs/ssg', () => {
     expect(typeof validatePages).toBe('function');
   });
 });
+
+describe('SSG 路径穿越防护（P0 回归）', () => {
+  // 旧实现：`pathToFilePath()` 只把 path 拼成 `${path}/index.html`，
+  // `validatePages()` 只检查 `startsWith('/')`。
+  // ⇒ `/../escape` 能通过校验，`join(outDir, '/../escape/index.html')`
+  //   最终写到 outDir 的**上一级**去。
+  it('validatePages 应拒绝包含 .. 的路径', () => {
+    const errors = validatePages([
+      { path: '/../escape', component: vnode('div', 'Escape') },
+      { path: '/a/../../b', component: vnode('div', 'Escape2') },
+    ]);
+
+    expect(errors.length).toBe(2);
+    for (const message of errors) {
+      expect(message).toContain('写出输出目录');
+    }
+  });
+
+  it('generateStaticPages 遇到穿越路径必须抛错，而不是产出越界文件路径', () => {
+    expect(() =>
+      generateStaticPages([{ path: '/../escape', component: vnode('div', 'Escape') }]),
+    ).toThrow(/非法的页面路径/);
+  });
+
+  it('write() 不得写出 outDir 之外', async () => {
+    const root = makeTempDir();
+    const outDir = join(root, 'dist');
+    const generator = new SSGGenerator({
+      pages: [{ path: '/../escape', component: vnode('div', 'Escape') }],
+      options: { outDir },
+    });
+
+    await expect(generator.write()).rejects.toThrow(/写出输出目录/);
+    expect(existsSync(join(root, 'escape', 'index.html'))).toBe(false);
+  });
+});
