@@ -874,6 +874,7 @@ export interface FormSlots {
 export interface FormItemSetupProps extends Record<string, unknown> {
   label: string;
   prop: string;
+  labelWidth: string;
   required: boolean;
   rules: FormRule[];
   error: string;
@@ -886,6 +887,7 @@ export interface FormItemSetupProps extends Record<string, unknown> {
 export interface FormItemProps {
   label?: string;
   prop?: string;
+  labelWidth?: string;
   required?: boolean;
   rules?: FormRule[];
   error?: string;

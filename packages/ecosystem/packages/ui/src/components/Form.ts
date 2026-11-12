@@ -250,6 +250,9 @@ export const FormItem = defineComponent({
   props: {
     label: { type: String, default: '' },
     prop: { type: String, default: '' },
+    // ★ 2026-11-12（P1）：渲染逻辑早已使用 `p.labelWidth`（注释称「已改为由 prop 驱动」），
+    //   但声明里漏了这个 prop ⇒ 传入值只进 attrs、label 宽度恒为 100px。
+    labelWidth: { type: String, default: '' },
     required: { type: Boolean, default: false },
     rules: { type: [Object, Array] as unknown as StringConstructor, default: () => [] },
     error: { type: String, default: '' },
