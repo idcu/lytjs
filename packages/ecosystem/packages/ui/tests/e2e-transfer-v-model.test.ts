@@ -24,9 +24,7 @@ const DATA = [
 ];
 
 /** 受控挂载：modelValue 驱动 + onUpdate:modelValue 回写（即 v-model 展开） */
-async function mountWithModel(
-  initial: (string | number)[],
-): Promise<{
+async function mountWithModel(initial: (string | number)[]): Promise<{
   host: HTMLElement;
   model: { (): (string | number)[]; set: (v: (string | number)[]) => void };
 }> {
