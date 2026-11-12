@@ -440,3 +440,52 @@ describe('数组变异方法的索引级触发（R-P0-2）', () => {
     expect(seen).toBe(2);
   });
 });
+
+/**
+ * R-P0-3：`Map` 的对象键 `set` 必须触发对应 key 的订阅者。
+ *
+ * 回归背景（2026-11-12）：`triggerCollectionMutation` 用 `toTriggerKey` 只放行
+ * string/symbol，对象键被丢弃；而 `SET` 又没有 `undefined` 键的回退分支
+ * ⇒ `map.set(objKey, v)` 完全不触发，读 `map.get(objKey)` 的 effect 停在旧值。
+ * （`map.get` 侧是按**对象本体**订阅的，depsMap 运行期是普通 Map，能承载任意键。）
+ */
+describe('Map 对象键 set 的触发（R-P0-3）', () => {
+  it('★ object 键的 get 订阅者在 set 后必须重跑', () => {
+    const key = { id: 1 };
+    const map = reactive(new Map<object, number>([[key, 1]]));
+    let seen: number | undefined;
+    effect(() => {
+      seen = map.get(key);
+    });
+    expect(seen).toBe(1);
+
+    map.set(key, 2);
+    expect(seen).toBe(2);
+  });
+
+  it('★ 新增 object 键后 size 订阅者必须重跑', () => {
+    const map = reactive(new Map<object, number>());
+    let size = -1;
+    effect(() => {
+      size = map.size;
+    });
+    expect(size).toBe(0);
+
+    map.set({ id: 1 }, 1);
+    expect(size).toBe(1);
+  });
+
+  it('已有 object 键改值不应惊动 size 订阅者', () => {
+    const key = {};
+    const map = reactive(new Map<object, number>([[key, 1]]));
+    const fn = vi.fn();
+    effect(() => {
+      fn(map.size);
+    });
+    expect(fn).toHaveBeenCalledTimes(1);
+
+    map.set(key, 2);
+    // size 不变 ⇒ 迭代类订阅者不应被触发
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+});

@@ -229,26 +229,20 @@ function isNonTrackableKey(key: string | symbol): boolean {
 }
 
 /**
- * 将 unknown 值安全地转换为 trigger key (string | symbol)。
- * 如果值不是 string 或 symbol 类型，返回 undefined。
- */
-function toTriggerKey(value: unknown): string | symbol | undefined {
-  if (typeof value === 'string' || typeof value === 'symbol') {
-    return value;
-  }
-  return undefined;
-}
-
-/**
  * 集合（Map/Set）变更的统一触发入口。
  *
- * dep 槽位只接受 `string | symbol`，所以**非字符串 key**（如 `Set<number>`、
- * `Map<object, T>`）没有 key 级订阅：此前直接 `toTriggerKey(...)` 拿到
- * undefined 就静默跳过 ⇒ `set.add(1)` 后读 `set.size` 的 effect 不重跑
- * （实测 dummy 停在 0，`tests/reactive.test.ts` 的 Set 用例红）。
- * 这类变更至少要让集合级订阅者（`size` / 迭代）收到，它们挂在 ITERATE_KEY。
- * 字符串 / symbol key 仍走 key 级触发（ADD/DELETE 会由 trigger 自动带上
- * ITERATE_KEY 依赖，不会双跑）。
+ * dep 槽位声明为 `string | symbol`，但 `depsMap` 运行期就是普通 `Map`，
+ * 能承载**任意键**——`Map.get(objKey)` 正是按对象本体 track 的。
+ *
+ * ★ 2026-11-12 修（R-P0-3）：此前用 `toTriggerKey` 把非 string/symbol 键
+ * （`Map<object, T>` 的对象键、`Set<number>` 的 number 键）直接丢弃，而 `SET`
+ * 又没有 undefined 键的回退分支 ⇒ `map.set(objKey, v)` **完全不触发**，
+ * 读 `map.get(objKey)` 的 effect 永远停在旧值（实测 seen 停在 1）。
+ *
+ * 现在原样交给 `trigger`：
+ * - `ADD` / `DELETE`：`trigger` 对非数组目标会自动补 `ITERATE_KEY`
+ *   （size / 迭代订阅者照旧收到，不依赖这里再补一次）；
+ * - `SET`：只命中 key 级 dep，不会惊动 size 订阅者（size 确实没变）。
  */
 function triggerCollectionMutation(
   target: object,
@@ -257,14 +251,7 @@ function triggerCollectionMutation(
   newValue?: unknown,
   oldValue?: unknown,
 ): void {
-  const triggerKey = toTriggerKey(key);
-  if (triggerKey !== undefined) {
-    trigger(target, type, triggerKey, newValue, oldValue);
-    return;
-  }
-  if (type === TriggerOpTypes.ADD || type === TriggerOpTypes.DELETE) {
-    trigger(target, type, ITERATE_KEY, newValue, oldValue);
-  }
+  trigger(target, type, key as string | symbol, newValue, oldValue);
 }
 
 // ==================== createReactiveObject ====================
