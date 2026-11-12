@@ -51,11 +51,17 @@ const RE_DEFINE_PROPS =
 const RE_DEFINE_EMITS =
   /(?:^|\n)[ \t]*(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*defineEmits\s*(<[^>]*>)?\s*\(([\s\S]*?)\)\s*;?/;
 
-/** 顶层声明名（含解构） */
-const RE_DECL_ASSIGN = /(?:^|\n)[ \t]*(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=/g;
-const RE_DECL_DESTRUCT = /(?:^|\n)[ \t]*(?:const|let|var)\s*[{[][\s\S]*?[}\]]\s*=/g;
-const RE_DECL_FN = /(?:^|\n)[ \t]*(?:async\s+)?function\s+([A-Za-z_$][\w$]*)/g;
-const RE_DECL_CLASS = /(?:^|\n)[ \t]*class\s+([A-Za-z_$][\w$]*)/g;
+/**
+ * 顶层声明名（含解构）。
+ *
+ * P0-4：必须只匹配**列 0** 的声明。此前带 `[ \t]*`，函数/块体内的缩进声明
+ * （`function f() { const b = 2 }`）同样命中 ⇒ `b` 被收进 setup 的 `return`，
+ * 而 `b` 并不在 setup 作用域里 ⇒ 运行期 ReferenceError。
+ */
+const RE_DECL_ASSIGN = /(?:^|\n)(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=/g;
+const RE_DECL_DESTRUCT = /(?:^|\n)(?:const|let|var)\s*[{[][\s\S]*?[}\]]\s*=/g;
+const RE_DECL_FN = /(?:^|\n)(?:async\s+)?function\s+([A-Za-z_$][\w$]*)/g;
+const RE_DECL_CLASS = /(?:^|\n)class\s+([A-Za-z_$][\w$]*)/g;
 
 /** 从解构模式里取出绑定名（`const { a, b: c, d = 1 } = x`） */
 function destructuredNames(pattern: string): string[] {

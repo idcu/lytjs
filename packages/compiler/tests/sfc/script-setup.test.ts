@@ -69,6 +69,34 @@ const { x, y } = { x: 1, y: 2 }
     expect(code).toContain('return { x, y }');
   });
 
+  // 负控（P0-4）：绑定收集正则带 `[ \t]*`，函数体内的缩进声明同样命中，
+  // 产物 `return { a, f, b }` 会引用 setup 作用域里不存在的 `b` ⇒ ReferenceError。
+  // 判据同时覆盖产物绑定清单与真实执行 setup 两层。
+  it('函数体内的局部变量不得进入 return（P0 回归）', () => {
+    const code = gen(`<template><div>{{ a }}</div></template>
+<script setup>
+const a = 1
+function f() {
+  const b = 2
+  return a + b
+}
+</script>`);
+    const returned = [...code.matchAll(/return \{([^}]*)\}/g)]
+      .pop()![1]
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    expect(returned).toEqual(['a', 'f']);
+
+    // 运行时：setup 不得因 return 了不存在的局部变量而抛 ReferenceError。
+    const body = code.replace(/^import[^\n]*$/gm, '').replace(/^export default/m, 'return');
+    const factory = new Function('createElementVNode', body);
+    const component = factory(() => ({})) as {
+      setup: (props: unknown, ctx: unknown) => unknown;
+    };
+    expect(() => component.setup({}, { emit: () => {} })).not.toThrow();
+  });
+
   it('与 <script> 并存：options 被展开合并', () => {
     const code = gen(`<template><i>{{ a }}</i></template>
 <script>
