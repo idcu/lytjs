@@ -13,8 +13,8 @@
  * 这些缺陷的共同点是**视觉上完全正常**：弹窗出现了、内容正确、鼠标能点。
  * 所以用例必须断言「焦点在哪」「按了 Escape 之后状态变没变」，而不是断言 DOM 结构。
  */
-import { describe, it, expect, afterEach } from 'vitest';
-import { createApp, h, ref } from '@lytjs/core';
+import { describe, it, expect, afterEach, vi } from 'vitest';
+import { createApp, h, ref, nextTick } from '@lytjs/core';
 import { Modal } from '../src/components/Modal';
 import { Dialog } from '../src/components/Dialog';
 import { Drawer } from '../src/components/Drawer';
@@ -22,7 +22,12 @@ import { Drawer } from '../src/components/Drawer';
 const hosts: HTMLElement[] = [];
 const apps: Array<{ unmount: () => void }> = [];
 
-const tick = (ms = 60): Promise<void> => new Promise((r) => setTimeout(r, ms));
+/**
+ * 等待策略：
+ * - 焦点陷阱由 `overlay-focus` 在打开后用一个宏任务（`setTimeout(0)`）建立
+ *   ⇒ 焦点/ Escape 类断言用 `vi.waitFor` 轮询**真实焦点位置 / 状态值**；
+ * - 纯渲染类断言（aria 树、内联样式）只需 `nextTick` 冲刷调度器。
+ */
 
 /** 挂一个「触发按钮 + 弹层」的小应用；返回 `open` 与真正能卸载的 app 句柄 */
 async function mountOverlay(Component: unknown, props: Record<string, unknown> = {}) {
@@ -77,7 +82,12 @@ describe.each([
   it('打开后焦点进入弹层（此前停在 body / 触发按钮上）', async () => {
     const { open } = await mountOverlay(Component);
     open.value = true;
-    await tick(80);
+    // 陷阱建立后焦点才会进入弹层 ⇒ 轮询真实 activeElement，而非固定 sleep
+    await vi.waitFor(() => {
+      const box = document.querySelector(selector);
+      expect(box).not.toBeNull();
+      expect(box!.contains(document.activeElement)).toBe(true);
+    });
 
     const box = document.querySelector(selector);
     expect(box).not.toBeNull();
@@ -87,14 +97,19 @@ describe.each([
   it('焦点在弹层外时 Escape 仍能关闭（元素级监听收不到这种情况）', async () => {
     const { open } = await mountOverlay(Component);
     open.value = true;
-    await tick(80);
+    // 先等陷阱真正建立（焦点进入弹层）——否则 Escape 根本没人接
+    await vi.waitFor(() => {
+      const box = document.querySelector(selector);
+      expect(box).not.toBeNull();
+      expect(box!.contains(document.activeElement)).toBe(true);
+    });
 
     // 关键：把焦点挪出去。真实用户完全可能先点一下页面别处再看弹窗。
     (document.activeElement as HTMLElement | null)?.blur();
     pressEscape();
-    await tick(80);
-
-    expect(open.value).toBe(false);
+    await vi.waitFor(() => {
+      expect(open.value).toBe(false);
+    });
   });
 
   it('关闭后焦点回到触发元素', async () => {
@@ -104,25 +119,35 @@ describe.each([
     expect(document.activeElement).toBe(trigger);
 
     open.value = true;
-    await tick(80);
+    await vi.waitFor(() => {
+      const box = document.querySelector(selector);
+      expect(box).not.toBeNull();
+      expect(box!.contains(document.activeElement)).toBe(true);
+    });
     expect(document.activeElement).not.toBe(trigger);
 
     open.value = false;
-    await tick(80);
-    expect(document.activeElement).toBe(trigger);
+    await vi.waitFor(() => {
+      expect(document.activeElement).toBe(trigger);
+    });
   });
 
   it('卸载后不再响应 Escape', async () => {
     const { open, app } = await mountOverlay(Component);
     open.value = true;
-    await tick(80);
+    await vi.waitFor(() => {
+      const box = document.querySelector(selector);
+      expect(box).not.toBeNull();
+      expect(box!.contains(document.activeElement)).toBe(true);
+    });
     expect(open.value).toBe(true);
 
     app.unmount();
-    await tick(40);
+    // 卸载钩子是同步解除监听的；nextTick 只用于冲刷调度器
+    await nextTick();
 
     pressEscape();
-    await tick(40);
+    await nextTick();
     expect(open.value).toBe(true);
   });
 });
@@ -160,15 +185,22 @@ describe('多个弹层同时打开', () => {
     });
     apps.push(app as unknown as { unmount: () => void });
     await app.mount(host);
-    await tick(80);
+    // 两个陷阱按 DOM 顺序先后建立（A 先、B 后）；B 建立后焦点落在 B 内
+    await vi.waitFor(() => {
+      const drawers = document.querySelectorAll('.lyt-drawer');
+      expect(drawers.length).toBe(2);
+      expect(drawers[1]!.contains(document.activeElement)).toBe(true);
+    });
 
     pressEscape();
-    await tick(60);
-    expect([a.value, b.value]).toEqual([true, false]);
+    await vi.waitFor(() => {
+      expect([a.value, b.value]).toEqual([true, false]);
+    });
 
     pressEscape();
-    await tick(60);
-    expect([a.value, b.value]).toEqual([false, false]);
+    await vi.waitFor(() => {
+      expect([a.value, b.value]).toEqual([false, false]);
+    });
   });
 });
 
@@ -176,7 +208,7 @@ describe('Modal：无障碍树与样式', () => {
   it('role="dialog" 的祖先链上不能有 aria-hidden="true"（此前遮罩层把整个对话框抹掉）', async () => {
     const { open } = await mountOverlay(Modal);
     open.value = true;
-    await tick(80);
+    await nextTick();
 
     const dialog = document.querySelector('.lyt-modal')!;
     expect(dialog.getAttribute('role')).toBe('dialog');
@@ -191,7 +223,7 @@ describe('Modal：无障碍树与样式', () => {
   it('默认 top="15vh" 生成合法 CSS（此前拼成 "15vhpx" 被整条丢弃）', async () => {
     const { open } = await mountOverlay(Modal);
     open.value = true;
-    await tick(80);
+    await nextTick();
 
     expect(document.querySelector('.lyt-modal')!.getAttribute('style')).toMatch(/top:\s*15vh/);
   });
@@ -199,7 +231,7 @@ describe('Modal：无障碍树与样式', () => {
   it('top 传数字时补 px', async () => {
     const { open } = await mountOverlay(Modal, { top: 20 });
     open.value = true;
-    await tick(80);
+    await nextTick();
 
     expect(document.querySelector('.lyt-modal')!.getAttribute('style')).toMatch(/top:\s*20px/);
   });
@@ -209,7 +241,7 @@ describe('aria-* 不输出空串', () => {
   it('弹层与表单控件都不带 aria-*=""', async () => {
     const { open } = await mountOverlay(Modal);
     open.value = true;
-    await tick(80);
+    await nextTick();
 
     const empties = [...document.querySelectorAll('*')].flatMap((el) =>
       [...el.attributes]
