@@ -213,6 +213,20 @@ export function createFragmentPatch<HN, HE extends HN>(
   // diffStableFragment - STABLE_FRAGMENT: patch by index, skip key comparison
   // ============================================================
 
+  /**
+   * 取 fragment 内第 `index` 个子节点的「原位插入点」。
+   *
+   * ⚠️ 2026-11-13 修（P1-5）：此前按索引 patch 一律传 `anchor = null`，
+   *   `insertBefore(node, null)` 等价于 append ⇒ 子节点类型变化（`<p>`→`<em>`）
+   *   时新节点会跑到**整个容器末尾**（越过 fragment 结束锚点与后续兄弟）。
+   *   这里用「下一个旧子节点的首节点」作为插入点；最后一个用 fragment 结束锚点。
+   *   旧子节点尚未被本轮回调改动，`el` 仍然有效，因此不依赖宿主提供 nextSibling。
+   */
+  function getChildInsertAnchor(c1: VNode[], index: number, endAnchor: HN): HN {
+    const next = c1[index + 1];
+    return ((next?.el as HN | null) ?? endAnchor) as HN;
+  }
+
   function diffStableFragment(
     c1: VNode[],
     c2: VNode[],
@@ -225,7 +239,15 @@ export function createFragmentPatch<HN, HE extends HN>(
     const commonLength = Math.min(c1.length, c2.length);
     // 按索引 patch 公共前缀（无需 key 比较）
     for (let i = 0; i < commonLength; i++) {
-      patch(c1[i]!, c2[i]!, container, null, parentComponent, parentSuspense, isSVG);
+      patch(
+        c1[i]!,
+        c2[i]!,
+        container,
+        getChildInsertAnchor(c1, i, endAnchor),
+        parentComponent,
+        parentSuspense,
+        isSVG,
+      );
     }
     // 挂载额外的新 children
     if (c2.length > c1.length) {
@@ -261,11 +283,20 @@ export function createFragmentPatch<HN, HE extends HN>(
 
     while (i < l1 && i < l2) {
       if (isSameVNodeType(c1[i]!, c2[i]!)) {
-        patch(c1[i]!, c2[i]!, container, null, parentComponent, parentSuspense, isSVG);
+        patch(
+          c1[i]!,
+          c2[i]!,
+          container,
+          getChildInsertAnchor(c1, i, endAnchor),
+          parentComponent,
+          parentSuspense,
+          isSVG,
+        );
       } else {
-        // 类型不匹配：卸载旧的，挂载新的
+        // 类型不匹配：卸载旧的，挂载新的（插回原位置，见 getChildInsertAnchor）
+        const insertAnchor = getChildInsertAnchor(c1, i, endAnchor);
         unmount(c1[i]!, parentComponent, parentSuspense, true);
-        patch(null, c2[i]!, container, null, parentComponent, parentSuspense, isSVG);
+        patch(null, c2[i]!, container, insertAnchor, parentComponent, parentSuspense, isSVG);
       }
       i++;
     }

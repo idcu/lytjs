@@ -12,6 +12,7 @@ import {
   getFragmentChildCount,
   Fragment,
   ShapeFlags,
+  PatchFlags,
 } from '../src/index';
 import { WebRendererHost } from '@lytjs/adapter-web';
 
@@ -167,6 +168,36 @@ describe('Fragment - renderer patch', () => {
     );
     expect(elements.length).toBe(1);
     expect(elements[0]?.textContent).toBe('a');
+  });
+});
+
+describe('Fragment - patch 插入位置', () => {
+  let container: HTMLDivElement;
+  let renderer: ReturnType<typeof createRenderer>;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    renderer = createRenderer(new WebRendererHost());
+  });
+
+  it('★ 子节点类型变化时插在原位置，不被追加到容器末尾', () => {
+    const v1 = createVNode('div', null, [
+      // STABLE_FRAGMENT 走 diffStableFragment（编译器对静态多根生成这个 flag）
+      createVNode(Fragment, null, [createVNode('p', null, 'a')], PatchFlags.STABLE_FRAGMENT),
+      createVNode('span', null, 'tail'),
+    ]);
+    renderer.mount(v1, container);
+
+    const v2 = createVNode('div', null, [
+      createVNode(Fragment, null, [createVNode('em', null, 'x')], PatchFlags.STABLE_FRAGMENT),
+      createVNode('span', null, 'tail'),
+    ]);
+    renderer.patch(v1, v2);
+
+    // 负控：旧实现 patch 的 anchor 传 null ⇒ 新节点被 append 到容器末尾
+    const root = container.firstElementChild as HTMLElement;
+    expect(Array.from(root.children).map((el) => el.tagName)).toEqual(['EM', 'SPAN']);
+    expect(root.textContent).toBe('xtail');
   });
 });
 
