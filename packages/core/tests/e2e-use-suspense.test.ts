@@ -20,8 +20,8 @@
  * 渲染出 `name=undefined`；新实现渲染出真实数据。两者**必然不同**，故判别。
  */
 
-import { describe, it, expect, afterEach } from 'vitest';
-import { createApp, h, useSuspense } from '../src/index';
+import { describe, it, expect, afterEach, vi } from 'vitest';
+import { createApp, h, nextTick, useSuspense } from '../src/index';
 
 const hosts: HTMLElement[] = [];
 afterEach(() => {
@@ -57,10 +57,8 @@ describe('端到端：useSuspense 的推荐用法', () => {
     // 首帧：数据未到
     expect(host.textContent).toBe('name=undefined');
 
-    await new Promise((resolve) => setTimeout(resolve, 200));
-
     // ★ 兑现后视图更新为真实数据
-    expect(host.textContent).toBe('name=Ada');
+    await vi.waitFor(() => expect(host.textContent).toBe('name=Ada'));
   });
 
   it('同步值也能直接 await（Promise.resolve）', async () => {
@@ -75,15 +73,20 @@ describe('端到端：useSuspense 的推荐用法', () => {
     };
     const host = newHost();
     await createApp(Sync as never).mount(host);
-    await new Promise((resolve) => setTimeout(resolve, 120));
-    expect(host.textContent).toBe('v=7');
+    await vi.waitFor(() => expect(host.textContent).toBe('v=7'));
   });
 
   it('Promise 拒绝时走错误处理，不渲染出 undefined 之外的东西、也不崩', async () => {
+    let rejected = false;
     const Bad = {
       async setup() {
-        const v = await useSuspense(Promise.reject(new Error('boom')));
-        return { v };
+        try {
+          const v = await useSuspense(Promise.reject(new Error('boom')));
+          return { v };
+        } catch (err) {
+          rejected = true;
+          throw err;
+        }
       },
       render(ctx: { v?: string }) {
         return h('div', { id: 'b' }, `v=${String(ctx.v)}`);
@@ -91,8 +94,10 @@ describe('端到端：useSuspense 的推荐用法', () => {
     };
     const host = newHost();
     await createApp(Bad as never).mount(host);
-    await new Promise((resolve) => setTimeout(resolve, 150));
-    // 首帧保持不变（setup 未成功 ⇒ 不会进入带数据的 render）
+
+    // 等到拒绝路径确实执行完，再断言首帧内容没有被改写
+    await vi.waitFor(() => expect(rejected).toBe(true));
+    await nextTick();
     expect(host.textContent).toBe('v=undefined');
   });
 
