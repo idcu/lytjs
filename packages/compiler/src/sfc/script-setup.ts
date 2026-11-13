@@ -44,12 +44,12 @@ const RE_IMPORT = /^[ \t]*import\s+[\s\S]*?from\s*['"][^'"]+['"];?[ \t]*$/gm;
 /** 副作用 import：`import './x.css'` */
 const RE_IMPORT_BARE = /^[ \t]*import\s*['"][^'"]+['"];?[ \t]*$/gm;
 
-/** `const props = defineProps(` / `const emit = defineEmits(` 的调用头（参数单独配平扫描） */
+/** `const props = defineProps` / `const emit = defineEmits` 的调用头（泛型与实参单独扫描） */
 const RE_DEFINE_PROPS_HEAD =
-  /(?:^|\n)[ \t]*(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*defineProps\s*(<[^>]*>)?\s*\(/;
+  /(?:^|\n)[ \t]*(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*defineProps\s*/;
 
 const RE_DEFINE_EMITS_HEAD =
-  /(?:^|\n)[ \t]*(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*defineEmits\s*(<[^>]*>)?\s*\(/;
+  /(?:^|\n)[ \t]*(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*defineEmits\s*/;
 
 /** 跳过一整个 JS 字符串 / 模板串（含转义），返回闭合引号之后的下标 */
 function skipJsString(src: string, start: number): number {
@@ -112,11 +112,55 @@ interface DefineCall {
   args: string;
 }
 
-/** 定位一条 `const x = defineProps/Emits(...)` 并取出完整实参 */
+/**
+ * C-31：从 `<` 起按嵌套深度找泛型闭合 `>`。
+ *
+ * 旧实现用 `<[^>]*>`，在嵌套泛型（`Props<Item>`）的第一个 `>` 或函数类型
+ * 的 `=>` 处提前收尾 ⇒ 整条 defineProps 识别失败，既不报错也不移除调用，
+ * 运行期抛 `defineProps is not defined`。`=>` 里的 `>` 不计入深度。
+ */
+function findMatchingAngle(src: string, openIndex: number): number | undefined {
+  let depth = 0;
+  let i = openIndex;
+  while (i < src.length) {
+    const ch = src[i] as string;
+    if (ch === '"' || ch === "'" || ch === '`') {
+      i = skipJsString(src, i);
+      continue;
+    }
+    if (ch === '<') {
+      depth++;
+    } else if (ch === '>' && src[i - 1] !== '=') {
+      depth--;
+      if (depth === 0) return i;
+    }
+    i++;
+  }
+  return undefined;
+}
+
+/** 定位一条 `const x = defineProps/Emits(...)` 并取出泛型与完整实参 */
 function findDefineCall(body: string, head: RegExp): DefineCall | undefined {
   const match = head.exec(body);
   if (!match) return undefined;
-  const openIndex = match.index + match[0].length - 1;
+
+  const skipSpaces = (from: number): number => {
+    let i = from;
+    while (i < body.length && /\s/.test(body[i] as string)) i++;
+    return i;
+  };
+
+  let cursor = skipSpaces(match.index + match[0].length);
+  let generic: string | undefined;
+  if (body[cursor] === '<') {
+    const genericEnd = findMatchingAngle(body, cursor);
+    if (genericEnd === undefined) return undefined;
+    generic = body.slice(cursor, genericEnd + 1);
+    cursor = skipSpaces(genericEnd + 1);
+  }
+  if (body[cursor] !== '(') return undefined;
+
+  const openIndex = cursor;
   const closeIndex = findMatchingParen(body, openIndex);
   if (closeIndex === undefined) return undefined;
 
@@ -128,7 +172,7 @@ function findDefineCall(body: string, head: RegExp): DefineCall | undefined {
     start: match.index,
     end,
     varName: match[1]!,
-    generic: match[2],
+    generic,
     args: body.slice(openIndex + 1, closeIndex),
   };
 }

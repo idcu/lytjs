@@ -238,6 +238,27 @@ const props = defineProps<{ title: string }>()
     ).toThrow(/泛型/);
   });
 
+  // 负控（C-31）：泛型 `<[^>]*>` 在嵌套 `>` / 箭头函数类型 `=>` 处提前收尾，
+  // 导致整条 defineProps 未被识别 ⇒ 不报错、defineProps 留在 setup 里，
+  // 运行期抛 `defineProps is not defined`。
+  it('嵌套泛型 defineProps<Foo<Bar>>() 必须显式报错', () => {
+    expect(() =>
+      gen(`<template><div/></template>
+<script setup>
+const props = defineProps<Props<Item>>()
+</script>`),
+    ).toThrow(/泛型/);
+  });
+
+  it('函数类型里的 `=>` 不得干扰泛型识别', () => {
+    expect(() =>
+      gen(`<template><div/></template>
+<script setup>
+const props = defineProps<{ onChange: (v: string) => void }>()
+</script>`),
+    ).toThrow(/泛型/);
+  });
+
   it('defineProps 返回值不叫 props → 编译期报错', () => {
     expect(() =>
       gen(`<template><div/></template>
