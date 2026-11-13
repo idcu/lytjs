@@ -5,7 +5,7 @@
   "expectedBranch": "v7.0.0-dev",
   "tagAtHead": null,
   "baselineTag": "v6.7.0",
-  "reason": "v7.0.0 尚在 v7.0.0-dev 分支开发，未发布 npm；首次发布由 C01 在 owner 显式授权后执行。",
-  "ownerSignOff": "owner 于 2026-11-05 确认：A12 只建立机制，不发布、不改版本号。",
-  "expiresOn": "2026-12-31"
+  "reason": "v7.0.0 待发布：仓库在 v7.0.0-dev 分支，npm 尚未发布；发布截止日 2026-11-30，首次发布由 C01 在 owner 显式授权后执行。",
+  "ownerSignOff": "owner 于 2026-11-13 通过对话指示设置发布截止日（2026-11-30）；本字段记录授权来源，不是签署人自签。",
+  "expiresOn": "2026-11-30"
 }
