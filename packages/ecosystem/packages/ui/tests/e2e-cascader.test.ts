@@ -17,7 +17,7 @@
  */
 
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { createApp, h } from '@lytjs/core';
+import { createApp, h, nextTick } from '@lytjs/core';
 import { Cascader } from '../src/components/Cascader';
 
 const hosts: HTMLElement[] = [];
@@ -59,19 +59,18 @@ const q = (host: HTMLElement, sel: string): HTMLElement | null =>
   host.querySelector(sel) as HTMLElement | null;
 const qa = (host: HTMLElement, sel: string): HTMLElement[] =>
   [...host.querySelectorAll(sel)] as HTMLElement[];
-const tick = (n = 20): Promise<void> => new Promise((r) => setTimeout(r, n));
 
 /** 直接点根节点（目标即根，不经冒泡），只触发一次 toggle */
 async function toggleRoot(host: HTMLElement): Promise<void> {
   q(host, '.lyt-cascader')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-  await tick();
+  await nextTick();
 }
 async function open(host: HTMLElement): Promise<void> {
   if (!q(host, '.lyt-cascader__dropdown')) await toggleRoot(host);
 }
 /** option 点击会冒泡双 toggle（怪癖 1），按真实开合态补开 */
 async function ensureOpen(host: HTMLElement): Promise<void> {
-  await tick();
+  await nextTick();
   if (!q(host, '.lyt-cascader__dropdown')) await toggleRoot(host);
 }
 async function clickOption(host: HTMLElement, panelIndex: number, optionIndex: number) {
@@ -155,7 +154,6 @@ describe('Cascader — 渲染与 a11y', () => {
           );
       },
     } as never).mount(host);
-    await tick(30);
     await open(host);
     expect(q(host, '.my-empty')!.textContent).toBe('真的没有');
   });
@@ -178,7 +176,6 @@ describe('Cascader — 渲染与 a11y', () => {
           );
       },
     } as never).mount(host);
-    await tick(30);
     await open(host);
     expect(qa(host, '.custom-opt')[0]!.textContent).toBe('★浙江');
   });
@@ -291,7 +288,7 @@ describe('Cascader — 多选', () => {
       onChange,
     });
     qa(host, '.lyt-cascader__tag-close')[0]!.click();
-    await tick();
+    await nextTick();
     expect(onRemoveTag).toHaveBeenCalledTimes(1);
     expect(onChange).toHaveBeenCalledWith([['cq']]);
     expect(qa(host, '.lyt-cascader__tag')).toHaveLength(1);
@@ -315,7 +312,7 @@ describe('Cascader — 多选', () => {
       onRemoveTag,
     });
     qa(host, '.lyt-cascader__tag-close')[0]!.click();
-    await tick();
+    await nextTick();
     expect(onRemoveTag).not.toHaveBeenCalled();
   });
 });
@@ -327,7 +324,7 @@ describe('Cascader — 清除', () => {
     const host = await mountCascader({ modelValue: ['cq'], onClear, onChange });
     expect(q(host, '.lyt-cascader__clear')).toBeTruthy();
     q(host, '.lyt-cascader__clear')!.click();
-    await tick();
+    await nextTick();
     expect(onClear).toHaveBeenCalledTimes(1);
     expect(onChange).toHaveBeenCalledWith([]);
     expect(q(host, '.lyt-cascader__placeholder')!.textContent).toBe('请选择');
@@ -349,7 +346,7 @@ describe('Cascader — 过滤', () => {
     expect(input).toBeTruthy();
     input.value = '南京';
     input.dispatchEvent(new Event('input', { bubbles: true }));
-    await tick();
+    await nextTick();
     const dropdown = q(host, '.lyt-cascader__dropdown')!;
     expect(dropdown.textContent).toContain('江苏');
     expect(dropdown.textContent).not.toContain('浙江');
@@ -363,10 +360,10 @@ describe('Cascader — 过滤', () => {
     const input = q(host, '.lyt-cascader__search input') as HTMLInputElement;
     input.value = '南京';
     input.dispatchEvent(new Event('input', { bubbles: true }));
-    await tick();
+    await nextTick();
     input.value = '';
     input.dispatchEvent(new Event('input', { bubbles: true }));
-    await tick();
+    await nextTick();
     expect(qa(host, '.lyt-cascader__panel')[0]!.textContent).toContain('浙江');
   });
 });
