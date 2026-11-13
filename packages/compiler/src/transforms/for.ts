@@ -16,7 +16,13 @@ import {
   createCompoundExpression,
   createConditionalExpression,
 } from '../ast';
-import { getExpContent, findDirective, getCodegenMemo, detachMemoFromCodegen } from './helpers';
+import {
+  getExpContent,
+  findDirective,
+  getCodegenMemo,
+  detachMemoFromCodegen,
+  setCodegenScopeParams,
+} from './helpers';
 import { transformElement } from './transform-element';
 import { warn } from '@lytjs/common-error';
 
@@ -269,12 +275,16 @@ export function transformFor(
     type BranchRenderListCall = ReturnType<typeof createCallExpression> & {
       [FOR_BRANCH_ELEMENT]?: unknown;
     };
+    // C-08：回调体的局部名只在该箭头函数内有效。把参数名挂在回调节点上，
+    // codegen 生成其子内容时才进入作用域，避免 `item` 泄漏到兄弟位置。
+    const renderListCallback = createCompoundExpression(
+      [`(${itemVar}${indexVar ? `, ${indexVar}` : ''}) => {`, ...bodyParts, ` }`],
+      forExp.loc,
+    );
+    setCodegenScopeParams(renderListCallback, localNames);
     const renderListCall: BranchRenderListCall = createCallExpression('RENDER_LIST', [
       createSimpleExpression(right, false, forExp.loc, false),
-      createCompoundExpression(
-        [`(${itemVar}${indexVar ? `, ${indexVar}` : ''}) => {`, ...bodyParts, ` }`],
-        forExp.loc,
-      ),
+      renderListCallback,
     ]);
     renderListCall[FOR_BRANCH_ELEMENT] = element;
 

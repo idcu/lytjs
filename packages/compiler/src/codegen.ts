@@ -27,8 +27,8 @@ import type {
 import { helperNameMap } from './constants';
 import { SourceMapGenerator } from './source-map';
 import { prefixIdentifiers } from './prefix-identifiers';
-import { getCodegenMemo } from './transforms/helpers';
-import { FRAGMENT_SENTINEL } from './transforms/transform-element';
+import { getCodegenMemo, getCodegenScopeParams } from './transforms/helpers';
+import { FRAGMENT_SENTINEL, extractParamNames } from './transforms/transform-element';
 import { BUILTIN_COMPONENT_NAMES, BUILTIN_COMPONENT_MODULE } from './builtin-components';
 
 // ============================================================
@@ -233,8 +233,13 @@ function createCodegenContext(
   let currentColumn = 0;
 
   const context: CodegenContext = {
-    // 局部标识符（v-for 别名等）：它们不加 `_ctx.` 前缀
-    locals: new Set<string>(ast.localIdentifiers ?? []),
+    // 局部标识符（v-for 别名 / 插槽参数）：它们不加 `_ctx.` 前缀。
+    //
+    // ⚠️ C-08：不能把 `ast.localIdentifiers`（全模板累加的集合）直接当成当前作用域 ——
+    //   那会让别名泄漏到兄弟位置。现在改为**空集合 + 生成时进/出作用域**：
+    //   JSFunctionExpression 的形参、v-for 回调（见 for.ts 挂的 scope 参数）在
+    //   生成其内容期间才加入，生成结束即移除。
+    locals: new Set<string>(),
     // ⚠️ 2026-11-07（ADR 0022 / 方案 B2）：mode 决定内置组件标签的产物形态
     //   · 'module'：裸标识符 + `import { X } from '@lytjs/component'`（AOT，零配置）
     //   · 其它/未传：`_ctx.X`（运行时 `new Function`，需显式注册）
@@ -404,6 +409,28 @@ function genNodeInner(node: JSChildNode | TemplateChildNode, context: CodegenCon
 // ============================================================
 
 /**
+ * C-08：在 `names` 进入作用域的前提下执行 `fn`，执行完精确回滚。
+ *
+ * 只删除「本次新加的」名字：外层作用域已有的同名变量不能被误删。
+ */
+function withCodegenScope(context: CodegenContext, names: string[], fn: () => void): void {
+  // CodegenContext 对外暴露 ReadonlySet；实际由 createCodegenContext 传入可变 Set。
+  const locals = context.locals as Set<string>;
+  const added: string[] = [];
+  for (const name of names) {
+    if (!locals.has(name)) {
+      locals.add(name);
+      added.push(name);
+    }
+  }
+  try {
+    fn();
+  } finally {
+    for (const name of added) locals.delete(name);
+  }
+}
+
+/**
  * 函数表达式：`(p1, p2) => [ … ]`（插槽内容的载体）。
  *
  * ⚠️ 2026-10-28 新增（具名/作用域插槽）：`JS_FUNCTION_EXPRESSION` 的 NodeType 与类型
@@ -421,19 +448,27 @@ function genFunctionExpression(node: JSFunctionExpression, context: CodegenConte
   });
   context.push(') => ');
 
-  // 返回体：数组 → `[ … ]`；单个节点 → 原样；空 → `[]`
-  if (Array.isArray(returns)) {
-    context.push('[');
-    returns.forEach((child, i) => {
-      if (i > 0) context.push(', ');
-      genNode(child as JSChildNode, context);
-    });
-    context.push(']');
-  } else if (returns) {
-    genNode(returns as JSChildNode, context);
-  } else {
-    context.push('[]');
+  // C-08：形参只在该函数体内有效，生成返回体期间进入作用域、生成完回滚。
+  const paramNames: string[] = [];
+  for (const param of params) {
+    if (typeof param === 'string') paramNames.push(...extractParamNames(param));
   }
+
+  withCodegenScope(context, paramNames, () => {
+    // 返回体：数组 → `[ … ]`；单个节点 → 原样；空 → `[]`
+    if (Array.isArray(returns)) {
+      context.push('[');
+      returns.forEach((child, i) => {
+        if (i > 0) context.push(', ');
+        genNode(child as JSChildNode, context);
+      });
+      context.push(']');
+    } else if (returns) {
+      genNode(returns as JSChildNode, context);
+    } else {
+      context.push('[]');
+    }
+  });
 }
 
 function genVNodeCall(node: VNodeCall, context: CodegenContext): void {
@@ -710,19 +745,24 @@ function genExpression(node: SimpleExpressionNode, context: CodegenContext): voi
 // ============================================================
 
 function genCompoundExpression(node: CompoundExpressionNode, context: CodegenContext): void {
-  for (const child of node.children) {
-    if (typeof child === 'string') {
-      context.push(child, node);
-    } else if (child.type === NodeTypes.SIMPLE_EXPRESSION) {
-      context.push(child.content, node);
-    } else if (child.type === NodeTypes.INTERPOLATION) {
-      context.push(`${context.helper('TO_DISPLAY_STRING')}(`, node);
-      genNode(child.content, context);
-      context.push(')', node);
-    } else {
-      genNode(child, context);
+  // C-08：v-for 回调的别名（见 for.ts 挂的 scope 参数）只在该回调体里有效。
+  // 包装节点上带了参数名时，生成其子内容期间进入作用域，生成完回滚。
+  const scopeParams = getCodegenScopeParams(node);
+  withCodegenScope(context, scopeParams ?? [], () => {
+    for (const child of node.children) {
+      if (typeof child === 'string') {
+        context.push(child, node);
+      } else if (child.type === NodeTypes.SIMPLE_EXPRESSION) {
+        context.push(child.content, node);
+      } else if (child.type === NodeTypes.INTERPOLATION) {
+        context.push(`${context.helper('TO_DISPLAY_STRING')}(`, node);
+        genNode(child.content, context);
+        context.push(')', node);
+      } else {
+        genNode(child, context);
+      }
     }
-  }
+  });
 }
 
 // ============================================================

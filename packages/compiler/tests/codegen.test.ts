@@ -328,3 +328,40 @@ describe('codegen', () => {
     });
   });
 });
+
+// ============================================================
+// C-08：v-for / 插槽的局部名必须按作用域生效，不能泄漏到兄弟位置
+// ============================================================
+
+describe('C-08 局部名作用域', () => {
+  it('v-for 别名不得泄漏到兄弟节点（vnode）', () => {
+    // 兄弟位置的 `{{ item }}` 属于组件数据，必须编译成 `_ctx.item`；
+    // 修前它被当成 v-for 别名，产物是裸 `item` ⇒ 运行时 ReferenceError。
+    const render = execute(
+      compile('<div><p v-for="item in items">{{ item.name }}</p><span>{{ item }}</span></div>'),
+    );
+    const rendered = render({ items: [{ name: 'a' }], item: 'sibling' });
+    expect(JSON.stringify(rendered)).toContain('sibling');
+  });
+
+  it('作用域插槽参数不得泄漏到兄弟节点（vnode）', () => {
+    const render = execute(
+      compile('<div><Child v-slot="{ row }">{{ row.name }}</Child><span>{{ row }}</span></div>'),
+    );
+    const rendered = render({ Child: 'child', row: 'sibling' });
+    expect(JSON.stringify(rendered)).toContain('sibling');
+  });
+
+  it('同名别名在兄弟位置仍取组件数据（嵌套作用域互不污染）', () => {
+    const render = execute(
+      compile(
+        '<div><p v-for="x in xs">{{ x }}</p><p v-for="x in ys">{{ x }}</p><span>{{ x }}</span></div>',
+      ),
+    );
+    const rendered = render({ xs: ['a'], ys: ['b'], x: 'c' });
+    const text = JSON.stringify(rendered);
+    expect(text).toContain('"a"');
+    expect(text).toContain('"b"');
+    expect(text).toContain('"c"');
+  });
+});

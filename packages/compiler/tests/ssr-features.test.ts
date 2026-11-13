@@ -233,3 +233,15 @@ describe('SSR 编译 - 绑定与 nullish 安全', () => {
     expect(ssr('<div v-text="label"></div>')({ label: 'L' })).toBe('<div>L</div>');
   });
 });
+
+describe('SSR 编译 - C-08 局部名作用域', () => {
+  it('v-for 别名不得泄漏到兄弟节点', () => {
+    const render = ssr(
+      '<div><p v-for="item in items">{{ item.name }}</p><span>{{ item }}</span></div>',
+    );
+    // 修前兄弟位置的 `item` 是裸标识符 ⇒ ReferenceError
+    expect(render({ items: [{ name: 'a' }], item: 'sibling' })).toBe(
+      '<div><p>a</p><span>sibling</span></div>',
+    );
+  });
+});

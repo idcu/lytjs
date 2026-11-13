@@ -1163,7 +1163,7 @@ function childToJSNode(c: TemplateChildNode, context: TransformContext): JSChild
 }
 
 /** 从 `#default="{ item, index }"` 的作用域参数里取出**绑定名**（用于登记局部名） */
-function extractParamNames(param: string | undefined): string[] {
+export function extractParamNames(param: string | undefined): string[] {
   if (!param) return [];
   const trimmed = param.trim();
   // 解构形态：`{ item }` / `{ item, index }` / `{ item: it }`
@@ -1180,8 +1180,11 @@ function extractParamNames(param: string | undefined): string[] {
       })
       .filter((name) => /^[A-Za-z_$][\w$]*$/.test(name));
   }
-  // 简单标识符
-  return /^[A-Za-z_$][\w$]*$/.test(trimmed) ? [trimmed] : [];
+  // 逗号分隔的多个简单形参（`v, k` / `item = 1`）：逐个取绑定名
+  return trimmed
+    .split(',')
+    .map((part) => part.trim().split(/[=:]/)[0]!.trim())
+    .filter((name) => /^[A-Za-z_$][\w$]*$/.test(name));
 }
 
 /**

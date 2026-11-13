@@ -10,7 +10,7 @@
 
 import { NodeTypes, ElementTypes } from './constants';
 import { escapeHTML } from '@lytjs/common-string';
-import { FRAGMENT_SENTINEL } from './transforms/transform-element';
+import { FRAGMENT_SENTINEL, extractParamNames } from './transforms/transform-element';
 import { prefixIdentifiers } from './prefix-identifiers';
 import { SourceMapGenerator } from './source-map';
 import type { RawSourceMap } from './types';
@@ -92,7 +92,11 @@ export function generateSSR(ast: RootNode, options: CodegenOptions = {}): Codege
   const parts: string[] = [];
 
   // 每次编译重置局部标识符（v-for 别名等）
-  ssrLocals = new Set<string>(ast.localIdentifiers ?? []);
+  //
+  // ⚠️ C-08：不再从 `ast.localIdentifiers` 注入 —— 那是全模板累加的集合，
+  //   别名会泄漏到兄弟位置（`{{ item }}` 被当成局部变量，产出裸 `item`）。
+  //   现在只在真正生成「引入该名字的函数体」时临时进入作用域。
+  ssrLocals = new Set<string>();
   usesRenderList = false;
   // C-27：接入 codegen options。此前 _options 被完全忽略 ⇒ sourceMap:true 永远拿不到 map。
   ssrMapEnabled = options.sourceMap === true;
@@ -453,7 +457,8 @@ function genSSRSlotFn(children: TemplateChildNode[], scopeParam?: string): strin
   if (!scopeParam) return `()=>${genSSRChildren(children)}`;
 
   const prev = ssrLocals;
-  ssrLocals = new Set<string>([...prev, scopeParam]);
+  // C-08：解构形参（`{ row }`）要取出真正的绑定名，不能把整段参数文本塞进集合。
+  ssrLocals = new Set<string>([...prev, ...extractParamNames(scopeParam)]);
   const inner = genSSRChildren(children);
   ssrLocals = prev;
   return `(${scopeParam})=>${inner}`;
@@ -928,7 +933,11 @@ function genSSRCallExpression(call: JSCallExpression): string {
         // Extract the body (everything between first and last child)
         const bodyChildren = children.slice(1, -1);
         if (bodyChildren.length > 0) {
+          // C-08：回调别名只在该函数体内有效，生成完立即回滚。
+          const prev = ssrLocals;
+          ssrLocals = new Set<string>([...prev, ...extractParamNames(arrowParams)]);
           arrowBodyStr = genSSRChildren(bodyChildren as TemplateChildNode[]);
+          ssrLocals = prev;
         }
       } else if (
         secondArg &&

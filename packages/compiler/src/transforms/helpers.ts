@@ -114,6 +114,30 @@ export function detachMemoFromCodegen(node: unknown): void {
   delete (node as Record<symbol, VMemoMeta | undefined>)[MEMO_CODEGEN_KEY];
 }
 
+// ============================================================
+// 作用域局部名（C-08）
+//
+// v-for 的回调体是一个 CompoundExpression（字符串外壳 + 子节点），
+// codegen 无法从结构上看出「这些别名只在该回调内有效」。
+// 这里在包装节点上挂一组参数名，codegen 生成该节点的子内容时进/出作用域，
+// 避免别名泄漏到兄弟位置（否则兄弟位置的 `{{ item }}` 会被当成局部变量，
+// 生成裸 `item` ⇒ 运行时 ReferenceError）。
+// ============================================================
+
+/** 挂在 codegen 节点上的「生成子内容时的作用域参数名」 */
+export const SCOPE_PARAMS_KEY = Symbol('__codegen_scope_params__');
+
+type ScopeCarrier = { [SCOPE_PARAMS_KEY]?: string[] };
+
+export function setCodegenScopeParams(node: object, names: string[]): void {
+  (node as ScopeCarrier)[SCOPE_PARAMS_KEY] = names;
+}
+
+export function getCodegenScopeParams(node: unknown): string[] | undefined {
+  if (node == null || typeof node !== 'object') return undefined;
+  return (node as ScopeCarrier)[SCOPE_PARAMS_KEY];
+}
+
 /**
  * 在元素节点中查找指定名称的指令
  */
