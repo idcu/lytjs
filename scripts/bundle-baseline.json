@@ -1,20 +1,20 @@
 {
   "tolerance": 0.02,
   "stage": "A15（体积预算回到真实基线）",
-  "recordedOn": "2026-11-12",
-  "measuredCommit": "c26a284d",
+  "recordedOn": "2026-11-13",
+  "measuredCommit": "21421944",
   "approval": {
     "signer": "owner",
-    "on": "2026-11-12",
-    "scope": "S35 P0 修复使 first-screen-runtime 达 38346 B：仅上调该入口基线至 37648 B（预算 38400 B，留 54 B 避免逐笔裁决，不留给功能增长）；其余入口与 minimal-app 硬上限不变。",
-    "decisionRecord": "keel/decisions/0029-bundle-first-screen-runtime-baseline.md"
+    "on": "2026-11-13",
+    "scope": "SSR codegen 修复（C-23/C-24/C-25/C-26/helper/batchAsync）使 first-screen 达 76990 B：仅上调该入口基线至 76990 B；其余入口与 minimal-app 硬上限不变。first-screen 静态闭包含完整编译器属 A15 已知欠账，已登记 v7.1 编译器按需化待办。",
+    "decisionRecord": "keel/decisions/0031-bundle-first-screen-ssr-codegen-fixes.md"
   },
   "entries": {
     "vdom-only": { "baselineBytes": 1697, "ceilingBytes": null },
     "barrel-only": { "baselineBytes": 9577, "ceilingBytes": null },
     "minimal-app": { "baselineBytes": 93957, "ceilingBytes": 95948 },
     "runtime-app": { "baselineBytes": 91808, "ceilingBytes": null },
-    "first-screen": { "baselineBytes": 75448, "ceilingBytes": null },
+    "first-screen": { "baselineBytes": 76990, "ceilingBytes": null },
     "first-screen-runtime": { "baselineBytes": 37648, "ceilingBytes": null }
   }
 }
