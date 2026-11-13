@@ -475,66 +475,68 @@ export class Server {
       response.body = { error: '未找到' };
     };
 
-    // 洋葱圈：index 从 -1 起递增 ⇒ **注册顺序即执行顺序**
+    // 洋葱圈：`dispatch(i)` 只负责第 i 层；每层的 `next()` 结果被**记住并复用**。
     //
-    // ⚠️ 2026-10-27 修（P1）：此前整条链只在**命中路由后**才执行，
-    //   于是 `OPTIONS` 预检（没有路由）与 404 都拿不到 CORS 头 ——
-    //   浏览器侧的预检实测返回 404 且无 `Access-Control-Allow-*`，跨域请求必失败。
-    //   现在所有请求都过中间件，未命中路由由终态 handler 产出 404。
-    let index = -1;
-    const next = async (): Promise<void> => {
-      index++;
-      const middleware = this.middlewares[index];
-      if (middleware) {
-        // ⚠️ 2026-10-31 修（P0）：Fetch 风格中间件（cors / auth / rate-limit）以
-        //   **返回 Response** 作为最终响应；此前这里把返回值丢弃 ⇒
-        //   CORS 头全丢、auth 的 401 变成 200 空体、rate-limit 的 429 变成 200 空体。
-        //   现在把 Fetch Response 归一化成宿主的 `{status, headers, body}` 并接管响应。
-        //
-        // 规范签名的返回类型是 `void`，但 Fetch 风格中间件会**返回 Response**，
-        // 故这里按 unknown 收，再结构化判断。
-        const result = (await middleware(ctx, next)) as unknown as
-          | (FetchLikeResponse & { headers: FetchLikeResponse['headers'] })
-          | { status: number; headers: Record<string, string | string[]>; body?: unknown }
-          | undefined;
-        if (result) {
-          if (
-            typeof result.status === 'number' &&
-            typeof (result as FetchLikeResponse).headers?.forEach === 'function' &&
-            typeof (result as FetchLikeResponse).text === 'function'
-          ) {
-            // Fetch `Response`
-            const converted = await fetchResponseToPlain(result as FetchLikeResponse);
-            // ⚠️ 2026-11-03 修（P1）：此前是**整体替换** `ctx.response` ⇒ 上游中间件
-            //   已经写好的头（`x-request-id` / `access-control-*` / `vary`）被一并丢弃，
-            //   只剩这个 Response 自带的头。现在合并，返回方优先。
-            ctx.response = {
-              ...converted,
-              headers: { ...ctx.response.headers, ...converted.headers },
-            };
-          } else if (
-            typeof result.status === 'number' &&
-            result.headers &&
-            typeof result.headers === 'object'
-          ) {
-            // 普通对象形态 `{ status, headers, body }`（middleware-rate-limit 的 429 走这条）
-            ctx.response = {
-              ...ctx.response,
-              status: result.status,
-              headers: {
-                ...ctx.response.headers,
-                ...(result.headers as Record<string, string | string[]>),
-              },
-              body: (result as { body?: unknown }).body,
-            };
-          }
-        }
-      } else {
+    // ⚠️ 2026-11-13 修（P1）：此前 `index` 是请求级闭包变量，`next()` 每调用一次就
+    //   `index++` ⇒ 同一中间件重复调用 `next()` 会继续推进，下游中间件与路由处理器被
+    //   **执行两次**（响应重复写、数据库重复提交、日志翻倍）。
+    //   现在按层记忆：第二次 `next()` 拿到的是同一个 Promise，不会再次下发。
+    const dispatch = async (i: number): Promise<void> => {
+      const middleware = this.middlewares[i];
+      if (!middleware) {
         await handler();
+        return;
+      }
+
+      let downstream: Promise<void> | undefined;
+      const next = (): Promise<void> => (downstream ??= dispatch(i + 1));
+
+      // ⚠️ 2026-10-31 修（P0）：Fetch 风格中间件（cors / auth / rate-limit）以
+      //   **返回 Response** 作为最终响应；此前这里把返回值丢弃 ⇒
+      //   CORS 头全丢、auth 的 401 变成 200 空体、rate-limit 的 429 变成 200 空体。
+      //   现在把 Fetch Response 归一化成宿主的 `{status, headers, body}` 并接管响应。
+      //
+      // 规范签名的返回类型是 `void`，但 Fetch 风格中间件会**返回 Response**，
+      // 故这里按 unknown 收，再结构化判断。
+      const result = (await middleware(ctx, next)) as unknown as
+        | (FetchLikeResponse & { headers: FetchLikeResponse['headers'] })
+        | { status: number; headers: Record<string, string | string[]>; body?: unknown }
+        | undefined;
+      if (result) {
+        if (
+          typeof result.status === 'number' &&
+          typeof (result as FetchLikeResponse).headers?.forEach === 'function' &&
+          typeof (result as FetchLikeResponse).text === 'function'
+        ) {
+          // Fetch `Response`
+          const converted = await fetchResponseToPlain(result as FetchLikeResponse);
+          // ⚠️ 2026-11-03 修（P1）：此前是**整体替换** `ctx.response` ⇒ 上游中间件
+          //   已经写好的头（`x-request-id` / `access-control-*` / `vary`）被一并丢弃，
+          //   只剩这个 Response 自带的头。现在合并，返回方优先。
+          ctx.response = {
+            ...converted,
+            headers: { ...ctx.response.headers, ...converted.headers },
+          };
+        } else if (
+          typeof result.status === 'number' &&
+          result.headers &&
+          typeof result.headers === 'object'
+        ) {
+          // 普通对象形态 `{ status, headers, body }`（middleware-rate-limit 的 429 走这条）
+          ctx.response = {
+            ...ctx.response,
+            status: result.status,
+            headers: {
+              ...ctx.response.headers,
+              ...(result.headers as Record<string, string | string[]>),
+            },
+            body: (result as { body?: unknown }).body,
+          };
+        }
       }
     };
 
-    await next();
+    await dispatch(0);
 
     if (ctx.response) {
       this.sendResponse(res, ctx.response, method);

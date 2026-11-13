@@ -116,6 +116,30 @@ describe('@lytjs/http-server 的 P0/P1 回归', () => {
     expect(outcome).toBe('rejected:EADDRINUSE');
   });
 
+  it('★ 重复调用 next() 不会重复执行下游与处理器', async () => {
+    let downstream = 0;
+    let handlerCalls = 0;
+
+    const base = await startServer((s) => {
+      s.use(async (_ctx, next) => {
+        await next();
+        await next(); // 重复调用：必须复用同一个下游 Promise
+      });
+      s.use(async (_ctx, next) => {
+        downstream++;
+        await next();
+      });
+      s.get('/once', () => {
+        handlerCalls++;
+      });
+    });
+
+    const res = await fetch(`${base}/once`);
+    expect(res.status).toBe(200);
+    expect(downstream).toBe(1);
+    expect(handlerCalls).toBe(1);
+  });
+
   it('规范两参中间件不受影响', async () => {
     const base = await startServer((s) => {
       s.use(async (ctx, next) => {
