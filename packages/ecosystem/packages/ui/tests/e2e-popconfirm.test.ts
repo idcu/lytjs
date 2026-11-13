@@ -11,8 +11,8 @@
  * **抓不到这类行为缺陷**（全绿但组件不能用）⇒ 这里补**真挂载 + 真事件**的判据。
  */
 
-import { describe, it, expect, afterEach } from 'vitest';
-import { createApp, h } from '@lytjs/core';
+import { describe, it, expect, afterEach, vi } from 'vitest';
+import { createApp, h, nextTick } from '@lytjs/core';
 import { Popconfirm } from '../src/components/Popconfirm';
 
 const hosts: HTMLElement[] = [];
@@ -67,8 +67,9 @@ describe('行为：Popconfirm 的开合', () => {
     const host = mount();
     await renderPopconfirm(host);
     enter(host.querySelector('.lyt-popconfirm__reference')!);
-    await new Promise((r) => setTimeout(r, 20));
-    expect(host.querySelector('.lyt-popconfirm__popup')).not.toBeNull();
+    await vi.waitFor(() => {
+      expect(host.querySelector('.lyt-popconfirm__popup')).not.toBeNull();
+    });
   });
 
   // ⚠️ 2026-10-27 行为变更：hover 事件从 `reference` 上移到**根容器**。
@@ -80,9 +81,9 @@ describe('行为：Popconfirm 的开合', () => {
     await renderPopconfirm(host);
     const ref = host.querySelector('.lyt-popconfirm__reference')!;
     enter(ref);
-    await new Promise((r) => setTimeout(r, 20));
+    await nextTick();
     leave(ref);
-    await new Promise((r) => setTimeout(r, 20));
+    await nextTick();
     expect(host.querySelector('.lyt-popconfirm__popup')).not.toBeNull();
   });
 
@@ -91,9 +92,9 @@ describe('行为：Popconfirm 的开合', () => {
     await renderPopconfirm(host);
     const root = host.querySelector('.lyt-popconfirm')!;
     enter(host.querySelector('.lyt-popconfirm__reference')!);
-    await new Promise((r) => setTimeout(r, 20));
+    await nextTick();
     leave(root);
-    await new Promise((r) => setTimeout(r, 20));
+    await nextTick();
     expect(host.querySelector('.lyt-popconfirm__popup')).toBeNull();
   });
 
@@ -101,7 +102,7 @@ describe('行为：Popconfirm 的开合', () => {
     const host = mount();
     await renderPopconfirm(host, { disabled: true });
     enter(host.querySelector('.lyt-popconfirm__reference')!);
-    await new Promise((r) => setTimeout(r, 20));
+    await nextTick();
     expect(host.querySelector('.lyt-popconfirm__popup')).toBeNull();
   });
 
@@ -109,8 +110,9 @@ describe('行为：Popconfirm 的开合', () => {
     const host = mount();
     await renderPopconfirm(host, { cancelButtonType: 'primary' });
     enter(host.querySelector('.lyt-popconfirm__reference')!);
-    await new Promise((r) => setTimeout(r, 20));
-    const cancel = host.querySelector('.lyt-popconfirm__popup button');
-    expect(cancel?.className).toContain('lyt-button--primary');
+    await vi.waitFor(() => {
+      const cancel = host.querySelector('.lyt-popconfirm__popup button');
+      expect(cancel?.className).toContain('lyt-button--primary');
+    });
   });
 });
