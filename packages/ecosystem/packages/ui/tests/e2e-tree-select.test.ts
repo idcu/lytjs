@@ -20,7 +20,7 @@
  */
 
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { createApp, h } from '@lytjs/core';
+import { createApp, h, nextTick } from '@lytjs/core';
 import { signal } from '@lytjs/core/runtime';
 import { TreeSelect, type TreeSelectNode } from '../src/components/TreeSelect';
 
@@ -86,11 +86,10 @@ const q = (host: HTMLElement, sel: string): HTMLElement | null =>
   host.querySelector(sel) as HTMLElement | null;
 const qa = (host: HTMLElement, sel: string): HTMLElement[] =>
   [...host.querySelectorAll(sel)] as HTMLElement[];
-const tick = (n = 20): Promise<void> => new Promise((r) => setTimeout(r, n));
 
 async function toggleTrigger(host: HTMLElement): Promise<void> {
   q(host, '.lyt-tree-select-trigger')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-  await tick();
+  await nextTick();
 }
 async function open(host: HTMLElement): Promise<void> {
   if (!q(host, '.lyt-tree-select-dropdown')) await toggleTrigger(host);
@@ -98,14 +97,14 @@ async function open(host: HTMLElement): Promise<void> {
 /** 点击第 index 个 .lyt-tree-node（文档序） */
 async function clickNode(host: HTMLElement, index: number): Promise<void> {
   qa(host, '.lyt-tree-node')[index]!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-  await tick();
+  await nextTick();
 }
 /** 点击第 index 个展开图标（文档序，只含 hasChildren 节点的按钮） */
 async function clickExpandIcon(host: HTMLElement, index: number): Promise<void> {
   qa(host, '.lyt-tree-node-expand-icon')[index]!.dispatchEvent(
     new MouseEvent('click', { bubbles: true }),
   );
-  await tick();
+  await nextTick();
 }
 
 describe('TreeSelect — 渲染与 a11y', () => {
@@ -167,7 +166,6 @@ describe('TreeSelect — 渲染与 a11y', () => {
           );
       },
     } as never).mount(host);
-    await tick(30);
     await open(host);
     expect(q(host, '.my-empty')!.textContent).toBe('啥都没有');
   });
@@ -284,7 +282,6 @@ describe('TreeSelect — 选择（受控）', () => {
           });
       },
     } as never).mount(host);
-    await tick(30);
     await open(host);
     await clickNode(host, 1); // 杭州
     expect(onChange).toHaveBeenCalledWith('hz', expect.objectContaining({ label: '杭州' }));
@@ -313,7 +310,7 @@ describe('TreeSelect — 清除', () => {
     const clearBtn = q(host, '.lyt-tree-select-clear')!;
     expect(clearBtn.getAttribute('aria-label')).toBe('清除');
     clearBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    await tick();
+    await nextTick();
     expect(onChange).toHaveBeenCalledWith('', null);
     expect(q(host, '.lyt-tree-select-value')!.textContent).toBe('请选择');
     expect(q(host, '.lyt-tree-select-clear')).toBeNull();
@@ -343,7 +340,7 @@ describe('TreeSelect — 过滤', () => {
     const input = q(host, '.lyt-tree-select-search input') as HTMLInputElement;
     input.value = '杭州';
     input.dispatchEvent(new Event('input', { bubbles: true }));
-    await tick();
+    await nextTick();
     const texts = qa(host, '.lyt-tree-node').map((n) => n.textContent);
     expect(texts.some((t) => t?.includes('浙江'))).toBe(true); // 父链保留
     expect(texts.some((t) => t?.includes('杭州'))).toBe(true);
@@ -357,7 +354,7 @@ describe('TreeSelect — 过滤', () => {
     const input = q(host, '.lyt-tree-select-search input') as HTMLInputElement;
     input.value = '杭州';
     input.dispatchEvent(new Event('input', { bubbles: true }));
-    await tick();
+    await nextTick();
     const texts = qa(host, '.lyt-tree-node').map((n) => n.textContent);
     expect(texts.some((t) => t?.includes('浙江'))).toBe(true); // 父链在
     expect(texts.some((t) => t?.includes('杭州'))).toBe(true); // 命中项被强制展开 ⇒ 可见
@@ -370,11 +367,11 @@ describe('TreeSelect — 过滤', () => {
     const input = q(host, '.lyt-tree-select-search input') as HTMLInputElement;
     input.value = 'HANG'; // 中文不匹配，但流程走通（大小写分支）
     input.dispatchEvent(new Event('input', { bubbles: true }));
-    await tick();
+    await nextTick();
     expect(q(host, '.lyt-tree-select-empty')!.textContent).toContain('暂无数据');
     input.value = '';
     input.dispatchEvent(new Event('input', { bubbles: true }));
-    await tick();
+    await nextTick();
     expect(qa(host, '.lyt-tree-node')).toHaveLength(6);
   });
 });
@@ -398,7 +395,6 @@ describe('TreeSelect — v-model 契约', () => {
           });
       },
     } as never).mount(host);
-    await tick(30);
 
     // 初始值 'hz' 应回显「杭州」
     expect(q(host, '.lyt-tree-select-value')!.textContent).toBe('杭州');
@@ -461,7 +457,7 @@ describe('TreeSelect — 多选（修复怪癖 A）', () => {
     });
     expect(q(host, '.lyt-tree-select-value')!.textContent).toBe('杭州、重庆');
     q(host, '.lyt-tree-select-clear')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    await tick();
+    await nextTick();
     expect(onChange).toHaveBeenCalledWith([], null);
     expect(q(host, '.lyt-tree-select-value')!.textContent).toBe('请选择');
     expect(q(host, '.lyt-tree-select-clear')).toBeNull();
