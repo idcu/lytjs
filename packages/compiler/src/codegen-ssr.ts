@@ -67,6 +67,8 @@ let ssrLocals: ReadonlySet<string> = new Set<string>();
 // 编译期上下文：当前正在生成的 <select> 的 v-model 表达式。
 // 代码生成是同步的，用模块级变量把值传给嵌套的 <option>，避免给所有 children 函数加参数。
 let ssrSelectModel: string | undefined;
+// 本次编译是否用到 v-for；只有用到时才注入 __lytRenderList，避免无关产物全部位移。
+let usesRenderList = false;
 
 const ElementTypes_SLOT = ElementTypes.SLOT;
 
@@ -84,6 +86,7 @@ export function generateSSR(ast: RootNode, _options: CodegenOptions = {}): Codeg
 
   // 每次编译重置局部标识符（v-for 别名等）
   ssrLocals = new Set<string>(ast.localIdentifiers ?? []);
+  usesRenderList = false;
 
   // 生成 render 函数
   parts.push(`function render(_ctx) {\n`);
@@ -108,22 +111,24 @@ export function generateSSR(ast: RootNode, _options: CodegenOptions = {}): Codeg
 
   // v-for 的 SSR 渲染：与运行时 renderList 语义一致，
   // 覆盖数组/字符串、数字（1..n）、对象（键值对）；结果直接拼成 HTML 字符串。
-  parts.push(`function __lytRenderList(source, renderItem) {\n`);
-  parts.push(`  const out = [];\n`);
-  parts.push(`  if (Array.isArray(source) || typeof source === 'string') {\n`);
-  parts.push(
-    `    for (let i = 0; i < source.length; i++) out.push(renderItem(source[i], i, i));\n`,
-  );
-  parts.push(`  } else if (typeof source === 'number') {\n`);
-  parts.push(`    for (let i = 0; i < source; i++) out.push(renderItem(i + 1, i + 1, i));\n`);
-  parts.push(`  } else if (source && typeof source === 'object') {\n`);
-  parts.push(`    const keys = Object.keys(source);\n`);
-  parts.push(
-    `    for (let i = 0; i < keys.length; i++) out.push(renderItem(source[keys[i]], keys[i], i));\n`,
-  );
-  parts.push(`  }\n`);
-  parts.push(`  return out.join('');\n`);
-  parts.push(`}\n\n`);
+  if (usesRenderList) {
+    parts.push(`function __lytRenderList(source, renderItem) {\n`);
+    parts.push(`  const out = [];\n`);
+    parts.push(`  if (Array.isArray(source) || typeof source === 'string') {\n`);
+    parts.push(
+      `    for (let i = 0; i < source.length; i++) out.push(renderItem(source[i], i, i));\n`,
+    );
+    parts.push(`  } else if (typeof source === 'number') {\n`);
+    parts.push(`    for (let i = 0; i < source; i++) out.push(renderItem(i + 1, i + 1, i));\n`);
+    parts.push(`  } else if (source && typeof source === 'object') {\n`);
+    parts.push(`    const keys = Object.keys(source);\n`);
+    parts.push(
+      `    for (let i = 0; i < keys.length; i++) out.push(renderItem(source[keys[i]], keys[i], i));\n`,
+    );
+    parts.push(`  }\n`);
+    parts.push(`  return out.join('');\n`);
+    parts.push(`}\n\n`);
+  }
 
   // 辅助函数
   // NOTE: renderToString is intentionally inlined into each compilation result
@@ -771,6 +776,7 @@ function genSSRCallExpression(call: JSCallExpression): string {
 
   // 处理 renderList
   if (callee === 'renderList' || callee === 'RENDER_LIST') {
+    usesRenderList = true;
     const args = call.arguments;
     if (args.length >= 2) {
       const firstArg = args[0];
