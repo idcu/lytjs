@@ -205,6 +205,35 @@ function functionBodyStart(sourceFile, name) {
   return positions[0];
 }
 
+/**
+ * 按调用形态定位 Teleport 的子节点挂载：
+ * `patch(null, child, target, targetEnd, ...)`。
+ * 返回第 3、4 实参的连续文本区间，注入时整体替换为 `container, anchor`。
+ * 不依赖前面是否有 cloneIfMounted 等插入语句。
+ */
+function teleportMountArgRange(sourceFile) {
+  const isIdent = (node, name) => ts.isIdentifier(node) && node.text === name;
+  const ranges = [];
+  const visit = (node) => {
+    if (
+      ts.isCallExpression(node) &&
+      isIdent(node.expression, 'patch') &&
+      node.arguments.length >= 4 &&
+      node.arguments[0].kind === ts.SyntaxKind.NullKeyword &&
+      isIdent(node.arguments[1], 'child') &&
+      isIdent(node.arguments[2], 'target')
+    ) {
+      ranges.push([node.arguments[2].getStart(sourceFile), node.arguments[3].getEnd()]);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  if (ranges.length !== 1) {
+    throw new Error(`结构锚点不唯一：Teleport 挂载调用命中 ${ranges.length} 处`);
+  }
+  return ranges[0];
+}
+
 /** 临时新建一个文件，跑完删除 */
 function withTempFile(file, content, run) {
   try {
@@ -1158,15 +1187,10 @@ const CONTROLS = {
     withPatchedFile(
       file,
       (text) => {
-        const needle =
-          '        if (child != null) {\n          patch(null, child, target, targetEnd, parentComponent, parentSuspense, isSVG);\n        }';
-        if (!text.includes(needle)) {
-          throw new Error('check-component-shapes：注入点漂移（找不到 Teleport 子节点挂载）');
-        }
-        return text.replace(
-          needle,
-          '        if (child != null) {\n          patch(null, child, container, anchor, parentComponent, parentSuspense, isSVG);\n        }',
-        );
+        // 结构锚点：按调用形态 patch(null, child, target, targetEnd, ...) 定位；
+        // 目标容器与宿主容器的替换仍保持原注入强度，前面插入 cloneIfMounted 不影响
+        const [start, end] = teleportMountArgRange(parseModule(file, text));
+        return `${text.slice(0, start)}container, anchor${text.slice(end)}`;
       },
       () => expectFail(['node', 'scripts/check-component-shapes.mjs'], 'check-component-shapes'),
     );
