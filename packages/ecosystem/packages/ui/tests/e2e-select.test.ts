@@ -13,7 +13,7 @@
  */
 
 import { describe, it, expect, afterEach } from 'vitest';
-import { createApp, h } from '@lytjs/core';
+import { createApp, h, nextTick } from '@lytjs/core';
 import { Select } from '../src/components/Select';
 
 const hosts: HTMLElement[] = [];
@@ -44,7 +44,7 @@ const q = (host: HTMLElement, sel: string): HTMLElement | null =>
   host.querySelector(sel) as HTMLElement | null;
 const qa = (host: HTMLElement, sel: string): HTMLElement[] =>
   [...host.querySelectorAll(sel)] as HTMLElement[];
-const tick = (): Promise<void> => new Promise((r) => setTimeout(r, 20));
+const tick = (): Promise<void> => nextTick();
 
 async function open(host: HTMLElement): Promise<void> {
   q(host, '.lyt-select__trigger')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
