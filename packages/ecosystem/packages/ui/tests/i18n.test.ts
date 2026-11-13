@@ -9,7 +9,7 @@
  *   4. zh-CN 与 en-US 键集合、占位符一致（门禁 `check-ui-i18n` 的运行时镜像）。
  */
 import { describe, it, expect, afterEach } from 'vitest';
-import { createApp, h } from '@lytjs/core';
+import { createApp, h, nextTick } from '@lytjs/core';
 import { createVNode, createTextVNode } from '@lytjs/core/runtime';
 import { Pagination } from '../src/components/Pagination';
 import { Empty } from '../src/components/Empty';
@@ -22,7 +22,7 @@ afterEach(() => {
   setUiLocale(FALLBACK_LOCALE);
 });
 
-const flush = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
+const flush = (): Promise<void> => nextTick();
 
 describe('i18n · locale 表', () => {
   it('默认 zh-CN，关键文案与迁移前逐字一致', () => {
@@ -67,7 +67,6 @@ describe('i18n · 运行时切换会触发组件重渲染', () => {
           createVNode('span', { class: 'probe' }, [createTextVNode(t('pagination.label'))]);
       },
     } as never).mount(host);
-    await flush();
     expect(host.querySelector('.probe')!.textContent).toBe('分页');
 
     setUiLocale('en-US');
@@ -84,7 +83,6 @@ describe('i18n · 运行时切换会触发组件重渲染', () => {
         return () => h(Pagination as never, { total: 100, current: 1, pageSize: 10 });
       },
     } as never).mount(host);
-    await flush();
     expect(host.textContent).toContain('共 100 条');
     expect(host.querySelector('.lyt-pagination__prev')!.textContent).toBe('上一页');
 
@@ -103,7 +101,6 @@ describe('i18n · 运行时切换会触发组件重渲染', () => {
         return () => h(Empty as never, {});
       },
     } as never).mount(host);
-    await flush();
     expect(host.textContent).toContain('暂无数据');
 
     setUiLocale('en-US');
