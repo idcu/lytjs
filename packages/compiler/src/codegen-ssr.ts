@@ -628,8 +628,13 @@ function genSSRBranch(
   }
 
   if (branch.type === NodeTypes.SIMPLE_EXPRESSION) {
+    const raw = (branch as SimpleExpressionNode).content.trim();
+    // for.ts 用字面量 `null` 表示「v-if 没有 else」的假分支：它是代码值，不是文本。
+    // 直接 String(null) 会把字面量 "null" 写进 HTML（客户端是注释锚点，压根不是文本）。
+    if (raw === 'null' || raw === 'undefined') return "''";
     // FIX: P0-1 SSR 表达式需要转义输出，防止 XSS
-    return `escapeHtml(String(${px((branch as SimpleExpressionNode).content)}))`;
+    const content = px(raw);
+    return `escapeHtml(${content} == null ? '' : String(${content}))`;
   }
 
   if (branch.type === NodeTypes.TEXT) {

@@ -1105,6 +1105,7 @@
         ]
       },
       "expected": "<div><p>a</p><p>c</p></div>",
+      "expectedSsr": "<div><p>a</p><p>c</p></div>",
       "expectedAfter": "<div><p>b</p></div>"
     },
     {
@@ -1125,6 +1126,7 @@
         ]
       },
       "expected": "<div><!----><span>a</span><!----><!----><span>c</span><!----></div>",
+      "expectedSsr": "<div><span>a</span><span>c</span></div>",
       "expectedAfter": "<div><!----><span>b</span><!----></div>"
     },
     {

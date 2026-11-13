@@ -128,6 +128,38 @@ describe('SSR 编译 - vnode 内部属性不落 DOM', () => {
   });
 });
 
+describe('SSR 编译 - 条件假分支不输出字面量 null', () => {
+  it('元素上的 v-for + v-if：假分支不产生文本', () => {
+    const render = ssr(
+      '<div><p v-for="it in list" v-if="it.show" :key="it.id">{{it.name}}</p></div>',
+    );
+    const html = render({
+      list: [
+        { id: 1, name: 'a', show: true },
+        { id: 2, name: 'b', show: false },
+        { id: 3, name: 'c', show: true },
+      ],
+    });
+    expect(html).not.toContain('null');
+    expect(html).toBe('<div><p>a</p><p>c</p></div>');
+  });
+
+  it('template 上的 v-for + v-if：假分支不产生文本', () => {
+    const render = ssr(
+      '<div><template v-for="it in list" v-if="it.show" :key="it.id"><span>{{it.name}}</span></template></div>',
+    );
+    const html = render({
+      list: [
+        { id: 1, name: 'a', show: true },
+        { id: 2, name: 'b', show: false },
+        { id: 3, name: 'c', show: true },
+      ],
+    });
+    expect(html).not.toContain('null');
+    expect(html).toBe('<div><span>a</span><span>c</span></div>');
+  });
+});
+
 describe('SSR 编译 - v-model 初态', () => {
   it('文本输入输出 value', () => {
     expect(ssr('<input v-model="msg">')({ msg: 'M' })).toBe('<input value="M">');
