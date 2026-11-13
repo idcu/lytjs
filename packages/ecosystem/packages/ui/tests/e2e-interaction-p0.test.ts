@@ -43,7 +43,6 @@ async function mount(render: () => unknown): Promise<HTMLElement> {
       return render as () => never;
     },
   } as never).mount(host);
-  await tick();
   return host;
 }
 
