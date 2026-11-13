@@ -33,6 +33,52 @@ export function getExpContent(exp: ExpressionNode | null | undefined): string | 
   return undefined;
 }
 
+// ============================================================
+// v-memo 元数据（transform 与 codegen 共享；放在 helpers 里避免
+// transform-element ↔ v-memo 的循环依赖）
+// ============================================================
+
+/** 挂在 ElementNode 上的 memo 元数据键 */
+export const MEMO_KEY = Symbol('__v_memo__');
+/** 挂在 codegen 节点上的 memo 元数据键（由 transformElement 从元素转移过来） */
+export const MEMO_CODEGEN_KEY = Symbol('__v_memo_codegen__');
+
+export interface VMemoMeta {
+  /** 依赖数组表达式字符串，例如 "[count, name]" */
+  deps: string;
+  /** 缓存变量名，例如 "_memo_0" */
+  cacheKey: string;
+  /** 静态缓存槽位（plain 元素 / v-if 分支） */
+  index: number;
+  /** 动态缓存槽位表达式（v-for 的循环下标）；存在时优先于 index */
+  indexExpr?: string;
+}
+
+type MemoCarrier = { [MEMO_KEY]?: VMemoMeta };
+
+export function getMemoMeta(node: ElementNode): VMemoMeta | undefined {
+  return (node as ElementNode & MemoCarrier)[MEMO_KEY];
+}
+
+export function setMemoMeta(node: ElementNode, meta: VMemoMeta): void {
+  (node as ElementNode & MemoCarrier)[MEMO_KEY] = meta;
+}
+
+/** 把 memo 元数据转移到 vnode codegen 节点（codegen 阶段据此外包 withMemo） */
+export function attachMemoToCodegen(node: object, meta: VMemoMeta): void {
+  (node as Record<symbol, VMemoMeta>)[MEMO_CODEGEN_KEY] = meta;
+}
+
+export function getCodegenMemo(node: unknown): VMemoMeta | undefined {
+  if (node == null || typeof node !== 'object') return undefined;
+  return (node as Record<symbol, VMemoMeta | undefined>)[MEMO_CODEGEN_KEY];
+}
+
+export function detachMemoFromCodegen(node: unknown): void {
+  if (node == null || typeof node !== 'object') return;
+  delete (node as Record<symbol, VMemoMeta | undefined>)[MEMO_CODEGEN_KEY];
+}
+
 /**
  * 在元素节点中查找指定名称的指令
  */

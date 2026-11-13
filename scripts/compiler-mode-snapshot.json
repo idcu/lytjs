@@ -86,7 +86,7 @@
     "sl05": "// Render function\nfunction render(_ctx, _cache) {\nreturn createElementVNode(\"div\", null, renderSlot(_ctx.$slots, \"footer\", {}))\n\n}",
     "sl06": "// Render function\nfunction render(_ctx, _cache) {\nreturn createElementVNode(\"div\", null, createElementVNode(\"header\", null, renderSlot(_ctx.$slots, \"header\", {})))\n\n}",
     "di01": "let _once_0;\n\n// Render function\nfunction render(_ctx, _cache) {\nreturn (_once_0 || (_once_0 = (openBlock(), createBlock(\"div\", null, toDisplayString(_ctx.msg), 1 /* TEXT */))))\n\n}",
-    "di02": "// Render function\nfunction render(_ctx, _cache) {\nreturn (openBlock(), createBlock(\"div\", null, toDisplayString(_ctx.msg), 1 /* TEXT */))\n\n}",
+    "di02": "// Render function\nfunction render(_ctx, _cache) {\nreturn withMemo([_ctx.msg], () => ((openBlock(), createBlock(\"div\", null, toDisplayString(_ctx.msg), 1 /* TEXT */))), _cache, 0)\n\n}",
     "di03": "// Render function\nfunction render(_ctx, _cache) {\nreturn (openBlock(), createBlock(\"div\", { \"textContent\": _ctx.msg }, null, 16 /* FULL_PROPS */))\n\n}",
     "di04": "// Render function\nfunction render(_ctx, _cache) {\nreturn (openBlock(), createBlock(\"div\", { \"innerHTML\": ((__DEV__ ? (console.warn(\"[LytJS] v-html directive can lead to XSS attack. Make sure the content is sanitized before rendering.\"), sanitizeHTML(_ctx.h)) : sanitizeHTML(_ctx.h))) }, null, 16 /* FULL_PROPS */))\n\n}",
     "kb02": "// Render function\nfunction render(_ctx, _cache) {\nreturn (openBlock(), createBlock(\"div\", null, (openBlock(), createBlock((_ctx[\"my-comp\"] || _ctx[\"myComp\"] || _ctx[\"MyComp\"] || \"my-comp\"), { \"title\": _ctx.t }, null, 16 /* FULL_PROPS */))))\n\n}",

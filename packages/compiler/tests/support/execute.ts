@@ -78,6 +78,14 @@ export const HELPERS: Record<string, unknown> = {
     return vnodeValue;
   },
   resolveDirective: (name: string) => name,
+  // v-memo：与 @lytjs/core-vnode 的 withMemo 同语义（dep 数组逐项相等则复用）
+  withMemo: (memo: unknown[], render: () => unknown, cache: unknown[], index: number): unknown => {
+    const cached = cache[index] as [unknown[], unknown] | undefined;
+    if (cached && arrayEquals(cached[0], memo)) return cached[1];
+    const vnodeValue = render();
+    cache[index] = [memo, vnodeValue];
+    return vnodeValue;
+  },
   Fragment,
   createSlots: (slots: unknown) => slots,
   renderSlot: (
@@ -107,7 +115,13 @@ export function importedHelpers(result: CompileResult): string[] {
   );
 }
 
-export type RenderFn = (ctx: Record<string, unknown>, cache?: Record<string, unknown>) => unknown;
+export type RenderFn = (ctx: Record<string, unknown>, cache?: unknown[]) => unknown;
+
+function arrayEquals(a: unknown[], b: unknown[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
 
 /** 把默认（VNode）产物当模块执行，返回 render 函数 */
 export function execute(result: CompileResult): RenderFn {
@@ -125,7 +139,10 @@ export function execute(result: CompileResult): RenderFn {
     ...args: unknown[]
   ) => RenderFn;
 
-  return factory(...helpers.map((name) => HELPERS[name]));
+  const render = factory(...helpers.map((name) => HELPERS[name]));
+  // 与运行时一致：render(_ctx, cache)，cache 跨渲染复用（v-memo 需要）
+  const cache: unknown[] = [];
+  return (ctx, c) => render(ctx, c ?? cache);
 }
 
 export function renderWith(source: string, ctx: Record<string, unknown> = {}): unknown {

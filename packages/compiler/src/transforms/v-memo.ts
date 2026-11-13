@@ -18,40 +18,15 @@ import type {
   TransformContext,
   ExpressionNode,
 } from '../types';
-import { findDirective, getExpContent } from './helpers';
+import { findDirective, getExpContent, setMemoMeta, MEMO_KEY } from './helpers';
+import type { VMemoMeta } from './helpers';
 import { transformElement } from './transform-element';
 
-/**
- * v-memo 依赖信息，附加到 ElementNode 的 props 中作为隐藏元数据。
- * 通过在 props 中注入一个特殊的标记属性，让 codegen 阶段可以识别
- * 并生成对应的缓存比较逻辑。
- */
-export interface VMemoMeta {
-  /** 依赖数组表达式字符串，例如 "[count, name]" */
-  deps: string;
-  /** 缓存变量名，例如 "_memo_0" */
-  cacheKey: string;
-}
-
-/**
- * 将 v-memo 依赖信息存储到 ElementNode 上。
- * 使用 Symbol 作为 key 避免与正常属性冲突。
- */
-export const MEMO_KEY = Symbol('__v_memo__');
-
-/**
- * 从 ElementNode 上获取 v-memo 依赖信息。
- */
-export function getMemoMeta(node: ElementNode): VMemoMeta | undefined {
-  return (node as unknown as Record<symbol, VMemoMeta | undefined>)[MEMO_KEY];
-}
-
-/**
- * 为 ElementNode 设置 v-memo 依赖信息。
- */
-function setMemoMeta(node: ElementNode, meta: VMemoMeta): void {
-  (node as unknown as Record<symbol, VMemoMeta>)[MEMO_KEY] = meta;
-}
+// 元数据定义与存取移到 helpers.ts（transform-element 与 codegen 都需要读取，
+// 放在本模块会产生 v-memo ↔ transform-element 的循环依赖）。
+export type { VMemoMeta };
+export { MEMO_KEY };
+export { getMemoMeta } from './helpers';
 
 // FIX: P2-28 移除模块级 memoCounter，改用 TransformContext.__counters
 // 避免多个编译上下文共享同一计数器导致变量名冲突
@@ -117,6 +92,7 @@ export function transformVMemo(
   setMemoMeta(element, {
     deps: depsContent,
     cacheKey,
+    index: memoCounter,
   });
 
   // 从 props 中移除 v-memo 指令

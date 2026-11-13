@@ -27,6 +27,7 @@ import type {
 import { helperNameMap } from './constants';
 import { SourceMapGenerator } from './source-map';
 import { prefixIdentifiers } from './prefix-identifiers';
+import { getCodegenMemo } from './transforms/helpers';
 import { FRAGMENT_SENTINEL } from './transforms/transform-element';
 import { BUILTIN_COMPONENT_NAMES, BUILTIN_COMPONENT_MODULE } from './builtin-components';
 
@@ -323,6 +324,30 @@ function genHelperImports(helpers: string[], runtimeModuleName?: string): string
 // ============================================================
 
 function genNode(node: JSChildNode | TemplateChildNode, context: CodegenContext): void {
+  // v-memo：在 vnode 路径上真正消费 memo 元数据。
+  //
+  // ⚠️ 2026-11-13 修（C-29）：此前 transformVMemo 只写了元数据 + 登记 helper，
+  //   vnode codegen 没有任何读取点 ⇒ 产物从不调用 withMemo，v-memo 完全无效
+  //   （性能承诺不成立，且带着一个未使用的 import）。
+  //   现在统一外包：`withMemo(deps, () => (<vnode>), _cache, index)`。
+  const memo = getCodegenMemo(node);
+  if (memo) {
+    context.push(`${context.helper('WITH_MEMO')}(`, node);
+    context.push(prefixIdentifiers(memo.deps, context.locals), node);
+    context.push(`, () => (`, node);
+    genNodeInner(node, context);
+    context.push(`), _cache, `, node);
+    context.push(
+      memo.indexExpr ? prefixIdentifiers(memo.indexExpr, context.locals) : String(memo.index),
+      node,
+    );
+    context.push(`)`, node);
+    return;
+  }
+  genNodeInner(node, context);
+}
+
+function genNodeInner(node: JSChildNode | TemplateChildNode, context: CodegenContext): void {
   switch (node.type) {
     case NodeTypes.VNODE_CALL:
       genVNodeCall(node as VNodeCall, context);

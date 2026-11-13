@@ -40,7 +40,7 @@ import {
   createObjectProperty,
   createConditionalExpression,
 } from '../ast';
-import { getExpContent, findDirective } from './helpers';
+import { getExpContent, findDirective, getMemoMeta, attachMemoToCodegen } from './helpers';
 import { prefixIdentifiers } from '../prefix-identifiers';
 import { capitalize } from '@lytjs/common-string';
 
@@ -491,6 +491,12 @@ function buildElementCodegen(node: ElementNode, context: TransformContext): void
       node.loc,
     ) as unknown as typeof node.codegenNode;
   }
+
+  // v-memo：把元数据挂到最终 codegen 节点上（可能是 vnode，也可能已被
+  // withDirectives 包裹），由 codegen 统一外包 withMemo —— 这样 plain 元素、
+  // v-if 分支、v-for 项都能在各自生成点上被正确包裹。
+  const memoMeta = getMemoMeta(node);
+  if (memoMeta) attachMemoToCodegen(node.codegenNode as object, memoMeta);
 
   if (shouldBeBlock) {
     context.helper('CREATE_BLOCK');

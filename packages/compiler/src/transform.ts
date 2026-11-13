@@ -21,6 +21,7 @@ import type {
   ExpressionNode,
 } from './types';
 import { createSimpleExpression, createCallExpression, createArrayExpression } from './ast';
+import { getMemoMeta } from './transforms/helpers';
 import { transformPre } from './transforms/pre';
 import {
   transformElement,
@@ -486,6 +487,9 @@ function hoistStatic(root: RootNode): void {
       if (
         element.isStatic &&
         element.codegenNode &&
+        // v-memo 元素不能提升：产物需要每次渲染按依赖比较，提升会把整个
+        // withMemo 包裹变成模块级常量（memo 彻底失效）。
+        !getMemoMeta(element) &&
         !isHoistedRef(element.codegenNode) &&
         !containsCtxReference(element.codegenNode)
       ) {

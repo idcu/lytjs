@@ -16,7 +16,7 @@ import {
   createCompoundExpression,
   createConditionalExpression,
 } from '../ast';
-import { getExpContent, findDirective } from './helpers';
+import { getExpContent, findDirective, getCodegenMemo, detachMemoFromCodegen } from './helpers';
 import { transformElement } from './transform-element';
 import { warn } from '@lytjs/common-error';
 
@@ -195,6 +195,20 @@ export function transformFor(
 
     const codegenNode = element.codegenNode;
     if (!codegenNode) return;
+
+    // v-memo + v-for：缓存槽位必须按项区分，否则不同项会命中彼此的缓存。
+    // 有索引别名 → 用索引做槽位；只有单项别名 → 把该项并入依赖（同项同依赖才复用）；
+    // 解构别名无法安全拼进表达式 → 关掉该元素的 memo（宁可少优化，不可错渲染）。
+    const memoMeta = getCodegenMemo(codegenNode);
+    if (memoMeta) {
+      if (indexVar) {
+        memoMeta.indexExpr = indexVar;
+      } else if (/^[A-Za-z_$][\w$]*$/.test(itemVar)) {
+        memoMeta.deps = `[...(${memoMeta.deps}), ${itemVar}]`;
+      } else {
+        detachMemoFromCodegen(codegenNode);
+      }
+    }
 
     // 使用类型守卫而非双重类型断言
     // FIX: P2-9 添加运行时类型检查，避免不安全的类型断言回退

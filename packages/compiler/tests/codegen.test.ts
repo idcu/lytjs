@@ -259,6 +259,28 @@ describe('codegen', () => {
       expect(child.props).toEqual({ ':p': 'a' });
     });
 
+    it('v-memo 在 vnode 路径真正生效：依赖不变复用同一 vnode（C-29）', () => {
+      const render = execute(compile('<div v-memo="[x]">{{ x }}</div>'));
+      const first = render({ x: 1 });
+      const second = render({ x: 1 });
+      expect(second).toBe(first);
+      const third = render({ x: 2 });
+      expect(third).not.toBe(first);
+    });
+
+    it('v-memo 在 v-for 中按项区分缓存槽位（C-29）', () => {
+      const render = execute(
+        compile(
+          '<ul><li v-for="(item, i) in list" :key="i" v-memo="[item.n]">{{ item.n }}</li></ul>',
+        ),
+      );
+      const ul = asVNode(render({ list: [{ n: 'a' }, { n: 'a' }] }));
+      const items = asVNodeList(ul.children);
+      expect(items).toHaveLength(2);
+      // 若所有项共用静态槽位 0，第二项会命中第一项的缓存、拿到同一个 vnode
+      expect(items[0]).not.toBe(items[1]);
+    });
+
     it('should evaluate v-once lazily and reuse the first render', () => {
       const render = execute(compile('<div v-once>{{ message }}</div>'));
       const first = asVNode(render({ message: 'first' }));

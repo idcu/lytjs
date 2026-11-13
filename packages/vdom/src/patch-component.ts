@@ -23,6 +23,14 @@ const MAX_RECURSION_DEPTH = 100;
 const componentRecursionDepthMap = new WeakMap<ComponentInternalInstance, number>();
 
 /**
+ * 每个组件实例一份渲染缓存，作为 render 的第二个形参传入（`_cache`）。
+ *
+ * 为什么需要：编译器为 v-memo 产物生成 `withMemo(deps, render, _cache, index)`，
+ * 缓存必须**跨渲染持久**才能命中；此前 runtime 只传 `_ctx`，`_cache` 恒为 undefined。
+ */
+const componentRenderCaches = new WeakMap<ComponentInternalInstance, unknown[]>();
+
+/**
  * 多根组件（render 返回数组）的 children 预处理：**只**把裸字符串 / 数字换成文本 vnode。
  *
  * 为什么不做完整「规范化」：数组里可能有**嵌套数组**（槽函数返回 `[vnode]`，
@@ -226,7 +234,12 @@ export function createComponentPatch<HN, HE extends HN>(
             // 异步 setup 尚未兑现：首帧渲染空，等 `instance.update()` 再来
             result = null;
           } else {
-            result = currentRender.call(component!.ctx, component!.ctx) as
+            let renderCache = componentRenderCaches.get(component!);
+            if (!renderCache) {
+              renderCache = [];
+              componentRenderCaches.set(component!, renderCache);
+            }
+            result = currentRender.call(component!.ctx, component!.ctx, renderCache) as
               | VNode
               | VNode[]
               | null
