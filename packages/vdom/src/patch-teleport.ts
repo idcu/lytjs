@@ -216,9 +216,39 @@ export function createTeleportPatch<HN, HE extends HN>(
         n2.targetAnchor = null;
         n2.targetStart = null;
       } else {
-        // 之前禁用，现在启用：重新作为 teleport 挂载
-        mountTeleport(n2, container, anchor, parentComponent, parentSuspense, isSVG);
-        return;
+        // 之前禁用，现在启用：把容器里的旧 children **搬进**目标容器，再交给下方
+        // 公共的 diffChildren 原地 patch。
+        //
+        // ⚠️ 不能 mountTeleport(n2) 重新挂载：
+        //   1. 旧 children（已挂载的 vnode）不会被卸载，DOM 残留在原容器 ⇒ 内容重复；
+        //   2. 组件会重新创建实例，mounted 钩子再触发一次、局部状态丢失。
+        let newTarget: HE | null = null;
+        if (isString(newTo)) {
+          newTarget = querySelector ? querySelector(newTo) : null;
+        } else if (newTo && typeof newTo === 'object') {
+          newTarget = newTo as HE;
+        }
+
+        if (newTarget) {
+          const targetStart = createComment('teleport start');
+          const targetEnd = createComment('teleport end');
+          insert(targetStart, newTarget, null);
+          insert(targetEnd, newTarget, null);
+
+          const oldChildren = isArray(n1.children) ? n1.children : [];
+          for (let i = 0; i < oldChildren.length; i++) {
+            const child = oldChildren[i];
+            if (child != null) {
+              move(child, newTarget, targetEnd, parentComponent, parentSuspense);
+            }
+          }
+
+          n2.target = newTarget as unknown as Element | null;
+          n2.targetAnchor = targetEnd as unknown as Node | null;
+          n2.targetStart = targetStart as unknown as Node | null;
+        } else if (typeof __DEV__ !== 'undefined' && __DEV__) {
+          warn(`Teleport target "${String(newTo)}" not found. Keeping children in place.`);
+        }
       }
     }
 

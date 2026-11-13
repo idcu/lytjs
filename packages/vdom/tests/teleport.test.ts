@@ -21,6 +21,53 @@ function createTestContainer(): HTMLDivElement {
   return el;
 }
 
+/**
+ * legacy options 渲染器：注入最小组件实例与 mounted/unmounted 计数。
+ * （`createRenderer(host)` 不接受这些回调，见 hostToOptions。）
+ */
+function createCountingRenderer(counters: { mounted: number; unmounted: number }) {
+  return createRenderer({
+    createElement: (tag: string) => document.createElement(tag),
+    setElementText: (el: Element, text: string) => {
+      el.textContent = text;
+    },
+    insert: (child: Node, parent: Node, anchor?: Node | null) => {
+      parent.insertBefore(child, anchor ?? null);
+    },
+    remove: (child: Node) => child.parentNode?.removeChild(child),
+    createText: (text: string) => document.createTextNode(text),
+    setText: (node: Node, text: string) => {
+      node.textContent = text;
+    },
+    patchProp: () => {},
+    createComment: (text: string) => document.createComment(text),
+    querySelector: (selector: string) => document.querySelector(selector),
+    nextSibling: (node: Node) => node.nextSibling,
+    parentNode: (node: Node) => node.parentNode,
+    setupChildComponent: (vnode: any, parent: any) => {
+      const type = vnode.type as { render: (ctx: object) => unknown };
+      vnode.component = {
+        type,
+        render: type.render,
+        ctx: {},
+        parent,
+        root: null,
+        subTree: null,
+        vnode,
+        refs: {},
+        attrs: null,
+        props: {},
+      };
+    },
+    invokeMountedHook: () => {
+      counters.mounted++;
+    },
+    invokeUnmountedHook: () => {
+      counters.unmounted++;
+    },
+  } as never);
+}
+
 describe('Teleport - mount', () => {
   let container: HTMLDivElement;
   let target: HTMLDivElement;
@@ -174,6 +221,50 @@ describe('Teleport - patch (target change)', () => {
     expect(target2.textContent).toBe('hello');
     // 原容器仍然只有占位注释
     expect(container.childNodes.length).toBe(1);
+  });
+});
+
+describe('Teleport - disabled 切换', () => {
+  let container: HTMLDivElement;
+  let target: HTMLDivElement;
+
+  beforeEach(() => {
+    container = createTestContainer();
+    target = createUniqueTarget();
+  });
+
+  afterEach(() => {
+    container.remove();
+    target.remove();
+  });
+
+  it('★ disabled true→false：内容搬入目标，不重新挂载组件', () => {
+    const counters = { mounted: 0, unmounted: 0 };
+    const renderer = createCountingRenderer(counters);
+    const Child = { name: 'Child', render: () => createVNode('span', null, 'hello') };
+
+    const teleport1 = createVNode('teleport', { to: `#${target.id}`, disabled: true }, [
+      createVNode(Child),
+    ]);
+    (teleport1 as any).shapeFlag = ShapeFlags.TELEPORT | ShapeFlags.ARRAY_CHILDREN;
+    renderer.mount(teleport1, container);
+
+    expect(container.querySelectorAll('span').length).toBe(1);
+    expect(target.childNodes.length).toBe(0);
+
+    const teleport2 = createVNode('teleport', { to: `#${target.id}` }, [createVNode(Child)]);
+    (teleport2 as any).shapeFlag = ShapeFlags.TELEPORT | ShapeFlags.ARRAY_CHILDREN;
+    renderer.patch(teleport1, teleport2, container);
+
+    // 负控：旧实现直接 mountTeleport(n2) 重新挂载 ⇒ 组件多挂一次（mounted=2），
+    // 容器里旧的 <span> 也没被移除（残留 2 个内容节点）。
+    expect(counters).toEqual({ mounted: 1, unmounted: 0 });
+    expect(container.querySelectorAll('span').length).toBe(0);
+    expect(target.querySelectorAll('span').length).toBe(1);
+    expect(target.textContent).toBe('hello');
+    // 容器只剩一个新占位注释（旧占位仍在也会让这里 >1）
+    expect(container.childNodes.length).toBe(1);
+    expect(container.childNodes[0]!.nodeType).toBe(Node.COMMENT_NODE);
   });
 });
 
