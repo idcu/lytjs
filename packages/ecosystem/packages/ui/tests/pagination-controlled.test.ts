@@ -8,18 +8,16 @@
  * 对应门禁：`scripts/check-controlled-props.mjs`（8 个组件 / 24 条断言）。
  */
 import { describe, it, expect, afterEach } from 'vitest';
-import { createApp, h, ref } from '@lytjs/core';
+import { createApp, h, nextTick, ref } from '@lytjs/core';
 import { Pagination } from '../src/components/Pagination';
 
 const hosts: HTMLElement[] = [];
-const sleep = (ms = 20): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
 async function mount(render: () => unknown): Promise<HTMLElement> {
   const host = document.createElement('div');
   document.body.appendChild(host);
   hosts.push(host);
   await createApp({ setup: () => render as never } as never).mount(host);
-  await sleep();
   return host;
 }
 
@@ -39,7 +37,7 @@ describe('Pagination 受控行为', () => {
     expect(activeText(host)).toBe('1');
 
     current.value = 3;
-    await sleep();
+    await nextTick();
     expect(activeText(host)).toBe('3');
   });
 
@@ -50,7 +48,7 @@ describe('Pagination 受控行为', () => {
     const before = count();
 
     size.value = 50;
-    await sleep();
+    await nextTick();
     expect(count()).toBeLessThan(before);
   });
 
@@ -78,7 +76,7 @@ describe('Pagination 受控行为', () => {
       (b) => b.textContent?.trim() === '2',
     );
     pageTwo?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    await sleep();
+    await nextTick();
 
     expect(current.value).toBe(2);
     expect(activeText(host)).toBe('2');
@@ -97,7 +95,7 @@ describe('Pagination 受控行为', () => {
     const before = count();
 
     total.value = 30;
-    await sleep();
+    await nextTick();
     expect(count()).toBeLessThan(before);
   });
 });
