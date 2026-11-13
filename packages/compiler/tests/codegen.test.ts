@@ -239,6 +239,26 @@ describe('codegen', () => {
       expect(asVNode(div.children).children).toBe('{{ raw }}');
     });
 
+    it('v-pre 子树内的指令保持字面量、不再编译（C-22）', () => {
+      const div = asVNode(
+        renderWith('<div v-pre><span v-if="ok" :title="t">x</span></div>', {
+          ok: false,
+          t: 'T',
+        }),
+      );
+      // 修前：v-if="ok" 被编译 ⇒ ok=false 时子节点为注释/空，span 整棵消失
+      const span = asVNode(div.children);
+      expect(span.type).toBe('span');
+      expect(span.props).toEqual({ 'v-if': 'ok', ':title': 't' });
+    });
+
+    it('v-pre 内的组件标签按普通元素渲染（C-22）', () => {
+      const div = asVNode(renderWith('<div v-pre><Comp :p="a" /></div>', { a: 1 }));
+      const child = asVNode(div.children);
+      expect(child.type).toBe('Comp');
+      expect(child.props).toEqual({ ':p': 'a' });
+    });
+
     it('should evaluate v-once lazily and reuse the first render', () => {
       const render = execute(compile('<div v-once>{{ message }}</div>'));
       const first = asVNode(render({ message: 'first' }));
