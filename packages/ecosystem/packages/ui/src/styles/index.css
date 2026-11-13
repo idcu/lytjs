@@ -2559,6 +2559,57 @@
 .lyt-color-picker-confirm {
   align-self: flex-end;
 }
+.lyt-color-picker-display {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--lyt-border-radius-small);
+  border: 1px solid var(--lyt-border-color-lighter);
+}
+.lyt-color-picker-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  color: var(--lyt-text-color-placeholder);
+  cursor: pointer;
+}
+.lyt-color-picker-clear:hover {
+  color: var(--lyt-text-color-regular);
+  background: var(--lyt-border-color-lighter);
+}
+.lyt-color-picker-arrow {
+  display: inline-flex;
+  align-items: center;
+  color: var(--lyt-text-color-secondary);
+  font-size: 10px;
+}
+.lyt-color-picker-hue,
+.lyt-color-picker-alpha {
+  padding: 2px 0;
+}
+.lyt-color-picker-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.lyt-color-picker-title {
+  margin-bottom: 4px;
+  color: var(--lyt-text-color-secondary);
+  font-size: 12px;
+}
+.lyt-color-picker-preview {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--lyt-border-radius-small);
+  border: 1px solid var(--lyt-border-color-lighter);
+}
+.lyt-color-picker-history {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 
 /* ===== Descriptions ===== */
 .lyt-descriptions {
