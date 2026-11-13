@@ -15,7 +15,7 @@
  */
 
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { createApp, h } from '@lytjs/core';
+import { createApp, h, nextTick } from '@lytjs/core';
 import { Modal } from '../src/components/Modal';
 import { Drawer } from '../src/components/Drawer';
 import { Dialog } from '../src/components/Dialog';
@@ -26,13 +26,15 @@ import { RichTextEditor } from '../src/components/RichTextEditor';
 
 const hosts: HTMLElement[] = [];
 
-const tick = (n = 30): Promise<void> => new Promise((r) => setTimeout(r, n));
-
 /**
  * 挂载辅助。
  *
  * ⚠️ 必须用 `createApp({ setup() { return () => vnode } })` 并 **await mount** ——
  *   `mount` 是异步的，且首帧渲染在微任务里；直接 `{ render }` + 同步断言会拿到空 DOM。
+ *
+ * 等待策略：本文件涉及的 Modal / Drawer / Dialog / Cascader / Popconfirm 交互
+ * 都是**同步**改 signal（无 setTimeout 等真实异步生产方）⇒ 只需 `nextTick`
+ * 冲刷调度器；点击类断言不额外等待。
  */
 async function mount(render: () => unknown): Promise<HTMLElement> {
   const host = document.createElement('div');
@@ -94,7 +96,7 @@ describe('Modal 交互（P0 回归）', () => {
     );
 
     click(host.querySelector('.lyt-modal__overlay'));
-    await tick();
+    await nextTick();
     expect(onUpdate).toHaveBeenCalledWith(false);
   });
 });
@@ -117,7 +119,7 @@ describe('Drawer 交互（P0 回归）', () => {
     );
 
     click(host.querySelector('.lyt-drawer__overlay'));
-    await tick();
+    await nextTick();
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(onUpdate).toHaveBeenCalledWith(false);
   });
@@ -136,7 +138,7 @@ describe('Dialog 交互（P0 回归）', () => {
     );
 
     click(host.querySelector('.lyt-dialog__overlay'));
-    await tick();
+    await nextTick();
     expect(onUpdate).toHaveBeenCalledWith(false);
   });
 });
@@ -148,11 +150,11 @@ describe('Cascader 交互（P0 回归）', () => {
     const host = await mount(() => h(Cascader, { options: OPTIONS }));
 
     click(host.querySelector('.lyt-cascader'));
-    await tick();
+    await nextTick();
     expect(host.querySelector('.lyt-cascader--open')).toBeTruthy();
 
     click(host.querySelector('.lyt-cascader__option'));
-    await tick();
+    await nextTick();
     expect(host.querySelector('.lyt-cascader--open')).toBeFalsy();
   });
 
@@ -160,9 +162,9 @@ describe('Cascader 交互（P0 回归）', () => {
     const host = await mount(() => h(Cascader, { options: OPTIONS, multiple: true }));
 
     click(host.querySelector('.lyt-cascader'));
-    await tick();
+    await nextTick();
     click(host.querySelector('.lyt-cascader__option'));
-    await tick();
+    await nextTick();
 
     expect(host.querySelector('.lyt-cascader--open')).toBeTruthy();
   });
@@ -181,17 +183,17 @@ describe('Popconfirm 交互（P0 回归）', () => {
     );
 
     hover(host.querySelector('.lyt-popconfirm__reference'), 'mouseenter');
-    await tick();
+    await nextTick();
     expect(host.querySelector('.lyt-popconfirm__popup')).toBeTruthy();
 
     // 离开 reference（进入气泡的必经动作）—— 此时不应隐藏
     hover(host.querySelector('.lyt-popconfirm__reference'), 'mouseleave');
-    await tick();
+    await nextTick();
     expect(host.querySelector('.lyt-popconfirm__popup')).toBeTruthy();
 
     // 离开整个组件区域才隐藏
     hover(host.querySelector('.lyt-popconfirm'), 'mouseleave');
-    await tick();
+    await nextTick();
     expect(host.querySelector('.lyt-popconfirm__popup')).toBeFalsy();
   });
 });
