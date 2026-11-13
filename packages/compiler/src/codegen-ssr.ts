@@ -103,6 +103,25 @@ export function generateSSR(ast: RootNode, _options: CodegenOptions = {}): Codeg
   parts.push(`    .replace(/'/g, '&#39;');\n`);
   parts.push(`}\n\n`);
 
+  // v-for 的 SSR 渲染：与运行时 renderList 语义一致，
+  // 覆盖数组/字符串、数字（1..n）、对象（键值对）；结果直接拼成 HTML 字符串。
+  parts.push(`function __lytRenderList(source, renderItem) {\n`);
+  parts.push(`  const out = [];\n`);
+  parts.push(`  if (Array.isArray(source) || typeof source === 'string') {\n`);
+  parts.push(
+    `    for (let i = 0; i < source.length; i++) out.push(renderItem(source[i], i, i));\n`,
+  );
+  parts.push(`  } else if (typeof source === 'number') {\n`);
+  parts.push(`    for (let i = 0; i < source; i++) out.push(renderItem(i + 1, i + 1, i));\n`);
+  parts.push(`  } else if (source && typeof source === 'object') {\n`);
+  parts.push(`    const keys = Object.keys(source);\n`);
+  parts.push(
+    `    for (let i = 0; i < keys.length; i++) out.push(renderItem(source[keys[i]], keys[i], i));\n`,
+  );
+  parts.push(`  }\n`);
+  parts.push(`  return out.join('');\n`);
+  parts.push(`}\n\n`);
+
   // 辅助函数
   // NOTE: renderToString is intentionally inlined into each compilation result
   // to ensure every compiled output is self-contained and independently executable,
@@ -547,6 +566,21 @@ function genSSRBranch(
     return genSSRElement(branch as ElementNode);
   }
 
+  if (branch.type === NodeTypes.COMPOUND_EXPRESSION) {
+    // v-for / 文本+插值混排会在 transform 阶段合成 CompoundExpression，
+    // 其 children 已是可执行的 JS 片段（字符串是原样代码，SimpleExpression 需补前缀）。
+    const raw = (branch as CompoundExpressionNode).children
+      .map((child) => {
+        if (typeof child === 'string') return child;
+        if (child.type === NodeTypes.INTERPOLATION) {
+          return genSSRExpr((child as InterpolationNode).content as JSChildNode);
+        }
+        return genSSRExpr(child as JSChildNode);
+      })
+      .join('');
+    return `escapeHtml(String(${raw}))`;
+  }
+
   if (branch.type === NodeTypes.SIMPLE_EXPRESSION) {
     // FIX: P0-1 SSR 表达式需要转义输出，防止 XSS
     return `escapeHtml(String(${px((branch as SimpleExpressionNode).content)}))`;
@@ -739,7 +773,7 @@ function genSSRCallExpression(call: JSCallExpression): string {
       ) {
         arrowBodyStr = (secondArg as SimpleExpressionNode).content;
       }
-      return `(${listExpr}).flatMap((${arrowParams}) => ${arrowBodyStr}).join('')`;
+      return `__lytRenderList(${listExpr}, (${arrowParams}) => ${arrowBodyStr})`;
     }
   }
 

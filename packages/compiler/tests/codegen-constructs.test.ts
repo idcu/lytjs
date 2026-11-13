@@ -193,6 +193,18 @@ describe('compiler codegen · 构造全覆盖批次', () => {
       expect(render({ message: 'M' })).toBe('<div>M</div>');
     });
 
+    it('SSR：v-for 支持对象与数字（与 renderList 语义一致）', () => {
+      const renderObj = executeSsr(
+        compile(`<div v-for="(v, k) in obj">{{ k }}={{ v }}</div>`, SSR.options as never),
+      );
+      expect(renderObj({ obj: { a: 1, b: 2 } })).toBe('<div>a=1</div><div>b=2</div>');
+
+      const renderNum = executeSsr(
+        compile(`<div v-for="n in 3">{{ n }}</div>`, SSR.options as never),
+      );
+      expect(renderNum({})).toBe('<div>1</div><div>2</div><div>3</div>');
+    });
+
     it('v-pre：不编译插值（原文渲染到 DOM）', () => {
       const handle = executeSignal(
         compile(`<div v-pre>{{ raw }}</div>`, SIGNAL_OPT.options as never),
