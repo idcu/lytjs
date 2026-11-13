@@ -76,11 +76,30 @@ export interface PrefetchManager {
 }
 
 // ============================================================
-// 全局预取数据存储
+// 预取数据存储
 // ============================================================
 
-const prefetchStore = new Map<string, PrefetchDataEntry>();
-const pendingPrefetches = new Map<string, Promise<unknown>>();
+/** 一次请求作用域的预取存储：实例之间必须完全隔离 */
+interface PrefetchStore {
+  entries: Map<string, PrefetchDataEntry>;
+  pending: Map<string, Promise<unknown>>;
+}
+
+function createPrefetchStore(): PrefetchStore {
+  return { entries: new Map(), pending: new Map() };
+}
+
+/**
+ * 模块级默认存储 —— 仅供**客户端单例 / 单元测试**使用。
+ *
+ * SSR 下每次请求都必须 `createPrefetchManager()` 创建独立实例：共享这份 map 会让
+ * A 请求预取的数据被 B 请求命中（跨请求数据泄漏）。
+ *
+ * @deprecated v8 将移除模块级单例，请显式创建实例。
+ */
+const defaultStore = createPrefetchStore();
+
+const prefetchStore = defaultStore.entries;
 
 // ============================================================
 // 数据序列化
@@ -172,32 +191,40 @@ export function deserializeData(json: string): unknown {
 // ============================================================
 
 /**
- * 创建预取管理器
+ * 创建预取管理器（**请求作用域实例**）
+ *
+ * 每个实例持有独立的缓存与进行中请求表。SSR 每处理一个请求就应创建一个实例
+ * 并在请求结束时丢弃，避免跨请求复用缓存。
  */
 export function createPrefetchManager(): PrefetchManager {
+  return buildPrefetchManager(createPrefetchStore());
+}
+
+function buildPrefetchManager(store: PrefetchStore): PrefetchManager {
+  const { entries, pending } = store;
   return {
     async prefetch<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
       // 检查是否已有缓存
-      const cached = prefetchStore.get(key);
+      const cached = entries.get(key);
       if (cached && cached.expiresAt > Date.now()) {
         return cached.data as T;
       }
 
       // 检查是否正在获取
-      const pending = pendingPrefetches.get(key);
-      if (pending) {
-        return pending as Promise<T>;
+      const pendingFetch = pending.get(key);
+      if (pendingFetch) {
+        return pendingFetch as Promise<T>;
       }
 
       // 开始获取
       const fetchPromise = fetcher();
-      pendingPrefetches.set(key, fetchPromise);
+      pending.set(key, fetchPromise);
 
       try {
         const data = await fetchPromise;
         const now = Date.now();
 
-        prefetchStore.set(key, {
+        entries.set(key, {
           key,
           data,
           timestamp: now,
@@ -206,12 +233,12 @@ export function createPrefetchManager(): PrefetchManager {
 
         return data;
       } finally {
-        pendingPrefetches.delete(key);
+        pending.delete(key);
       }
     },
 
     getPrefetchedData<T>(key: string): T | undefined {
-      const entry = prefetchStore.get(key);
+      const entry = entries.get(key);
       if (entry && entry.expiresAt > Date.now()) {
         return entry.data as T;
       }
@@ -219,25 +246,35 @@ export function createPrefetchManager(): PrefetchManager {
     },
 
     serialize(): string {
-      const entries = Array.from(prefetchStore.values());
-      return serializeData(entries);
+      const allEntries = Array.from(entries.values());
+      return serializeData(allEntries);
     },
 
     deserialize(data: string): void {
-      const entries = deserializeData(data) as PrefetchDataEntry[];
-      if (isArray(entries)) {
-        for (const entry of entries) {
-          prefetchStore.set(entry.key, entry);
+      const allEntries = deserializeData(data) as PrefetchDataEntry[];
+      if (isArray(allEntries)) {
+        for (const entry of allEntries) {
+          entries.set(entry.key, entry);
         }
       }
     },
 
     clear(): void {
-      prefetchStore.clear();
-      pendingPrefetches.clear();
+      entries.clear();
+      pending.clear();
     },
   };
 }
+
+/**
+ * 模块级默认管理器 —— 仅供**客户端单例 / 单元测试**使用。
+ *
+ * SSR 必须使用 `createPrefetchManager()` 的实例（每请求一个），否则预取缓存
+ * 会跨请求共享。
+ *
+ * @deprecated v8 将移除模块级单例，请显式创建实例。
+ */
+export const defaultPrefetchManager: PrefetchManager = buildPrefetchManager(defaultStore);
 
 // ============================================================
 // useFetch 组合式函数

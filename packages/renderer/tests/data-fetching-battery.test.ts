@@ -9,6 +9,7 @@ import {
   serializeData,
   deserializeData,
   createPrefetchManager,
+  defaultPrefetchManager,
   useFetch,
   useAsyncData,
   injectPrefetchData,
@@ -16,7 +17,7 @@ import {
 } from '../src/data/data-fetching';
 
 beforeEach(() => {
-  createPrefetchManager().clear();
+  defaultPrefetchManager.clear();
   delete (window as unknown as Record<string, unknown>).__LYTJS_PREFETCH_DATA__;
   vi.restoreAllMocks();
 });
@@ -131,6 +132,35 @@ describe('data-fetching · createPrefetchManager', () => {
     await expect(mgr.prefetch('k', fetcher)).rejects.toThrow('net');
     await expect(mgr.prefetch('k', fetcher)).resolves.toBe(5); // pending 已清理
     expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('P1-10：预取管理器的请求作用域隔离', () => {
+  it('★ 两个实例的缓存与进行中请求互不可见（否则 SSR 跨请求泄漏）', async () => {
+    const a = createPrefetchManager();
+    const b = createPrefetchManager();
+
+    await a.prefetch('k', async () => 'A');
+    expect(a.getPrefetchedData('k')).toBe('A');
+    // 旧实现两个实例共用模块级 map ⇒ b 读到 'A'
+    expect(b.getPrefetchedData('k')).toBeUndefined();
+    expect(b.serialize()).toBe('[]');
+
+    // 进行中的请求也不能共享：b 对同一 key 必须发起自己的 fetcher
+    let releaseA!: (v: string) => void;
+    const aGate = new Promise<string>((r) => (releaseA = r));
+    const p1 = a.prefetch('shared', () => aGate);
+    const p2 = b.prefetch('shared', async () => 'B');
+    releaseA('A2');
+    await expect(p1).resolves.toBe('A2');
+    await expect(p2).resolves.toBe('B');
+    expect(a.getPrefetchedData('shared')).toBe('A2');
+    expect(b.getPrefetchedData('shared')).toBe('B');
+
+    // a.clear() 不得影响 b
+    a.clear();
+    expect(a.getPrefetchedData('shared')).toBeUndefined();
+    expect(b.getPrefetchedData('shared')).toBe('B');
   });
 });
 
@@ -300,7 +330,8 @@ describe('data-fetching · injectPrefetchData / getPrefetchData', () => {
   });
 
   it('有缓存时产出可被 getPrefetchData 消费的注入脚本', async () => {
-    const mgr = createPrefetchManager();
+    // injectPrefetchData / getPrefetchData 读写的是模块级默认缓存（客户端单例语义）
+    const mgr = defaultPrefetchManager;
     await mgr.prefetch('pk', async () => ({ a: 1 }));
     const html = injectPrefetchData();
     expect(html).toContain('<script>window.__LYTJS_PREFETCH_DATA__=');
