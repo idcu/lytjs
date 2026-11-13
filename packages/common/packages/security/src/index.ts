@@ -296,10 +296,32 @@ const DECODE_MAP: [RegExp, string | ((substring: string, ...args: string[]) => s
 ];
 
 /**
+ * 解码 HTML 实体，**仅供检查使用**。
+ *
+ * 输出侧不得使用解码结果：`&lt;b&gt;` 解码成 `<b>` 后写回 innerHTML 会变成
+ * 真实标签（文本被当标签渲染）。属性值检查（协议、CSS expression）必须
+ * 先解码，否则 `javascript&colon;` / `expr&#x65;ssion(` 能绕过。
+ */
+function decodeEntitiesForInspection(str: string): string {
+  if (!str.includes('&')) return str;
+  let decoded = str;
+  for (let i = 0; i < 5; i++) {
+    const prev = decoded;
+    for (const [re, repl] of DECODE_MAP) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      decoded = decoded.replace(re, repl as any);
+    }
+    if (decoded === prev) break;
+  }
+  return decoded;
+}
+
+/**
  * Runtime HTML sanitization for innerHTML (v-html directive).
  *
  * Security strategy:
- * 1. Entity decoding: Decodes HTML entities before inspection.
+ * 1. Entity decoding: Decodes HTML entities **for inspection only**; the
+ *    output preserves the original encoding so encoded text stays text.
  * 2. Dangerous tag removal: Strips dangerous tags via case-insensitive regex.
  * 3. Event-handler stripping: Removes on* attributes.
  * 4. Dangerous URI neutralisation: Inspects URL attributes and neutralises dangerous schemes.
@@ -320,24 +342,15 @@ const DECODE_MAP: [RegExp, string | ((substring: string, ...args: string[]) => s
  * - For production-grade sanitization, consider a dedicated library like DOMPurify.
  */
 export function sanitizeHTML(str: string): string {
-  // 1. Decode HTML entities so encoded payloads are not missed.
-  let decoded = str;
-  if (str.includes('&')) {
-    for (let i = 0; i < 5; i++) {
-      const prev = decoded;
-      for (const [re, repl] of DECODE_MAP) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        decoded = decoded.replace(re, repl as any);
-      }
-      if (decoded === prev) break;
-    }
-  }
-
+  // 1. 输出保持**原始编码**。解码只用于属性值检查（协议 / CSS expression），
+  //    否则 `&lt;b&gt;` 会变成真实 `<b>` 标签，把用户文本当 HTML 渲染。
+  //    实体编码的标签（`&lt;script&gt;`）保持文本形态，本身就是安全的。
+  //
   // 2–6. 危险内容清除。包进**有界循环（最多 10 轮，直至稳定）**：
   // 标签 / 属性移除可能暴露出新标签（mutation / 重组 XSS，例如
   // `<div><scr<script>ipt>…</script></div>` —— 删掉内层 `<script>` 后，
   // `<scr` 与 `ipt>` 会重新拼成 `<script>`），故需反复清理直到输出不再变化。
-  let output = decoded;
+  let output = str;
   const MAX_ITERATIONS = 10;
   let iterations = 0;
   let prev = '';
@@ -365,7 +378,10 @@ export function sanitizeHTML(str: string): string {
     // 4. Neutralise dangerous URI schemes.
     output = output.replace(RE_URI_ATTR, (_match, attr: string, dq: string, sq: string) => {
       const value = dq ?? sq ?? '';
-      const cleaned = value.replace(RE_WHITESPACE_CTRL, '').toLowerCase();
+      // 属性值必须先解码再检查：`javascript&colon;` 在浏览器里仍会执行。
+      const cleaned = decodeEntitiesForInspection(value)
+        .replace(RE_WHITESPACE_CTRL, '')
+        .toLowerCase();
       if (RE_DANGEROUS_SCHEME.test(cleaned)) {
         if (RE_DATA_SVG.test(cleaned)) {
           return `${attr}=""`;
@@ -380,10 +396,11 @@ export function sanitizeHTML(str: string): string {
       RE_STYLE_ATTR,
       (_match, tagPrefix: string, _attrName: string, dq: string, sq: string) => {
         const value = dq ?? sq ?? '';
-        const cleaned = value.replace(RE_WHITESPACE_CTRL, '');
+        const cleaned = decodeEntitiesForInspection(value).replace(RE_WHITESPACE_CTRL, '');
+        RE_CSS_EXPRESSION.lastIndex = 0;
         if (RE_CSS_EXPRESSION.test(cleaned)) {
-          const sanitized = cleaned.replace(RE_CSS_EXPRESSION, '').trim();
-          return `${tagPrefix} style="${sanitized}"`;
+          // 命中 expression() 时整段清空，避免把实体编码的表达式原样留在输出里。
+          return `${tagPrefix} style=""`;
         }
         return _match;
       },

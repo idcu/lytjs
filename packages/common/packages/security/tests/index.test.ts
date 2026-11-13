@@ -203,11 +203,15 @@ describe('sanitizeHTML', () => {
     expect(result).not.toContain('javascript:');
   });
 
-  it('should handle double-encoded payloads', () => {
-    const input = '<div>&lt;script&gt;alert(1)&lt;/script&gt;</div>';
-    const result = sanitizeHTML(input);
-    // After decoding, the script tags should be removed
-    expect(result).not.toContain('script');
+  it('should keep entity-encoded markup as text, not render it as tags', () => {
+    // 解码只用于检查危险内容；输出必须保持原编码，否则实体文本会变成真实标签。
+    const input = '<div>&lt;b&gt;x&lt;/b&gt;</div>';
+    expect(sanitizeHTML(input)).toBe(input);
+
+    const encodedScript = '<div>&lt;script&gt;alert(1)&lt;/script&gt;</div>';
+    const result = sanitizeHTML(encodedScript);
+    expect(result).toBe(encodedScript);
+    expect(result).not.toContain('<script');
   });
 
   it('should handle case-insensitive dangerous tags', () => {

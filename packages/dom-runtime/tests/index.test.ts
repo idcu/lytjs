@@ -226,6 +226,12 @@ describe('@lytjs/dom-runtime', () => {
         expect(container.querySelector('div')).not.toBeNull();
       });
 
+      it('should keep entity-encoded markup as text, not create elements', () => {
+        setHTML(container, '&lt;b&gt;x&lt;/b&gt;');
+        expect(container.querySelector('b')).toBeNull();
+        expect(container.textContent).toBe('<b>x</b>');
+      });
+
       it('should remove inline event handlers (onclick)', () => {
         setHTML(container, '<div onclick="alert(1)">click me</div>');
         const div = container.querySelector('div');
