@@ -110,8 +110,8 @@ export function createWebHistory(base: string = ''): RouterHistory {
     createBaseHistory(normalizedBase);
 
   // Initialize from current browser URL
-  function getCurrentUrl(): string {
-    const { pathname, search, hash } = window.location;
+  function getCurrentUrl(win: Window): string {
+    const { pathname, search, hash } = win.location;
     const path =
       normalizedBase && pathname.startsWith(normalizedBase)
         ? pathname.slice(normalizedBase.length) || '/'
@@ -119,19 +119,29 @@ export function createWebHistory(base: string = ''): RouterHistory {
     return `${path}${search}${hash}`;
   }
 
-  // Set initial location from browser
-  const initialUrl = getCurrentUrl();
-  const { path, query, hash } = parseFullPath(initialUrl);
-  currentLocation.path = path;
-  currentLocation.fullPath = initialUrl;
-  currentLocation.query = query;
-  currentLocation.hash = hash;
+  /**
+   * 惰性获取 window。
+   *
+   * SSR / Node 没有 `window`：此时给出**可诊断**的错误，并明确指出应显式使用
+   * `createMemoryHistory()`。不做静默降级 —— 退化成 memory history 会让
+   * “服务端误用 web history”从配置错误变成难以察觉的行为差异。
+   */
+  function getWindow(): Window {
+    if (typeof window === 'undefined') {
+      throw new Error(
+        '[router] createWebHistory() 需要浏览器的 window.location，但当前环境没有 window（SSR / Node）。' +
+          ' 服务端请显式使用 createMemoryHistory()；客户端不要在 app.use(router) 之前访问 history.location。',
+      );
+    }
+    return window;
+  }
 
+  let initialized = false;
   let popStateHandler: ((e: PopStateEvent) => void) | null = null;
 
-  function setupListeners() {
+  function setupListeners(win: Window) {
     popStateHandler = (e: PopStateEvent) => {
-      const url = getCurrentUrl();
+      const url = getCurrentUrl(win);
       const { path, query, hash } = parseFullPath(url);
       const to = createRouteLocation(path, query, hash);
 
@@ -140,7 +150,27 @@ export function createWebHistory(base: string = ''): RouterHistory {
       triggerListeners(to, from, { type: 'pop', direction: 'unknown', delta: 0 });
     };
 
-    window.addEventListener('popstate', popStateHandler);
+    win.addEventListener('popstate', popStateHandler);
+  }
+
+  /**
+   * 首次真正需要浏览器环境时再读取地址栏并挂载监听。
+   * 构造阶段完全不碰 `window`，所以 SSR 里 `createRouter({ history: createWebHistory() })`
+   * 不会抛 ReferenceError；错误推迟到安装/首次访问 `location` 时才出现。
+   */
+  function ensureInitialized(): void {
+    if (initialized) return;
+    const win = getWindow();
+
+    const initialUrl = getCurrentUrl(win);
+    const { path, query, hash } = parseFullPath(initialUrl);
+    currentLocation.path = path;
+    currentLocation.fullPath = initialUrl;
+    currentLocation.query = query;
+    currentLocation.hash = hash;
+
+    setupListeners(win);
+    initialized = true;
   }
 
   function destroy() {
@@ -152,6 +182,7 @@ export function createWebHistory(base: string = ''): RouterHistory {
   }
 
   function push(to: RouteLocationRaw): Promise<NavigationFailure | void> {
+    ensureInitialized();
     const routeLocation = typeof to === 'string' ? parseFullPath(to) : to;
     const path = routeLocation.path || '/';
     const query = routeLocation.query || {};
@@ -173,6 +204,7 @@ export function createWebHistory(base: string = ''): RouterHistory {
   }
 
   function replace(to: RouteLocationRaw): Promise<NavigationFailure | void> {
+    ensureInitialized();
     const routeLocation = typeof to === 'string' ? parseFullPath(to) : to;
     const path = routeLocation.path || '/';
     const query = routeLocation.query || {};
@@ -194,10 +226,12 @@ export function createWebHistory(base: string = ''): RouterHistory {
   }
 
   function go(delta: number) {
+    ensureInitialized();
     window.history.go(delta);
   }
 
   function listen(callback: HistoryListener): () => void {
+    ensureInitialized();
     listeners.push(callback);
     return () => {
       const index = listeners.indexOf(callback);
@@ -205,15 +239,13 @@ export function createWebHistory(base: string = ''): RouterHistory {
     };
   }
 
-  // Auto-setup listeners on creation
-  setupListeners();
-
   return {
     get location() {
+      ensureInitialized();
       return currentLocation;
     },
     get state() {
-      return window.history.state;
+      return getWindow().history.state;
     },
     base: normalizedBase,
     push,

@@ -159,6 +159,26 @@ describe('createWebHistory', () => {
 
     h.destroy();
   });
+
+  it('★ 无 window 环境：构造不抛错，首次需要地址栏时才抛可诊断错误', () => {
+    vi.stubGlobal('window', undefined);
+    try {
+      // 旧实现在构造期就 getCurrentUrl() ⇒ ReferenceError: window is not defined，
+      // 调用方拿不到"该用 memory history"的提示。
+      const h = createWebHistory();
+
+      // 构造与销毁都不应触碰 window
+      expect(() => h.destroy()).not.toThrow();
+
+      expect(() => h.location).toThrow(/createMemoryHistory/);
+      expect(() => h.push('/x')).toThrow(/createMemoryHistory/);
+      expect(() => h.replace('/x')).toThrow(/createMemoryHistory/);
+      expect(() => h.go(-1)).toThrow(/createMemoryHistory/);
+      expect(() => h.listen(() => {})).toThrow(/createMemoryHistory/);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });
 
 // ==================== createWebHashHistory ====================
