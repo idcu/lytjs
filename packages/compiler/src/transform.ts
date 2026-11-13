@@ -145,9 +145,19 @@ export function transform(root: RootNode, options: TransformOptions = {}): void 
  * 已合并到 transform() 中，此函数保留仅为向后兼容。
  * 调用此函数是安全的（幂等操作），但推荐直接使用 transform()。
  */
-export function optimize(root: RootNode, _options: CompilerOptions = {}): void {
+export function optimize(root: RootNode, options: CompilerOptions = {}): void {
   markConstants(root);
-  hoistStatic(root);
+
+  // C-28：optimize() 此前忽略 options，对 signal/vapor/SSR 的 AST 也照样提升。
+  // 静态提升只对 vnode 产物成立（signal/SSR 不消费 `_hoisted_N`，且 signal 发射器
+  // 把 element.codegenNode 当作 VNODE_CALL 读取），守卫必须与 transform() 一致。
+  const { rendererMode, ssrMode, ssr } = options;
+  const isSSR = ssrMode === true || ssr === true;
+  const usesVNodeCodegen = !isSSR && rendererMode !== 'signal' && rendererMode !== 'vapor';
+  if (usesVNodeCodegen) {
+    hoistStatic(root);
+  }
+
   collectDynamicChildren(root);
 }
 

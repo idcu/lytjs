@@ -20,6 +20,41 @@ function compileForOptimize(source: string) {
 }
 
 describe('optimize', () => {
+  // C-28：optimize() 此前完全忽略 options —— 对 signal/SSR 的 AST 也做静态提升。
+  // signal 发射器把 element.codegenNode 当作「属性/子内容携带者」读取（只认 VNODE_CALL），
+  // 提升后 codegenNode 被换成 `_hoisted_N` 的 SIMPLE_EXPRESSION ⇒ 静态属性/子内容丢失。
+  describe('C-28 rendererMode / SSR 守卫', () => {
+    it('signal 模式不得静态提升', () => {
+      const ast = parse('<div class="a"><span>hi</span></div>');
+      transform(ast, { nodeTransforms: builtInTransforms, rendererMode: 'signal' });
+      const before = (ast.children[0] as ElementNode).codegenNode;
+      optimize(ast, { rendererMode: 'signal' });
+      expect(ast.hoists.length).toBe(0);
+      expect((ast.children[0] as ElementNode).codegenNode).toBe(before);
+    });
+
+    it('vapor 模式不得静态提升', () => {
+      const ast = parse('<div class="a"><span>hi</span></div>');
+      transform(ast, { nodeTransforms: builtInTransforms, rendererMode: 'vapor' });
+      optimize(ast, { rendererMode: 'vapor' });
+      expect(ast.hoists.length).toBe(0);
+    });
+
+    it('ssrMode 不得静态提升', () => {
+      const ast = parse('<div class="a"><span>hi</span></div>');
+      transform(ast, { nodeTransforms: builtInTransforms, ssr: true });
+      optimize(ast, { ssrMode: true });
+      expect(ast.hoists.length).toBe(0);
+    });
+
+    it('vnode 模式（默认）仍然静态提升', () => {
+      const ast = parse('<div class="a"><span>hi</span></div>');
+      transform(ast, { nodeTransforms: builtInTransforms });
+      optimize(ast);
+      expect(ast.hoists.length).toBeGreaterThan(0);
+    });
+  });
+
   describe('markConstants', () => {
     it('should mark static elements', () => {
       const ast = compileForOptimize('<div><span></span></div>');
