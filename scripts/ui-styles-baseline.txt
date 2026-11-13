@@ -7,22 +7,6 @@
 # 加一行前请先想清楚：这个类名是**该补样式**还是**该从组件里删掉**？
 # 两条都不做而只是加进基线，等于把「裸 DOM」正式固化为契约。
 #
-Cascader → lyt-cascader--collapse-tags
-Cascader → lyt-cascader__arrow
-Cascader → lyt-cascader__clear
-Cascader → lyt-cascader__dropdown
-Cascader → lyt-cascader__loading
-Cascader → lyt-cascader__option
-Cascader → lyt-cascader__option--active
-Cascader → lyt-cascader__option--disabled
-Cascader → lyt-cascader__option--selected
-Cascader → lyt-cascader__panel
-Cascader → lyt-cascader__placeholder
-Cascader → lyt-cascader__search
-Cascader → lyt-cascader__tag
-Cascader → lyt-cascader__tag-close
-Cascader → lyt-cascader__trigger
-Cascader → lyt-cascader__value
 ColorPicker → lyt-color-picker-alpha
 ColorPicker → lyt-color-picker-arrow
 ColorPicker → lyt-color-picker-clear
