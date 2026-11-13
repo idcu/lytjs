@@ -27,7 +27,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { createApp, h } from '@lytjs/core';
+import { createApp, h, nextTick } from '@lytjs/core';
 import { Upload, type UploadFile } from '../src/components/Upload';
 
 const hosts: HTMLElement[] = [];
@@ -71,8 +71,6 @@ afterEach(() => {
   for (const x of hosts.splice(0)) x.remove();
 });
 
-const flush = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
-
 function makeFile(name = 'a.txt', size = 4): File {
   return new File(['x'.repeat(size)], name, { type: 'text/plain' });
 }
@@ -104,7 +102,6 @@ async function mountUpload(
       return () => h(Upload as never, { ...props }, slots as never);
     },
   } as never).mount(host);
-  await flush();
   return host;
 }
 
@@ -166,8 +163,9 @@ describe('Upload · 渲染', () => {
     const host = await mountUpload({ autoUpload: false, onChange });
     expect(host.querySelector('.lyt-upload__list')).toBeNull();
     selectFiles(getInput(host), [makeFile()]);
-    await flush();
-    expect(host.querySelector('.lyt-upload__list')).toBeTruthy();
+    await vi.waitFor(() => {
+      expect(host.querySelector('.lyt-upload__list')).toBeTruthy();
+    });
   });
 });
 
@@ -176,8 +174,9 @@ describe('Upload · 文件添加（autoUpload=false）', () => {
     const onChange = vi.fn();
     const host = await mountUpload({ autoUpload: false, onChange });
     selectFiles(getInput(host), [makeFile('hello.txt', 6)]);
-    await flush();
-    expect(fileNames(host)).toEqual(['hello.txt']);
+    await vi.waitFor(() => {
+      expect(fileNames(host)).toEqual(['hello.txt']);
+    });
     const item = host.querySelector('.lyt-upload__file')!;
     expect(item.className).toContain('lyt-upload__file--pending');
     expect(onChange).toHaveBeenCalledTimes(1);
@@ -190,15 +189,17 @@ describe('Upload · 文件添加（autoUpload=false）', () => {
     const host = await mountUpload({ autoUpload: false });
     const input = getInput(host);
     selectFiles(input, [makeFile()]);
-    await flush();
-    expect(input.value).toBe('');
+    await vi.waitFor(() => {
+      expect(input.value).toBe('');
+    });
   });
 
   it('一次选择多个文件全部入列', async () => {
     const host = await mountUpload({ autoUpload: false, multiple: true });
     selectFiles(getInput(host), [makeFile('a.txt'), makeFile('b.txt'), makeFile('c.txt')]);
-    await flush();
-    expect(fileNames(host)).toEqual(['a.txt', 'b.txt', 'c.txt']);
+    await vi.waitFor(() => {
+      expect(fileNames(host)).toEqual(['a.txt', 'b.txt', 'c.txt']);
+    });
   });
 
   it('怪癖 C：达到 limit 静默拒绝 —— 文件不入列且无任何回调', async () => {
@@ -206,9 +207,12 @@ describe('Upload · 文件添加（autoUpload=false）', () => {
     const onError = vi.fn();
     const host = await mountUpload({ autoUpload: false, limit: 1, onChange, onError });
     selectFiles(getInput(host), [makeFile('a.txt')]);
-    await flush();
+    await vi.waitFor(() => {
+      expect(fileNames(host)).toEqual(['a.txt']);
+    });
     selectFiles(getInput(host), [makeFile('b.txt')]);
-    await flush();
+    // 达到 limit 时同步静默 return，无异步可等
+    await nextTick();
     expect(fileNames(host)).toEqual(['a.txt']);
     expect(onChange).toHaveBeenCalledTimes(1); // 第二次无 onChange
     expect(onError).not.toHaveBeenCalled(); // 也没有任何拒绝通知
@@ -218,8 +222,9 @@ describe('Upload · 文件添加（autoUpload=false）', () => {
     const beforeUpload = vi.fn().mockResolvedValue(false);
     const host = await mountUpload({ autoUpload: false, beforeUpload });
     selectFiles(getInput(host), [makeFile()]);
-    await flush();
-    expect(beforeUpload).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(beforeUpload).toHaveBeenCalledTimes(1);
+    });
     expect(fileNames(host)).toEqual([]);
   });
 
@@ -227,8 +232,9 @@ describe('Upload · 文件添加（autoUpload=false）', () => {
     const beforeUpload = vi.fn().mockResolvedValue(true);
     const host = await mountUpload({ autoUpload: false, beforeUpload });
     selectFiles(getInput(host), [makeFile('ok.txt')]);
-    await flush();
-    expect(fileNames(host)).toEqual(['ok.txt']);
+    await vi.waitFor(() => {
+      expect(fileNames(host)).toEqual(['ok.txt']);
+    });
   });
 
   it('移除 ×：onRemove + onChange，DOM 同步消失', async () => {
@@ -236,10 +242,12 @@ describe('Upload · 文件添加（autoUpload=false）', () => {
     const onChange = vi.fn();
     const host = await mountUpload({ autoUpload: false, onRemove, onChange });
     selectFiles(getInput(host), [makeFile('a.txt'), makeFile('b.txt')]);
-    await flush();
+    await vi.waitFor(() => {
+      expect(fileNames(host)).toEqual(['a.txt', 'b.txt']);
+    });
     onChange.mockClear();
     host.querySelector<HTMLElement>('.lyt-upload__remove')!.click();
-    await flush();
+    await nextTick();
     expect(fileNames(host)).toEqual(['b.txt']);
     expect(onRemove).toHaveBeenCalledTimes(1);
     expect((onRemove.mock.calls[0]![0] as UploadFile).name).toBe('a.txt');
@@ -257,7 +265,7 @@ describe('Upload · trigger 点击（P0 回归）', () => {
     const input = getInput(host);
     const clickSpy = vi.spyOn(input, 'click');
     getTrigger(host).click();
-    await flush();
+    await nextTick();
     expect(clickSpy).toHaveBeenCalledTimes(1);
   });
 
@@ -265,7 +273,7 @@ describe('Upload · trigger 点击（P0 回归）', () => {
     const host = await mountUpload({ disabled: true });
     const clickSpy = vi.spyOn(getInput(host), 'click');
     getTrigger(host).click();
-    await flush();
+    await nextTick();
     expect(clickSpy).not.toHaveBeenCalled();
   });
 });
@@ -277,7 +285,7 @@ describe('Upload · 拖拽', () => {
     const e = new Event('dragover', { bubbles: true, cancelable: true });
     const spy = vi.spyOn(e, 'preventDefault');
     trigger.dispatchEvent(e);
-    await flush();
+    await nextTick();
     expect(spy).toHaveBeenCalled();
     expect(host.querySelector('.lyt-upload')!.className).toContain('lyt-upload--dragover');
   });
@@ -286,9 +294,9 @@ describe('Upload · 拖拽', () => {
     const host = await mountUpload();
     const trigger = getTrigger(host);
     trigger.dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));
-    await flush();
+    await nextTick();
     trigger.dispatchEvent(new Event('dragleave', { bubbles: true }));
-    await flush();
+    await nextTick();
     expect(host.querySelector('.lyt-upload')!.className).not.toContain('lyt-upload--dragover');
   });
 
@@ -297,11 +305,12 @@ describe('Upload · 拖拽', () => {
     const host = await mountUpload({ autoUpload: false, onChange });
     const trigger = getTrigger(host);
     trigger.dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));
-    await flush();
+    await nextTick();
     const spy = dropFiles(trigger, [makeFile('d.txt')]);
-    await flush();
+    await vi.waitFor(() => {
+      expect(fileNames(host)).toEqual(['d.txt']);
+    });
     expect(spy).toHaveBeenCalled();
-    expect(fileNames(host)).toEqual(['d.txt']);
     expect(host.querySelector('.lyt-upload')!.className).not.toContain('lyt-upload--dragover');
     expect(onChange).toHaveBeenCalled();
   });
@@ -309,14 +318,17 @@ describe('Upload · 拖拽', () => {
   it('怪癖 E：disabled 时 drop 仍然上传（只挡点击不挡拖拽）', async () => {
     const host = await mountUpload({ autoUpload: false, disabled: true });
     dropFiles(getTrigger(host), [makeFile('evil.txt')]);
-    await flush();
-    expect(fileNames(host)).toEqual(['evil.txt']);
+    await vi.waitFor(() => {
+      expect(fileNames(host)).toEqual(['evil.txt']);
+    });
   });
 
   it('怪癖 F：multiple=false 时 drop 多文件仍全部入列', async () => {
     const host = await mountUpload({ autoUpload: false, multiple: false });
     dropFiles(getTrigger(host), [makeFile('a.txt'), makeFile('b.txt')]);
-    await flush();
+    await vi.waitFor(() => {
+      expect(fileNames(host)).toEqual(['a.txt', 'b.txt']);
+    });
     expect(fileNames(host)).toEqual(['a.txt', 'b.txt']);
   });
 });
@@ -329,8 +341,9 @@ describe('Upload · XHR 上传', () => {
       data: { extra: 'v1' },
     });
     selectFiles(getInput(host), [makeFile('f.txt')]);
-    await flush();
-    expect(FakeXHR.instances).toHaveLength(1);
+    await vi.waitFor(() => {
+      expect(FakeXHR.instances).toHaveLength(1);
+    });
     const xhr = FakeXHR.instances[0]!;
     expect(xhr.open).toHaveBeenCalledWith('POST', '/up');
     expect(xhr.setRequestHeader).toHaveBeenCalledWith('X-Token', 't1');
@@ -347,9 +360,11 @@ describe('Upload · XHR 上传', () => {
     const onProgress = vi.fn();
     const host = await mountUpload({ action: '/up', onProgress });
     selectFiles(getInput(host), [makeFile()]);
-    await flush();
+    await vi.waitFor(() => {
+      expect(FakeXHR.instances).toHaveLength(1);
+    });
     FakeXHR.instances[0]!.progress(50, 100);
-    await flush();
+    await nextTick();
     expect(onProgress).toHaveBeenCalledWith(50, expect.objectContaining({ status: 'uploading' }));
     const bar = host.querySelector<HTMLElement>('.lyt-upload__progress-bar')!;
     expect(bar.style.width).toBe('50%');
@@ -361,9 +376,11 @@ describe('Upload · XHR 上传', () => {
     const onChange = vi.fn();
     const host = await mountUpload({ action: '/up', onSuccess, onChange });
     selectFiles(getInput(host), [makeFile()]);
-    await flush();
+    await vi.waitFor(() => {
+      expect(FakeXHR.instances).toHaveLength(1);
+    });
     FakeXHR.instances[0]!.respond(200, '{"url":"http://cdn/f.txt"}');
-    await flush();
+    await nextTick();
     expect(onSuccess).toHaveBeenCalledWith(
       { url: 'http://cdn/f.txt' },
       expect.objectContaining({ status: 'success', url: 'http://cdn/f.txt', percentage: 100 }),
@@ -379,9 +396,11 @@ describe('Upload · XHR 上传', () => {
     const onError = vi.fn();
     const host = await mountUpload({ action: '/up', onError });
     selectFiles(getInput(host), [makeFile()]);
-    await flush();
+    await vi.waitFor(() => {
+      expect(FakeXHR.instances).toHaveLength(1);
+    });
     FakeXHR.instances[0]!.respond(500, '{}');
-    await flush();
+    await nextTick();
     expect(onError).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'Upload failed' }),
       expect.objectContaining({ status: 'error' }),
@@ -394,9 +413,11 @@ describe('Upload · XHR 上传', () => {
     await mountUpload({ action: '/up', onError });
     const host = hosts[0]!;
     selectFiles(getInput(host), [makeFile()]);
-    await flush();
+    await vi.waitFor(() => {
+      expect(FakeXHR.instances).toHaveLength(1);
+    });
     FakeXHR.instances[0]!.fail();
-    await flush();
+    await nextTick();
     expect(onError).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'Network error' }),
       expect.objectContaining({ status: 'error' }),
@@ -408,10 +429,12 @@ describe('Upload · XHR 上传', () => {
     const onSuccess = vi.fn();
     const host = await mountUpload({ action: '/up', onError, onSuccess });
     selectFiles(getInput(host), [makeFile()]);
-    await flush();
+    await vi.waitFor(() => {
+      expect(FakeXHR.instances).toHaveLength(1);
+    });
     const xhr = FakeXHR.instances[0]!;
     expect(() => xhr.respond(200, 'not-json')).toThrow();
-    await flush();
+    await nextTick();
     expect(onSuccess).not.toHaveBeenCalled();
     expect(onError).not.toHaveBeenCalled();
     expect(host.querySelector('.lyt-upload__file')!.className).toContain(
@@ -424,14 +447,16 @@ describe('Upload · XHR 上传', () => {
     const onRemove = vi.fn();
     const host = await mountUpload({ action: '/up', onChange, onRemove });
     selectFiles(getInput(host), [makeFile()]);
-    await flush();
+    await vi.waitFor(() => {
+      expect(FakeXHR.instances).toHaveLength(1);
+    });
     host.querySelector<HTMLElement>('.lyt-upload__remove')!.click();
-    await flush();
+    await nextTick();
     expect(fileNames(host)).toEqual([]);
     expect(onRemove).toHaveBeenCalled();
     onChange.mockClear();
     FakeXHR.instances[0]!.respond(200, '{"url":"u"}');
-    await flush();
+    await nextTick();
     // XHR 未被 abort：成功回调照常跑，原地改 file 并再次广播 onChange
     expect(onChange).toHaveBeenCalled();
   });
@@ -439,10 +464,14 @@ describe('Upload · XHR 上传', () => {
   it('autoUpload=false 不发 XHR；无 action 也不发', async () => {
     const h1 = await mountUpload({ autoUpload: false, action: '/up' });
     selectFiles(getInput(h1), [makeFile()]);
-    await flush();
+    await vi.waitFor(() => {
+      expect(fileNames(h1)).toHaveLength(1);
+    });
     const h2 = await mountUpload({ autoUpload: true, action: '' });
     selectFiles(getInput(h2), [makeFile()]);
-    await flush();
+    await vi.waitFor(() => {
+      expect(fileNames(h2)).toHaveLength(1);
+    });
     expect(FakeXHR.instances).toHaveLength(0);
   });
 });
