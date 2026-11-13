@@ -24,7 +24,6 @@ async function mount(props: Record<string, unknown>, slotText = 'content'): Prom
   await createApp({
     setup: () => () => h(Container as never, props, { default: () => [h('span', null, slotText)] }),
   } as never).mount(host);
-  await new Promise((r) => setTimeout(r, 20));
   return host;
 }
 
