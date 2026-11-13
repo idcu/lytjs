@@ -146,6 +146,21 @@ export interface PathMatchResult {
 }
 
 /**
+ * 解码单个路径段。
+ *
+ * ⚠️ 2026-11-13 修（P1）：`resolveName()` 现在会对参数做 `encodeURIComponent`，
+ *   matcher 必须在这里解回来，否则 `params.name` 会变成 `a%2Fb`。
+ *   畸形转义（`%zz`）保留原串，与 query 解码同一策略（不能抛 URIError 打断导航）。
+ */
+function decodePathSegment(raw: string): string {
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
+
+/**
  * Match a pathname against a tokenized route
  */
 export function matchPath(
@@ -178,16 +193,16 @@ export function matchPath(
 
       case 'param':
         if (token.repeatable) {
-          params[token.name] = pathSegments.slice(i);
+          params[token.name] = pathSegments.slice(i).map(decodePathSegment);
           i = pathSegments.length;
         } else if (segment !== undefined) {
-          params[token.name] = segment;
+          params[token.name] = decodePathSegment(segment);
           i++;
         }
         break;
 
       case 'wildcard':
-        params[token.value] = pathSegments.slice(i).join('/');
+        params[token.value] = pathSegments.slice(i).map(decodePathSegment).join('/');
         i = pathSegments.length;
         break;
     }

@@ -178,7 +178,12 @@ export function createRouter(options: RouterOptions): Router {
         // Replace params in path
         if (params) {
           for (const [key, value] of Object.entries(params)) {
-            const paramValue = Array.isArray(value) ? value.join('/') : value;
+            // ⚠️ 2026-11-13 修（P1）：此前直接 `path.replace(':k', value)`，参数里的
+            //   `/` 会被当成路径分隔符（`name: 'a/b'` 逃逸到 `/files/a/b`），空格/中文/`%`
+            //   也会原样进入 URL。现在逐段 `encodeURIComponent`，与 matcher 的解码配对。
+            const paramValue = Array.isArray(value)
+              ? value.map((item) => encodeURIComponent(String(item))).join('/')
+              : encodeURIComponent(String(value));
             path = path.replace(`:${key}`, paramValue);
           }
         }

@@ -192,6 +192,29 @@ describe('query 语义', () => {
   });
 });
 
+describe('命名路由参数编码', () => {
+  it('★ encode 后再 decode 往返不丢字符（/ 空格 中文 %）', async () => {
+    const router = mk([
+      { path: '/files/:name', component: { name: 'F' }, name: 'file' },
+      { path: '/files/:name/detail', component: { name: 'FD' }, name: 'detail' },
+    ]);
+
+    for (const raw of ['a/b', 'a b', '中文 路径', '100%', '%2F']) {
+      const resolved = router.resolve({ name: 'file', params: { name: raw } });
+
+      // 编码方向：`/` 必须变成 %2F，否则会被当成新的路径段（逃逸到别的路由）
+      expect(resolved.path).toBe(`/files/${encodeURIComponent(raw)}`);
+
+      await router.push({ name: 'file', params: { name: raw } });
+
+      // 解码方向：最终 params 必须还原成原文
+      expect(router.currentRoute().name).toBe('file');
+      expect(router.currentRoute().params.name).toBe(raw);
+      expect(router.currentRoute().path).toBe(`/files/${encodeURIComponent(raw)}`);
+    }
+  });
+});
+
 describe('并发导航', () => {
   it('★ 守卫未完成时发起的第二次 push 不能被吞掉', async () => {
     const router = mk([
