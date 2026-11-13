@@ -1,8 +1,8 @@
 {
-  "commit": "0043813094e9bb949e5812dea37db57c6ca21cbd",
-  "generatedAt": "2026-11-12T19:21:05.560Z",
-  "totalSrcFiles": 446,
-  "coveredSrcFiles": 437,
+  "commit": "ec099e1e38f781468edd6149eb7669bde6f35fd4",
+  "generatedAt": "2026-11-13T04:22:35.310Z",
+  "totalSrcFiles": 447,
+  "coveredSrcFiles": 438,
   "threshold": 0.975,
   "basis": {
     "authoritative": "vitest-thresholds",
@@ -334,6 +334,7 @@
     "packages/ecosystem/packages/web-framework/packages/middleware-rate-limit/src/index.ts": true,
     "packages/ecosystem/packages/web-framework/packages/middleware-rate-limit/src/rate-limit.ts": true,
     "packages/ecosystem/packages/web-framework/packages/middleware-rate-limit/src/types.ts": true,
+    "packages/ecosystem/packages/web-framework/packages/middleware/src/adapt.ts": true,
     "packages/ecosystem/packages/web-framework/packages/middleware/src/chain.ts": true,
     "packages/ecosystem/packages/web-framework/packages/middleware/src/composer.ts": true,
     "packages/ecosystem/packages/web-framework/packages/middleware/src/context.ts": true,
