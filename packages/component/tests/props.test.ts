@@ -118,6 +118,33 @@ describe('props', () => {
     expect(instance.props.visible).toBe(false);
   });
 
+  it('★ 裸布尔属性（空串）应 cast 为 true', () => {
+    const options = defineComponent({
+      name: 'BoolCastComp',
+      props: {
+        disabled: { type: Boolean },
+        isEnabled: { type: Boolean },
+      },
+    });
+
+    const instance = createAndSetup(options, { disabled: '', 'is-enabled': '' });
+    // 修复前：空串原样保留 ⇒ props.disabled === ''、props.isEnabled === ''。
+    expect(instance.props.disabled).toBe(true);
+    expect(instance.props.isEnabled).toBe(true);
+  });
+
+  it('★ 布尔属性值等于自身 kebab 名时应 cast 为 true', () => {
+    const options = defineComponent({
+      name: 'BoolKebabComp',
+      props: {
+        isEnabled: { type: Boolean },
+      },
+    });
+
+    const instance = createAndSetup(options, { 'is-enabled': 'is-enabled' });
+    expect(instance.props.isEnabled).toBe(true);
+  });
+
   it('should support custom validator', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 

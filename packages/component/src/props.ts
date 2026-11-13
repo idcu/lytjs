@@ -12,6 +12,7 @@ import {
   EMPTY_OBJ,
 } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
+import { camelToKebab } from '@lytjs/common-string';
 import type { PropOptions } from './types';
 import type { ComponentInternalInstance } from './types';
 
@@ -89,6 +90,17 @@ export function resolvePropValue<T = unknown>(
       warn(`Missing required prop: "${key}"`);
     }
     return undefined;
+  }
+
+  // Boolean cast：
+  //  · 裸属性（`<Comp disabled>`）在 vnode props 里是空串 `''`；
+  //  · 旧写法 `<Comp is-enabled="is-enabled">` 的值等于自身 kebab 名。
+  // 两者都表示「属性存在」⇒ true（与 Vue 的 boolean casting 一致）。
+  // 此前只有「缺失 ⇒ false」，空串原样透传 ⇒ `props.disabled === ''`。
+  if (type === Boolean || (isArray(type) && type.includes(Boolean as unknown))) {
+    if (value === '' || (typeof key === 'string' && value === camelToKebab(key))) {
+      return true as T | undefined;
+    }
   }
 
   // 类型验证
