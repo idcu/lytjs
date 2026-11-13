@@ -9,7 +9,7 @@ import { generate } from './codegen';
 import { generateSignal } from './codegen-signal';
 import { generateSignalOptimized } from './codegen-signal-optimized';
 import { generateSSR } from './codegen-ssr';
-import type { CompilerOptions, CodegenResult, RootNode } from './types';
+import type { CompilerOptions, CodegenResult, RootNode, RawSourceMap } from './types';
 
 // Server Components (Phase 1.4)
 export {
@@ -74,6 +74,8 @@ interface CompileCacheEntry {
   preamble: string;
   // FIX: P1-24 使用 RootNode 类型替代 any，提供类型安全
   ast: RootNode;
+  // map 必须随缓存一起保存：否则 sourceMap:true 的第二次编译命中缓存后 map 丢失。
+  map?: RawSourceMap;
 }
 
 /** 最大缓存条目数 */
@@ -271,7 +273,12 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
       cacheStats.hits++;
       const endTime = performance.now();
       cacheStats.totalTime += endTime - startTime;
-      return { code: cached.code, preamble: cached.preamble, ast: cached.ast };
+      return {
+        code: cached.code,
+        preamble: cached.preamble,
+        ast: cached.ast,
+        map: cached.map,
+      };
     }
     cacheStats.misses++;
   }
@@ -347,6 +354,7 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
       code: codegenResult.code,
       preamble: codegenResult.preamble ?? '',
       ast,
+      map: codegenResult.map,
     });
   }
 

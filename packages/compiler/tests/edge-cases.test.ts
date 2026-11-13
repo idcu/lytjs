@@ -724,6 +724,16 @@ describe('Compile 函数边界条件', () => {
       expect(getCompileCacheSize()).toBe(2);
     });
 
+    it('sourceMap:true 命中缓存后仍应返回同一份 map（C-11）', () => {
+      const options = { sourceMap: true, filename: 'cache-map.html' };
+      const first = compile('<div class="a">{{ msg }}</div>', options);
+      const second = compile('<div class="a">{{ msg }}</div>', options);
+
+      expect(first.map).toBeDefined();
+      expect(second.map).toBeDefined();
+      expect(second.map).toEqual(first.map);
+    });
+
     it('clearCompileCache 后缓存大小应为 0', () => {
       compile('<div>test</div>');
       expect(getCompileCacheSize()).toBe(1);
