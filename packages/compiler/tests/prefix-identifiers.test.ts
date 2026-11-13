@@ -173,3 +173,28 @@ describe('prefixIdentifiers · 对象简写属性（P0 回归）', () => {
     expect(span.props).toEqual({ class: { active: true } });
   });
 });
+
+// ⚠️ C-16 回归：函数声明名被误前缀化
+//
+// 旧行为：`isFunctionName` 判据写成 `prev === 'c'`（想匹配 `function` 的末字母，
+// 实际是 `n`），该分支恒不成立 ⇒ `function foo() { return foo }` 产出
+// `function _ctx.foo() { return _ctx.foo }` —— 非法 JS，`new Function` 抛 SyntaxError。
+describe('prefixIdentifiers · 函数声明名（C-16 回归）', () => {
+  it('函数声明名与内部自引用都不加前缀', () => {
+    expect(prefixIdentifiers('function foo() { return foo }')).toBe(
+      'function foo() { return foo }',
+    );
+  });
+
+  it('带空白的函数声明同样不加前缀', () => {
+    expect(prefixIdentifiers('function  foo () { return foo(1) }')).toBe(
+      'function  foo () { return foo(1) }',
+    );
+  });
+
+  it('函数体里的真实上下文绑定仍要前缀化', () => {
+    expect(prefixIdentifiers('function foo() { return count }')).toBe(
+      'function foo() { return _ctx.count }',
+    );
+  });
+});

@@ -328,7 +328,11 @@ export function prefixIdentifiers(content: string, locals?: ReadonlySet<string>)
         (prev === '{' || prev === ',') &&
         (next === ',' || next === '}');
       // 函数声明 / 函数表达式的名字
-      const isFunctionName = prev === 'c' && /\bfunction$/.test(content.slice(0, i).trimEnd());
+      //
+      // ⚠️ C-16 修：判据此前写成 `prev === 'c'`（想匹配 `function` 的末字母，实际是 `n`），
+      //   该分支恒不成立 ⇒ `function foo() { return foo }` 被前缀成
+      //   `function _ctx.foo() { return _ctx.foo }` —— 非法 JS。
+      const isFunctionName = prev === 'n' && /\bfunction$/.test(content.slice(0, i).trimEnd());
 
       if (isArrowSingleParam || isFunctionName) {
         state.locals.add(word);
@@ -345,6 +349,7 @@ export function prefixIdentifiers(content: string, locals?: ReadonlySet<string>)
         !isKeyword &&
         !isGlobal &&
         !isArrowSingleParam &&
+        !isFunctionName &&
         !isDeclarationTarget &&
         !isDeclarationKeyword;
 
