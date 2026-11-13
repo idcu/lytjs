@@ -96,7 +96,12 @@ export function delegateEvent(
     events[eventType] = entry;
   }
 
-  entry.handlers.push({ selector, handler });
+  // 幂等注册：同一 (selector, handler) 已存在时不再 push 第二条。
+  // 否则一次事件会遍历到两条相同条目 ⇒ handler 被调用两次（计数 2），
+  // 与 `addEventListener`「重复注册同一监听器是 no-op」的语义不一致。
+  if (!entry.handlers.some((h) => h.selector === selector && h.handler === handler)) {
+    entry.handlers.push({ selector, handler });
+  }
 
   return () => {
     const currentEvents = delegatedEventsMap.get(element);

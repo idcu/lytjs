@@ -193,6 +193,31 @@ describe('delegateEvent · 注销', () => {
     expect(inputHandler).toHaveBeenCalledTimes(1);
   });
 
+  it('★ 同一 handler + selector 重复注册只触发一次', () => {
+    const btn = child();
+    const handler = vi.fn();
+
+    delegateEvent(root, 'click', '.btn', handler);
+    delegateEvent(root, 'click', '.btn', handler);
+    click(btn);
+
+    // 修复前：handlers 数组直接 push，同一 (selector, handler) 存在两条
+    // ⇒ 一次事件调用两次 handler（计数 2），与 addEventListener 的幂等语义不符。
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it('★ 重复注册后注销一次即彻底移除', () => {
+    const btn = child();
+    const handler = vi.fn();
+
+    const off = delegateEvent(root, 'click', '.btn', handler);
+    delegateEvent(root, 'click', '.btn', handler);
+    off();
+    click(btn);
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
   it('重复调用注销函数是安全的', () => {
     const btn = child();
     const handler = vi.fn();
