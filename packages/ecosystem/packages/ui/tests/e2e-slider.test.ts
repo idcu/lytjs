@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect, afterEach } from 'vitest';
-import { createApp, h } from '@lytjs/core';
+import { createApp, h, nextTick } from '@lytjs/core';
 import { Slider } from '../src/components/Slider';
 
 const hosts: HTMLElement[] = [];
@@ -37,7 +37,7 @@ const q = (host: HTMLElement, sel: string): HTMLElement | null =>
   host.querySelector(sel) as HTMLElement | null;
 const qa = (host: HTMLElement, sel: string): HTMLElement[] =>
   [...host.querySelectorAll(sel)] as HTMLElement[];
-const tick = (): Promise<void> => new Promise((r) => setTimeout(r, 20));
+const tick = (): Promise<void> => nextTick();
 
 /** jsdom 的 getBoundingClientRect 恒为 0 ⇒ 拖动换算会得 NaN，需给根元素桩一个真实矩形 */
 function stubRect(el: HTMLElement, width = 200, height = 20): void {
