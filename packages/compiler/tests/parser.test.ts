@@ -39,6 +39,28 @@ describe('无 arg 指令 + 修饰符（v-model.lazy 等）', () => {
   });
 });
 
+describe('动态参数（:[a.b]）', () => {
+  it('动态参数中的点不应被拆成修饰符', () => {
+    const ast = parse('<div :[a.b]="x"></div>');
+    const el = ast.children.find((c) => c.type === 1) as { props: Array<Record<string, unknown>> };
+    const dir = el.props[0]!;
+    expect(dir['name']).toBe('bind');
+    const arg = dir['arg'] as { content?: string; isStatic?: boolean };
+    expect(arg.content).toBe('a.b');
+    expect(arg.isStatic).toBe(false);
+    expect(dir['modifiers']).toEqual([]);
+  });
+
+  it('动态参数后的修饰符仍应识别（v-on:[a.b].stop）', () => {
+    const ast = parse('<button v-on:[a.b].stop="fn">x</button>');
+    const el = ast.children.find((c) => c.type === 1) as { props: Array<Record<string, unknown>> };
+    const dir = el.props[0]!;
+    expect(dir['name']).toBe('on');
+    expect((dir['arg'] as { content?: string }).content).toBe('a.b');
+    expect(dir['modifiers']).toEqual(['stop']);
+  });
+});
+
 describe('parser', () => {
   describe('basic parsing', () => {
     it('should parse empty template', () => {

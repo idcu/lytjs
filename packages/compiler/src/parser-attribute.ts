@@ -243,6 +243,24 @@ function parseAttributeValue(context: ParserContext): TextNode {
   return createText(content, getSelection(context, start));
 }
 
+/**
+ * 从 `[` 起始的动态参数中找出配平的 `]`，返回其下标；未找到返回 -1。
+ * 允许表达式内出现嵌套方括号（如 `:[a[b]]`）。
+ */
+function findClosingBracket(rawArg: string): number {
+  let depth = 0;
+  for (let i = 0; i < rawArg.length; i++) {
+    const char = rawArg[i]!;
+    if (char === '[') {
+      depth++;
+    } else if (char === ']') {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
+}
+
 function parseDirective(
   context: ParserContext,
   name: string,
@@ -259,15 +277,26 @@ function parseDirective(
     // 约定：rawArg 以 `.` 开头表示「无 arg、只有修饰符」（如 `v-model.lazy`）
     if (rawArg.startsWith('.')) {
       modifiers = rawArg.slice(1).split('.').filter(Boolean);
+    } else if (rawArg.startsWith('[') && findClosingBracket(rawArg) !== -1) {
+      // 动态参数必须整体识别 `[...]` 后再拆修饰符。此前先 split('.')，
+      // `:[a.b]` 被拆成 arg=`[a`、modifier=`b]`，表达式里的点被误判。
+      const close = findClosingBracket(rawArg);
+      arg = createSimpleExpression(
+        rawArg.slice(1, close),
+        false,
+        getSelection(context, start),
+        false,
+      );
+      const rest = rawArg.slice(close + 1);
+      if (rest.startsWith('.')) {
+        modifiers = rest.slice(1).split('.').filter(Boolean);
+      }
     } else {
       const parts = rawArg.split('.');
       const argContent = parts[0];
       modifiers = parts.slice(1);
 
-      if (argContent !== undefined && argContent.startsWith('[') && argContent.endsWith(']')) {
-        const content = argContent.slice(1, -1);
-        arg = createSimpleExpression(content, false, getSelection(context, start), false);
-      } else if (argContent !== undefined) {
+      if (argContent !== undefined) {
         arg = createSimpleExpression(argContent, true, getSelection(context, start), true);
       }
     }
