@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect, afterEach } from 'vitest';
-import { createApp, h } from '@lytjs/core';
+import { createApp, h, nextTick } from '@lytjs/core';
 import { Menu } from '../src/components/Menu';
 
 const hosts: HTMLElement[] = [];
@@ -55,7 +55,7 @@ const q = (host: HTMLElement, sel: string): HTMLElement | null =>
   host.querySelector(sel) as HTMLElement | null;
 const qa = (host: HTMLElement, sel: string): HTMLElement[] =>
   [...host.querySelectorAll(sel)] as HTMLElement[];
-const tick = (): Promise<void> => new Promise((r) => setTimeout(r, 20));
+const tick = (): Promise<void> => nextTick();
 /** 顶层菜单项（排除子菜单里的） */
 const topItems = (host: HTMLElement): HTMLElement[] => qa(host, '.lyt-menu > .lyt-menu__item');
 const sro = (host: HTMLElement): string => q(host, '.lyt-menu__sro')?.textContent ?? '';
