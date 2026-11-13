@@ -35,6 +35,9 @@ export function createPinia(): Pinia {
   const stateSignal = signal<Record<string, StateTree>>({});
   const plugins: PiniaPlugin[] = [];
   let isInstalled = false;
+  // 按 app 记录安装状态：同一个 pinia 可以装进多个 app；
+  // 实例级布尔会让第二个 app 直接 return，拿不到 provide，进而回落到全局 activePinia。
+  const installedApps = new WeakSet<object>();
 
   // Wrap signal with .value getter/setter for compatibility
   const state = {
@@ -54,12 +57,13 @@ export function createPinia(): Pinia {
     author: undefined,
     keywords: undefined,
     install: (app: App) => {
-      if (isInstalled) {
+      if (installedApps.has(app as unknown as object)) {
         if (__DEV__) {
-          console.warn(`[@lytjs/store] Pinia has already been installed.`);
+          console.warn(`[@lytjs/store] Pinia has already been installed in this app.`);
         }
         return;
       }
+      installedApps.add(app as unknown as object);
       isInstalled = true;
       activePinia = pinia;
 

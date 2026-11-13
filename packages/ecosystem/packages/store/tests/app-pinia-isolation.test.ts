@@ -19,7 +19,7 @@
 
 import { describe, it, expect, afterEach } from 'vitest';
 import { createApp, h } from '@lytjs/core';
-import { defineStore, createPinia, clearStoreCache } from '../src/index';
+import { defineStore, createPinia, clearStoreCache, setActivePinia } from '../src/index';
 
 const hosts: HTMLElement[] = [];
 
@@ -77,5 +77,41 @@ describe('S24 useStore 按 app 的 pinia 隔离', () => {
     expect(seen[1].who).toBe('B');
     expect(hostA.querySelector('.who-a')!.textContent).toBe('A');
     expect(hostB.querySelector('.who-b')!.textContent).toBe('B');
+  });
+
+  it('同一个 pinia 装入两个 app 后，第二个 app 仍按自己的 provide 解析', async () => {
+    clearStoreCache();
+
+    const useStore = defineStore('s24SharedPinia', {
+      state: () => ({ who: 'init' }),
+    });
+
+    const shared = createPinia();
+    const other = createPinia();
+    let storeInB: unknown;
+
+    const appA = createApp({
+      setup: () => () => h('div', 'a'),
+    });
+    appA.use(shared);
+
+    const appB = createApp({
+      setup() {
+        storeInB = useStore();
+        return () => h('div', 'b');
+      },
+    });
+    // 同一个 pinia 的第二次 install 不应被实例级 isInstalled 短路
+    appB.use(shared);
+
+    // 模拟另一个请求把模块级 activePinia 改写成 other
+    setActivePinia(other);
+    await appB.mount(newHost());
+
+    // 修复前：appB 没拿到 provide，回落到 activePinia=other ⇒ 解析到别的 pinia 的 store
+    expect(storeInB).toBe(useStore(shared));
+    expect(storeInB).not.toBe(useStore(other));
+
+    setActivePinia(null as never);
   });
 });
