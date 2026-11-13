@@ -161,8 +161,10 @@ export function useId(): Readonly<Ref<string>> {
     }
     const counter = (map.get('useId') ?? 0) + 1;
     map.set('useId', counter);
-    // 添加高熵随机后缀，防止跨实例 ID 冲突
-    id.value = `${prefix}-${counter}-${generateIdSuffix()}`;
+    // 不能用随机后缀：SSR 与客户端是两次独立执行，随机段必然不同，
+    // 水合时 <label for>/aria-* 会指向不存在的 id。
+    // 组件 uid 按遍历顺序分配，同一棵树的 SSR/CSR 取值一致，前缀 + 计数即可确定。
+    id.value = `${prefix}-${counter}`;
   } else {
     // 降级：使用高熵随机数替代全局计数器
     id.value = `lyt-${generateIdSuffix()}`;

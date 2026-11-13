@@ -281,8 +281,25 @@ describe('useId', () => {
 
     expect(ids).toHaveLength(2);
     expect(ids[0]).not.toBe(ids[1]);
-    expect(ids[0]).toMatch(/^lyt-\d+-1-/);
-    expect(ids[1]).toMatch(/^lyt-\d+-2-/);
+    expect(ids[0]).toMatch(/^lyt-\d+-1$/);
+    expect(ids[1]).toMatch(/^lyt-\d+-2$/);
+  });
+
+  it('setup 内 id 只由 uid + 计数决定，不含随机段（SSR/CSR 必须可对齐）', async () => {
+    const ids: string[] = [];
+    const Comp = {
+      setup() {
+        ids.push(useId().value, useId().value);
+        return () => h('div', null, 'x');
+      },
+    };
+
+    await mount(Comp);
+
+    // 反证：随机后缀会让同一棵树在服务端与客户端生成不同 id，
+    // 水合时 <label for>/aria-* 必然失配。id 必须是 (uid, 计数) 的纯函数。
+    expect(ids[0]).toMatch(/^lyt-\d+-1$/);
+    expect(ids[1]).toMatch(/^lyt-\d+-2$/);
   });
 
   it('两个组件实例的 id 前缀不同（按 uid 区分）', async () => {
