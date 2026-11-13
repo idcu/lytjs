@@ -180,6 +180,27 @@ function computeContentHash(content: string): string {
 }
 
 /**
+ * C-13：判断选项里是否含有**无法安全序列化进缓存键**的值（函数 / 对象 / 数组）。
+ *
+ * 缓存键只能可靠表达标量；此前把函数与对象一律折叠成 `<obj>` ⇒
+ * `onError` / `bindingMetadata` / `isCustomElement` 等选项互不区分，
+ * 携带不同闭包或绑定表的编译会互相命中：第二次编译不再 parse/transform，
+ * `onError` 诊断被静默吞掉，且 AST 可能来自另一组选项。
+ *
+ * 这类选项无法用字符串键表达，直接整体跳过缓存读写（正确性优先于命中率）。
+ */
+function hasUncacheableOptions(options: CompilerOptions): boolean {
+  const record = options as Record<string, unknown>;
+  for (const key of Object.keys(record)) {
+    const value = record[key];
+    if (typeof value === 'function') return true;
+    // 含普通对象、数组、Map/Set 等；null 是标量语义，放行。
+    if (value !== null && typeof value === 'object') return true;
+  }
+  return false;
+}
+
+/**
  * 构建编译缓存键，确保读取和写入使用相同的键生成逻辑。
  * FIX: P1-25 缓存键覆盖所有影响编译结果的选项，
  * 包括 source、ssrMode、rendererMode、scopeId、inline、mode 等
@@ -200,7 +221,8 @@ function buildCompileCacheKey(source: string, options: CompilerOptions): string 
     .sort()
     .map((key) => {
       const value = record[key];
-      // 非标量（函数 / 数组 / 对象）不参与：带自定义 transform 的结果本就不入缓存
+      // 非标量（函数 / 数组 / 对象）本应在进入这里之前就被
+      // `hasUncacheableOptions` 拦下；保留该分支仅作防御。
       if (value === null || value === undefined) return `${key}=`;
       if (typeof value === 'object' || typeof value === 'function') return `${key}=<obj>`;
       return `${key}=${String(value)}`;
@@ -256,12 +278,15 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
   const startTime = performance.now();
   cacheStats.totalCompiles++;
 
-  // 0. 检查编译缓存（仅在无自定义 nodeTransforms/directiveTransforms 时使用缓存）
+  // 0. 检查编译缓存（仅在无自定义 transform、且选项可安全序列化时使用缓存）
   const hasCustomTransforms =
     (options.nodeTransforms && options.nodeTransforms.length > 0) ||
     (options.directiveTransforms && Object.keys(options.directiveTransforms).length > 0);
+  // C-13：函数/对象选项（onError、bindingMetadata、isCustomElement…）无法进缓存键，
+  // 一律不读不写缓存，否则不同选项会互相命中、诊断静默丢失。
+  const cacheable = !hasCustomTransforms && !hasUncacheableOptions(options);
 
-  if (!hasCustomTransforms) {
+  if (cacheable) {
     const cacheKey = buildCompileCacheKey(source, options);
     const cached = compileCache.get(cacheKey);
     if (cached) {
@@ -343,7 +368,7 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
   }
 
   // 4. 存入缓存
-  if (!hasCustomTransforms) {
+  if (cacheable) {
     const cacheKey = buildCompileCacheKey(source, options);
     // LRU 淘汰：超出最大缓存大小时删除最旧条目
     if (compileCache.size >= MAX_CACHE_SIZE) {

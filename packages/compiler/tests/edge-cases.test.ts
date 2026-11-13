@@ -779,6 +779,20 @@ describe('Compile 函数边界条件', () => {
       });
       expect(getCompileCacheSize()).toBe(1);
     });
+
+    it('携带函数选项（onError）的编译不得读写缓存（C-13）', () => {
+      const messages: string[] = [];
+      const options = { onError: (error: Error) => messages.push(error.message) };
+
+      compile('<div />', options);
+      compile('<div />', options);
+
+      // 修前：函数/对象选项在缓存键里被折叠成 `<obj>`，第二次编译命中缓存
+      // 直接返回产物、不再 parse ⇒ 诊断静默消失（只收到 1 条），
+      // 且缓存里留下一条携带闭包的 `<obj>` 键条目。
+      expect(messages).toHaveLength(2);
+      expect(getCompileCacheSize()).toBe(0);
+    });
   });
 
   describe('SSR 模式编译', () => {
