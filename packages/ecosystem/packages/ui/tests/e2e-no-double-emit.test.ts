@@ -33,7 +33,6 @@ async function mount(node: unknown): Promise<HTMLElement> {
   document.body.appendChild(host);
   hosts.push(host);
   await createApp({ setup: () => () => node } as never).mount(host);
-  await tick();
   return host;
 }
 
