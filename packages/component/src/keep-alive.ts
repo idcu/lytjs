@@ -528,6 +528,13 @@ export function getCacheKey(keepAlive: ComponentInternalInstance, vnode: VNode):
     }
   }
 
+  // 显式 vnode.key 优先：同一组件的不同 key 是不同实例
+  // （如 `<component :is="Comp" :key="id">`），必须分开缓存，
+  // 否则切回时命中同一个条目、复用另一个 key 的实例（状态串页）。
+  if (vnode.key != null) {
+    return String(vnode.key);
+  }
+
   // 默认：使用 vnode.type（组件构造函数或标签字符串）
   const type = vnode.type;
   if (typeof type === 'string') {

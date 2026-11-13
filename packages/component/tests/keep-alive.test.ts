@@ -204,6 +204,35 @@ describe('KeepAlive', () => {
   });
 });
 
+describe('KeepAlive vnode.key', () => {
+  it('★ 同一组件的不同 vnode.key 必须产生不同缓存 key', () => {
+    const ka = createKeepAliveInstance();
+    const comp = createSimpleInstance('KeyedComp');
+    const v1 = { type: comp.type, props: {}, key: 'a' } as unknown as VNode;
+    const v2 = { type: comp.type, props: {}, key: 'b' } as unknown as VNode;
+
+    const k1 = getCacheKey(ka, v1);
+    const k2 = getCacheKey(ka, v2);
+
+    // 修复前：默认 key 只看 vnode.type ⇒ 两者都是 'KeyedComp'，不同实例串到同一缓存条目。
+    expect(k1).not.toBe(k2);
+  });
+
+  it('★ 不同 key 的实例不会互相覆盖缓存', () => {
+    const ka = createKeepAliveInstance();
+    const compA = createSimpleInstance('SameComp');
+    const compB = createSimpleInstance('SameComp');
+    const v1 = { type: compA.type, props: {}, key: 'page-1' } as unknown as VNode;
+    const v2 = { type: compB.type, props: {}, key: 'page-2' } as unknown as VNode;
+
+    cacheInstance(ka, getCacheKey(ka, v1), compA);
+    cacheInstance(ka, getCacheKey(ka, v2), compB);
+
+    expect(getCachedInstance(ka, getCacheKey(ka, v1))).toBe(compA);
+    expect(getCachedInstance(ka, getCacheKey(ka, v2))).toBe(compB);
+  });
+});
+
 describe('KeepAlive onCacheKey', () => {
   it('should use onCacheKey function to generate cache key', () => {
     const customKeyFn = vi.fn((vnode: VNode) => `custom:${(vnode.type as any).name}`);
