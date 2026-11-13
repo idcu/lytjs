@@ -101,6 +101,7 @@ export class SourceMapGenerator {
     generatedColumn: number,
     name?: string,
     originalColumnExact?: number,
+    source?: string,
   ): void {
     // 解析源索引（如果尚未添加则使用第一个源）
     if (this.sources.length === 0) {
@@ -123,7 +124,13 @@ export class SourceMapGenerator {
       originalColumnExact !== undefined ? originalColumnExact : originalColumn;
     const finalGeneratedColumn = generatedColumn;
 
+    // C-17：此前从不记录 source，编码时恒回退到 sources[0]，
+    // 使 addSource 多次调用（多源合并）成为死能力。
+    // 未显式传 source 时保持旧行为：指向已注册的第一个源。
+    const resolvedSource = source ?? this.sources[0];
+
     this.mappings.push({
+      source: resolvedSource,
       originalLine,
       originalColumn: finalOriginalColumn,
       generatedLine,

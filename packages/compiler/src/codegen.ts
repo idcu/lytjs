@@ -255,6 +255,11 @@ function createCodegenContext(
     },
 
     push(c: string, node?: BaseNode): void {
+      // C-17：先记录 push 起点。此前用 `currentColumn - c.length` 反推，
+      // c 含换行时该值会变成负数（映射数据不可用）。
+      const startLine = currentLine;
+      const startColumn = currentColumn;
+
       codeParts.push(c);
 
       // 更新生成位置跟踪
@@ -272,8 +277,8 @@ function createCodegenContext(
         sourceMapGen.addMapping(
           node.loc.start.line - 1, // Convert to 0-based
           node.loc.start.column - 1,
-          currentLine,
-          currentColumn - c.length, // Map to the start of this push
+          startLine,
+          startColumn,
         );
       }
     },

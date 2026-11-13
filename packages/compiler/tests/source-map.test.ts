@@ -3,6 +3,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { SourceMapGenerator, createSourceMapGenerator } from '../src/source-map';
+import { compile } from '../src/index';
 
 describe('SourceMapGenerator', () => {
   describe('基本功能', () => {
@@ -204,5 +205,90 @@ describe('VLQ Encoding', () => {
     const map = gen.toJSON();
     // Large values require multi-character VLQ encoding
     expect(map.mappings.length).toBeGreaterThan(4);
+  });
+});
+
+// ============================================================
+// C-17：多源映射与生成列正确性
+// ============================================================
+
+const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+/** 解码一段 VLQ 段（不含逗号）为增量数组 */
+function decodeSegment(segment: string): number[] {
+  const values: number[] = [];
+  let shift = 0;
+  let value = 0;
+  for (const ch of segment) {
+    const digit = B64.indexOf(ch);
+    expect(digit).toBeGreaterThanOrEqual(0);
+    const cont = (digit & 32) !== 0;
+    value += (digit & 31) << shift;
+    if (cont) {
+      shift += 5;
+    } else {
+      const negative = (value & 1) === 1;
+      value >>>= 1;
+      values.push(negative ? -value : value);
+      shift = 0;
+      value = 0;
+    }
+  }
+  return values;
+}
+
+/** 解码 mappings 为绝对位置（generatedLine/Column、source、originalLine/Column） */
+function decodeMappings(mappings: string) {
+  const out: Array<{
+    generatedLine: number;
+    generatedColumn: number;
+    source: number;
+    originalLine: number;
+    originalColumn: number;
+  }> = [];
+  let source = 0;
+  let originalLine = 0;
+  let originalColumn = 0;
+  mappings.split(';').forEach((lineStr, generatedLine) => {
+    let generatedColumn = 0;
+    if (lineStr === '') return;
+    for (const seg of lineStr.split(',')) {
+      if (seg === '') continue;
+      const v = decodeSegment(seg);
+      generatedColumn += v[0] ?? 0;
+      source += v[1] ?? 0;
+      originalLine += v[2] ?? 0;
+      originalColumn += v[3] ?? 0;
+      out.push({ generatedLine, generatedColumn, source, originalLine, originalColumn });
+    }
+  });
+  return out;
+}
+
+describe('C-17 映射数据可靠性', () => {
+  it('addMapping 记录 source，多源映射指向正确索引', () => {
+    const gen = new SourceMapGenerator('out.js');
+    gen.addSource('a.js', 'aaa');
+    gen.addSource('b.js', 'bbb');
+    gen.addMapping(0, 0, 0, 0, undefined, undefined, 'b.js');
+
+    const segs = decodeMappings(gen.toJSON().mappings);
+    expect(segs).toHaveLength(1);
+    // 修前：source 恒为 0（忽略传入的 b.js）
+    expect(segs[0]!.source).toBe(1);
+  });
+
+  it('codegen 的生成列不会为负（含换行的 push）', () => {
+    const { map } = compile('<div>\n  <p>{{ msg }}</p>\n  <span>hi</span>\n</div>', {
+      sourceMap: true,
+      filename: 't.html',
+    });
+    expect(map).toBeDefined();
+    const segs = decodeMappings(map!.mappings);
+    expect(segs.length).toBeGreaterThan(0);
+    // 修前：用 push 后的 currentColumn - 长度 反推起点，跨行 push 会得到负列
+    for (const seg of segs) {
+      expect(seg.generatedColumn).toBeGreaterThanOrEqual(0);
+    }
   });
 });
