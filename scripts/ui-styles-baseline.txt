@@ -7,10 +7,6 @@
 # 加一行前请先想清楚：这个类名是**该补样式**还是**该从组件里删掉**？
 # 两条都不做而只是加进基线，等于把「裸 DOM」正式固化为契约。
 #
-Calendar → lyt-calendar-day-number
-Calendar → lyt-calendar-day-view
-Calendar → lyt-calendar-month
-Calendar → lyt-calendar-week-view
 Cascader → lyt-cascader--collapse-tags
 Cascader → lyt-cascader__arrow
 Cascader → lyt-cascader__clear

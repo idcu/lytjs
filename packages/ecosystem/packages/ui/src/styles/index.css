@@ -2283,6 +2283,30 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.lyt-calendar-month {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.lyt-calendar-day-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1;
+}
+.lyt-calendar-week-view,
+.lyt-calendar-day-view {
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--lyt-border-color-lighter);
+  border-radius: var(--lyt-border-radius-small);
+  color: var(--lyt-text-color-placeholder);
+  font-size: 13px;
+}
 
 /* ===== 选择器类（Cascader / DatePicker / TimePicker 共用的触发框）===== */
 .lyt-cascader,
