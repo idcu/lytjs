@@ -23,7 +23,7 @@
  */
 
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { createApp, h } from '@lytjs/core';
+import { createApp, h, nextTick } from '@lytjs/core';
 import { signal } from '@lytjs/core/runtime';
 import { InputNumber } from '../src/components/InputNumber';
 
@@ -33,7 +33,7 @@ afterEach(() => {
   for (const x of hosts.splice(0)) x.remove();
 });
 
-const flush = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
+const flush = (): Promise<void> => nextTick();
 
 /**
  * 受控挂载：signal 驱动 modelValue，`onUpdate:modelValue` 回写。
@@ -60,7 +60,6 @@ async function mountInputNumber(
         });
     },
   } as never).mount(host);
-  await flush();
   return { host, mv: (v?: number) => value.set(v) };
 }
 
