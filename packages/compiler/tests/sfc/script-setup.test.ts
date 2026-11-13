@@ -124,6 +124,26 @@ const emit = defineEmits(['go'])
     expect(code).toContain('return { emit }');
   });
 
+  // 负控（C-30）：defineProps/defineEmits 的参数用非贪婪 `\)` 截断，
+  // 遇到函数型默认值 / 校验器里的 `()` 时只取到第一个右括号 ⇒ 产物语法错误。
+  it('defineProps 参数含嵌套括号时不得截断', () => {
+    const code = gen(`<template><p>{{ title }}</p></template>
+<script setup>
+const props = defineProps({ title: { type: String, default: () => 'x' } })
+</script>`);
+    expect(code).toContain("props: { title: { type: String, default: () => 'x' } }");
+    expect(code).not.toContain("=> 'x' } })");
+  });
+
+  it('defineEmits 参数含嵌套括号时不得截断', () => {
+    const code = gen(`<template><button @click="emit('go')">x</button></template>
+<script setup>
+const emit = defineEmits({ go: (payload) => payload != null })
+</script>`);
+    expect(code).toContain('emits: { go: (payload) => payload != null }');
+    expect(code).not.toContain('payload != null } })');
+  });
+
   it('解构声明里的每个名字都要 return', () => {
     const code = gen(`<template><b>{{ x }}{{ y }}</b></template>
 <script setup>

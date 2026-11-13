@@ -44,12 +44,94 @@ const RE_IMPORT = /^[ \t]*import\s+[\s\S]*?from\s*['"][^'"]+['"];?[ \t]*$/gm;
 /** 副作用 import：`import './x.css'` */
 const RE_IMPORT_BARE = /^[ \t]*import\s*['"][^'"]+['"];?[ \t]*$/gm;
 
-/** `const props = defineProps(...)` / `defineProps<...>(...)` */
-const RE_DEFINE_PROPS =
-  /(?:^|\n)[ \t]*(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*defineProps\s*(<[^>]*>)?\s*\(([\s\S]*?)\)\s*;?/;
+/** `const props = defineProps(` / `const emit = defineEmits(` 的调用头（参数单独配平扫描） */
+const RE_DEFINE_PROPS_HEAD =
+  /(?:^|\n)[ \t]*(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*defineProps\s*(<[^>]*>)?\s*\(/;
 
-const RE_DEFINE_EMITS =
-  /(?:^|\n)[ \t]*(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*defineEmits\s*(<[^>]*>)?\s*\(([\s\S]*?)\)\s*;?/;
+const RE_DEFINE_EMITS_HEAD =
+  /(?:^|\n)[ \t]*(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*defineEmits\s*(<[^>]*>)?\s*\(/;
+
+/** 跳过一整个 JS 字符串 / 模板串（含转义），返回闭合引号之后的下标 */
+function skipJsString(src: string, start: number): number {
+  const quote = src[start];
+  let i = start + 1;
+  while (i < src.length) {
+    const c = src[i];
+    if (c === '\\') {
+      i += 2;
+      continue;
+    }
+    if (c === quote) return i + 1;
+    i++;
+  }
+  return i;
+}
+
+/**
+ * C-30：从 `(` 开始做括号配平扫描，返回匹配的 `)` 下标。
+ *
+ * 旧实现用 `\(([\s\S]*?)\)` 非贪婪匹配，参数里出现第一个右括号就收尾
+ * （`default: () => 'x'`、校验器 `(payload) => …`）⇒ 产物被截断成非法 JS。
+ * 扫描时跳过字符串与注释，避免引号/注释里的括号干扰计数。
+ */
+function findMatchingParen(src: string, openIndex: number): number | undefined {
+  let depth = 0;
+  let i = openIndex;
+  while (i < src.length) {
+    const ch = src[i] as string;
+    if (ch === '"' || ch === "'" || ch === '`') {
+      i = skipJsString(src, i);
+      continue;
+    }
+    if (ch === '/' && src[i + 1] === '/') {
+      const nl = src.indexOf('\n', i + 2);
+      i = nl === -1 ? src.length : nl;
+      continue;
+    }
+    if (ch === '/' && src[i + 1] === '*') {
+      const end = src.indexOf('*/', i + 2);
+      i = end === -1 ? src.length : end + 2;
+      continue;
+    }
+    if (ch === '(') depth++;
+    else if (ch === ')') {
+      depth--;
+      if (depth === 0) return i;
+    }
+    i++;
+  }
+  return undefined;
+}
+
+interface DefineCall {
+  /** 整条语句在 body 中的起止（含前导换行与可选分号） */
+  start: number;
+  end: number;
+  varName: string;
+  generic?: string;
+  args: string;
+}
+
+/** 定位一条 `const x = defineProps/Emits(...)` 并取出完整实参 */
+function findDefineCall(body: string, head: RegExp): DefineCall | undefined {
+  const match = head.exec(body);
+  if (!match) return undefined;
+  const openIndex = match.index + match[0].length - 1;
+  const closeIndex = findMatchingParen(body, openIndex);
+  if (closeIndex === undefined) return undefined;
+
+  let end = closeIndex + 1;
+  while (body[end] === ' ' || body[end] === '\t') end++;
+  if (body[end] === ';') end++;
+
+  return {
+    start: match.index,
+    end,
+    varName: match[1]!,
+    generic: match[2],
+    args: body.slice(openIndex + 1, closeIndex),
+  };
+}
 
 /**
  * 顶层声明名（含解构）。
@@ -153,9 +235,9 @@ export function compileScriptSetup(content: string): ScriptSetupResult {
   const propsBinding = 'props';
   const emitBinding = 'emit';
 
-  const propsMatch = body.match(RE_DEFINE_PROPS);
-  if (propsMatch) {
-    const [, varName, generic, args] = propsMatch;
+  const propsCall = findDefineCall(body, RE_DEFINE_PROPS_HEAD);
+  if (propsCall) {
+    const { varName, generic, args } = propsCall;
     if (generic) {
       errors.push(
         `defineProps<...>() 的**泛型**形式需要 TypeScript 类型解析，当前 SFC 编译器不支持。\n` +
@@ -168,15 +250,15 @@ export function compileScriptSetup(content: string): ScriptSetupResult {
           `改名会牵动正文里的所有引用，当前实现不做改写。`,
       );
     } else {
-      body = body.replace(propsMatch[0], '');
-      propsDecl = (args ?? '').trim();
+      body = body.slice(0, propsCall.start) + body.slice(propsCall.end);
+      propsDecl = args.trim();
     }
-    if (!propsDecl) propsDecl = (args ?? '').trim() || '{}';
+    if (!propsDecl) propsDecl = args.trim() || '{}';
   }
 
-  const emitsMatch = body.match(RE_DEFINE_EMITS);
-  if (emitsMatch) {
-    const [, varName, generic, args] = emitsMatch;
+  const emitsCall = findDefineCall(body, RE_DEFINE_EMITS_HEAD);
+  if (emitsCall) {
+    const { varName, generic, args } = emitsCall;
     if (generic) {
       errors.push(
         `defineEmits<...>() 的**泛型**形式需要 TypeScript 类型解析，当前 SFC 编译器不支持。\n` +
@@ -188,10 +270,10 @@ export function compileScriptSetup(content: string): ScriptSetupResult {
           `改名会牵动正文里的所有引用，当前实现不做改写。`,
       );
     } else {
-      body = body.replace(emitsMatch[0], '');
-      emitsDecl = (args ?? '').trim();
+      body = body.slice(0, emitsCall.start) + body.slice(emitsCall.end);
+      emitsDecl = args.trim();
     }
-    if (!emitsDecl) emitsDecl = (args ?? '').trim() || '[]';
+    if (!emitsDecl) emitsDecl = args.trim() || '[]';
   }
 
   // 3) `defineExpose` 接管道（N12，2026-11-10）：
