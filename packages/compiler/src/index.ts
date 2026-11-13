@@ -276,7 +276,9 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
       return {
         code: cached.code,
         preamble: cached.preamble,
-        ast: cached.ast,
+        // AST 是可变对象，调用方可能就地改写；每次命中都发一份独立副本，
+        // 避免一次改写污染后续所有同源编译（C-12）。
+        ast: structuredClone(cached.ast),
         map: cached.map,
       };
     }
@@ -353,7 +355,9 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
     compileCache.set(cacheKey, {
       code: codegenResult.code,
       preamble: codegenResult.preamble ?? '',
-      ast,
+      // 缓存保存副本：未命中路径返回的 ast 仍是 transform 的就地产物，
+      // 调用方改写它不得影响缓存中的基线。
+      ast: structuredClone(ast),
       map: codegenResult.map,
     });
   }

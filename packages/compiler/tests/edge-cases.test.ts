@@ -734,6 +734,25 @@ describe('Compile 函数边界条件', () => {
       expect(second.map).toEqual(first.map);
     });
 
+    it('返回的 ast 不得与缓存共享引用（C-12）', () => {
+      const source = '<div class="a">{{ msg }}</div>';
+      const first = compile(source);
+
+      // 调用方就地改写首次返回的 AST
+      const firstEl = first.ast.children[0] as ElementNode;
+      firstEl.tag = 'corrupted';
+      firstEl.props.length = 0;
+
+      const second = compile(source);
+      const secondEl = second.ast.children[0] as ElementNode;
+
+      expect(secondEl).not.toBe(firstEl);
+      expect(secondEl.tag).toBe('div');
+      expect(secondEl.props.length).toBeGreaterThan(0);
+      // 缓存产物本身不受调用方改写影响
+      expect(second.code).toBe(first.code);
+    });
+
     it('clearCompileCache 后缓存大小应为 0', () => {
       compile('<div>test</div>');
       expect(getCompileCacheSize()).toBe(1);
