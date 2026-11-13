@@ -13,7 +13,7 @@
  * 但根因是**没读懂 emit 的契约**。
  */
 import { describe, it, expect, afterEach } from 'vitest';
-import { createApp, h } from '@lytjs/core';
+import { createApp, h, nextTick } from '@lytjs/core';
 import { Radio } from '../src/components/Radio';
 import { Checkbox } from '../src/components/Checkbox';
 import { Switch } from '../src/components/Switch';
@@ -24,9 +24,8 @@ afterEach(() => {
   for (const x of hosts.splice(0)) x.remove();
 });
 
-async function tick(ms = 40): Promise<void> {
-  await new Promise((r) => setTimeout(r, ms));
-}
+// 回调由 `emit` 同步触发（这正是本文件的判据）⇒ 只需 nextTick 冲刷调度器，
+// 不存在计时器类真实异步。
 
 async function mount(node: unknown): Promise<HTMLElement> {
   const host = document.createElement('div');
@@ -49,7 +48,7 @@ describe('回归：一次交互只触发一次回调', () => {
     const input = host.querySelector('input')!;
     input.checked = true;
     input.dispatchEvent(new Event('change', { bubbles: true }));
-    await tick();
+    await nextTick();
     expect(seen).toEqual(['b']);
   });
 
@@ -65,7 +64,7 @@ describe('回归：一次交互只触发一次回调', () => {
     const input = host.querySelector('input')!;
     input.checked = true;
     input.dispatchEvent(new Event('change', { bubbles: true }));
-    await tick();
+    await nextTick();
     expect(seen).toHaveLength(1);
   });
 
@@ -82,7 +81,7 @@ describe('回归：一次交互只触发一次回调', () => {
     const core = host.querySelector('.lyt-switch__core') as HTMLElement | null;
     expect(core).not.toBeNull();
     core!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    await tick();
+    await nextTick();
     expect(seen).toHaveLength(1);
   });
 
@@ -97,7 +96,7 @@ describe('回归：一次交互只触发一次回调', () => {
     const closeBtn = host.querySelector('.lyt-tag__close') as HTMLElement | null;
     expect(closeBtn).not.toBeNull();
     closeBtn!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    await tick();
+    await nextTick();
     expect(seen).toHaveLength(1);
   });
 });
