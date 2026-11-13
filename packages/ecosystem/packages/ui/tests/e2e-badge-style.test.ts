@@ -29,7 +29,6 @@ async function mountBadge(props: Record<string, unknown>): Promise<HTMLElement> 
       return () => h(Badge as never, props, () => 'content');
     },
   } as never).mount(host);
-  await new Promise((r) => setTimeout(r, 20));
   return host;
 }
 
