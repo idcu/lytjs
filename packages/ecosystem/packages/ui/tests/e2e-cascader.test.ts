@@ -52,7 +52,6 @@ async function mountCascader(props: Record<string, unknown> = {}): Promise<HTMLE
       return () => h(Cascader as never, { options: OPTIONS, ...props });
     },
   } as never).mount(host);
-  await new Promise((r) => setTimeout(r, 30));
   return host;
 }
 
