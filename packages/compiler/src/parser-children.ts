@@ -85,6 +85,14 @@ export function parseChildren(
           continue;
         }
         node = parseElement(context);
+        if (!node) {
+          // ⚠️ C-10 修：`<` 不能作为标签起始（如 `a < 2` / `<<div>`）时，
+          //   parseTag 已不改动游标。这里把 `<` 当普通文本消费掉一个字符；
+          //   不能交给 parseText —— 它以 `<` 为终止符，会 advanceBy(0) 死循环。
+          const textStart = getCursor(context);
+          advanceBy(context, 1);
+          node = createText('<', getSelection(context, textStart));
+        }
       }
     }
 

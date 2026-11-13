@@ -538,4 +538,26 @@ describe('parser', () => {
       expect((el.children[0] as TextNode).content).toBe('if (a</b>) {}');
     });
   });
+
+  // 负控（C-10）：DATA 模式下裸 `<`（不是标签起始）此前被 parseTag 先消费掉，
+  // 随后 parseText 从 `<` 之后开始 ⇒ 文本里少一个 `<`；`<<div>` 还会因 advanceBy(0) 死循环。
+  describe('DATA 模式裸 `<`', () => {
+    const textOf = (template: string): string => {
+      const ast = parse(template);
+      const el = ast.children[0] as ElementNode;
+      return (el.children as TextNode[]).map((c) => c.content).join('');
+    };
+
+    it('`a < 2` 的 `<` 应保留为文本', () => {
+      expect(textOf('<div>a < 2</div>')).toBe('a < 2');
+    });
+
+    it('`<` 后紧跟非标签字符时整体保留', () => {
+      expect(textOf('<div>1<2 && 3>2</div>')).toBe('1<2 && 3>2');
+    });
+
+    it('`<<div>` 不应死循环，第一个 `<` 作为文本', () => {
+      expect(textOf('<div><<span>x</span></div>').startsWith('<')).toBe(true);
+    });
+  });
 });

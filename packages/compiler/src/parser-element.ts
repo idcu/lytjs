@@ -93,12 +93,15 @@ export function parseElement(context: ParserContext): ElementNode | undefined {
 
 function parseTag(context: ParserContext, type: number): ElementNode | undefined {
   const start = getCursor(context);
-  advanceBy(context, 1);
 
-  const tagMatch = context.source.match(RE_TAG_NAME);
+  // ⚠️ C-10 修：先把 `<` 之后的部分与 RE_TAG_NAME 匹配，匹配成功才消费 `<`。
+  //   此前无条件 advanceBy(1) 后再匹配，失败时游标已越过 `<` ⇒ 裸 `<`（`a < 2`）
+  //   被吞掉；`<<div>` 还会让 parseText 在 `<` 上 advanceBy(0) 死循环。
+  const tagMatch = context.source.slice(1).match(RE_TAG_NAME);
   if (!tagMatch) {
     return undefined;
   }
+  advanceBy(context, 1);
 
   const tag = tagMatch[1]!;
   advanceBy(context, tag.length);
