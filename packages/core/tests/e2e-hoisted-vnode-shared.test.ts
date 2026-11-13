@@ -66,4 +66,47 @@ describe('静态提升 vnode 跨实例共享（P0-6）', () => {
     expect(host.querySelectorAll('div.own').length).toBe(1);
     expect(host.querySelector('div.own')).toBe(bEl);
   });
+
+  it('嵌套静态子节点也不得跨实例共享 el', async () => {
+    // 整棵静态子树被提升成一个对象，子元素 vnode 是它的嵌套字段。
+    // 仅克隆根节点不够：子元素的 el 仍会指向另一个实例的 DOM。
+    const hoisted = createVNode('div', { class: 'own' }, [
+      createVNode('span', { class: 'child' }, 'nested'),
+    ]);
+    const Child = { name: 'Child', render: () => hoisted };
+
+    const showA = ref(true);
+    const child = (key: string) => {
+      const vnode = createVNode(Child);
+      vnode.key = key;
+      return vnode;
+    };
+    const App = {
+      setup() {
+        return { showA };
+      },
+      render() {
+        return showA.value ? [child('a'), child('b')] : [child('b')];
+      },
+    };
+
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    hosts.push(host);
+    await createApp(App as never).mount(host);
+    await flush();
+
+    const all = Array.from(host.querySelectorAll('div.own'));
+    expect(all.length).toBe(2);
+    const bSpan = all[1]!.querySelector('span.child');
+    expect(bSpan).not.toBeNull();
+
+    showA.value = false;
+    await flush();
+
+    expect(all[1]!.isConnected).toBe(true);
+    expect(bSpan!.isConnected).toBe(true);
+    expect(bSpan!.textContent).toBe('nested');
+    expect(host.querySelectorAll('div.own').length).toBe(1);
+  });
 });

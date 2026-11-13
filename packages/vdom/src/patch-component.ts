@@ -12,7 +12,7 @@ import { effect } from '@lytjs/reactivity';
 import { queuePreFlushCb } from '@lytjs/common-scheduler';
 import type { SuspenseBoundary } from './types';
 import type { RendererContext } from './patch-element';
-import { createVNode, createTextVNode, cloneVNode } from './vnode';
+import { createVNode, createTextVNode, cloneVNode, cloneIfMounted } from './vnode';
 
 // ============================================================
 // 组件递归深度限制
@@ -210,15 +210,6 @@ export function createComponentPatch<HN, HE extends HN>(
     // P0-6：静态提升（hoisted）vnode 是**模块级共享对象**，`render()` 每次返回同一个。
     // 它一旦被挂载过，`el` 就指向某个实例的 DOM；其他实例/后续渲染直接复用会让
     // 各自的 `component.subTree` 都指向同一个 el ⇒ 卸载任一实例会按别人的 el 删 DOM。
-    // 与 Vue 的 cloneIfMounted 一致：已挂载过的对象必须先克隆并清空 el/anchor。
-    const cloneIfMounted = (vnode: VNode): VNode => {
-      if (vnode.el == null) return vnode;
-      const cloned = cloneVNode(vnode);
-      cloned.el = null;
-      cloned.anchor = null;
-      return cloned;
-    };
-
     const update = () => {
       // ⚠️ 声明为 `VNode | null`：`render()` 可以合法地返回 null/undefined（空渲染），
       //    下方有专门分支处理（此前这里声明为 `VNode`，把 null 当成不可能 ⇒ 见该分支注释）。

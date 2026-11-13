@@ -10,6 +10,7 @@ import { isArray, isString, EMPTY_OBJ } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
 import type { SuspenseBoundary } from './types';
 import type { RendererContext } from './patch-element';
+import { cloneIfMounted } from './vnode';
 
 // ============================================================
 // Teleport patch 工厂
@@ -115,8 +116,11 @@ export function createTeleportPatch<HN, HE extends HN>(
       // 在目标锚点之间挂载 children
       const children = isArray(vnode.children) ? vnode.children : [];
       for (let i = 0; i < children.length; i++) {
-        const child = children[i];
-        if (child != null) {
+        const rawChild = children[i];
+        if (rawChild != null) {
+          // 同 mountChildren：提升子节点跨实例复用时先克隆，写回数组供卸载使用。
+          const child = cloneIfMounted(rawChild);
+          if (child !== rawChild) children[i] = child;
           patch(null, child, target, targetEnd, parentComponent, parentSuspense, isSVG);
         }
       }

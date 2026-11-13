@@ -11,6 +11,7 @@ import { PatchFlags, isSameVNodeType } from '@lytjs/common-vnode';
 import { isArray } from '@lytjs/common-is';
 import type { SuspenseBoundary } from './types';
 import type { RendererContext } from './patch-element';
+import { cloneIfMounted } from './vnode';
 
 // ============================================================
 // Fragment patch 工厂
@@ -101,8 +102,11 @@ export function createFragmentPatch<HN, HE extends HN>(
     // 在锚点之间挂载 children
     const children = isArray(vnode.children) ? vnode.children : [];
     for (let i = 0; i < children.length; i++) {
-      const child = children[i];
-      if (child != null) {
+      const rawChild = children[i];
+      if (rawChild != null) {
+        // 同 mountChildren：提升子节点跨实例复用时先克隆，写回数组供卸载使用。
+        const child = cloneIfMounted(rawChild);
+        if (child !== rawChild) children[i] = child;
         patch(null, child, container, fragmentEndAnchor, parentComponent, parentSuspense, isSVG);
       }
     }
@@ -194,7 +198,10 @@ export function createFragmentPatch<HN, HE extends HN>(
     } else if (isArray(c2)) {
       // 旧为 null/空，在结束锚点前挂载所有新节点
       for (let i = 0; i < c2.length; i++) {
-        patch(null, c2[i]!, container, endAnchor as HN, parentComponent, parentSuspense, isSVG);
+        const rawChild = c2[i]!;
+        const child = cloneIfMounted(rawChild);
+        if (child !== rawChild) c2[i] = child;
+        patch(null, child, container, endAnchor as HN, parentComponent, parentSuspense, isSVG);
       }
     } else if (isArray(c1)) {
       // 新为 null/空，卸载所有旧节点

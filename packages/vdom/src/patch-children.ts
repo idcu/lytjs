@@ -13,7 +13,7 @@ import { warn } from '@lytjs/common-error';
 import type { SuspenseBoundary } from './types';
 import type { RendererContext } from './patch-element';
 import { patchKeyedChildren as listDiffPatchKeyedChildren } from './list-diff';
-import { createTextVNode } from './vnode';
+import { createTextVNode, cloneIfMounted } from './vnode';
 
 // ============================================================
 // normalizeVNode —— 数组子节点里的「非 VNode 值」规范化
@@ -264,8 +264,12 @@ export function createChildrenPatch<HN, HE extends HN>(
     normalizeVNodeChildren(children as unknown[]);
 
     for (let i = 0; i < children.length; i++) {
-      const child = children[i];
-      if (child != null) {
+      const rawChild = children[i];
+      if (rawChild != null) {
+        // 提升的静态子树跨实例复用时，子 vnode 的 el 仍指向上一个实例的 DOM。
+        // 逐层克隆并写回数组，保证每个实例持有自己的 el；首次挂载不克隆。
+        const child = cloneIfMounted(rawChild);
+        if (child !== rawChild) children[i] = child;
         patch(null, child, container, anchor, parentComponent, parentSuspense, isSVG);
       }
     }

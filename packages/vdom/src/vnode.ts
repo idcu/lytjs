@@ -372,6 +372,29 @@ export function cloneVNode(vnode: VNode, extraProps: Record<string, unknown> | n
 }
 
 // ============================================================
+// cloneIfMounted
+// ============================================================
+
+/**
+ * 已挂载过的 vnode 在**再次挂载**前必须克隆并清空 `el` / `anchor`。
+ *
+ * 典型来源是编译器提升的静态子树：它是模块级常量，多个组件实例共用同一批
+ * vnode 对象。若直接复用，后挂载的实例会覆盖共享对象的 `el`，先挂载的实例
+ * 卸载时就会按别人的 `el` 删 DOM。克隆只发生在「该对象已经挂载过」时，
+ * 首次挂载仍是零拷贝，不增加首屏分配。
+ *
+ * 注意：这里是**浅克隆**，嵌套子 vnode 需要由挂载子节点的调用方（如
+ * `mountChildren` / `mountFragment`）逐层再做一次判断，否则子节点仍共享。
+ */
+export function cloneIfMounted(vnode: VNode): VNode {
+  if (vnode.el == null && vnode.anchor == null) return vnode;
+  const cloned = cloneVNode(vnode);
+  cloned.el = null;
+  cloned.anchor = null;
+  return cloned;
+}
+
+// ============================================================
 // mergeProps
 // ============================================================
 
