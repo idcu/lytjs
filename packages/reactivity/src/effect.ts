@@ -16,6 +16,24 @@ const targetMap = new WeakMap<object, Map<string | symbol, Dep>>();
 let shouldTrack = true;
 const trackStack: boolean[] = [];
 
+// ==================== 异步 batch 状态 ====================
+
+/**
+ * `batchAsync` 的恢复所有权。
+ *
+ * 异步 batch 不能各自按自己的 `stackLength` 截断 `trackStack`：并发/交错时，
+ * 先结束的那个会把尚未结束的 batch 的暂停状态一起收走（提前恢复追踪）。
+ * 因此只有**最外层** batch 记录并负责恢复快照，其余 batch 结束时只递减计数。
+ */
+let asyncBatchTokenSeq = 0;
+let pendingAsyncBatches = 0;
+let suspendedAsyncBatches = 0;
+let asyncBatchRestorePoint: {
+  ownerToken: number;
+  stackLength: number;
+  shouldTrack: boolean;
+} | null = null;
+
 // ==================== 首次渲染优化 ====================
 
 /** 标记当前是否处于首次渲染优化期间 */
@@ -659,6 +677,9 @@ export function _resetTrackingState(): void {
   pendingBatchEffects.length = 0;
   isFirstRenderPass = false;
   skippedTrackingCount = 0;
+  pendingAsyncBatches = 0;
+  suspendedAsyncBatches = 0;
+  asyncBatchRestorePoint = null;
 }
 
 /**
@@ -706,21 +727,68 @@ export function batch(fn: () => void): void {
  * Pauses tracking during fn execution (including after await), and
  * **defers notifications** until the returned promise settles.
  * Returns a Promise.
+ *
+ * ## ⚠️ 不支持并发 async batch
+ *
+ * 暂停追踪与通知合并用的是**全局**状态（与 `batch()` / `signalBatch()` 共用）。
+ * 当一个 `batchAsync` 已跨 `await` 挂起时再启动另一个，两个批的边界无法区分，
+ * 通知会被**静默合并**到最后一个结束的批。这种用法不受支持：
+ * 检测到会通过 `warn()` 给出可诊断提示。请**串行 `await`**，
+ * 或改用同步的 `batch()` 包裹各自的同步段。
+ *
+ * ## token 化恢复
+ *
+ * 每个异步 batch 持有独立 token，但只有最外层 batch 记录恢复快照（`stackLength` /
+ * `shouldTrack`）并负责还原。这样即使内层/后发的 batch 先结束，也不会把外层
+ * 仍在生效的“暂停追踪”提前收走。
+ *
+ * @param fn - 需要批量执行的函数（可为同步或异步）
+ * @returns 在 fn 完成（或 reject）时 resolve/reject 的 Promise
  */
 export function batchAsync(fn: () => void | Promise<void>): Promise<void> {
-  const stackLength = trackStack.length;
+  // 已有 batch 跨 await 挂起时再启动新的 batch ⇒ 并发使用，行为不可预期。
+  if (suspendedAsyncBatches > 0) {
+    warn(
+      'batchAsync() 不支持并发调用：检测到上一个异步 batch 尚未结束。' +
+        '并发异步 batch 会共享同一份暂停追踪/通知合并状态，结果会被静默合并。' +
+        '请改为串行 await，或在各段内部使用同步的 batch()。',
+    );
+  }
+
+  const token = ++asyncBatchTokenSeq;
+  if (pendingAsyncBatches === 0) {
+    // 快照归属于最外层 batch：只有它能恢复，避免内层先结束时提前恢复追踪
+    asyncBatchRestorePoint = { ownerToken: token, stackLength: trackStack.length, shouldTrack };
+  }
+  pendingAsyncBatches++;
+
   pauseTracking();
   beginTriggerBatch();
+
+  let finished = false;
+  let suspended = false;
   const finish = () => {
-    while (trackStack.length > stackLength) {
-      trackStack.pop();
+    // token 化：每个 batch 的 finish 只允许生效一次（同步路径与 then/catch 可能先后触发）
+    if (finished) return;
+    finished = true;
+    if (suspended) suspendedAsyncBatches--;
+    pendingAsyncBatches--;
+    // 只有最外层 owner 负责恢复快照；内层结束不碰全局状态
+    if (pendingAsyncBatches === 0 && asyncBatchRestorePoint) {
+      const { stackLength, shouldTrack: prev } = asyncBatchRestorePoint;
+      asyncBatchRestorePoint = null;
+      while (trackStack.length > stackLength) {
+        trackStack.pop();
+      }
+      shouldTrack = prev;
     }
-    shouldTrack = trackStack.length > 0 ? trackStack[trackStack.length - 1]! : true;
     endTriggerBatch();
   };
   try {
     const result = fn();
     if (result && typeof result === 'object' && 'then' in result) {
+      suspended = true;
+      suspendedAsyncBatches++;
       return (result as Promise<void>).finally(finish);
     }
     // 同步路径：立即恢复 tracking 状态并 flush

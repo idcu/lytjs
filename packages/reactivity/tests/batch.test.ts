@@ -379,3 +379,32 @@ describe('P1-1：batchAsync 同样合并通知', () => {
     expect(fn).toHaveBeenLastCalledWith(2);
   });
 });
+
+describe('P1-13：并发 async batch 必须可诊断，不能静默合并', () => {
+  it('★ 两个 batchAsync 交叠时给出明确警告', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+
+    // slow 先进入 await（处于 suspended 状态），fast 此时才启动 —— 典型的并发用法
+    const slow = batchAsync(async () => {
+      await gate;
+    });
+    await Promise.resolve();
+
+    const fast = batchAsync(async () => {});
+    await fast;
+
+    const warned = warnSpy.mock.calls.some(
+      (args) => String(args[0]).includes('batchAsync') && String(args[0]).includes('并发'),
+    );
+    expect(warned).toBe(true);
+
+    release();
+    await slow;
+    warnSpy.mockRestore();
+  });
+});
