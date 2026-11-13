@@ -37,7 +37,6 @@ async function mountSelect(props: Record<string, unknown> = {}): Promise<HTMLEle
       return () => h(Select as never, { options: OPTIONS, ...props });
     },
   } as never).mount(host);
-  await new Promise((r) => setTimeout(r, 30));
   return host;
 }
 
