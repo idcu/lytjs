@@ -266,6 +266,61 @@ describe('Teleport - disabled 切换', () => {
     expect(container.childNodes.length).toBe(1);
     expect(container.childNodes[0]!.nodeType).toBe(Node.COMMENT_NODE);
   });
+
+  it('★ 多根子组件 + disabled 往返两轮：整组搬移、实例不重建', () => {
+    const counters = { mounted: 0, unmounted: 0 };
+    const renderer = createCountingRenderer(counters);
+    const Child = {
+      name: 'MultiRootChild',
+      render: () => [
+        createVNode('i', null, '1'),
+        createVNode('i', null, '2'),
+        createVNode('i', null, '3'),
+      ],
+    };
+
+    const makeTeleport = (disabled: boolean) => {
+      const teleport = createVNode('teleport', { to: `#${target.id}`, disabled }, [
+        createVNode(Child),
+      ]);
+      (teleport as any).shapeFlag = ShapeFlags.TELEPORT | ShapeFlags.ARRAY_CHILDREN;
+      return teleport;
+    };
+    const texts = (el: Element) =>
+      Array.from(el.querySelectorAll('i')).map((node) => node.textContent);
+
+    // 起点：启用，内容在 target
+    const v1 = makeTeleport(false);
+    renderer.mount(v1, container);
+    expect(texts(target)).toEqual(['1', '2', '3']);
+
+    // 往返 1：启用 → 禁用（整组搬回 container）→ 启用（搬回 target）
+    const v2 = makeTeleport(true);
+    renderer.patch(v1, v2, container);
+    expect(texts(container)).toEqual(['1', '2', '3']);
+    expect(target.querySelectorAll('i').length).toBe(0);
+
+    const v3 = makeTeleport(false);
+    renderer.patch(v2, v3, container);
+    expect(texts(target)).toEqual(['1', '2', '3']);
+    expect(container.querySelectorAll('i').length).toBe(0);
+
+    // 往返 2：再来一遍
+    const v4 = makeTeleport(true);
+    renderer.patch(v3, v4, container);
+    expect(texts(container)).toEqual(['1', '2', '3']);
+
+    const v5 = makeTeleport(false);
+    renderer.patch(v4, v5, container);
+
+    // 负控：旧 move() 对组件只 insert(vnode.el)（子树起始注释），三个 <i>
+    // 会留在原容器；这里要求目标内三根齐全、顺序不变、原容器只剩占位注释。
+    expect(texts(target)).toEqual(['1', '2', '3']);
+    expect(target.querySelectorAll('i').length).toBe(3);
+    expect(container.querySelectorAll('i').length).toBe(0);
+    expect(container.childNodes.length).toBe(1);
+    expect(counters).toEqual({ mounted: 1, unmounted: 0 });
+  });
 });
 
 describe('Teleport - move', () => {

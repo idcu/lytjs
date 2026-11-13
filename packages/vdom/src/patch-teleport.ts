@@ -204,7 +204,11 @@ export function createTeleportPatch<HN, HE extends HN>(
     else if (oldDisabled !== newDisabled) {
       if (newDisabled) {
         // 之前启用，现在禁用：将 children 从目标移回容器
-        const children = isArray(n2.children) ? n2.children : [];
+        //
+        // ⚠️ 与「换 to」分支同理，必须搬 **n1.children**（当前真正在目标里的已挂载
+        //   节点）；`n2.children` 是本次新建、el 为 null 的 vnode，move 是空转，
+        //   随后旧目标锚点被删 ⇒ 内容永久留在目标里，容器反而为空。
+        const children = isArray(n1.children) ? n1.children : [];
         for (let i = 0; i < children.length; i++) {
           const child = children[i];
           if (child != null) {
