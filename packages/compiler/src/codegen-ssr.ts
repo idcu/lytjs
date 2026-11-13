@@ -64,6 +64,9 @@ export const escapeHtml = escapeHTML;
  * SSR 产物同样是 `function render(_ctx) {...}`，绑定必须写成 `_ctx.xxx` 才能取到值。
  */
 let ssrLocals: ReadonlySet<string> = new Set<string>();
+// 编译期上下文：当前正在生成的 <select> 的 v-model 表达式。
+// 代码生成是同步的，用模块级变量把值传给嵌套的 <option>，避免给所有 children 函数加参数。
+let ssrSelectModel: string | undefined;
 
 const ElementTypes_SLOT = ElementTypes.SLOT;
 
@@ -313,6 +316,9 @@ function genSSRComponent(element: ElementNode): string {
         const key = argNode && !argNode.isStatic ? `[${px(arg)}]` : JSON.stringify(arg);
         propsParts.push(`${key}:${px(exp)}`);
       }
+    } else if (prop.type === NodeTypes.DIRECTIVE && prop.name === 'model' && prop.exp) {
+      // 组件 v-model ⇒ modelValue prop（SSR 首屏需要带上，否则子组件拿到 undefined）
+      propsParts.push(`"modelValue":${px((prop.exp as SimpleExpressionNode).content)}`);
     }
   }
   const propsCode = propsParts.length ? `{${propsParts.join(',')}}` : 'null';
@@ -419,6 +425,27 @@ function genSSRElement(element: ElementNode): string {
         (p.arg as SimpleExpressionNode | undefined)?.content === 'style'),
   );
 
+  // v-model 的初态由控件类型决定（value / checked / selected / textarea 文本）
+  const staticAttr = (name: string): string | undefined => {
+    const found = element.props.find((p) => p.type === NodeTypes.ATTRIBUTE && p.name === name) as
+      | { value?: { content: string } }
+      | undefined;
+    return found?.value?.content;
+  };
+  const boundValueExp = (() => {
+    const found = element.props.find(
+      (p) =>
+        p.type === NodeTypes.DIRECTIVE &&
+        p.name === 'bind' &&
+        (p.arg as SimpleExpressionNode | undefined)?.content === 'value',
+    ) as DirectiveNode | undefined;
+    return found?.exp ? px((found.exp as SimpleExpressionNode).content) : undefined;
+  })();
+  const inputType = staticAttr('type');
+  const staticValue = staticAttr('value');
+  const valueExpr = staticValue !== undefined ? JSON.stringify(staticValue) : boundValueExp;
+  let selectModel: string | undefined;
+
   for (const prop of element.props) {
     if (prop.type === NodeTypes.ATTRIBUTE) {
       const name = prop.name;
@@ -492,11 +519,28 @@ function genSSRElement(element: ElementNode): string {
         }
       }
 
-      // v-model：SSR 下应输出受控元素的当前值（此前完全没处理 ⇒ 表单初始值丢失）
+      // v-model：SSR 下应输出受控元素的初始状态。
+      // 之前一律输出 value，导致 checkbox/radio 没有 checked、select 没有 selected、
+      // textarea 用了非法 value 属性 —— 服务端首屏与客户端状态不一致。
       if (prop.name === 'model') {
         const expContent = prop.exp ? (prop.exp as SimpleExpressionNode).content : undefined;
         if (expContent && (tag === 'input' || tag === 'textarea' || tag === 'select')) {
-          propParts.push(`' value="' + escapeHtml(String(${px(expContent)})) + '"'`);
+          const model = px(expContent);
+          if (tag === 'input' && inputType === 'checkbox') {
+            const checked = valueExpr
+              ? `(Array.isArray(${model}) ? ${model}.includes(${valueExpr}) : !!${model})`
+              : `!!${model}`;
+            propParts.push(`(${checked} ? ' checked="checked"' : '')`);
+          } else if (tag === 'input' && inputType === 'radio') {
+            const checked = valueExpr ? `String(${model}) === String(${valueExpr})` : `!!${model}`;
+            propParts.push(`(${checked} ? ' checked="checked"' : '')`);
+          } else if (tag === 'textarea') {
+            directiveChildren = `escapeHtml(String(${model}))`;
+          } else if (tag === 'select') {
+            selectModel = model;
+          } else {
+            propParts.push(`' value="' + escapeHtml(String(${model})) + '"'`);
+          }
         }
       }
 
@@ -514,6 +558,13 @@ function genSSRElement(element: ElementNode): string {
     parts.push(' + ' + propParts.join(' + '));
   }
 
+  // <option> 的初态由外层 <select v-model> 决定
+  if (tag === 'option' && ssrSelectModel && valueExpr !== undefined) {
+    parts.push(
+      ` + (String(${ssrSelectModel}) === String(${valueExpr}) ? ' selected="selected"' : '')`,
+    );
+  }
+
   // 自闭合检查
   if (VOID_ELEMENTS.has(tag)) {
     parts.push(" + '>'");
@@ -526,7 +577,10 @@ function genSSRElement(element: ElementNode): string {
   if (directiveChildren) {
     parts.push(' + ' + directiveChildren);
   } else if (element.children.length > 0) {
+    const prevSelectModel = ssrSelectModel;
+    if (selectModel) ssrSelectModel = selectModel;
     const childrenStr = genSSRChildren(element.children);
+    ssrSelectModel = prevSelectModel;
     parts.push(' + ' + childrenStr);
   }
 

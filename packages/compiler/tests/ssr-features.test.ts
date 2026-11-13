@@ -69,6 +69,56 @@ describe('SSR 编译 - 组件插槽', () => {
   });
 });
 
+describe('SSR 编译 - v-model 初态', () => {
+  it('文本输入输出 value', () => {
+    expect(ssr('<input v-model="msg">')({ msg: 'M' })).toBe('<input value="M">');
+  });
+
+  it('checkbox 输出 checked（布尔与数组两种形态）', () => {
+    expect(ssr('<input type="checkbox" v-model="ok">')({ ok: true })).toBe(
+      '<input type="checkbox" checked="checked">',
+    );
+    const render = ssr('<input type="checkbox" value="a" v-model="picked">');
+    expect(render({ picked: ['a', 'b'] })).toBe(
+      '<input type="checkbox" value="a" checked="checked">',
+    );
+    expect(render({ picked: [] })).toBe('<input type="checkbox" value="a">');
+  });
+
+  it('radio 仅当值与 v-model 相等时输出 checked', () => {
+    const render = ssr('<input type="radio" value="a" v-model="pick">');
+    expect(render({ pick: 'a' })).toBe('<input type="radio" value="a" checked="checked">');
+    expect(render({ pick: 'b' })).toBe('<input type="radio" value="a">');
+  });
+
+  it('select 把 selected 落到匹配的 option 上，而不是给 select 加 value', () => {
+    const render = ssr(
+      '<select v-model="pick"><option value="a">A</option><option value="b">B</option></select>',
+    );
+    expect(render({ pick: 'b' })).toBe(
+      '<select><option value="a">A</option><option value="b" selected="selected">B</option></select>',
+    );
+  });
+
+  it('textarea 用子节点承载初值，不输出非法 value 属性', () => {
+    expect(ssr('<textarea v-model="msg"></textarea>')({ msg: 'hi' })).toBe(
+      '<textarea>hi</textarea>',
+    );
+  });
+
+  it('组件 v-model 输出 modelValue prop', () => {
+    const seen: Record<string, unknown>[] = [];
+    const render = executeSsr(compile('<Comp v-model="msg" />', { ssrMode: true }), {
+      renderComponentVNode: (_comp: unknown, props: Record<string, unknown>) => {
+        seen.push(props);
+        return '';
+      },
+    });
+    render({ msg: 'M' });
+    expect(seen[0]).toMatchObject({ modelValue: 'M' });
+  });
+});
+
 describe('SSR 编译 - 绑定与 nullish 安全', () => {
   it('插值应前缀化并对 nullish 输出空串', () => {
     const render = ssr('<div>{{ msg }}</div>');
