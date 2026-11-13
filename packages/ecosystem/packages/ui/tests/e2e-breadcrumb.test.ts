@@ -46,7 +46,6 @@ async function renderBreadcrumb(
         });
     },
   } as never).mount(host);
-  await new Promise((r) => setTimeout(r, 30));
 }
 
 describe('行为：Breadcrumb 渲染真实内容', () => {
