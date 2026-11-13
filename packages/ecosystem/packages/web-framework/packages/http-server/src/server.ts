@@ -299,17 +299,32 @@ export class Server {
    * @returns Promise
    */
   listen(port: number, hostname?: string): Promise<void> {
-    return new Promise((resolve) => {
-      this.server = createNodeServer((req, res) => {
+    return new Promise((resolve, reject) => {
+      const server = createNodeServer((req, res) => {
         // 兜底：handleRequest 内部已 try/catch，这里再保一层，避免任何情况下
         // 出现 unhandled rejection 而让客户端挂到超时。
         void this.handleRequest(req, res).catch((err) => {
           this.sendError(res, err);
         });
       });
-      this.server.listen(port, hostname, () => {
+      this.server = server;
+
+      // ⚠️ 2026-11-13 修（P1）：此前**只监听 listening，不监听 error**。
+      //   `EADDRINUSE` / `EACCES` 时该 Promise 永不落定，且 `error` 事件无人接管
+      //   ⇒ 变成进程级 uncaughtException（调用方的 `catch` 永远等不到）。
+      //   现在失败即 reject，并释放句柄（否则失败后端口/事件循环仍被占着）。
+      const onError = (err: Error): void => {
+        server.off('listening', onListening);
+        if (this.server === server) this.server = undefined;
+        server.close(() => reject(err));
+      };
+      const onListening = (): void => {
+        server.off('error', onError);
         resolve();
-      });
+      };
+      server.once('error', onError);
+      server.once('listening', onListening);
+      server.listen(port, hostname);
     });
   }
 

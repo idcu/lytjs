@@ -12,6 +12,8 @@
  *    `middleware-auth` 是 `(request, ctx, next)`，宿主按 `(ctx, next)` 调用 ⇒ 全部 500。
  */
 import { describe, it, expect, afterEach } from 'vitest';
+import { createServer as createNodeServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { createServer, type Server } from '../src';
 
 let server: Server | undefined;
@@ -94,6 +96,24 @@ describe('@lytjs/http-server 的 P0/P1 回归', () => {
 
     expect(res.status).toBe(200);
     expect(res.headers.get('x-seen-origin')).toBe('https://example.com');
+  });
+
+  it('★ 端口被占用时 listen 必须 reject（此前 Promise 永不落定）', async () => {
+    const blocker = createNodeServer();
+    await new Promise<void>((resolve) => blocker.listen(0, '127.0.0.1', resolve));
+    const port = (blocker.address() as AddressInfo).port;
+
+    const occupied = createServer();
+    const outcome = await Promise.race([
+      occupied.listen(port, '127.0.0.1').then(
+        () => 'resolved',
+        (err) => `rejected:${(err as NodeJS.ErrnoException).code}`,
+      ),
+      new Promise<string>((resolve) => setTimeout(() => resolve('timeout'), 1000)),
+    ]);
+
+    await new Promise<void>((resolve) => blocker.close(() => resolve()));
+    expect(outcome).toBe('rejected:EADDRINUSE');
   });
 
   it('规范两参中间件不受影响', async () => {
