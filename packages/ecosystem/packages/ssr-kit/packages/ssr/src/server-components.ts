@@ -43,7 +43,7 @@ export interface ServerComponentRegistration {
 }
 
 /** 服务端组件状态管理器 */
-class ServerComponentStateManager {
+export class ServerComponentStateManager {
   /** 注册的组件 */
   private registrations: Map<string, ServerComponentRegistration> = new Map();
   /** 正在执行的预取请求 */
@@ -145,7 +145,23 @@ class ServerComponentStateManager {
   }
 }
 
-/** 全局状态管理器实例 */
+/**
+ * 创建**请求作用域**的状态管理器。
+ *
+ * SSR 每处理一个请求就应创建一个实例：注册表、初始化状态与预取缓存都随实例隔离，
+ * 避免 A 请求注册/初始化的组件状态泄漏给 B 请求。
+ */
+export function createStateManager(): ServerComponentStateManager {
+  return new ServerComponentStateManager();
+}
+
+/**
+ * 模块级默认状态管理器 —— 仅供**客户端单例 / 单元测试**使用。
+ *
+ * SSR 必须使用 `createStateManager()` 的实例（每请求一个）。
+ *
+ * @deprecated v8 将移除模块级单例，请显式创建实例。
+ */
 export const stateManager = new ServerComponentStateManager();
 
 /**
@@ -170,15 +186,17 @@ export function unregisterServerComponent(name: string): void {
  */
 export function collectPrefetchComponents(
   vnode: VNode | VNode[] | string | number | null | undefined,
+  manager: ServerComponentStateManager = stateManager,
 ): string[] {
   const components: string[] = [];
-  collectComponentsRecursive(vnode, components);
+  collectComponentsRecursive(vnode, components, manager);
   return components;
 }
 
 function collectComponentsRecursive(
   vnode: VNode | VNode[] | string | number | null | undefined,
   result: string[],
+  manager: ServerComponentStateManager,
 ): void {
   if (!isObject(vnode)) {
     return;
@@ -188,7 +206,7 @@ function collectComponentsRecursive(
 
   if (isArray(vnode)) {
     for (const child of vnode) {
-      collectComponentsRecursive(child as VNode, result);
+      collectComponentsRecursive(child as VNode, result, manager);
     }
     return;
   }
@@ -196,7 +214,7 @@ function collectComponentsRecursive(
   // 检查是否是带有预取的组件
   if (isFunction(node.type)) {
     const compName = (node.type as { name?: string }).name;
-    if (compName && stateManager.getRegistration(compName)) {
+    if (compName && manager.getRegistration(compName)) {
       if (!result.includes(compName)) {
         result.push(compName);
       }
@@ -207,10 +225,10 @@ function collectComponentsRecursive(
   const children = node.children;
   if (isArray(children)) {
     for (const child of children) {
-      collectComponentsRecursive(child as VNode, result);
+      collectComponentsRecursive(child as VNode, result, manager);
     }
   } else if (isObject(children)) {
-    collectComponentsRecursive(children as unknown as VNode, result);
+    collectComponentsRecursive(children as unknown as VNode, result, manager);
   }
 }
 
@@ -220,12 +238,13 @@ function collectComponentsRecursive(
 export async function prefetchAllComponents(
   components: string[],
   context: DataPrefetchContext,
+  manager: ServerComponentStateManager = stateManager,
 ): Promise<Record<string, PrefetchResult>> {
   const results: Record<string, PrefetchResult> = {};
   const promises: Array<Promise<void>> = [];
 
   for (const name of components) {
-    const promise = stateManager
+    const promise = manager
       .prefetchComponentData(name, context)
       .then((result) => {
         results[name] = result;

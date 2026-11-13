@@ -44,6 +44,8 @@ export {
   buildDehydratedState,
   ServerComponent,
   stateManager,
+  createStateManager,
+  ServerComponentStateManager,
 } from './server-components';
 export type {
   ServerLifecycleHook,

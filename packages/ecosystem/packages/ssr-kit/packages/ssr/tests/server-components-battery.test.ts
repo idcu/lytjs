@@ -11,6 +11,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   stateManager,
+  createStateManager,
   registerServerComponent,
   unregisterServerComponent,
   collectPrefetchComponents,
@@ -47,6 +48,47 @@ describe('注册与注销', () => {
 
   it('注销不存在的组件不抛错', () => {
     expect(() => unregisterServerComponent('nope')).not.toThrow();
+  });
+});
+
+describe('P1-13：请求作用域状态管理器', () => {
+  it('★ 两个实例的注册、初始化与预取状态互不可见', async () => {
+    const a = createStateManager();
+    const b = createStateManager();
+
+    a.register('X', reg('X', { prefetch: async () => ({ data: { from: 'a' } }) }));
+
+    expect(a.getRegistration('X')).toBeDefined();
+    // 旧实现只有模块级 stateManager ⇒ b 会直接看到 a 注册的组件（跨请求污染）
+    expect(b.getRegistration('X')).toBeUndefined();
+
+    await a.initializeComponent('X', { componentId: 'x' });
+    // b 未注册，必须走“未注册”分支，而不是复用 a 的初始化状态
+    await expect(b.initializeComponent('X', { componentId: 'x' })).rejects.toThrow(
+      /not registered/,
+    );
+
+    // 预取结果也不能跨实例复用
+    await expect(a.prefetchComponentData('X', {})).resolves.toEqual({ data: { from: 'a' } });
+    await expect(b.prefetchComponentData('X', {})).resolves.toEqual({ data: {} });
+
+    a.clearAll();
+    expect(a.getRegistration('X')).toBeUndefined();
+  });
+
+  it('collectPrefetchComponents / prefetchAllComponents 可绑定到请求实例', async () => {
+    const reqA = createStateManager();
+    reqA.register('Item', reg('Item', { prefetch: async () => ({ data: { n: 1 } }) }));
+
+    const Item = () => ({ type: 'div' });
+    Object.defineProperty(Item, 'name', { value: 'Item', configurable: true });
+    const vnode = { type: Item } as never;
+    expect(collectPrefetchComponents(vnode, reqA)).toEqual(['Item']);
+    await expect(prefetchAllComponents(['Item'], {}, reqA)).resolves.toEqual({
+      Item: { data: { n: 1 } },
+    });
+    // 全局单例没有注册 ⇒ 收集不到
+    expect(collectPrefetchComponents(vnode)).toEqual([]);
   });
 });
 
