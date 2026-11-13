@@ -871,9 +871,79 @@ function handleVModel(
     return value?.content;
   };
 
+  // `:type="expr"`（动态绑定形态）的表达式；没有则返回 undefined。
+  const findDynamicType = (): string | undefined => {
+    for (const p of node.props) {
+      if (p.type !== NodeTypes.DIRECTIVE || p.name !== 'bind') continue;
+      if (getExpContent(p.arg) !== 'type') continue;
+      return getExpContent(p.exp);
+    }
+    return undefined;
+  };
+
   // ② checkbox / radio：绑定的是 checked，不是 value
   if (tag === 'input') {
-    const inputType = findStaticAttr('type') ?? 'text';
+    const staticType = findStaticAttr('type');
+    // ⚠️ 2026-11-13 修（C-21）：此前只读**静态** `type`，`<input :type="kind" v-model="x">`
+    //   一律按 text 处理 ⇒ 当 kind 为 checkbox/radio 时绑的是 value、监听 onInput，
+    //   复选框永远不勾选、且不报错（静默语义错误）。
+    //   动态 type 改为**运行时分支**：展开一个条件对象，按实际 type 选派
+    //   checked/onChange 或 value/onInput。
+    if (staticType === undefined) {
+      const dynamicType = findDynamicType();
+      if (dynamicType !== undefined && dynamicType !== '') {
+        const checkedHandler = `$event => (${expContent} = $event.target.checked)`;
+        const obj = (entries: [string, string][]): JSObjectExpression =>
+          createObjectExpression(
+            entries.map(([key, value]) =>
+              createObjectProperty(
+                createSimpleExpression(JSON.stringify(key), true, prop.loc, true),
+                createSimpleExpression(value, false, prop.loc, false),
+              ),
+            ),
+            prop.loc,
+          );
+        const radioValue = findStaticAttr('value');
+        const radioBranch =
+          radioValue !== undefined
+            ? obj([
+                ['checked', `${expContent} === ${JSON.stringify(radioValue)}`],
+                ['onChange', `$event => (${expContent} = ${JSON.stringify(radioValue)})`],
+              ])
+            : obj([
+                ['checked', expContent],
+                ['onChange', checkedHandler],
+              ]);
+        const model = createConditionalExpression(
+          createSimpleExpression(`(${dynamicType}) === "checkbox"`, false, prop.loc, false),
+          obj([
+            ['checked', expContent],
+            ['onChange', checkedHandler],
+          ]),
+          createConditionalExpression(
+            createSimpleExpression(`(${dynamicType}) === "radio"`, false, prop.loc, false),
+            radioBranch,
+            obj([
+              ['value', expContent],
+              [eventName, `$event => (${expContent} = ${readValue()})`],
+            ]),
+            false,
+            prop.loc,
+          ),
+          false,
+          prop.loc,
+        );
+        properties.push({
+          type: NodeTypes.JS_PROPERTY,
+          key: createSimpleExpression('__vmodel_dynamic_type__', true, prop.loc, true),
+          value: model,
+          spread: true,
+          loc: prop.loc,
+        });
+        return;
+      }
+    }
+    const inputType = staticType ?? 'text';
     if (inputType === 'checkbox') {
       push('checked', expContent, false);
       push('onChange', `$event => (${expContent} = $event.target.checked)`, false);

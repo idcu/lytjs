@@ -90,6 +90,38 @@ describe('原生 v-model（P0 回归）', () => {
     expect(checked.props.checked).toBe(true);
   });
 
+  it('动态 :type 为 checkbox 时按 checked 绑定（C-21）', () => {
+    const mounted = mount('<input :type="kind" v-model="ok">', { kind: 'checkbox', ok: true });
+    expect(mounted.props).toHaveProperty('checked', true);
+    expect(mounted.props).not.toHaveProperty('value');
+    mounted.emit('onChange', { target: { checked: false } });
+    expect(mounted.ctx.ok).toBe(false);
+  });
+
+  it('动态 :type 为 text 时按 value 绑定（C-21）', () => {
+    const mounted = mount('<input :type="kind" v-model="msg">', { kind: 'text', msg: 'M' });
+    expect(mounted.props.value).toBe('M');
+    expect(mounted.props).not.toHaveProperty('checked');
+    mounted.emit('onInput', { target: { value: 'N' } });
+    expect(mounted.ctx.msg).toBe('N');
+  });
+
+  it('动态 :type 为 radio 且带 value 时按值比较（C-21）', () => {
+    const checked = mount('<input :type="kind" v-model="pick" value="a">', {
+      kind: 'radio',
+      pick: 'a',
+    });
+    expect(checked.props.checked).toBe(true);
+
+    const unchecked = mount('<input :type="kind" v-model="pick" value="a">', {
+      kind: 'radio',
+      pick: 'b',
+    });
+    expect(unchecked.props.checked).toBe(false);
+    unchecked.emit('onChange', { target: { checked: true } });
+    expect(unchecked.ctx.pick).toBe('a');
+  });
+
   it('textarea 绑定 value + onInput', () => {
     const mounted = mount('<textarea v-model="msg"></textarea>', { msg: 'M' });
     expect(mounted.props.value).toBe('M');
