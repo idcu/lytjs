@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, afterEach } from 'vitest';
-import { createApp, h } from '@lytjs/core';
+import { createApp, h, nextTick } from '@lytjs/core';
 import { signal } from '@lytjs/core/runtime';
 import { Transfer } from '../src/components/Transfer';
 
@@ -42,7 +42,6 @@ async function mountWithModel(initial: (string | number)[]): Promise<{
         });
     },
   } as never).mount(host);
-  await new Promise((r) => setTimeout(r, 30));
   return { host, model };
 }
 
@@ -66,7 +65,7 @@ describe('Transfer — v-model', () => {
     items(left)[0].dispatchEvent(new MouseEvent('click', { bubbles: true }));
     const moveRight = host.querySelector('.lyt-transfer-buttons button') as HTMLButtonElement;
     moveRight.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    await new Promise((r) => setTimeout(r, 20));
+    await nextTick();
 
     expect(model()).toEqual(['a']);
     expect(items(left).map((n) => n.textContent)).toEqual(['Banana']);
