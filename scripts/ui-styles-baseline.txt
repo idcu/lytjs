@@ -4,19 +4,4 @@
 # 门禁只对**新增**报错。Golden 20 不允许出现在本文件（必须零缺失）。
 # 格式：每行一条，`<组件> → <未命中的类名>`。
 #
-# 加一行前请先想清楚：这个类名是**该补样式**还是**该从组件里删掉**？
-# 两条都不做而只是加进基线，等于把「裸 DOM」正式固化为契约。
-#
-Upload → lyt-upload__content
-Upload → lyt-upload__file
-Upload → lyt-upload__file-name
-Upload → lyt-upload__icon
-Upload → lyt-upload__input
-Upload → lyt-upload__list
-Upload → lyt-upload__percentage
-Upload → lyt-upload__progress
-Upload → lyt-upload__progress-bar
-Upload → lyt-upload__remove
-Upload → lyt-upload__text
-Upload → lyt-upload__tip
-Upload → lyt-upload__trigger
+# 当前欠账已清零（78 → 0）。新增裸类名会被门禁直接拦下。
