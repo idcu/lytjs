@@ -115,6 +115,7 @@ import {
 } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import ts from 'typescript';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const BIN = resolve(ROOT, 'node_modules/.bin');
@@ -179,6 +180,29 @@ function withPatchedFile(file, patch, run) {
     writeFileSync(file, original);
     utimesSync(file, st.atime, st.mtime);
   }
+}
+
+/**
+ * 解析产物为 AST，只用来计算结构位置；改写仍走原文切片，避免整文件重排。
+ */
+function parseModule(file, text) {
+  return ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+}
+
+/** 按函数名定位函数体起始偏移（`{` 之后），不依赖函数内首条语句/局部变量名。 */
+function functionBodyStart(sourceFile, name) {
+  const positions = [];
+  const visit = (node) => {
+    if (ts.isFunctionDeclaration(node) && node.name?.text === name && node.body) {
+      positions.push(node.body.getStart(sourceFile) + 1);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  if (positions.length !== 1) {
+    throw new Error(`结构锚点不唯一：函数 ${name} 命中 ${positions.length} 处`);
+  }
+  return positions[0];
 }
 
 /** 临时新建一个文件，跑完删除 */
@@ -684,14 +708,9 @@ const CONTROLS = {
     withPatchedFile(
       file,
       (text) => {
-        const needle = 'function sanitizeHTML(str) {\n  let decoded = str;';
-        if (!text.includes(needle)) {
-          throw new Error('check-security-html：注入点漂移（找不到 sanitizeHTML）');
-        }
-        return text.replace(
-          needle,
-          'function sanitizeHTML(str) {\n  return str;\n  let decoded = str;',
-        );
+        // 结构锚点：函数体起点；局部变量改名或前面插入语句都不影响
+        const bodyStart = functionBodyStart(parseModule(file, text), 'sanitizeHTML');
+        return `${text.slice(0, bodyStart)}\n  return str;${text.slice(bodyStart)}`;
       },
       () => expectFail(['node', 'scripts/check-security-html.mjs'], 'check-security-html'),
     );
