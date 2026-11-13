@@ -34,7 +34,7 @@
  */
 
 import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
-import { createApp, h } from '@lytjs/core';
+import { createApp, h, nextTick } from '@lytjs/core';
 import { signal } from '@lytjs/core/runtime';
 import { Dialog } from '../src/components/Dialog';
 
@@ -60,7 +60,13 @@ afterEach(() => {
   document.body.style.overflow = '';
 });
 
-const tick = (n = 20): Promise<void> => new Promise((r) => setTimeout(r, n));
+/**
+ * 等待策略：
+ * - 渲染/受控开关类断言 ⇒ `nextTick` 冲刷调度器；
+ * - 焦点管理由 `overlay-focus` 在打开后一个宏任务建立 ⇒ 焦点 / Tab / Escape
+ *   类断言用 `vi.waitFor` 轮询**真实焦点位置**；
+ * - `onBeforeOpen` 的异步放行用 `vi.waitFor` 轮询对话框实际出现。
+ */
 
 /** 受控挂载：signal 驱动 modelValue */
 async function mountDialog(
@@ -109,7 +115,7 @@ describe('Dialog — 渲染与 a11y', () => {
   it('打开：role=dialog / aria-modal / title / 默认 width 50%', async () => {
     const { host, mv } = await mountDialog({ title: '设置' });
     mv.set(true);
-    await tick(30);
+    await nextTick();
     const dialog = q(host, '.lyt-dialog')!;
     expect(dialog.getAttribute('role')).toBe('dialog');
     expect(dialog.getAttribute('aria-modal')).toBe('true');
@@ -120,7 +126,7 @@ describe('Dialog — 渲染与 a11y', () => {
   it('width：数字转 px，字符串原样', async () => {
     const { host, mv } = await mountDialog({ title: 't', width: 400 });
     mv.set(true);
-    await tick(30);
+    await nextTick();
     expect(q(host, '.lyt-dialog')!.style.width).toBe('400px');
   });
 
@@ -129,7 +135,7 @@ describe('Dialog — 渲染与 a11y', () => {
       default: () => [h('p', {}, '正文')],
     } as never);
     mv.set(true);
-    await tick(30);
+    await nextTick();
     const dialog = q(host, '.lyt-dialog')!;
     expect(dialog.getAttribute('aria-labelledby')).toBe('dlg-title');
     expect(dialog.getAttribute('aria-describedby')).toBe('dlg-body');
@@ -145,7 +151,7 @@ describe('Dialog — 渲染与 a11y', () => {
       ariaDescribedBy: 'ext-desc',
     });
     mv.set(true);
-    await tick(30);
+    await nextTick();
     const dialog = q(host, '.lyt-dialog')!;
     expect(dialog.getAttribute('aria-label')).toBe('自定义标签');
     expect(dialog.getAttribute('aria-describedby')).toBe('ext-desc');
@@ -154,7 +160,7 @@ describe('Dialog — 渲染与 a11y', () => {
   it('class 透传到 .lyt-dialog；ariaModal=false 落到 aria-modal', async () => {
     const { host, mv } = await mountDialog({ title: 't', class: 'my-dlg', ariaModal: false });
     mv.set(true);
-    await tick(30);
+    await nextTick();
     const dialog = q(host, '.lyt-dialog')!;
     expect(dialog.className).toContain('my-dlg');
     expect(dialog.getAttribute('aria-modal')).toBe('false');
@@ -166,7 +172,7 @@ describe('Dialog — 渲染与 a11y', () => {
       default: () => [h('p', { class: 'my-body' }, '内容')],
     } as never);
     mv.set(true);
-    await tick(30);
+    await nextTick();
     expect(q(host, '.my-header')!.textContent).toBe('自定义头');
     expect(q(host, '.lyt-dialog__title')).toBeNull();
     expect(q(host, '.lyt-dialog__close')).toBeNull(); // 插槽头没有 ×
@@ -176,14 +182,14 @@ describe('Dialog — 渲染与 a11y', () => {
   it('showClose=false 不渲染 ×；默认渲染带 aria-label 的 ×', async () => {
     const { host, mv } = await mountDialog({ title: 't' });
     mv.set(true);
-    await tick(30);
+    await nextTick();
     expect(q(host, '.lyt-dialog__close')!.getAttribute('aria-label')).toBe('关闭对话框');
   });
 
   it('showClose=false：无 ×', async () => {
     const { host, mv } = await mountDialog({ title: 't', showClose: false });
     mv.set(true);
-    await tick(30);
+    await nextTick();
     expect(q(host, '.lyt-dialog__close')).toBeNull();
   });
 
@@ -192,19 +198,19 @@ describe('Dialog — 渲染与 a11y', () => {
       footer: () => [h('i', { class: 'my-footer' }, '脚')],
     } as never);
     mv.set(true);
-    await tick(30);
+    await nextTick();
     expect(q(host, '.my-footer')!.textContent).toBe('脚');
 
     const r2 = await mountDialog({ title: 't' });
     r2.mv.set(true);
-    await tick(30);
+    await nextTick();
     expect(q(r2.host, '.lyt-dialog__footer')).toBeNull();
   });
 
   it('appendToBody：未声明被过滤，dialog 仍挂宿主内（怪癖 D：传了静默无效）', async () => {
     const { host, mv } = await mountDialog({ title: 'tele', appendToBody: true });
     mv.set(true);
-    await tick(30);
+    await nextTick();
     // 真实行为：p.appendToBody 恒 undefined ⇒ withTeleport 原样返回 ⇒ 不 teleport
     expect(q(host, '.lyt-dialog')).toBeTruthy();
     expect(q(host, '.lyt-dialog__wrapper')!.parentElement).not.toBe(document.body);
@@ -217,7 +223,7 @@ describe('Dialog — 打开与关闭', () => {
     const { host, mv } = await mountDialog({ title: 't', onOpen });
     expect(document.body.style.overflow).toBe('');
     mv.set(true);
-    await tick(30);
+    await nextTick();
     expect(onOpen).toHaveBeenCalledTimes(1);
     expect(document.body.style.overflow).toBe('hidden');
     expect(q(host, '.lyt-dialog')).toBeTruthy();
@@ -226,7 +232,7 @@ describe('Dialog — 打开与关闭', () => {
   it('初始 modelValue=true：渲染但 onOpen 不调、overflow 不锁（怪癖 A：watch 无 immediate）', async () => {
     const onOpen = vi.fn();
     const { host } = await mountDialog({ title: 't', modelValue: true, onOpen });
-    await tick(30);
+    await nextTick();
     expect(q(host, '.lyt-dialog')).toBeTruthy(); // 渲染了
     expect(onOpen).not.toHaveBeenCalled(); // 但打开回调没走
     expect(document.body.style.overflow).toBe(''); // 也没锁滚动
@@ -236,9 +242,9 @@ describe('Dialog — 打开与关闭', () => {
     const onClose = vi.fn();
     const { host, mv } = await mountDialog({ title: 't', onClose });
     mv.set(true);
-    await tick(30);
+    await nextTick();
     q(host, '.lyt-dialog__close')!.click();
-    await tick(30);
+    await nextTick();
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(document.body.style.overflow).toBe('');
     expect(q(host, '.lyt-dialog')).toBeNull();
@@ -249,9 +255,9 @@ describe('Dialog — 打开与关闭', () => {
     const onBeforeClose = vi.fn(() => false);
     const { host, mv } = await mountDialog({ title: 't', onClose, onBeforeClose });
     mv.set(true);
-    await tick(30);
+    await nextTick();
     q(host, '.lyt-dialog__close')!.click();
-    await tick(30);
+    await nextTick();
     expect(onBeforeClose).toHaveBeenCalledTimes(1);
     expect(onClose).not.toHaveBeenCalled();
     expect(q(host, '.lyt-dialog')).toBeTruthy(); // 仍开着
@@ -261,27 +267,32 @@ describe('Dialog — 打开与关闭', () => {
     const onBeforeOpen = vi.fn(() => false);
     const { host, mv } = await mountDialog({ title: 't', onBeforeOpen });
     mv.set(true);
-    await tick(30);
+    // 轮询「异步守卫确实被执行」，而不是固定等 30ms
+    await vi.waitFor(() => {
+      expect(onBeforeOpen).toHaveBeenCalledTimes(1);
+    });
     expect(q(host, '.lyt-dialog')).toBeNull();
 
     const slow = vi.fn(async () => {
-      await tick(5);
+      // 用微任务模拟异步放行即可（组件只关心 Promise 的最终结果）
+      await Promise.resolve();
       return true;
     });
     const r2 = await mountDialog({ title: 't', onBeforeOpen: slow });
     r2.mv.set(true);
-    await tick(50);
+    await vi.waitFor(() => {
+      expect(q(r2.host, '.lyt-dialog')).toBeTruthy();
+    });
     expect(slow).toHaveBeenCalledTimes(1);
-    expect(q(r2.host, '.lyt-dialog')).toBeTruthy();
   });
 
   it('遮罩点击关闭（closeOnClickModal 默认）', async () => {
     const onClose = vi.fn();
     const { host, mv } = await mountDialog({ title: 't', onClose });
     mv.set(true);
-    await tick(30);
+    await nextTick();
     q(host, '.lyt-dialog__overlay')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    await tick(30);
+    await nextTick();
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(q(host, '.lyt-dialog')).toBeNull();
   });
@@ -290,9 +301,9 @@ describe('Dialog — 打开与关闭', () => {
     const onClose = vi.fn();
     const { host, mv } = await mountDialog({ title: 't', onClose, closeOnClickModal: false });
     mv.set(true);
-    await tick(30);
+    await nextTick();
     q(host, '.lyt-dialog__overlay')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    await tick(30);
+    await nextTick();
     expect(onClose).not.toHaveBeenCalled();
     expect(q(host, '.lyt-dialog')).toBeTruthy();
   });
@@ -302,12 +313,17 @@ describe('Dialog — 打开与关闭', () => {
     const onKeydown = vi.fn();
     const { host, mv } = await mountDialog({ title: 't', onClose, onKeydown });
     mv.set(true);
-    await tick(30);
+    // Escape 由焦点陷阱在 document 上统一处理 ⇒ 先等陷阱建立（焦点进入对话框）
+    await vi.waitFor(() => {
+      const dialog = q(host, '.lyt-dialog');
+      expect(dialog).not.toBeNull();
+      expect(dialog!.contains(document.activeElement)).toBe(true);
+    });
     pressKey(q(host, '.lyt-dialog')!, 'Enter');
     expect(onKeydown).toHaveBeenCalledTimes(1);
     expect(q(host, '.lyt-dialog')).toBeTruthy(); // Enter 不关
     pressKey(q(host, '.lyt-dialog')!, 'Escape');
-    await tick(30);
+    await nextTick();
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(q(host, '.lyt-dialog')).toBeNull();
   });
@@ -322,9 +338,13 @@ describe('Dialog — 打开与关闭', () => {
       closeOnPressEscape: false,
     });
     mv.set(true);
-    await tick(30);
+    await vi.waitFor(() => {
+      const dialog = q(host, '.lyt-dialog');
+      expect(dialog).not.toBeNull();
+      expect(dialog!.contains(document.activeElement)).toBe(true);
+    });
     pressKey(q(host, '.lyt-dialog')!, 'Escape');
-    await tick(30);
+    await nextTick();
     expect(onKeydown).toHaveBeenCalledTimes(1);
     expect(onClose).not.toHaveBeenCalled();
     expect(q(host, '.lyt-dialog')).toBeTruthy();
@@ -333,16 +353,16 @@ describe('Dialog — 打开与关闭', () => {
   it('lockScroll=false：打开不锁 overflow', async () => {
     const { mv } = await mountDialog({ title: 't', lockScroll: false });
     mv.set(true);
-    await tick(30);
+    await nextTick();
     expect(document.body.style.overflow).toBe('');
   });
 
   it('× 关闭后 emit update:modelValue=false：外部 modelValue 跟随，可直接重开', async () => {
     const { host, mv } = await mountDialog({ title: 't' });
     mv.set(true);
-    await tick(40);
+    await nextTick();
     q(host, '.lyt-dialog__close')!.click();
-    await tick(40);
+    await nextTick();
     expect(q(host, '.lyt-dialog')).toBeNull();
     // ★ 2026-11-04：此前这里断言的是「外部 modelValue 仍为 true」（旧怪癖 B），
     //   而 2026-10-27 就已改成回写 `v-model` —— 旧断言之所以还过，是因为测试
@@ -350,7 +370,7 @@ describe('Dialog — 打开与关闭', () => {
     expect(mv()).toBe(false);
     // 直接重开即可，不需要先 false 再 true
     mv.set(true);
-    await tick(40);
+    await nextTick();
     expect(q(host, '.lyt-dialog')).not.toBeNull();
   });
 
@@ -358,10 +378,10 @@ describe('Dialog — 打开与关闭', () => {
     const onClose = vi.fn();
     const { host, mv } = await mountDialog({ title: 't', onClose });
     mv.set(true);
-    await tick(30);
+    await nextTick();
     expect(document.body.style.overflow).toBe('hidden');
     mv.set(false);
-    await tick(30);
+    await nextTick();
     expect(q(host, '.lyt-dialog')).toBeNull();
     expect(document.body.style.overflow).toBe('');
     expect(onClose).not.toHaveBeenCalled(); // 外部关闭不走 onClose
@@ -375,12 +395,12 @@ describe('Dialog — 内置 footer 按钮', () => {
     const onClose = vi.fn();
     const { host, mv } = await mountDialog({ title: 't', onConfirm, onCancel, onClose });
     mv.set(true);
-    await tick(30);
+    await nextTick();
     expect(q(host, '.lyt-dialog__cancel-btn')!.textContent).toBe('取消');
     expect(q(host, '.lyt-dialog__confirm-btn')!.textContent).toBe('确定');
 
     q(host, '.lyt-dialog__confirm-btn')!.click();
-    await tick(30);
+    await nextTick();
     expect(onConfirm).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(q(host, '.lyt-dialog')).toBeNull();
@@ -390,10 +410,10 @@ describe('Dialog — 内置 footer 按钮', () => {
     const onCancel = vi.fn();
     const { host, mv } = await mountDialog({ title: 't', onCancel });
     mv.set(true);
-    await tick(30);
+    await nextTick();
     expect(q(host, '.lyt-dialog__confirm-btn')).toBeNull();
     q(host, '.lyt-dialog__cancel-btn')!.click();
-    await tick(30);
+    await nextTick();
     expect(onCancel).toHaveBeenCalledTimes(1);
     expect(q(host, '.lyt-dialog')).toBeNull();
   });
@@ -404,7 +424,7 @@ describe('Dialog — 内置 footer 按钮', () => {
       footer: () => [h('i', { class: 'slot-foot' }, '插槽脚')],
     } as never);
     mv.set(true);
-    await tick(30);
+    await nextTick();
     const footer = q(host, '.lyt-dialog__footer')!;
     expect(footer.textContent).toContain('插槽脚');
     expect(footer.textContent).toContain('确定');
@@ -421,7 +441,12 @@ describe('Dialog — 焦点管理', () => {
 
     const { host, mv } = await mountDialog({ title: 't' });
     mv.set(true);
-    await tick(60);
+    // 焦点陷阱在打开后一个宏任务建立 ⇒ 轮询真实焦点位置
+    await vi.waitFor(() => {
+      const dialog = q(host, '.lyt-dialog');
+      expect(dialog).not.toBeNull();
+      expect(dialog!.contains(document.activeElement)).toBe(true);
+    });
 
     // ★ 2026-11-04 修：此前这里断言的是「焦点原地不动」（旧「怪癖 E」）。
     //   根因不在 Dialog 自己的焦点代码，而在 `patchElement` **从不调用 setRef** ——
@@ -437,8 +462,9 @@ describe('Dialog — 焦点管理', () => {
     closeBtn.focus();
     expect(document.activeElement).toBe(closeBtn);
     closeBtn.click();
-    await tick(60);
-    expect(document.activeElement).toBe(outer);
+    await vi.waitFor(() => {
+      expect(document.activeElement).toBe(outer);
+    });
   });
 
   it('returnFocusOnClose=false：关闭不归还焦点', async () => {
@@ -449,11 +475,17 @@ describe('Dialog — 焦点管理', () => {
 
     const { host, mv } = await mountDialog({ title: 't', returnFocusOnClose: false });
     mv.set(true);
-    await tick(60);
+    await vi.waitFor(() => {
+      const dialog = q(host, '.lyt-dialog');
+      expect(dialog).not.toBeNull();
+      expect(dialog!.contains(document.activeElement)).toBe(true);
+    });
     const closeBtn = q(host, '.lyt-dialog__close')!;
     closeBtn.focus();
     closeBtn.click();
-    await tick(60);
+    await vi.waitFor(() => {
+      expect(q(host, '.lyt-dialog')).toBeNull();
+    });
     expect(document.activeElement).not.toBe(outer); // 不归还（焦点随 DOM 移除落到 body）
   });
 
@@ -465,16 +497,22 @@ describe('Dialog — 焦点管理', () => {
       ],
     } as never);
     mv.set(true);
-    await tick(60);
+    await vi.waitFor(() => {
+      expect(document.activeElement).toBe(q(host, '.target-btn'));
+    });
     // 此前：`dialogRef` 恒 null ⇒ initialFocus 分支根本没执行
-    expect(document.activeElement).toBe(q(host, '.target-btn'));
   });
 
   it('Tab 焦点陷阱生效：从最后一个元素 Tab 回绕到第一个', async () => {
     const onConfirm = vi.fn();
     const { host, mv } = await mountDialog({ title: 't', onConfirm });
     mv.set(true);
-    await tick(60);
+    // Tab 拦截依赖焦点陷阱 ⇒ 等陷阱建立（焦点进入对话框）
+    await vi.waitFor(() => {
+      const dialog = q(host, '.lyt-dialog');
+      expect(dialog).not.toBeNull();
+      expect(dialog!.contains(document.activeElement)).toBe(true);
+    });
 
     const confirmBtn = q(host, '.lyt-dialog__confirm-btn')!;
     const closeBtn = q(host, '.lyt-dialog__close')!;
