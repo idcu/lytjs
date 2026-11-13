@@ -564,8 +564,9 @@ for (const fx of FIXTURES) {
 //   a) **产物逐字快照**：每条模板的 vnode / SSR 编译产物存进
 //      `scripts/compiler-mode-snapshot.json`，重构后必须逐字不变
 //      （有意变更时用 `--update-mode-snapshot` 重生成，diff 即评审点）。
-//   b) **执行冒烟**：vnode 产物真实 render + mount、SSR 产物真实求值，
-//      断言不抛错（语义/结构差异不在此断言，避免把运行时差异当编译缺陷）。
+//   b) **执行冒烟 + SSR 语义基准**：vnode 产物真实 render + mount、SSR 产物真实求值，
+//      断言不抛错；若模板带 `expectedSsr`，还要逐字比对 SSR 的 HTML
+//      （`expected` 只约束 signal 基础实现，SSR 产物此前从未被断言）。
 //
 // 已知的 SSR 抛错（动态组件名的表达式中引用了未注入的 `comp`）记在
 // `compiler-parity-baseline.json` 的 `modeParity` 段，同样**只允许减少**。
