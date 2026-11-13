@@ -283,19 +283,24 @@ export function renderToStream(
     ? new FlowController(maxBytesPerSecond)
     : null;
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  // 超时回调、主流程、cancel 三方都可能关闭流；只允许第一个生效。
+  let closed = false;
 
   return new ReadableStream<Uint8Array>({
     async start(controller) {
       // 设置超时
       timeoutId = setTimeout(() => {
+        if (closed) return;
         try {
           if (errorRecovery) {
             console.warn('Stream rendering timed out, using fallback HTML');
             controller.enqueue(encoder.encode(fallbackHtml));
             controller.close();
+            closed = true;
             onError?.(new StreamTimeoutError('Stream rendering timed out'));
           } else {
             controller.error(new StreamTimeoutError('Stream rendering timed out'));
+            closed = true;
           }
         } catch (err) {
           const error = err instanceof Error ? err : new Error(String(err));
@@ -319,6 +324,7 @@ export function renderToStream(
           // 发送 shell 分块
           for (const chunk of byteChunks) {
             await sendChunk(controller, encoder, chunk);
+            if (closed) return;
           }
 
           // 通知 shell 就绪
@@ -331,22 +337,27 @@ export function renderToStream(
 
           for (const chunk of remainingByteChunks) {
             await sendChunk(controller, encoder, chunk);
+            if (closed) return;
           }
         } else {
           // 无 Suspense 边界，直接分块发送
           const byteChunks = splitIntoByteChunks(fullHtml, chunkSize);
           for (const chunk of byteChunks) {
             await sendChunk(controller, encoder, chunk);
+            if (closed) return;
           }
         }
 
+        if (closed) return;
         // 取消超时并正常关闭
         if (timeoutId) {
           clearTimeout(timeoutId);
           timeoutId = null;
         }
         controller.close();
+        closed = true;
       } catch (err) {
+        if (closed) return;
         if (timeoutId) {
           clearTimeout(timeoutId);
           timeoutId = null;
@@ -359,6 +370,7 @@ export function renderToStream(
             console.warn('Error occurred during stream rendering, using fallback HTML');
             controller.enqueue(encoder.encode(fallbackHtml));
             controller.close();
+            closed = true;
           } catch (_) {
             controller.error(error);
           }
@@ -369,6 +381,7 @@ export function renderToStream(
     },
 
     cancel(reason) {
+      closed = true;
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
@@ -393,10 +406,10 @@ export function renderToStream(
     if (flowController) {
       // 如果启用了流控制，等待速率限制后再入队
       return flowController.waitForRateLimit(encoded.length).then(() => {
-        controller.enqueue(encoded);
+        if (!closed) controller.enqueue(encoded);
       });
     }
-    controller.enqueue(encoded);
+    if (!closed) controller.enqueue(encoded);
   }
 }
 

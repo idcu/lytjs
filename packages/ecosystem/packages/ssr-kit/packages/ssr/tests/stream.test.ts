@@ -50,6 +50,25 @@ describe('renderToStream', () => {
     expect(stream).toBeInstanceOf(ReadableStream);
   });
 
+  it('超时与主流程竞态：只关闭一次、不抛 ERR_INVALID_STATE', async () => {
+    const onError = vi.fn();
+    const stream = renderToStream(createTestVNode('div', null, 'x'.repeat(200)), {
+      timeout: 1,
+      chunkSize: 4,
+      maxBytesPerSecond: 1,
+      fallbackHtml: '<fallback/>',
+      onError,
+    });
+
+    // 超时回调先 close；主流程在限流 await 结束后不应再 enqueue/close
+    const html = await streamToString(stream);
+    expect(html).toBe('<fallback/>');
+
+    // 等限流 Promise 结束：若没有 closed 守卫，这里会再 enqueue 一次并触发第二个错误
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+    expect(onError).toHaveBeenCalledTimes(1);
+  });
+
   it('应该正确渲染简单元素', async () => {
     const vnode = createTestVNode('div', null, 'Hello World');
     const stream = renderToStream(vnode);
