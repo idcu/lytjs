@@ -13,6 +13,7 @@ import {
   getServerComponent,
   getServerFunction,
   handleServerAction,
+  createServerComponentRegistry,
   createServerActionHandler,
   serializeServerData,
   deserializeServerData,
@@ -431,5 +432,32 @@ describe('Server Function 运行时（编译器生成代码依赖的两个函数
 
     expect(typeof (srv as Record<string, unknown>).createServerReference).toBe('function');
     expect(typeof (cli as Record<string, unknown>).createServerProxy).toBe('function');
+  });
+});
+
+describe('P1-13：Server Component 注册表的请求作用域', () => {
+  it('★ 两个注册表实例的组件与函数互不可见', async () => {
+    const a = createServerComponentRegistry();
+    const b = createServerComponentRegistry();
+
+    a.registerComponent({ id: 'scoped', name: 'S', render: async () => '<i/>' });
+    a.registerFunction('scoped', 'inc', async (n: unknown) => Number(n) + 1);
+
+    expect(a.getComponent('scoped')).toBeDefined();
+    // 旧实现只有模块级 registry ⇒ b 会直接拿到 a 注册的组件与函数
+    expect(b.getComponent('scoped')).toBeUndefined();
+    expect(b.getFunction('scoped', 'inc')).toBeUndefined();
+
+    // Server Action 绑定实例：只有注册过的实例能分发
+    await expect(
+      handleServerAction({ componentName: 'scoped', functionName: 'inc', args: [1] }, b),
+    ).resolves.toMatchObject({ success: false });
+    await expect(
+      handleServerAction({ componentName: 'scoped', functionName: 'inc', args: [1] }, a),
+    ).resolves.toEqual({ success: true, data: 2 });
+
+    a.clear();
+    expect(a.getComponent('scoped')).toBeUndefined();
+    expect(a.getFunction('scoped', 'inc')).toBeUndefined();
   });
 });

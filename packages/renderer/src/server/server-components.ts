@@ -48,45 +48,103 @@ interface ServerComponentRegistry {
   functions: Map<string, Map<string, (...args: unknown[]) => Promise<unknown>>>;
 }
 
+/** 请求作用域的 Server Component 注册表句柄 */
+export interface ServerComponentRegistryHandle {
+  registerComponent(component: ServerComponentDefinition): void;
+  registerFunction(
+    componentId: string,
+    functionName: string,
+    fn: (...args: unknown[]) => Promise<unknown>,
+  ): void;
+  getComponent(id: string): ServerComponentDefinition | undefined;
+  getFunction(
+    componentId: string,
+    functionName: string,
+  ): ((...args: unknown[]) => Promise<unknown>) | undefined;
+  clear(): void;
+}
+
 // ============================================================
-// 全局注册表
+// 注册表
 // ============================================================
 
-const registry: ServerComponentRegistry = {
-  components: new Map(),
-  functions: new Map(),
-};
+function buildRegistry(registry: ServerComponentRegistry): ServerComponentRegistryHandle {
+  return {
+    registerComponent(component: ServerComponentDefinition): void {
+      registry.components.set(component.id, component);
+    },
+    registerFunction(
+      componentId: string,
+      functionName: string,
+      fn: (...args: unknown[]) => Promise<unknown>,
+    ): void {
+      if (!registry.functions.has(componentId)) {
+        registry.functions.set(componentId, new Map());
+      }
+      registry.functions.get(componentId)!.set(functionName, fn);
+    },
+    getComponent(id: string): ServerComponentDefinition | undefined {
+      return registry.components.get(id);
+    },
+    getFunction(
+      componentId: string,
+      functionName: string,
+    ): ((...args: unknown[]) => Promise<unknown>) | undefined {
+      return registry.functions.get(componentId)?.get(functionName);
+    },
+    clear(): void {
+      registry.components.clear();
+      registry.functions.clear();
+    },
+  };
+}
+
+/**
+ * 创建**请求作用域**的 Server Component 注册表。
+ *
+ * SSR 每处理一个请求就应创建一个实例：服务端组件定义与可被客户端调用的
+ * Server Function 都随实例隔离，避免 A 请求注册的函数被 B 请求分发。
+ */
+export function createServerComponentRegistry(): ServerComponentRegistryHandle {
+  return buildRegistry({ components: new Map(), functions: new Map() });
+}
+
+/**
+ * 模块级默认注册表 —— 仅供**客户端单例 / 单元测试**使用。
+ *
+ * SSR 必须使用 `createServerComponentRegistry()` 的实例（每请求一个）。
+ *
+ * @deprecated v8 将移除模块级单例，请显式创建实例。
+ */
+const defaultRegistry = buildRegistry({ components: new Map(), functions: new Map() });
 
 // ============================================================
 // 组件注册
 // ============================================================
 
 /**
- * 注册 Server Component
+ * 注册 Server Component（写入模块级默认注册表）
  */
 export function registerServerComponent(component: ServerComponentDefinition): void {
-  registry.components.set(component.id, component);
+  defaultRegistry.registerComponent(component);
 }
 
 /**
- * 注册服务端函数
+ * 注册服务端函数（写入模块级默认注册表）
  */
 export function registerServerFunction(
   componentId: string,
   functionName: string,
   fn: (...args: unknown[]) => Promise<unknown>,
 ): void {
-  if (!registry.functions.has(componentId)) {
-    registry.functions.set(componentId, new Map());
-  }
-  registry.functions.get(componentId)!.set(functionName, fn);
+  defaultRegistry.registerFunction(componentId, functionName, fn);
 }
 
 /**
  * 获取 Server Component
  */
 export function getServerComponent(id: string): ServerComponentDefinition | undefined {
-  return registry.components.get(id);
+  return defaultRegistry.getComponent(id);
 }
 
 /**
@@ -96,7 +154,7 @@ export function getServerFunction(
   componentId: string,
   functionName: string,
 ): ((...args: unknown[]) => Promise<unknown>) | undefined {
-  return registry.functions.get(componentId)?.get(functionName);
+  return defaultRegistry.getFunction(componentId, functionName);
 }
 
 // ============================================================
@@ -106,15 +164,23 @@ export function getServerFunction(
 /**
  * 处理 Server Action 请求
  * 用于处理客户端对服务端函数的调用
+ *
+ * ⚠️ **不做身份认证/授权**：本函数只负责按注册表分发。调用方（HTTP 框架层）
+ * 必须先完成鉴权，再决定允许哪些 functionName 暴露；请求作用域注册表只能限制
+ * “哪些函数可见”，不能代替权限校验。
+ *
+ * @param request - Server Action 请求
+ * @param registry - 注册表实例（SSR 传入每请求实例；缺省用模块级默认注册表）
  */
 export async function handleServerAction(
   request: ServerActionRequest,
+  registry: ServerComponentRegistryHandle = defaultRegistry,
 ): Promise<ServerActionResponse> {
   const { componentName, functionName, args } = request;
 
   try {
     // 查找函数
-    const fn = getServerFunction(componentName, functionName);
+    const fn = registry.getFunction(componentName, functionName);
     if (!fn) {
       return {
         success: false,
@@ -142,7 +208,9 @@ export async function handleServerAction(
  * 创建 Server Action 处理器
  * 用于 Express/Fastify 等服务端框架
  */
-export function createServerActionHandler() {
+export function createServerActionHandler(
+  registry: ServerComponentRegistryHandle = defaultRegistry,
+) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return async (req: any, res: any) => {
     const componentName = req.headers['x-server-component'];
@@ -155,11 +223,14 @@ export function createServerActionHandler() {
 
     const args = req.body?.args || [];
 
-    const result = await handleServerAction({
-      componentName,
-      functionName,
-      args,
-    });
+    const result = await handleServerAction(
+      {
+        componentName,
+        functionName,
+        args,
+      },
+      registry,
+    );
 
     if (result.success) {
       res.json(result.data);
@@ -256,8 +327,9 @@ function escapeForInlineScript(json: string): string {
 export async function renderServerComponent(
   componentId: string,
   _context: Record<string, unknown> = {},
+  registry: ServerComponentRegistryHandle = defaultRegistry,
 ): Promise<string> {
-  const component = getServerComponent(componentId);
+  const component = registry.getComponent(componentId);
   if (!component) {
     throw new Error(`[LytJS] Server component not found: ${componentId}`);
   }
