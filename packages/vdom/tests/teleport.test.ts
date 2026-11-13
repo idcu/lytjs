@@ -149,6 +149,32 @@ describe('Teleport - patch (target change)', () => {
     expect(target1.querySelector('span')).toBeNull();
     expect(target2.querySelector('span')).not.toBeNull();
   });
+
+  it('★ 换 to 时用旧 children 搬运：旧目标清空、新目标收到内容', () => {
+    const teleport1 = createVNode('teleport', { to: `#${target1.id}` }, [
+      createVNode('span', null, 'hello'),
+    ]);
+    (teleport1 as any).shapeFlag = ShapeFlags.TELEPORT | ShapeFlags.ARRAY_CHILDREN;
+
+    renderer.mount(teleport1, container);
+    expect(target1.querySelector('span')).not.toBeNull();
+
+    // 真实渲染路径：新 vnode 的 children 是**尚未挂载**的新 vnode（el 为 null）。
+    // 负控：旧实现遍历 n2.children 调 move()，这些新 vnode 没有 el ⇒ 搬运是空转，
+    // 内容全部留在旧目标里（旧目标锚点已删，只剩内容节点）。
+    const teleport2 = createVNode('teleport', { to: `#${target2.id}` }, [
+      createVNode('span', null, 'hello'),
+    ]);
+    (teleport2 as any).shapeFlag = ShapeFlags.TELEPORT | ShapeFlags.ARRAY_CHILDREN;
+
+    renderer.patch(teleport1, teleport2, container);
+
+    expect(target1.childNodes.length).toBe(0);
+    expect(target2.querySelectorAll('span').length).toBe(1);
+    expect(target2.textContent).toBe('hello');
+    // 原容器仍然只有占位注释
+    expect(container.childNodes.length).toBe(1);
+  });
 });
 
 describe('Teleport - move', () => {

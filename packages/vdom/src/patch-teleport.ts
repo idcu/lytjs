@@ -177,7 +177,12 @@ export function createTeleportPatch<HN, HE extends HN>(
         insert(targetEnd, newTarget, null);
 
         // 将 children 从旧目标移动到新目标
-        const children = isArray(n2.children) ? n2.children : [];
+        //
+        // ⚠️ 必须遍历 **n1.children**：`n2.children` 是本次渲染新建的 vnode，
+        //   尚未挂载（el 为 null），对它们调 move() 是空转 ⇒ 内容全留在旧目标里。
+        //   真正待在旧目标中的是 n1 的已挂载子节点，搬完后再由下方 diffChildren
+        //   原地 patch 成 n2 的内容。
+        const children = isArray(n1.children) ? n1.children : [];
         for (let i = 0; i < children.length; i++) {
           const child = children[i];
           if (child != null) {
