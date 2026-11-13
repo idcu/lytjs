@@ -11,6 +11,7 @@ import { createVNode, Fragment, Text } from '@lytjs/vdom';
 import {
   registerIslandComponent,
   getIslandComponent,
+  createIslandRegistry,
   createIslandSSRContent,
   hydrateIsland,
 } from '../src/ssr/ssr-island';
@@ -44,6 +45,19 @@ describe('ssr-island battery: registry', () => {
 
     registerIslandComponent(123 as any, Comp);
     warnSpy.mockRestore();
+  });
+
+  it('★ 请求作用域注册表：两个实例互不可见', () => {
+    const a = createIslandRegistry();
+    const b = createIslandRegistry();
+
+    a.register('Scoped', Comp);
+    expect(a.get('Scoped')).toBe(Comp);
+    // 旧实现只有模块级 islandRegistry ⇒ b 会看到 a 注册的组件（跨请求污染）
+    expect(b.get('Scoped')).toBeUndefined();
+
+    a.clear();
+    expect(a.get('Scoped')).toBeUndefined();
   });
 });
 

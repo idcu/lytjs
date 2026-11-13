@@ -347,7 +347,7 @@ export { OptimizedSSRStream } from './ssr/ssr-stream-optimized';
 
 // SSR Island 架构
 /** Island Architecture 相关函数 */
-import type { ComponentOptions } from './ssr/ssr-island';
+import type { ComponentOptions, IslandRegistry } from './ssr/ssr-island';
 export async function hydrateIsland(
   el: Element,
   component: ComponentOptions,
@@ -363,6 +363,16 @@ export async function registerIslandComponent(
   const { registerIslandComponent: _registerIslandComponent } = await import('./ssr/ssr-island');
   return _registerIslandComponent(name, component);
 }
+/**
+ * 创建请求作用域的 Island 注册表（SSR 每请求一个实例）。
+ *
+ * 模块级注册表仅客户端/单测可用；SSR 请使用本工厂。
+ */
+export async function createIslandRegistry(): Promise<IslandRegistry> {
+  const { createIslandRegistry: _createIslandRegistry } = await import('./ssr/ssr-island');
+  return _createIslandRegistry();
+}
+export type { ComponentOptions as IslandComponentOptions, IslandRegistry } from './ssr/ssr-island';
 export async function createIslandSSRContent(
   name: string,
   props: Record<string, unknown> = {},
@@ -370,7 +380,6 @@ export async function createIslandSSRContent(
   const { createIslandSSRContent: _createIslandSSRContent } = await import('./ssr/ssr-island');
   return _createIslandSSRContent(name, props);
 }
-export type { ComponentOptions as IslandComponentOptions } from './ssr/ssr-island';
 
 // Signal 渲染器
 /** 创建 Signal 模式渲染器（细粒度 DOM 更新） */

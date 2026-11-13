@@ -37,21 +37,56 @@ export interface ComponentOptions {
 // Island 注册表
 // ============================================================
 
-const islandRegistry = new Map<string, ComponentOptions>();
+/** 请求作用域的 Island 注册表 */
+export interface IslandRegistry {
+  register(name: string, component: ComponentOptions): void;
+  get(name: string): ComponentOptions | undefined;
+  clear(): void;
+}
+
+/**
+ * 创建 Island 注册表实例。
+ *
+ * SSR 每处理一个请求就应创建一个实例，避免 A 请求注册的 Island 被 B 请求命中。
+ */
+export function createIslandRegistry(): IslandRegistry {
+  const registry = new Map<string, ComponentOptions>();
+  return {
+    register(name: string, component: ComponentOptions): void {
+      if (!name || typeof name !== 'string') {
+        if (__DEV__) {
+          warn(`registerIslandComponent: invalid island name "${String(name)}"`);
+        }
+        return;
+      }
+      registry.set(name, component);
+    },
+    get(name: string): ComponentOptions | undefined {
+      return registry.get(name);
+    },
+    clear(): void {
+      registry.clear();
+    },
+  };
+}
+
+/**
+ * 模块级默认注册表 —— 仅供**客户端单例 / 单元测试**使用。
+ *
+ * SSR 必须使用 `createIslandRegistry()` 的实例（每请求一个）。
+ *
+ * @deprecated v8 将移除模块级单例，请显式创建实例。
+ */
+const defaultIslandRegistry = createIslandRegistry();
 
 /**
  * 注册一个命名 Island 组件。
  *
  * 注册的组件后续可以在 `hydrateIsland` 和 `createIslandSSRContent` 中通过名称引用。
+ * 该函数写入模块级默认注册表；SSR 请求作用域请使用 `createIslandRegistry()`。
  */
 export function registerIslandComponent(name: string, component: ComponentOptions): void {
-  if (!name || typeof name !== 'string') {
-    if (__DEV__) {
-      warn(`registerIslandComponent: invalid island name "${String(name)}"`);
-    }
-    return;
-  }
-  islandRegistry.set(name, component);
+  defaultIslandRegistry.register(name, component);
 }
 
 /**
@@ -59,7 +94,7 @@ export function registerIslandComponent(name: string, component: ComponentOption
  * 如果未找到则返回 undefined。
  */
 export function getIslandComponent(name: string): ComponentOptions | undefined {
-  return islandRegistry.get(name);
+  return defaultIslandRegistry.get(name);
 }
 
 // ============================================================
@@ -123,7 +158,7 @@ export async function hydrateIsland(
     // 确定使用哪个组件：显式参数或注册表查找
     // 仅当 Island 名称与注册组件完全匹配时才匹配；
     // 不要在名称不匹配时回退到传入的组件，以防止错误的 hydration。
-    let resolvedComponent = islandRegistry.get(islandName);
+    let resolvedComponent = defaultIslandRegistry.get(islandName);
     if (!resolvedComponent && islandName === component.name) {
       resolvedComponent = component;
     }
