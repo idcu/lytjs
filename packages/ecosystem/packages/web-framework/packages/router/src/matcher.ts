@@ -368,8 +368,13 @@ export function parseQuery(queryString: string): LocationQuery {
 
   for (const pair of pairs) {
     if (!pair) continue;
-    const [key, value] = pair.split('=');
-    const decodedKey = decodeQueryComponent(key!);
+    // ⚠️ 2026-11-13 修（P1）：此前 `split('=')` 解构只取前两段 ⇒ `?token=a=b` 得到
+    //   `'a'`，第二个 `=` 之后的内容被静默丢弃（签名 / Base64 / 回调 URL 常见）。
+    //   现在只按**第一个** `=` 切分，值里允许出现任意 `=`。
+    const eqIndex = pair.indexOf('=');
+    const key = eqIndex === -1 ? pair : pair.slice(0, eqIndex);
+    const value = eqIndex === -1 ? undefined : pair.slice(eqIndex + 1);
+    const decodedKey = decodeQueryComponent(key);
     const decodedValue = value !== undefined ? decodeQueryComponent(value) : undefined;
 
     if (decodedKey in query) {

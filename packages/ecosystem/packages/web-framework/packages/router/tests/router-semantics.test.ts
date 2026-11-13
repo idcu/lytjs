@@ -182,6 +182,14 @@ describe('query 语义', () => {
   it('畸形转义不抛（保留原串）', () => {
     expect(parseQuery('q=%zz')).toEqual({ q: '%zz' });
   });
+
+  it('★ 值里含 `=` 时不截断（?token=a=b）', () => {
+    // 负控：`pair.split('=')` 会丢掉第二个 `=` 之后的内容
+    expect(parseQuery('token=a=b')).toEqual({ token: 'a=b' });
+    expect(parseQuery('a=1&next=x=y=z')).toEqual({ a: '1', next: 'x=y=z' });
+    // 键为空 / 纯等号仍保持原语义
+    expect(parseQuery('=v')).toEqual({ '': 'v' });
+  });
 });
 
 describe('未匹配路径', () => {
