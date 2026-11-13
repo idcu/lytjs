@@ -124,3 +124,24 @@ describe('SSR Compilation Mode', () => {
     });
   });
 });
+
+// C-27：generateSSR 此前完全不读 options —— sourceMap:true 也拿不到 map。
+describe('C-27 SSR 接入 codegen options', () => {
+  const template = '<div class="a"><span>{{ msg }}</span></div>';
+
+  it('sourceMap:true 时返回指向模板源的 map', () => {
+    const result = compile(template, { ssrMode: true, sourceMap: true, filename: 'SsrPage.vue' });
+    expect(result.map).toBeDefined();
+    expect(result.map!.file).toBe('SsrPage.vue');
+    expect(result.map!.sources).toEqual(['SsrPage.vue']);
+    expect(result.map!.sourcesContent[0]).toBe(template);
+    expect(result.map!.mappings.length).toBeGreaterThan(0);
+  });
+
+  it('sourceMap 开关不改变产物代码（行为等价）', () => {
+    const plain = compile(template, { ssrMode: true });
+    const mapped = compile(template, { ssrMode: true, sourceMap: true, filename: 'SsrPage.vue' });
+    expect(mapped.code).toBe(plain.code);
+    expect(plain.map).toBeUndefined();
+  });
+});

@@ -12,6 +12,8 @@ import { NodeTypes, ElementTypes } from './constants';
 import { escapeHTML } from '@lytjs/common-string';
 import { FRAGMENT_SENTINEL } from './transforms/transform-element';
 import { prefixIdentifiers } from './prefix-identifiers';
+import { SourceMapGenerator } from './source-map';
+import type { RawSourceMap } from './types';
 import type {
   RootNode,
   ElementNode,
@@ -70,6 +72,10 @@ let ssrLocals: ReadonlySet<string> = new Set<string>();
 let ssrSelectModel: string | undefined;
 // 本次编译是否用到 v-for；只有用到时才注入 __lytRenderList，避免无关产物全部位移。
 let usesRenderList = false;
+// C-27：sourceMap 开启时，在每个子节点产物前插入不可见标记（\0<idx>\1），
+// 生成结束后据此还原「模板节点 → 产物位置」的精确映射，标记本身随后从产物中剥除。
+let ssrMapEnabled = false;
+let ssrMapMarks: { node: TemplateChildNode }[] = [];
 
 const ElementTypes_SLOT = ElementTypes.SLOT;
 
@@ -82,23 +88,24 @@ function px(content: string): string {
 // 主 SSR 生成函数
 // ============================================================
 
-export function generateSSR(ast: RootNode, _options: CodegenOptions = {}): CodegenResult {
+export function generateSSR(ast: RootNode, options: CodegenOptions = {}): CodegenResult {
   const parts: string[] = [];
 
   // 每次编译重置局部标识符（v-for 别名等）
   ssrLocals = new Set<string>(ast.localIdentifiers ?? []);
   usesRenderList = false;
+  // C-27：接入 codegen options。此前 _options 被完全忽略 ⇒ sourceMap:true 永远拿不到 map。
+  ssrMapEnabled = options.sourceMap === true;
+  ssrMapMarks = [];
 
   // 生成 render 函数
-  parts.push(`function render(_ctx) {\n`);
-  parts.push(`  return renderToString(`);
+  parts.push(`function render(_ctx) {\n  return renderToString(`);
 
   // 将 children 生成为字符串拼接
   const body = genSSRChildren(ast.children);
   parts.push(body);
 
-  parts.push(`);\n`);
-  parts.push(`}\n\n`);
+  parts.push(`);\n}\n\n`);
 
   // escapeHtml helper (used by renderToString and interpolation output)
   parts.push(`function escapeHtml(str) {\n`);
@@ -176,11 +183,79 @@ export function generateSSR(ast: RootNode, _options: CodegenOptions = {}): Codeg
   parts.push(`  return html;\n`);
   parts.push(`}\n`);
 
+  const rawCode = parts.join('');
+  let code = rawCode;
+  let map: RawSourceMap | undefined;
+
+  if (ssrMapEnabled) {
+    const extracted = stripMapMarks(rawCode, ssrMapMarks.length);
+    code = extracted.code;
+    const filename = options.filename ?? 'template.html';
+    const sourceMapGen = new SourceMapGenerator(filename);
+    sourceMapGen.addSource(filename, ast.loc.source);
+    for (let i = 0; i < ssrMapMarks.length; i++) {
+      const node = ssrMapMarks[i]!.node;
+      const pos = extracted.positions[i];
+      if (!pos || !node.loc?.start) continue;
+      // SourceLocation 的 line/column 是 1-based；source map 要求 0-based。
+      sourceMapGen.addMapping(
+        node.loc.start.line - 1,
+        node.loc.start.column - 1,
+        pos.line,
+        pos.column,
+      );
+    }
+    map = sourceMapGen.toJSON();
+  }
+
+  ssrMapMarks = [];
+
   return {
-    code: parts.join(''),
+    code,
     preamble: '',
     ast,
+    map,
   };
+}
+
+/**
+ * 剥除产物中的映射标记，同时记录每个标记所在的生成位置（0-based 行列）。
+ */
+function stripMapMarks(
+  code: string,
+  count: number,
+): { code: string; positions: Array<{ line: number; column: number } | undefined> } {
+  const positions = new Array<{ line: number; column: number } | undefined>(count);
+  let out = '';
+  let line = 0;
+  let column = 0;
+  let i = 0;
+
+  while (i < code.length) {
+    if (code[i] === '\u0000') {
+      const end = code.indexOf('\u0001', i + 1);
+      if (end !== -1) {
+        const idx = Number(code.slice(i + 1, end));
+        if (Number.isInteger(idx) && idx >= 0 && idx < count) {
+          positions[idx] = { line, column };
+          i = end + 1;
+          continue;
+        }
+      }
+    }
+
+    const ch = code[i]!;
+    if (ch === '\n') {
+      line++;
+      column = 0;
+    } else {
+      column++;
+    }
+    out += ch;
+    i++;
+  }
+
+  return { code: out, positions };
 }
 
 // ============================================================
@@ -192,83 +267,100 @@ function genSSRChildren(children: TemplateChildNode[]): string {
 
   for (const child of children) {
     if (!child) continue;
-
-    switch (child.type) {
-      case NodeTypes.TEXT:
-        parts.push(JSON.stringify((child as TextNode).content));
-        break;
-
-      case NodeTypes.INTERPOLATION: {
-        const node = child as InterpolationNode;
-        const content = (node.content as SimpleExpressionNode).content;
-        // 2026-11-13 撤销 P1-14 的「简单属性路径」白名单：
-        // 模板代码由开发者编写、编译成 render 函数后执行，不是不可信输入；
-        // 白名单不构成安全边界，只会让 SSR 与 vnode 路径行为分叉（复杂表达式变占位符）。
-        // XSS 防护由下方 escapeHtml 负责，表达式语法交给解析器。
-        parts.push(`escapeHtml(${px(content)} == null ? '' : String(${px(content)}))`);
-        break;
-      }
-
-      case NodeTypes.ELEMENT: {
-        const element = child as ElementNode;
-        parts.push(genSSRElement(element));
-        break;
-      }
-
-      case NodeTypes.COMMENT:
-        // 注释在 SSR 中被省略
-        break;
-
-      case NodeTypes.JS_CONDITIONAL_EXPRESSION: {
-        const cond = child as JSConditionalExpression;
-        parts.push(genSSRConditional(cond));
-        break;
-      }
-
-      case NodeTypes.JS_CALL_EXPRESSION: {
-        const call = child as JSCallExpression;
-        parts.push(genSSRCallExpression(call));
-        break;
-      }
-
-      case NodeTypes.VNODE_CALL: {
-        // v-for / v-once 等元素的 codegenNode 是 VNODE_CALL；此前该分支缺失，
-        // 导致 SSR 下 `renderList(..., (x) => '')` —— 列表项被整体渲染成空串。
-        const vnode = child as VNodeCall;
-        parts.push(genSSRVNodeCall(vnode));
-        break;
-      }
-
-      case NodeTypes.COMPOUND_EXPRESSION: {
-        const compound = child as CompoundExpressionNode;
-        const childParts: string[] = [];
-        for (const c of compound.children) {
-          if (typeof c === 'string') {
-            childParts.push(c);
-          } else if (c.type === NodeTypes.SIMPLE_EXPRESSION) {
-            // FIX: P0-1 CompoundExpression 中的表达式需要转义输出，防止 XSS
-            childParts.push(
-              `escapeHtml(${px((c as SimpleExpressionNode).content)} == null ? '' : String(${px((c as SimpleExpressionNode).content)}))`,
-            );
-          } else if (c.type === NodeTypes.INTERPOLATION) {
-            const content = ((c as InterpolationNode).content as SimpleExpressionNode).content;
-            // 与上方 INTERPOLATION 同理：表达式取自解析器产物，白名单不构成安全边界，
-            // 输出侧统一 escapeHtml；此处不再把复杂表达式替换成占位符。
-            childParts.push(`escapeHtml(${px(content)} == null ? '' : String(${px(content)}))`);
-          }
-        }
-        parts.push(`(${childParts.join(' + ')})`);
-        break;
-      }
-
-      default:
-        break;
-    }
+    const code = genSSRChild(child);
+    if (code !== undefined) parts.push(code);
   }
 
   if (parts.length === 0) return "''";
   if (parts.length === 1) return parts[0]!;
   return parts.join(' + ');
+}
+
+/**
+ * 生成单个 SSR child 的表达式；注释/未知节点返回 undefined（不参与拼接）。
+ */
+function genSSRChild(child: TemplateChildNode): string | undefined {
+  let code: string | undefined;
+
+  switch (child.type) {
+    case NodeTypes.TEXT:
+      code = JSON.stringify((child as TextNode).content);
+      break;
+
+    case NodeTypes.INTERPOLATION: {
+      const node = child as InterpolationNode;
+      const content = (node.content as SimpleExpressionNode).content;
+      // 2026-11-13 撤销 P1-14 的「简单属性路径」白名单：
+      // 模板代码由开发者编写、编译成 render 函数后执行，不是不可信输入；
+      // 白名单不构成安全边界，只会让 SSR 与 vnode 路径行为分叉（复杂表达式变占位符）。
+      // XSS 防护由下方 escapeHtml 负责，表达式语法交给解析器。
+      code = `escapeHtml(${px(content)} == null ? '' : String(${px(content)}))`;
+      break;
+    }
+
+    case NodeTypes.ELEMENT: {
+      const element = child as ElementNode;
+      code = genSSRElement(element);
+      break;
+    }
+
+    case NodeTypes.COMMENT:
+      // 注释在 SSR 中被省略
+      return undefined;
+
+    case NodeTypes.JS_CONDITIONAL_EXPRESSION: {
+      const cond = child as JSConditionalExpression;
+      code = genSSRConditional(cond);
+      break;
+    }
+
+    case NodeTypes.JS_CALL_EXPRESSION: {
+      const call = child as JSCallExpression;
+      code = genSSRCallExpression(call);
+      break;
+    }
+
+    case NodeTypes.VNODE_CALL: {
+      // v-for / v-once 等元素的 codegenNode 是 VNODE_CALL；此前该分支缺失，
+      // 导致 SSR 下 `renderList(..., (x) => '')` —— 列表项被整体渲染成空串。
+      const vnode = child as VNodeCall;
+      code = genSSRVNodeCall(vnode);
+      break;
+    }
+
+    case NodeTypes.COMPOUND_EXPRESSION: {
+      const compound = child as CompoundExpressionNode;
+      const childParts: string[] = [];
+      for (const c of compound.children) {
+        if (typeof c === 'string') {
+          childParts.push(c);
+        } else if (c.type === NodeTypes.SIMPLE_EXPRESSION) {
+          // FIX: P0-1 CompoundExpression 中的表达式需要转义输出，防止 XSS
+          childParts.push(
+            `escapeHtml(${px((c as SimpleExpressionNode).content)} == null ? '' : String(${px((c as SimpleExpressionNode).content)}))`,
+          );
+        } else if (c.type === NodeTypes.INTERPOLATION) {
+          const content = ((c as InterpolationNode).content as SimpleExpressionNode).content;
+          // 与上方 INTERPOLATION 同理：表达式取自解析器产物，白名单不构成安全边界，
+          // 输出侧统一 escapeHtml；此处不再把复杂表达式替换成占位符。
+          childParts.push(`escapeHtml(${px(content)} == null ? '' : String(${px(content)}))`);
+        }
+      }
+      code = `(${childParts.join(' + ')})`;
+      break;
+    }
+
+    default:
+      return undefined;
+  }
+
+  if (code === undefined) return undefined;
+  if (ssrMapEnabled && child.loc) {
+    const idx = ssrMapMarks.length;
+    ssrMapMarks.push({ node: child });
+    return `\u0000${idx}\u0001${code}`;
+  }
+  return code;
 }
 
 // ============================================================
