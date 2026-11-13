@@ -45,6 +45,20 @@ describe('scoped CSS 端到端', () => {
     expect(extractAttrNames(code)).toEqual([]);
   });
 
+  it('<slot> 上的 scopeId 属性不得被当成 slot prop（C-33）', () => {
+    const { code } = compile('<div><slot name="header" :user="u"/></div>', {
+      mode: 'module',
+      scopeId: 'abc123',
+    });
+
+    // 插槽实参只应有真实 prop
+    expect(code).toContain('"user": _ctx.u');
+    // scope 属性只应出现在元素的 props 上，不得混入 renderSlot 的插槽参数
+    const slotCall = code.slice(code.indexOf('renderSlot'));
+    expect(slotCall).not.toContain('data-v-abc123');
+    expect(code).toContain('createElementVNode("div", { "data-v-abc123": "" }');
+  });
+
   it('compileSFC scoped：产物属性名与 CSS 选择器必须指向同一属性（关键断言）', () => {
     const source = [
       '<template><div class="a"><p>x</p></div></template>',

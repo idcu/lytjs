@@ -82,6 +82,9 @@ export function transformSlot(
       if (prop === undefined) continue;
 
       if (prop.type === NodeTypes.ATTRIBUTE) {
+        // transformScoped 会给所有元素（含 <slot>）注入 `data-v-*`。`<slot>` 不产出
+        // DOM 元素，该属性不是插槽参数；不排除会在每次 renderSlot 时多传一个假 prop。
+        if (prop.name.startsWith('data-v-')) continue;
         if (prop.name === 'name') {
           nameArg = JSON.stringify(prop.value ? prop.value.content : 'default');
           continue;
