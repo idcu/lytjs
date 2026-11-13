@@ -40,7 +40,6 @@ async function renderSteps(host: HTMLElement, props: Record<string, unknown> = {
         );
     },
   } as never).mount(host);
-  await new Promise((r) => setTimeout(r, 30));
 }
 
 function classesOf(host: HTMLElement): string[] {
@@ -81,7 +80,6 @@ describe('行为：Steps 的状态与回调', () => {
 
     const steps = [...host.querySelectorAll('.lyt-step')];
     steps[2]!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    await new Promise((r) => setTimeout(r, 20));
 
     expect(seen).toEqual([2]);
   });
@@ -95,7 +93,6 @@ describe('行为：Steps 的状态与回调', () => {
 
     const steps = [...host.querySelectorAll('.lyt-step')];
     steps[1]!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    await new Promise((r) => setTimeout(r, 20));
 
     expect(seen).toEqual([]);
   });
