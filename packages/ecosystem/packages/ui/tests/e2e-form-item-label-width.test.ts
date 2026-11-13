@@ -30,7 +30,6 @@ async function mountItem(props: Record<string, unknown>): Promise<HTMLElement> {
         h(Form as never, { model: {} }, () => [h(FormItem as never, props, () => h('input', {}))]);
     },
   } as never).mount(host);
-  await new Promise((r) => setTimeout(r, 20));
   return host;
 }
 
