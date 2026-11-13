@@ -841,10 +841,34 @@ function handleVModel(
     );
   };
 
-  // ① 组件：沿用 modelValue 约定
+  // ① 组件：默认走 modelValue 约定；带静态 arg 时走「属性名 / onUpdate:属性名」
+  //
+  // ⚠️ 2026-11-13 修（C-20）：此前无论 `v-model:title` 还是 `v-model.trim`，
+  //   都只产出 `modelValue` / `onUpdate:modelValue` —— arg 与修饰符被静默丢弃，
+  //   自定义 model 组件（如 `v-model:title`）收不到 `title`，也拿不到修饰符。
+  //   现在：静态 arg → `title` / `onUpdate:title`；修饰符 → `<arg>Modifiers`（默认 `modelModifiers`）。
   if (node.tagType === ElementTypes.COMPONENT) {
+    const argContent = getExpContent(prop.arg);
+    const isDynamicArg =
+      prop.arg !== undefined &&
+      prop.arg.type === NodeTypes.SIMPLE_EXPRESSION &&
+      !(prop.arg as SimpleExpressionNode).isStatic;
+    const modifiers = prop.modifiers ?? [];
+    const modsValue =
+      modifiers.length > 0
+        ? JSON.stringify(Object.fromEntries(modifiers.map((m) => [m, true])))
+        : undefined;
+
+    if (argContent !== undefined && argContent !== '' && !isDynamicArg) {
+      push(argContent, expContent, false);
+      push(`onUpdate:${argContent}`, `$event => (${expContent} = $event)`, false);
+      if (modsValue !== undefined) push(`${argContent}Modifiers`, modsValue, true);
+      return;
+    }
+
     push('modelValue', expContent, false);
     push('onUpdate:modelValue', `$event => (${expContent} = $event)`, false);
+    if (modsValue !== undefined) push('modelModifiers', modsValue, true);
     return;
   }
 

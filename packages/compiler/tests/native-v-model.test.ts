@@ -136,6 +136,24 @@ describe('原生 v-model（P0 回归）', () => {
     expect(mounted.ctx.sel).toBe('b');
   });
 
+  it('组件 v-model:arg 生成 arg / onUpdate:arg（C-20）', () => {
+    const mounted = mount('<Comp v-model:title="t" />', { t: 'T', Comp: 'Comp' });
+    expect(mounted.props).toHaveProperty('title', 'T');
+    expect(mounted.props).not.toHaveProperty('modelValue');
+    mounted.emit('onUpdate:title', 'N');
+    expect(mounted.ctx.t).toBe('N');
+  });
+
+  it('组件 v-model 修饰符传给 modelModifiers（C-20）', () => {
+    const mounted = mount('<Comp v-model.trim="t" />', { t: 'T', Comp: 'Comp' });
+    expect(mounted.props.modelModifiers).toEqual({ trim: true });
+  });
+
+  it('组件 v-model:arg 修饰符传给 argModifiers（C-20）', () => {
+    const mounted = mount('<Comp v-model:title.lazy="t" />', { t: 'T', Comp: 'Comp' });
+    expect(mounted.props.titleModifiers).toEqual({ lazy: true });
+  });
+
   it('组件形态必须保持 modelValue / onUpdate:modelValue', () => {
     const mounted = mount('<Comp v-model="msg" />', { msg: 'M', Comp: 'Comp' });
     expect(mounted.props.modelValue).toBe('M');
