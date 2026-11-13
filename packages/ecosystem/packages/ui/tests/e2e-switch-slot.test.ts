@@ -40,7 +40,6 @@ async function mountSwitch(
       return () => h(Switch as never, props, slots as never);
     },
   } as never).mount(host);
-  await new Promise((r) => setTimeout(r, 20));
   return host;
 }
 
