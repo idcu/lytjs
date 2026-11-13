@@ -11,7 +11,7 @@ import { createVNode, createTextVNode, createCommentVNode } from '../src/vnode';
 import { createRenderer } from '../src/patch';
 import { registerEventCleanupCallback } from '../src/patch';
 import { Fragment } from '@lytjs/common-vnode';
-import type { VNode } from '@lytjs/common-vnode';
+import type { ComponentInternalInstance, VNode } from '@lytjs/common-vnode';
 import { WebRendererHost } from '@lytjs/adapter-web';
 
 afterEach(() => {
@@ -28,6 +28,106 @@ function newContainer(): HTMLElement {
 function makeRenderer(): ReturnType<typeof createRenderer> {
   return createRenderer(new WebRendererHost());
 }
+
+/**
+ * 带组件实例创建的渲染器。
+ *
+ * `createRenderer(host)` 这条路径**不接收** `setupChildComponent`（`hostToOptions`
+ * 固定写 `undefined`），组件需要 core 注入才能挂载，所以这里走 legacy options 路径，
+ * 用最小的组件实例（type / render / ctx / attrs）驱动 `mountComponent`。
+ */
+function makeComponentRenderer(): ReturnType<typeof createRenderer> {
+  return createRenderer({
+    createElement: (tag: string) => document.createElement(tag),
+    setElementText: (el: Element, text: string) => {
+      el.textContent = text;
+    },
+    insert: (child: Node, parent: Node, anchor?: Node | null) => {
+      parent.insertBefore(child, anchor ?? null);
+    },
+    remove: (child: Node) => child.parentNode?.removeChild(child),
+    createText: (text: string) => document.createTextNode(text),
+    setText: (node: Node, text: string) => {
+      node.textContent = text;
+    },
+    patchProp: () => {},
+    createComment: (text: string) => document.createComment(text),
+    nextSibling: (node: Node) => node.nextSibling,
+    parentNode: (node: Node) => node.parentNode,
+    setupChildComponent: (vnode: VNode, parent: ComponentInternalInstance | null) => {
+      const type = vnode.type as { render: (ctx: object) => unknown };
+      (vnode as unknown as { component: unknown }).component = {
+        type,
+        render: type.render,
+        ctx: {},
+        parent,
+        root: null,
+        subTree: null,
+        vnode,
+        refs: {},
+        attrs: null,
+        props: {},
+      };
+    },
+  } as never);
+}
+
+describe('move - 多根组件', () => {
+  it('★ keyed 重排时多根组件整段移动，DOM 不丢节点', () => {
+    const container = newContainer();
+    const renderer = makeComponentRenderer();
+
+    const CompA = {
+      name: 'CompA',
+      render: () => [createVNode('i', null, 'A1'), createVNode('i', null, 'A2')],
+    };
+    const CompB = {
+      name: 'CompB',
+      render: () => [createVNode('i', null, 'B1'), createVNode('i', null, 'B2')],
+    };
+
+    const v1 = createVNode('div', null, [
+      createVNode(CompA, { key: 'a' }),
+      createVNode(CompB, { key: 'b' }),
+    ]);
+    renderer.mount(v1, container);
+
+    const v2 = createVNode('div', null, [
+      createVNode(CompB, { key: 'b' }),
+      createVNode(CompA, { key: 'a' }),
+    ]);
+    renderer.patch(v1, v2);
+
+    // 负控：旧实现 move() 只 insert(vnode.el)（多根组件的起始锚点），
+    // 真实 DOM 子节点留在原地 ⇒ 顺序仍是 A1 A2 B1 B2，节点数也可能对不上。
+    const root = container.firstElementChild as HTMLElement;
+    expect(Array.from(root.children).map((el) => el.textContent)).toEqual(['B1', 'B2', 'A1', 'A2']);
+    expect(root.querySelectorAll('i').length).toBe(4);
+  });
+
+  it('★ keyed 重排 Fragment 时锚点仍包住自身内容', () => {
+    const container = newContainer();
+    const renderer = makeRenderer();
+
+    const frag = (key: string, a: string, b: string) =>
+      createVNode(Fragment, { key }, [createVNode('i', null, a), createVNode('i', null, b)]);
+
+    const v1 = createVNode('div', null, [frag('a', 'A1', 'A2'), frag('b', 'B1', 'B2')]);
+    renderer.mount(v1, container);
+
+    const v2 = createVNode('div', null, [frag('b', 'B1', 'B2'), frag('a', 'A1', 'A2')]);
+    renderer.patch(v1, v2);
+
+    const root = container.firstElementChild as HTMLElement;
+    expect(Array.from(root.children).map((el) => el.textContent)).toEqual(['B1', 'B2', 'A1', 'A2']);
+    // 负控：旧实现先搬子节点、后搬起始锚点 ⇒ 起始注释跑到内容后面，
+    // 后续 patch 以 vnode.el 为插入点时会落在错误位置。
+    const kinds = Array.from(root.childNodes).map((n) =>
+      n.nodeType === Node.COMMENT_NODE ? '#' : (n as Element).tagName,
+    );
+    expect(kinds).toEqual(['#', 'I', 'I', '#', '#', 'I', 'I', '#']);
+  });
+});
 
 describe('createRenderer 的两条适配路径', () => {
   it('返回 patch / mount / hydrate / unmount / move / diffChildren', () => {

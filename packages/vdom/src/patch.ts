@@ -805,17 +805,39 @@ export function createRenderer<HN, HE extends HN>(
   ): void {
     if (vnode.type === Fragment) {
       // 移动 Fragment children
+      //
+      // ⚠️ 顺序必须是「起始锚点 → 子节点 → 结束锚点」：三者都插到**同一个**
+      //   `anchor` 之前，插入是稳定的，所以先落起始锚点，后续子节点会排到它后面。
+      //   反过来（旧实现：先搬子节点、最后搬起始锚点）会让起始注释落到内容之后 ——
+      //   DOM 元素顺序看着对，但 `vnode.el` 已不在内容头部，下一次 patch 以它为
+      //   插入点就会落到错误位置。
+      const vEl = getVNodeEl(vnode);
+      if (vEl) insert(vEl, container, anchor);
       const children = isArray(vnode.children) ? vnode.children : [];
       for (let i = 0; i < children.length; i++) {
         move(children[i]!, container, anchor, parentComponent, parentSuspense);
       }
-      // 移动锚点
-      const vEl = getVNodeEl(vnode);
-      if (vEl) insert(vEl, container, anchor);
       // FIX: P2-16 添加 null 检查，避免 vnode.anchor 为 null 时的不安全类型断言
       if (vnode.anchor && vnode.anchor !== vnode.el) {
         const anchorEl = vnode.anchor as unknown as HN;
         if (anchorEl) insert(anchorEl, container, anchor);
+      }
+    } else if (
+      vnode.shapeFlag &
+      (ShapeFlags.STATEFUL_COMPONENT | ShapeFlags.FUNCTIONAL_COMPONENT)
+    ) {
+      // 组件：`vnode.el` 只是子树的首个节点（多根时是 Fragment 起始注释），
+      // 元素 / 文本 / 注释单根场景可以只搬它；但多根组件的其余节点会全留在原地。
+      // 统一委托给子树的 move —— Fragment 分支会搬齐所有子节点与两个锚点。
+      const subTree = (vnode.component as ComponentInternalInstance | null | undefined)?.subTree as
+        | VNode
+        | null
+        | undefined;
+      if (subTree) {
+        move(subTree, container, anchor, parentComponent, parentSuspense);
+      } else {
+        const ownEl = getVNodeEl(vnode);
+        if (ownEl) insert(ownEl, container, anchor);
       }
     } else if (vnode.shapeFlag & ShapeFlags.TELEPORT) {
       teleportAPI.moveTeleport(vnode, container, anchor);
