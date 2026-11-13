@@ -92,8 +92,6 @@ async function mountOne(
         return () => h(comp as never, props, { default: () => [h('span', null, 'slot')] });
       },
     } as never).mount(host);
-    // 让可能的微任务/异步子组件跑完
-    await new Promise((r) => setTimeout(r, 5));
   } catch (e) {
     error = e instanceof Error ? e.message : String(e);
   }
