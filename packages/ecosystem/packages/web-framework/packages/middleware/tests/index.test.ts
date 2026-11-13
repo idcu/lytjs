@@ -46,6 +46,30 @@ describe('@lytjs/middleware', () => {
   });
 
   describe('combineMiddlewares', () => {
+    it('★ 重复调用 next() 不会重复执行下游与终点', async () => {
+      const calls: string[] = [];
+      let finalCalls = 0;
+
+      const combined = combineMiddlewares(
+        async (_ctx, next) => {
+          await next();
+          await next(); // 重复调用：必须复用同一个下游 Promise
+        },
+        async (_ctx, next) => {
+          calls.push('m2');
+          await next();
+        },
+      );
+
+      await combined({ request: null }, async () => {
+        finalCalls++;
+      });
+
+      // 负控：旧实现每次 next() 都重新 dispatch ⇒ m2 / 终点各执行两次
+      expect(calls).toEqual(['m2']);
+      expect(finalCalls).toBe(1);
+    });
+
     it('should combine multiple middlewares', async () => {
       const calls: string[] = [];
 

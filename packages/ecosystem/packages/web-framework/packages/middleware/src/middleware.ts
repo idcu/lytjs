@@ -16,22 +16,24 @@ export function createMiddleware(fn: MiddlewareFn): MiddlewareFn {
  */
 export function combineMiddlewares(...middlewares: MiddlewareFn[]): MiddlewareFn {
   return async (ctx: MiddlewareContext, next: () => Promise<void>) => {
-    const index = 0;
-
     const dispatch = async (i: number): Promise<void> => {
       if (i >= middlewares.length) {
         return next();
       }
 
       const middleware = middlewares[i];
-      if (middleware) {
-        await middleware(ctx, () => dispatch(i + 1));
-      } else {
-        await dispatch(i + 1);
+      if (!middleware) {
+        return dispatch(i + 1);
       }
+
+      // ⚠️ 2026-11-13 修（P1）：此前每次调用 `next()` 都重新 `dispatch(i + 1)` ——
+      //   同一个中间件重复调用 `next()` 会**重复执行**下游中间件与终点
+      //   （响应重复写、数据库重复提交）。现在按层记忆：第二次拿到同一个 Promise。
+      let downstream: Promise<void> | undefined;
+      await middleware(ctx, () => (downstream ??= dispatch(i + 1)));
     };
 
-    await dispatch(index);
+    await dispatch(0);
   };
 }
 
