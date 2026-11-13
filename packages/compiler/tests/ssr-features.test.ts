@@ -111,6 +111,23 @@ describe('SSR 编译 - template v-for 的 Fragment 不应被当标签输出', ()
   });
 });
 
+describe('SSR 编译 - vnode 内部属性不落 DOM', () => {
+  it('元素 v-for 的 :key 不输出 key 属性', () => {
+    const render = ssr('<ul><li v-for="x in xs" :key="x">{{ x }}</li></ul>');
+    const html = render({ xs: ['a', 'b'] });
+    expect(html).not.toContain('key=');
+    expect(html).toBe('<ul><li>a</li><li>b</li></ul>');
+  });
+
+  it('普通元素的 :key / :ref 也不输出成属性', () => {
+    const render = ssr('<div><p :key="k" :ref="r">{{ m }}</p></div>');
+    const html = render({ k: 'k1', r: 'r1', m: 'M' });
+    expect(html).not.toContain('key=');
+    expect(html).not.toContain('ref=');
+    expect(html).toBe('<div><p>M</p></div>');
+  });
+});
+
 describe('SSR 编译 - v-model 初态', () => {
   it('文本输入输出 value', () => {
     expect(ssr('<input v-model="msg">')({ msg: 'M' })).toBe('<input value="M">');

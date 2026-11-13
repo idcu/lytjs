@@ -448,6 +448,8 @@ function genSSRElement(element: ElementNode): string {
       // 跳过 v-on、v-model、v-show
       if (prop.name === 'bind') {
         const argContent = prop.arg ? (prop.arg as SimpleExpressionNode).content : undefined;
+        // key / ref 是 vnode 内部属性，不落 DOM（运行时 ssr-renderer 同样跳过）
+        if (argContent === 'key' || argContent === 'ref') continue;
         const expContent = prop.exp ? (prop.exp as SimpleExpressionNode).content : undefined;
         const isDynamicArg =
           !!prop.arg &&
@@ -715,6 +717,11 @@ function genSSRVNodeCall(vnode: VNodeCall): string {
         }
         // 跳过 style（v-show 生成的）
         if (key === 'style') {
+          continue;
+        }
+        // 跳过 vnode 内部属性：key / ref 不落 DOM，运行时 ssr-renderer 同样跳过它们。
+        // 此前 `:key="x"` 会输出成 `key="x"` 属性，与客户端渲染结果不一致。
+        if (key === 'key' || key === 'ref') {
           continue;
         }
         const value =
