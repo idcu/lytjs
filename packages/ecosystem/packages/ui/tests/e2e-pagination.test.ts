@@ -21,7 +21,7 @@
  */
 
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { createApp, h } from '@lytjs/core';
+import { createApp, h, nextTick } from '@lytjs/core';
 import { signal } from '@lytjs/core/runtime';
 import { Pagination } from '../src/components/Pagination';
 
@@ -31,7 +31,7 @@ afterEach(() => {
   for (const x of hosts.splice(0)) x.remove();
 });
 
-const flush = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
+const flush = (): Promise<void> => nextTick();
 
 /** 受控挂载：signal 驱动 current/pageSize props（用于怪癖 A 验证） */
 async function mountPagination(
@@ -48,7 +48,6 @@ async function mountPagination(
         h(Pagination as never, { total: 100, ...props, current: current(), pageSize: pageSize() });
     },
   } as never).mount(host);
-  await flush();
   return {
     host,
     setProp: (k, v) => (k === 'current' ? current.set(v) : pageSize.set(v)),
