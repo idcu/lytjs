@@ -2,8 +2,8 @@
 scope: verify
 status: active
 severity: P1
-last-verified: 2026-10-10
-triggers: 0
+last-verified: 2026-11-13
+triggers: 1
 keywords: [恒过断言, toBeDefined, 布尔, 门禁形同虚设, 假绿, matcher 误用]
 ---
 
@@ -15,6 +15,7 @@ keywords: [恒过断言, toBeDefined, 布尔, 门禁形同虚设, 假绿, matche
 ## 根因
 
 `toBeDefined()` 只排除 `undefined`；`false` 也是 defined ⇒ 断言**恒真**。
+SSR 只看 string，null 产物也恒真——占位符/null 因此一直绿。
 实测：`compiler/tests/edge-cases.test.ts` 的"自定义 directive transform 应被调用"用的就是它，
 而当时 `options.directiveTransforms` **完全未被消费**（`called` 恒为 `false`）——
 该测试却一直绿，把缺陷藏了 ≥6 天。

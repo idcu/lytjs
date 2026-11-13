@@ -47,8 +47,9 @@ keywords: [坑库, 索引, 假绿, 门禁, 负控]
 | TS2307 | [root](verify/undeclared-root-dep-gate.md) |
 | 残留缺陷 | [residual](core/residuals.md) |
 | dist mtime | [mtime](verify/dist-mtime.md) |
-| 快照落后 HEAD | [cov-age](verify/coverage-snapshot-commit-staleness.md) |
-| 体积/行为测旧 dist | [stale](verify/bundle-gate-reads-stale-dist.md) |
+| 快照落后 | [cov-age](verify/coverage-snapshot-commit-staleness.md) |
+| 测旧 dist | [stale](verify/bundle-gate-reads-stale-dist.md) |
 | 负控锚点漂移 | [anchor](verify/negative-control-anchor-drift.md) |
 | 子串假通过 | [substr](verify/substring-probe-comment-false-pass.md) |
-| test 首帧固定等待 | [once](verify/test-once-unreproduced.md) |
+| 首帧固定等待 | [once](verify/test-once-unreproduced.md) |
+| SSR 产物未断言 | [true](verify/always-true-assertion.md) |
