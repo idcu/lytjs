@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-11-09",
-  "total": 323,
+  "updatedAt": "2026-11-13",
+  "total": 319,
   "files": {
     "packages/adapter-web/src/web-host-extended.ts": 1,
     "packages/adapter-web/src/web-host.ts": 2,
@@ -96,7 +96,7 @@
     "packages/ecosystem/packages/ui/src/components/Tooltip.ts": 1,
     "packages/ecosystem/packages/ui/src/components/Transfer.ts": 1,
     "packages/ecosystem/packages/ui/src/components/Transition.ts": 3,
-    "packages/ecosystem/packages/ui/src/components/TreeSelect.ts": 11,
+    "packages/ecosystem/packages/ui/src/components/TreeSelect.ts": 7,
     "packages/ecosystem/packages/web-framework/packages/http-server/src/server.ts": 1,
     "packages/ecosystem/packages/web-framework/packages/middleware-rate-limit/src/rate-limit.ts": 3,
     "packages/ecosystem/packages/web-framework/packages/middleware/src/chain.ts": 2,
@@ -117,7 +117,7 @@
     "packages/vdom/src/list-diff.ts": 2,
     "packages/vdom/src/patch-children.ts": 1,
     "packages/vdom/src/patch-component.ts": 10,
-    "packages/vdom/src/patch-element.ts": 5,
+    "packages/vdom/src/patch-element.ts": 4,
     "packages/vdom/src/patch-fragment.ts": 2,
     "packages/vdom/src/patch-suspense.ts": 2,
     "packages/vdom/src/patch-teleport.ts": 14,
