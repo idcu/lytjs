@@ -20,7 +20,8 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "test": "vitest run"
+    "test": "vitest run",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@lytjs/common-is": "workspace:*"

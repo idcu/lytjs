@@ -31,7 +31,8 @@
     "build": "tsup",
     "test": "vitest run",
     "test:watch": "vitest",
-    "clean": "rm -rf dist .tsbuildinfo"
+    "clean": "rm -rf dist .tsbuildinfo",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@lytjs/common-is": "workspace:*",
