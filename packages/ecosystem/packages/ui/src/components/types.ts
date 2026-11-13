@@ -1359,7 +1359,10 @@ export interface TreeSelectProps {
   clearable?: boolean;
   multiple?: boolean;
   filterable?: boolean;
+  /** 仅在 `multiple=true` 时生效；开启后点击节点行/label 走复选框级联勾选。 */
   showCheckbox?: boolean;
+  /** 仅 `showCheckbox && multiple` 时有意义；父子勾选互不影响（无级联、无半选）。 */
+  checkStrictly?: boolean;
   class?: string;
   id?: string;
   ariaLabel?: string;
@@ -1377,8 +1380,10 @@ export interface TreeSelectSetupProps extends Record<string, unknown> {
   disabled: boolean;
   clearable: boolean;
   multiple: boolean;
+  /** 仅 `showCheckbox && multiple` 时有意义；父子勾选互不影响（无级联、无半选）。 */
   checkStrictly: boolean;
   filterable: boolean;
+  /** 仅在 `multiple=true` 时生效；开启后点击节点行/label 走复选框级联勾选。 */
   showCheckbox: boolean;
   class: string;
   id: string;

@@ -479,6 +479,136 @@ describe('TreeSelect — 多选（修复怪癖 A）', () => {
   });
 });
 
+describe('TreeSelect — 多选复选框级联（showCheckbox）', () => {
+  const nodeOf = (host: HTMLElement, text: string): HTMLElement | null =>
+    qa(host, '.lyt-tree-node').find((n) => n.textContent?.includes(text)) ?? null;
+  const checkboxOf = (host: HTMLElement, text: string): HTMLInputElement | null =>
+    (nodeOf(host, text)?.querySelector('input[type="checkbox"]') as HTMLInputElement | null) ??
+    null;
+  const checkedStateOf = (host: HTMLElement, text: string): string | null =>
+    checkboxOf(host, text)?.getAttribute('aria-checked') ?? null;
+  /** jsdom 下直接派发 change，避免 click 的默认行为改变 input.checked 干扰判定 */
+  async function toggleCheckbox(host: HTMLElement, text: string): Promise<void> {
+    const input = checkboxOf(host, text);
+    expect(input).not.toBeNull();
+    input!.dispatchEvent(new Event('change', { bubbles: true }));
+    await nextTick();
+  }
+
+  it('勾父选子：勾选浙江后其全部后代一起选中', async () => {
+    const onChange = vi.fn();
+    const host = await mountTreeSelect({
+      multiple: true,
+      showCheckbox: true,
+      modelValue: [],
+      onChange,
+      defaultExpandAll: true,
+    });
+    await open(host);
+    await toggleCheckbox(host, '浙江');
+    const last = onChange.mock.lastCall![0] as (string | number)[];
+    expect([...last].sort()).toEqual(['hz', 'nb', 'zj']);
+    expect(checkedStateOf(host, '浙江')).toBe('true');
+    expect(checkedStateOf(host, '杭州')).toBe('true');
+    expect(checkedStateOf(host, '宁波')).toBe('true');
+  });
+
+  it('子全选时父选中：勾上最后一个子节点后父节点进入值数组', async () => {
+    const onChange = vi.fn();
+    const host = await mountTreeSelect({
+      multiple: true,
+      showCheckbox: true,
+      modelValue: ['hz'],
+      onChange,
+      defaultExpandAll: true,
+    });
+    await open(host);
+    await toggleCheckbox(host, '宁波');
+    const last = onChange.mock.lastCall![0] as (string | number)[];
+    expect([...last].sort()).toEqual(['hz', 'nb', 'zj']);
+    expect(checkedStateOf(host, '浙江')).toBe('true');
+  });
+
+  it('部分子选中时父半选：父不进值数组，aria-checked=mixed 且带 indeterminate 类', async () => {
+    const host = await mountTreeSelect({
+      multiple: true,
+      showCheckbox: true,
+      modelValue: ['hz'],
+      defaultExpandAll: true,
+    });
+    await open(host);
+    expect(checkedStateOf(host, '浙江')).toBe('mixed');
+    expect(nodeOf(host, '浙江')!.querySelector('.lyt-checkbox')!.className).toContain(
+      'lyt-checkbox--indeterminate',
+    );
+    expect(checkedStateOf(host, '杭州')).toBe('true');
+    expect(q(host, '.lyt-tree-select-value')!.textContent).toBe('杭州');
+  });
+
+  it('checkStrictly 下父子互不影响：只改自身，不级联、无半选', async () => {
+    const onChange = vi.fn();
+    const host = await mountTreeSelect({
+      multiple: true,
+      showCheckbox: true,
+      checkStrictly: true,
+      modelValue: [],
+      onChange,
+      defaultExpandAll: true,
+    });
+    await open(host);
+
+    await toggleCheckbox(host, '浙江');
+    expect(onChange.mock.lastCall![0]).toEqual(['zj']);
+    expect(checkedStateOf(host, '杭州')).toBe('false');
+    expect(checkedStateOf(host, '宁波')).toBe('false');
+
+    await toggleCheckbox(host, '杭州');
+    expect([...(onChange.mock.lastCall![0] as (string | number)[])].sort()).toEqual(['hz', 'zj']);
+    expect(checkedStateOf(host, '浙江')).toBe('true');
+
+    await toggleCheckbox(host, '浙江');
+    expect(onChange.mock.lastCall![0]).toEqual(['hz']);
+    expect(checkedStateOf(host, '杭州')).toBe('true');
+  });
+
+  it('showCheckbox=false：DOM 中不存在 checkbox（不是靠 CSS 隐藏）', async () => {
+    const host = await mountTreeSelect({
+      multiple: true,
+      showCheckbox: false,
+      defaultExpandAll: true,
+    });
+    await open(host);
+    expect(qa(host, 'input[type="checkbox"]')).toHaveLength(0);
+  });
+
+  it('showCheckbox=true 但 multiple=false：不渲染 checkbox', async () => {
+    const host = await mountTreeSelect({ showCheckbox: true, defaultExpandAll: true });
+    await open(host);
+    expect(qa(host, 'input[type="checkbox"]')).toHaveLength(0);
+  });
+
+  it('showCheckbox=false 时点击 label 的选中行为与改动前一致', async () => {
+    // 边界：未开启复选框时，行点击仍是原有的“选中/高亮 + multiple 切换”，不得走级联。
+    const onChange = vi.fn();
+    const host = await mountTreeSelect({
+      multiple: true,
+      showCheckbox: false,
+      modelValue: [],
+      onChange,
+      defaultExpandAll: true,
+    });
+    await open(host);
+    nodeOf(host, '浙江')!
+      .querySelector('.lyt-tree-node-label')!
+      .dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await nextTick();
+    expect(onChange).toHaveBeenLastCalledWith(['zj'], expect.objectContaining({ label: '浙江' }));
+    expect(nodeOf(host, '浙江')!.className).toContain('is-selected');
+    expect(checkedStateOf(host, '浙江')).toBeNull();
+    expect(qa(host, 'input[type="checkbox"]')).toHaveLength(0);
+  });
+});
+
 describe('TreeSelect — 数据源契约与组件级 disabled', () => {
   it('只传 options 时树正常渲染', async () => {
     const host = await mountTreeSelect({ options: DATA }, null);

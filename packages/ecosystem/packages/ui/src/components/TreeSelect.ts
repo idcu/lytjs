@@ -11,7 +11,12 @@
 import { defineComponent, type PropType } from '@lytjs/component';
 import { createVNode, type VNode, signal } from '@lytjs/core/runtime';
 import { isString, isObject } from '@lytjs/common-is';
-import { getComboboxA11yProps, getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
+import {
+  getComboboxA11yProps,
+  getButtonA11yProps,
+  getInputControlA11yProps,
+  mergeA11yProps,
+} from '@lytjs/common-a11y';
 
 export interface TreeSelectNode {
   value: string | number;
@@ -30,6 +35,16 @@ export interface TreeSelectSetupProps {
   placeholder: string;
   multiple: boolean;
   clearable: boolean;
+  /**
+   * 是否渲染复选框。**仅在 `multiple=true` 时生效**；单选下该 prop 被忽略。
+   * 开启后点击节点行/label 走级联勾选，不再是原有的单选/多选选中语义。
+   */
+  showCheckbox: boolean;
+  /**
+   * 父子勾选互不影响。仅在 `showCheckbox && multiple` 时有意义；
+   * 为 true 时不做级联、不产生半选。
+   */
+  checkStrictly: boolean;
   filterable: boolean;
   filterPlaceholder: string;
   nodeKey: string;
@@ -62,6 +77,10 @@ export const TreeSelect = defineComponent({
     placeholder: { type: String, default: '请选择' },
     multiple: { type: Boolean, default: false },
     clearable: { type: Boolean, default: false },
+    /** 仅 `multiple=true` 时生效；单选下忽略。 */
+    showCheckbox: { type: Boolean, default: false },
+    /** 仅 `showCheckbox && multiple` 时有意义；父子互不影响。 */
+    checkStrictly: { type: Boolean, default: false },
     filterable: { type: Boolean, default: false },
     filterPlaceholder: { type: String, default: '请输入搜索内容' },
     nodeKey: { type: String, default: 'value' },
@@ -101,8 +120,7 @@ export const TreeSelect = defineComponent({
       const keys: (string | number)[] = [];
       const traverse = (nodeList: TreeSelectNode[]) => {
         for (const node of nodeList) {
-          const nodeDict = node as unknown as NodeDict;
-          const nodeValue = nodeDict[_props.nodeKey];
+          const nodeValue = nodeValueOf(node);
           if (typeof nodeValue === 'string' || typeof nodeValue === 'number') {
             keys.push(nodeValue);
           }
@@ -149,8 +167,7 @@ export const TreeSelect = defineComponent({
       value: string | number,
     ): TreeSelectNode | null => {
       for (const node of nodes) {
-        const nodeDict = node as unknown as NodeDict;
-        if (nodeDict[_props.nodeKey] === value) return node;
+        if (nodeValueOf(node) === value) return node;
         if (node.children && node.children.length > 0) {
           const found = findNodeByValue(node.children, value);
           if (found) return found;
@@ -163,6 +180,94 @@ export const TreeSelect = defineComponent({
       const v = _props.modelValue;
       if (typeof v !== 'string' && typeof v !== 'number') return null;
       return findNodeByValue(treeData(), v);
+    };
+
+    /** 节点值（按 `nodeKey` 取值） */
+    function nodeValueOf(node: TreeSelectNode): string | number {
+      return (node as unknown as NodeDict)[_props.nodeKey] as string | number;
+    }
+
+    const childrenOf = (node: TreeSelectNode): TreeSelectNode[] =>
+      Array.isArray(node.children) ? node.children : [];
+
+    /** 收集节点自身及全部后代的 key（深度优先，自身在前） */
+    const collectSubtreeValues = (node: TreeSelectNode): (string | number)[] => {
+      const values: (string | number)[] = [nodeValueOf(node)];
+      for (const child of childrenOf(node)) values.push(...collectSubtreeValues(child));
+      return values;
+    };
+
+    /** 完整数据源的 value → 父节点 value 映射（顶层为 null） */
+    const buildParentMap = (): Map<string | number, string | number | null> => {
+      const map = new Map<string | number, string | number | null>();
+      const walk = (nodes: TreeSelectNode[], parent: string | number | null) => {
+        for (const node of nodes) {
+          const value = nodeValueOf(node);
+          map.set(value, parent);
+          walk(childrenOf(node), value);
+        }
+      };
+      walk(treeData(), null);
+      return map;
+    };
+
+    /** 子树内是否有任一节点在值数组中（用于半选判定） */
+    const subtreeHasChecked = (node: TreeSelectNode, values: (string | number)[]): boolean => {
+      if (values.includes(nodeValueOf(node))) return true;
+      return childrenOf(node).some((child) => subtreeHasChecked(child, values));
+    };
+
+    /** 勾选态：checked / unchecked / indeterminate（仅非 checkStrictly 会产生半选） */
+    const checkStateOf = (node: TreeSelectNode): 'checked' | 'unchecked' | 'indeterminate' => {
+      const values = multiValues();
+      if (values.includes(nodeValueOf(node))) return 'checked';
+      if (_props.checkStrictly) return 'unchecked';
+      return childrenOf(node).some((child) => subtreeHasChecked(child, values))
+        ? 'indeterminate'
+        : 'unchecked';
+    };
+
+    /**
+     * 复选框勾选（仅 `multiple && showCheckbox` 路径）。
+     *
+     * - 非 `checkStrictly`：勾父选全部后代；子全选时父进入值数组；部分子选中父半选
+     *   （父不进数组）。祖先自底向上重算，保证「全选才算选中」。
+     * - `checkStrictly`：只改自身，不向上/向下传播，无半选。
+     */
+    const handleCheck = (node: TreeSelectNode) => {
+      if (_props.disabled || node.disabled) return;
+      const value = nodeValueOf(node);
+      const current = multiValues();
+      let next: (string | number)[];
+
+      if (_props.checkStrictly) {
+        next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
+      } else {
+        const set = new Set(current);
+        const subtreeValues = collectSubtreeValues(node);
+        if (current.includes(value)) {
+          for (const v of subtreeValues) set.delete(v);
+        } else {
+          for (const v of subtreeValues) set.add(v);
+        }
+
+        const parentMap = buildParentMap();
+        let parentValue = parentMap.get(value) ?? null;
+        while (parentValue !== null) {
+          const parentNode = findNodeByValue(treeData(), parentValue);
+          if (!parentNode) break;
+          const allChildrenChecked = childrenOf(parentNode).every((child) =>
+            set.has(nodeValueOf(child)),
+          );
+          if (allChildrenChecked) set.add(parentValue);
+          else set.delete(parentValue);
+          parentValue = parentMap.get(parentValue) ?? null;
+        }
+        next = Array.from(set);
+      }
+
+      emit('update:modelValue', next);
+      _props.onChange?.(next, node);
     };
 
     const handleToggle = () => {
@@ -195,8 +300,7 @@ export const TreeSelect = defineComponent({
 
     const handleSelect = (node: TreeSelectNode) => {
       if (_props.disabled || node.disabled) return;
-      const nodeDict = node as unknown as NodeDict;
-      const nodeValue = nodeDict[_props.nodeKey] as string | number;
+      const nodeValue = nodeValueOf(node);
       if (_props.multiple) {
         // 多选：切换选中态并保持下拉展开，便于连续勾选
         const current = multiValues();
@@ -215,8 +319,7 @@ export const TreeSelect = defineComponent({
     const handleToggleExpand = (node: TreeSelectNode, e: Event) => {
       e.stopPropagation();
       if (_props.disabled) return;
-      const nodeDict = node as unknown as NodeDict;
-      const nodeKey = nodeDict[_props.nodeKey] as string | number;
+      const nodeKey = nodeValueOf(node);
       const keys = expandedKeys();
       if (keys.includes(nodeKey)) {
         expandedKeys.set(keys.filter((k) => k !== nodeKey));
@@ -244,14 +347,15 @@ export const TreeSelect = defineComponent({
 
     const renderNode = (node: TreeSelectNode, level: number = 0): VNode => {
       const keys = expandedKeys();
-      const nodeDict = node as unknown as NodeDict;
-      const nodeKey = nodeDict[_props.nodeKey] as string | number;
+      const nodeKey = nodeValueOf(node);
       // 过滤期间强制展开命中父链，否则深层命中项不可见
       const isExpanded = filterQuery().length > 0 || keys.includes(nodeKey);
       const isSelected = _props.multiple
         ? multiValues().includes(nodeKey)
         : nodeKey === _props.modelValue;
       const hasChildren = node.children && node.children.length > 0;
+      // 复选框仅在多选下生效；单选保持既有 DOM 与交互不变
+      const usesCheckbox = _props.multiple && _props.showCheckbox;
 
       const nodeChildren: VNode[] = [];
 
@@ -278,6 +382,48 @@ export const TreeSelect = defineComponent({
         );
       }
 
+      if (usesCheckbox) {
+        const state = checkStateOf(node);
+        const checked = state === 'checked';
+        const indeterminate = state === 'indeterminate';
+        const checkDisabled = _props.disabled || node.disabled;
+        const checkboxClasses = ['lyt-checkbox'];
+        if (checked) checkboxClasses.push('lyt-checkbox--checked');
+        if (indeterminate) checkboxClasses.push('lyt-checkbox--indeterminate');
+        if (checkDisabled) checkboxClasses.push('lyt-checkbox--disabled');
+
+        const checkboxA11y = getInputControlA11yProps({
+          ariaLabel: node.label,
+          disabled: checkDisabled,
+          checked: checked ? true : indeterminate ? 'mixed' : false,
+        });
+
+        nodeChildren.push(
+          createVNode(
+            'label',
+            {
+              class: checkboxClasses.join(' '),
+              // 勾选框自己处理 change；阻止冒泡避免行点击再走一次级联
+              onClick: (e: Event) => e.stopPropagation(),
+            },
+            [
+              createVNode(
+                'input',
+                mergeA11yProps(checkboxA11y, {
+                  type: 'checkbox',
+                  class: 'lyt-checkbox__input',
+                  checked,
+                  disabled: checkDisabled,
+                  onChange: () => handleCheck(node),
+                }),
+                [],
+              ),
+              createVNode('span', { class: 'lyt-checkbox__inner' }, []),
+            ],
+          ),
+        );
+      }
+
       const labelBtnProps = getButtonA11yProps({
         ariaLabel: node.label,
         disabled: node.disabled,
@@ -300,7 +446,7 @@ export const TreeSelect = defineComponent({
             { 'is-selected': isSelected, 'is-disabled': node.disabled, 'is-expanded': isExpanded },
           ],
           style: { paddingLeft: `${level * 20}px` },
-          onClick: () => handleSelect(node),
+          onClick: () => (usesCheckbox ? handleCheck(node) : handleSelect(node)),
         },
         nodeChildren,
       );
