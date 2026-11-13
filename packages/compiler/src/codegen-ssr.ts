@@ -200,19 +200,11 @@ function genSSRChildren(children: TemplateChildNode[]): string {
       case NodeTypes.INTERPOLATION: {
         const node = child as InterpolationNode;
         const content = (node.content as SimpleExpressionNode).content;
-        // FIX: P1-14 SSR 插值表达式白名单验证，防止代码注入
-        const isValidExpr = /^[a-zA-Z_$][a-zA-Z0-9_$]*(\.[a-zA-Z_$][a-zA-Z0-9_$]*)*$/.test(content);
-        if (!isValidExpr) {
-          if (__DEV__) {
-            console.warn(
-              `[lytjs/compiler] Invalid interpolation expression in SSR: "${content}". ` +
-                `Only simple property access paths are allowed.`,
-            );
-          }
-          parts.push(`'[invalid expression]'`);
-        } else {
-          parts.push(`escapeHtml(${px(content)} == null ? '' : String(${px(content)}))`);
-        }
+        // 2026-11-13 撤销 P1-14 的「简单属性路径」白名单：
+        // 模板代码由开发者编写、编译成 render 函数后执行，不是不可信输入；
+        // 白名单不构成安全边界，只会让 SSR 与 vnode 路径行为分叉（复杂表达式变占位符）。
+        // XSS 防护由下方 escapeHtml 负责，表达式语法交给解析器。
+        parts.push(`escapeHtml(${px(content)} == null ? '' : String(${px(content)}))`);
         break;
       }
 
@@ -259,21 +251,9 @@ function genSSRChildren(children: TemplateChildNode[]): string {
             );
           } else if (c.type === NodeTypes.INTERPOLATION) {
             const content = ((c as InterpolationNode).content as SimpleExpressionNode).content;
-            // FIX: P1-4 SSR CompoundExpression 插值白名单验证，防止代码注入
-            const isValidExpr = /^[a-zA-Z_$][a-zA-Z0-9_$]*(\.[a-zA-Z_$][a-zA-Z0-9_$]*)*$/.test(
-              content,
-            );
-            if (!isValidExpr) {
-              if (__DEV__) {
-                console.warn(
-                  `[lytjs/compiler] Invalid interpolation expression in SSR CompoundExpression: "${content}". ` +
-                    `Only simple property access paths are allowed.`,
-                );
-              }
-              childParts.push(`'[invalid expression]'`);
-            } else {
-              childParts.push(`escapeHtml(${px(content)} == null ? '' : String(${px(content)}))`);
-            }
+            // 与上方 INTERPOLATION 同理：表达式取自解析器产物，白名单不构成安全边界，
+            // 输出侧统一 escapeHtml；此处不再把复杂表达式替换成占位符。
+            childParts.push(`escapeHtml(${px(content)} == null ? '' : String(${px(content)}))`);
           }
         }
         parts.push(`(${childParts.join(' + ')})`);

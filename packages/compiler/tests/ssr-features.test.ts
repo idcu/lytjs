@@ -69,6 +69,15 @@ describe('SSR 编译 - 组件插槽', () => {
   });
 });
 
+describe('SSR 编译 - 插值表达式', () => {
+  it('接受解析器已接受的二元/三元/调用表达式，与 vnode 路径一致', () => {
+    const render = ssr('<div>{{ a + 1 }}-{{ ok ? "A" : "B" }}-{{ fmt(x) }}</div>');
+    expect(render({ a: 1, ok: true, x: 'z', fmt: (v: string) => v.toUpperCase() })).toBe(
+      '<div>2-A-Z</div>',
+    );
+  });
+});
+
 describe('SSR 编译 - v-model 初态', () => {
   it('文本输入输出 value', () => {
     expect(ssr('<input v-model="msg">')({ msg: 'M' })).toBe('<input value="M">');
