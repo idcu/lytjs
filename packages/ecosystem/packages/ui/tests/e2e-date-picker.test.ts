@@ -41,7 +41,6 @@ async function mountPicker(props: Record<string, unknown> = {}): Promise<HTMLEle
       return () => h(DatePicker as never, props);
     },
   } as never).mount(host);
-  await new Promise((r) => setTimeout(r, 30));
   return host;
 }
 
