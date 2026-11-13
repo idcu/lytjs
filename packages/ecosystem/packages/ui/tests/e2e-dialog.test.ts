@@ -85,7 +85,6 @@ async function mountDialog(
         );
     },
   } as never).mount(host);
-  await tick(30);
   return { host, mv };
 }
 
