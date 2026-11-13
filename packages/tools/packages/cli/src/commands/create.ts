@@ -132,6 +132,10 @@ export function generateProjectFiles(
       // 模板改用 `.ts` + `template` 字符串 —— 由 @lytjs/core 的**运行时模板编译**
       // 直接支持（2026-09-26 打通），因此不需要任何构建期插件。
       vite: '^5.0.0',
+      // ⚠️ 2026-11-13：模板生成 tsconfig.json / tsconfig.node.json 与 .ts 源码，
+      // 却没声明 typescript ⇒ 生成项目里 `tsc` 直接 command not found。
+      // 版本与主仓保持一致，避免装到过旧编译器。
+      typescript: '^5.8.2',
     },
   };
 
@@ -153,6 +157,9 @@ export function generateProjectFiles(
     // ⚠️ `node server` 跑不了 `.ts`（此前必失败）；用 tsx 直接执行
     packageJson.scripts['preview'] = 'tsx server.ts';
     packageJson.devDependencies['tsx'] = '^4.0.0';
+    // ⚠️ 2026-11-13：server.ts 直接 import node:fs / node:path / node:http / node:url，
+    // 不声明 @types/node 时生成的 .ts 源码类型检查必失败（skipLibCheck 救不了源码）。
+    packageJson.devDependencies['@types/node'] = '^22.10.5';
   }
 
   // Router template: add @lytjs/router

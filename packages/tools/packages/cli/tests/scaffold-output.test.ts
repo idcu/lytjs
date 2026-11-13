@@ -81,6 +81,22 @@ describe('脚手架产物', () => {
     }
   });
 
+  it('★ 每个模板都声明了自身文件所需的 devDependencies', () => {
+    for (const template of ['minimal', 'default', 'ssr', 'router', 'store', 'full']) {
+      const p = generate(template);
+      // 模板生成了 tsconfig.json / tsconfig.node.json 与 .ts 源码，但没有声明
+      // typescript ⇒ 用户在生成项目里跑 `tsc` 直接 command not found。
+      expect(p.pkg.devDependencies.typescript, `${template}: typescript`).toEqual(
+        expect.any(String),
+      );
+    }
+
+    // SSR 的 server.ts 直接 import node:fs / node:path / node:http / node:url，
+    // 没有 @types/node 时生成的 .ts 源码类型检查必失败。
+    const ssr = generate('ssr');
+    expect(ssr.pkg.devDependencies['@types/node'], 'ssr: @types/node').toEqual(expect.any(String));
+  });
+
   it('index.html 引用的静态资源真实存在', () => {
     const p = generate('default');
     expect(p.files).toContain('public/vite.svg');
