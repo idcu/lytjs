@@ -7,30 +7,6 @@
 # 加一行前请先想清楚：这个类名是**该补样式**还是**该从组件里删掉**？
 # 两条都不做而只是加进基线，等于把「裸 DOM」正式固化为契约。
 #
-DatePicker → lyt-date-picker__calendar
-DatePicker → lyt-date-picker__clear
-DatePicker → lyt-date-picker__confirm-btn
-DatePicker → lyt-date-picker__day
-DatePicker → lyt-date-picker__day--disabled
-DatePicker → lyt-date-picker__day--empty
-DatePicker → lyt-date-picker__day--in-range
-DatePicker → lyt-date-picker__day--selected
-DatePicker → lyt-date-picker__day--today
-DatePicker → lyt-date-picker__days
-DatePicker → lyt-date-picker__dropdown
-DatePicker → lyt-date-picker__footer
-DatePicker → lyt-date-picker__header
-DatePicker → lyt-date-picker__input
-DatePicker → lyt-date-picker__input--placeholder
-DatePicker → lyt-date-picker__month-label
-DatePicker → lyt-date-picker__nav-btn
-DatePicker → lyt-date-picker__shortcut
-DatePicker → lyt-date-picker__shortcuts
-DatePicker → lyt-date-picker__time
-DatePicker → lyt-date-picker__time-input
-DatePicker → lyt-date-picker__trigger
-DatePicker → lyt-date-picker__week-header
-DatePicker → lyt-date-picker__weekday
 TimePicker → lyt-time-picker__clear
 TimePicker → lyt-time-picker__confirm-btn
 TimePicker → lyt-time-picker__dropdown

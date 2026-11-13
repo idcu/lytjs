@@ -2611,6 +2611,191 @@
   gap: 4px;
 }
 
+/* ===== DatePicker ===== */
+.lyt-date-picker__trigger {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+}
+.lyt-date-picker__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lyt-date-picker__input--placeholder {
+  color: var(--lyt-text-color-placeholder);
+}
+.lyt-date-picker__clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  color: var(--lyt-text-color-placeholder);
+  cursor: pointer;
+}
+.lyt-date-picker__clear:hover {
+  color: var(--lyt-text-color-regular);
+  background: var(--lyt-border-color-lighter);
+}
+.lyt-date-picker__dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 2000;
+  padding: 8px;
+  background: var(--lyt-bg-color);
+  border: 1px solid var(--lyt-border-color-light);
+  border-radius: var(--lyt-border-radius-base);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+.lyt-date-picker__calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 224px;
+}
+.lyt-date-picker__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.lyt-date-picker__nav-btn {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: var(--lyt-border-radius-small);
+  background: transparent;
+  color: var(--lyt-text-color-secondary);
+  font-size: 10px;
+  cursor: pointer;
+}
+.lyt-date-picker__nav-btn:hover {
+  background: var(--lyt-border-color-lighter);
+  color: var(--lyt-color-primary);
+}
+.lyt-date-picker__month-label {
+  flex: 1 1 auto;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--lyt-text-color-primary);
+}
+.lyt-date-picker__week-header,
+.lyt-date-picker__days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.lyt-date-picker__weekday {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  color: var(--lyt-text-color-secondary);
+  font-size: 12px;
+}
+.lyt-date-picker__day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: var(--lyt-border-radius-small);
+  background: transparent;
+  color: var(--lyt-text-color-regular);
+  font-size: 13px;
+  cursor: pointer;
+}
+.lyt-date-picker__day:hover {
+  background: var(--lyt-border-color-lighter);
+}
+.lyt-date-picker__day--empty {
+  pointer-events: none;
+}
+.lyt-date-picker__day--today {
+  color: var(--lyt-color-primary);
+  font-weight: 600;
+}
+.lyt-date-picker__day--in-range {
+  background: rgba(64, 158, 255, 0.12);
+}
+.lyt-date-picker__day--selected {
+  background: var(--lyt-color-primary);
+  color: #fff;
+}
+.lyt-date-picker__day--disabled {
+  color: var(--lyt-text-color-placeholder);
+  cursor: not-allowed;
+}
+.lyt-date-picker__day--disabled:hover {
+  background: transparent;
+}
+.lyt-date-picker__time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--lyt-border-color-lighter);
+}
+.lyt-date-picker__time-input {
+  width: 40px;
+  height: 26px;
+  padding: 0 4px;
+  border: 1px solid var(--lyt-border-color);
+  border-radius: var(--lyt-border-radius-small);
+  outline: none;
+  text-align: center;
+  box-sizing: border-box;
+}
+.lyt-date-picker__time-input:focus {
+  border-color: var(--lyt-color-primary);
+}
+.lyt-date-picker__confirm-btn {
+  height: 26px;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--lyt-border-radius-small);
+  background: var(--lyt-color-primary);
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+.lyt-date-picker__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--lyt-border-color-lighter);
+}
+.lyt-date-picker__shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.lyt-date-picker__shortcut {
+  padding: 2px 4px;
+  border: none;
+  border-radius: var(--lyt-border-radius-small);
+  background: transparent;
+  color: var(--lyt-color-primary);
+  font-size: 12px;
+  cursor: pointer;
+}
+.lyt-date-picker__shortcut:hover {
+  background: rgba(64, 158, 255, 0.12);
+}
+
 /* ===== Descriptions ===== */
 .lyt-descriptions {
   display: grid;
