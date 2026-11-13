@@ -15,7 +15,7 @@
  */
 
 import { describe, it, expect, afterEach } from 'vitest';
-import { createApp, h } from '@lytjs/core';
+import { createApp, h, nextTick } from '@lytjs/core';
 import { DatePicker } from '../src/components/DatePicker';
 
 const hosts: HTMLElement[] = [];
@@ -48,12 +48,11 @@ const q = (host: HTMLElement, sel: string): HTMLElement | null =>
   host.querySelector(sel) as HTMLElement | null;
 const qa = (host: HTMLElement, sel: string): HTMLElement[] =>
   [...host.querySelectorAll(sel)] as HTMLElement[];
-const tick = (): Promise<void> => new Promise((r) => setTimeout(r, 20));
 const trigger = (host: HTMLElement): HTMLElement => q(host, '.lyt-date-picker__trigger')!;
 const dayCells = (host: HTMLElement): HTMLElement[] => qa(host, '.lyt-date-picker__day');
 const click = async (el: HTMLElement): Promise<void> => {
   el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-  await tick();
+  await nextTick();
 };
 
 describe('DatePicker — 渲染与开合', () => {
@@ -244,7 +243,7 @@ describe('DatePicker — 范围与时间', () => {
     const inputs = qa(host, '.lyt-date-picker__time-input') as HTMLInputElement[];
     inputs[0]!.value = '13';
     inputs[0]!.dispatchEvent(new Event('input', { bubbles: true }));
-    await tick();
+    await nextTick();
     await click(q(host, '.lyt-date-picker__confirm-btn')!);
     expect(seen).toEqual([`${fmt(Y, M, 4)} 13:00:00`]);
   });
