@@ -224,8 +224,14 @@ export function defineAsyncComponent(
   const AsyncComponentWrapper: ComponentOptions = {
     name: 'AsyncComponentWrapper',
 
-    setup(_props: Record<string, unknown>, { slots }: { slots?: Record<string, unknown> }) {
+    setup(props: Record<string, unknown>, { slots }: { slots?: Record<string, unknown> }) {
       const instance = getCurrentInstance();
+
+      // ★ 2026-11-13：包装器 vnode 上的 props 必须透传给真正加载的组件。
+      //   `setup` 收到的 `props` 只含**声明过的** props（包装器未声明任何 prop ⇒ 恒为 {}），
+      //   因此优先取 `instance.vnode.props`（含 attrs / 事件）；无实例时退回 setup props。
+      const forwardedProps = (): Record<string, unknown> =>
+        (instance?.vnode?.props as Record<string, unknown> | null | undefined) ?? props;
 
       // 获取或创建此实例的状态
       let state: AsyncComponentState;
@@ -248,7 +254,7 @@ export function defineAsyncComponent(
 
       // 如果已加载，返回已加载的组件
       if (state.isLoaded && state.loadedComponent) {
-        return () => renderLoadedComponent(state.loadedComponent!, slots);
+        return () => renderLoadedComponent(state.loadedComponent!, forwardedProps(), slots);
       }
 
       // 如果发生错误，显示错误组件
@@ -379,7 +385,7 @@ export function defineAsyncComponent(
         //   ⇒ 加载完成 / 失败后仍渲染加载占位（实测：挂载后等 60ms，真实组件与错误组件
         //   **都不出现**；`onError` 已被调用，只是视图不切）。现在把三态都在这里兜住。
         if (state.isLoaded && state.loadedComponent) {
-          return renderLoadedComponent(state.loadedComponent, slots);
+          return renderLoadedComponent(state.loadedComponent, forwardedProps(), slots);
         }
         if (state.isError) {
           return errorComponent
@@ -441,10 +447,11 @@ function createAsyncCommentVNode(text: string): VNode {
  */
 function renderLoadedComponent(
   component: ComponentOptions,
+  props: Record<string, unknown>,
   slots?: Record<string, unknown>,
 ): VNode {
   // FIX: DTS build error - slots 类型断言
-  return createVNode(component, {}, slots as VNodeChildren, ShapeFlags.STATEFUL_COMPONENT);
+  return createVNode(component, props, slots as VNodeChildren, ShapeFlags.STATEFUL_COMPONENT);
 }
 
 // ==================== 预加载工具函数 ====================

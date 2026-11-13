@@ -53,6 +53,17 @@ function setupWrapper(w: Wrapper): ComponentInternalInstance {
   return instance;
 }
 
+/** 同上，但带包装器 vnode props（用于 props 透传判据） */
+function setupWrapperWithProps(
+  w: Wrapper,
+  props: Record<string, unknown>,
+): ComponentInternalInstance {
+  const vnode = { type: w, props, children: null };
+  const instance = createComponentInstance(vnode, null);
+  setupComponent(instance);
+  return instance;
+}
+
 /** 取渲染结果的组件身份（`.type`）；注释占位返回 null */
 const renderedType = (instance: ComponentInternalInstance): unknown => {
   const out = (instance as unknown as { render: () => { type?: unknown } | null }).render();
@@ -183,6 +194,19 @@ describe('defineAsyncComponent — src 级状态机（模块身份一致）', ()
     await flush(30);
 
     expect(renderedType(instance)).toBe(Comp);
+  });
+
+  it('★ 传给包装器的 props 必须透传给已加载组件', async () => {
+    const w = defineAsyncComponent({ loader: async () => Comp, delay: 0 });
+    const instance = setupWrapperWithProps(w, { title: 'hello' });
+    await flush(30);
+
+    const out = (
+      instance as unknown as { render: () => { type?: unknown; props?: unknown } }
+    ).render();
+    expect(out.type).toBe(Comp);
+    // 修复前：renderLoadedComponent 固定传 `{}` ⇒ 已加载组件收不到任何 props。
+    expect(out.props).toMatchObject({ title: 'hello' });
   });
 
   it('超时后应渲染 errorComponent（并请求重渲染）', async () => {
