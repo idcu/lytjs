@@ -230,7 +230,9 @@ export function getHydrationStrategy(vnode: VNode): HydrationStrategy {
   }
 
   const props = getVNodeProps(vnode as VNode);
-  const strategy = props['hydrateStrategy'];
+  // createHydrationMarkers 会把控制属性 hydrateStrategy 转成 data-hydrate-strategy，
+  // 并删除原属性；只读原属性会让真实链路的策略恒为 eager。
+  const strategy = props[HYDRATE_STRATEGY_ATTR] ?? props['hydrateStrategy'];
 
   if (isString(strategy) && isValidStrategy(strategy)) {
     return strategy;

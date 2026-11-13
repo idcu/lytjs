@@ -137,6 +137,17 @@ describe('getHydrationStrategy', () => {
     expect(getHydrationStrategy(vnode)).toBe('eager');
   });
 
+  it('标记后的 VNode 仍能读回策略（控制属性已转成 data-hydrate-strategy）', () => {
+    const vnode = createTestVNode('div', { hydrateStrategy: 'lazy' }, 'text');
+    const marked = createHydrationMarkers(vnode);
+
+    // createHydrationMarkers 会删除控制属性 hydrateStrategy，只保留 DOM 属性
+    expect(marked.props['hydrateStrategy']).toBeUndefined();
+    expect(marked.props['data-hydrate-strategy']).toBe('lazy');
+    // 真实链路：先打标记、再生产提示；此时必须仍读得到 lazy
+    expect(getHydrationStrategy(marked)).toBe('lazy');
+  });
+
   it('应该在 VNode 为 null 时返回 eager', () => {
     expect(getHydrationStrategy(null as any)).toBe('eager');
   });
