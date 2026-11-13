@@ -24,7 +24,6 @@ async function renderPicker(props: Record<string, unknown>): Promise<HTMLElement
       return () => h(TimePicker as never, { modelValue: '12:00:00', ...props });
     },
   } as never).mount(host);
-  await new Promise((r) => setTimeout(r, 40));
   // ★ 下拉层只在展开时渲染 ⇒ 先点开
   const trigger =
     host.querySelector('.lyt-time-picker__trigger') ?? host.querySelector('.lyt-time-picker');
