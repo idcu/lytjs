@@ -97,3 +97,56 @@ describe('scoped CSS 端到端', () => {
     expect(attrs[0]).toMatch(/^data-v-[0-9a-f]{8}$/);
   });
 });
+
+// ============================================================
+// C-19：scopeCSS 必须识别 at-rule / 关键帧 / 顶层逗号 / :deep()
+// ============================================================
+
+describe('C-19 scopeCSS 结构识别', () => {
+  const scopedCss = (css: string): string => {
+    const descriptor = parseSFC(`<style scoped>${css}</style>`, { filename: 'T.lyt' });
+    return (compileSFC(descriptor, { scoped: true, id: 'abc123' }).css ?? '').trim();
+  };
+
+  it('@keyframes 前导与百分比选择器保持原样', () => {
+    const css = '@keyframes fade { 0%, 100% { opacity: 0 } 50% { opacity: 1 } }';
+    // 修前：`@keyframes fade[data-v-abc123]`、`0%[data-v-abc123], 100%[data-v-abc123]`
+    expect(scopedCss(css)).toBe(css);
+  });
+
+  it('@media / @supports 前导不得被当成选择器', () => {
+    expect(scopedCss('@media (min-width: 600px) { .a { color: red } }')).toBe(
+      '@media (min-width: 600px) {.a[data-v-abc123]{ color: red } }',
+    );
+    expect(scopedCss('@supports (display: grid) { .g { display: grid } }')).toBe(
+      '@supports (display: grid) {.g[data-v-abc123]{ display: grid } }',
+    );
+  });
+
+  it('括号/引号内的逗号不得拆断选择器', () => {
+    // 修前：`.a:not(.b[data-v-x], .c)[data-v-x]`
+    expect(scopedCss('.a:not(.b, .c) { color: red }')).toBe(
+      '.a[data-v-abc123]:not(.b, .c){ color: red }',
+    );
+    // 修前：`input[data-x="a[data-v-x], b"][data-v-x]`
+    expect(scopedCss('input[data-x="a,b"] { color: red }')).toBe(
+      'input[data-x="a,b"][data-v-abc123]{ color: red }',
+    );
+  });
+
+  it(':deep() / :global() 语义正确', () => {
+    // 修前：`.a [data-v-abc123]:deep(.b)`
+    expect(scopedCss('.a :deep(.b) { color: red }')).toBe('.a[data-v-abc123] .b{ color: red }');
+    expect(scopedCss(':deep(.b) { color: red }')).toBe('.b{ color: red }');
+    expect(scopedCss('.a :global(.g) { color: red }')).toBe('.a[data-v-abc123] .g{ color: red }');
+    // 旧式 ::v-deep 无括号：左侧作用域、右侧全局
+    expect(scopedCss('.a::v-deep .b { color: red }')).toBe('.a[data-v-abc123] .b{ color: red }');
+  });
+
+  it('普通规则行为不变（回归护栏）', () => {
+    expect(scopedCss('.a, .b { color: red }')).toBe(
+      '.a[data-v-abc123], .b[data-v-abc123]{ color: red }',
+    );
+    expect(scopedCss('.b:hover { color: blue }')).toBe('.b[data-v-abc123]:hover{ color: blue }');
+  });
+});

@@ -328,72 +328,219 @@ function generateModuleCode(opts: ModuleCodeOptions): string {
  * Add a scoped ID attribute selector to every CSS rule.
  * Transforms `.container { color: red; }` into `.container[data-v-abc123] { color: red; }`
  *
- * This is a simplified implementation. A production compiler would use
- * a proper CSS parser (e.g., postcss) for robust handling.
+ * ⚠️ 2026-11-13（C-19）：改为**结构扫描**，不再用 `([^{}@/][^{}]*?)\{` 正则。
+ * 旧实现有三类实际错误（已用编译产物复现）：
+ *   1. at-rule 前导被当成选择器：`@media (min-width: 600px)` → `@media (min-width: 600px)[data-v-x]`；
+ *      `@keyframes fade` → `@keyframes fade[data-v-x]`。
+ *   2. 关键帧百分比选择器（`0%, 100%`）被加作用域，且逗号拆分破坏块结构。
+ *   3. 逗号拆分不识别括号/引号：`:not(.b, .c)`、`[data-x="a,b"]` 被拦腰截断。
+ *   4. 单冒号 `:deep()` 未识别，产物变成 `[data-v-x]:deep(.b)`（无效 CSS）。
  *
- * FIX: P1-34 CSS scoping 正则增强：
- * - 正确处理伪类选择器（:hover, :focus, ::before 等）
- * - 正确处理属性选择器（[attr=value]）
- * - 正确处理多级嵌套选择器
- * - 跳过 @keyframes 内部的 from/to 百分比选择器
+ * 现在的做法：按 `{` / `}` / `;` 维护块栈，at-rule 前导与关键帧内容原样输出；
+ * 普通规则的选择器列表按**顶层逗号**拆分（尊重 `()`/`[]`/引号），
+ * 每条选择器再处理 `:deep()` / `:global()` 后追加作用域属性。
  *
- * FIX: P2-25 已知限制：当前正则实现不支持 CSS 嵌套规则（CSS Nesting），
- * 如 `.parent { .child { } }` 这种嵌套语法需要使用完整的 CSS 解析器处理。
- * 建议使用 PostCSS 等工具进行生产环境的 CSS 作用域处理。
+ * 仍不是完整 CSS 解析器（不处理注释内的花括号以外的高级语法），
+ * 生产环境仍建议 PostCSS；但上述结构性输入不再被破坏。
  */
 function scopeCSS(css: string, scopeId: string): string {
   const attrSelector = `[data-v-${scopeId}]`;
+  type Frame = { keyframes: boolean };
+  const stack: Frame[] = [];
 
-  // Process each CSS rule block
-  return css.replace(
-    // FIX: P1-34 增强正则，正确匹配包含伪类、伪元素、属性选择器的复杂选择器
-    // FIX: P2-25 注意：此正则不支持 CSS 嵌套规则（CSS Nesting）
-    /([^{}@/][^{}]*?)\{/g,
-    (match, selector: string) => {
-      // Skip @ rules (e.g., @media, @keyframes)
-      if (selector.trim().startsWith('@')) {
-        return match;
+  let out = '';
+  let buffer = '';
+  let quote = '';
+
+  const flushText = (): string => {
+    const text = buffer;
+    buffer = '';
+    return text;
+  };
+
+  for (let i = 0; i < css.length; i++) {
+    const ch = css[i]!;
+
+    // 字符串字面量：原样收集，花括号/分号/逗号不参与结构判断
+    if (quote) {
+      buffer += ch;
+      if (ch === '\\') {
+        buffer += css[i + 1] ?? '';
+        i++;
+      } else if (ch === quote) {
+        quote = '';
       }
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      buffer += ch;
+      continue;
+    }
+    // 注释：整段原样收集
+    if (ch === '/' && css[i + 1] === '*') {
+      const end = css.indexOf('*/', i + 2);
+      const stop = end === -1 ? css.length : end + 2;
+      buffer += css.slice(i, stop);
+      i = stop - 1;
+      continue;
+    }
 
-      // 跳过 @keyframes 内部的 from/to/百分比选择器
-      const trimmedSelector = selector.trim();
-      if (/^(from|to|\d+%)\s*$/.test(trimmedSelector)) {
-        return match;
+    if (ch === '{') {
+      const prelude = flushText();
+      const trimmed = prelude.trim();
+      const parentKeyframes = stack.length > 0 && stack[stack.length - 1]!.keyframes;
+
+      if (trimmed.startsWith('@')) {
+        // at-rule 前导（@media / @supports / @keyframes …）原样输出
+        out += `${prelude}{`;
+        stack.push({ keyframes: /^@(?:-[a-z]+-)?keyframes\b/i.test(trimmed) });
+      } else if (parentKeyframes) {
+        // 关键帧内部：from / to / 0% / 0%, 100% 原样输出
+        out += `${prelude}{`;
+        stack.push({ keyframes: false });
+      } else {
+        out += `${scopeSelectorList(prelude, attrSelector)}{`;
+        stack.push({ keyframes: false });
       }
+      continue;
+    }
 
-      // FIX: P2-25 检测并警告嵌套规则（简单的启发式检测）
-      if (trimmedSelector.includes('{') || trimmedSelector.includes('}')) {
-        if (__DEV__) {
-          console.warn(
-            `[scopeCSS] 检测到可能的 CSS 嵌套规则，当前实现可能无法正确处理。` +
-              `建议使用 PostCSS 进行生产环境的 CSS 作用域处理。`,
-          );
+    if (ch === '}') {
+      out += `${flushText()}}`;
+      stack.pop();
+      continue;
+    }
+
+    // 顶层 at-statement（如 `@import "x";`）原样输出，不并入后续选择器
+    if (ch === ';' && stack.length === 0) {
+      out += `${flushText()};`;
+      continue;
+    }
+
+    buffer += ch;
+  }
+
+  return out + buffer;
+}
+
+/** 按**顶层逗号**拆分选择器列表（尊重 `()` / `[]` / 引号）。 */
+function splitSelectorList(selector: string): string[] {
+  const parts: string[] = [];
+  let current = '';
+  let depth = 0;
+  let quote = '';
+
+  for (let i = 0; i < selector.length; i++) {
+    const ch = selector[i]!;
+    if (quote) {
+      current += ch;
+      if (ch === '\\') {
+        current += selector[i + 1] ?? '';
+        i++;
+      } else if (ch === quote) {
+        quote = '';
+      }
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      current += ch;
+      continue;
+    }
+    if (ch === '(' || ch === '[') depth++;
+    else if (ch === ')' || ch === ']') depth--;
+    if (ch === ',' && depth === 0) {
+      parts.push(current);
+      current = '';
+      continue;
+    }
+    current += ch;
+  }
+  parts.push(current);
+  return parts;
+}
+
+/** 给单条选择器追加作用域属性（插在尾部伪类/伪元素之前）。 */
+function scopeSingleSelector(selector: string, attrSelector: string): string {
+  const trimmed = selector.trim();
+  if (!trimmed) return trimmed;
+
+  // :deep(...) / ::v-deep(...)：左侧正常作用域，括号内保持全局
+  const deep = findPseudoCall(trimmed, [':deep', '::v-deep', '::deep']);
+  if (deep) {
+    const left = trimmed.slice(0, deep.start).trim();
+    const inner = trimmed.slice(deep.innerStart, deep.innerEnd).trim();
+    if (!left) return inner;
+    return `${scopeSingleSelector(left, attrSelector)} ${inner}`;
+  }
+
+  // :global(...)：内部完全全局
+  const global = findPseudoCall(trimmed, [':global', '::v-global']);
+  if (global) {
+    const left = trimmed.slice(0, global.start).trim();
+    const inner = trimmed.slice(global.innerStart, global.innerEnd).trim();
+    return left ? `${scopeSingleSelector(left, attrSelector)} ${inner}` : inner;
+  }
+
+  // 旧式 `::v-deep` 后代组合符（无括号）：左侧作用域，右侧全局
+  const legacy = trimmed.indexOf('::v-deep');
+  if (legacy !== -1) {
+    const left = trimmed.slice(0, legacy).trim();
+    const right = trimmed.slice(legacy + '::v-deep'.length).trim();
+    const scopedLeft = left ? `${scopeSingleSelector(left, attrSelector)} ` : '';
+    return `${scopedLeft}${right}`.trim();
+  }
+
+  // 属性选择器插在尾部伪类/伪元素之前：`.a:hover` → `.a[data-v-x]:hover`
+  const pseudoMatch = trimmed.match(/^(.*?)(::?[a-zA-Z-]+(?:\(.*?\))?)$/);
+  if (pseudoMatch && pseudoMatch[2] && pseudoMatch[1]) {
+    return `${pseudoMatch[1]}${attrSelector}${pseudoMatch[2]}`;
+  }
+  if (pseudoMatch && pseudoMatch[2] && !pseudoMatch[1]) {
+    // 纯伪类选择器（`:hover`）：属性必须在伪类之后才合法
+    return `:root${attrSelector}${pseudoMatch[2]}`;
+  }
+  return `${trimmed}${attrSelector}`;
+}
+
+/** 选择器列表整体作用域化（保留逗号分隔）。 */
+function scopeSelectorList(prelude: string, attrSelector: string): string {
+  const body = prelude.trim();
+  if (!body) return prelude;
+  return splitSelectorList(body)
+    .map((part) => scopeSingleSelector(part, attrSelector))
+    .join(', ');
+}
+
+/**
+ * 在 `:deep(...)` / `:global(...)` 这类伪类函数里找到顶层调用位置。
+ * 返回前导结束位置、括号内区间；找不到返回 null。
+ */
+function findPseudoCall(
+  selector: string,
+  names: string[],
+): { start: number; innerStart: number; innerEnd: number } | null {
+  for (const name of names) {
+    let index = selector.indexOf(name);
+    while (index !== -1) {
+      const open = index + name.length;
+      if (selector[open] === '(') {
+        let depth = 0;
+        for (let i = open; i < selector.length; i++) {
+          if (selector[i] === '(') depth++;
+          else if (selector[i] === ')') {
+            depth--;
+            if (depth === 0) {
+              return { start: index, innerStart: open + 1, innerEnd: i };
+            }
+          }
         }
       }
-
-      // Split selector by comma to handle multiple selectors
-      const scopedSelectors = selector
-        .split(',')
-        .map((s: string) => {
-          const trimmed = s.trim();
-          if (!trimmed) return trimmed;
-          // For ::v-deep or ::deep, use a different scoping strategy
-          if (trimmed.includes('::v-deep') || trimmed.includes('::deep')) {
-            return trimmed;
-          }
-          // FIX: P1-34 将 scopeId 添加到选择器末尾（伪类/伪元素之前），
-          // 正确处理 :hover, ::before, :not() 等伪选择器
-          const pseudoMatch = trimmed.match(/^(.*?)(::?[a-zA-Z-]+(?:\(.*?\))?)$/);
-          if (pseudoMatch && pseudoMatch[2]) {
-            return `${pseudoMatch[1]}${attrSelector}${pseudoMatch[2]}`;
-          }
-          return `${trimmed}${attrSelector}`;
-        })
-        .join(', ');
-
-      return `${scopedSelectors}{`;
-    },
-  );
+      index = selector.indexOf(name, index + 1);
+    }
+  }
+  return null;
 }
 
 // ============================================================
