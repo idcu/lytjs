@@ -10,8 +10,8 @@
  * `clearColor` 不通知父组件 —— 本电池先用实测确立事实。
  */
 
-import { describe, it, expect, afterEach } from 'vitest';
-import { createApp, h } from '@lytjs/core';
+import { describe, it, expect, afterEach, vi } from 'vitest';
+import { createApp, h, nextTick } from '@lytjs/core';
 import { ColorPicker } from '../src/components/ColorPicker';
 
 const hosts: HTMLElement[] = [];
@@ -36,11 +36,10 @@ const q = (host: HTMLElement, sel: string): HTMLElement | null =>
   host.querySelector(sel) as HTMLElement | null;
 const qa = (host: HTMLElement, sel: string): HTMLElement[] =>
   [...host.querySelectorAll(sel)] as HTMLElement[];
-const tick = (): Promise<void> => new Promise((r) => setTimeout(r, 20));
 const trigger = (host: HTMLElement): HTMLElement => q(host, '.lyt-color-picker-trigger')!;
 const click = async (el: HTMLElement): Promise<void> => {
   el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-  await tick();
+  await nextTick();
 };
 
 describe('ColorPicker — 渲染与开合', () => {
@@ -111,8 +110,9 @@ describe('ColorPicker — 选色与通知', () => {
     const input = q(host, '.lyt-color-picker-input input') as HTMLInputElement;
     input.value = '#123456';
     input.dispatchEvent(new Event('change', { bubbles: true }));
-    await tick();
-    expect(seen).toEqual(['#123456']);
+    await vi.waitFor(() => {
+      expect(seen).toEqual(['#123456']);
+    });
   });
 
   it('「确认」按钮用当前取色器颜色通知', async () => {
@@ -205,10 +205,11 @@ describe('ColorPicker — 取色器拖动', () => {
     const hue = q(host, '.lyt-color-picker-hue-slider')!;
     stubRect(hue, 360, 20);
     hue.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 180 }));
-    await tick();
     // 色相 180 ⇒ 预览色应为青色系（#00ffff 附近）
     const preview = q(host, '.lyt-color-picker-preview')!;
-    expect(preview.getAttribute('style')).toMatch(/rgb\(/);
+    await vi.waitFor(() => {
+      expect(preview.getAttribute('style')).toMatch(/rgb\(/);
+    });
   });
 
   it('未按下时 mousemove 不改色（isDragging 守卫）', async () => {
@@ -218,7 +219,7 @@ describe('ColorPicker — 取色器拖动', () => {
     stubRect(hue, 360, 20);
     const before = q(host, '.lyt-color-picker-preview')!.getAttribute('style');
     hue.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 300 }));
-    await tick();
+    await nextTick();
     expect(q(host, '.lyt-color-picker-preview')!.getAttribute('style')).toBe(before);
   });
 
@@ -228,8 +229,10 @@ describe('ColorPicker — 取色器拖动', () => {
     const alpha = q(host, '.lyt-color-picker-alpha-slider')!;
     stubRect(alpha, 100, 20);
     alpha.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 50 }));
-    await tick();
-    expect(q(host, '.lyt-color-picker-preview')!.getAttribute('style')).toContain('rgba(');
+    const preview = q(host, '.lyt-color-picker-preview')!;
+    await vi.waitFor(() => {
+      expect(preview.getAttribute('style')).toContain('rgba(');
+    });
   });
 
   it('在饱和面板上按下同时改变饱和与明度', async () => {
@@ -238,8 +241,10 @@ describe('ColorPicker — 取色器拖动', () => {
     const sat = q(host, '.lyt-color-picker-saturation')!;
     stubRect(sat, 200, 100);
     sat.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 50, clientY: 25 }));
-    await tick();
-    expect(q(host, '.lyt-color-picker-preview')!.getAttribute('style')).toMatch(/rgb\(/);
+    const preview = q(host, '.lyt-color-picker-preview')!;
+    await vi.waitFor(() => {
+      expect(preview.getAttribute('style')).toMatch(/rgb\(/);
+    });
   });
 });
 
