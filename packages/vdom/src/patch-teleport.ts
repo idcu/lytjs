@@ -8,6 +8,7 @@
 import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
 import { isArray, isString, EMPTY_OBJ } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
+import { unsafeCast } from '@lytjs/common-assertions';
 import type { SuspenseBoundary } from './types';
 import type { RendererContext } from './patch-element';
 import { cloneIfMounted } from './vnode';
@@ -243,9 +244,9 @@ export function createTeleportPatch<HN, HE extends HN>(
             }
           }
 
-          n2.target = newTarget as unknown as Element | null;
-          n2.targetAnchor = targetEnd as unknown as Node | null;
-          n2.targetStart = targetStart as unknown as Node | null;
+          n2.target = unsafeCast<Element | null>(newTarget);
+          n2.targetAnchor = unsafeCast<Node | null>(targetEnd);
+          n2.targetStart = unsafeCast<Node | null>(targetStart);
         } else if (typeof __DEV__ !== 'undefined' && __DEV__) {
           warn(`Teleport target "${String(newTo)}" not found. Keeping children in place.`);
         }
