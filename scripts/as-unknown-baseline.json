@@ -1,6 +1,6 @@
 {
   "updatedAt": "2026-11-09",
-  "total": 324,
+  "total": 323,
   "files": {
     "packages/adapter-web/src/web-host-extended.ts": 1,
     "packages/adapter-web/src/web-host.ts": 2,
