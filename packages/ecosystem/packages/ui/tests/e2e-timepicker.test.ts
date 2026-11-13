@@ -6,7 +6,7 @@
  * 全部不可约束。本判据用真挂载断言**真实渲染出的 `<option>` 集合与显示文本**。
  */
 
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { createApp, h } from '@lytjs/core';
 import { TimePicker } from '../src/components/TimePicker';
 
@@ -24,11 +24,13 @@ async function renderPicker(props: Record<string, unknown>): Promise<HTMLElement
       return () => h(TimePicker as never, { modelValue: '12:00:00', ...props });
     },
   } as never).mount(host);
-  // ★ 下拉层只在展开时渲染 ⇒ 先点开
+  // ★ 下拉层只在展开时渲染 ⇒ 先点开；轮询下拉层真实出现，而非固定 sleep
   const trigger =
     host.querySelector('.lyt-time-picker__trigger') ?? host.querySelector('.lyt-time-picker');
   trigger?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-  await new Promise((r) => setTimeout(r, 40));
+  await vi.waitFor(() => {
+    expect(host.querySelector('.lyt-time-picker__dropdown')).not.toBeNull();
+  });
   return host;
 }
 
