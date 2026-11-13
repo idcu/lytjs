@@ -9,3 +9,4 @@ export * from './middleware';
 export * from './composer';
 export * from './context';
 export * from './chain';
+export * from './adapt';

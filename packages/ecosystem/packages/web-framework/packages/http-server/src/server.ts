@@ -20,6 +20,7 @@ import { createServer as createNodeServer } from 'node:http';
 import type { Handler, Context, Request, Response, HttpMethod } from './types';
 import { Router } from './router';
 import { parseQueryStringWithArrays } from '@lytjs/common-query';
+import { adaptMiddleware } from '@lytjs/middleware';
 
 /** 默认请求体上限：1 MiB */
 const DEFAULT_BODY_LIMIT = 1024 * 1024;
@@ -140,6 +141,8 @@ export type Middleware = (ctx: Context, next: () => Promise<void>) => Promise<vo
  *   `ctx` 为 undefined，中间件内部 `request.headers.get` 直接抛。
  *   现在在边界处做一次**适配**：把 Node 的 `ctx.request` 包装成带 `headers.get()` 的门面，
  *   并按实参个数分派。规范仍是 `(ctx, next)`；三参形态只作为已发布包的兼容入口。
+ *   （2026-11-13 P1-8：适配逻辑已抽到 `@lytjs/middleware` 的 `adaptMiddleware` 并导出，
+ *   本包改为引用，不再有自己的私有副本。）
  */
 export type LegacyMiddleware = (
   request: unknown,
@@ -147,55 +150,19 @@ export type LegacyMiddleware = (
   next: () => Promise<void>,
 ) => Promise<void> | void;
 
-/** 把 Node 的 headers（普通对象）包装成 Fetch 风格（`get` / `has` / `entries`） */
-function createHeadersFacade(headers: Record<string, unknown>): {
-  get(name: string): string | null;
-  has(name: string): boolean;
-  entries(): IterableIterator<[string, string]>;
-} {
-  const normalized = new Map<string, string>();
-  for (const [key, value] of Object.entries(headers)) {
-    if (value === undefined) continue;
-    normalized.set(key.toLowerCase(), Array.isArray(value) ? value.join(', ') : String(value));
-  }
-  return {
-    get: (name: string) => normalized.get(name.toLowerCase()) ?? null,
-    has: (name: string) => normalized.has(name.toLowerCase()),
-    entries: () => normalized.entries(),
-  };
-}
-
 /**
- * 按实参个数把三参中间件适配成规范签名。
+ * 内部统一签名：规范两参，允许返回任意值（Fetch 风格中间件会返回 Response）。
  *
- * 判据用 `fn.length`：`(request, ctx, next)` 的 length 是 3，`(ctx, next)` 是 2。
- * 带默认值的写法（`(request, ctx, next = noop)`）length 会变成 2 —— 这种情况请显式包一层。
+ * ⚠️ 2026-11-13（P1-8）：三参中间件的适配已移到 `@lytjs/middleware` 的
+ *   `adaptMiddleware`，本包不再维护私有实现。
  */
-function normalizeMiddleware(middleware: Middleware | LegacyMiddleware): Middleware {
-  if (middleware.length < 3) return middleware as Middleware;
-  const legacy = middleware as LegacyMiddleware;
-  return async (ctx: Context, next: () => Promise<void>) => {
-    const request = ctx.request;
-    const facade = {
-      method: request.method,
-      url: request.url,
-      path: request.path,
-      query: request.query,
-      params: request.params,
-      body: request.body,
-      rawBody: request.rawBody,
-      ip: request.ip,
-      headers: createHeadersFacade((request.headers ?? {}) as Record<string, unknown>),
-    };
-    return legacy(facade, ctx, next);
-  };
-}
+type NormalizedMiddleware = (ctx: Context, next: () => Promise<void>) => Promise<unknown> | void;
 
 export class Server {
   /** 路由实例 */
   private router: Router;
   /** 中间件列表（**按注册顺序执行**） */
-  private middlewares: Middleware[] = [];
+  private middlewares: NormalizedMiddleware[] = [];
   /** Node.js 服务器实例 */
   private server?: NodeServer;
   /** 请求体上限 */
@@ -218,8 +185,13 @@ export class Server {
    * @param middleware - 中间件函数
    * @returns 服务器实例
    */
-  use(middleware: Middleware): this {
-    this.middlewares.push(normalizeMiddleware(middleware));
+  use(middleware: Middleware | LegacyMiddleware): this {
+    // 三参（Fetch 风格）走公共适配器；两参保持规范签名
+    this.middlewares.push(
+      middleware.length >= 3
+        ? adaptMiddleware(middleware as LegacyMiddleware)
+        : (middleware as Middleware),
+    );
     return this;
   }
 

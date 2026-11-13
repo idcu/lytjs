@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createComposer, createMiddleware, combineMiddlewares } from '../src';
+import { createComposer, createMiddleware, combineMiddlewares, adaptMiddleware } from '../src';
 
 describe('@lytjs/middleware', () => {
   describe('MiddlewareComposer', () => {
@@ -114,6 +114,35 @@ describe('@lytjs/middleware', () => {
       await combined({ request: new Request('http://localhost') }, async () => {});
 
       expect(calls).toEqual(['m1', 'm2']);
+    });
+  });
+
+  describe('adaptMiddleware', () => {
+    it('★ 三参中间件经适配后能读到 request.headers', async () => {
+      const seen: (string | null)[] = [];
+
+      const adapted = adaptMiddleware<{ request: unknown; [key: string]: unknown }>(
+        async (request, _ctx, next) => {
+          const headers = (request as { headers: { get(name: string): string | null } }).headers;
+          seen.push(headers.get('origin'));
+          seen.push(headers.get('x-missing'));
+          await next();
+        },
+      );
+
+      await adapted(
+        {
+          request: {
+            method: 'GET',
+            url: '/x',
+            headers: { Origin: 'https://example.com', 'X-Trace': ['a', 'b'] },
+          },
+        },
+        async () => {},
+      );
+
+      // 大小写不敏感、缺失返回 null
+      expect(seen).toEqual(['https://example.com', null]);
     });
   });
 });
