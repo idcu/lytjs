@@ -21,7 +21,10 @@ export interface TreeSelectNode {
 }
 
 export interface TreeSelectSetupProps {
-  data: TreeSelectNode[];
+  /** @deprecated 使用 `options`；两者同时提供时以 `options` 为准。保留仅为向后兼容。 */
+  data?: TreeSelectNode[];
+  options?: TreeSelectNode[];
+  disabled: boolean;
   /** 单选为标量；multiple 时为数组 */
   modelValue: string | number | (string | number)[];
   placeholder: string;
@@ -48,7 +51,10 @@ export const TreeSelect = defineComponent({
   name: 'LytTreeSelect',
 
   props: {
-    data: { type: Array as () => TreeSelectNode[], default: () => [] },
+    /** @deprecated 使用 `options`；两者同时提供时以 `options` 为准。 */
+    data: { type: Array as () => TreeSelectNode[], default: undefined },
+    options: { type: Array as () => TreeSelectNode[], default: undefined },
+    disabled: { type: Boolean, default: false },
     modelValue: {
       type: [String, Number, Array] as unknown as PropType<string | number | (string | number)[]>,
       default: '',
@@ -74,10 +80,17 @@ export const TreeSelect = defineComponent({
 
   setup(props: Record<string, unknown>, { slots, emit }) {
     const _props = props as unknown as TreeSelectSetupProps;
+
+    /** 数据源：`options` 为契约；`data` 是 deprecated 别名，两者都给时 options 优先。 */
+    const treeData = (): TreeSelectNode[] => {
+      if (Array.isArray(_props.options)) return _props.options;
+      return Array.isArray(_props.data) ? _props.data : [];
+    };
+
     const visible = signal(false);
     const filterQuery = signal('');
     const expandedKeys = signal<(string | number)[]>(
-      _props.defaultExpandAll ? getAllNodeKeys(_props.data) : _props.defaultExpandedKeys,
+      _props.defaultExpandAll ? getAllNodeKeys(treeData()) : _props.defaultExpandedKeys,
     );
 
     /** 多选当前值（非数组入参按空集处理） */
@@ -104,7 +117,7 @@ export const TreeSelect = defineComponent({
 
     const filteredData = (): TreeSelectNode[] => {
       const query = filterQuery();
-      if (!query) return _props.data;
+      if (!query) return treeData();
 
       const filterNodes = (nodes: TreeSelectNode[]): TreeSelectNode[] => {
         const result: TreeSelectNode[] = [];
@@ -128,7 +141,7 @@ export const TreeSelect = defineComponent({
         return result;
       };
 
-      return filterNodes(_props.data);
+      return filterNodes(treeData());
     };
 
     const findNodeByValue = (
@@ -149,14 +162,28 @@ export const TreeSelect = defineComponent({
     const selectedNode = (): TreeSelectNode | null => {
       const v = _props.modelValue;
       if (typeof v !== 'string' && typeof v !== 'number') return null;
-      return findNodeByValue(_props.data, v);
+      return findNodeByValue(treeData(), v);
     };
 
     const handleToggle = () => {
+      if (_props.disabled) return;
       visible.update((v) => !v);
     };
 
+    /** 键盘展开与点击共用同一守卫，disabled 时不得绕过。 */
+    const handleTriggerKeydown = (e: KeyboardEvent) => {
+      if (_props.disabled) return;
+      if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !visible()) {
+        e.preventDefault();
+        handleToggle();
+      } else if (e.key === 'Escape' && visible()) {
+        e.preventDefault();
+        handleToggle();
+      }
+    };
+
     const handleClear = () => {
+      if (_props.disabled) return;
       if (_props.multiple) {
         emit('update:modelValue', []);
         _props.onChange?.([], null as unknown as TreeSelectNode);
@@ -167,7 +194,7 @@ export const TreeSelect = defineComponent({
     };
 
     const handleSelect = (node: TreeSelectNode) => {
-      if (node.disabled) return;
+      if (_props.disabled || node.disabled) return;
       const nodeDict = node as unknown as NodeDict;
       const nodeValue = nodeDict[_props.nodeKey] as string | number;
       if (_props.multiple) {
@@ -187,6 +214,7 @@ export const TreeSelect = defineComponent({
 
     const handleToggleExpand = (node: TreeSelectNode, e: Event) => {
       e.stopPropagation();
+      if (_props.disabled) return;
       const nodeDict = node as unknown as NodeDict;
       const nodeKey = nodeDict[_props.nodeKey] as string | number;
       const keys = expandedKeys();
@@ -201,6 +229,7 @@ export const TreeSelect = defineComponent({
       const classes = ['lyt-tree-select'];
       // `is-multiple` 供样式区分多选（单选是一行文本，多选是标签列表）
       if (_props.multiple) classes.push('is-multiple');
+      if (_props.disabled) classes.push('is-disabled');
       if (visible()) classes.push('is-visible');
       if (_props.class) classes.push(_props.class);
       return classes.join(' ');
@@ -295,7 +324,7 @@ export const TreeSelect = defineComponent({
         id: _props.id,
         ariaLabel: _props.ariaLabel,
         ariaDescribedBy: _props.ariaDescribedBy,
-        disabled: false,
+        disabled: _props.disabled,
         expanded: visible(),
         controls: undefined,
       });
@@ -303,7 +332,7 @@ export const TreeSelect = defineComponent({
       const currentNode = _props.multiple ? null : selectedNode();
       const multiLabels = _props.multiple
         ? multiValues()
-            .map((v) => findNodeByValue(_props.data, v)?.label)
+            .map((v) => findNodeByValue(treeData(), v)?.label)
             .filter((l): l is string => Boolean(l))
         : [];
       const displayText = _props.multiple
@@ -347,6 +376,7 @@ export const TreeSelect = defineComponent({
           mergeA11yProps(a11yProps, {
             class: 'lyt-tree-select-trigger',
             onClick: handleToggle,
+            onKeydown: handleTriggerKeydown,
           }),
           triggerChildren,
         ),

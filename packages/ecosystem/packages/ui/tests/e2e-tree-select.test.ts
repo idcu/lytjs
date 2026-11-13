@@ -54,7 +54,7 @@ const DATA: TreeSelectNode[] = [
  */
 async function mountTreeSelect(
   props: Record<string, unknown> = {},
-  data: TreeSelectNode[] = DATA,
+  data: TreeSelectNode[] | null = DATA,
 ): Promise<HTMLElement> {
   const host = document.createElement('div');
   document.body.appendChild(host);
@@ -69,7 +69,7 @@ async function mountTreeSelect(
     setup() {
       return () =>
         h(TreeSelect as never, {
-          data,
+          ...(data ? { data } : {}),
           ...props,
           modelValue: value(),
           onChange: (v: string | number | (string | number)[], n: TreeSelectNode) => {
@@ -476,5 +476,70 @@ describe('TreeSelect — 多选（修复怪癖 A）', () => {
     await clickNode(host, idx);
     expect(onChange).not.toHaveBeenCalled();
     expect(q(host, '.lyt-tree-select-value')!.textContent).toBe('请选择');
+  });
+});
+
+describe('TreeSelect — 数据源契约与组件级 disabled', () => {
+  it('只传 options 时树正常渲染', async () => {
+    const host = await mountTreeSelect({ options: DATA }, null);
+    await open(host);
+    const texts = qa(host, '.lyt-tree-node').map((n) => n.textContent);
+    expect(texts.some((t) => t?.includes('浙江'))).toBe(true);
+  });
+
+  it('同时传 data 与 options 时以 options 为准', async () => {
+    const host = await mountTreeSelect({
+      data: DATA,
+      options: [{ value: 'op', label: '来自 options' }],
+    });
+    await open(host);
+    const texts = qa(host, '.lyt-tree-node').map((n) => n.textContent);
+    expect(texts.some((t) => t?.includes('来自 options'))).toBe(true);
+    expect(texts.some((t) => t?.includes('浙江'))).toBe(false);
+  });
+
+  it('只传 data 仍可用（向后兼容别名）', async () => {
+    const host = await mountTreeSelect({});
+    await open(host);
+    expect(qa(host, '.lyt-tree-node').some((n) => n.textContent?.includes('浙江'))).toBe(true);
+  });
+
+  it('组件 disabled：点击 trigger 不展开，且 aria-disabled=true', async () => {
+    const host = await mountTreeSelect({ disabled: true });
+    expect(q(host, '.lyt-tree-select-trigger')!.getAttribute('aria-disabled')).toBe('true');
+    expect(q(host, '.lyt-tree-select')!.className).toContain('is-disabled');
+    await toggleTrigger(host);
+    expect(q(host, '.lyt-tree-select-dropdown')).toBeNull();
+  });
+
+  it('组件 disabled：键盘 ArrowDown 不展开', async () => {
+    const host = await mountTreeSelect({ disabled: true });
+    q(host, '.lyt-tree-select-trigger')!.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }),
+    );
+    await nextTick();
+    expect(q(host, '.lyt-tree-select-dropdown')).toBeNull();
+  });
+
+  it('组件可用时键盘 ArrowDown 可展开（负控对照）', async () => {
+    const host = await mountTreeSelect({});
+    q(host, '.lyt-tree-select-trigger')!.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }),
+    );
+    await nextTick();
+    expect(q(host, '.lyt-tree-select-dropdown')).toBeTruthy();
+  });
+
+  it('组件 disabled：清除按钮不触发 onChange', async () => {
+    const onChange = vi.fn();
+    const host = await mountTreeSelect({
+      disabled: true,
+      clearable: true,
+      modelValue: 'zj',
+      onChange,
+    });
+    q(host, '.lyt-tree-select-clear')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await nextTick();
+    expect(onChange).not.toHaveBeenCalled();
   });
 });

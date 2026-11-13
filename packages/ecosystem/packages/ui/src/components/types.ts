@@ -1352,6 +1352,8 @@ export interface TreeSelectNode {
 export interface TreeSelectProps {
   modelValue?: string | number | (string | number)[];
   options?: TreeSelectNode[];
+  /** @deprecated 使用 `options`；两者同时提供时以 `options` 为准。 */
+  data?: TreeSelectNode[];
   placeholder?: string;
   disabled?: boolean;
   clearable?: boolean;
@@ -1369,6 +1371,8 @@ export interface TreeSelectProps {
 export interface TreeSelectSetupProps extends Record<string, unknown> {
   modelValue: string | number | (string | number)[];
   options: TreeSelectNode[];
+  /** @deprecated 使用 `options`；两者同时提供时以 `options` 为准。 */
+  data?: TreeSelectNode[];
   placeholder: string;
   disabled: boolean;
   clearable: boolean;
