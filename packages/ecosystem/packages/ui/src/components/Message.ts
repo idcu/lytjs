@@ -60,9 +60,15 @@ function createMessage(options: MessageOptions): MessageInstance {
 
   document.body.appendChild(container);
 
+  let closed = false;
   const close = () => {
+    // 幂等：关闭动画期间重复调用（手动 close + 自动关闭 / closeAll）不得
+    // 再排一个 300ms 定时器 —— 第二次 removeChild 会抛 NotFoundError，
+    // onClose 也会被重复调用。
+    if (closed) return;
     const instance = instances.get(id);
     if (instance) {
+      closed = true;
       instance.el.classList.add('lyt-message--fade-out');
       setTimeout(() => {
         document.body.removeChild(container);

@@ -9,7 +9,7 @@
  * 若移除 Message.ts 中的 escapeHTML(message) / escapeHTML(type)，
  * 下方「载荷被中和」「注入无法跳出 class 属性」两条断言将立即失败（红）。
  */
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { Message } from './Message';
 
 afterEach(() => {
@@ -57,5 +57,37 @@ describe('Message 组件 - XSS 防护', () => {
   it('showClose 时渲染关闭按钮', () => {
     Message.success('可关闭', { showClose: true });
     expect(document.querySelector('.lyt-message__close')).not.toBeNull();
+  });
+});
+
+describe('Message 关闭幂等', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('★ 重复 close 不应二次 removeChild 抛错，onClose 只调一次', () => {
+    vi.useFakeTimers();
+    const onClose = vi.fn();
+    const inst = Message.success('重复关闭', { duration: 0, onClose });
+
+    inst.close();
+    inst.close();
+
+    // 修复前：两次 close 都排进了 300ms 定时器，第二个 removeChild 抛 NotFoundError。
+    expect(() => vi.advanceTimersByTime(300)).not.toThrow();
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(document.querySelectorAll('.lyt-message-container').length).toBe(0);
+  });
+
+  it('★ Message.close(id) 重复调用同样幂等', () => {
+    vi.useFakeTimers();
+    const onClose = vi.fn();
+    const inst = Message.success('按 id 关闭', { duration: 0, onClose });
+
+    Message.close(inst.id);
+    Message.close(inst.id);
+
+    expect(() => vi.advanceTimersByTime(300)).not.toThrow();
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
