@@ -63,6 +63,7 @@ const REACTIVITY = new URL('../packages/reactivity/dist/index.mjs', import.meta.
 const VDOM = new URL('../packages/vdom/dist/index.mjs', import.meta.url).href;
 const RENDERER = new URL('../packages/renderer/dist/index.mjs', import.meta.url).href;
 const COMPONENT = new URL('../packages/component/dist/index.mjs', import.meta.url).href;
+const CORE_VNODE = new URL('../packages/core-vnode/dist/index.mjs', import.meta.url).href;
 const SECURITY = new URL('../packages/common/packages/security/dist/index.mjs', import.meta.url)
   .href;
 
@@ -571,8 +572,12 @@ for (const fx of FIXTURES) {
 // 已知的 SSR 抛错（动态组件名的表达式中引用了未注入的 `comp`）记在
 // `compiler-parity-baseline.json` 的 `modeParity` 段，同样**只允许减少**。
 // ============================================================
+const { withMemo } = await import(CORE_VNODE);
+
 const MODE_RUNTIME = {
   ...vdomRuntime,
+  // v-memo 的产物 helper（在 @lytjs/core-vnode，不在 vdom 的导出面里）
+  withMemo,
   ...domRuntimeModules,
   ...(await import(COMPONENT)),
   ...(await import(RENDERER)),
