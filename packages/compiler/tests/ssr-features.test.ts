@@ -53,6 +53,22 @@ describe('SSR 编译 - <slot>', () => {
   });
 });
 
+describe('SSR 编译 - 组件插槽', () => {
+  it('<template #default> 应作为默认插槽，而不是输出字面量 <template> 标签', () => {
+    const render = executeSsr(
+      compile('<Comp><template v-slot><span>hi</span></template></Comp>', { ssrMode: true }),
+      {
+        renderComponentVNode: (
+          _comp: unknown,
+          _props: unknown,
+          slots: Record<string, () => string> | null,
+        ) => (slots?.default ? slots.default() : ''),
+      },
+    );
+    expect(render({})).toBe('<span>hi</span>');
+  });
+});
+
 describe('SSR 编译 - 绑定与 nullish 安全', () => {
   it('插值应前缀化并对 nullish 输出空串', () => {
     const render = ssr('<div>{{ msg }}</div>');

@@ -335,7 +335,11 @@ function genSSRComponent(element: ElementNode): string {
         const slotDir = el.props.find(
           (pp) => pp.type === NodeTypes.DIRECTIVE && pp.name === 'slot',
         ) as DirectiveNode | undefined;
-        const name = slotDir?.arg ? (slotDir.arg as SimpleExpressionNode).content : undefined;
+        const name = slotDir
+          ? slotDir.arg
+            ? (slotDir.arg as SimpleExpressionNode).content
+            : 'default'
+          : undefined;
         if (name) {
           const innerScope = slotDir?.exp
             ? (slotDir.exp as SimpleExpressionNode).content
@@ -347,7 +351,7 @@ function genSSRComponent(element: ElementNode): string {
     }
     defaultChildren.push(child);
   }
-  if (defaultChildren.length) {
+  if (defaultChildren.length && !slotEntries.some((entry) => entry.startsWith('"default":'))) {
     slotEntries.unshift(`default:${genSSRSlotFn(defaultChildren, defaultScope)}`);
   }
   const slotsCode = slotEntries.length ? `{${slotEntries.join(',')}}` : 'null';
