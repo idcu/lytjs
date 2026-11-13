@@ -192,6 +192,36 @@ describe('query 语义', () => {
   });
 });
 
+describe('并发导航', () => {
+  it('★ 守卫未完成时发起的第二次 push 不能被吞掉', async () => {
+    const router = mk([
+      { path: '/a', component: { name: 'A' }, name: 'a' },
+      { path: '/b', component: { name: 'B' }, name: 'b' },
+    ]);
+
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let first = true;
+    router.beforeEach(async () => {
+      if (first) {
+        first = false;
+        await gate;
+      }
+      return true;
+    });
+
+    const firstNav = router.push('/a');
+    const secondNav = router.push('/b');
+    release();
+    await Promise.all([firstNav, secondNav]);
+
+    // 负控：旧实现直接返回第一次的 Promise ⇒ 最终停在 /a，/b 被静默丢弃
+    expect(router.currentRoute().path).toBe('/b');
+  });
+});
+
 describe('未匹配路径', () => {
   it('给出可操作的告警（此前完全静默）', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});

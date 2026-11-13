@@ -96,8 +96,22 @@ export function createRouter(options: RouterOptions): Router {
     readyResolve = resolve;
   });
 
-  // Pending navigation
-  let pendingNavigation: Promise<NavigationFailure | void> | null = null;
+  // 导航串行化：并发调用 `push` / `replace` 时**排队**，而不是丢弃后一次目标。
+  //
+  // ⚠️ 2026-11-13 修（P1）：此前 `pendingNavigation` 非空就直接返回**旧 Promise**
+  //   ⇒ 守卫还没跑完时用户点了第二个链接，第二次导航被静默吞掉（调用方以为成功）。
+  //   现在后一次导航等前一次落定后再执行，最终位置 = 最后一次请求的目标。
+  let navigationTail: Promise<unknown> = Promise.resolve();
+
+  function enqueueNavigation(
+    to: RouteLocationRaw,
+    replace: boolean,
+  ): Promise<NavigationFailure | void> {
+    const run = navigationTail.then(() => navigate(to, replace));
+    // 队列本身必须吞掉失败：一次导航抛错不能让后续所有导航永久停摆
+    navigationTail = run.catch(() => {});
+    return run;
+  }
 
   /**
    * Resolve a route location by matching against all route records
@@ -517,23 +531,11 @@ export function createRouter(options: RouterOptions): Router {
     resolveName,
 
     async push(to) {
-      if (pendingNavigation) return pendingNavigation;
-      try {
-        pendingNavigation = navigate(to, false);
-        return await pendingNavigation;
-      } finally {
-        pendingNavigation = null;
-      }
+      return enqueueNavigation(to, false);
     },
 
     async replace(to) {
-      if (pendingNavigation) return pendingNavigation;
-      try {
-        pendingNavigation = navigate(to, true);
-        return await pendingNavigation;
-      } finally {
-        pendingNavigation = null;
-      }
+      return enqueueNavigation(to, true);
     },
 
     go(delta) {
