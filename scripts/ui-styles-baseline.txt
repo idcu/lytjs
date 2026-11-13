@@ -7,18 +7,6 @@
 # 加一行前请先想清楚：这个类名是**该补样式**还是**该从组件里删掉**？
 # 两条都不做而只是加进基线，等于把「裸 DOM」正式固化为契约。
 #
-TimePicker → lyt-time-picker__clear
-TimePicker → lyt-time-picker__confirm-btn
-TimePicker → lyt-time-picker__dropdown
-TimePicker → lyt-time-picker__footer
-TimePicker → lyt-time-picker__input
-TimePicker → lyt-time-picker__input--placeholder
-TimePicker → lyt-time-picker__panel
-TimePicker → lyt-time-picker__range
-TimePicker → lyt-time-picker__select
-TimePicker → lyt-time-picker__select-group
-TimePicker → lyt-time-picker__separator
-TimePicker → lyt-time-picker__trigger
 Upload → lyt-upload__content
 Upload → lyt-upload__file
 Upload → lyt-upload__file-name

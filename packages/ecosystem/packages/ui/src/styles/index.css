@@ -2796,6 +2796,102 @@
   background: rgba(64, 158, 255, 0.12);
 }
 
+/* ===== TimePicker ===== */
+.lyt-time-picker__trigger {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+}
+.lyt-time-picker__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lyt-time-picker__input--placeholder {
+  color: var(--lyt-text-color-placeholder);
+}
+.lyt-time-picker__clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  color: var(--lyt-text-color-placeholder);
+  cursor: pointer;
+}
+.lyt-time-picker__clear:hover {
+  color: var(--lyt-text-color-regular);
+  background: var(--lyt-border-color-lighter);
+}
+.lyt-time-picker__dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 2000;
+  min-width: 180px;
+  padding: 8px;
+  background: var(--lyt-bg-color);
+  border: 1px solid var(--lyt-border-color-light);
+  border-radius: var(--lyt-border-radius-base);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+.lyt-time-picker__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.lyt-time-picker__range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.lyt-time-picker__select-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.lyt-time-picker__select {
+  height: 26px;
+  padding: 0 4px;
+  border: 1px solid var(--lyt-border-color);
+  border-radius: var(--lyt-border-radius-small);
+  outline: none;
+  background: var(--lyt-bg-color);
+  color: var(--lyt-text-color-regular);
+  box-sizing: border-box;
+}
+.lyt-time-picker__select:focus {
+  border-color: var(--lyt-color-primary);
+}
+.lyt-time-picker__separator {
+  padding: 0 4px;
+  color: var(--lyt-text-color-placeholder);
+}
+.lyt-time-picker__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--lyt-border-color-lighter);
+}
+.lyt-time-picker__confirm-btn {
+  height: 26px;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--lyt-border-radius-small);
+  background: var(--lyt-color-primary);
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+
 /* ===== Descriptions ===== */
 .lyt-descriptions {
   display: grid;
