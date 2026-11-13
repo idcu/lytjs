@@ -929,7 +929,8 @@
       "update": {
         "ok": false
       },
-      "expected": "<div><span data-lyt-frag=\"1\" style=\"display:contents\"><!----><span>A</span><!----></span><span>tail</span></div>"
+      "expected": "<div><span data-lyt-frag=\"1\" style=\"display:contents\"><!----><span>A</span><!----></span><span>tail</span></div>",
+      "expectedSsr": "<div><span>A</span><span>tail</span></div>"
     },
     {
       "id": "tf02",
@@ -942,6 +943,7 @@
         "list": ["a", "c"]
       },
       "expected": "<div><!----><span>a</span><!----><!----><span>b</span><!----></div>",
+      "expectedSsr": "<div><span>a</span><span>b</span></div>",
       "expectedAfter": "<div><!----><span>a</span><!----><!----><span>c</span><!----></div>"
     },
     {
@@ -957,6 +959,7 @@
         "inner": false
       },
       "expected": "<div><span data-lyt-frag=\"1\" style=\"display:contents\"><!----><span>N</span><!----></span></div>",
+      "expectedSsr": "<div><span>N</span></div>",
       "expectedAfter": "<div><span data-lyt-frag=\"1\" style=\"display:contents\"><!----><!----></span></div>"
     },
     {
@@ -969,7 +972,8 @@
       "update": {
         "ok": false
       },
-      "expected": "<div><span data-lyt-frag=\"1\" style=\"display:contents\"><!----><!----></span><span>tail</span></div>"
+      "expected": "<div><span data-lyt-frag=\"1\" style=\"display:contents\"><!----><!----></span><span>tail</span></div>",
+      "expectedSsr": "<div><span>tail</span></div>"
     },
     {
       "id": "cf02",
@@ -1066,6 +1070,7 @@
         ]
       },
       "expected": "<div><!----><span>a</span><!----><!----><!----><!----><span>c</span><!----></div>",
+      "expectedSsr": "<div><span>a</span><span>c</span></div>",
       "expectedAfter": "<div><!----><!----><!----><span>b</span><!----></div>"
     },
     {
@@ -1079,6 +1084,7 @@
         "list": ["x", "y"]
       },
       "expected": "<div><!----><span>x</span><!----><!----><span>y!</span><!----><!----><span>z</span><!----></div>",
+      "expectedSsr": "<div><span>x</span><span>y!</span><span>z</span></div>",
       "expectedAfter": "<div><!----><span>x</span><!----><!----><span>y!</span><!----></div>"
     },
     {
@@ -1139,6 +1145,7 @@
         ]
       },
       "expected": "<div><!----><span>a</span><!----><!----><span>b</span><!----><!----><span>c</span><!----></div>",
+      "expectedSsr": "<div><span>a</span><span>b</span><span>c</span></div>",
       "expectedAfter": "<div><!----><span>c</span><!----><!----><span>a</span><!----></div>"
     }
   ]

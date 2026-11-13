@@ -10,6 +10,7 @@
 
 import { NodeTypes, ElementTypes } from './constants';
 import { escapeHTML } from '@lytjs/common-string';
+import { FRAGMENT_SENTINEL } from './transforms/transform-element';
 import { prefixIdentifiers } from './prefix-identifiers';
 import type {
   RootNode,
@@ -679,8 +680,24 @@ function genSSRSlotOutlet(element: ElementNode): string {
   );
 }
 
+/** Fragment 的 children 序列化：透明容器，不产生任何包装标签 */
+function genSSRFragmentChildren(children: VNodeCall['children']): string {
+  if (children === undefined || children === null) return "''";
+  if (typeof children === 'string') return JSON.stringify(children);
+  if (Array.isArray(children)) return genSSRChildren(children as TemplateChildNode[]);
+  return genSSRBranch(children as JSChildNode);
+}
+
 function genSSRVNodeCall(vnode: VNodeCall): string {
   const tag = typeof vnode.tag === 'string' ? vnode.tag.replace(/"/g, '') : String(vnode.tag);
+
+  // `<template v-for>` / `<template v-if>` 的 vnode 是 Fragment（见 transform-element
+  // 的 FRAGMENT_SENTINEL）。Fragment 在 DOM 里没有对应元素，SSR 必须只输出子节点；
+  // 此前把它当普通标签，产物里直接出现 `<__LYTJS_FRAGMENT__ key="…">` 字面量。
+  if (tag === FRAGMENT_SENTINEL) {
+    return genSSRFragmentChildren(vnode.children);
+  }
+
   const parts: string[] = [`'<${tag}'`];
 
   // Props

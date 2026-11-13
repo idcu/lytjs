@@ -684,6 +684,14 @@ for (const entry of TEMPLATES) {
   try {
     const html = execSSRMode(ssrCode, { ...ctx });
     if (typeof html !== 'string') throw new Error(`SSR 产物返回 ${typeof html}`);
+    // SSR 语义基准（可选）：只比 innerHTML 无法发现「占位符被当文本」「字面量 null」
+    // 这类产物级缺陷 —— `expected` 只约束 signal 基础实现，SSR 由这里单独断言。
+    if (entry.expectedSsr !== undefined && html.trim() !== entry.expectedSsr) {
+      fail(
+        `${entry.id}: SSR 产物≠人工语义基准`,
+        `实际: ${JSON.stringify(html)}\n     基准: ${JSON.stringify(entry.expectedSsr)}`,
+      );
+    }
   } catch (e) {
     observedModeThrows.ssr.push(entry.id);
     if (!modeBaseline.ssrThrows.includes(entry.id)) {

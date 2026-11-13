@@ -78,6 +78,39 @@ describe('SSR 编译 - 插值表达式', () => {
   });
 });
 
+describe('SSR 编译 - template v-for 的 Fragment 不应被当标签输出', () => {
+  it('只输出子节点，不输出占位符标签', () => {
+    const render = ssr(
+      '<div><template v-for="x in list" :key="x"><span>{{x}}</span></template></div>',
+    );
+    const html = render({ list: ['a', 'b'] });
+    expect(html).not.toContain('__LYTJS_FRAGMENT__');
+    expect(html).toBe('<div><span>a</span><span>b</span></div>');
+  });
+
+  it('列表项内的 v-if 假分支也不保留占位标签', () => {
+    const render = ssr(
+      '<div><template v-for="it in list" :key="it.id"><span v-if="it.show">{{it.name}}</span></template></div>',
+    );
+    const html = render({
+      list: [
+        { id: 1, show: true, name: 'a' },
+        { id: 2, show: false, name: 'b' },
+        { id: 3, show: true, name: 'c' },
+      ],
+    });
+    expect(html).not.toContain('__LYTJS_FRAGMENT__');
+    expect(html).toBe('<div><span>a</span><span>c</span></div>');
+  });
+
+  it('<template v-if> 命中时只输出内容', () => {
+    const render = ssr('<div><template v-if="ok"><span>{{msg}}</span></template></div>');
+    const html = render({ ok: true, msg: 'M' });
+    expect(html).not.toContain('__LYTJS_FRAGMENT__');
+    expect(html).toBe('<div><span>M</span></div>');
+  });
+});
+
 describe('SSR 编译 - v-model 初态', () => {
   it('文本输入输出 value', () => {
     expect(ssr('<input v-model="msg">')({ msg: 'M' })).toBe('<input value="M">');
