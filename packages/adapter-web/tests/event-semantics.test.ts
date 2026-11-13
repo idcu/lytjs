@@ -102,3 +102,38 @@ describe('patchEvent 修饰符语义', () => {
     expect([first, second]).toEqual([0, 1]);
   });
 });
+
+describe('移除时复用注册时的实际 options', () => {
+  it('★ removeAllEventListeners 后，残留的 capture 监听仍会触发（池化复用）', () => {
+    const oldEl = el();
+    const nextEl = el();
+    const hits: string[] = [];
+
+    patchEvent(oldEl, 'onClick', { handler: () => hits.push('old'), capture: true } as never);
+    removeAllEventListeners(oldEl);
+
+    // 释放的 invoker 会被下一个元素从对象池取出复用；若旧元素上的 capture 监听
+    // 没被真正移除，点击旧元素就会跑到「新元素」的 handler 上。
+    patchEvent(nextEl, 'onClick', () => hits.push('new'));
+    click(oldEl);
+
+    // 修复前：移除时只按 _parsed（prop 名修饰符）重建 options，丢掉值对象里的
+    // capture:true ⇒ removeEventListener 的 capture 与注册时不匹配 ⇒ 监听残留，
+    // 点击已移除监听的旧元素仍会触发（hits === ['new']）。
+    expect(hits).toEqual([]);
+  });
+
+  it('★ patchEvent(null) 后，残留的 capture 监听仍会触发（池化复用）', () => {
+    const oldEl = el();
+    const nextEl = el();
+    const hits: string[] = [];
+
+    patchEvent(oldEl, 'onClick', { handler: () => hits.push('old'), capture: true } as never);
+    patchEvent(oldEl, 'onClick', null);
+
+    patchEvent(nextEl, 'onClick', () => hits.push('new'));
+    click(oldEl);
+
+    expect(hits).toEqual([]);
+  });
+});

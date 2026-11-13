@@ -251,7 +251,13 @@ export function patchEvent(
     // FIX: P1-3 使用 existingInvoker._parsed 而非重新解析的 parsed，
     // 确保移除时的 options 与绑定时完全一致
     // FIX: DTS build error - existingInvoker._parsed 可能为 undefined
-    const removeOptions = buildEventListenerOptions(existingInvoker._parsed!);
+    // ⚠️ 2026-11-13：必须并入 `_options`（注册时值对象里的 capture/once/passive），
+    //   只按 `_parsed` 重建会丢掉 capture:true ⇒ 移除时的 capture 与注册不匹配，
+    //   监听残留（jsdom 实测：移除后点击仍会触发）。
+    const removeOptions = buildEventListenerOptions(
+      existingInvoker._parsed!,
+      existingInvoker._options,
+    );
     el.removeEventListener(existingInvoker._parsed!.name, existingInvoker, removeOptions);
     // FIX: P1-12 DOM-NEW-01 - 将 invoker 归还到对象池
     releaseInvoker(existingInvoker);
@@ -280,7 +286,10 @@ export function removeAllEventListeners(el: Element): void {
       const parsed = invoker._parsed;
       const eventName = parsed?.name ?? normalizeEventName(eventKey);
       // FIX: P2-v11-34 传递完整的 options，确保与 addEventListener 一致
-      const removeOptions = parsed ? buildEventListenerOptions(parsed) : undefined;
+      // ⚠️ 2026-11-13：同样必须并入 `_options`，否则值对象注册的 capture 监听移除不掉。
+      const removeOptions = parsed
+        ? buildEventListenerOptions(parsed, invoker._options)
+        : undefined;
       el.removeEventListener(eventName, invoker, removeOptions);
       // FIX: P1-12 - 将 invoker 归还到对象池
       releaseInvoker(invoker);
