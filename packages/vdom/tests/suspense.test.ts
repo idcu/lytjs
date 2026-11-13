@@ -62,6 +62,21 @@ function createAsyncVNode(tag: string): VNode {
   return vnode;
 }
 
+/**
+ * 多根 Suspense：default / fallback 都以 **slot 对象 + 数组** 传入。
+ *
+ * 注意不能用 `createSuspenseVNode` 的数组形态 —— 它把 `children[0]` 当 default、
+ * `children[1]` 当 fallback，多根会因此被误读。
+ */
+function createMultiRootSuspenseVNode(defaultChildren: VNode[], fallbackChildren?: VNode[]): VNode {
+  const children = fallbackChildren
+    ? { default: defaultChildren, fallback: fallbackChildren }
+    : { default: defaultChildren };
+  const vnode = createVNode(SUSPENSE_TYPE, null, children);
+  vnode.shapeFlag = ShapeFlags.SUSPENSE | ShapeFlags.STATEFUL_COMPONENT;
+  return vnode;
+}
+
 describe('Suspense pendingBranch/activeBranch', () => {
   let container: HTMLDivElement;
 
@@ -137,6 +152,48 @@ describe('Suspense pendingBranch/activeBranch', () => {
       const boundary = suspenseVNode.suspense as SuspenseBoundary;
       expect(boundary.activeBranch).toBe(defaultContent);
       expect(boundary.isInFallback).toBe(false);
+    });
+  });
+
+  describe('多根分支', () => {
+    it('★ 多根 default 全部挂载，而不是只取第一根', () => {
+      const { mount } = createTestRenderer();
+      const a = createElementVNode('div', 'A');
+      const b = createElementVNode('div', 'B');
+      const suspenseVNode = createMultiRootSuspenseVNode([a, b]);
+
+      mount(suspenseVNode, container);
+
+      // 负控：旧实现 resolveSuspenseChildren 用 first(slot) 只取 [0] ⇒ 只渲染 A。
+      expect(container.textContent).toBe('AB');
+      expect(container.querySelectorAll('div').length).toBe(2);
+
+      const boundary = suspenseVNode.suspense as SuspenseBoundary;
+      expect(boundary.activeBranch).toBe(a);
+      expect(boundary.isInFallback).toBe(false);
+    });
+
+    it('★ 显示 fallback 时多根 default 全部移除，fallback 多根全部挂载', () => {
+      const { mount } = createTestRenderer();
+      const a = createElementVNode('div', 'A');
+      const asyncContent = createAsyncVNode('async-comp');
+      const fb1 = createElementVNode('div', 'L1');
+      const fb2 = createElementVNode('div', 'L2');
+      const suspenseVNode = createMultiRootSuspenseVNode([a, asyncContent], [fb1, fb2]);
+
+      mount(suspenseVNode, container);
+
+      // 负控：旧实现只把第一根当 default ⇒ 看不到第二根里的异步占位，
+      // 不会切 fallback，容器里留着 "A"。
+      expect(container.textContent).toContain('L1');
+      expect(container.textContent).toContain('L2');
+      expect(container.textContent).not.toContain('A');
+      expect(container.querySelectorAll('div').length).toBe(2);
+
+      const boundary = suspenseVNode.suspense as SuspenseBoundary;
+      expect(boundary.isInFallback).toBe(true);
+      expect(boundary.activeBranch).toBeNull();
+      expect(boundary.fallbackBranch).toBe(fb1);
     });
   });
 
