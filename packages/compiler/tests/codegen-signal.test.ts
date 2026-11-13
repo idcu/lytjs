@@ -316,6 +316,18 @@ describe('codegen-signal', () => {
       const hidden = mount('<div v-show="visible">content</div>', { visible: false });
       expect(hidden.container.querySelector('div')!.style.display).toBe('none');
     });
+
+    it('should restore display for v-show inside a v-if branch (C-09)', () => {
+      // signal 产物用 effect 追踪 reactive 上下文；普通对象不会触发重跑
+      const ctx = reactive({ ok: true, s: false });
+      const handle = mount('<div><span v-if="ok" v-show="s">x</span></div>', ctx);
+      const span = () => handle.container.querySelector('span')!;
+      expect(span().style.display).toBe('none');
+
+      ctx.s = true;
+      // 修前：条件为真时 style 取 undefined，setStyle 视作 no-op ⇒ 永远停在 none
+      expect(span().style.display).toBe('');
+    });
   });
 
   // ============================================================

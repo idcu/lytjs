@@ -8,6 +8,9 @@ import type {
   ExpressionNode,
   TemplateChildNode,
   CompoundExpressionNode,
+  JSProperty,
+  JSConditionalExpression,
+  SimpleExpressionNode,
 } from '../types';
 
 /**
@@ -31,6 +34,38 @@ export function getExpContent(exp: ExpressionNode | null | undefined): string | 
       .join('');
   }
   return undefined;
+}
+
+/**
+ * 识别 `handleVShow` 产出的 `style: (cond) ? undefined : { display: 'none' }`。
+ *
+ * signal 的「分支内静态 HTML + 动态 op」路径只认简单表达式，会直接跳过这个
+ * 条件表达式（C-09：分支内 v-show 整条丢失）。返回条件表达式内容，供两条
+ * emitter 改写成 `display: cond ? '' : 'none'`。
+ */
+export function getVShowStyleTest(prop: JSProperty): string | undefined {
+  const value = prop.value;
+  if (!value || value.type !== NodeTypes.JS_CONDITIONAL_EXPRESSION) return undefined;
+  const cond = value as JSConditionalExpression;
+  const test = cond.test as { type?: number; content?: string };
+  if (!test || test.type !== NodeTypes.SIMPLE_EXPRESSION || typeof test.content !== 'string') {
+    return undefined;
+  }
+  const cons = cond.consequent as { type?: number; content?: string };
+  if (!cons || cons.type !== NodeTypes.SIMPLE_EXPRESSION || cons.content !== 'undefined') {
+    return undefined;
+  }
+  const alt = cond.alternate as { type?: number; properties?: JSProperty[] };
+  if (!alt || alt.type !== NodeTypes.JS_OBJECT_EXPRESSION) return undefined;
+  const props = alt.properties ?? [];
+  if (props.length !== 1) return undefined;
+  const only = props[0]!;
+  if (only.type !== NodeTypes.JS_PROPERTY) return undefined;
+  const key = only.key as SimpleExpressionNode;
+  const val = only.value as SimpleExpressionNode;
+  if (key.type !== NodeTypes.SIMPLE_EXPRESSION || key.content !== 'display') return undefined;
+  if (val.type !== NodeTypes.SIMPLE_EXPRESSION || val.content !== "'none'") return undefined;
+  return test.content;
 }
 
 // ============================================================

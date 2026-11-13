@@ -42,6 +42,7 @@ import {
   processVNodeCallPropsShared,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
+import { getVShowStyleTest } from './transforms/helpers';
 import { prefixIdentifiers } from './prefix-identifiers';
 import { FRAGMENT_SENTINEL } from './transforms/transform-element';
 import type {
@@ -1290,6 +1291,18 @@ function collectBranchDynamics(
       for (const rawProp of (vn.props as JSObjectExpression).properties) {
         if (rawProp.type !== NodeTypes.JS_PROPERTY) continue;
         const jsProp = rawProp as JSProperty;
+        // 分支内 v-show（C-09）：style 的值是 `cond ? undefined : {display:'none'}`，
+        // 不是简单表达式；若直接跳过，v-show 会在分支路径整条丢失（永远可见）。
+        const showTest = getVShowStyleTest(jsProp);
+        if (showTest !== undefined) {
+          ops.push({
+            elementIndex: selfIndex,
+            kind: 'style',
+            key: 'style',
+            expr: `{ display: ${prefixIdentifiers(showTest, inheritedLocals)} ? '' : 'none' }`,
+          });
+          continue;
+        }
         if (
           jsProp.key.type !== NodeTypes.SIMPLE_EXPRESSION ||
           jsProp.value.type !== NodeTypes.SIMPLE_EXPRESSION

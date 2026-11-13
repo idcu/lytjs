@@ -46,6 +46,7 @@ import {
   processVNodeCallPropsShared,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
+import { getVShowStyleTest } from './transforms/helpers';
 import { FRAGMENT_SENTINEL } from './transforms/transform-element';
 import { prefixIdentifiers } from './prefix-identifiers';
 import type {
@@ -1773,6 +1774,16 @@ function collectBranchDynamics(
       for (const prop of (vnode.props as JSObjectExpression).properties) {
         if (prop.type !== NodeTypes.JS_PROPERTY) continue;
         const jsProp = prop as JSProperty;
+        // 分支内 v-show（C-09）：与 base emitter 同样的条件表达式识别
+        const showTest = getVShowStyleTest(jsProp);
+        if (showTest !== undefined) {
+          ops.push({
+            elementIndex: selfIndex,
+            kind: 'style',
+            expr: `{ display: ${toItemExpr(showTest, locals)} ? '' : 'none' }`,
+          });
+          continue;
+        }
         if (jsProp.key.type !== NodeTypes.SIMPLE_EXPRESSION) continue;
         if (jsProp.value.type !== NodeTypes.SIMPLE_EXPRESSION) continue;
         const key = (jsProp.key as SimpleExpressionNode).content.replace(/^"|"$/g, '');
