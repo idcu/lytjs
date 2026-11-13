@@ -12,9 +12,12 @@
  */
 
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { createApp, h } from '@lytjs/core';
+import { createApp, h, nextTick } from '@lytjs/core';
 import { signal } from '@lytjs/core/runtime';
 import { Tabs, TabPane } from '../src/components/Tabs';
+
+/** 调度器冲刷：等微任务里的重渲染落地（确定性同步点，不是固定时长）。 */
+const flushUpdates = (): Promise<void> => nextTick();
 
 const hosts: HTMLElement[] = [];
 
@@ -62,7 +65,7 @@ async function mountTabs(
         );
     },
   } as never).mount(host);
-  await new Promise((r) => setTimeout(r, 30));
+  await vi.waitFor(() => expect(host.childNodes.length).toBeGreaterThan(0));
   return host;
 }
 
@@ -119,7 +122,7 @@ async function mountTabsControlled(
         );
     },
   } as never).mount(host);
-  await new Promise((r) => setTimeout(r, 30));
+  await vi.waitFor(() => expect(host.childNodes.length).toBeGreaterThan(0));
   return host;
 }
 
@@ -188,8 +191,7 @@ describe('Tabs — 渲染', () => {
           ]);
       },
     } as never).mount(host);
-    await new Promise((r) => setTimeout(r, 30));
-    expect(qa(host, '[role="tab"]')).toHaveLength(1);
+    await vi.waitFor(() => expect(qa(host, '[role="tab"]')).toHaveLength(1));
     expect(q(host, '.not-a-pane')).toBeNull();
   });
 
@@ -206,11 +208,12 @@ describe('Tabs — 点击切换', () => {
     const onTabClick = vi.fn();
     const host = await mountTabsControlled({ onChange, onTabClick });
     qa(host, '[role="tab"]')[1]!.click();
-    await new Promise((r) => setTimeout(r, 20));
-    expect(onChange).toHaveBeenCalledWith('b');
+    await vi.waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith('b');
+      expect(qa(host, '[role="tab"]')[1]!.getAttribute('aria-selected')).toBe('true');
+      expect(q(host, '[role="tabpanel"]')!.textContent).toBe('Content B');
+    });
     expect(onTabClick).toHaveBeenCalledTimes(1);
-    expect(qa(host, '[role="tab"]')[1]!.getAttribute('aria-selected')).toBe('true');
-    expect(q(host, '[role="tabpanel"]')!.textContent).toBe('Content B');
   });
 
   it('非受控下点击切换应保持选中（ADR 0010 修复）', async () => {
@@ -220,9 +223,10 @@ describe('Tabs — 点击切换', () => {
     const onChange = vi.fn();
     const host = await mountTabs({ onChange });
     qa(host, '[role="tab"]')[1]!.click();
-    await new Promise((r) => setTimeout(r, 30));
-    expect(onChange).toHaveBeenCalledWith('b'); // 事件仍正常发出
-    expect(qa(host, '[role="tab"]')[1]!.getAttribute('aria-selected')).toBe('true'); // 且不再被重置
+    await vi.waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith('b'); // 事件仍正常发出
+      expect(qa(host, '[role="tab"]')[1]!.getAttribute('aria-selected')).toBe('true'); // 且不再被重置
+    });
   });
 
   it('点击 disabled tab 不切换', async () => {
@@ -232,7 +236,7 @@ describe('Tabs — 点击切换', () => {
       { label: 'B', name: 'b', disabled: true, content: 'B' },
     ]);
     qa(host, '[role="tab"]')[1]!.click();
-    await new Promise((r) => setTimeout(r, 20));
+    await flushUpdates();
     expect(onChange).not.toHaveBeenCalled();
     expect(qa(host, '[role="tab"]')[0]!.getAttribute('aria-selected')).toBe('true');
   });
@@ -242,9 +246,7 @@ describe('Tabs — 点击切换', () => {
     const host = await mountTabs({ onChange });
     const tab = qa(host, '[role="tab"]')[0]!;
     tab.click();
-    await new Promise((r) => setTimeout(r, 20));
     tab.click();
-    await new Promise((r) => setTimeout(r, 20));
     // onChange 每次都触发（由父组件决定是否需要防抖）
     expect(onChange).toHaveBeenCalledTimes(2);
   });
@@ -252,10 +254,11 @@ describe('Tabs — 点击切换', () => {
   it('切换后 live region 出现公告文本', async () => {
     const host = await mountTabs({});
     qa(host, '[role="tab"]')[1]!.click();
-    await new Promise((r) => setTimeout(r, 20));
-    const sro = q(host, '.lyt-tabs__sro')!;
-    expect(sro.textContent).toContain('已切换到标签页 2');
-    expect(sro.getAttribute('aria-live')).toBe('polite');
+    await vi.waitFor(() => {
+      const sro = q(host, '.lyt-tabs__sro')!;
+      expect(sro.textContent).toContain('已切换到标签页 2');
+      expect(sro.getAttribute('aria-live')).toBe('polite');
+    });
   });
 });
 
@@ -267,29 +270,33 @@ describe('Tabs — 键盘导航', () => {
   it('ArrowRight 循环到下一个可用药 tab', async () => {
     const host = await mountTabsControlled({});
     keydown(q(host, '[role="tablist"]')!, 'ArrowRight');
-    await new Promise((r) => setTimeout(r, 20));
-    expect(qa(host, '[role="tab"]')[1]!.getAttribute('aria-selected')).toBe('true');
+    await vi.waitFor(() =>
+      expect(qa(host, '[role="tab"]')[1]!.getAttribute('aria-selected')).toBe('true'),
+    );
   });
 
   it('ArrowLeft 循环到上一个', async () => {
     const host = await mountTabsControlled({ modelValue: 'b' });
     keydown(q(host, '[role="tablist"]')!, 'ArrowLeft');
-    await new Promise((r) => setTimeout(r, 20));
-    expect(qa(host, '[role="tab"]')[0]!.getAttribute('aria-selected')).toBe('true');
+    await vi.waitFor(() =>
+      expect(qa(host, '[role="tab"]')[0]!.getAttribute('aria-selected')).toBe('true'),
+    );
   });
 
   it('ArrowDown 等价 ArrowRight', async () => {
     const host = await mountTabsControlled({});
     keydown(q(host, '[role="tablist"]')!, 'ArrowDown');
-    await new Promise((r) => setTimeout(r, 20));
-    expect(qa(host, '[role="tab"]')[1]!.getAttribute('aria-selected')).toBe('true');
+    await vi.waitFor(() =>
+      expect(qa(host, '[role="tab"]')[1]!.getAttribute('aria-selected')).toBe('true'),
+    );
   });
 
   it('ArrowUp 等价 ArrowLeft', async () => {
     const host = await mountTabsControlled({ modelValue: 'c' });
     keydown(q(host, '[role="tablist"]')!, 'ArrowUp');
-    await new Promise((r) => setTimeout(r, 20));
-    expect(qa(host, '[role="tab"]')[1]!.getAttribute('aria-selected')).toBe('true');
+    await vi.waitFor(() =>
+      expect(qa(host, '[role="tab"]')[1]!.getAttribute('aria-selected')).toBe('true'),
+    );
   });
 
   it('跳过 disabled tab', async () => {
@@ -299,22 +306,25 @@ describe('Tabs — 键盘导航', () => {
       { label: 'C', name: 'c' },
     ]);
     keydown(q(host, '[role="tablist"]')!, 'ArrowRight');
-    await new Promise((r) => setTimeout(r, 20));
-    expect(qa(host, '[role="tab"]')[2]!.getAttribute('aria-selected')).toBe('true');
+    await vi.waitFor(() =>
+      expect(qa(host, '[role="tab"]')[2]!.getAttribute('aria-selected')).toBe('true'),
+    );
   });
 
   it('Home 跳到第一个可用 tab', async () => {
     const host = await mountTabsControlled({ modelValue: 'c' });
     keydown(q(host, '[role="tablist"]')!, 'Home');
-    await new Promise((r) => setTimeout(r, 20));
-    expect(qa(host, '[role="tab"]')[0]!.getAttribute('aria-selected')).toBe('true');
+    await vi.waitFor(() =>
+      expect(qa(host, '[role="tab"]')[0]!.getAttribute('aria-selected')).toBe('true'),
+    );
   });
 
   it('End 跳到最后一个可用 tab', async () => {
     const host = await mountTabsControlled({});
     keydown(q(host, '[role="tablist"]')!, 'End');
-    await new Promise((r) => setTimeout(r, 20));
-    expect(qa(host, '[role="tab"]')[2]!.getAttribute('aria-selected')).toBe('true');
+    await vi.waitFor(() =>
+      expect(qa(host, '[role="tab"]')[2]!.getAttribute('aria-selected')).toBe('true'),
+    );
   });
 
   it('End 跳过末尾 disabled', async () => {
@@ -324,8 +334,9 @@ describe('Tabs — 键盘导航', () => {
       { label: 'C', name: 'c', disabled: true },
     ]);
     keydown(q(host, '[role="tablist"]')!, 'End');
-    await new Promise((r) => setTimeout(r, 20));
-    expect(qa(host, '[role="tab"]')[1]!.getAttribute('aria-selected')).toBe('true');
+    await vi.waitFor(() =>
+      expect(qa(host, '[role="tab"]')[1]!.getAttribute('aria-selected')).toBe('true'),
+    );
   });
 
   it('Enter 触发当前 tab 的点击逻辑', async () => {
@@ -333,19 +344,19 @@ describe('Tabs — 键盘导航', () => {
     const host = await mountTabsControlled({ onChange });
     const list = q(host, '[role="tablist"]')!;
     keydown(list, 'ArrowRight');
-    await new Promise((r) => setTimeout(r, 20));
+    await vi.waitFor(() =>
+      expect(qa(host, '[role="tab"]')[1]!.getAttribute('aria-selected')).toBe('true'),
+    );
     onChange.mockClear();
     keydown(list, 'Enter');
-    await new Promise((r) => setTimeout(r, 20));
-    expect(onChange).toHaveBeenCalledWith('b');
+    await vi.waitFor(() => expect(onChange).toHaveBeenCalledWith('b'));
   });
 
   it('Space 触发当前 tab 的点击逻辑', async () => {
     const onChange = vi.fn();
     const host = await mountTabsControlled({ onChange });
     keydown(q(host, '[role="tablist"]')!, ' ');
-    await new Promise((r) => setTimeout(r, 20));
-    expect(onChange).toHaveBeenCalledWith('a');
+    await vi.waitFor(() => expect(onChange).toHaveBeenCalledWith('a'));
   });
 
   it('全部 disabled 时键盘导航不响应', async () => {
@@ -355,7 +366,7 @@ describe('Tabs — 键盘导航', () => {
       { label: 'B', name: 'b', disabled: true },
     ]);
     keydown(q(host, '[role="tablist"]')!, 'ArrowRight');
-    await new Promise((r) => setTimeout(r, 20));
+    await flushUpdates();
     expect(onChange).not.toHaveBeenCalled();
   });
 
@@ -363,8 +374,7 @@ describe('Tabs — 键盘导航', () => {
     const onKeydown = vi.fn();
     const host = await mountTabs({ onKeydown });
     keydown(q(host, '[role="tablist"]')!, 'ArrowRight');
-    await new Promise((r) => setTimeout(r, 20));
-    expect(onKeydown).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => expect(onKeydown).toHaveBeenCalledTimes(1));
   });
 });
 
@@ -375,8 +385,7 @@ describe('Tabs — 关闭标签', () => {
     const closeBtn = qa(host, '.lyt-tabs__close')[1]!;
     expect(closeBtn).toBeTruthy();
     closeBtn.click();
-    await new Promise((r) => setTimeout(r, 20));
-    expect(onTabRemove).toHaveBeenCalledWith('b');
+    await vi.waitFor(() => expect(onTabRemove).toHaveBeenCalledWith('b'));
   });
 
   it('pane 级 closable 优先于全局', async () => {
@@ -390,23 +399,26 @@ describe('Tabs — 关闭标签', () => {
   it('关闭中间标签后 activeIndex 前移', async () => {
     const host = await mountTabs({ closable: true, modelValue: 'c' });
     qa(host, '.lyt-tabs__close')[1]!.click(); // 关闭 b
-    await new Promise((r) => setTimeout(r, 20));
     // 源码按剩余 pane 数组重排，announce 提示"现在显示标签页"
-    expect(q(host, '.lyt-tabs__sro')!.textContent).toContain('已关闭标签页');
+    await vi.waitFor(() =>
+      expect(q(host, '.lyt-tabs__sro')!.textContent).toContain('已关闭标签页'),
+    );
   });
 
   it('关闭第一个标签后焦点移到新第一个', async () => {
     const host = await mountTabs({ closable: true });
     qa(host, '.lyt-tabs__close')[0]!.click();
-    await new Promise((r) => setTimeout(r, 20));
-    expect(q(host, '.lyt-tabs__sro')!.textContent).toContain('已关闭标签页');
+    await vi.waitFor(() =>
+      expect(q(host, '.lyt-tabs__sro')!.textContent).toContain('已关闭标签页'),
+    );
   });
 
   it('关闭唯一标签 announce "现在没有标签页"', async () => {
     const host = await mountTabs({ closable: true }, [{ label: 'Only', name: 'only' }]);
     qa(host, '.lyt-tabs__close')[0]!.click();
-    await new Promise((r) => setTimeout(r, 20));
-    expect(q(host, '.lyt-tabs__sro')!.textContent).toContain('现在没有标签页');
+    await vi.waitFor(() =>
+      expect(q(host, '.lyt-tabs__sro')!.textContent).toContain('现在没有标签页'),
+    );
   });
 
   it('Delete 键关闭当前 closable 标签', async () => {
@@ -418,8 +430,7 @@ describe('Tabs — 关闭标签', () => {
     q(host, '[role="tablist"]')!.dispatchEvent(
       new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }),
     );
-    await new Promise((r) => setTimeout(r, 20));
-    expect(onTabRemove).toHaveBeenCalledWith('a');
+    await vi.waitFor(() => expect(onTabRemove).toHaveBeenCalledWith('a'));
   });
 
   it('Backspace 键关闭当前标签', async () => {
@@ -431,8 +442,7 @@ describe('Tabs — 关闭标签', () => {
     q(host, '[role="tablist"]')!.dispatchEvent(
       new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true, cancelable: true }),
     );
-    await new Promise((r) => setTimeout(r, 20));
-    expect(onTabRemove).toHaveBeenCalledWith('a');
+    await vi.waitFor(() => expect(onTabRemove).toHaveBeenCalledWith('a'));
   });
 
   it('closable=false 时 Delete 键不触发关闭', async () => {
@@ -444,7 +454,7 @@ describe('Tabs — 关闭标签', () => {
     q(host, '[role="tablist"]')!.dispatchEvent(
       new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }),
     );
-    await new Promise((r) => setTimeout(r, 20));
+    await flushUpdates();
     // 源码里 p.closable 为 false 时整个分支不进入
     expect(onTabRemove).not.toHaveBeenCalled();
   });
@@ -457,9 +467,10 @@ describe('Tabs — 新增标签', () => {
     const btn = q(host, '.lyt-tabs__add-btn')!;
     expect(btn).toBeTruthy();
     btn.click();
-    await new Promise((r) => setTimeout(r, 20));
-    expect(onTabAdd).toHaveBeenCalledTimes(1);
-    expect(q(host, '.lyt-tabs__sro')!.textContent).toContain('正在添加新标签页');
+    await vi.waitFor(() => {
+      expect(onTabAdd).toHaveBeenCalledTimes(1);
+      expect(q(host, '.lyt-tabs__sro')!.textContent).toContain('正在添加新标签页');
+    });
   });
 
   it('editable 同样渲染 + 按钮', async () => {
@@ -492,16 +503,16 @@ describe('Tabs — 拖拽排序', () => {
     const tabs = qa(host, '[role="tab"]');
 
     tabs[0]!.dispatchEvent(new Event('dragstart', { bubbles: true }));
-    await new Promise((r) => setTimeout(r, 10));
-    expect(onTabDragStart).toHaveBeenCalledWith(0);
+    await vi.waitFor(() => expect(onTabDragStart).toHaveBeenCalledWith(0));
 
     tabs[2]!.dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));
-    await new Promise((r) => setTimeout(r, 10));
+    await flushUpdates();
 
     tabs[2]!.dispatchEvent(new Event('dragend', { bubbles: true }));
-    await new Promise((r) => setTimeout(r, 10));
-    expect(onTabDragEnd).toHaveBeenCalledWith(0, 2);
-    expect(q(host, '.lyt-tabs__sro')!.textContent).toContain('移动到位置 3');
+    await vi.waitFor(() => {
+      expect(onTabDragEnd).toHaveBeenCalledWith(0, 2);
+      expect(q(host, '.lyt-tabs__sro')!.textContent).toContain('移动到位置 3');
+    });
   });
 
   it('dragover 非拖拽状态时不更新 dropIndex', async () => {
@@ -509,7 +520,7 @@ describe('Tabs — 拖拽排序', () => {
     const tabs = qa(host, '[role="tab"]');
     // 没有先 dragstart，直接 dragover
     tabs[1]!.dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));
-    await new Promise((r) => setTimeout(r, 10));
+    await flushUpdates();
     // 不应有 --drop 类
     expect(qa(host, '.lyt-tabs__item--drop')).toHaveLength(0);
   });
@@ -518,7 +529,7 @@ describe('Tabs — 拖拽排序', () => {
     const onTabDragStart = vi.fn();
     const host = await mountTabs({ draggable: false, onTabDragStart });
     qa(host, '[role="tab"]')[0]!.dispatchEvent(new Event('dragstart', { bubbles: true }));
-    await new Promise((r) => setTimeout(r, 10));
+    await flushUpdates();
     expect(onTabDragStart).not.toHaveBeenCalled();
   });
 
@@ -527,11 +538,11 @@ describe('Tabs — 拖拽排序', () => {
     const host = await mountTabs({ draggable: true, onTabDragEnd });
     const tabs = qa(host, '[role="tab"]');
     tabs[1]!.dispatchEvent(new Event('dragstart', { bubbles: true }));
-    await new Promise((r) => setTimeout(r, 10));
+    await flushUpdates();
     tabs[1]!.dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));
-    await new Promise((r) => setTimeout(r, 10));
+    await flushUpdates();
     tabs[1]!.dispatchEvent(new Event('dragend', { bubbles: true }));
-    await new Promise((r) => setTimeout(r, 10));
+    await flushUpdates();
     expect(onTabDragEnd).not.toHaveBeenCalled();
   });
 
@@ -539,10 +550,9 @@ describe('Tabs — 拖拽排序', () => {
     const host = await mountTabs({ draggable: true });
     const tabs = qa(host, '[role="tab"]');
     tabs[0]!.dispatchEvent(new Event('dragstart', { bubbles: true }));
-    await new Promise((r) => setTimeout(r, 10));
+    await flushUpdates();
     tabs[2]!.dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));
-    await new Promise((r) => setTimeout(r, 20));
-    expect(qa(host, '.lyt-tabs__item--drop')).toHaveLength(1);
+    await vi.waitFor(() => expect(qa(host, '.lyt-tabs__item--drop')).toHaveLength(1));
   });
 });
 
@@ -578,16 +588,16 @@ describe('Tabs — 缺陷修复守卫', () => {
   it('★ 非受控模式下点击标签应保持激活（不得被拉回第一个）', async () => {
     const host = await mountTabs();
     qa(host, '[role="tab"]')[2]!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    await new Promise((r) => setTimeout(r, 40));
-    expect(qa(host, '[role="tab"]')[2]!.getAttribute('aria-selected')).toBe('true');
+    await vi.waitFor(() =>
+      expect(qa(host, '[role="tab"]')[2]!.getAttribute('aria-selected')).toBe('true'),
+    );
   });
 
   it('★ 切换应发 update:modelValue（v-model 契约）', async () => {
     const seen: unknown[] = [];
     const host = await mountTabs({ 'onUpdate:modelValue': (v: unknown) => seen.push(v) });
     qa(host, '[role="tab"]')[1]!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    await new Promise((r) => setTimeout(r, 20));
-    expect(seen).toEqual(['b']);
+    await vi.waitFor(() => expect(seen).toEqual(['b']));
   });
 
   it('★ 页面里只应有一个 role=tablist（不得根 / header 嵌套）', async () => {
@@ -600,7 +610,8 @@ describe('Tabs — 缺陷修复守卫', () => {
     qa(host, '[role="tab"]')[0]!.dispatchEvent(
       new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }),
     );
-    await new Promise((r) => setTimeout(r, 40));
-    expect(qa(host, '[role="tab"]')[1]!.getAttribute('aria-selected')).toBe('true');
+    await vi.waitFor(() =>
+      expect(qa(host, '[role="tab"]')[1]!.getAttribute('aria-selected')).toBe('true'),
+    );
   });
 });
