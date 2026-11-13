@@ -48,7 +48,6 @@ async function mountMenu(
       return () => h(Menu as never, props, { default: () => items });
     },
   } as never).mount(host);
-  await new Promise((r) => setTimeout(r, 30));
   return host;
 }
 
