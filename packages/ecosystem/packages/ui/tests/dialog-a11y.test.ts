@@ -51,7 +51,6 @@ async function mountOverlay(Component: unknown, props: Record<string, unknown> =
   });
   apps.push(app as unknown as { unmount: () => void });
   await app.mount(host);
-  await tick();
   return { host, open, app };
 }
 
