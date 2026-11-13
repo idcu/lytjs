@@ -28,11 +28,18 @@ export type Middleware = (
 /**
  * 中间件函数类型 - 洋葱圈模型签名
  *
+ * ⚠️ 2026-11-13 放宽返回类型（owner 批准）：允许中间件直接返回 `Response`
+ *   （cors / auth / rate-limit 的既有写法）。对实现方是**放宽**，既有
+ *   `Promise<void>` 中间件不受影响；调用方需要处理可能出现的 `Response`。
+ *
  * @param ctx - 当前中间件上下文
  * @param next - 调用链中下一个中间件的函数
- * @returns 中间件完成时的 Promise
+ * @returns 中间件完成时的 Promise（可带一个 Response 作为最终响应）
  */
-export type MiddlewareFn = (ctx: MiddlewareContext, next: () => Promise<void>) => Promise<void>;
+export type MiddlewareFn = (
+  ctx: MiddlewareContext,
+  next: () => Promise<void>,
+) => Promise<void | Response>;
 
 /**
  * 最终处理器函数

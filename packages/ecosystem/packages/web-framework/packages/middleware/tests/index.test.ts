@@ -46,6 +46,32 @@ describe('@lytjs/middleware', () => {
   });
 
   describe('combineMiddlewares', () => {
+    it('★ 下游返回的 Response 透传给调用方', async () => {
+      const combined = combineMiddlewares(async (_ctx, next) => {
+        await next();
+      });
+
+      // 终点处理器返回 201（规范签名是 Promise<void>，运行时允许带 Response）
+      const result = await combined(
+        { request: null },
+        (async () => new Response('done', { status: 201 })) as unknown as () => Promise<void>,
+      );
+
+      // 负控：旧实现只 `await` 不返回 ⇒ 调用方拿到 undefined
+      expect(result).toBeInstanceOf(Response);
+      expect((result as Response).status).toBe(201);
+    });
+
+    it('中间件自己返回的 Response 优先于下游', async () => {
+      const combined = combineMiddlewares(async (_ctx, next) => {
+        await next();
+        return new Response('mine', { status: 202 });
+      });
+
+      const result = await combined({ request: null }, async () => {});
+      expect((result as Response).status).toBe(202);
+    });
+
     it('★ 重复调用 next() 不会重复执行下游与终点', async () => {
       const calls: string[] = [];
       let finalCalls = 0;
