@@ -41,7 +41,7 @@ keywords: [S35, P0 止血, 体积裁决, 负控, 覆盖率快照, signal 收编,
 - check-ui-styles 78 条欠账（Calendar 4 / Cascader 16 / ColorPicker 9 /
   DatePicker 24 / TimePicker 12 / Upload 13），只减不增。
 - 体积债：plugin / common-error 按需加载（ADR 0029）。
-- 覆盖率（全分母 2026-11-14 实测）：lines/statements 88.58%、functions 89.54%、branches 88.03%；棘轮下限 66.5/72.2/86.2。旧口径 97.5/97.99 不可横比
+- 覆盖率（全分母 2026-11-14 实测）：lines/statements 88.58%、functions 89.53%、branches 88.03%；棘轮下限 66.5/72.2/86.2。旧口径 97.5/97.99 不可横比
 
 ## 下一步
 
