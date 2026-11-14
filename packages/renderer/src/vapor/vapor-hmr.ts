@@ -3,6 +3,7 @@
 // Phase 1.2: 实现 Vapor 组件热更新，保持组件状态
 
 import type { VaporComponentDefinition } from './vapor-app';
+import { globalSlot } from '../shared/global-slot';
 
 // ============================================================
 // HMR 类型定义
@@ -53,17 +54,25 @@ interface ComponentInstance {
   mounted: boolean;
 }
 
-/** 组件注册表 */
-const componentRegistry = new Map<string, ComponentInstance>();
+interface VaporHmrGlobalState {
+  componentRegistry: Map<string, ComponentInstance>;
+  componentIdCounter: number;
+  hmrListeners: Set<HMRUpdateListener>;
+}
 
-/** 组件 ID 计数器 */
-let componentIdCounter = 0;
+/** HMR 注册表状态跨入口共享（主入口内联副本与 /vapor 入口）。 */
+const hmrState = () =>
+  globalSlot<VaporHmrGlobalState>('@lytjs/renderer/vapor-hmr', () => ({
+    componentRegistry: new Map(),
+    componentIdCounter: 0,
+    hmrListeners: new Set(),
+  }));
 
 /**
  * 生成唯一的组件 ID
  */
 export function generateComponentId(): string {
-  return `vapor-c-${++componentIdCounter}`;
+  return `vapor-c-${++hmrState().componentIdCounter}`;
 }
 
 /**
@@ -74,7 +83,7 @@ export function registerComponent(
   component: VaporComponentDefinition,
   container: Element,
 ): void {
-  componentRegistry.set(id, {
+  hmrState().componentRegistry.set(id, {
     id,
     component,
     container,
@@ -87,21 +96,21 @@ export function registerComponent(
  * 注销组件实例
  */
 export function unregisterComponent(id: string): void {
-  componentRegistry.delete(id);
+  hmrState().componentRegistry.delete(id);
 }
 
 /**
  * 获取组件实例
  */
 export function getComponentInstance(id: string): ComponentInstance | undefined {
-  return componentRegistry.get(id);
+  return hmrState().componentRegistry.get(id);
 }
 
 /**
  * 获取所有已注册的组件 ID
  */
 export function getRegisteredComponentIds(): string[] {
-  return Array.from(componentRegistry.keys());
+  return Array.from(hmrState().componentRegistry.keys());
 }
 
 // ============================================================
@@ -112,7 +121,7 @@ export function getRegisteredComponentIds(): string[] {
  * 捕获组件状态快照
  */
 export function captureStateSnapshot(id: string): Map<string, unknown> | null {
-  const instance = componentRegistry.get(id);
+  const instance = hmrState().componentRegistry.get(id);
   if (!instance) return null;
 
   // 返回状态副本
@@ -123,7 +132,7 @@ export function captureStateSnapshot(id: string): Map<string, unknown> | null {
  * 恢复组件状态
  */
 export function restoreStateSnapshot(id: string, snapshot: Map<string, unknown>): boolean {
-  const instance = componentRegistry.get(id);
+  const instance = hmrState().componentRegistry.get(id);
   if (!instance) return false;
 
   // 合并状态
@@ -141,21 +150,21 @@ export function restoreStateSnapshot(id: string, snapshot: Map<string, unknown>)
 /** HMR 更新监听器 */
 type HMRUpdateListener = (update: HMRUpdate) => void;
 
-const hmrListeners = new Set<HMRUpdateListener>();
+const hmrListeners = () => hmrState().hmrListeners;
 
 /**
  * 添加 HMR 更新监听器
  */
 export function onHMRUpdate(listener: HMRUpdateListener): () => void {
-  hmrListeners.add(listener);
-  return () => hmrListeners.delete(listener);
+  hmrListeners().add(listener);
+  return () => hmrListeners().delete(listener);
 }
 
 /**
  * 触发 HMR 更新
  */
 function emitHMRUpdate(update: HMRUpdate): void {
-  for (const listener of hmrListeners) {
+  for (const listener of hmrListeners()) {
     try {
       listener(update);
     } catch (error) {
@@ -179,7 +188,7 @@ export function handleComponentUpdate(
   updateType: HMRUpdateType,
   _preservation: HMRStatePreservation = DEFAULT_STATE_PRESERVATION,
 ): boolean {
-  const instance = componentRegistry.get(componentId);
+  const instance = hmrState().componentRegistry.get(componentId);
   if (!instance) {
     console.warn(`[LytJS HMR] Component not found: ${componentId}`);
     return false;
@@ -282,7 +291,7 @@ export function createVaporHMRHandler(componentId: string) {
     }
 
     // 检测更新类型
-    const instance = componentRegistry.get(componentId);
+    const instance = hmrState().componentRegistry.get(componentId);
     if (!instance) {
       console.warn(`[LytJS HMR] Component instance not found: ${componentId}`);
       return;
@@ -356,7 +365,7 @@ function escapeForSingleQuotedString(value: string): string {
 // 在浏览器环境中创建全局注册表
 if (typeof window !== 'undefined') {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (window as any).__LYTJS_HMR_REGISTRY__ = componentRegistry;
+  (window as any).__LYTJS_HMR_REGISTRY__ = hmrState().componentRegistry;
   // ★ 2026-10-22：`generateHMRCode()` 产出的 accept 回调通过它触发**真正的**热更新
   //   （默认按 template 处理：换定义、保留状态、不刷新页面）。
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -381,7 +390,7 @@ export function isHMRAvailable(): boolean {
  * 手动触发组件重新渲染
  */
 export function forceRerender(componentId: string): boolean {
-  const instance = componentRegistry.get(componentId);
+  const instance = hmrState().componentRegistry.get(componentId);
   if (!instance) return false;
 
   // 触发重新渲染
@@ -400,7 +409,7 @@ export function forceRerender(componentId: string): boolean {
  * 清理所有 HMR 状态
  */
 export function clearHMRState(): void {
-  componentRegistry.clear();
-  hmrListeners.clear();
-  componentIdCounter = 0;
+  hmrState().componentRegistry.clear();
+  hmrState().hmrListeners.clear();
+  hmrState().componentIdCounter = 0;
 }

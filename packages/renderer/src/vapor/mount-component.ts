@@ -31,17 +31,22 @@ import {
 } from '@lytjs/component';
 import { effect } from '@lytjs/reactivity';
 import { getRealNode } from '@lytjs/dom-runtime';
+import { globalSlot } from '../shared/global-slot';
 
 /** 组件定义：函数组件、选项对象或异步组件包装 */
 export type VaporComponentLike = unknown;
 
 /** 渲染器单例（懒创建，避免模块加载期就依赖 DOM） */
-let renderer: ReturnType<typeof createDOMRenderer> | null = null;
+const vaporRendererState = () =>
+  globalSlot('@lytjs/renderer/vapor-renderer', () => ({
+    renderer: null as ReturnType<typeof createDOMRenderer> | null,
+  }));
 
 function getRenderer(): ReturnType<typeof createDOMRenderer> {
-  if (renderer) return renderer;
+  const state = vaporRendererState();
+  if (state.renderer) return state.renderer;
 
-  renderer = createDOMRenderer({
+  state.renderer = createDOMRenderer({
     setupChildComponent(childVNode: unknown, parentComponent: unknown): void {
       const vnode = childVNode as VNode;
       const instance = createComponentInstance(
@@ -82,7 +87,7 @@ function getRenderer(): ReturnType<typeof createDOMRenderer> {
     },
   });
 
-  return renderer;
+  return state.renderer;
 }
 
 /**
@@ -183,7 +188,7 @@ export function mountComponent(
 
 /** 便于测试：重置渲染器单例 */
 export function resetVaporComponentRenderer(): void {
-  renderer = null;
+  vaporRendererState().renderer = null;
 }
 
 /**

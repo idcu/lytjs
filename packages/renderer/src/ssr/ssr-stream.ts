@@ -15,12 +15,15 @@ import { isValidHTMLElementTag, renderAttributeToString, NAMED_ENTITIES } from '
 import { resolveComponentRootVNodeAsync } from './ssr-island';
 import type { ComponentOptions } from './ssr-island';
 import { warn } from '@lytjs/common-error';
+import { globalSlot } from '../shared/global-slot';
 
 // 重新导出 NAMED_ENTITIES 以保持向后兼容
 export { NAMED_ENTITIES };
 
 // FIX: P2-batch2-1 单调递增计数器，用于生成唯一的 Suspense ID
-let suspenseIdCounter = 0;
+// 跨入口共享（主入口内联副本与 /ssr 入口）：同一文档内 ID 必须唯一。
+const ssrStreamState = () =>
+  globalSlot('@lytjs/renderer/ssr-stream', () => ({ suspenseIdCounter: 0 }));
 
 // ============================================================
 // SSRStreamOptions
@@ -256,7 +259,7 @@ async function streamSuspenseBoundary(
 ): Promise<void> {
   // FIX: P2-batch2-1 使用单调递增计数器替代 Math.random()，
   // 避免 SSR 流式渲染中 Suspense ID 碰撞和不可预测行为
-  const suspenseId = `suspense-${++suspenseIdCounter}`;
+  const suspenseId = `suspense-${++ssrStreamState().suspenseIdCounter}`;
 
   // 打开 Suspense 边界标记
   pushChunk(controller, encoder, `<!--${suspenseId}-start-->`, commentMarkers, 'suspense:start');

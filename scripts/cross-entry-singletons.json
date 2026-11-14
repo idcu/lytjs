@@ -113,16 +113,16 @@
       "entries": ["index"],
       "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
-    "packages/common/packages/scheduler/src/index.ts::isFlushing": {
+    "packages/common/packages/scheduler/src/index.ts::isFlushPending": {
       "kind": "let/var",
-      "line": 92,
+      "line": 93,
       "classification": "a",
       "entries": ["index"],
       "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
-    "packages/common/packages/scheduler/src/index.ts::isFlushPending": {
+    "packages/common/packages/scheduler/src/index.ts::isFlushing": {
       "kind": "let/var",
-      "line": 93,
+      "line": 92,
       "classification": "a",
       "entries": ["index"],
       "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
@@ -386,16 +386,16 @@
       "entries": ["index"],
       "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
-    "packages/component/src/keep-alive.ts::anonymousTypeIds": {
-      "kind": "new WeakMap",
-      "line": 562,
+    "packages/component/src/keep-alive.ts::anonymousTypeIdSeed": {
+      "kind": "let/var",
+      "line": 563,
       "classification": "a",
       "entries": ["index"],
       "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
-    "packages/component/src/keep-alive.ts::anonymousTypeIdSeed": {
-      "kind": "let/var",
-      "line": 563,
+    "packages/component/src/keep-alive.ts::anonymousTypeIds": {
+      "kind": "new WeakMap",
+      "line": 562,
       "classification": "a",
       "entries": ["index"],
       "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
@@ -1065,20 +1065,6 @@
       "entries": ["index"],
       "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
-    "packages/renderer/src/client/server-components-client.ts::defaultConfig": {
-      "kind": "let/var",
-      "line": 23,
-      "classification": "c",
-      "entries": ["index", "client"],
-      "reason": "defaultConfig/hydrationState 在主入口内联副本与 /client 入口各一份；水合标记跨入口读不到"
-    },
-    "packages/renderer/src/client/server-components-client.ts::hydrationState": {
-      "kind": "new Map",
-      "line": 147,
-      "classification": "c",
-      "entries": ["index", "client"],
-      "reason": "defaultConfig/hydrationState 在主入口内联副本与 /client 入口各一份；水合标记跨入口读不到"
-    },
     "packages/renderer/src/hydration/enhanced-hydration.ts::isProcessingQueue": {
       "kind": "let/var",
       "line": 412,
@@ -1100,13 +1086,6 @@
       "entries": ["index", "ssr"],
       "reason": "纯渲染缓存，跨入口只影响命中率"
     },
-    "packages/renderer/src/ssr/ssr-stream.ts::suspenseIdCounter": {
-      "kind": "let/var",
-      "line": 23,
-      "classification": "c",
-      "entries": ["index", "ssr"],
-      "reason": "suspenseIdCounter 在 index 与 /ssr 各一份；同文档混用两个入口会重复 id"
-    },
     "packages/renderer/src/unmount.ts::cleanupHookRegistry": {
       "kind": "new WeakMap",
       "line": 46,
@@ -1127,34 +1106,6 @@
       "classification": "a",
       "entries": ["index"],
       "reason": "三张卸载注册表只被主入口 import"
-    },
-    "packages/renderer/src/vapor/mount-component.ts::renderer": {
-      "kind": "let/var",
-      "line": 39,
-      "classification": "c",
-      "entries": ["index", "vapor"],
-      "reason": "vapor 渲染器槽在主入口动态副本与 /vapor 入口各一份；跨入口设置互不可见"
-    },
-    "packages/renderer/src/vapor/vapor-hmr.ts::componentIdCounter": {
-      "kind": "let/var",
-      "line": 60,
-      "classification": "c",
-      "entries": ["index", "vapor"],
-      "reason": "HMR 组件注册表/计数器在主入口动态副本与 /vapor 入口各一份；跨入口注册彼此不可见"
-    },
-    "packages/renderer/src/vapor/vapor-hmr.ts::componentRegistry": {
-      "kind": "new Map",
-      "line": 57,
-      "classification": "c",
-      "entries": ["index", "vapor"],
-      "reason": "HMR 组件注册表/计数器在主入口动态副本与 /vapor 入口各一份；跨入口注册彼此不可见"
-    },
-    "packages/renderer/src/vapor/vapor-hmr.ts::hmrListeners": {
-      "kind": "new Set",
-      "line": 144,
-      "classification": "c",
-      "entries": ["index", "vapor"],
-      "reason": "HMR 组件注册表/计数器在主入口动态副本与 /vapor 入口各一份；跨入口注册彼此不可见"
     },
     "packages/tools/packages/devtools/src/bridge.ts::genericHandlers": {
       "kind": "new Set",

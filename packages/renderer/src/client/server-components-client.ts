@@ -6,6 +6,8 @@
 // 类型定义
 // ============================================================
 
+import { globalSlot } from '../shared/global-slot';
+
 /** Server Action 配置 */
 export interface ServerActionConfig {
   /** 服务端 action 端点 */
@@ -20,17 +22,30 @@ export interface ServerActionConfig {
 // 默认配置
 // ============================================================
 
-let defaultConfig: ServerActionConfig = {
-  endpoint: '/__lytjs_server_action',
-  headers: {},
-  onError: (error) => console.error('[LytJS Server Action Error]', error),
-};
+interface ClientGlobalState {
+  defaultConfig: ServerActionConfig;
+  hydrationState: Map<string, { hydrated: boolean; pending: boolean; error: Error | null }>;
+}
+
+/**
+ * 主入口内联副本与 `/client` 入口各有一份模块级状态；水合标记必须跨入口可见。
+ */
+function clientState(): ClientGlobalState {
+  return globalSlot('@lytjs/renderer/server-components-client', () => ({
+    defaultConfig: {
+      endpoint: '/__lytjs_server_action',
+      headers: {},
+      onError: (error) => console.error('[LytJS Server Action Error]', error),
+    },
+    hydrationState: new Map(),
+  }));
+}
 
 /**
  * 配置 Server Action
  */
 export function configureServerAction(config: Partial<ServerActionConfig>): void {
-  defaultConfig = { ...defaultConfig, ...config };
+  clientState().defaultConfig = { ...clientState().defaultConfig, ...config };
 }
 
 // ============================================================
@@ -51,7 +66,7 @@ export async function callServer<T = unknown>(
   functionName: string,
   ...args: unknown[]
 ): Promise<T> {
-  const { endpoint, headers, onError } = defaultConfig;
+  const { endpoint, headers, onError } = clientState().defaultConfig;
 
   try {
     const response = await fetch(endpoint!, {
@@ -142,29 +157,21 @@ function serverDataRoot(): Record<string, unknown> | undefined {
 // ============================================================
 
 /**
- * Hydration 状态
+ * Hydration 状态（跨入口共享，见 clientState）
  */
-const hydrationState = new Map<
-  string,
-  {
-    hydrated: boolean;
-    pending: boolean;
-    error: Error | null;
-  }
->();
 
 /**
  * 检查组件是否已 hydration
  */
 export function isHydrated(componentId: string): boolean {
-  return hydrationState.get(componentId)?.hydrated ?? false;
+  return clientState().hydrationState.get(componentId)?.hydrated ?? false;
 }
 
 /**
  * 标记组件为已 hydration
  */
 export function markHydrated(componentId: string): void {
-  hydrationState.set(componentId, {
+  clientState().hydrationState.set(componentId, {
     hydrated: true,
     pending: false,
     error: null,
@@ -182,7 +189,7 @@ export function getHydrationState(componentId: string): {
   pending: boolean;
   error: Error | null;
 } {
-  const state = hydrationState.get(componentId);
+  const state = clientState().hydrationState.get(componentId);
   if (!state) {
     return { hydrated: false, pending: false, error: null };
   }
@@ -208,7 +215,7 @@ export async function autoHydrate(): Promise<void> {
     if (isHydrated(componentId)) continue;
 
     // 标记为 pending
-    hydrationState.set(componentId, {
+    clientState().hydrationState.set(componentId, {
       hydrated: false,
       pending: true,
       error: null,
@@ -224,7 +231,7 @@ export async function autoHydrate(): Promise<void> {
 
       markHydrated(componentId);
     } catch (error) {
-      hydrationState.set(componentId, {
+      clientState().hydrationState.set(componentId, {
         hydrated: false,
         pending: false,
         error: error instanceof Error ? error : new Error(String(error)),
