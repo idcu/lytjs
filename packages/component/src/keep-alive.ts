@@ -394,6 +394,14 @@ export const KeepAlive: ComponentOptions = {
         // 复用缓存实例：把实例挂到新 vnode 上，并标记 KEPT_ALIVE
         rawVNode.component = cachedInstance as unknown as NonNullable<typeof rawVNode.component>;
         rawVNode.shapeFlag |= ShapeFlags.COMPONENT_KEPT_ALIVE;
+        // ★ 2026-11-15 修（P1-6 回归）：缓存命中的 vnode 也必须带 SHOULD_KEEP_ALIVE。
+        //   此前只有「首次未命中」的 vnode 打了这个标记；命中路径只打 KEPT_ALIVE，
+        //   于是这个组件再次被切走时，渲染器认不出它该**停用**，会走真正的卸载
+        //   （移除 DOM）。旧代码靠「unmount 不清 vnode.el」让 activate 把已摘除的
+        //   节点重新 insertBefore 回去 —— 正是 P1-6 要消除的陈旧 el 依赖。
+        //   现在补上标记，切走即走 deactivate（DOM 移入 storage，el 保留），
+        //   P1-6 的「真移除才清 el」才不会被 KeepAlive 误伤。
+        rawVNode.shapeFlag |= ShapeFlags.COMPONENT_SHOULD_KEEP_ALIVE;
         // ⚠️ 不在这里调 `activateInstance()`：它应当在**渲染器**把既有 DOM
         //    移回容器**之后**触发（见 vdom mountComponent 的激活分支），
         //    否则 activated 钩子会在 DOM 尚未回到文档树时运行。

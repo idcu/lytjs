@@ -693,13 +693,15 @@ export function createRenderer<HN, HE extends HN>(
       // ★ 2026-11-15 修（P1-6）：清掉指向已销毁子树的 `el`。
       //   否则调用方仍持有该 vnode 时，`patch()` 顶部「`n1.el === null` ⇒ 重新挂载」
       //   的守卫永远看不到信号，会把新内容写进已摘除的旧节点。
-      vnode.el = null;
+      //   ⚠️ 只在**真正移除**（doRemove）时清：KeepAlive 停用走的是 doRemove=false，
+      //   节点被搬进缓存容器、随时可能复位，清空 el 会让复位插不进 DOM。
+      if (doRemove) vnode.el = null;
       return;
     }
 
     if (type === Fragment) {
       fragmentAPI.unmountFragment(vnode, parentComponent, parentSuspense, doRemove);
-      vnode.el = null;
+      if (doRemove) vnode.el = null;
       return;
     }
 
@@ -707,20 +709,20 @@ export function createRenderer<HN, HE extends HN>(
       if (doRemove) {
         const commentEl = getVNodeEl(vnode);
         if (commentEl) hostRemove(commentEl);
+        vnode.el = null;
       }
-      vnode.el = null;
       return;
     }
 
     if (vnode.shapeFlag & ShapeFlags.TELEPORT) {
       teleportAPI.unmountTeleport(vnode, parentComponent, parentSuspense, doRemove);
-      vnode.el = null;
+      if (doRemove) vnode.el = null;
       return;
     }
 
     if (vnode.shapeFlag & ShapeFlags.SUSPENSE) {
       suspenseAPI.unmountSuspense(vnode, parentComponent, parentSuspense, doRemove);
-      vnode.el = null;
+      if (doRemove) vnode.el = null;
       return;
     }
 
@@ -802,7 +804,8 @@ export function createRenderer<HN, HE extends HN>(
     // ★ 2026-11-15 修（P1-6）：卸载尾部清 `el`。
     //   必须放在指令 `unmounted` 之后 —— 钩子仍可拿到宿主节点；
     //   清空后，`patch()` 的「`n1.el === null` ⇒ 走挂载」守卫才能真正生效。
-    vnode.el = null;
+    //   doRemove=false 表示节点被保留（KeepAlive 缓存 / 搬移），此时不能清。
+    if (doRemove) vnode.el = null;
   }
 
   // ============================================================
