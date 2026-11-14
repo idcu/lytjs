@@ -150,4 +150,52 @@ describe('transform', () => {
       expect(vnode.props).toBeDefined();
     });
   });
+
+  describe('v-for renderList 回调体', () => {
+    // #13：优化版对回调体里的每个 VNODE_CALL 都生成一次 createBody（最后覆盖），
+    // 基础版只取最后一个 renderItem 生成一次。两者的 varCounter/usedRuntime 消耗
+    // 次数因此可能不同 —— 但前提是「同一回调体出现多个 VNODE_CALL」这个形态可达。
+    // transforms/for.ts 只把**一个** renderItemExpr 放进 bodyParts（多根
+    // <template v-for> 会先被包成单个 Fragment VNODE_CALL），故此处直接对 AST 取证。
+    function collectRenderListChildCounts(ast: unknown): number[] {
+      const counts: number[] = [];
+      const seen = new WeakSet<object>();
+      const visit = (node: unknown): void => {
+        if (!node || typeof node !== 'object' || seen.has(node)) return;
+        seen.add(node);
+        const n = node as Record<string, unknown>;
+        if (n.type === NodeTypes.JS_CALL_EXPRESSION && n.callee === 'RENDER_LIST') {
+          const args = n.arguments as unknown[] | undefined;
+          const cb = args?.[1] as Record<string, unknown> | undefined;
+          const children = Array.isArray(cb?.children) ? (cb.children as unknown[]) : [];
+          counts.push(
+            children.filter(
+              (c) =>
+                (c as Record<string, unknown> | null | undefined)?.type === NodeTypes.VNODE_CALL,
+            ).length,
+          );
+        }
+        for (const value of Object.values(n)) {
+          if (Array.isArray(value)) value.forEach(visit);
+          else visit(value);
+        }
+      };
+      visit(ast);
+      return counts;
+    }
+
+    it('回调体最多承载一个 VNODE_CALL（多 VNODE_CALL 形态不可达）', () => {
+      const templates = [
+        '<ul><li v-for="x in xs">{{ x }}</li></ul>',
+        '<ul><template v-for="x in xs"><li>{{ x }}</li><li>{{ x }}</li></template></ul>',
+        '<ul><li v-for="x in xs" v-if="x.on">{{ x.name }}</li></ul>',
+        '<ul><li v-for="x in xs"><span>{{ x }}</span></li></ul>',
+      ];
+      for (const template of templates) {
+        const counts = collectRenderListChildCounts(transformTemplate(template));
+        expect(counts.length, template).toBeGreaterThan(0);
+        expect(Math.max(...counts), template).toBeLessThanOrEqual(1);
+      }
+    });
+  });
 });
