@@ -34,11 +34,7 @@ import {
   getStaticClass,
   createSimpleExpressionFor,
   getTestExpr,
-  validateAttributeName,
-  validateArgContent,
-  validateEventName,
   validateComponentName,
-  validateIslandDirective,
   buildComponentSlotsObjectShared,
   collectSlotVNodesShared,
   serializeConditionalVNodeShared,
@@ -49,6 +45,9 @@ import {
   serializeVNodeElementShared,
   buildComponentPropsObjectShared,
   processVNodeCallPropsShared,
+  processDirectiveShared,
+  validateExpression,
+  type DirectiveDialect,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { getVShowStyleTest } from './transforms/helpers';
@@ -810,27 +809,8 @@ function processElementOptimized(
 // 优化的指令处理
 // ============================================================
 
-/**
- * 危险/带副作用的表达式黑名单（与 `codegen-signal.ts` **同款**）。
- *
- * ⚠️ 2026-09-30 修复：此前这里用 `VALID_EXPRESSION`（只允许「简单属性路径」）做**白名单**校验，
- * 导致一大批在**非优化版 / SSR 均可编译**的表达式在**默认路径**下直接报错
- * （`:class="[a,b]"` / `:style="{color:'red'}"` / `:data-x="a"` / `@click="fn()"` /
- * `<slot :a="1">` …）。根因是批次 48–50 的「表达式改走 `prefixIdentifiers`」**只落在 base 版**。
- * 现统一为黑名单：模板表达式默认**信任**（由开发者书写），只拦语句/箭头/声明/赋值等危险写法。
- */
-const DANGEROUS_EXPRESSION =
-  /;|=>|\bfunction\b|\bnew\s|\bimport\b|\brequire\b|\bdelete\b|\bthrow\b|\bawait\b|(^|[^=!<>])\b[a-zA-Z_$][\w$]*\s*=(?!=)/;
-
-function validateExpression(exp: string | undefined, context: string): void {
-  if (!exp) return;
-  if (DANGEROUS_EXPRESSION.test(exp)) {
-    throw new Error(
-      `[lytjs/compiler] Unsafe expression in ${context}: "${exp}".\n` +
-        `  Statements, arrow functions, declarations and assignments are not allowed in templates.`,
-    );
-  }
-}
+// 危险表达式校验已下沉 `codegen-signal-shared.ts`（signal 两版收编），
+// 两版共用同一判据与错误文案。
 
 /** 把表达式渲染为 Signal 运行时可直接使用的代码（`_ctx.x` → `_c.x`）。 */
 function renderExpression(exp: string, locals: ReadonlySet<string> = new Set()): string {
@@ -873,195 +853,59 @@ function processDirectiveOptimized(
   options: SignalCodegenOptions,
   staticClass = '',
 ): void {
-  const expContent = dir.exp ? getExpContent(dir.exp as SimpleExpressionNode) : undefined;
-  const argContent = dir.arg ? getExpContent(dir.arg as SimpleExpressionNode) : undefined;
+  const rt = (name: string): string => {
+    usedRuntime.add(name);
+    return getShortName(name, options.useShortNames ?? true);
+  };
 
-  validateExpression(expContent, `v-${dir.name}`);
-  validateExpression(argContent, `v-${dir.name} argument`);
-  // 与基础实现对齐：参数里的单引号会破坏生成的代码/字符串字面量
-  validateArgContent(argContent);
-
-  // ⚠️ 2026-09-30 修复：**动态参数/事件**（`:[dyn]` / `@[evt]`）的 `arg` 是**表达式**
-  // （transform 后 `isStatic === false`），而此前一律按字面量写成 `'dyn'` / `'evt'`
-  // ⇒ 属性/事件名被写死，运行期取不到值（`:[dyn]` 写到名为 dyn 的属性上、`@[evt]` 绑到名为 evt 的事件上）。
-  const isDynamicArg = !!dir.arg && (dir.arg as { isStatic?: boolean }).isStatic === false;
-  const argCode = argContent
-    ? isDynamicArg
-      ? renderExpression(argContent)
-      : `'${argContent}'`
-    : "''";
-
-  // 与基础实现同一校验路径（判据与错误文案均来自共享层）
-  // C-35a：动态参数的 arg 是表达式，跳过字面量名称校验。
-  if (!isDynamicArg && dir.name === 'bind' && argContent) {
-    validateAttributeName(argContent, `v-bind:${argContent}`);
-  }
-  if (!isDynamicArg && dir.name === 'on' && argContent) {
-    validateEventName(argContent, `v-on:${argContent}`);
-  }
-  if (dir.name === 'island') {
-    validateIslandDirective(expContent, 'v-island');
-  }
-
-  switch (dir.name) {
-    case 'if': {
-      if (expContent) {
-        usedRuntime.add('effect');
-        usedRuntime.add('insert');
-        usedRuntime.add('remove');
-        const e = getShortName('effect', options.useShortNames ?? true);
-        const ins = getShortName('insert', options.useShortNames ?? true);
-        const rm = getShortName('remove', options.useShortNames ?? true);
-        dynamicBindings.push({
-          varName,
-          code: `let _f=null;${e}(()=>{if(${renderExpression(expContent)}){if(!_f){_f=${varName};${ins}(_f, ${OPTIMIZED_EMIT_PROFILE.containerParam});}}else{if(_f){${rm}(_f);_f=null;}}});`,
-        });
+  // 优化版指令拼写（紧凑形态 + 短别名）；语义全部在 `processDirectiveShared`。
+  const dialect: DirectiveDialect = {
+    expr: (exp) => renderExpression(exp),
+    handler: (exp) => renderHandlerExpression(exp),
+    ifStatement: (v, condition) =>
+      `let _f=null;${rt('effect')}(()=>{if(${condition}){if(!_f){_f=${v};${rt(
+        'insert',
+      )}(_f, ${OPTIMIZED_EMIT_PROFILE.containerParam});}}else{if(_f){${rt('remove')}(_f);_f=null;}}});`,
+    showStatement: (v, condition) =>
+      `${rt('effect')}(()=>{${v}.style.display=${condition}?'':'none';});`,
+    textStatement: (v, value) => `${rt('effect')}(()=>${rt('setText')}(${v},${value}));`,
+    htmlStatement: (v, value) => `${rt('effect')}(()=>${rt('setHTML')}(${v},${value}));`,
+    classStatement: (v, value, staticClass) =>
+      `${rt('effect')}(()=>${rt('setClass')}(${v},${
+        staticClass ? `[${JSON.stringify(staticClass)},${value}]` : value
+      }));`,
+    styleStatement: (v, value) => `${rt('effect')}(()=>${rt('setStyle')}(${v},${value}));`,
+    attrStatement: (v, argCode, value) =>
+      `${rt('effect')}(()=>${rt('setAttribute')}(${v},${argCode},${value}));`,
+    eventStatement: (v, argCode, handler, modifiers) => {
+      const cev = rt('createEventHandler');
+      const oc = rt('onCleanup');
+      if (modifiers.length > 0) {
+        const mods = modifiers.map((m) => `${m}:1`).join(',');
+        return `${oc}(${cev}(${v},${argCode},${handler},{${mods}}));`;
       }
-      break;
-    }
+      return `${oc}(${cev}(${v},${argCode},${handler}));`;
+    },
+    modelStatements: (v, value, eventName, setValue) => {
+      const e = rt('effect');
+      const cev = rt('createEventHandler');
+      const oc = rt('onCleanup');
+      return [
+        `${e}(()=>{${v}.value=${value};});`,
+        `${oc}(${cev}(${v},'${eventName}',($e)=>{${value}=${setValue};}));`,
+      ];
+    },
+  };
 
-    case 'show': {
-      if (expContent) {
-        usedRuntime.add('effect');
-        const e = getShortName('effect', options.useShortNames ?? true);
-        dynamicBindings.push({
-          varName,
-          code: `${e}(()=>{${varName}.style.display=${renderExpression(expContent)}?'':'none';});`,
-        });
-      }
-      break;
-    }
-
-    case 'text': {
-      if (expContent) {
-        usedRuntime.add('effect');
-        usedRuntime.add('setText');
-        const e = getShortName('effect', options.useShortNames ?? true);
-        const st = getShortName('setText', options.useShortNames ?? true);
-        dynamicBindings.push({
-          varName,
-          code: `${e}(()=>${st}(${varName},${renderExpression(expContent)}));`,
-        });
-      }
-      break;
-    }
-
-    case 'html': {
-      if (expContent) {
-        usedRuntime.add('effect');
-        usedRuntime.add('setHTML');
-        const e = getShortName('effect', options.useShortNames ?? true);
-        const sh = getShortName('setHTML', options.useShortNames ?? true);
-        dynamicBindings.push({
-          varName,
-          code: `${e}(()=>${sh}(${varName},${renderExpression(expContent)}));`,
-        });
-      }
-      break;
-    }
-
-    case 'bind': {
-      if (argContent && expContent) {
-        usedRuntime.add('effect');
-        const e = getShortName('effect', options.useShortNames ?? true);
-        const sc = getShortName('setClass', options.useShortNames ?? true);
-        const ss = getShortName('setStyle', options.useShortNames ?? true);
-        const sa = getShortName('setAttribute', options.useShortNames ?? true);
-        if (argContent === 'class' && !isDynamicArg) {
-          usedRuntime.add('setClass');
-          // 静态 class 必须并入（setClass 是整体替换），否则模板里的 class 会被抹掉
-          const classValue = staticClass
-            ? `[${JSON.stringify(staticClass)},${renderExpression(expContent)}]`
-            : renderExpression(expContent);
-          dynamicBindings.push({
-            varName,
-            code: `${e}(()=>${sc}(${varName},${classValue}));`,
-          });
-        } else if (argContent === 'style' && !isDynamicArg) {
-          usedRuntime.add('setStyle');
-          dynamicBindings.push({
-            varName,
-            code: `${e}(()=>${ss}(${varName},${renderExpression(expContent)}));`,
-          });
-        } else {
-          usedRuntime.add('setAttribute');
-          dynamicBindings.push({
-            varName,
-            code: `${e}(()=>${sa}(${varName},${argCode},${renderExpression(expContent)}));`,
-          });
-        }
-      }
-      break;
-    }
-
-    case 'on': {
-      if (argContent && expContent) {
-        usedRuntime.add('createEventHandler');
-        usedRuntime.add('onCleanup');
-        const cev = getShortName('createEventHandler', options.useShortNames ?? true);
-        const oc = getShortName('onCleanup', options.useShortNames ?? true);
-        if (dir.modifiers.length > 0) {
-          const mods = dir.modifiers.map((m) => `${m}:1`).join(',');
-          dynamicBindings.push({
-            varName,
-            code: `${oc}(${cev}(${varName},${argCode},${renderHandlerExpression(expContent)},{${mods}}));`,
-          });
-        } else {
-          dynamicBindings.push({
-            varName,
-            code: `${oc}(${cev}(${varName},${argCode},${renderHandlerExpression(expContent)}));`,
-          });
-        }
-      }
-      break;
-    }
-
-    case 'model': {
-      if (expContent) {
-        const tagLower = tag.toLowerCase();
-        const modifiers = dir.modifiers;
-        const isLazy = modifiers.includes('lazy');
-        const isNumber = modifiers.includes('number');
-        const isTrim = modifiers.includes('trim');
-
-        let eventName = 'input';
-        const getValueExpr = '$e.target.value';
-
-        if (tagLower === 'select') {
-          eventName = 'change';
-        } else if (isLazy) {
-          eventName = 'change';
-        }
-
-        let setValueExpr = getValueExpr;
-        if (isNumber && isTrim) {
-          setValueExpr = `Number((${getValueExpr}).trim())`;
-        } else if (isNumber) {
-          setValueExpr = `Number(${getValueExpr})`;
-        } else if (isTrim) {
-          setValueExpr = `(${getValueExpr}).trim()`;
-        }
-
-        usedRuntime.add('effect');
-        usedRuntime.add('createEventHandler');
-        usedRuntime.add('onCleanup');
-
-        const e = getShortName('effect', options.useShortNames ?? true);
-        const cev = getShortName('createEventHandler', options.useShortNames ?? true);
-        const oc = getShortName('onCleanup', options.useShortNames ?? true);
-
-        dynamicBindings.push({
-          varName,
-          code: `${e}(()=>{${varName}.value=${renderExpression(expContent)};});`,
-        });
-        dynamicBindings.push({
-          varName,
-          code: `${oc}(${cev}(${varName},'${eventName}',($e)=>{${renderExpression(expContent)}=${setValueExpr};}));`,
-        });
-      }
-      break;
-    }
-  }
+  processDirectiveShared(
+    dir,
+    varName,
+    tag,
+    (code) => dynamicBindings.push({ varName, code }),
+    dialect,
+    new Set(),
+    staticClass,
+  );
 }
 
 // ============================================================

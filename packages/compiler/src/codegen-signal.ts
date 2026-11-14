@@ -29,11 +29,7 @@ import {
   getStaticClass,
   createSimpleExpressionFor,
   getTestExpr,
-  validateAttributeName,
-  validateArgContent,
-  validateEventName,
   validateComponentName,
-  validateIslandDirective,
   buildComponentSlotsObjectShared,
   collectSlotVNodesShared,
   serializeConditionalVNodeShared,
@@ -44,6 +40,9 @@ import {
   serializeVNodeElementShared,
   buildComponentPropsObjectShared,
   processVNodeCallPropsShared,
+  processDirectiveShared,
+  validateExpression,
+  type DirectiveDialect,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { getVShowStyleTest } from './transforms/helpers';
@@ -776,29 +775,9 @@ function processVNodeCallProps(
 // 处理指令节点
 // ============================================================
 
-/**
- * 危险/带副作用的表达式模式（黑名单）。
- * 模板表达式默认**信任**（模板由开发者书写），只拦这些：
- * 语句分隔、箭头函数、声明关键字、动态导入、赋值（避免副作用与注入）。
- */
-const DANGEROUS_EXPRESSION =
-  /;|=>|\bfunction\b|\bnew\s|\bimport\b|\brequire\b|\bdelete\b|\bthrow\b|\bawait\b|(^|[^=!<>])\b[a-zA-Z_$][\w$]*\s*=(?!=)/;
-
-function validateExpression(exp: string | undefined, context: string): void {
-  if (!exp) return;
-  // 表达式生成已统一改走 `prefixIdentifiers(exp, locals)`（见各调用点），
-  // 它能正确处理数组/对象/三元/拼接/索引等，并跳过属性名、字符串、locals。
-  // ⇒ 这里不再限制为「简单属性路径」，改为**黑名单式**拒绝明显危险/带副作用的模式。
-  if (DANGEROUS_EXPRESSION.test(exp)) {
-    throw new Error(
-      `[lytjs/compiler] Unsafe expression in ${context}: "${exp}".\n` +
-        `  Statements, arrow functions, declarations and assignments are not allowed in templates.`,
-    );
-  }
-}
-
 // FIX: P1-S1/S2/S6/S8：属性名 / 事件名 / 组件名 / v-island 校验统一在
 // `codegen-signal-shared.ts` 实现，两套发射器共用同一判据与错误文案。
+// `validateExpression` 同样已下沉（signal 两版收编），此处不再保留副本。
 
 /**
  * handler 表达式是否为「成员路径」（方法引用）：`fn` / `obj.fn` / `a.b.c`。
@@ -819,6 +798,34 @@ function renderHandlerExpression(exp: string, locals: ReadonlySet<string> = new 
   return `($event) => { ${prefixIdentifiers(exp, new Set([...locals, '$event']))}; }`;
 }
 
+/** 基础版指令拼写（语义在 `processDirectiveShared`，这里只负责产物形态）。 */
+const BASE_DIRECTIVE_DIALECT: DirectiveDialect = {
+  expr: (exp, locals) => prefixIdentifiers(exp, locals),
+  handler: (exp, locals) => renderHandlerExpression(exp, locals),
+  ifStatement: (varName, condition) =>
+    `let _ifFallbackEl = null;\n  effect(() => {\n    if (${condition}) {\n      if (!_ifFallbackEl) {\n        _ifFallbackEl = ${varName};\n        insert(_ifFallbackEl, ${BASE_EMIT_PROFILE.containerParam});\n      }\n    } else {\n      if (_ifFallbackEl) {\n        remove(_ifFallbackEl);\n        _ifFallbackEl = null;\n      }\n    }\n  });`,
+  showStatement: (varName, condition) =>
+    `effect(() => {\n    ${varName}.style.display = ${condition} ? '' : 'none';\n  });`,
+  htmlStatement: (varName, value) => `effect(() => setHTML(${varName}, ${value}));`,
+  classStatement: (varName, value, staticClass) =>
+    `effect(() => setClass(${varName}, ${
+      staticClass ? `[${JSON.stringify(staticClass)}, ${value}]` : value
+    }));`,
+  styleStatement: (varName, value) => `effect(() => setStyle(${varName}, ${value}));`,
+  attrStatement: (varName, argCode, value) =>
+    `effect(() => setAttribute(${varName}, ${argCode}, ${value}));`,
+  eventStatement: (varName, argCode, handler, modifiers) =>
+    modifiers.length > 0
+      ? `onCleanup(createEventHandler(${varName}, ${argCode}, ${handler}, { ${modifiers
+          .map((m) => `${m}: true`)
+          .join(', ')} }));`
+      : `onCleanup(createEventHandler(${varName}, ${argCode}, ${handler}));`,
+  modelStatements: (varName, value, eventName, setValue) => [
+    `effect(() => { ${varName}.value = ${value}; });`,
+    `onCleanup(createEventHandler(${varName}, '${eventName}', ($e) => { ${value} = ${setValue}; }));`,
+  ],
+};
+
 function processDirective(
   dir: DirectiveNode,
   varName: string,
@@ -827,175 +834,15 @@ function processDirective(
   locals: ReadonlySet<string> = new Set(),
   staticClass = '',
 ): void {
-  const expContent = dir.exp ? getExpContent(dir.exp as SimpleExpressionNode) : undefined;
-  const argContent = dir.arg ? getExpContent(dir.arg as SimpleExpressionNode) : undefined;
-
-  // FIX: P1-1~3 对 expContent 和 argContent 进行白名单验证
-  validateExpression(expContent, `v-${dir.name}`);
-  validateExpression(argContent, `v-${dir.name} argument`);
-  validateArgContent(argContent);
-
-  // 2026-09-30 修复：动态参数/事件（`:[dyn]` / `@[evt]`）的 arg 是**表达式**，不是字面量。
-  const isDynamicArg = !!dir.arg && (dir.arg as { isStatic?: boolean }).isStatic === false;
-  const argCode = argContent
-    ? isDynamicArg
-      ? prefixIdentifiers(argContent, locals)
-      : `'${argContent}'`
-    : "''";
-
-  // FIX: P1-S1, P1-S2: 根据指令类型进行特定的名称验证
-  // C-35a：动态参数（`:[foo.bar]` / `@[evt.name]`）的 arg 是**表达式**，
-  // 不是属性/事件字面量；用字面量白名单校验会把合法表达式误杀。
-  if (!isDynamicArg && dir.name === 'bind' && argContent) {
-    validateAttributeName(argContent, `v-bind:${argContent}`);
-  }
-  if (!isDynamicArg && dir.name === 'on' && argContent) {
-    validateEventName(argContent, `v-on:${argContent}`);
-  }
-  // FIX: P1-S8: v-island 指令验证
-  if (dir.name === 'island') {
-    validateIslandDirective(expContent, 'v-island');
-  }
-
-  switch (dir.name) {
-    case 'if': {
-      // v-if 在 transform 阶段已被转换为 JSConditionalExpression
-      // 此处作为后备处理，使用 insert/remove 方式
-      // FIX: P2-13 _container 是 render 函数的第二个参数，在生成的代码中可用
-      if (expContent) {
-        dynamicBindings.push({
-          varName,
-          code: `let _ifFallbackEl = null;\n  effect(() => {\n    if (${prefixIdentifiers(expContent, locals)}) {\n      if (!_ifFallbackEl) {\n        _ifFallbackEl = ${varName};\n        insert(_ifFallbackEl, ${BASE_EMIT_PROFILE.containerParam});\n      }\n    } else {\n      if (_ifFallbackEl) {\n        remove(_ifFallbackEl);\n        _ifFallbackEl = null;\n      }\n    }\n  });`,
-        });
-      }
-      break;
-    }
-
-    case 'show': {
-      if (expContent) {
-        dynamicBindings.push({
-          varName,
-          code: `effect(() => {\n    ${varName}.style.display = ${prefixIdentifiers(expContent, locals)} ? '' : 'none';\n  });`,
-        });
-      }
-      break;
-    }
-
-    case 'html': {
-      // v-html 在 transform 阶段已被转换为 innerHTML 属性
-      // 在 processVNodeCallProps 中处理
-      // 此处作为后备（消毒同样由 dom-runtime.setHTML 承担，见上方 innerHTML 分支注释）
-      if (expContent) {
-        dynamicBindings.push({
-          varName,
-          code: `effect(() => setHTML(${varName}, ${prefixIdentifiers(expContent, locals)}));`,
-        });
-      }
-      break;
-    }
-
-    case 'bind': {
-      if (argContent && expContent) {
-        if (argContent === 'class' && !isDynamicArg) {
-          // 静态 class 必须并入（setClass 是整体替换），否则模板里的 class 会被抹掉
-          const classValue = staticClass
-            ? `[${JSON.stringify(staticClass)}, ${prefixIdentifiers(expContent, locals)}]`
-            : prefixIdentifiers(expContent, locals);
-          dynamicBindings.push({
-            varName,
-            code: `effect(() => setClass(${varName}, ${classValue}));`,
-          });
-        } else if (argContent === 'style' && !isDynamicArg) {
-          dynamicBindings.push({
-            varName,
-            code: `effect(() => setStyle(${varName}, ${prefixIdentifiers(expContent, locals)}));`,
-          });
-        } else {
-          dynamicBindings.push({
-            varName,
-            code: `effect(() => setAttribute(${varName}, ${argCode}, ${prefixIdentifiers(expContent, locals)}));`,
-          });
-        }
-      }
-      break;
-    }
-
-    case 'on': {
-      if (argContent && expContent) {
-        if (dir.modifiers.length > 0) {
-          const mods = dir.modifiers.map((m) => `${m}: true`).join(', ');
-          dynamicBindings.push({
-            varName,
-            code: `onCleanup(createEventHandler(${varName}, ${argCode}, ${renderHandlerExpression(expContent, locals)}, { ${mods} }));`,
-          });
-        } else {
-          // FIX: P1-12 使用 createEventHandler 替代未导入的 addEventListener
-          dynamicBindings.push({
-            varName,
-            code: `onCleanup(createEventHandler(${varName}, ${argCode}, ${renderHandlerExpression(expContent, locals)}));`,
-          });
-        }
-      }
-      break;
-    }
-
-    case 'model': {
-      if (expContent) {
-        const tagLower = tag.toLowerCase();
-        const modifiers = dir.modifiers;
-        const isLazy = modifiers.includes('lazy');
-        const isNumber = modifiers.includes('number');
-        const isTrim = modifiers.includes('trim');
-
-        // 确定事件类型和取值方式
-        let eventName: string;
-        let getValueExpr: string;
-        if (tagLower === 'select') {
-          eventName = 'change';
-          getValueExpr = '$e.target.value';
-        } else if (tagLower === 'textarea') {
-          eventName = isLazy ? 'change' : 'input';
-          getValueExpr = '$e.target.value';
-        } else {
-          // input 元素（默认）
-          eventName = isLazy ? 'change' : 'input';
-          getValueExpr = '$e.target.value';
-        }
-
-        // 构建赋值表达式（应用修饰符）
-        // FIX: P2-14 重构为 if-else 结构，避免 .number.trim 组合时
-        // 前面的单独 if 分支被后续组合分支覆盖，导致逻辑冗余
-        let setValueExpr: string;
-        if (isNumber && isTrim) {
-          // .number.trim 组合：先 trim 再转 number
-          setValueExpr = `Number((${getValueExpr}).trim())`;
-        } else if (isNumber) {
-          setValueExpr = `Number(${getValueExpr})`;
-        } else if (isTrim) {
-          setValueExpr = `(${getValueExpr}).trim()`;
-        } else {
-          setValueExpr = getValueExpr;
-        }
-
-        // 生成双向绑定代码
-        dynamicBindings.push({
-          varName,
-          code: `effect(() => { ${varName}.value = ${prefixIdentifiers(expContent, locals)}; });`,
-        });
-        dynamicBindings.push({
-          varName,
-          code: `onCleanup(createEventHandler(${varName}, '${eventName}', ($e) => { ${prefixIdentifiers(expContent, locals)} = ${setValueExpr}; }));`,
-        });
-      }
-      break;
-    }
-
-    case 'for': {
-      // v-for 在 transform 阶段已被转换为 JSCallExpression (renderList)
-      // 此处作为后备处理
-      break;
-    }
-  }
+  processDirectiveShared(
+    dir,
+    varName,
+    tag,
+    (code) => dynamicBindings.push({ varName, code }),
+    BASE_DIRECTIVE_DIALECT,
+    locals,
+    staticClass,
+  );
 }
 
 // ============================================================

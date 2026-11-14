@@ -847,6 +847,197 @@ export function validateIslandDirective(exp: string | undefined, context: string
   }
 }
 
+/**
+ * 危险/带副作用的表达式黑名单（C-04 / P1）。
+ *
+ * 模板表达式默认**信任**（模板由开发者书写），只拦这些：语句分隔、箭头函数、
+ * 声明关键字、动态导入、赋值（避免副作用与注入）。
+ *
+ * 2026-11-14（signal 两版收编）：基础版与优化版原各有一份逐字相同的实现，
+ * 现收敛到共享层，避免「改一版漏一版」。
+ */
+const DANGEROUS_EXPRESSION =
+  /;|=>|\bfunction\b|\bnew\s|\bimport\b|\brequire\b|\bdelete\b|\bthrow\b|\bawait\b|(^|[^=!<>])\b[a-zA-Z_$][\w$]*\s*=(?!=)/;
+
+/** 校验模板表达式（两套发射器共用同一判据与错误文案）。 */
+export function validateExpression(exp: string | undefined, context: string): void {
+  if (!exp) return;
+  // 表达式生成统一走 `prefixIdentifiers(exp, locals)`，能正确处理数组/对象/三元/
+  // 拼接/索引，并跳过属性名、字符串、locals ⇒ 不再限制为「简单属性路径」。
+  if (DANGEROUS_EXPRESSION.test(exp)) {
+    throw new Error(
+      `[lytjs/compiler] Unsafe expression in ${context}: "${exp}".\n` +
+        `  Statements, arrow functions, declarations and assignments are not allowed in templates.`,
+    );
+  }
+}
+
+/**
+ * 指令语义核心的**产物拼写适配层**。
+ *
+ * 语义（校验、动态参数判定、class 合并、model 修饰符推导）只在
+ * `processDirectiveShared()` 里写一次；两版发射器只提供各自的字符串形态
+ * （完整名/短别名、`_ctx.`/`_c.`、空格与换行）。
+ */
+export interface DirectiveDialect {
+  /** 表达式 → 产物代码（含上下文前缀与 locals 处理）。 */
+  expr(exp: string, locals: ReadonlySet<string>): string;
+  /** 事件 handler → 产物代码。 */
+  handler(exp: string, locals: ReadonlySet<string>): string;
+  ifStatement(varName: string, condition: string): string;
+  showStatement(varName: string, condition: string): string;
+  /**
+   * 基础版不在此处输出 v-text：`transform` 已把 `v-text` 转成 codegenNode 的
+   * `textContent` 属性，由 `processVNodeCallProps` 承担（带 locals，能正确处理
+   * `v-for` 作用域）。优化版历史上走指令分支，故保留可选实现。
+   */
+  textStatement?: (varName: string, value: string) => string;
+  htmlStatement(varName: string, value: string): string;
+  classStatement(varName: string, value: string, staticClass: string): string;
+  styleStatement(varName: string, value: string): string;
+  attrStatement(varName: string, argCode: string, value: string): string;
+  eventStatement(varName: string, argCode: string, handler: string, modifiers: string[]): string;
+  modelStatements(varName: string, value: string, eventName: string, setValue: string): string[];
+}
+
+/**
+ * 指令处理语义核心（signal 两版共用）。
+ *
+ * @param push 落地一条绑定（调用方负责挂到 `dynamicBindings`）
+ */
+export function processDirectiveShared(
+  dir: DirectiveNode,
+  varName: string,
+  tag: string,
+  push: (code: string) => void,
+  dialect: DirectiveDialect,
+  locals: ReadonlySet<string> = new Set(),
+  staticClass = '',
+): void {
+  const expContent = dir.exp ? getExpContent(dir.exp as SimpleExpressionNode) : undefined;
+  const argContent = dir.arg ? getExpContent(dir.arg as SimpleExpressionNode) : undefined;
+
+  validateExpression(expContent, `v-${dir.name}`);
+  validateExpression(argContent, `v-${dir.name} argument`);
+  validateArgContent(argContent);
+
+  // 动态参数/事件（`:[dyn]` / `@[evt]`）的 arg 是**表达式**，不是字面量。
+  const isDynamicArg = !!dir.arg && (dir.arg as { isStatic?: boolean }).isStatic === false;
+  const argCode = argContent
+    ? isDynamicArg
+      ? dialect.expr(argContent, locals)
+      : `'${argContent}'`
+    : "''";
+
+  // C-35a：动态参数的 arg 是表达式，跳过字面量名称校验。
+  if (!isDynamicArg && dir.name === 'bind' && argContent) {
+    validateAttributeName(argContent, `v-bind:${argContent}`);
+  }
+  if (!isDynamicArg && dir.name === 'on' && argContent) {
+    validateEventName(argContent, `v-on:${argContent}`);
+  }
+  if (dir.name === 'island') {
+    validateIslandDirective(expContent, 'v-island');
+  }
+
+  switch (dir.name) {
+    case 'if': {
+      // v-if 正常在 transform 阶段已转为 JSConditionalExpression；此处是后备路径。
+      if (expContent) {
+        push(dialect.ifStatement(varName, dialect.expr(expContent, locals)));
+      }
+      break;
+    }
+
+    case 'show': {
+      if (expContent) {
+        push(dialect.showStatement(varName, dialect.expr(expContent, locals)));
+      }
+      break;
+    }
+
+    case 'text': {
+      if (expContent && dialect.textStatement) {
+        push(dialect.textStatement(varName, dialect.expr(expContent, locals)));
+      }
+      break;
+    }
+
+    case 'html': {
+      if (expContent) {
+        push(dialect.htmlStatement(varName, dialect.expr(expContent, locals)));
+      }
+      break;
+    }
+
+    case 'bind': {
+      if (argContent && expContent) {
+        const value = dialect.expr(expContent, locals);
+        if (argContent === 'class' && !isDynamicArg) {
+          // 静态 class 必须并入（setClass 是整体替换），否则模板里的 class 会被抹掉。
+          push(dialect.classStatement(varName, value, staticClass));
+        } else if (argContent === 'style' && !isDynamicArg) {
+          push(dialect.styleStatement(varName, value));
+        } else {
+          push(dialect.attrStatement(varName, argCode, value));
+        }
+      }
+      break;
+    }
+
+    case 'on': {
+      if (argContent && expContent) {
+        push(
+          dialect.eventStatement(
+            varName,
+            argCode,
+            dialect.handler(expContent, locals),
+            dir.modifiers,
+          ),
+        );
+      }
+      break;
+    }
+
+    case 'model': {
+      if (expContent) {
+        const tagLower = tag.toLowerCase();
+        const isLazy = dir.modifiers.includes('lazy');
+        const isNumber = dir.modifiers.includes('number');
+        const isTrim = dir.modifiers.includes('trim');
+
+        const eventName = tagLower === 'select' || isLazy ? 'change' : 'input';
+        const getValueExpr = '$e.target.value';
+        let setValueExpr: string;
+        if (isNumber && isTrim) {
+          setValueExpr = `Number((${getValueExpr}).trim())`;
+        } else if (isNumber) {
+          setValueExpr = `Number(${getValueExpr})`;
+        } else if (isTrim) {
+          setValueExpr = `(${getValueExpr}).trim()`;
+        } else {
+          setValueExpr = getValueExpr;
+        }
+
+        for (const code of dialect.modelStatements(
+          varName,
+          dialect.expr(expContent, locals),
+          eventName,
+          setValueExpr,
+        )) {
+          push(code);
+        }
+      }
+      break;
+    }
+
+    case 'for': {
+      // v-for 在 transform 阶段已转为 JSCallExpression (renderList)。
+      break;
+    }
+  }
+}
+
 /** 生成列表项组件的 props 对象字面量（跳过 :key；字面量原样、表达式按 `toExpr` 前缀化）。 */
 export function buildItemComponentPropsShared(
   vnode: VNodeCall,
