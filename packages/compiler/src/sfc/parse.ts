@@ -2,6 +2,7 @@
 // SFC (Single File Component) parser for .lyt files
 
 import type { RootNode } from '../types';
+import { compilerWarn } from '../warning';
 
 // ============================================================
 // SFC Descriptor Types
@@ -124,7 +125,7 @@ export function parseSFC(source: string, options: SFCParseOptions = {}): SFCDesc
       case 'template': {
         if (descriptor.template !== null) {
           if (__DEV__) {
-            console.warn(
+            compilerWarn(
               `[parseSFC] Duplicate <template> block in "${filename}". Only the first one will be used.`,
             );
           }
@@ -146,7 +147,7 @@ export function parseSFC(source: string, options: SFCParseOptions = {}): SFCDesc
         if (isSetup) {
           if (descriptor.scriptSetup !== null) {
             if (__DEV__) {
-              console.warn(
+              compilerWarn(
                 `[parseSFC] Duplicate <script setup> block in "${filename}". Only the first one will be used.`,
               );
             }
@@ -163,7 +164,7 @@ export function parseSFC(source: string, options: SFCParseOptions = {}): SFCDesc
         } else {
           if (descriptor.script !== null) {
             if (__DEV__) {
-              console.warn(
+              compilerWarn(
                 `[parseSFC] Duplicate <script> block in "${filename}". Only the first one will be used.`,
               );
             }
@@ -285,7 +286,7 @@ function extractBlocks(source: string): SFCBlock[] {
     if (closeIndex === -1) {
       // No closing tag found; treat remaining content as this block's content
       if (__DEV__) {
-        console.warn(
+        compilerWarn(
           `[parseSFC] Missing closing tag </${tagName}>. Treating rest of file as block content.`,
         );
       }

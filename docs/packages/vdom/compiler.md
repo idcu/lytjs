@@ -151,8 +151,10 @@ const { code } = compile(template);
 警告级别：
 
 - `silent` - 静默所有警告
-- `error` - 将警告视为错误
+- `error` - 以 `console.error` 输出（提升可见性，不抛出）
 - `warn` - 输出警告（默认）
+
+旧文档的数值枚举仍可用：`0` → `silent`，`1`/`2` → `warn`。
 
 ## 指令转换
 

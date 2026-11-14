@@ -2,7 +2,7 @@
 // Parse children and whitespace condensing
 
 import { NodeTypes, TextModes } from './constants';
-import { warn } from '@lytjs/common-error';
+import { compilerWarn } from './warning';
 import type { TextNode, TemplateChildNode, ParentNode, ParserContext } from './types';
 
 import { advanceBy, getCursor, getSelection, RE_DOCTYPE } from './parser-shared';
@@ -82,7 +82,7 @@ export function parseChildren(
           }
           // DOCTYPE/声明格式异常，跳过到行尾或文件尾防止无限循环
           if (__DEV__) {
-            warn(`Invalid DOCTYPE/declaration at position ${context.offset}`);
+            compilerWarn(`Invalid DOCTYPE/declaration at position ${context.offset}`);
           }
           const lineEnd = s.indexOf('\n');
           advanceBy(context, lineEnd === -1 ? s.length : lineEnd);

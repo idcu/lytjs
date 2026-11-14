@@ -81,18 +81,9 @@ interface CompileCacheEntry {
 /** 最大缓存条目数 */
 const MAX_CACHE_SIZE = 100;
 
-/** FIX: P2-22 编译警告级别可配置 */
-export type WarningLevel = 'silent' | 'error' | 'warn';
-
-let globalWarningLevel: WarningLevel = 'warn';
-
-export function setWarningLevel(level: WarningLevel): void {
-  globalWarningLevel = level;
-}
-
-export function getWarningLevel(): WarningLevel {
-  return globalWarningLevel;
-}
+// C-15：警告级别与真实告警通道集中在 warning.ts，这里仅做包入口再导出。
+export { setWarningLevel, getWarningLevel } from './warning';
+export type { WarningLevel } from './warning';
 
 /** 编译缓存（Map 天然保持插入顺序，用于 LRU 淘汰） */
 const compileCache = new Map<string, CompileCacheEntry>();

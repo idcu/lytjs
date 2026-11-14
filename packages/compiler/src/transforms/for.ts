@@ -24,7 +24,7 @@ import {
   setCodegenScopeParams,
 } from './helpers';
 import { transformElement } from './transform-element';
-import { warn } from '@lytjs/common-error';
+import { compilerWarn } from '../warning';
 
 // FIX: P1-29 移除模块级计数器，改为上下文级计数器，
 // 避免多个编译上下文共享同一计数器导致变量名冲突
@@ -41,9 +41,10 @@ const FOR_BRANCH_ELEMENT = Symbol('lytjs.forBranchElement');
 
 /**
  * 变换期告警：保留既有开发期 console 通道，同时送达调用方的 `onWarn`（C-14e）。
+ * 通道本身受 `setWarningLevel()` 控制（C-15）。
  */
 function warnTransform(context: TransformContext, message: string): void {
-  warn(message);
+  compilerWarn(message);
   context.onWarn?.(message);
 }
 

@@ -2,6 +2,7 @@
 // AST node creation helper functions
 
 import { NodeTypes, ElementTypes } from './constants';
+import { compilerWarn } from './warning';
 import type {
   RootNode,
   ElementNode,
@@ -28,8 +29,8 @@ import type {
 function createLoc(source: string, offset: number, length: number): SourceLocation {
   if (__DEV__) {
     if (offset < 0 || length < 0 || offset + length > source.length) {
-      console.warn(
-        `[LytJS] createLoc: invalid range offset=${offset}, length=${length}, source.length=${source.length}`,
+      compilerWarn(
+        `createLoc: invalid range offset=${offset}, length=${length}, source.length=${source.length}`,
       );
     }
   }

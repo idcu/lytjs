@@ -4,8 +4,9 @@
 // 子解析模块只需要纯工具，不应为了工具而与 `parse()` 所在模块形成静态环。
 
 import { TextModes } from './constants';
-import { warn, type SourceLocation } from '@lytjs/common-error';
+import type { SourceLocation } from '@lytjs/common-error';
 import type { RootNode, ParserContext, ParserOptions } from './types';
+import { compilerWarn } from './warning';
 import { createRoot } from './ast';
 
 import { COMPILER_MAX_INPUT_LENGTH as MAX_INPUT_LENGTH } from '@lytjs/common-constants';
@@ -24,7 +25,7 @@ export function parse(source: string, options: ParserOptions = {}): RootNode {
   // FIX: P1-1 COMPILER-NEW-02 - 输入长度检查，如果超过限制使用分段解析
   if (source.length > MAX_INPUT_LENGTH) {
     if (__DEV__) {
-      warn(
+      compilerWarn(
         `Input length (${source.length}) exceeds maximum recommended length (${MAX_INPUT_LENGTH}). ` +
           `Parsing may be slower for large inputs.`,
       );

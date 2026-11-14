@@ -49,6 +49,7 @@ import { getMemoMeta } from './transforms/v-memo';
 import { getVShowStyleTest } from './transforms/helpers';
 import { prefixIdentifiers } from './prefix-identifiers';
 import { FRAGMENT_SENTINEL } from './transforms/transform-element';
+import { compilerWarn } from './warning';
 import type {
   RootNode,
   ElementNode,
@@ -1849,7 +1850,7 @@ function buildReconcileArrayCode(
 
     if (!userKeyExpr) {
       if (__DEV__) {
-        console.warn(
+        compilerWarn(
           `[lytjs/compiler] v-for is missing a "key" attribute. ` +
             `This may cause performance issues and incorrect DOM updates. ` +
             `Add a unique :key binding to the v-for element, e.g., :key="item.id" or :key="index". ` +

@@ -1,6 +1,8 @@
 // src/sfc/custom-blocks.ts
 // SFC 自定义块处理器注册表
 
+import { compilerWarn } from '../warning';
+
 // ============================================================
 // 类型定义
 // ============================================================
@@ -36,7 +38,7 @@ const processorMap = new Map<string, CustomBlockProcessor>();
 export function registerCustomBlockProcessor(processor: CustomBlockProcessor): void {
   if (processorMap.has(processor.name)) {
     if (__DEV__) {
-      console.warn(
+      compilerWarn(
         `[custom-blocks] Overwriting existing custom block processor for "${processor.name}".`,
       );
     }

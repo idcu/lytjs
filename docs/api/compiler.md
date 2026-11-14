@@ -496,27 +496,33 @@ function getContentHashCacheSize(): number;
 
 ### setWarningLevel()
 
-设置警告级别。
+设置编译期告警级别。所有编译期告警（解析期、变换期、codegen 与 SFC 解析）
+统一经该级别过滤后输出。
 
 ```ts
-function setWarningLevel(level: WarningLevel): void;
+type WarningLevel = 'silent' | 'error' | 'warn';
+type NumericWarningLevel = 0 | 1 | 2;
+
+function setWarningLevel(level: WarningLevel | NumericWarningLevel): void;
 ```
 
-**WarningLevel：**
+**级别语义：**
 
-```ts
-enum WarningLevel {
-  Off = 0, // 关闭所有警告
-  Normal = 1, // 正常警告
-  Verbose = 2, // 详细警告（包含建议）
-}
-```
+| 级别     | 行为                                                |
+| -------- | --------------------------------------------------- |
+| `silent` | 不输出任何编译期告警                                |
+| `warn`   | 经 `console.warn` 输出（默认；仍受开发模式判定）    |
+| `error`  | 经 `console.error` 输出（提升可见性，**不会抛出**） |
+
+**数值兼容：** 旧版文档曾公开 `enum WarningLevel { Off=0, Normal=1, Verbose=2 }`。
+数值输入仍被接受并映射为字符串级别：`0 → 'silent'`，`1/2 → 'warn'`
+（`Verbose` 无独立实现，与 `Normal` 等价）。
 
 ---
 
 ### getWarningLevel()
 
-获取当前警告级别。
+获取当前告警级别。始终返回字符串真源（数值输入已被映射）。
 
 ```ts
 function getWarningLevel(): WarningLevel;

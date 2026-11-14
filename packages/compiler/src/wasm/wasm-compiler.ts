@@ -17,6 +17,7 @@ import { transform } from '../transform';
 import { generate } from '../codegen';
 import { generateSSR } from '../codegen-ssr';
 import { NodeTypes } from '../constants';
+import { compilerWarn } from '../warning';
 import type {
   RootNode,
   TemplateChildNode,
@@ -361,8 +362,8 @@ let warnedWasmSimulated = false;
 function warnWasmIsSimulated(): void {
   if (warnedWasmSimulated) return;
   warnedWasmSimulated = true;
-  if (__DEV__ && typeof console !== 'undefined') {
-    console.warn(
+  if (__DEV__) {
+    compilerWarn(
       '[lytjs/compiler] @lytjs/compiler/wasm 当前是 JavaScript 模拟实现，' +
         '并非 WebAssembly 编译产物；若需要真实 WASM 请关注后续版本。',
     );

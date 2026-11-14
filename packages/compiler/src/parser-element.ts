@@ -3,7 +3,7 @@
 
 import { ElementTypes, TagType, TextModes } from './constants';
 import { VOID_ELEMENTS } from '@lytjs/common-string';
-import { warn } from '@lytjs/common-error';
+import { compilerWarn } from './warning';
 import type { ElementNode, ParserContext, AttributeNode, DirectiveNode } from './types';
 import { createElement } from './ast';
 
@@ -79,7 +79,7 @@ export function parseElement(context: ParserContext): ElementNode | undefined {
       // FIX: P1-2 COMPILER-NEW-03 - 使用带行列位置信息的错误
       const errorMessage = `Element <${tag}> was left open. Expected closing tag </${tag}>.`;
       if (__DEV__) {
-        warn(errorMessage);
+        compilerWarn(errorMessage);
       }
 
       if (context.options.onError) {
@@ -134,7 +134,7 @@ function parseTag(context: ParserContext, type: number): ElementNode | undefined
     attrCount++;
     if (attrCount > MAX_ATTRIBUTES) {
       if (__DEV__) {
-        warn(
+        compilerWarn(
           `Too many attributes (${attrCount}), ` +
             `stopping attribute parsing to prevent infinite loop.`,
         );
@@ -166,7 +166,7 @@ function parseTag(context: ParserContext, type: number): ElementNode | undefined
         `This is not valid HTML and may cause hydration issues. ` +
         `Use <${tag}></${tag}> instead.`;
       if (__DEV__) {
-        warn(errorMessage);
+        compilerWarn(errorMessage);
       }
       if (context.options.onError) {
         context.options.onError(createParseError(context, errorMessage));

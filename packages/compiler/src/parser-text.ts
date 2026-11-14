@@ -3,7 +3,7 @@
 
 import type { TextNode, InterpolationNode, ParserContext } from './types';
 import { createText, createInterpolation, createSimpleExpression } from './ast';
-import { warn } from '@lytjs/common-error';
+import { compilerWarn } from './warning';
 import { advanceBy, getCursor, getSelection } from './parser-shared';
 
 import { COMPILER_MAX_REGEX_INPUT_LENGTH as MAX_REGEX_INPUT_LENGTH } from '@lytjs/common-constants';
@@ -88,7 +88,7 @@ export function parseInterpolation(context: ParserContext): InterpolationNode | 
 
   if (closeIndex === -1) {
     if (__DEV__) {
-      warn('Unclosed interpolation expression.');
+      compilerWarn('Unclosed interpolation expression.');
     }
     return undefined;
   }

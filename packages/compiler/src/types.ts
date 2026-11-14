@@ -405,7 +405,7 @@ export interface TransformContext {
    * 变换期警告回调（来自 `TransformOptions.onWarn`）。
    *
    * 与 `error()` 走 `onError` 对称：变换器报「不致命但需要提示」的问题时，
-   * 除既有开发期 `warn()` 外，也把同一条消息交给调用方。
+   * 除既有开发期编译告警通道（受 `setWarningLevel` 控制）外，也把同一条消息交给调用方。
    */
   onWarn?: (warning: string) => void;
   /**

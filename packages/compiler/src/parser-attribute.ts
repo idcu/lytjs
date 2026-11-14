@@ -7,7 +7,7 @@ import {
   BARE_DIRECTIVE_CONFLICTS,
   BARE_DIRECTIVE_VALUE_PATTERNS,
 } from './constants';
-import { warn } from '@lytjs/common-error';
+import { compilerWarn } from './warning';
 import type {
   TextNode,
   AttributeNode,
@@ -213,7 +213,7 @@ function parseQuotedString(context: ParserContext, quote: '"' | "'"): string {
     content = context.source.slice(0, endIndex);
   } else {
     if (__DEV__) {
-      warn('Unclosed attribute value.');
+      compilerWarn('Unclosed attribute value.');
     }
     content = context.source;
   }
