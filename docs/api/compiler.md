@@ -232,7 +232,10 @@ interface ParserOptions {
   decodeEntities?: (text: string, strict: boolean) => string;
   /** 解析错误回调 */
   onError?: (error: Error) => void;
-  /** 是否保留注释节点 */
+  /**
+   * 是否保留注释节点，默认 true。
+   * 设为 false 时注释仍会被解析消费，但不会进入 AST（不产出 `COMMENT` 节点）。
+   */
   comments?: boolean;
   /**
    * 是否启用裸指令名解析（"所见即所得"模式）。

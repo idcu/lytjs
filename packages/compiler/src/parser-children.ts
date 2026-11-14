@@ -51,6 +51,10 @@ export function parseChildren(
     if (mode === TextModes.DATA || mode === TextModes.RCDATA) {
       if (s.startsWith('<!--')) {
         node = parseComment(context);
+        // C-14：comments === false 时仍消费注释，但不让它进入 AST。
+        if (context.options.comments === false) {
+          continue;
+        }
       } else if (s.startsWith('{{')) {
         node = parseInterpolation(context);
       } else if (s.startsWith('<')) {

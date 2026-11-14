@@ -315,6 +315,20 @@ describe('parser', () => {
     });
   });
 
+  // C-14：ParserOptions.comments 此前只声明未读取 ⇒ 传 false 仍产出注释节点。
+  describe('comments 选项', () => {
+    it('默认保留注释节点', () => {
+      const ast = parse('<div></div><!-- hi -->');
+      expect(ast.children.some((c) => c.type === NodeTypes.COMMENT)).toBe(true);
+    });
+
+    it('comments: false 不产生注释节点', () => {
+      const ast = parse('<div></div><!-- hi -->', { comments: false });
+      expect(ast.children.some((c) => c.type === NodeTypes.COMMENT)).toBe(false);
+      expect(ast.children.length).toBe(1);
+    });
+  });
+
   describe('error recovery', () => {
     it('should handle unclosed tags gracefully', () => {
       const ast = parse('<div><span>hello');
