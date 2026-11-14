@@ -311,3 +311,32 @@ describe('createApp - errorCaptured', () => {
     expect(true).toBe(true);
   });
 });
+
+describe('async plugin install', () => {
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  it('mount waits for async install before first render', async () => {
+    const app = createApp({
+      render: () =>
+        h('div', null, app.config.globalProperties.pluginReady ? 'plugin-ready' : 'plugin-pending'),
+    });
+    app.use({
+      install: (() =>
+        new Promise<void>((resolve) => {
+          setTimeout(() => {
+            app.config.globalProperties.pluginReady = true;
+            resolve();
+          }, 10);
+        })) as unknown as () => void,
+    });
+
+    await app.mount(container);
+
+    expect(container.textContent).toBe('plugin-ready');
+  });
+});

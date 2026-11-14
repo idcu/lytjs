@@ -167,6 +167,31 @@ export function createAppInternal(
   const installedPlugins = new Set<Plugin | ((app: App, ...options: unknown[]) => void)>();
   const pluginRegistry = new PluginRegistry();
   const pluginValidator = new PluginValidator();
+  // P1-7：`use()` 是同步 API，但 install 常常返回 Promise。把未完成的安装
+  // 记在这里，`mount()` 首帧渲染前统一等待；否则插件注册的组件/指令在
+  // 首帧缺失（空白或少控件），await app.mount() 也救不回来。
+  const pendingInstalls = new Set<Promise<void>>();
+  const trackPendingInstall = (result: unknown): void => {
+    const thenable = result as { then?: unknown } | undefined;
+    if (!thenable || typeof thenable.then !== 'function') return;
+    const task = Promise.resolve(result).then(
+      () => undefined,
+      (err: unknown) => {
+        const e = err instanceof Error ? err : new Error(String(err));
+        error(`[lytjs] 插件安装失败: ${e.message}`);
+      },
+    );
+    pendingInstalls.add(task);
+    void task.finally(() => pendingInstalls.delete(task));
+  };
+  const waitForPendingInstalls = async (): Promise<void> => {
+    // 插件安装期间可能继续 `use()` 新插件，按批次清空直到没有待完成项。
+    while (pendingInstalls.size > 0) {
+      const batch = Array.from(pendingInstalls);
+      await Promise.all(batch);
+      for (const task of batch) pendingInstalls.delete(task);
+    }
+  };
   let _isUnmounted = false;
   let _isMounted = false;
 
@@ -265,37 +290,47 @@ export function createAppInternal(
 
           const thenable = installResult as { then?: unknown } | undefined;
           if (thenable && typeof thenable.then === 'function') {
-            void (installResult as Promise<unknown>).then(finishInstall).catch((err: unknown) => {
-              const e = err instanceof Error ? err : new Error(String(err));
-              const cfg = context.config as { errorHandler?: unknown } | undefined;
-              if (cfg && typeof cfg.errorHandler === 'function') {
-                (cfg.errorHandler as (err: Error, instance: null, info: string) => void)(
-                  e,
-                  null,
-                  `plugin "${enhancedPlugin.name}" install`,
-                );
-              } else {
-                error(`[lytjs] 插件 "${enhancedPlugin.name}" 安装失败: ${e.message}`);
-              }
-            });
+            const task = (installResult as Promise<unknown>)
+              .then(finishInstall)
+              .catch((err: unknown) => {
+                const e = err instanceof Error ? err : new Error(String(err));
+                const cfg = context.config as { errorHandler?: unknown } | undefined;
+                if (cfg && typeof cfg.errorHandler === 'function') {
+                  (cfg.errorHandler as (err: Error, instance: null, info: string) => void)(
+                    e,
+                    null,
+                    `plugin "${enhancedPlugin.name}" install`,
+                  );
+                } else {
+                  error(`[lytjs] 插件 "${enhancedPlugin.name}" 安装失败: ${e.message}`);
+                }
+              });
+            pendingInstalls.add(task);
+            void task.finally(() => pendingInstalls.delete(task));
           } else {
             finishInstall();
           }
         } else {
-          // 基础 Plugin 或函数式插件，保持原有行为
+          // 基础 Plugin 或函数式插件，保持原有行为；异步 install 同样登记，
+          // 由 mount() 首帧前等待。
+          let basicInstallResult: unknown;
           if (typeof plugin === 'function') {
-            (plugin as (app: App, ...options: unknown[]) => void)(app, ...options);
+            basicInstallResult = (plugin as (app: App, ...options: unknown[]) => unknown)(
+              app,
+              ...options,
+            );
           } else if (
             plugin &&
             typeof (plugin as unknown as Record<string, unknown>).install === 'function'
           ) {
-            (
+            basicInstallResult = (
               (plugin as unknown as Record<string, unknown>).install as (
                 app: App,
                 ...options: unknown[]
-              ) => void
+              ) => unknown
             )(app, ...options);
           }
+          trackPendingInstall(basicInstallResult);
         }
         installedPlugins.add(plugin);
       } catch (err) {
@@ -335,6 +370,11 @@ export function createAppInternal(
           warn('App.mount() expects a root component.');
         }
         return null;
+      }
+
+      // P1-7：等待所有异步插件安装完成，再走首帧渲染。
+      if (pendingInstalls.size > 0) {
+        await waitForPendingInstalls();
       }
 
       if (context._container) {
