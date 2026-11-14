@@ -12,7 +12,7 @@
  * 一致」，**不锁产物文本** —— 一次看似无害的重构（改空格、改变量名、丢一个 hoist）
  * 可以让 DOM 仍然正确、体积或运行时契约却已变化，而门禁全绿。
  *
- * 本门禁把 100 个模板在**两个 profile** 下的编译产物逐字钉住：
+ * 本门禁把模板集在**两个 profile** 下的编译产物逐字钉住：
  *   - `base`      ：`{ rendererMode: 'signal' }`（默认，语义主干）
  *   - `optimized` ：`{ rendererMode: 'signal', optimizeSignal: true }`
  *
@@ -21,15 +21,15 @@
  *
  * ## 覆盖
  *
- * 模板来源与 `check-compiler-parity` 相同（`scripts/compiler-parity-templates.json`，
- * 100 条），因此覆盖率可对照：parity 100/100 是行为面，本门禁 100×2 是文本面。
+ * 模板来源与 `check-compiler-parity` 相同（`scripts/compiler-parity-templates.json`），
+ * 因此覆盖率可对照：parity 是行为面，本门禁是文本面。
  *
  * ## 用法
  *
  *   node scripts/check-signal-profile-snapshot.mjs            # 比对，不一致退出 1
  *   node scripts/check-signal-profile-snapshot.mjs --update   # 显式重写快照
  *
- * 退出码：0 = 200 份产物全部逐字一致；1 = 有差异 / 缺快照 / 编译抛错。
+ * 退出码：0 = 全部产物逐字一致；1 = 有差异 / 缺快照 / 编译抛错。
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';

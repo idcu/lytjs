@@ -16,7 +16,7 @@
  *
  * ## 判据
  *
- * 1. 遍历 `signal-profile-snapshot.json` 的 115×2 份冻结产物，逐份求值；
+ * 1. 遍历 `signal-profile-snapshot.json` 里全部冻结产物（模板数 × 2 profile），逐份求值；
  * 2. 任何 `ReferenceError` / `SyntaxError` / 未知运行时导出 ⇒ 失败；
  * 3. 其它错误（宿主/桩不足导致）单独列出，不冒充“通过”。
  */
@@ -128,8 +128,15 @@ let failed = 0;
 let evaluated = 0;
 const unevaluable = [];
 
+const templateCount = Object.keys(snapshot.base ?? {}).length;
+const snapshotCount = ['base', 'optimized'].reduce(
+  (n, p) => n + Object.keys(snapshot[p] ?? {}).length,
+  0,
+);
 console.log('\n🔍 signal 产物自洽求值 check-signal-output-evaluates\n');
-console.log('   按产物自身 import 图执行 115×2 份快照；不注入额外 helper\n');
+console.log(
+  `   按产物自身 import 图执行 ${snapshotCount} 份快照（${templateCount} 模板 × 2 profile）；不注入额外 helper\n`,
+);
 
 for (const profile of ['base', 'optimized']) {
   for (const [id, code] of Object.entries(snapshot[profile] ?? {})) {

@@ -28,6 +28,7 @@
  */
 
 import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 /** @typedef {'fast'|'slow'} Tier */
@@ -38,6 +39,22 @@ const ROOT = new URL('..', import.meta.url).pathname;
 //   这条是被实测抓到的：直接 `node scripts/gate.mjs --tier fast` 全部瞬间失败。
 const BIN = resolve(ROOT, 'node_modules/.bin');
 const ENV = { ...process.env, PATH: `${BIN}:${process.env.PATH ?? ''}` };
+
+// 门禁描述里的条数从资产取，避免模板集增长后输出对不上（排障时会误判为统计口径坏了）
+const parityTemplatesFile = JSON.parse(
+  readFileSync(resolve(ROOT, 'scripts/compiler-parity-templates.json'), 'utf8'),
+);
+const PARITY_TEMPLATE_COUNT = (parityTemplatesFile.templates ?? parityTemplatesFile).length;
+const parityBaseline = JSON.parse(
+  readFileSync(resolve(ROOT, 'scripts/compiler-parity-baseline.json'), 'utf8'),
+);
+const PARITY_DIVERGENT_COUNT = (parityBaseline.divergent ?? []).length;
+const PARITY_EXPECTED_MISMATCH_COUNT = (parityBaseline.templateParity?.expectedMismatch ?? [])
+  .length;
+const SIGNAL_SNAPSHOT_TEMPLATE_COUNT = Object.keys(
+  JSON.parse(readFileSync(resolve(ROOT, 'scripts/signal-profile-snapshot.json'), 'utf8')).base ??
+    {},
+).length;
 
 /**
  * 门禁登记表（单一真相源）
@@ -481,9 +498,11 @@ const GATES = [
     approx: '~2s',
     desc:
       '★ signal/vapor **默认编译路径**的语义正确性（A04/D1）+ 两套 codegen **逐字对拍**（B01 前置）：' +
-      '5 个最小模板默认选项编译 → 真实执行 → 断言 DOM 与响应式更新；100 模板分别用 ' +
-      'optimizeSignal:false/true 编译并真实执行，断言 innerHTML 逐字一致（含 26 个已知分叉与 ' +
-      '5 个基础实现缺陷的棘轮基线，只减不增）。执行器按 import 别名注入运行时，避免短名产物被误报为分叉。' +
+      '5 个最小模板默认选项编译 → 真实执行 → 断言 DOM 与响应式更新；' +
+      `${PARITY_TEMPLATE_COUNT} 模板分别用 ` +
+      'optimizeSignal:false/true 编译并真实执行，断言 innerHTML 逐字一致（含 ' +
+      `${PARITY_DIVERGENT_COUNT} 个已知分叉与 ${PARITY_EXPECTED_MISMATCH_COUNT} 个基础实现缺陷的棘轮基线，只减不增）。` +
+      '执行器按 import 别名注入运行时，避免短名产物被误报为分叉。' +
       '资产：scripts/compiler-parity-templates.json + scripts/compiler-parity-baseline.json。',
   },
   {
@@ -869,7 +888,7 @@ const GATES = [
     cmd: ['node', 'scripts/check-signal-profile-snapshot.mjs'],
     approx: '~0.5s',
     desc:
-      '★ signal 双 profile 产物逐字快照（B01c）：100 模板 × { base, optimized } 的编译产物' +
+      `★ signal 双 profile 产物逐字快照（B01c）：${SIGNAL_SNAPSHOT_TEMPLATE_COUNT} 模板 × { base, optimized } 的编译产物` +
       '必须与 scripts/signal-profile-snapshot.json 逐字一致；任何变化必须显式 `--update` 才通过。' +
       '放在 slow 档：产物来自 compiler dist（fast 档的不变量是只读源码、不需要 dist）',
   },
@@ -880,7 +899,7 @@ const GATES = [
     cmd: ['node', 'scripts/check-signal-output-evaluates.mjs'],
     approx: '~2s',
     desc:
-      '★ signal 产物自洽可求值（2026-11-14，for13 缺 import）：遍历快照里全部 115×2 份产物，' +
+      `★ signal 产物自洽可求值（2026-11-14，for13 缺 import）：遍历快照里全部 ${SIGNAL_SNAPSHOT_TEMPLATE_COUNT}×2 份产物，` +
       '只按产物**自身 import 图**在带桩沙箱求值，任何 ReferenceError / SyntaxError 即红。' +
       '文本快照与 parity 执行器（helper 全量注入）都会掩盖缺失 import —— 本项补的就是这个盲区',
   },

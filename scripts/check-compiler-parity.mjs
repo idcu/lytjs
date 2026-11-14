@@ -18,7 +18,7 @@
  *    旧执行器把 import 行整条剥掉却没有把 `e` / `x` 绑到运行时 ⇒ 优化版一律
  *    `ReferenceError: e is not defined`，被误记为「语义分叉」。现在解析 import 并
  *    按别名注入运行时，分叉才是真的语义分叉。
- * 2. **100 模板对拍**：`scripts/compiler-parity-templates.json` 里同一模板分别用
+ * 2. **模板对拍**：`scripts/compiler-parity-templates.json` 里同一模板分别用
  *    `optimizeSignal: false`（基础实现 A）与 `true`（优化实现 B）编译并真实执行，
  *    断言 `innerHTML` 逐字一致；有 `update` 的模板再对拍一次响应式更新后的 DOM。
  * 3. **棘轮基线**：已知不一致与已知「基础实现≠人工核定语义基准」都记入
@@ -274,9 +274,9 @@ const pass = (msg) => {
   console.log(`  ✅ ${msg}`);
 };
 
-console.log('\n🔍 编译器一致性 check-compiler-parity（signal/vapor 默认路径 + 100 模板对拍）\n');
+console.log('\n🔍 编译器一致性 check-compiler-parity（signal/vapor 默认路径 + 模板对拍）\n');
 console.log('   ① 5 个最小模板：默认选项编译 → 真实执行 → 断言 DOM + 更新 + 默认关闭棘轮');
-console.log('   ② 100 模板：optimizeSignal false/true 双编译 → 双执行 → innerHTML 逐字对拍\n');
+console.log('   ② 模板对拍：optimizeSignal false/true 双编译 → 双执行 → innerHTML 逐字对拍\n');
 
 // ============================================================
 // ① 默认路径语义正确性（原 A04/D1 用例）
@@ -329,7 +329,7 @@ for (const fx of FIXTURES) {
 }
 
 // ============================================================
-// ② 100 模板对拍（B01 前置）
+// ② 模板对拍（B01 前置）
 // ============================================================
 const templatesFile = JSON.parse(
   readFileSync(new URL('./compiler-parity-templates.json', import.meta.url), 'utf8'),
@@ -509,7 +509,7 @@ const sameCount = TEMPLATES.length - observedDivergent.length;
 const kindCounts = {};
 for (const d of report.divergent) kindCounts[d.kind] = (kindCounts[d.kind] ?? 0) + 1;
 console.log(
-  `\n  ↪ 100 模板对拍：一致 ${sameCount} / 不一致 ${observedDivergent.length}（基线 ${divergentIds.length}）`,
+  `\n  ↪ ${TEMPLATES.length} 模板对拍：一致 ${sameCount} / 不一致 ${observedDivergent.length}（基线 ${divergentIds.length}）`,
 );
 if (observedDivergent.length > 0) {
   console.log(`     不一致根因分布: ${JSON.stringify(kindCounts)}`);
@@ -740,7 +740,7 @@ if (reportIdx !== -1 && process.argv[reportIdx + 1]) {
 
 console.log(
   failed === 0
-    ? `\n✅ check-compiler-parity 通过：默认路径 ${passed} 个最小模板语义正确；100 模板对拍无新增分叉\n`
+    ? `\n✅ check-compiler-parity 通过：默认路径 ${passed} 个最小模板语义正确；${TEMPLATES.length} 模板对拍无新增分叉\n`
     : `\n❌ check-compiler-parity 失败：${failed} 项\n`,
 );
 process.exit(failed === 0 ? 0 : 1);
