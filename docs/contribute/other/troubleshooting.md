@@ -42,7 +42,7 @@ iconv -f GBK -t UTF-8 input.ts > output.ts
 
 ## 插件测试配置问题
 
-**问题**：测试无法解析 `@lytjs/reactivity/scope` 等子路径导出
+**问题**：测试无法解析 `@lytjs/compiler/sfc` 等子路径导出
 
 **原因**：vitest 路径别名不支持通配符子路径匹配
 
@@ -52,6 +52,9 @@ iconv -f GBK -t UTF-8 input.ts > output.ts
 // 直接导入构建后的文件而非源码
 const pluginModule = require('../dist/index.cjs');
 ```
+
+> 2026-11-14：`@lytjs/reactivity` 的 `/signal`、`/signal-component`、`/scope`、`/async`
+> 四个子路径已合并回主入口，不再存在；旧报错里出现这些路径属于历史记录。
 
 **步骤**：
 

@@ -7,7 +7,8 @@ import type { EnhancedPlugin, Plugin } from '../src/types';
  * EnhancedPlugin 集成测试
  *
  * 注意：完整的 createApp 集成测试需要 component 包的 dist 正确解析
- * @lytjs/reactivity/scope，这需要 vitest alias 支持 dist 内部引用。
+ * `@lytjs/reactivity`（其子路径自 2026-11-14 起已合并回主入口），
+ * 这需要 vitest alias 支持 dist 内部引用。
  * 此处测试 PluginRegistry + PluginValidator 的集成逻辑。
  */
 describe('EnhancedPlugin 集成测试', () => {
