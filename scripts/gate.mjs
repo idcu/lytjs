@@ -855,6 +855,17 @@ const GATES = [
       '放在 slow 档：产物来自 compiler dist（fast 档的不变量是只读源码、不需要 dist）',
   },
   {
+    name: 'check-signal-output-evaluates',
+    tier: 'slow',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-signal-output-evaluates.mjs'],
+    approx: '~2s',
+    desc:
+      '★ signal 产物自洽可求值（2026-11-14，for13 缺 import）：遍历快照里全部 115×2 份产物，' +
+      '只按产物**自身 import 图**在带桩沙箱求值，任何 ReferenceError / SyntaxError 即红。' +
+      '文本快照与 parity 执行器（helper 全量注入）都会掩盖缺失 import —— 本项补的就是这个盲区',
+  },
+  {
     name: 'check-doc-imports',
     tier: 'slow',
     needsDist: true,
