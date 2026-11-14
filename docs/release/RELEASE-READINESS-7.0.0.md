@@ -115,6 +115,26 @@ npm view @lytjs/core version          # 期望 7.0.0
 - 发布前唯一有效的测试结论是 `pnpm test:coverage` 全量运行（exit 0）+ 覆盖率现场快照校验；
   任何历史「全绿」结论引用时必须标注档位与命令。
 
+### 3.2 发布时当场对账的两个数（2026-11-15 实测）
+
+| 口径                 | 数                                                                                                | 来源                                                 |
+| -------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| slow 档项数          | **23 项** = 22 项命名 + 1 项自动前置（`check-dist-freshness`，任何含 `needsDist` 的运行都会前置） | `node scripts/gate.mjs --list`，`tier: 'slow'` 计 22 |
+| `test:coverage` 全量 | **431 个测试文件 / 9014 个用例**（全绿，exit 0）                                                  | `pnpm test:coverage` 两次连跑一致                    |
+| 覆盖率棘轮           | lines/statements **66.5**、functions **72.2**、branches **86.2**                                  | `vitest.config.ts`                                   |
+
+⚠️ **不要把 `check-coverage-snapshot` 的绿读成「覆盖率数字可复现」**。它比对的是
+`coverage/coverage-final.json` 的**原始字节 sha256** + 快照里的 commit（见
+[coverage-snapshot.mjs](file:///Volumes/Data/lytjs/lytjs/scripts/coverage-snapshot.mjs#L140-L150)、
+[check-coverage-snapshot.mjs](file:///Volumes/Data/lytjs/lytjs/scripts/check-coverage-snapshot.mjs#L76-L86)），
+只证明「这份产物来自当前 HEAD 这棵树」。实测同一 HEAD、连续两次全量：
+statements/functions/lines 完全一致（54932/61988、3886/4336、54932/61988），
+**branches 分母逐次抖动**（16600/18851 → 16605/18856，19 个文件各 ±1~3），
+因此两次的 sha256 必然不同（`b92674f8…` vs `a4b9ec19…`）；`--no-file-parallelism` 串行复跑同样不同
+（`983c8237…` vs `31be9a78…`），排除并发分片因素，属 v8→istanbul 分支映射的非确定性。
+操作含义：`test:coverage` 会清空 `coverage/`（含 snapshot.json），所以**每次跑完都必须按 gate 顺序**
+重跑 `coverage-snapshot` → `check-coverage-snapshot`；该门禁不能、也不应被当作复现性证明。
+
 ## 4. 失败回滚方式
 
 **tag 只在 76 个发布包全部 publish 成功后创建**（脚本按步骤顺序执行，publish 未完成不会进 tag 步骤）。
