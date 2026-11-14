@@ -760,338 +760,338 @@
     "packages/reactivity/src/batch.ts::globalBatchDepth": {
       "kind": "let/var",
       "line": 56,
-      "classification": "c",
-      "entries": ["index", "signal", "scope", "async"],
-      "reason": "批处理深度与 pendingScopes 按入口各一份；跨入口批处理不会合并"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/batch.ts::pendingScopes": {
       "kind": "new Set",
       "line": 68,
-      "classification": "c",
-      "entries": ["index", "signal", "scope", "async"],
-      "reason": "批处理深度与 pendingScopes 按入口各一份；跨入口批处理不会合并"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/computed.ts::_isSSR": {
       "kind": "let/var",
       "line": 193,
-      "classification": "c",
-      "entries": ["index", "signal", "scope", "async"],
-      "reason": "computed 栈/深度按入口各一份；跨入口依赖追踪分裂"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/computed.ts::computedDepth": {
       "kind": "let/var",
       "line": 24,
-      "classification": "c",
-      "entries": ["index", "signal", "scope", "async"],
-      "reason": "computed 栈/深度按入口各一份；跨入口依赖追踪分裂"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/computed.ts::computedStack": {
       "kind": "new Set",
       "line": 25,
-      "classification": "c",
-      "entries": ["index", "signal", "scope", "async"],
-      "reason": "computed 栈/深度按入口各一份；跨入口依赖追踪分裂"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/constants.ts::ComputedRefSymbol": {
       "kind": "Symbol()",
       "line": 13,
-      "classification": "c",
-      "entries": ["index", "signal", "scope", "async"],
-      "reason": "导出的 unique symbol 身份跨入口不同；任何基于这些 Symbol 的检测在跨入口时会失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/constants.ts::ITERATE_KEY": {
       "kind": "Symbol()",
       "line": 57,
-      "classification": "c",
-      "entries": ["index", "signal", "scope", "async"],
-      "reason": "导出的 unique symbol 身份跨入口不同；任何基于这些 Symbol 的检测在跨入口时会失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/constants.ts::ReactiveSymbol": {
       "kind": "Symbol()",
       "line": 14,
-      "classification": "c",
-      "entries": ["index", "signal", "scope", "async"],
-      "reason": "导出的 unique symbol 身份跨入口不同；任何基于这些 Symbol 的检测在跨入口时会失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/constants.ts::ReadonlySymbol": {
       "kind": "Symbol()",
       "line": 15,
-      "classification": "c",
-      "entries": ["index", "signal", "scope", "async"],
-      "reason": "导出的 unique symbol 身份跨入口不同；任何基于这些 Symbol 的检测在跨入口时会失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/constants.ts::RefSymbol": {
       "kind": "Symbol()",
       "line": 11,
-      "classification": "c",
-      "entries": ["index", "signal", "scope", "async"],
-      "reason": "导出的 unique symbol 身份跨入口不同；任何基于这些 Symbol 的检测在跨入口时会失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/constants.ts::ShallowRefSymbol": {
       "kind": "Symbol()",
       "line": 12,
-      "classification": "c",
-      "entries": ["index", "signal", "scope", "async"],
-      "reason": "导出的 unique symbol 身份跨入口不同；任何基于这些 Symbol 的检测在跨入口时会失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/effect-scope.ts::activeEffectScope": {
       "kind": "let/var",
       "line": 31,
-      "classification": "c",
-      "entries": ["index", "scope", "async"],
-      "reason": "activeEffectScope 按入口各一份；跨入口注册的 effect 不会挂到当前 scope"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/effect.ts::_trackDepth": {
       "kind": "let/var",
       "line": 14,
-      "classification": "c",
-      "entries": ["index", "signal", "signal-component", "scope", "async"],
-      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/effect.ts::activeEffect": {
       "kind": "let/var",
       "line": 13,
-      "classification": "c",
-      "entries": ["index", "signal", "signal-component", "scope", "async"],
-      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/effect.ts::asyncBatchRestorePoint": {
       "kind": "let/var",
       "line": 31,
-      "classification": "c",
-      "entries": ["index", "signal", "signal-component", "scope", "async"],
-      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/effect.ts::asyncBatchTokenSeq": {
       "kind": "let/var",
       "line": 28,
-      "classification": "c",
-      "entries": ["index", "signal", "signal-component", "scope", "async"],
-      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/effect.ts::isFirstRenderPass": {
       "kind": "let/var",
       "line": 40,
-      "classification": "c",
-      "entries": ["index", "signal", "signal-component", "scope", "async"],
-      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/effect.ts::isTriggerBatching": {
       "kind": "let/var",
       "line": 134,
-      "classification": "c",
-      "entries": ["index", "signal", "signal-component", "scope", "async"],
-      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/effect.ts::pendingAsyncBatches": {
       "kind": "let/var",
       "line": 29,
-      "classification": "c",
-      "entries": ["index", "signal", "signal-component", "scope", "async"],
-      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/effect.ts::shouldTrack": {
       "kind": "let/var",
       "line": 16,
-      "classification": "c",
-      "entries": ["index", "signal", "signal-component", "scope", "async"],
-      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/effect.ts::skippedTrackingCount": {
       "kind": "let/var",
       "line": 43,
-      "classification": "c",
-      "entries": ["index", "signal", "signal-component", "scope", "async"],
-      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/effect.ts::suspendedAsyncBatches": {
       "kind": "let/var",
       "line": 30,
-      "classification": "c",
-      "entries": ["index", "signal", "signal-component", "scope", "async"],
-      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/effect.ts::targetMap": {
       "kind": "new WeakMap",
       "line": 15,
-      "classification": "c",
-      "entries": ["index", "signal", "signal-component", "scope", "async"],
-      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/effect.ts::triggerBatchDepth": {
       "kind": "let/var",
       "line": 142,
-      "classification": "c",
-      "entries": ["index", "signal", "signal-component", "scope", "async"],
-      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/effect.ts::triggerDepth": {
       "kind": "let/var",
       "line": 129,
-      "classification": "c",
-      "entries": ["index", "signal", "signal-component", "scope", "async"],
-      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/index.ts::devToolsEnabled": {
       "kind": "let/var",
       "line": 203,
       "classification": "a",
       "entries": ["index"],
-      "reason": "devtools 订阅集合只在主入口创建与消费"
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/index.ts::devToolsFlushScheduled": {
       "kind": "let/var",
       "line": 209,
       "classification": "a",
       "entries": ["index"],
-      "reason": "devtools 订阅集合只在主入口创建与消费"
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/index.ts::effectRunListeners": {
       "kind": "new Set",
       "line": 201,
       "classification": "a",
       "entries": ["index"],
-      "reason": "devtools 订阅集合只在主入口创建与消费"
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/index.ts::pendingEffectNotifications": {
       "kind": "let/var",
       "line": 208,
       "classification": "a",
       "entries": ["index"],
-      "reason": "devtools 订阅集合只在主入口创建与消费"
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/index.ts::pendingSignalNotifications": {
       "kind": "let/var",
       "line": 207,
       "classification": "a",
       "entries": ["index"],
-      "reason": "devtools 订阅集合只在主入口创建与消费"
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/index.ts::signalChangeListeners": {
       "kind": "new Set",
       "line": 199,
       "classification": "a",
       "entries": ["index"],
-      "reason": "devtools 订阅集合只在主入口创建与消费"
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/reactive.ts::builtInSymbols": {
       "kind": "new Set",
       "line": 202,
-      "classification": "c",
-      "entries": ["index", "scope", "async"],
-      "reason": "代理缓存按入口各一份；同一对象跨入口得到不同代理，依赖收集分裂"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/reactive.ts::collectionMethodCache": {
       "kind": "new WeakMap",
       "line": 42,
-      "classification": "c",
-      "entries": ["index", "scope", "async"],
-      "reason": "代理缓存按入口各一份；同一对象跨入口得到不同代理，依赖收集分裂"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/reactive.ts::reactiveMap": {
       "kind": "new WeakMap",
       "line": 586,
-      "classification": "c",
-      "entries": ["index", "scope", "async"],
-      "reason": "代理缓存按入口各一份；同一对象跨入口得到不同代理，依赖收集分裂"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/reactive.ts::readonlyMap": {
       "kind": "new WeakMap",
       "line": 588,
-      "classification": "c",
-      "entries": ["index", "scope", "async"],
-      "reason": "代理缓存按入口各一份；同一对象跨入口得到不同代理，依赖收集分裂"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/reactive.ts::shallowReactiveMap": {
       "kind": "new WeakMap",
       "line": 587,
-      "classification": "c",
-      "entries": ["index", "scope", "async"],
-      "reason": "代理缓存按入口各一份；同一对象跨入口得到不同代理，依赖收集分裂"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/reactive.ts::shallowReadonlyMap": {
       "kind": "new WeakMap",
       "line": 589,
-      "classification": "c",
-      "entries": ["index", "scope", "async"],
-      "reason": "代理缓存按入口各一份；同一对象跨入口得到不同代理，依赖收集分裂"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/reactive.ts::skipMethods": {
       "kind": "new Set",
       "line": 179,
-      "classification": "c",
-      "entries": ["index", "scope", "async"],
-      "reason": "代理缓存按入口各一份；同一对象跨入口得到不同代理，依赖收集分裂"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/shared.ts::_rawDepth": {
       "kind": "let/var",
       "line": 31,
-      "classification": "c",
-      "entries": ["index", "signal", "scope", "async"],
-      "reason": "raw 深度/seen 集合按入口各一份；跨入口嵌套 raw 判定不一致"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/shared.ts::_rawSeenSet": {
       "kind": "new Set",
       "line": 26,
-      "classification": "c",
-      "entries": ["index", "signal", "scope", "async"],
-      "reason": "raw 深度/seen 集合按入口各一份；跨入口嵌套 raw 判定不一致"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/shared/untracked.ts::isUntracked": {
       "kind": "let/var",
       "line": 20,
-      "classification": "c",
-      "entries": ["index", "scope", "async"],
-      "reason": "untracked 开关按入口各一份；跨入口 untracked 不生效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/signal.ts::activeSubscriber": {
       "kind": "let/var",
       "line": 68,
-      "classification": "c",
-      "entries": ["index", "signal", "signal-component", "scope", "async"],
-      "reason": "activeSubscriber/pendingNotifications 在 index 与 signal/scope/async 入口各一份；跨入口订阅静默失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/signal.ts::batchDepth": {
       "kind": "let/var",
       "line": 77,
-      "classification": "c",
-      "entries": ["index", "signal", "signal-component", "scope", "async"],
-      "reason": "activeSubscriber/pendingNotifications 在 index 与 signal/scope/async 入口各一份；跨入口订阅静默失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/signal.ts::isNotifying": {
       "kind": "let/var",
       "line": 102,
-      "classification": "c",
-      "entries": ["index", "signal", "signal-component", "scope", "async"],
-      "reason": "activeSubscriber/pendingNotifications 在 index 与 signal/scope/async 入口各一份；跨入口订阅静默失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/signal.ts::isSignalComputedGetter": {
       "kind": "let/var",
       "line": 82,
-      "classification": "c",
-      "entries": ["index", "signal", "signal-component", "scope", "async"],
-      "reason": "activeSubscriber/pendingNotifications 在 index 与 signal/scope/async 入口各一份；跨入口订阅静默失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/signal.ts::pendingNotifications": {
       "kind": "new Set",
       "line": 88,
-      "classification": "c",
-      "entries": ["index", "signal", "signal-component", "scope", "async"],
-      "reason": "activeSubscriber/pendingNotifications 在 index 与 signal/scope/async 入口各一份；跨入口订阅静默失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/signal.ts::pendingTriggerOps": {
       "kind": "new Map",
       "line": 96,
-      "classification": "c",
-      "entries": ["index", "signal", "signal-component", "scope", "async"],
-      "reason": "activeSubscriber/pendingNotifications 在 index 与 signal/scope/async 入口各一份；跨入口订阅静默失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/reactivity/src/signal.ts::trackDependency": {
       "kind": "let/var",
       "line": 73,
-      "classification": "c",
-      "entries": ["index", "signal", "signal-component", "scope", "async"],
-      "reason": "activeSubscriber/pendingNotifications 在 index 与 signal/scope/async 入口各一份；跨入口订阅静默失效"
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包（2026-11-14 合并 /scope /async /signal /signal-component 后）：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
     },
     "packages/renderer/src/client/server-components-client.ts::defaultConfig": {
       "kind": "let/var",
@@ -1442,11 +1442,6 @@
       "write": "compiler/signal-optimized.registerSignalOptimizedGenerator()",
       "read": "compiler.compile({optimizeSignal:true})",
       "expect": "主入口 compile 能取到子入口注册的发射器，产物含 `_c.msg`"
-    },
-    "reactivity.effect-main_signal-sub": {
-      "write": "reactivity/signal.signal()+set()",
-      "read": "reactivity.effect()",
-      "expect": "子入口创建的 signal 被主入口 effect 订阅：set 后 effect 重跑（runs=2）"
     },
     "core.config-main_runtime": {
       "write": "core.setGlobalConfig()",

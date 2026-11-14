@@ -19,11 +19,12 @@ tsup `splitting: false` 逐入口内联：同一模块在每个入口各一份�
 
 ## 正解
 
-- 跨入口必须共享的状态：挂 `globalThis` + `Symbol.for`，不要用模块级变量。
+- **先减入口**：子路径若只是同一批模块再转出、仓内零真实消费方，合并掉比加
+  全局槽更干净，每减一个入口永久消掉一类分叉（reactivity 已合并为单入口）。
+- 确需跨入口的状态：挂 `globalThis` + `Symbol.for`，不要用模块级变量。
 - 只被单入口消费的状态：保持模块级，不要滥用 globalThis 破坏实例隔离。
-- 新增模块级状态先问：另一个入口会不会读写它？登记到
-  `scripts/cross-entry-singletons.json`，由 `check-cross-entry-singletons` 棘轮把关。
+- 新增模块级状态先问另一入口会不会读写，登记 `scripts/cross-entry-singletons.json`。
 
 ## 判据
 
-`node scripts/check-cross-entry-singletons.mjs`：直接 import dist 入口做「写 A 读 B」探针。
+`node scripts/check-cross-entry-singletons.mjs`：import dist 入口做「写 A 读 B」探针。

@@ -326,14 +326,19 @@ window.__LYTJS_DEVTOOLS__.onSignalChange((id, value) => {
 });
 ```
 
-## 子路径入口
+## 作用域与异步计算
+
+`effectScope` / `getCurrentScope` / `onScopeDispose` 与 `asyncComputed` / `useAsyncState`
+均从主入口导出（2026-11-14 起不再提供 `/scope`、`/async` 子路径）：
 
 ```typescript
-// Effect Scope
-import { effectScope, getCurrentScope, onScopeDispose } from '@lytjs/reactivity/scope';
-
-// 异步计算
-import { asyncComputed, useAsyncState } from '@lytjs/reactivity/async';
+import {
+  effectScope,
+  getCurrentScope,
+  onScopeDispose,
+  asyncComputed,
+  useAsyncState,
+} from '@lytjs/reactivity';
 ```
 
 ## 相关包

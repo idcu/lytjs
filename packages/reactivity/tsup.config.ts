@@ -3,10 +3,6 @@ import { defineConfig } from 'tsup';
 export default defineConfig({
   entry: {
     index: 'src/index.ts',
-    signal: 'src/signal.ts',
-    'signal-component': 'src/signal-component.ts',
-    scope: 'src/scope.ts',
-    async: 'src/async.ts',
   },
   format: ['esm', 'cjs'],
   dts: true,

@@ -137,29 +137,6 @@ const PROBES = {
     },
   },
 
-  'reactivity.effect-main_signal-sub': {
-    write: 'reactivity/signal.signal()+set()',
-    read: 'reactivity.effect()',
-    expect: '子入口创建的 signal 被主入口 effect 订阅：set 后 effect 重跑（runs=2）',
-    async run() {
-      const main = await import(dist('packages/reactivity/dist/index.mjs'));
-      const sub = await import(dist('packages/reactivity/dist/signal.mjs'));
-      let runs = 0;
-      const s = sub.signal(0);
-      const runner = main.effect(() => {
-        runs++;
-        s();
-      });
-      sub.set(s, 1);
-      try {
-        main.stop(runner);
-      } catch {
-        /* runner 形态差异不参与判定 */
-      }
-      return { ok: runs === 2, detail: `runs=${runs}（期望 2）` };
-    },
-  },
-
   'core.config-main_runtime': {
     write: 'core.setGlobalConfig()',
     read: 'core/runtime.getConfig()',

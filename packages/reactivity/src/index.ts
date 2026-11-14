@@ -39,12 +39,13 @@ export {
   setSSRMode,
 } from './computed';
 
-// scope and async sub-path entries are available at:
-//   @lytjs/reactivity/scope   - effectScope, getCurrentScope, onScopeDispose
-//   @lytjs/reactivity/async   - asyncComputed, useAsyncState
-
+// scope / async：2026-11-14 合并回主入口（原 /scope、/async 子路径零真实消费方，
+// 且只是同一批模块的再转出；逐入口内联会让 effect 追踪状态跨入口分裂）
 export { effectScope, getCurrentScope, onScopeDispose } from './effect-scope';
 export type { EffectScope, EffectScopeOptions } from './effect-scope';
+
+export { asyncComputed, useAsyncState } from './async-computed';
+export type { AsyncComputedRef } from './async-computed';
 
 export {
   // watch

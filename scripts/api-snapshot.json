@@ -1122,6 +1122,7 @@
       "ValidationReport"
     ],
     "@lytjs/reactivity": [
+      "AsyncComputedRef",
       "BatchScopeCallback",
       "BatchScopeContext",
       "BatchScopeOptions",
@@ -1165,6 +1166,7 @@
       "_notifyDevToolsSignalChange",
       "_resetSignalGlobalState",
       "_resetTrackingState",
+      "asyncComputed",
       "batch",
       "batchAsync",
       "batchScope",
@@ -1219,6 +1221,7 @@
       "unref",
       "untrack",
       "update",
+      "useAsyncState",
       "valueOf",
       "watch",
       "watchEffect",
