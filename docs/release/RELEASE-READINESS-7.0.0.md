@@ -176,6 +176,26 @@ statements、functions、lines 的 `covered` 不低于基线、未插桩集合�
 还原  ✅ 判据 1 / 2 / 3 全部通过                     （exit 0，未插桩回到 7 条）
 ```
 
+③ 复现 `e42cc23d` 的 `__UI_VERSION__` 静默失效（移除 `vitest.shared.ts` 的 define，
+不是构造出来的违规，是真实事故）：
+
+```
+改前  ✅ 通过（431 文件 / 9014 用例，exit 0）
+改后  ❌ 缺少 coverage/coverage-final.json —— 本门禁只读本次现场产物，请先运行 pnpm run test:coverage
+      （test:coverage 本身 exit 1：2 failed | 429 passed (431)，8880 passed (8880) ⇒ 134 用例未跑）
+补充  vitest run --coverage --coverage.reportOnFailure=true 强制出产物后：
+      ❌ 44 个文件的 covered 低于基线（逐文件棘轮）：
+        .../ui/src/components/Alert.ts     statements 96 → 18 · functions 2 → 0 · lines 96 → 18
+        .../ui/src/components/Avatar.ts    statements 106 → 23 · functions 4 → 0 · lines 106 → 23
+        .../ui/src/components/Calendar.ts  statements 181 → 25 · functions 12 → 0 · lines 181 → 25
+      ❌ 全局 covered 低于基线：statements 54932 → 53013、functions 3886 → 3792、lines 54932 → 53013
+      ✅ 判据 3 未插桩集合未新增（7 条）        （exit 1）
+还原  ✅ 431 文件 / 9014 用例全绿；判据 1 / 2 / 3 全部通过（exit 0）
+```
+
+③ 的结论：套件崩掉时既走「产物缺失」也走「逐文件 covered 下降」，两条都判死，没有
+「整文件从产物消失被当成文件增删」的假绿口子。
+
 > 基线是**下界**：覆盖率提升不会自动入账，需要显式
 > `node scripts/coverage-baseline.mjs --update`（连跑三次取 min、打印 diff、人工 `yes` 才落盘）。
 > 这是有意的，避免数字自然上涨导致棘轮失效。禁止手工下调基线值。
