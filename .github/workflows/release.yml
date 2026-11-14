@@ -1,3 +1,6 @@
+# [no-ci-release] 当前唯一远端是 gitee.com:lytjs/lytjs.git；本 workflow 不会触发。
+# 发布走本地 `node scripts/release.mjs`（默认 --dry-run）。
+# 保留本文件仅为将来接入 GitHub 镜像；`check-release-workflow` 会校验本标记，勿删。
 name: Release
 
 on:

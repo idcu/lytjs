@@ -10,19 +10,19 @@ keywords: [S35, P0 止血, 体积裁决, 负控, 覆盖率快照, signal 收编,
 
 ## 本轮（2026-11-14）
 
-- 覆盖率：现场产物+双指纹+冻结清单；fast 不声称。
-- signal 收编：第 2/3 步已下沉 shared，两版只留拼写；每步 230 份逐字快照 + 100 模板对拍。
-- 快照基线：按 `fa7beaa4`/`d839b156` 刷新；负控改拼写 22 红，还原回绿。
+- 覆盖率：现场产物+双指纹+冻结清单；fast 不报。
+- signal 收编：第 2/3 步已下沉 shared，两版只留拼写；每步 230 份快照 + 100 模板对拍。
+- 快照基线：按 `fa7beaa4`/`d839b156` 刷新；负控改拼写 22 红，还原绿。
 - optimized/for13 缺 import 已修；新增产物自洽求值门禁。
-- 口径：读 dist 门禁标 needsDist，自动前置 freshness；stale exit 1。
+- 读 dist 门禁标 needsDist，自动前置 freshness；stale exit 1。
 - ADR 0033：优化器拆 `signal-optimized` 子入口；first-screen 80763→74595 B。
-- 发布物：`check-release-artifacts`（slow，pack+隔离安装+121 subpath）、`check-publish-private` 已入档。
+- 发布物：`check-release-artifacts`、`check-publish-private` 已入档；就绪单见 [readiness](../docs/release/RELEASE-READINESS-7.0.0.md)。
 
 ## 当前焦点
 
 - **S35 收口**：P0 8 笔已 push；取证见 [ui-contracts-na-audit](checks/ui-contracts-na-audit.md)。
-- first-screen-runtime 基线 37648/38400，见 [ADR 0029](decisions/0029-bundle-first-screen-runtime-baseline.md)。
-- `checks/rules.md` 与 `gate.mjs` 对齐 81 条（59 fast / 22 slow）。
+- first-screen-runtime 基线 37648/38400（[0029](decisions/0029-bundle-first-screen-runtime-baseline.md)）。
+- `checks/rules.md` 与 `gate.mjs` 对齐 82 条（60 fast / 22 slow）。
 
 ## P0 账
 

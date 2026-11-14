@@ -268,6 +268,15 @@ const GATES = [
       'changeset publish 队列（2026-11-14 benchmark fixture lytjs-npm 实证）',
   },
   {
+    name: 'check-release-workflow',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-release-workflow.mjs'],
+    approx: '~0.1s',
+    desc:
+      'release workflow 语义：origin 非 GitHub 时，release.yml 必须带 [no-ci-release] 标记，' +
+      '避免「配置存在 ⇒ 误以为有 CI 发布」（当前远端 gitee.com，发布走 scripts/release.mjs）',
+  },
+  {
     name: 'check-consumer-demo',
     tier: 'fast',
     needsDist: true,
