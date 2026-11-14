@@ -22,7 +22,7 @@ cd /Volumes/Data/lytjs/lytjs
 # 本仓库声明了 pnpm@11.3.0，用 corepack 保证版本一致
 corepack pnpm@11.3.0 install
 
-# 构建全部 76 个包（产出各包 dist/，后续导入要用）
+# 构建全部包（产出各包 dist/，后续导入要用）
 corepack pnpm@11.3.0 run build
 ```
 
@@ -37,7 +37,7 @@ corepack pnpm@11.3.0 run build
 
 ```bash
 node scripts/link-workspace-packages.mjs
-# 输出示例：[link-workspace] @lytjs 包 76 个 —— 新建链接 76，已存在 0（目录 node_modules/@lytjs）
+# 输出示例：[link-workspace] @lytjs 包 N 个 —— 新建链接 N，已存在 0（目录 node_modules/@lytjs）
 ```
 
 （幂等，重复执行只会报"已存在 N"。）
@@ -133,15 +133,15 @@ bash scripts/verify-baseline.sh --no-cov    # 6 项门禁（build / type-check /
 
 **仓库地图**：
 
-| 目录                         | 内容                                                                       |
-| ---------------------------- | -------------------------------------------------------------------------- |
-| `packages/`                  | 76 个包。**先看** `core-signal`（Signal 应用入口）、`compiler`、`renderer` |
-| `packages/common/packages/`  | 34 个通用子包（string / path / is / error …）                              |
-| `examples/hello/`            | 最小可跑示例（与本文第 3 节同款）                                          |
-| `examples/slots-demo/`       | 插槽能力演示（具名 / 作用域 / v-for / v-if / v-model）                     |
-| `docs/api/`                  | API 参考（先看 `compiler.md`）                                             |
-| `docs/design/`               | 设计文档与**已知缺陷登记**（**建议先读**）                                 |
-| `scripts/verify-baseline.sh` | 基线验证脚本；`scripts/link-workspace-packages.mjs` 建包链接               |
+| 目录                         | 内容                                                                        |
+| ---------------------------- | --------------------------------------------------------------------------- |
+| `packages/`                  | 发布集包。**先看** `core-signal`（Signal 应用入口）、`compiler`、`renderer` |
+| `packages/common/packages/`  | 通用子包（string / path / is / error …）                                    |
+| `examples/hello/`            | 最小可跑示例（与本文第 3 节同款）                                           |
+| `examples/slots-demo/`       | 插槽能力演示（具名 / 作用域 / v-for / v-if / v-model）                      |
+| `docs/api/`                  | API 参考（先看 `compiler.md`）                                              |
+| `docs/design/`               | 设计文档与**已知缺陷登记**（**建议先读**）                                  |
+| `scripts/verify-baseline.sh` | 基线验证脚本；`scripts/link-workspace-packages.mjs` 建包链接                |
 
 ## 6. 已知限制（**都是从零跑一遍踩出来的**）
 
@@ -169,7 +169,7 @@ bash scripts/verify-baseline.sh --no-cov    # 6 项门禁（build / type-check /
 
 | 步骤                                         | 结果                                                                        |
 | -------------------------------------------- | --------------------------------------------------------------------------- |
-| `corepack pnpm@11.3.0 install` + `run build` | ✅ 76 包构建通过（另有基线脚本验证 6/6 全绿）                               |
+| `corepack pnpm@11.3.0 install` + `run build` | ✅ 发布集全部包构建通过（另有基线脚本验证 6/6 全绿）                        |
 | `node scripts/link-workspace-packages.mjs`   | ✅ 新建链接 76；重复执行幂等（已存在 76）                                   |
 | esbuild 打包 `examples/hello`                | ✅ 698KB / ~120ms；产物中 `__DEV__` 已正确替换                              |
 | **渲染验证**（jsdom 执行打包产物）           | ✅ `<div><button>+1</button><p>count = 0 , doubled = 0</p></div>`           |

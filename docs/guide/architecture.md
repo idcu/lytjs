@@ -1,45 +1,38 @@
 # 架构设计
 
-LytJS 采用 8 层架构设计，从底层到上层分别为 L0-L7。本文档依据 **当前仓库实际代码** 梳理，覆盖全部 89 个已发布包（版本统一为 v6.9.6）。
+LytJS 采用 8 层架构设计，从底层到上层分别为 L0-L7。本文档依据 **当前仓库实际代码** 梳理。发布集不在此写死包数，由 `.changeset` 配置与 workspace 派生；当期数字可直接运行：
+
+```bash
+node -e "import('./scripts/release-set.mjs').then(m => console.log(m.getReleasePackages().length))"
+```
 
 > 注意：这是高级主题，新手可以先跳过，学习[新手入门](../getting-started/index.md)后再阅读。
 
 ## 架构总览
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│ L7: 工程化工具层（3 包）                                   │
-│  cli · test-utils · devtools-extension                   │
-├──────────────────────────────────────────────────────────┤
-│ L6: 生态系统层（25 包，允许第三方依赖）                    │
-│  定能力 config/di/plugin/ui · store/devtools/bundler ·    │
-│  SSR×6 · Web 框架×9                                       │
-├──────────────────────────────────────────────────────────┤
-│ L5: 组件基础层（逻辑层，封装于 @lytjs/component）           │
-│  统一组件 API · 通信机制 · 样式规范                       │
-├──────────────────────────────────────────────────────────┤
-│ L4: 插件与适配层（13 包）                                  │
-│  plugin-* ×13（animation/auth/chart/data/i18n/form/…）    │
-├──────────────────────────────────────────────────────────┤
-│ L3: 核心运行时层（3 包）★ 核心聚焦                         │
-│  core（双模式）· core-vnode · core-signal                 │
-├──────────────────────────────────────────────────────────┤
-│ L2: 渲染引擎层（6 包）                                     │
-│  component · renderer · dom-runtime · dom · web ·         │
-│  adapter-web                                              │
-├──────────────────────────────────────────────────────────┤
-│ L1: 核心原语层（3 包）                                     │
-│  reactivity · vdom · compiler                            │
-├──────────────────────────────────────────────────────────┤
-│ L0: 基础工具层（36 包，零第三方依赖）                      │
-│  shared-types · host-contract · @lytjs/common ·           │
-│  common-* ×33                                             │
-└──────────────────────────────────────────────────────────┘
-      合计：36 + 3 + 6 + 3 + 13 + 25 + 3 = 89 包
-      依赖方向：上层依赖下层（L7 → L6 → … → L0）
+┌ L7: 工程化工具层
+│   cli · test-utils · devtools-extension
+├ L6: 生态系统层（允许第三方依赖）
+│   基础能力 config/di/plugin/ui · store/devtools/bundler
+│   SSR 套件 · Web 框架体系
+├ L5: 组件基础层（逻辑层，封装于 @lytjs/component）
+│   统一组件 API · 通信机制 · 样式规范
+├ L4: 插件与适配层
+│   plugin-*（animation/auth/chart/data/i18n/form/…）
+├ L3: 核心运行时层 ★ 核心聚焦
+│   core（双模式）· core-vnode · core-signal
+├ L2: 渲染引擎层
+│   component · renderer · dom-runtime · dom · web · adapter-web
+├ L1: 核心原语层
+│   reactivity · vdom · compiler
+├ L0: 基础工具层（零第三方依赖）
+│   shared-types · host-contract · @lytjs/common · common-*
+└ 各层包数以 scripts/release-set.mjs 的派生结果为准
+  依赖方向：上层依赖下层（L7 → L6 → … → L0）
 ```
 
-## L0: 基础工具层（36 包）
+## L0: 基础工具层
 
 基础层提供框架运行所需的最底层工具和类型定义。
 
@@ -47,10 +40,10 @@ LytJS 采用 8 层架构设计，从底层到上层分别为 L0-L7。本文档�
 | ---------------------- | ------------------------------------------------- |
 | `@lytjs/shared-types`  | 共享类型定义（VNode、组件、渲染器、App 上下文等） |
 | `@lytjs/host-contract` | 跨平台渲染接口定义（Host Contract）               |
-| `@lytjs/common`        | common-\* 聚合包（转发 28 个子包导出）            |
-| `@lytjs/common-*`      | 33 个工具子包                                     |
+| `@lytjs/common`        | common-\* 聚合包（转发子包导出）                  |
+| `@lytjs/common-*`      | 工具子包（完整列表见下）                          |
 
-### common-\* 子包列表（33 个）
+### common-\* 子包列表
 
 | 子包                              | 描述                       |
 | --------------------------------- | -------------------------- |
@@ -88,7 +81,7 @@ LytJS 采用 8 层架构设计，从底层到上层分别为 L0-L7。本文档�
 | `@lytjs/common-rate-limit`        | 限流工具                   |
 | `@lytjs/common-warn`              | 警告消息工具               |
 
-## L1: 核心原语层（3 包）
+## L1: 核心原语层
 
 | 包                  | 描述                                                    |
 | ------------------- | ------------------------------------------------------- |
@@ -104,7 +97,7 @@ vdom → reactivity, common-*
 compiler → common-*
 ```
 
-## L2: 渲染引擎层（6 包）
+## L2: 渲染引擎层
 
 | 包                   | 描述                                                            |
 | -------------------- | --------------------------------------------------------------- |
@@ -126,7 +119,7 @@ web → （无框架依赖）
 adapter-web → vdom, reactivity, host-contract, common-*
 ```
 
-## L3: 核心运行时层（3 包）
+## L3: 核心运行时层
 
 | 包                   | 描述                                          |
 | -------------------- | --------------------------------------------- |
@@ -146,12 +139,12 @@ core-signal → reactivity, compiler, component, renderer, common-*
 
 | 包                   | 描述                                                         |
 | -------------------- | ------------------------------------------------------------ |
-| `@lytjs/plugin-*`    | 13 个官方插件（见下表）                                      |
-| `@lytjs/adapter-web` | Web 平台适配器（在 L2 已列，此处按适配职责归类，不重复计数） |
+| `@lytjs/plugin-*`    | 官方插件（见下表）                                           |
+| `@lytjs/adapter-web` | Web 平台适配器（在 L2 已列，此处按适配职责归类，不重复列出） |
 
 > 说明：`@lytjs/adapter-web` 依赖层次介于 L1-L2，本清单按目录归类于 L2。
 
-### 官方插件列表（13 个）
+### 官方插件列表
 
 | 子包                       | 描述      |
 | -------------------------- | --------- |
@@ -179,20 +172,20 @@ core-signal → reactivity, compiler, component, renderer, common-*
 | 组件通信机制 | Props、Events、Provide/Inject |
 | 样式规范定义 | 主题系统、CSS 变量            |
 
-## L6: 生态系统层（25 包）
+## L6: 生态系统层
 
 生态系统层提供完整的业务解决方案（允许引入第三方依赖）。可细分四组：
 
-### 基础能力（4 包）
+### 基础能力
 
 | 包              | 描述                                                                   |
 | --------------- | ---------------------------------------------------------------------- |
 | `@lytjs/config` | 通用配置系统（ConfigManager/Schema/Validator/Transformer，零框架依赖） |
 | `@lytjs/di`     | 依赖注入系统                                                           |
 | `@lytjs/plugin` | 通用插件系统核心（PluginRegistry/生命周期事件/版本管理，零框架依赖）   |
-| `@lytjs/ui`     | UI 组件库（56 个组件）                                                 |
+| `@lytjs/ui`     | UI 组件库                                                              |
 
-### 业务状态与工具（6 包）
+### 业务状态与工具
 
 | 包                        | 描述                     |
 | ------------------------- | ------------------------ |
@@ -203,7 +196,7 @@ core-signal → reactivity, compiler, component, renderer, common-*
 | `@lytjs/compat`           | 兼容性层（占位，计划中） |
 | `@lytjs/platform-adapter` | 平台适配器               |
 
-### SSR 套件（6 包，`ecosystem/packages/ssr-kit/packages/`）
+### SSR 套件（`ecosystem/packages/ssr-kit/packages/`）
 
 | 包                     | 描述         |
 | ---------------------- | ------------ |
@@ -214,7 +207,7 @@ core-signal → reactivity, compiler, component, renderer, common-*
 | `@lytjs/cache`         | 缓存         |
 | `@lytjs/cache-isr`     | ISR 增量缓存 |
 
-### Web 框架体系（9 包，`ecosystem/packages/web-framework/packages/`）
+### Web 框架体系（`ecosystem/packages/web-framework/packages/`）
 
 | 包                             | 描述                   |
 | ------------------------------ | ---------------------- |
@@ -228,7 +221,7 @@ core-signal → reactivity, compiler, component, renderer, common-*
 | `@lytjs/http-server`           | HTTP 服务器            |
 | `@lytjs/metadata`              | 元数据                 |
 
-## L7: 工程化工具层（3 包）
+## L7: 工程化工具层
 
 | 包                          | 描述                |
 | --------------------------- | ------------------- |
@@ -259,7 +252,7 @@ L0 不依赖任何层
 共同底座（零依赖）
 ┌────────┐   ┌────────┐   ┌────────┐
 │ common │   │shared- │   │ host-  │
-│  -×33  │   │ types  │   │contract│
+│common-*│   │ types  │   │contract│
 └────────┘   └────────┘   └────────┘
     │            │            │
     ▼            ▼            ▼
@@ -287,7 +280,7 @@ L0 不依赖任何层
 消费端（依赖 core）
 ┌────────┐   ┌────────┐   ┌────────┐
 │plugin- │   │ ui ·   │   │ ssr ·  │
-│  *×13  │   │ store  │   │ router │
+│plugin-*│   │ ui ·   │   │ ssr ·  │
 └────────┘   └────────┘   └────────┘
 ```
 

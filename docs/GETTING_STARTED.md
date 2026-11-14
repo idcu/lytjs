@@ -12,7 +12,7 @@
 LytJS 以 monorepo 形式组织，使用前需要先构建各包的 dist 产物：
 
 ```bash
-# 全量构建（76 个包）
+# 全量构建（发布集全部包）
 npx tsx scripts/smart-build.ts
 
 # 或只构建最小依赖链（core + reactivity + compiler + component + renderer + ssr）
@@ -206,7 +206,7 @@ console.log(store.double); // 2
 
 ## 项目状态
 
-- 全仓 76 个包全部可构建
+- 全仓发布集全部包可构建
 - 384 文件 / 8432 用例全绿
-- 11 项门禁全通过
+- 门禁全通过
 - 详见 `evaluation/PROJECT_STATUS_2026-11-02.md`
