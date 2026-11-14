@@ -9,6 +9,7 @@
  */
 
 import { ConfigManager } from '@lytjs/config';
+import { coreGlobalState } from './global-state';
 import type {
   ConfigChangeCallback,
   ConfigOptions,
@@ -61,20 +62,14 @@ const defaultGlobalConfig: ConfigObject = {
 };
 
 /**
- * 全局配置管理器实例
- */
-let globalConfigManager: ConfigManager | null = null;
-
-/**
- * 获取全局配置管理器
- *
- * @returns 全局配置管理器实例
+ * 全局配置管理器实例（跨入口共享，见 ./global-state）
  */
 export function getGlobalConfig(): ConfigManager {
-  if (!globalConfigManager) {
-    globalConfigManager = new ConfigManager(defaultGlobalConfig);
+  const state = coreGlobalState();
+  if (!state.configManager) {
+    state.configManager = new ConfigManager(defaultGlobalConfig);
   }
-  return globalConfigManager;
+  return state.configManager;
 }
 
 /**

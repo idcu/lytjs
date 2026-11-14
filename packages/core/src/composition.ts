@@ -2,6 +2,7 @@
 // @lytjs/core - Composition API 辅助函数
 
 import { getCurrentInstance, onMounted } from '@lytjs/component';
+import { coreGlobalState } from './global-state';
 import { computed, shallowRef, watchEffect, readonly, onScopeDispose } from '@lytjs/reactivity';
 import { warnOnce } from '@lytjs/common-error';
 import type { WritableComputedRef, Ref } from '@lytjs/reactivity';
@@ -133,8 +134,11 @@ function generateIdSuffix(): string {
 
 /**
  * WeakMap to store per-instance ID counters, avoiding private property pollution.
+ * 跨入口共享（见 ./global-state）：主入口与 /runtime 同时加载时不能各记一套。
  */
-const instanceIdMap = new WeakMap<object, Map<string, number>>();
+function instanceIdMap(): WeakMap<object, Map<string, number>> {
+  return coreGlobalState().instanceIds;
+}
 
 /**
  * 生成应用范围内唯一的 ID。
@@ -154,10 +158,10 @@ export function useId(): Readonly<Ref<string>> {
     // 使用组件 uid 作为前缀，确保组件级别的唯一性
     const prefix = `lyt-${instance.uid}`;
     // 使用 WeakMap 存储每个实例的 ID 计数器，避免私有属性依赖
-    let map = instanceIdMap.get(instance);
+    let map = instanceIdMap().get(instance);
     if (!map) {
       map = new Map<string, number>();
-      instanceIdMap.set(instance, map);
+      instanceIdMap().set(instance, map);
     }
     const counter = (map.get('useId') ?? 0) + 1;
     map.set('useId', counter);
@@ -177,8 +181,11 @@ export function useId(): Readonly<Ref<string>> {
 
 /**
  * WeakMap to store per-instance CSS module mappings, avoiding private property pollution.
+ * 跨入口共享（见 ./global-state），语义与 instanceIdMap 一致。
  */
-const instanceCssModulesMap = new WeakMap<object, Record<string, Record<string, string>>>();
+function instanceCssModulesMap(): WeakMap<object, Record<string, Record<string, string>>> {
+  return coreGlobalState().instanceCssModules;
+}
 
 /**
  * 获取单文件组件中 CSS Modules 的类名映射。
@@ -197,7 +204,7 @@ export function useCssModule(name = '$style'): Record<string, string> {
   }
 
   // CSS Modules 的类名映射通过 WeakMap 存储，避免私有属性依赖
-  const modules = instanceCssModulesMap.get(instance);
+  const modules = instanceCssModulesMap().get(instance);
   return modules?.[name] ?? {};
 }
 
@@ -210,10 +217,10 @@ export function registerCssModules(
   name: string,
   mapping: Record<string, string>,
 ): void {
-  let modules = instanceCssModulesMap.get(instance);
+  let modules = instanceCssModulesMap().get(instance);
   if (!modules) {
     modules = {};
-    instanceCssModulesMap.set(instance, modules);
+    instanceCssModulesMap().set(instance, modules);
   }
   modules[name] = mapping;
 }

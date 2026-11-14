@@ -435,34 +435,6 @@
       "entries": ["index"],
       "reason": "elementContextMap 只在 index 入口的 web-component 流程使用"
     },
-    "packages/core/src/common-integration.ts::_integrations": {
-      "kind": "let/var",
-      "line": 150,
-      "classification": "c",
-      "entries": ["index", "runtime"],
-      "reason": "主入口与 /runtime 各一份集成注册表；registerIntegrations 目前无人调用"
-    },
-    "packages/core/src/composition.ts::instanceCssModulesMap": {
-      "kind": "new WeakMap",
-      "line": 181,
-      "classification": "c",
-      "entries": ["index", "runtime"],
-      "reason": "实例 id / CSS Modules 映射按入口各一份；跨入口读会 miss 后重算，内部尚未混用"
-    },
-    "packages/core/src/composition.ts::instanceIdMap": {
-      "kind": "new WeakMap",
-      "line": 137,
-      "classification": "c",
-      "entries": ["index", "runtime"],
-      "reason": "实例 id / CSS Modules 映射按入口各一份；跨入口读会 miss 后重算，内部尚未混用"
-    },
-    "packages/core/src/config.ts::globalConfigManager": {
-      "kind": "let/var",
-      "line": 66,
-      "classification": "c",
-      "entries": ["index", "runtime"],
-      "reason": "主入口与 /runtime 各一份全局配置管理器；UI 两个 dist 同进程加载，setter 目前无人调用"
-    },
     "packages/core/src/create-app-with-compiler.ts::compilerInstalled": {
       "kind": "let/var",
       "line": 30,

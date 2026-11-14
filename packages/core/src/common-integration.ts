@@ -7,6 +7,8 @@
 // 3. 安全工具集成（用于 XSS 防护）
 // 4. 缓存工具集成（用于组件缓存等场景）
 
+import { coreGlobalState } from './global-state';
+
 // ============================================================
 // 类型导入（避免运行时依赖）
 // ============================================================
@@ -146,49 +148,52 @@ export class IntegrationScope {
   }
 }
 
-// 全局集成点存储（向后兼容）
-let _integrations: CoreIntegrations = {};
+// 全局集成点存储（向后兼容）：跨入口共享，见 ./global-state
+function globalIntegrations(): CoreIntegrations {
+  return coreGlobalState().integrations;
+}
 
 /**
  * 注册集成点（全局，向后兼容）
  */
 export function registerIntegrations(integrations: CoreIntegrations): void {
-  _integrations = { ..._integrations, ...integrations };
+  const state = coreGlobalState();
+  state.integrations = { ...state.integrations, ...integrations };
 }
 
 /**
  * 重置全局集成点
  */
 export function resetIntegrations(): void {
-  _integrations = {};
+  coreGlobalState().integrations = {};
 }
 
 /**
  * 获取 HTTP 客户端
  */
 export function getHttpClient(): HttpClientLike | undefined {
-  return _integrations.http;
+  return globalIntegrations().http;
 }
 
 /**
  * 获取查询工具
  */
 export function getQueryUtils(): QueryUtilsLike | undefined {
-  return _integrations.query;
+  return globalIntegrations().query;
 }
 
 /**
  * 获取安全工具
  */
 export function getSecurityUtils(): SecurityUtilsLike | undefined {
-  return _integrations.security;
+  return globalIntegrations().security;
 }
 
 /**
  * 获取缓存工具
  */
 export function getCacheUtils(): CacheUtilsLike | undefined {
-  return _integrations.cache;
+  return globalIntegrations().cache;
 }
 
 // ============================================================
