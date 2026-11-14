@@ -63,14 +63,43 @@ export interface TransitionState {
 }
 
 // ============================================================
-// 内部：transition 清理 WeakMap
+// 跨入口共享状态
 // ============================================================
+
+/**
+ * 主入口与 `/transition` 入口是两个 dist 产物（splitting:false 逐入口内联）。
+ * 前缀、清理表与引擎缓存必须跨入口共享，否则：
+ * - `setTransitionPrefix` 只影响写入的那个入口；
+ * - 一个入口发起的过渡，另一个入口的 `cancelTransition` 找不到 cleanup；
+ * - 同一 host 在两个入口各建一个 TransitionEngine。
+ */
+interface TransitionGlobalState {
+  prefix: string;
+  cleanup: Map<symbol, () => void>;
+  elementKeys: WeakMap<object, Set<symbol>>;
+  engines: WeakMap<RendererHost<object, object>, TransitionEngine<object, object>>;
+}
+
+const TRANSITION_SLOT = Symbol.for('@lytjs/vdom/transition');
+
+function transitionState(): TransitionGlobalState {
+  const existing = Reflect.get(globalThis, TRANSITION_SLOT) as TransitionGlobalState | undefined;
+  if (existing) return existing;
+  const created: TransitionGlobalState = {
+    prefix: 'v',
+    cleanup: new Map(),
+    elementKeys: new WeakMap(),
+    engines: new WeakMap(),
+  };
+  Reflect.set(globalThis, TRANSITION_SLOT, created);
+  return created;
+}
 
 // FIX: P2-18 使用复合 key 机制避免同一元素上不同过渡的 cleanup 冲突。
 // transitionCleanupMap: 存储每个 cleanup symbol 对应的清理函数
-const transitionCleanupMap = new Map<symbol, () => void>();
+const transitionCleanupMap = () => transitionState().cleanup;
 // elementCleanupKeys: 追踪每个元素关联的所有 cleanup symbol，用于 cancelTransition
-const elementCleanupKeys = new WeakMap<object, Set<symbol>>();
+const elementCleanupKeys = () => transitionState().elementKeys;
 
 // ============================================================
 // 全局 transition 前缀配置
@@ -78,10 +107,18 @@ const elementCleanupKeys = new WeakMap<object, Set<symbol>>();
 
 // FIX: P0-3 将 globalTransitionPrefix 和 setTransitionPrefix 移到文件顶部（模块顶层）
 // FIX: P1-7 导出 globalTransitionPrefix，供 transition-group.ts 使用
-export let globalTransitionPrefix = 'v';
+// 2026-11-14：绑定保留为兼容快照（随本入口写入同步），实际读取一律走
+// getTransitionPrefix()，避免跨入口读到各自副本。
+export let globalTransitionPrefix = transitionState().prefix;
 
 export function setTransitionPrefix(prefix: string): void {
+  transitionState().prefix = prefix;
   globalTransitionPrefix = prefix;
+}
+
+/** 读取跨入口共享的当前前缀 */
+export function getTransitionPrefix(): string {
+  return transitionState().prefix;
 }
 
 // ============================================================
@@ -93,7 +130,7 @@ export function setTransitionPrefix(prefix: string): void {
  * key: RendererHost 实例的 WeakMap key
  * value: TransitionEngine 实例
  */
-const engineCache = new WeakMap<RendererHost<object, object>, TransitionEngine<object, object>>();
+const engineCache = () => transitionState().engines;
 
 /**
  * 获取或创建指定 host 的 TransitionEngine 实例。
@@ -103,10 +140,10 @@ const engineCache = new WeakMap<RendererHost<object, object>, TransitionEngine<o
 function getOrCreateEngine<HN extends object, HE extends HN>(
   host: RendererHost<HN, HE>,
 ): TransitionEngine<HN, HE> {
-  let engine = engineCache.get(host);
+  let engine = engineCache().get(host);
   if (!engine) {
     engine = new TransitionEngine<HN, HE>(host);
-    engineCache.set(host, engine);
+    engineCache().set(host, engine);
   }
   return engine as TransitionEngine<HN, HE>;
 }
@@ -211,7 +248,7 @@ function resolveTransitionClasses<HE>(
   type: 'enter' | 'leave',
 ): { from: string; active: string; to: string } {
   // FIX: P0-3 使用 globalTransitionPrefix 替代硬编码的 'v'
-  const name = props.name ?? globalTransitionPrefix;
+  const name = props.name ?? getTransitionPrefix();
 
   if (type === 'enter') {
     return {
@@ -526,8 +563,8 @@ export function performEnterTransition<HN extends object, HE extends HN>(
           // 执行清理
           if (cleanupKey) {
             cleanupFn();
-            transitionCleanupMap.delete(cleanupKey);
-            const keys = elementCleanupKeys.get(el as object);
+            transitionCleanupMap().delete(cleanupKey);
+            const keys = elementCleanupKeys().get(el as object);
             keys?.delete(cleanupKey);
           }
           el.classList.remove(classes.active);
@@ -538,11 +575,11 @@ export function performEnterTransition<HN extends object, HE extends HN>(
         if (info.duration > 0) {
           // FIX: 存储定时器以便后续清理
           cleanupKey = Symbol('transition-cleanup-enter-timeout-dom');
-          transitionCleanupMap.set(cleanupKey, cleanupFn);
-          let keys = elementCleanupKeys.get(el as object);
+          transitionCleanupMap().set(cleanupKey, cleanupFn);
+          let keys = elementCleanupKeys().get(el as object);
           if (!keys) {
             keys = new Set();
-            elementCleanupKeys.set(el as object, keys);
+            elementCleanupKeys().set(el as object, keys);
           }
           keys.add(cleanupKey);
           timer = setTimeout(finish, info.duration + 50);
@@ -648,8 +685,8 @@ export function performLeaveTransition<HN extends object, HE extends HN>(
           // 执行清理
           if (cleanupKey) {
             cleanupFn();
-            transitionCleanupMap.delete(cleanupKey);
-            const keys = elementCleanupKeys.get(el as object);
+            transitionCleanupMap().delete(cleanupKey);
+            const keys = elementCleanupKeys().get(el as object);
             keys?.delete(cleanupKey);
           }
           el.classList.remove(classes.active);
@@ -660,11 +697,11 @@ export function performLeaveTransition<HN extends object, HE extends HN>(
         if (info.duration > 0) {
           // FIX: 存储定时器以便后续清理
           cleanupKey = Symbol('transition-cleanup-leave-timeout-dom');
-          transitionCleanupMap.set(cleanupKey, cleanupFn);
-          let keys = elementCleanupKeys.get(el as object);
+          transitionCleanupMap().set(cleanupKey, cleanupFn);
+          let keys = elementCleanupKeys().get(el as object);
           if (!keys) {
             keys = new Set();
-            elementCleanupKeys.set(el as object, keys);
+            elementCleanupKeys().set(el as object, keys);
           }
           keys.add(cleanupKey);
           timer = setTimeout(finish, info.duration + 50);
@@ -734,12 +771,12 @@ export function waitForTransitionEndDOM(
     el.removeEventListener('transitionend', onEnd);
     el.removeEventListener('animationend', onEnd);
   };
-  transitionCleanupMap.set(cleanupKey, cleanupFn);
+  transitionCleanupMap().set(cleanupKey, cleanupFn);
 
-  let keys = elementCleanupKeys.get(el as object);
+  let keys = elementCleanupKeys().get(el as object);
   if (!keys) {
     keys = new Set();
-    elementCleanupKeys.set(el as object, keys);
+    elementCleanupKeys().set(el as object, keys);
   }
   keys.add(cleanupKey);
 
@@ -747,7 +784,7 @@ export function waitForTransitionEndDOM(
   const originalDone = done;
   const wrappedDone = () => {
     cleanupFn();
-    transitionCleanupMap.delete(cleanupKey);
+    transitionCleanupMap().delete(cleanupKey);
     keys?.delete(cleanupKey);
     originalDone();
   };
@@ -777,17 +814,17 @@ export function cancelTransition<HN, HE extends HN>(
   // FIX: P2-18 使用复合 key 机制取消过渡。
   // 通过 elementCleanupKeys 查找元素关联的所有 cleanup key，
   // 逐个执行清理并删除，确保同一元素上的多个过渡都能被正确取消。
-  const keys = elementCleanupKeys.get(target);
+  const keys = elementCleanupKeys().get(target);
   if (keys) {
     for (const key of keys) {
-      const cleanup = transitionCleanupMap.get(key);
+      const cleanup = transitionCleanupMap().get(key);
       if (cleanup) {
         cleanup();
-        transitionCleanupMap.delete(key);
+        transitionCleanupMap().delete(key);
       }
     }
     keys.clear();
-    elementCleanupKeys.delete(target);
+    elementCleanupKeys().delete(target);
   }
 }
 

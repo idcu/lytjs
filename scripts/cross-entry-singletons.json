@@ -1317,33 +1317,12 @@
       "entries": ["index"],
       "reason": "仅主入口 patch 流程写入与读取"
     },
-    "packages/vdom/src/transition.ts::elementCleanupKeys": {
-      "kind": "new WeakMap",
-      "line": 73,
-      "classification": "c",
-      "entries": ["index", "transition"],
-      "reason": "transition 前缀/清理注册表在 index 与 /transition 入口各一份；跨入口设置前缀或取消过渡会失效"
-    },
-    "packages/vdom/src/transition.ts::engineCache": {
-      "kind": "new WeakMap",
-      "line": 96,
-      "classification": "c",
-      "entries": ["index", "transition"],
-      "reason": "transition 前缀/清理注册表在 index 与 /transition 入口各一份；跨入口设置前缀或取消过渡会失效"
-    },
     "packages/vdom/src/transition.ts::globalTransitionPrefix": {
       "kind": "let/var",
       "line": 81,
       "classification": "c",
       "entries": ["index", "transition"],
-      "reason": "transition 前缀/清理注册表在 index 与 /transition 入口各一份；跨入口设置前缀或取消过渡会失效"
-    },
-    "packages/vdom/src/transition.ts::transitionCleanupMap": {
-      "kind": "new Map",
-      "line": 71,
-      "classification": "c",
-      "entries": ["index", "transition"],
-      "reason": "transition 前缀/清理注册表在 index 与 /transition 入口各一份；跨入口设置前缀或取消过渡会失效"
+      "reason": "导出的兼容快照：仅在本入口 setTransitionPrefix 时同步；所有内部/transition-group 读取已改走 getTransitionPrefix()（globalThis 槽），故跨入口行为正确"
     },
     "packages/vdom/src/vnode.ts::vnodePoolHitCount": {
       "kind": "let/var",
