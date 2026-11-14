@@ -1,11 +1,16 @@
 ---
 scope: verify
-status: active
+status: archived          # 2026-11-15 被 ADR 0034 取代后移入冷区（容量归档）
 severity: P2
-last-verified: 2026-11-14
+last-verified: 2026-11-15
 triggers: 2
 keywords: [覆盖率, coverage, snapshot, 快照, 过期, 97.99, 旧口径]
 ---
+
+> **已被取代（2026-11-15，ADR 0034）**：本文描述的「现场快照 + 双指纹」同样是
+> 拿产物跟自己比（生成即校验），不能判死代码回归。现行判据见
+> [coverage-generate-then-verify.md](../../../pitfalls/verify/coverage-generate-then-verify.md) 与
+> `scripts/check-coverage-baseline.mjs`。以下保留为历史记录。
 
 ## 症状
 

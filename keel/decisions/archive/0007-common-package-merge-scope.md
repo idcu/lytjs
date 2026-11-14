@@ -1,6 +1,6 @@
 ---
 scope: meta
-status: active
+status: archived          # 2026-11-15 容量归档（内容仍有效，未撤销）
 last-verified: 2026-10-12
 keywords: [砍包, 包合并, 收敛规模, common, 架构决策, 依赖闭包]
 type: decision

@@ -37,8 +37,8 @@
  *   - `check-ui-i18n`         UI i18n：把一条英文文案改成空串 → 必红
  *   - `check-bundle-size`     体积预算：把基线压到实测之下 → 必红
  *   - `check-package-exports` 发布产物：把 main 指向不存在的文件 → 必红
- *   - `check-coverage-snapshot` 覆盖率现场产物：三向反证（移走 coverage/、旧指纹冒充、
- *     新增未插桩 src）→ 各自必红
+ *   - `check-coverage-baseline` 逐文件覆盖率棘轮：删一条测试 ⇒ 该文件 covered 下降必红；
+ *     把源文件挤出插桩范围 ⇒ 未插桩集合新增必红（各跑一次真实 test:coverage）
  *   - `check-signal-profile-snapshot` 双 profile 快照：分别篡改 base / optimized 产物 → 各自必红
  *   - `check-component-status` 组件成熟度：把 experimental 的 Table 错标 stable → 必红
  *   - `check-cache`            缓存容量：关掉 LRU 淘汰循环 →「totalSize 不超过 maxSize」必红
@@ -109,7 +109,6 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
-  renameSync,
   rmSync,
   statSync,
   unlinkSync,
@@ -788,79 +787,74 @@ const CONTROLS = {
     );
   },
 
-  'check-coverage-snapshot': () => {
-    // 三向反证（2026-11-14 判据口径变更后）：
-    //   ① 移走 coverage/ ⇒ 「只读现场产物」必红；
-    //   ② 用旧指纹冒充当前提交 ⇒ 双指纹必红；
-    //   ③ 新增一个不被测试覆盖的 src 文件 ⇒ 冻结清单之外必有未插桩文件，必红。
-    const coverageDir = join(ROOT, 'coverage');
-    const finalJson = join(coverageDir, 'coverage-final.json');
-    const snapshotPath = join(coverageDir, 'snapshot.json');
-    if (!existsSync(finalJson) || !existsSync(snapshotPath)) {
-      throw new Error(
-        'check-coverage-snapshot：缺少现场覆盖率产物 —— 先跑 test:coverage 再跑 node scripts/coverage-snapshot.mjs',
-      );
+  'check-coverage-baseline': () => {
+    // 判据（ADR 0034）：
+    //   ① 删掉一条现有测试 ⇒ 对应源文件 statements.covered 下降 ⇒ 逐文件棘轮必红；
+    //   ② 把一个源文件挤出插桩范围 ⇒ 未插桩集合新增成员 ⇒ 必红。
+    // 每次注入都跑真实的 test:coverage —— 本门禁只读现场产物，档内不生成被比对的对象。
+    const baselineCheck = ['node', 'scripts/check-coverage-baseline.mjs'];
+    if (!existsSync(join(ROOT, 'coverage/coverage-final.json'))) {
+      throw new Error('check-coverage-baseline：缺少现场覆盖率产物 —— 先跑 pnpm run test:coverage');
     }
-    // 基线必须先是绿的，否则「注入后红」可能只是复用了已有红灯（假通过）
-    const baseline = spawnSync('node', ['scripts/check-coverage-snapshot.mjs'], {
-      cwd: ROOT,
-      stdio: 'pipe',
-      env: ENV,
-      encoding: 'utf-8',
-    });
-    if (baseline.status !== 0) {
-      throw new Error('check-coverage-snapshot：注入前基线不是绿的，无法证明红灯由注入导致');
-    }
+    runOrThrow(baselineCheck, 'check-coverage-baseline:注入前基线');
 
-    // ① 移走 coverage/（rename 保留全部产物，恢复是瞬时的）
-    const backup = `${coverageDir}.negctl-bak`;
-    rmSync(backup, { recursive: true, force: true });
-    renameSync(coverageDir, backup);
-    try {
-      expectFail(
-        ['node', 'scripts/check-coverage-snapshot.mjs'],
-        'check-coverage-snapshot:①移走coverage',
-      );
-    } finally {
-      renameSync(backup, coverageDir);
-    }
-
-    // ② 旧指纹冒充当前提交：commit 指向父提交、sha256 归零，各自必红
+    // ① 删掉 createObjectTypeGuard 用例 ⇒ type-utils.ts 的该守卫与箭头函数不再被覆盖
+    const testFile = join(ROOT, 'packages/shared-types/tests/type-utils.test.ts');
     withPatchedFile(
-      snapshotPath,
+      testFile,
       (text) => {
-        const snap = JSON.parse(text);
-        snap.commit = '0000000000000000000000000000000000000000';
-        return `${JSON.stringify(snap, null, 2)}\n`;
+        const needle = [
+          "  it('createObjectTypeGuard：非对象直接 false，字段逐个校验', () => {",
+          '    const isPoint = createObjectTypeGuard<{ x: unknown; y: unknown }>({',
+          '      x: isNumber,',
+          '      y: isNumber,',
+          '    });',
+          '    expect(isPoint({ x: 1, y: 2 })).toBe(true);',
+          "    expect(isPoint({ x: 1, y: '2' })).toBe(false);",
+          '    expect(isPoint(null)).toBe(false);',
+          "    expect(isPoint('x')).toBe(false);",
+          '  });',
+          '',
+        ].join('\n');
+        if (!text.includes(needle)) {
+          throw new Error(
+            'check-coverage-baseline：注入点漂移（找不到 createObjectTypeGuard 用例）',
+          );
+        }
+        return text.replace(needle, '');
       },
-      () =>
-        expectFail(
-          ['node', 'scripts/check-coverage-snapshot.mjs'],
-          'check-coverage-snapshot:②commit指纹',
-        ),
-    );
-    withPatchedFile(
-      snapshotPath,
-      (text) => {
-        const snap = JSON.parse(text);
-        snap.coverageSha256 = '0'.repeat(64);
-        return `${JSON.stringify(snap, null, 2)}\n`;
+      () => {
+        runOrThrow(['pnpm', 'run', 'test:coverage'], 'check-coverage-baseline:①删测试后重跑覆盖率');
+        expectFail(baselineCheck, 'check-coverage-baseline:①删测试');
       },
-      () =>
-        expectFail(
-          ['node', 'scripts/check-coverage-snapshot.mjs'],
-          'check-coverage-snapshot:②产物指纹',
-        ),
     );
 
-    // ③ 新增一个不被任何测试覆盖的 src 文件 ⇒ 清单之外的未插桩文件必红
-    const uncovered = join(ROOT, 'packages/vdom/src/__negctl-uncovered.ts');
-    withTempFile(uncovered, 'export const negctlUncovered = 1;\n', () =>
-      expectFail(
-        ['node', 'scripts/check-coverage-snapshot.mjs'],
-        'check-coverage-snapshot:③新增未覆盖src',
-      ),
+    // ② 把 type-utils.ts 临时挤进 coverage.exclude ⇒ 未插桩集合新增成员
+    const configFile = join(ROOT, 'vitest.config.ts');
+    withPatchedFile(
+      configFile,
+      (text) => {
+        const needle = "        'packages/shared-types/src/web.ts',\n";
+        if (!text.includes(needle)) {
+          throw new Error('check-coverage-baseline：注入点漂移（找不到 exclude 锚点）');
+        }
+        return text.replace(
+          needle,
+          `${needle}        'packages/shared-types/src/type-utils.ts',\n`,
+        );
+      },
+      () => {
+        runOrThrow(
+          ['pnpm', 'run', 'test:coverage'],
+          'check-coverage-baseline:②挤出插桩后重跑覆盖率',
+        );
+        expectFail(baselineCheck, 'check-coverage-baseline:②挤出插桩');
+      },
     );
+
+    // 还原现场后再跑一次，证明门禁回绿（不是只靠 catch 兜住）
+    runOrThrow(['pnpm', 'run', 'test:coverage'], 'check-coverage-baseline:还原后重跑覆盖率');
+    runOrThrow(baselineCheck, 'check-coverage-baseline:还原后');
   },
 
   'check-component-status': () => {
@@ -1767,8 +1761,8 @@ const SLOW_CONTROLS = new Set([
   'check-signal-profile-snapshot',
   // 发布物验收要打 76 个 tarball 并隔离安装（实测 ~20s），放慢档
   'check-release-artifacts',
-  // 三向反证需要真实的现场覆盖率产物 ⇒ 必须排在 test:coverage 之后（gate slow 顺序已同步）
-  'check-coverage-snapshot',
+  // 注入需要真实的现场覆盖率产物 ⇒ 必须排在 test:coverage 之后（gate slow 顺序已同步）
+  'check-coverage-baseline',
 ]);
 const HEAVY_CONTROLS = new Set(['build', 'build:fallback', 'type-check', 'test', 'test:coverage']);
 

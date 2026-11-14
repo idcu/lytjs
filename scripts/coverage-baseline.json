@@ -1,0 +1,8620 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-11-14T19:41:19.689Z",
+  "head": "ce2f996755e6a6eb8619197e562101e0ef239f54",
+  "rule": "逐文件 covered 取三次 test:coverage 运行的最小值（下界，不设容差）；branches 只记录、不参与判据；提升需显式 --update 才会入账",
+  "runs": [
+    {
+      "run": 1,
+      "statements": {
+        "covered": 54932,
+        "total": 61988
+      },
+      "functions": {
+        "covered": 3886,
+        "total": 4336
+      },
+      "lines": {
+        "covered": 54932,
+        "total": 61988
+      },
+      "branches": {
+        "covered": 16600,
+        "total": 18851
+      }
+    },
+    {
+      "run": 2,
+      "statements": {
+        "covered": 54932,
+        "total": 61988
+      },
+      "functions": {
+        "covered": 3886,
+        "total": 4336
+      },
+      "lines": {
+        "covered": 54932,
+        "total": 61988
+      },
+      "branches": {
+        "covered": 16598,
+        "total": 18849
+      }
+    },
+    {
+      "run": 3,
+      "statements": {
+        "covered": 54932,
+        "total": 61988
+      },
+      "functions": {
+        "covered": 3886,
+        "total": 4336
+      },
+      "lines": {
+        "covered": 54932,
+        "total": 61988
+      },
+      "branches": {
+        "covered": 16603,
+        "total": 18854
+      }
+    }
+  ],
+  "global": {
+    "statements": {
+      "covered": 54932,
+      "total": 61988
+    },
+    "functions": {
+      "covered": 3886,
+      "total": 4336
+    },
+    "lines": {
+      "covered": 54932,
+      "total": 61988
+    },
+    "branches": {
+      "covered": 16598,
+      "total": 18854,
+      "informational": true
+    }
+  },
+  "files": {
+    "packages/adapter-web/src/index.ts": {
+      "statements": {
+        "covered": 5,
+        "total": 5
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 5,
+        "total": 5
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/adapter-web/src/web-dom-renderer.ts": {
+      "statements": {
+        "covered": 253,
+        "total": 273
+      },
+      "functions": {
+        "covered": 31,
+        "total": 33
+      },
+      "lines": {
+        "covered": 253,
+        "total": 273
+      },
+      "branches": {
+        "covered": 91,
+        "total": 96,
+        "informational": true
+      }
+    },
+    "packages/adapter-web/src/web-event-wrap.ts": {
+      "statements": {
+        "covered": 18,
+        "total": 20
+      },
+      "functions": {
+        "covered": 5,
+        "total": 6
+      },
+      "lines": {
+        "covered": 18,
+        "total": 20
+      },
+      "branches": {
+        "covered": 5,
+        "total": 5,
+        "informational": true
+      }
+    },
+    "packages/adapter-web/src/web-host-extended.ts": {
+      "statements": {
+        "covered": 242,
+        "total": 276
+      },
+      "functions": {
+        "covered": 27,
+        "total": 30
+      },
+      "lines": {
+        "covered": 242,
+        "total": 276
+      },
+      "branches": {
+        "covered": 54,
+        "total": 80,
+        "informational": true
+      }
+    },
+    "packages/adapter-web/src/web-host.ts": {
+      "statements": {
+        "covered": 224,
+        "total": 263
+      },
+      "functions": {
+        "covered": 35,
+        "total": 40
+      },
+      "lines": {
+        "covered": 224,
+        "total": 263
+      },
+      "branches": {
+        "covered": 55,
+        "total": 60,
+        "informational": true
+      }
+    },
+    "packages/adapter-web/src/web-hydration.ts": {
+      "statements": {
+        "covered": 296,
+        "total": 318
+      },
+      "functions": {
+        "covered": 13,
+        "total": 15
+      },
+      "lines": {
+        "covered": 296,
+        "total": 318
+      },
+      "branches": {
+        "covered": 76,
+        "total": 101,
+        "informational": true
+      }
+    },
+    "packages/adapter-web/src/web-patch-events.ts": {
+      "statements": {
+        "covered": 166,
+        "total": 177
+      },
+      "functions": {
+        "covered": 9,
+        "total": 11
+      },
+      "lines": {
+        "covered": 166,
+        "total": 177
+      },
+      "branches": {
+        "covered": 66,
+        "total": 76,
+        "informational": true
+      }
+    },
+    "packages/adapter-web/src/web-patch-props.ts": {
+      "statements": {
+        "covered": 26,
+        "total": 41
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 26,
+        "total": 41
+      },
+      "branches": {
+        "covered": 12,
+        "total": 15,
+        "informational": true
+      }
+    },
+    "packages/common/packages/a11y/src/index.ts": {
+      "statements": {
+        "covered": 436,
+        "total": 439
+      },
+      "functions": {
+        "covered": 32,
+        "total": 32
+      },
+      "lines": {
+        "covered": 436,
+        "total": 439
+      },
+      "branches": {
+        "covered": 159,
+        "total": 167,
+        "informational": true
+      }
+    },
+    "packages/common/packages/algorithm/src/index.ts": {
+      "statements": {
+        "covered": 110,
+        "total": 110
+      },
+      "functions": {
+        "covered": 2,
+        "total": 2
+      },
+      "lines": {
+        "covered": 110,
+        "total": 110
+      },
+      "branches": {
+        "covered": 46,
+        "total": 47,
+        "informational": true
+      }
+    },
+    "packages/common/packages/assertions/src/index.ts": {
+      "statements": {
+        "covered": 121,
+        "total": 121
+      },
+      "functions": {
+        "covered": 21,
+        "total": 21
+      },
+      "lines": {
+        "covered": 121,
+        "total": 121
+      },
+      "branches": {
+        "covered": 53,
+        "total": 55,
+        "informational": true
+      }
+    },
+    "packages/common/packages/async-scheduler/src/index.ts": {
+      "statements": {
+        "covered": 117,
+        "total": 135
+      },
+      "functions": {
+        "covered": 10,
+        "total": 13
+      },
+      "lines": {
+        "covered": 117,
+        "total": 135
+      },
+      "branches": {
+        "covered": 26,
+        "total": 31,
+        "informational": true
+      }
+    },
+    "packages/common/packages/cache/src/index.ts": {
+      "statements": {
+        "covered": 188,
+        "total": 188
+      },
+      "functions": {
+        "covered": 23,
+        "total": 23
+      },
+      "lines": {
+        "covered": 188,
+        "total": 188
+      },
+      "branches": {
+        "covered": 68,
+        "total": 69,
+        "informational": true
+      }
+    },
+    "packages/common/packages/common/src/index.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/common/packages/constants/src/index.ts": {
+      "statements": {
+        "covered": 41,
+        "total": 41
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 41,
+        "total": 41
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/common/packages/dom-helpers/src/index.ts": {
+      "statements": {
+        "covered": 169,
+        "total": 188
+      },
+      "functions": {
+        "covered": 11,
+        "total": 12
+      },
+      "lines": {
+        "covered": 169,
+        "total": 188
+      },
+      "branches": {
+        "covered": 42,
+        "total": 46,
+        "informational": true
+      }
+    },
+    "packages/common/packages/dom/src/index.ts": {
+      "statements": {
+        "covered": 175,
+        "total": 200
+      },
+      "functions": {
+        "covered": 6,
+        "total": 7
+      },
+      "lines": {
+        "covered": 175,
+        "total": 200
+      },
+      "branches": {
+        "covered": 82,
+        "total": 84,
+        "informational": true
+      }
+    },
+    "packages/common/packages/env/src/index.ts": {
+      "statements": {
+        "covered": 22,
+        "total": 26
+      },
+      "functions": {
+        "covered": 4,
+        "total": 5
+      },
+      "lines": {
+        "covered": 22,
+        "total": 26
+      },
+      "branches": {
+        "covered": 4,
+        "total": 7,
+        "informational": true
+      }
+    },
+    "packages/common/packages/error/src/index.ts": {
+      "statements": {
+        "covered": 512,
+        "total": 520
+      },
+      "functions": {
+        "covered": 22,
+        "total": 22
+      },
+      "lines": {
+        "covered": 512,
+        "total": 520
+      },
+      "branches": {
+        "covered": 115,
+        "total": 119,
+        "informational": true
+      }
+    },
+    "packages/common/packages/event-normalizer/src/index.ts": {
+      "statements": {
+        "covered": 129,
+        "total": 137
+      },
+      "functions": {
+        "covered": 12,
+        "total": 16
+      },
+      "lines": {
+        "covered": 129,
+        "total": 137
+      },
+      "branches": {
+        "covered": 30,
+        "total": 34,
+        "informational": true
+      }
+    },
+    "packages/common/packages/events/src/index.ts": {
+      "statements": {
+        "covered": 266,
+        "total": 298
+      },
+      "functions": {
+        "covered": 26,
+        "total": 29
+      },
+      "lines": {
+        "covered": 266,
+        "total": 298
+      },
+      "branches": {
+        "covered": 89,
+        "total": 97,
+        "informational": true
+      }
+    },
+    "packages/common/packages/http/src/index.ts": {
+      "statements": {
+        "covered": 318,
+        "total": 330
+      },
+      "functions": {
+        "covered": 35,
+        "total": 36
+      },
+      "lines": {
+        "covered": 318,
+        "total": 330
+      },
+      "branches": {
+        "covered": 86,
+        "total": 94,
+        "informational": true
+      }
+    },
+    "packages/common/packages/is/src/index.ts": {
+      "statements": {
+        "covered": 46,
+        "total": 46
+      },
+      "functions": {
+        "covered": 22,
+        "total": 22
+      },
+      "lines": {
+        "covered": 46,
+        "total": 46
+      },
+      "branches": {
+        "covered": 35,
+        "total": 35,
+        "informational": true
+      }
+    },
+    "packages/common/packages/keyboard/src/index.ts": {
+      "statements": {
+        "covered": 81,
+        "total": 83
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 81,
+        "total": 83
+      },
+      "branches": {
+        "covered": 26,
+        "total": 27,
+        "informational": true
+      }
+    },
+    "packages/common/packages/memory/src/index.ts": {
+      "statements": {
+        "covered": 249,
+        "total": 316
+      },
+      "functions": {
+        "covered": 27,
+        "total": 29
+      },
+      "lines": {
+        "covered": 249,
+        "total": 316
+      },
+      "branches": {
+        "covered": 79,
+        "total": 89,
+        "informational": true
+      }
+    },
+    "packages/common/packages/node-cache/src/index.ts": {
+      "statements": {
+        "covered": 91,
+        "total": 103
+      },
+      "functions": {
+        "covered": 11,
+        "total": 11
+      },
+      "lines": {
+        "covered": 91,
+        "total": 103
+      },
+      "branches": {
+        "covered": 27,
+        "total": 32,
+        "informational": true
+      }
+    },
+    "packages/common/packages/object/src/index.ts": {
+      "statements": {
+        "covered": 280,
+        "total": 280
+      },
+      "functions": {
+        "covered": 17,
+        "total": 17
+      },
+      "lines": {
+        "covered": 280,
+        "total": 280
+      },
+      "branches": {
+        "covered": 146,
+        "total": 150,
+        "informational": true
+      }
+    },
+    "packages/common/packages/path/src/index.ts": {
+      "statements": {
+        "covered": 113,
+        "total": 126
+      },
+      "functions": {
+        "covered": 12,
+        "total": 12
+      },
+      "lines": {
+        "covered": 113,
+        "total": 126
+      },
+      "branches": {
+        "covered": 44,
+        "total": 47,
+        "informational": true
+      }
+    },
+    "packages/common/packages/performance/src/index.ts": {
+      "statements": {
+        "covered": 240,
+        "total": 256
+      },
+      "functions": {
+        "covered": 28,
+        "total": 29
+      },
+      "lines": {
+        "covered": 240,
+        "total": 256
+      },
+      "branches": {
+        "covered": 67,
+        "total": 74,
+        "informational": true
+      }
+    },
+    "packages/common/packages/query/src/index.ts": {
+      "statements": {
+        "covered": 194,
+        "total": 206
+      },
+      "functions": {
+        "covered": 6,
+        "total": 6
+      },
+      "lines": {
+        "covered": 194,
+        "total": 206
+      },
+      "branches": {
+        "covered": 73,
+        "total": 79,
+        "informational": true
+      }
+    },
+    "packages/common/packages/raf/src/index.ts": {
+      "statements": {
+        "covered": 62,
+        "total": 64
+      },
+      "functions": {
+        "covered": 10,
+        "total": 10
+      },
+      "lines": {
+        "covered": 62,
+        "total": 64
+      },
+      "branches": {
+        "covered": 19,
+        "total": 21,
+        "informational": true
+      }
+    },
+    "packages/common/packages/rate-limit/src/index.ts": {
+      "statements": {
+        "covered": 195,
+        "total": 210
+      },
+      "functions": {
+        "covered": 25,
+        "total": 29
+      },
+      "lines": {
+        "covered": 195,
+        "total": 210
+      },
+      "branches": {
+        "covered": 54,
+        "total": 58,
+        "informational": true
+      }
+    },
+    "packages/common/packages/render-queue/src/index.ts": {
+      "statements": {
+        "covered": 161,
+        "total": 174
+      },
+      "functions": {
+        "covered": 15,
+        "total": 15
+      },
+      "lines": {
+        "covered": 161,
+        "total": 174
+      },
+      "branches": {
+        "covered": 45,
+        "total": 51,
+        "informational": true
+      }
+    },
+    "packages/common/packages/scheduler/src/index.ts": {
+      "statements": {
+        "covered": 149,
+        "total": 192
+      },
+      "functions": {
+        "covered": 14,
+        "total": 17
+      },
+      "lines": {
+        "covered": 149,
+        "total": 192
+      },
+      "branches": {
+        "covered": 37,
+        "total": 43,
+        "informational": true
+      }
+    },
+    "packages/common/packages/security/src/index.ts": {
+      "statements": {
+        "covered": 275,
+        "total": 275
+      },
+      "functions": {
+        "covered": 6,
+        "total": 6
+      },
+      "lines": {
+        "covered": 275,
+        "total": 275
+      },
+      "branches": {
+        "covered": 41,
+        "total": 46,
+        "informational": true
+      }
+    },
+    "packages/common/packages/storage/src/index.ts": {
+      "statements": {
+        "covered": 123,
+        "total": 125
+      },
+      "functions": {
+        "covered": 14,
+        "total": 14
+      },
+      "lines": {
+        "covered": 123,
+        "total": 125
+      },
+      "branches": {
+        "covered": 42,
+        "total": 46,
+        "informational": true
+      }
+    },
+    "packages/common/packages/string/src/index.ts": {
+      "statements": {
+        "covered": 274,
+        "total": 278
+      },
+      "functions": {
+        "covered": 33,
+        "total": 33
+      },
+      "lines": {
+        "covered": 274,
+        "total": 278
+      },
+      "branches": {
+        "covered": 126,
+        "total": 133,
+        "informational": true
+      }
+    },
+    "packages/common/packages/timing/src/index.ts": {
+      "statements": {
+        "covered": 201,
+        "total": 276
+      },
+      "functions": {
+        "covered": 20,
+        "total": 25
+      },
+      "lines": {
+        "covered": 201,
+        "total": 276
+      },
+      "branches": {
+        "covered": 58,
+        "total": 65,
+        "informational": true
+      }
+    },
+    "packages/common/packages/transition-engine/src/index.ts": {
+      "statements": {
+        "covered": 259,
+        "total": 274
+      },
+      "functions": {
+        "covered": 21,
+        "total": 21
+      },
+      "lines": {
+        "covered": 259,
+        "total": 274
+      },
+      "branches": {
+        "covered": 65,
+        "total": 80,
+        "informational": true
+      }
+    },
+    "packages/common/packages/validate/src/index.ts": {
+      "statements": {
+        "covered": 135,
+        "total": 137
+      },
+      "functions": {
+        "covered": 19,
+        "total": 19
+      },
+      "lines": {
+        "covered": 135,
+        "total": 137
+      },
+      "branches": {
+        "covered": 54,
+        "total": 56,
+        "informational": true
+      }
+    },
+    "packages/common/packages/vnode/src/index.ts": {
+      "statements": {
+        "covered": 101,
+        "total": 101
+      },
+      "functions": {
+        "covered": 8,
+        "total": 8
+      },
+      "lines": {
+        "covered": 101,
+        "total": 101
+      },
+      "branches": {
+        "covered": 44,
+        "total": 44,
+        "informational": true
+      }
+    },
+    "packages/common/packages/warn/src/index.ts": {
+      "statements": {
+        "covered": 117,
+        "total": 123
+      },
+      "functions": {
+        "covered": 21,
+        "total": 21
+      },
+      "lines": {
+        "covered": 117,
+        "total": 123
+      },
+      "branches": {
+        "covered": 49,
+        "total": 53,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/ast.ts": {
+      "statements": {
+        "covered": 245,
+        "total": 249
+      },
+      "functions": {
+        "covered": 17,
+        "total": 17
+      },
+      "lines": {
+        "covered": 245,
+        "total": 249
+      },
+      "branches": {
+        "covered": 19,
+        "total": 22,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/builtin-components.ts": {
+      "statements": {
+        "covered": 8,
+        "total": 8
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 8,
+        "total": 8
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/client-server-boundary/index.ts": {
+      "statements": {
+        "covered": 384,
+        "total": 396
+      },
+      "functions": {
+        "covered": 17,
+        "total": 17
+      },
+      "lines": {
+        "covered": 384,
+        "total": 396
+      },
+      "branches": {
+        "covered": 90,
+        "total": 108,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/codegen-signal-optimized.ts": {
+      "statements": {
+        "covered": 1102,
+        "total": 1279
+      },
+      "functions": {
+        "covered": 104,
+        "total": 116
+      },
+      "lines": {
+        "covered": 1102,
+        "total": 1279
+      },
+      "branches": {
+        "covered": 332,
+        "total": 397,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/codegen-signal-shared.ts": {
+      "statements": {
+        "covered": 1296,
+        "total": 1590
+      },
+      "functions": {
+        "covered": 60,
+        "total": 62
+      },
+      "lines": {
+        "covered": 1296,
+        "total": 1590
+      },
+      "branches": {
+        "covered": 667,
+        "total": 749,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/codegen-signal.ts": {
+      "statements": {
+        "covered": 979,
+        "total": 1084
+      },
+      "functions": {
+        "covered": 96,
+        "total": 111
+      },
+      "lines": {
+        "covered": 979,
+        "total": 1084
+      },
+      "branches": {
+        "covered": 355,
+        "total": 408,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/codegen-ssr.ts": {
+      "statements": {
+        "covered": 604,
+        "total": 660
+      },
+      "functions": {
+        "covered": 16,
+        "total": 16
+      },
+      "lines": {
+        "covered": 604,
+        "total": 660
+      },
+      "branches": {
+        "covered": 219,
+        "total": 269,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/codegen.ts": {
+      "statements": {
+        "covered": 467,
+        "total": 506
+      },
+      "functions": {
+        "covered": 27,
+        "total": 29
+      },
+      "lines": {
+        "covered": 467,
+        "total": 506
+      },
+      "branches": {
+        "covered": 164,
+        "total": 195,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/constants.ts": {
+      "statements": {
+        "covered": 108,
+        "total": 108
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 108,
+        "total": 108
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/index.ts": {
+      "statements": {
+        "covered": 143,
+        "total": 159
+      },
+      "functions": {
+        "covered": 7,
+        "total": 10
+      },
+      "lines": {
+        "covered": 143,
+        "total": 159
+      },
+      "branches": {
+        "covered": 56,
+        "total": 60,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/optimizations/incremental-compile.ts": {
+      "statements": {
+        "covered": 262,
+        "total": 285
+      },
+      "functions": {
+        "covered": 14,
+        "total": 14
+      },
+      "lines": {
+        "covered": 262,
+        "total": 285
+      },
+      "branches": {
+        "covered": 57,
+        "total": 64,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/optimizations/index.ts": {
+      "statements": {
+        "covered": 249,
+        "total": 258
+      },
+      "functions": {
+        "covered": 15,
+        "total": 15
+      },
+      "lines": {
+        "covered": 249,
+        "total": 258
+      },
+      "branches": {
+        "covered": 74,
+        "total": 98,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/optimizations/staticAnalysis.ts": {
+      "statements": {
+        "covered": 282,
+        "total": 282
+      },
+      "functions": {
+        "covered": 20,
+        "total": 20
+      },
+      "lines": {
+        "covered": 282,
+        "total": 282
+      },
+      "branches": {
+        "covered": 78,
+        "total": 81,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/optimize.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/parser-attribute.ts": {
+      "statements": {
+        "covered": 188,
+        "total": 198
+      },
+      "functions": {
+        "covered": 7,
+        "total": 7
+      },
+      "lines": {
+        "covered": 188,
+        "total": 198
+      },
+      "branches": {
+        "covered": 74,
+        "total": 77,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/parser-base.ts": {
+      "statements": {
+        "covered": 15,
+        "total": 15
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 15,
+        "total": 15
+      },
+      "branches": {
+        "covered": 2,
+        "total": 2,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/parser-children.ts": {
+      "statements": {
+        "covered": 133,
+        "total": 161
+      },
+      "functions": {
+        "covered": 7,
+        "total": 8
+      },
+      "lines": {
+        "covered": 133,
+        "total": 161
+      },
+      "branches": {
+        "covered": 55,
+        "total": 74,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/parser-comment.ts": {
+      "statements": {
+        "covered": 13,
+        "total": 15
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 13,
+        "total": 15
+      },
+      "branches": {
+        "covered": 1,
+        "total": 2,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/parser-element.ts": {
+      "statements": {
+        "covered": 106,
+        "total": 121
+      },
+      "functions": {
+        "covered": 2,
+        "total": 2
+      },
+      "lines": {
+        "covered": 106,
+        "total": 121
+      },
+      "branches": {
+        "covered": 54,
+        "total": 57,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/parser-shared.ts": {
+      "statements": {
+        "covered": 122,
+        "total": 132
+      },
+      "functions": {
+        "covered": 10,
+        "total": 10
+      },
+      "lines": {
+        "covered": 122,
+        "total": 132
+      },
+      "branches": {
+        "covered": 16,
+        "total": 19,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/parser-text.ts": {
+      "statements": {
+        "covered": 64,
+        "total": 70
+      },
+      "functions": {
+        "covered": 2,
+        "total": 2
+      },
+      "lines": {
+        "covered": 64,
+        "total": 70
+      },
+      "branches": {
+        "covered": 22,
+        "total": 25,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/parser.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/prefix-identifiers.ts": {
+      "statements": {
+        "covered": 230,
+        "total": 274
+      },
+      "functions": {
+        "covered": 4,
+        "total": 5
+      },
+      "lines": {
+        "covered": 230,
+        "total": 274
+      },
+      "branches": {
+        "covered": 89,
+        "total": 102,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/server-components/index.ts": {
+      "statements": {
+        "covered": 174,
+        "total": 174
+      },
+      "functions": {
+        "covered": 11,
+        "total": 11
+      },
+      "lines": {
+        "covered": 174,
+        "total": 174
+      },
+      "branches": {
+        "covered": 34,
+        "total": 35,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/sfc-entry.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/sfc/compile.ts": {
+      "statements": {
+        "covered": 340,
+        "total": 360
+      },
+      "functions": {
+        "covered": 9,
+        "total": 9
+      },
+      "lines": {
+        "covered": 340,
+        "total": 360
+      },
+      "branches": {
+        "covered": 140,
+        "total": 157,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/sfc/custom-blocks.ts": {
+      "statements": {
+        "covered": 14,
+        "total": 22
+      },
+      "functions": {
+        "covered": 3,
+        "total": 4
+      },
+      "lines": {
+        "covered": 14,
+        "total": 22
+      },
+      "branches": {
+        "covered": 3,
+        "total": 4,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/sfc/index.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/sfc/parse.ts": {
+      "statements": {
+        "covered": 148,
+        "total": 190
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4
+      },
+      "lines": {
+        "covered": 148,
+        "total": 190
+      },
+      "branches": {
+        "covered": 28,
+        "total": 36,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/sfc/script-setup.ts": {
+      "statements": {
+        "covered": 201,
+        "total": 231
+      },
+      "functions": {
+        "covered": 8,
+        "total": 8
+      },
+      "lines": {
+        "covered": 201,
+        "total": 231
+      },
+      "branches": {
+        "covered": 69,
+        "total": 94,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/sfc/typescript.ts": {
+      "statements": {
+        "covered": 211,
+        "total": 220
+      },
+      "functions": {
+        "covered": 9,
+        "total": 9
+      },
+      "lines": {
+        "covered": 211,
+        "total": 220
+      },
+      "branches": {
+        "covered": 55,
+        "total": 65,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/signal-optimized-registry.ts": {
+      "statements": {
+        "covered": 14,
+        "total": 14
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 14,
+        "total": 14
+      },
+      "branches": {
+        "covered": 5,
+        "total": 5,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/signal-optimized.ts": {
+      "statements": {
+        "covered": 4,
+        "total": 4
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 4,
+        "total": 4
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/signal.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/source-map.ts": {
+      "statements": {
+        "covered": 164,
+        "total": 189
+      },
+      "functions": {
+        "covered": 9,
+        "total": 10
+      },
+      "lines": {
+        "covered": 164,
+        "total": 189
+      },
+      "branches": {
+        "covered": 37,
+        "total": 43,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/ssr.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/transform.ts": {
+      "statements": {
+        "covered": 310,
+        "total": 357
+      },
+      "functions": {
+        "covered": 18,
+        "total": 27
+      },
+      "lines": {
+        "covered": 310,
+        "total": 357
+      },
+      "branches": {
+        "covered": 134,
+        "total": 148,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/transforms/bind.ts": {
+      "statements": {
+        "covered": 14,
+        "total": 14
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 14,
+        "total": 14
+      },
+      "branches": {
+        "covered": 5,
+        "total": 5,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/transforms/for.ts": {
+      "statements": {
+        "covered": 271,
+        "total": 321
+      },
+      "functions": {
+        "covered": 11,
+        "total": 12
+      },
+      "lines": {
+        "covered": 271,
+        "total": 321
+      },
+      "branches": {
+        "covered": 95,
+        "total": 113,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/transforms/helpers.ts": {
+      "statements": {
+        "covered": 71,
+        "total": 82
+      },
+      "functions": {
+        "covered": 10,
+        "total": 11
+      },
+      "lines": {
+        "covered": 71,
+        "total": 82
+      },
+      "branches": {
+        "covered": 26,
+        "total": 39,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/transforms/if.ts": {
+      "statements": {
+        "covered": 142,
+        "total": 156
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 142,
+        "total": 156
+      },
+      "branches": {
+        "covered": 79,
+        "total": 92,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/transforms/index.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/transforms/model.ts": {
+      "statements": {
+        "covered": 25,
+        "total": 25
+      },
+      "functions": {
+        "covered": 2,
+        "total": 2
+      },
+      "lines": {
+        "covered": 25,
+        "total": 25
+      },
+      "branches": {
+        "covered": 8,
+        "total": 8,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/transforms/on.ts": {
+      "statements": {
+        "covered": 31,
+        "total": 31
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 31,
+        "total": 31
+      },
+      "branches": {
+        "covered": 7,
+        "total": 7,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/transforms/once.ts": {
+      "statements": {
+        "covered": 29,
+        "total": 29
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 29,
+        "total": 29
+      },
+      "branches": {
+        "covered": 9,
+        "total": 10,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/transforms/pre.ts": {
+      "statements": {
+        "covered": 65,
+        "total": 88
+      },
+      "functions": {
+        "covered": 5,
+        "total": 7
+      },
+      "lines": {
+        "covered": 65,
+        "total": 88
+      },
+      "branches": {
+        "covered": 17,
+        "total": 27,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/transforms/scoped.ts": {
+      "statements": {
+        "covered": 43,
+        "total": 43
+      },
+      "functions": {
+        "covered": 5,
+        "total": 5
+      },
+      "lines": {
+        "covered": 43,
+        "total": 43
+      },
+      "branches": {
+        "covered": 15,
+        "total": 16,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/transforms/show.ts": {
+      "statements": {
+        "covered": 14,
+        "total": 14
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 14,
+        "total": 14
+      },
+      "branches": {
+        "covered": 3,
+        "total": 3,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/transforms/slot.ts": {
+      "statements": {
+        "covered": 77,
+        "total": 77
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4
+      },
+      "lines": {
+        "covered": 77,
+        "total": 77
+      },
+      "branches": {
+        "covered": 34,
+        "total": 39,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/transforms/transform-element.ts": {
+      "statements": {
+        "covered": 884,
+        "total": 901
+      },
+      "functions": {
+        "covered": 27,
+        "total": 27
+      },
+      "lines": {
+        "covered": 884,
+        "total": 901
+      },
+      "branches": {
+        "covered": 323,
+        "total": 348,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/transforms/v-memo.ts": {
+      "statements": {
+        "covered": 41,
+        "total": 43
+      },
+      "functions": {
+        "covered": 2,
+        "total": 3
+      },
+      "lines": {
+        "covered": 41,
+        "total": 43
+      },
+      "branches": {
+        "covered": 18,
+        "total": 18,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/warning.ts": {
+      "statements": {
+        "covered": 29,
+        "total": 29
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4
+      },
+      "lines": {
+        "covered": 29,
+        "total": 29
+      },
+      "branches": {
+        "covered": 14,
+        "total": 14,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/wasm-entry.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/wasm/index.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/wasm/wasm-compiler.ts": {
+      "statements": {
+        "covered": 136,
+        "total": 186
+      },
+      "functions": {
+        "covered": 6,
+        "total": 9
+      },
+      "lines": {
+        "covered": 136,
+        "total": 186
+      },
+      "branches": {
+        "covered": 27,
+        "total": 33,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/wasm/wasm-generator.ts": {
+      "statements": {
+        "covered": 40,
+        "total": 67
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4
+      },
+      "lines": {
+        "covered": 40,
+        "total": 67
+      },
+      "branches": {
+        "covered": 11,
+        "total": 14,
+        "informational": true
+      }
+    },
+    "packages/compiler/src/wasm/wasm-parser.ts": {
+      "statements": {
+        "covered": 136,
+        "total": 161
+      },
+      "functions": {
+        "covered": 6,
+        "total": 6
+      },
+      "lines": {
+        "covered": 136,
+        "total": 161
+      },
+      "branches": {
+        "covered": 38,
+        "total": 46,
+        "informational": true
+      }
+    },
+    "packages/component/src/app-factory.ts": {
+      "statements": {
+        "covered": 8,
+        "total": 15
+      },
+      "functions": {
+        "covered": 2,
+        "total": 3
+      },
+      "lines": {
+        "covered": 8,
+        "total": 15
+      },
+      "branches": {
+        "covered": 2,
+        "total": 2,
+        "informational": true
+      }
+    },
+    "packages/component/src/async-component.ts": {
+      "statements": {
+        "covered": 202,
+        "total": 219
+      },
+      "functions": {
+        "covered": 16,
+        "total": 18
+      },
+      "lines": {
+        "covered": 202,
+        "total": 219
+      },
+      "branches": {
+        "covered": 65,
+        "total": 76,
+        "informational": true
+      }
+    },
+    "packages/component/src/builtin-components.ts": {
+      "statements": {
+        "covered": 16,
+        "total": 16
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 16,
+        "total": 16
+      },
+      "branches": {
+        "covered": 2,
+        "total": 3,
+        "informational": true
+      }
+    },
+    "packages/component/src/builtin-registry.ts": {
+      "statements": {
+        "covered": 17,
+        "total": 17
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 17,
+        "total": 17
+      },
+      "branches": {
+        "covered": 3,
+        "total": 3,
+        "informational": true
+      }
+    },
+    "packages/component/src/component-init.ts": {
+      "statements": {
+        "covered": 257,
+        "total": 336
+      },
+      "functions": {
+        "covered": 12,
+        "total": 19
+      },
+      "lines": {
+        "covered": 257,
+        "total": 336
+      },
+      "branches": {
+        "covered": 95,
+        "total": 115,
+        "informational": true
+      }
+    },
+    "packages/component/src/component-inject.ts": {
+      "statements": {
+        "covered": 70,
+        "total": 70
+      },
+      "functions": {
+        "covered": 5,
+        "total": 5
+      },
+      "lines": {
+        "covered": 70,
+        "total": 70
+      },
+      "branches": {
+        "covered": 35,
+        "total": 36,
+        "informational": true
+      }
+    },
+    "packages/component/src/component-options.ts": {
+      "statements": {
+        "covered": 95,
+        "total": 123
+      },
+      "functions": {
+        "covered": 8,
+        "total": 8
+      },
+      "lines": {
+        "covered": 95,
+        "total": 123
+      },
+      "branches": {
+        "covered": 29,
+        "total": 36,
+        "informational": true
+      }
+    },
+    "packages/component/src/component-proxy.ts": {
+      "statements": {
+        "covered": 185,
+        "total": 208
+      },
+      "functions": {
+        "covered": 12,
+        "total": 13
+      },
+      "lines": {
+        "covered": 185,
+        "total": 208
+      },
+      "branches": {
+        "covered": 100,
+        "total": 106,
+        "informational": true
+      }
+    },
+    "packages/component/src/component-setup.ts": {
+      "statements": {
+        "covered": 256,
+        "total": 281
+      },
+      "functions": {
+        "covered": 15,
+        "total": 18
+      },
+      "lines": {
+        "covered": 256,
+        "total": 281
+      },
+      "branches": {
+        "covered": 76,
+        "total": 87,
+        "informational": true
+      }
+    },
+    "packages/component/src/component.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/component/src/di/index.ts": {
+      "statements": {
+        "covered": 104,
+        "total": 111
+      },
+      "functions": {
+        "covered": 7,
+        "total": 7
+      },
+      "lines": {
+        "covered": 104,
+        "total": 111
+      },
+      "branches": {
+        "covered": 37,
+        "total": 41,
+        "informational": true
+      }
+    },
+    "packages/component/src/emit.ts": {
+      "statements": {
+        "covered": 44,
+        "total": 48
+      },
+      "functions": {
+        "covered": 5,
+        "total": 5
+      },
+      "lines": {
+        "covered": 44,
+        "total": 48
+      },
+      "branches": {
+        "covered": 24,
+        "total": 27,
+        "informational": true
+      }
+    },
+    "packages/component/src/error-boundary.ts": {
+      "statements": {
+        "covered": 251,
+        "total": 282
+      },
+      "functions": {
+        "covered": 22,
+        "total": 28
+      },
+      "lines": {
+        "covered": 251,
+        "total": 282
+      },
+      "branches": {
+        "covered": 64,
+        "total": 68,
+        "informational": true
+      }
+    },
+    "packages/component/src/force-update.ts": {
+      "statements": {
+        "covered": 7,
+        "total": 26
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 7,
+        "total": 26
+      },
+      "branches": {
+        "covered": 5,
+        "total": 8,
+        "informational": true
+      }
+    },
+    "packages/component/src/index.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/component/src/keep-alive.ts": {
+      "statements": {
+        "covered": 339,
+        "total": 351
+      },
+      "functions": {
+        "covered": 25,
+        "total": 26
+      },
+      "lines": {
+        "covered": 339,
+        "total": 351
+      },
+      "branches": {
+        "covered": 142,
+        "total": 146,
+        "informational": true
+      }
+    },
+    "packages/component/src/lifecycle.ts": {
+      "statements": {
+        "covered": 250,
+        "total": 271
+      },
+      "functions": {
+        "covered": 23,
+        "total": 23
+      },
+      "lines": {
+        "covered": 250,
+        "total": 271
+      },
+      "branches": {
+        "covered": 59,
+        "total": 68,
+        "informational": true
+      }
+    },
+    "packages/component/src/props.ts": {
+      "statements": {
+        "covered": 115,
+        "total": 127
+      },
+      "functions": {
+        "covered": 5,
+        "total": 5
+      },
+      "lines": {
+        "covered": 115,
+        "total": 127
+      },
+      "branches": {
+        "covered": 115,
+        "total": 125,
+        "informational": true
+      }
+    },
+    "packages/component/src/signal-state.ts": {
+      "statements": {
+        "covered": 3,
+        "total": 7
+      },
+      "functions": {
+        "covered": 0,
+        "total": 2
+      },
+      "lines": {
+        "covered": 3,
+        "total": 7
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/component/src/slots.ts": {
+      "statements": {
+        "covered": 57,
+        "total": 57
+      },
+      "functions": {
+        "covered": 6,
+        "total": 6
+      },
+      "lines": {
+        "covered": 57,
+        "total": 57
+      },
+      "branches": {
+        "covered": 40,
+        "total": 42,
+        "informational": true
+      }
+    },
+    "packages/component/src/suspense.ts": {
+      "statements": {
+        "covered": 235,
+        "total": 285
+      },
+      "functions": {
+        "covered": 13,
+        "total": 19
+      },
+      "lines": {
+        "covered": 235,
+        "total": 285
+      },
+      "branches": {
+        "covered": 53,
+        "total": 62,
+        "informational": true
+      }
+    },
+    "packages/component/src/teleport.ts": {
+      "statements": {
+        "covered": 11,
+        "total": 11
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 11,
+        "total": 11
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/component/src/transition-group.ts": {
+      "statements": {
+        "covered": 84,
+        "total": 86
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4
+      },
+      "lines": {
+        "covered": 84,
+        "total": 86
+      },
+      "branches": {
+        "covered": 22,
+        "total": 26,
+        "informational": true
+      }
+    },
+    "packages/component/src/transition.ts": {
+      "statements": {
+        "covered": 113,
+        "total": 119
+      },
+      "functions": {
+        "covered": 6,
+        "total": 6
+      },
+      "lines": {
+        "covered": 113,
+        "total": 119
+      },
+      "branches": {
+        "covered": 43,
+        "total": 45,
+        "informational": true
+      }
+    },
+    "packages/component/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/core-signal/src/create-app.ts": {
+      "statements": {
+        "covered": 164,
+        "total": 243
+      },
+      "functions": {
+        "covered": 10,
+        "total": 17
+      },
+      "lines": {
+        "covered": 164,
+        "total": 243
+      },
+      "branches": {
+        "covered": 36,
+        "total": 47,
+        "informational": true
+      }
+    },
+    "packages/core-signal/src/define-component.ts": {
+      "statements": {
+        "covered": 2,
+        "total": 2
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 2,
+        "total": 2
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/core-signal/src/index.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/core-signal/src/lifecycle.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/core-signal/src/next-tick.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/core-signal/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/core-vnode/src/app-context.ts": {
+      "statements": {
+        "covered": 31,
+        "total": 40
+      },
+      "functions": {
+        "covered": 5,
+        "total": 7
+      },
+      "lines": {
+        "covered": 31,
+        "total": 40
+      },
+      "branches": {
+        "covered": 7,
+        "total": 7,
+        "informational": true
+      }
+    },
+    "packages/core-vnode/src/component-renderer.ts": {
+      "statements": {
+        "covered": 31,
+        "total": 33
+      },
+      "functions": {
+        "covered": 7,
+        "total": 8
+      },
+      "lines": {
+        "covered": 31,
+        "total": 33
+      },
+      "branches": {
+        "covered": 9,
+        "total": 9,
+        "informational": true
+      }
+    },
+    "packages/core-vnode/src/composition.ts": {
+      "statements": {
+        "covered": 47,
+        "total": 47
+      },
+      "functions": {
+        "covered": 7,
+        "total": 7
+      },
+      "lines": {
+        "covered": 47,
+        "total": 47
+      },
+      "branches": {
+        "covered": 18,
+        "total": 18,
+        "informational": true
+      }
+    },
+    "packages/core-vnode/src/create-app.ts": {
+      "statements": {
+        "covered": 104,
+        "total": 144
+      },
+      "functions": {
+        "covered": 9,
+        "total": 9
+      },
+      "lines": {
+        "covered": 104,
+        "total": 144
+      },
+      "branches": {
+        "covered": 24,
+        "total": 31,
+        "informational": true
+      }
+    },
+    "packages/core-vnode/src/define-component.ts": {
+      "statements": {
+        "covered": 2,
+        "total": 2
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 2,
+        "total": 2
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/core-vnode/src/directives.ts": {
+      "statements": {
+        "covered": 76,
+        "total": 76
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4
+      },
+      "lines": {
+        "covered": 76,
+        "total": 76
+      },
+      "branches": {
+        "covered": 26,
+        "total": 28,
+        "informational": true
+      }
+    },
+    "packages/core-vnode/src/h.ts": {
+      "statements": {
+        "covered": 36,
+        "total": 37
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 36,
+        "total": 37
+      },
+      "branches": {
+        "covered": 13,
+        "total": 14,
+        "informational": true
+      }
+    },
+    "packages/core-vnode/src/index.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/core-vnode/src/lifecycle.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/core-vnode/src/next-tick.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/core-vnode/src/resolve.ts": {
+      "statements": {
+        "covered": 114,
+        "total": 162
+      },
+      "functions": {
+        "covered": 0,
+        "total": 2
+      },
+      "lines": {
+        "covered": 114,
+        "total": 162
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/core-vnode/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/core-vnode/src/web-component.ts": {
+      "statements": {
+        "covered": 196,
+        "total": 212
+      },
+      "functions": {
+        "covered": 16,
+        "total": 16
+      },
+      "lines": {
+        "covered": 196,
+        "total": 212
+      },
+      "branches": {
+        "covered": 67,
+        "total": 76,
+        "informational": true
+      }
+    },
+    "packages/core/src/app-context.ts": {
+      "statements": {
+        "covered": 40,
+        "total": 40
+      },
+      "functions": {
+        "covered": 7,
+        "total": 7
+      },
+      "lines": {
+        "covered": 40,
+        "total": 40
+      },
+      "branches": {
+        "covered": 11,
+        "total": 11,
+        "informational": true
+      }
+    },
+    "packages/core/src/common-integration.ts": {
+      "statements": {
+        "covered": 78,
+        "total": 78
+      },
+      "functions": {
+        "covered": 18,
+        "total": 18
+      },
+      "lines": {
+        "covered": 78,
+        "total": 78
+      },
+      "branches": {
+        "covered": 28,
+        "total": 28,
+        "informational": true
+      }
+    },
+    "packages/core/src/composition.ts": {
+      "statements": {
+        "covered": 132,
+        "total": 147
+      },
+      "functions": {
+        "covered": 15,
+        "total": 16
+      },
+      "lines": {
+        "covered": 132,
+        "total": 147
+      },
+      "branches": {
+        "covered": 42,
+        "total": 43,
+        "informational": true
+      }
+    },
+    "packages/core/src/config-schema.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/core/src/config-transformer.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/core/src/config-validator.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/core/src/config.ts": {
+      "statements": {
+        "covered": 87,
+        "total": 87
+      },
+      "functions": {
+        "covered": 9,
+        "total": 9
+      },
+      "lines": {
+        "covered": 87,
+        "total": 87
+      },
+      "branches": {
+        "covered": 12,
+        "total": 12,
+        "informational": true
+      }
+    },
+    "packages/core/src/create-app-with-compiler.ts": {
+      "statements": {
+        "covered": 28,
+        "total": 28
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4
+      },
+      "lines": {
+        "covered": 28,
+        "total": 28
+      },
+      "branches": {
+        "covered": 5,
+        "total": 5,
+        "informational": true
+      }
+    },
+    "packages/core/src/create-app.ts": {
+      "statements": {
+        "covered": 408,
+        "total": 502
+      },
+      "functions": {
+        "covered": 27,
+        "total": 29
+      },
+      "lines": {
+        "covered": 408,
+        "total": 502
+      },
+      "branches": {
+        "covered": 141,
+        "total": 152,
+        "informational": true
+      }
+    },
+    "packages/core/src/define-component.ts": {
+      "statements": {
+        "covered": 2,
+        "total": 2
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 2,
+        "total": 2
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/core/src/directives.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/core/src/error-boundary.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/core/src/global-state.ts": {
+      "statements": {
+        "covered": 13,
+        "total": 13
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 13,
+        "total": 13
+      },
+      "branches": {
+        "covered": 3,
+        "total": 3,
+        "informational": true
+      }
+    },
+    "packages/core/src/h.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/core/src/index.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/core/src/lifecycle.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/core/src/next-tick.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/core/src/plugin-registry.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/core/src/plugin-sdk.ts": {
+      "statements": {
+        "covered": 192,
+        "total": 194
+      },
+      "functions": {
+        "covered": 16,
+        "total": 17
+      },
+      "lines": {
+        "covered": 192,
+        "total": 194
+      },
+      "branches": {
+        "covered": 58,
+        "total": 61,
+        "informational": true
+      }
+    },
+    "packages/core/src/plugin-validator.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/core/src/resolve.ts": {
+      "statements": {
+        "covered": 178,
+        "total": 178
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4
+      },
+      "lines": {
+        "covered": 178,
+        "total": 178
+      },
+      "branches": {
+        "covered": 28,
+        "total": 30,
+        "informational": true
+      }
+    },
+    "packages/core/src/runtime-helpers.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/core/src/runtime.ts": {
+      "statements": {
+        "covered": 9,
+        "total": 9
+      },
+      "functions": {
+        "covered": 2,
+        "total": 2
+      },
+      "lines": {
+        "covered": 9,
+        "total": 9
+      },
+      "branches": {
+        "covered": 2,
+        "total": 2,
+        "informational": true
+      }
+    },
+    "packages/core/src/ssr.ts": {
+      "statements": {
+        "covered": 19,
+        "total": 19
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 19,
+        "total": 19
+      },
+      "branches": {
+        "covered": 4,
+        "total": 4,
+        "informational": true
+      }
+    },
+    "packages/core/src/template-compiler.ts": {
+      "statements": {
+        "covered": 30,
+        "total": 46
+      },
+      "functions": {
+        "covered": 2,
+        "total": 3
+      },
+      "lines": {
+        "covered": 30,
+        "total": 46
+      },
+      "branches": {
+        "covered": 10,
+        "total": 14,
+        "informational": true
+      }
+    },
+    "packages/core/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/core/src/web-component.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/dom-runtime/src/batch.ts": {
+      "statements": {
+        "covered": 288,
+        "total": 294
+      },
+      "functions": {
+        "covered": 16,
+        "total": 16
+      },
+      "lines": {
+        "covered": 288,
+        "total": 294
+      },
+      "branches": {
+        "covered": 77,
+        "total": 90,
+        "informational": true
+      }
+    },
+    "packages/dom-runtime/src/events.ts": {
+      "statements": {
+        "covered": 103,
+        "total": 105
+      },
+      "functions": {
+        "covered": 7,
+        "total": 7
+      },
+      "lines": {
+        "covered": 103,
+        "total": 105
+      },
+      "branches": {
+        "covered": 32,
+        "total": 34,
+        "informational": true
+      }
+    },
+    "packages/dom-runtime/src/index.ts": {
+      "statements": {
+        "covered": 591,
+        "total": 695
+      },
+      "functions": {
+        "covered": 45,
+        "total": 54
+      },
+      "lines": {
+        "covered": 591,
+        "total": 695
+      },
+      "branches": {
+        "covered": 253,
+        "total": 289,
+        "informational": true
+      }
+    },
+    "packages/dom/src/index.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/dom/src/web-components.ts": {
+      "statements": {
+        "covered": 254,
+        "total": 257
+      },
+      "functions": {
+        "covered": 31,
+        "total": 31
+      },
+      "lines": {
+        "covered": 254,
+        "total": 257
+      },
+      "branches": {
+        "covered": 108,
+        "total": 120,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/bundler/src/index.ts": {
+      "statements": {
+        "covered": 104,
+        "total": 104
+      },
+      "functions": {
+        "covered": 9,
+        "total": 9
+      },
+      "lines": {
+        "covered": 104,
+        "total": 104
+      },
+      "branches": {
+        "covered": 29,
+        "total": 30,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/bundler/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/compat/src/index.ts": {
+      "statements": {
+        "covered": 71,
+        "total": 71
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 71,
+        "total": 71
+      },
+      "branches": {
+        "covered": 18,
+        "total": 18,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/config/src/config-schema.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/config/src/config-transformer.ts": {
+      "statements": {
+        "covered": 286,
+        "total": 295
+      },
+      "functions": {
+        "covered": 10,
+        "total": 10
+      },
+      "lines": {
+        "covered": 286,
+        "total": 295
+      },
+      "branches": {
+        "covered": 78,
+        "total": 85,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/config/src/config-validator.ts": {
+      "statements": {
+        "covered": 564,
+        "total": 587
+      },
+      "functions": {
+        "covered": 16,
+        "total": 16
+      },
+      "lines": {
+        "covered": 564,
+        "total": 587
+      },
+      "branches": {
+        "covered": 170,
+        "total": 175,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/config/src/config.ts": {
+      "statements": {
+        "covered": 245,
+        "total": 284
+      },
+      "functions": {
+        "covered": 19,
+        "total": 19
+      },
+      "lines": {
+        "covered": 245,
+        "total": 284
+      },
+      "branches": {
+        "covered": 83,
+        "total": 97,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/config/src/index.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/config/src/proto-keys.ts": {
+      "statements": {
+        "covered": 5,
+        "total": 5
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 5,
+        "total": 5
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/devtools/src/benchmark.ts": {
+      "statements": {
+        "covered": 206,
+        "total": 214
+      },
+      "functions": {
+        "covered": 19,
+        "total": 19
+      },
+      "lines": {
+        "covered": 206,
+        "total": 214
+      },
+      "branches": {
+        "covered": 56,
+        "total": 59,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/devtools/src/componentTree.ts": {
+      "statements": {
+        "covered": 87,
+        "total": 87
+      },
+      "functions": {
+        "covered": 7,
+        "total": 7
+      },
+      "lines": {
+        "covered": 87,
+        "total": 87
+      },
+      "branches": {
+        "covered": 34,
+        "total": 37,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/devtools/src/debugEnhancer.ts": {
+      "statements": {
+        "covered": 256,
+        "total": 272
+      },
+      "functions": {
+        "covered": 27,
+        "total": 29
+      },
+      "lines": {
+        "covered": 256,
+        "total": 272
+      },
+      "branches": {
+        "covered": 68,
+        "total": 72,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/devtools/src/devtools.ts": {
+      "statements": {
+        "covered": 216,
+        "total": 266
+      },
+      "functions": {
+        "covered": 18,
+        "total": 18
+      },
+      "lines": {
+        "covered": 216,
+        "total": 266
+      },
+      "branches": {
+        "covered": 45,
+        "total": 65,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/devtools/src/index.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/devtools/src/performance.ts": {
+      "statements": {
+        "covered": 442,
+        "total": 495
+      },
+      "functions": {
+        "covered": 42,
+        "total": 42
+      },
+      "lines": {
+        "covered": 442,
+        "total": 495
+      },
+      "branches": {
+        "covered": 104,
+        "total": 119,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/devtools/src/routeInspector.ts": {
+      "statements": {
+        "covered": 108,
+        "total": 108
+      },
+      "functions": {
+        "covered": 14,
+        "total": 14
+      },
+      "lines": {
+        "covered": 108,
+        "total": 108
+      },
+      "branches": {
+        "covered": 67,
+        "total": 71,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/devtools/src/safe-stringify.ts": {
+      "statements": {
+        "covered": 12,
+        "total": 14
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 12,
+        "total": 14
+      },
+      "branches": {
+        "covered": 6,
+        "total": 7,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/devtools/src/signalsInspector.ts": {
+      "statements": {
+        "covered": 572,
+        "total": 598
+      },
+      "functions": {
+        "covered": 40,
+        "total": 41
+      },
+      "lines": {
+        "covered": 572,
+        "total": 598
+      },
+      "branches": {
+        "covered": 145,
+        "total": 161,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/devtools/src/storeInspector.ts": {
+      "statements": {
+        "covered": 123,
+        "total": 125
+      },
+      "functions": {
+        "covered": 12,
+        "total": 12
+      },
+      "lines": {
+        "covered": 123,
+        "total": 125
+      },
+      "branches": {
+        "covered": 55,
+        "total": 59,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/devtools/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/devtools/src/vdomInspector.ts": {
+      "statements": {
+        "covered": 251,
+        "total": 291
+      },
+      "functions": {
+        "covered": 20,
+        "total": 20
+      },
+      "lines": {
+        "covered": 251,
+        "total": 291
+      },
+      "branches": {
+        "covered": 84,
+        "total": 104,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/di/src/errors.ts": {
+      "statements": {
+        "covered": 15,
+        "total": 15
+      },
+      "functions": {
+        "covered": 2,
+        "total": 2
+      },
+      "lines": {
+        "covered": 15,
+        "total": 15
+      },
+      "branches": {
+        "covered": 7,
+        "total": 7,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/di/src/index.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/di/src/provider-tree.ts": {
+      "statements": {
+        "covered": 60,
+        "total": 60
+      },
+      "functions": {
+        "covered": 8,
+        "total": 8
+      },
+      "lines": {
+        "covered": 60,
+        "total": 60
+      },
+      "branches": {
+        "covered": 13,
+        "total": 15,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/di/src/resolver.ts": {
+      "statements": {
+        "covered": 136,
+        "total": 150
+      },
+      "functions": {
+        "covered": 10,
+        "total": 13
+      },
+      "lines": {
+        "covered": 136,
+        "total": 150
+      },
+      "branches": {
+        "covered": 55,
+        "total": 60,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/di/src/scope.ts": {
+      "statements": {
+        "covered": 17,
+        "total": 19
+      },
+      "functions": {
+        "covered": 6,
+        "total": 7
+      },
+      "lines": {
+        "covered": 17,
+        "total": 19
+      },
+      "branches": {
+        "covered": 6,
+        "total": 6,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/di/src/token.ts": {
+      "statements": {
+        "covered": 17,
+        "total": 17
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 17,
+        "total": 17
+      },
+      "branches": {
+        "covered": 5,
+        "total": 5,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/di/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/platform-adapter/src/adapter-registry.ts": {
+      "statements": {
+        "covered": 47,
+        "total": 47
+      },
+      "functions": {
+        "covered": 9,
+        "total": 9
+      },
+      "lines": {
+        "covered": 47,
+        "total": 47
+      },
+      "branches": {
+        "covered": 18,
+        "total": 19,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/platform-adapter/src/create-renderer.ts": {
+      "statements": {
+        "covered": 79,
+        "total": 105
+      },
+      "functions": {
+        "covered": 5,
+        "total": 5
+      },
+      "lines": {
+        "covered": 79,
+        "total": 105
+      },
+      "branches": {
+        "covered": 25,
+        "total": 37,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/platform-adapter/src/index.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/platform-adapter/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/plugin/src/index.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/plugin/src/registry.ts": {
+      "statements": {
+        "covered": 441,
+        "total": 472
+      },
+      "functions": {
+        "covered": 29,
+        "total": 29
+      },
+      "lines": {
+        "covered": 441,
+        "total": 472
+      },
+      "branches": {
+        "covered": 168,
+        "total": 186,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/plugin/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/plugin/src/validator.ts": {
+      "statements": {
+        "covered": 334,
+        "total": 376
+      },
+      "functions": {
+        "covered": 16,
+        "total": 16
+      },
+      "lines": {
+        "covered": 334,
+        "total": 376
+      },
+      "branches": {
+        "covered": 109,
+        "total": 122,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/runtime-edge/src/index.ts": {
+      "statements": {
+        "covered": 255,
+        "total": 310
+      },
+      "functions": {
+        "covered": 30,
+        "total": 36
+      },
+      "lines": {
+        "covered": 255,
+        "total": 310
+      },
+      "branches": {
+        "covered": 95,
+        "total": 121,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/runtime-edge/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ssr-kit/packages/cache-isr/src/cache.ts": {
+      "statements": {
+        "covered": 37,
+        "total": 50
+      },
+      "functions": {
+        "covered": 5,
+        "total": 7
+      },
+      "lines": {
+        "covered": 37,
+        "total": 50
+      },
+      "branches": {
+        "covered": 9,
+        "total": 14,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ssr-kit/packages/cache-isr/src/index.ts": {
+      "statements": {
+        "covered": 3,
+        "total": 3
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 3,
+        "total": 3
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ssr-kit/packages/cache-isr/src/revalidate.ts": {
+      "statements": {
+        "covered": 5,
+        "total": 21
+      },
+      "functions": {
+        "covered": 0,
+        "total": 3
+      },
+      "lines": {
+        "covered": 5,
+        "total": 21
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ssr-kit/packages/cache-isr/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ssr-kit/packages/cache/src/index.ts": {
+      "statements": {
+        "covered": 224,
+        "total": 273
+      },
+      "functions": {
+        "covered": 19,
+        "total": 25
+      },
+      "lines": {
+        "covered": 224,
+        "total": 273
+      },
+      "branches": {
+        "covered": 66,
+        "total": 77,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ssr-kit/packages/hmr/src/index.ts": {
+      "statements": {
+        "covered": 192,
+        "total": 222
+      },
+      "functions": {
+        "covered": 23,
+        "total": 26
+      },
+      "lines": {
+        "covered": 192,
+        "total": 222
+      },
+      "branches": {
+        "covered": 47,
+        "total": 67,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ssr-kit/packages/hmr/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ssr-kit/packages/html-renderer/src/index.ts": {
+      "statements": {
+        "covered": 2,
+        "total": 2
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 2,
+        "total": 2
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ssr-kit/packages/html-renderer/src/renderer.ts": {
+      "statements": {
+        "covered": 71,
+        "total": 71
+      },
+      "functions": {
+        "covered": 7,
+        "total": 7
+      },
+      "lines": {
+        "covered": 71,
+        "total": 71
+      },
+      "branches": {
+        "covered": 23,
+        "total": 23,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ssr-kit/packages/html-renderer/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ssr-kit/packages/ssg/src/generator.ts": {
+      "statements": {
+        "covered": 11,
+        "total": 11
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 11,
+        "total": 11
+      },
+      "branches": {
+        "covered": 5,
+        "total": 5,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ssr-kit/packages/ssg/src/index.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ssr-kit/packages/ssr/src/hydration.ts": {
+      "statements": {
+        "covered": 125,
+        "total": 177
+      },
+      "functions": {
+        "covered": 11,
+        "total": 12
+      },
+      "lines": {
+        "covered": 125,
+        "total": 177
+      },
+      "branches": {
+        "covered": 39,
+        "total": 50,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ssr-kit/packages/ssr/src/index.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ssr-kit/packages/ssr/src/render.ts": {
+      "statements": {
+        "covered": 253,
+        "total": 388
+      },
+      "functions": {
+        "covered": 12,
+        "total": 13
+      },
+      "lines": {
+        "covered": 253,
+        "total": 388
+      },
+      "branches": {
+        "covered": 80,
+        "total": 117,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ssr-kit/packages/ssr/src/server-components.ts": {
+      "statements": {
+        "covered": 214,
+        "total": 214
+      },
+      "functions": {
+        "covered": 18,
+        "total": 18
+      },
+      "lines": {
+        "covered": 214,
+        "total": 214
+      },
+      "branches": {
+        "covered": 76,
+        "total": 76,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ssr-kit/packages/ssr/src/ssg.ts": {
+      "statements": {
+        "covered": 254,
+        "total": 334
+      },
+      "functions": {
+        "covered": 23,
+        "total": 26
+      },
+      "lines": {
+        "covered": 254,
+        "total": 334
+      },
+      "branches": {
+        "covered": 66,
+        "total": 86,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ssr-kit/packages/ssr/src/stream.ts": {
+      "statements": {
+        "covered": 272,
+        "total": 322
+      },
+      "functions": {
+        "covered": 13,
+        "total": 15
+      },
+      "lines": {
+        "covered": 272,
+        "total": 322
+      },
+      "branches": {
+        "covered": 84,
+        "total": 97,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ssr-kit/packages/ssr/src/virtualList.ts": {
+      "statements": {
+        "covered": 85,
+        "total": 85
+      },
+      "functions": {
+        "covered": 3,
+        "total": 4
+      },
+      "lines": {
+        "covered": 85,
+        "total": 85
+      },
+      "branches": {
+        "covered": 13,
+        "total": 13,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/store/src/defineStore.ts": {
+      "statements": {
+        "covered": 592,
+        "total": 638
+      },
+      "functions": {
+        "covered": 47,
+        "total": 50
+      },
+      "lines": {
+        "covered": 592,
+        "total": 638
+      },
+      "branches": {
+        "covered": 196,
+        "total": 204,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/store/src/index.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/store/src/pinia.ts": {
+      "statements": {
+        "covered": 55,
+        "total": 72
+      },
+      "functions": {
+        "covered": 7,
+        "total": 8
+      },
+      "lines": {
+        "covered": 55,
+        "total": 72
+      },
+      "branches": {
+        "covered": 11,
+        "total": 12,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/store/src/storeToRefs.ts": {
+      "statements": {
+        "covered": 14,
+        "total": 15
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 14,
+        "total": 15
+      },
+      "branches": {
+        "covered": 10,
+        "total": 12,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/store/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/component-status.ts": {
+      "statements": {
+        "covered": 95,
+        "total": 99
+      },
+      "functions": {
+        "covered": 1,
+        "total": 3
+      },
+      "lines": {
+        "covered": 95,
+        "total": 99
+      },
+      "branches": {
+        "covered": 2,
+        "total": 2,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Alert.ts": {
+      "statements": {
+        "covered": 96,
+        "total": 100
+      },
+      "functions": {
+        "covered": 2,
+        "total": 3
+      },
+      "lines": {
+        "covered": 96,
+        "total": 100
+      },
+      "branches": {
+        "covered": 8,
+        "total": 9,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Avatar.ts": {
+      "statements": {
+        "covered": 106,
+        "total": 129
+      },
+      "functions": {
+        "covered": 4,
+        "total": 5
+      },
+      "lines": {
+        "covered": 106,
+        "total": 129
+      },
+      "branches": {
+        "covered": 11,
+        "total": 18,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Badge.ts": {
+      "statements": {
+        "covered": 77,
+        "total": 77
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4
+      },
+      "lines": {
+        "covered": 77,
+        "total": 77
+      },
+      "branches": {
+        "covered": 15,
+        "total": 17,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Breadcrumb.ts": {
+      "statements": {
+        "covered": 65,
+        "total": 76
+      },
+      "functions": {
+        "covered": 2,
+        "total": 3
+      },
+      "lines": {
+        "covered": 65,
+        "total": 76
+      },
+      "branches": {
+        "covered": 10,
+        "total": 10,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Button.ts": {
+      "statements": {
+        "covered": 94,
+        "total": 113
+      },
+      "functions": {
+        "covered": 3,
+        "total": 5
+      },
+      "lines": {
+        "covered": 94,
+        "total": 113
+      },
+      "branches": {
+        "covered": 20,
+        "total": 20,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Calendar.ts": {
+      "statements": {
+        "covered": 181,
+        "total": 240
+      },
+      "functions": {
+        "covered": 12,
+        "total": 21
+      },
+      "lines": {
+        "covered": 181,
+        "total": 240
+      },
+      "branches": {
+        "covered": 27,
+        "total": 31,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Card.ts": {
+      "statements": {
+        "covered": 87,
+        "total": 97
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4
+      },
+      "lines": {
+        "covered": 87,
+        "total": 97
+      },
+      "branches": {
+        "covered": 8,
+        "total": 12,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Carousel.ts": {
+      "statements": {
+        "covered": 70,
+        "total": 74
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 70,
+        "total": 74
+      },
+      "branches": {
+        "covered": 7,
+        "total": 10,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/CarouselItem.ts": {
+      "statements": {
+        "covered": 57,
+        "total": 61
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 57,
+        "total": 61
+      },
+      "branches": {
+        "covered": 5,
+        "total": 8,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Cascader.ts": {
+      "statements": {
+        "covered": 330,
+        "total": 332
+      },
+      "functions": {
+        "covered": 17,
+        "total": 17
+      },
+      "lines": {
+        "covered": 330,
+        "total": 332
+      },
+      "branches": {
+        "covered": 103,
+        "total": 108,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Checkbox.ts": {
+      "statements": {
+        "covered": 149,
+        "total": 172
+      },
+      "functions": {
+        "covered": 4,
+        "total": 6
+      },
+      "lines": {
+        "covered": 149,
+        "total": 172
+      },
+      "branches": {
+        "covered": 20,
+        "total": 30,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/CheckboxGroup.ts": {
+      "statements": {
+        "covered": 106,
+        "total": 111
+      },
+      "functions": {
+        "covered": 6,
+        "total": 6
+      },
+      "lines": {
+        "covered": 106,
+        "total": 111
+      },
+      "branches": {
+        "covered": 27,
+        "total": 34,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/ColorPicker.ts": {
+      "statements": {
+        "covered": 404,
+        "total": 419
+      },
+      "functions": {
+        "covered": 25,
+        "total": 31
+      },
+      "lines": {
+        "covered": 404,
+        "total": 419
+      },
+      "branches": {
+        "covered": 59,
+        "total": 68,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Container.ts": {
+      "statements": {
+        "covered": 53,
+        "total": 56
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 53,
+        "total": 56
+      },
+      "branches": {
+        "covered": 9,
+        "total": 12,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/DatePicker.ts": {
+      "statements": {
+        "covered": 390,
+        "total": 399
+      },
+      "functions": {
+        "covered": 24,
+        "total": 26
+      },
+      "lines": {
+        "covered": 390,
+        "total": 399
+      },
+      "branches": {
+        "covered": 108,
+        "total": 117,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Descriptions.ts": {
+      "statements": {
+        "covered": 109,
+        "total": 111
+      },
+      "functions": {
+        "covered": 2,
+        "total": 2
+      },
+      "lines": {
+        "covered": 109,
+        "total": 111
+      },
+      "branches": {
+        "covered": 15,
+        "total": 19,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Dialog.ts": {
+      "statements": {
+        "covered": 237,
+        "total": 238
+      },
+      "functions": {
+        "covered": 9,
+        "total": 9
+      },
+      "lines": {
+        "covered": 237,
+        "total": 238
+      },
+      "branches": {
+        "covered": 67,
+        "total": 68,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Divider.ts": {
+      "statements": {
+        "covered": 58,
+        "total": 61
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 58,
+        "total": 61
+      },
+      "branches": {
+        "covered": 7,
+        "total": 10,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Drawer.ts": {
+      "statements": {
+        "covered": 202,
+        "total": 220
+      },
+      "functions": {
+        "covered": 9,
+        "total": 10
+      },
+      "lines": {
+        "covered": 202,
+        "total": 220
+      },
+      "branches": {
+        "covered": 40,
+        "total": 58,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Empty.ts": {
+      "statements": {
+        "covered": 127,
+        "total": 130
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 127,
+        "total": 130
+      },
+      "branches": {
+        "covered": 13,
+        "total": 20,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Form.ts": {
+      "statements": {
+        "covered": 130,
+        "total": 254
+      },
+      "functions": {
+        "covered": 8,
+        "total": 16
+      },
+      "lines": {
+        "covered": 130,
+        "total": 254
+      },
+      "branches": {
+        "covered": 21,
+        "total": 21,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Icon.ts": {
+      "statements": {
+        "covered": 58,
+        "total": 60
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 58,
+        "total": 60
+      },
+      "branches": {
+        "covered": 8,
+        "total": 10,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Image.ts": {
+      "statements": {
+        "covered": 98,
+        "total": 179
+      },
+      "functions": {
+        "covered": 1,
+        "total": 6
+      },
+      "lines": {
+        "covered": 98,
+        "total": 179
+      },
+      "branches": {
+        "covered": 11,
+        "total": 18,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Input.ts": {
+      "statements": {
+        "covered": 123,
+        "total": 161
+      },
+      "functions": {
+        "covered": 4,
+        "total": 10
+      },
+      "lines": {
+        "covered": 123,
+        "total": 161
+      },
+      "branches": {
+        "covered": 22,
+        "total": 22,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/InputNumber.ts": {
+      "statements": {
+        "covered": 269,
+        "total": 274
+      },
+      "functions": {
+        "covered": 16,
+        "total": 16
+      },
+      "lines": {
+        "covered": 269,
+        "total": 274
+      },
+      "branches": {
+        "covered": 77,
+        "total": 81,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Link.ts": {
+      "statements": {
+        "covered": 94,
+        "total": 109
+      },
+      "functions": {
+        "covered": 3,
+        "total": 5
+      },
+      "lines": {
+        "covered": 94,
+        "total": 109
+      },
+      "branches": {
+        "covered": 9,
+        "total": 14,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Menu.ts": {
+      "statements": {
+        "covered": 327,
+        "total": 356
+      },
+      "functions": {
+        "covered": 11,
+        "total": 11
+      },
+      "lines": {
+        "covered": 327,
+        "total": 356
+      },
+      "branches": {
+        "covered": 79,
+        "total": 91,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Message.ts": {
+      "statements": {
+        "covered": 76,
+        "total": 80
+      },
+      "functions": {
+        "covered": 7,
+        "total": 8
+      },
+      "lines": {
+        "covered": 76,
+        "total": 80
+      },
+      "branches": {
+        "covered": 12,
+        "total": 12,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Modal.ts": {
+      "statements": {
+        "covered": 231,
+        "total": 267
+      },
+      "functions": {
+        "covered": 8,
+        "total": 11
+      },
+      "lines": {
+        "covered": 231,
+        "total": 267
+      },
+      "branches": {
+        "covered": 48,
+        "total": 65,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Notification.ts": {
+      "statements": {
+        "covered": 47,
+        "total": 168
+      },
+      "functions": {
+        "covered": 3,
+        "total": 11
+      },
+      "lines": {
+        "covered": 47,
+        "total": 168
+      },
+      "branches": {
+        "covered": 4,
+        "total": 5,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Pagination.ts": {
+      "statements": {
+        "covered": 253,
+        "total": 253
+      },
+      "functions": {
+        "covered": 13,
+        "total": 15
+      },
+      "lines": {
+        "covered": 253,
+        "total": 253
+      },
+      "branches": {
+        "covered": 46,
+        "total": 46,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Popconfirm.ts": {
+      "statements": {
+        "covered": 168,
+        "total": 184
+      },
+      "functions": {
+        "covered": 6,
+        "total": 8
+      },
+      "lines": {
+        "covered": 168,
+        "total": 184
+      },
+      "branches": {
+        "covered": 18,
+        "total": 24,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Progress.ts": {
+      "statements": {
+        "covered": 141,
+        "total": 211
+      },
+      "functions": {
+        "covered": 5,
+        "total": 6
+      },
+      "lines": {
+        "covered": 141,
+        "total": 211
+      },
+      "branches": {
+        "covered": 18,
+        "total": 25,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Radio.ts": {
+      "statements": {
+        "covered": 127,
+        "total": 143
+      },
+      "functions": {
+        "covered": 4,
+        "total": 6
+      },
+      "lines": {
+        "covered": 127,
+        "total": 143
+      },
+      "branches": {
+        "covered": 11,
+        "total": 16,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/RadioGroup.ts": {
+      "statements": {
+        "covered": 94,
+        "total": 99
+      },
+      "functions": {
+        "covered": 5,
+        "total": 5
+      },
+      "lines": {
+        "covered": 94,
+        "total": 99
+      },
+      "branches": {
+        "covered": 12,
+        "total": 17,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Rate.ts": {
+      "statements": {
+        "covered": 109,
+        "total": 139
+      },
+      "functions": {
+        "covered": 7,
+        "total": 12
+      },
+      "lines": {
+        "covered": 109,
+        "total": 139
+      },
+      "branches": {
+        "covered": 21,
+        "total": 26,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/RichTextEditor.ts": {
+      "statements": {
+        "covered": 101,
+        "total": 113
+      },
+      "functions": {
+        "covered": 4,
+        "total": 8
+      },
+      "lines": {
+        "covered": 101,
+        "total": 113
+      },
+      "branches": {
+        "covered": 12,
+        "total": 18,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Select.ts": {
+      "statements": {
+        "covered": 404,
+        "total": 447
+      },
+      "functions": {
+        "covered": 17,
+        "total": 18
+      },
+      "lines": {
+        "covered": 404,
+        "total": 447
+      },
+      "branches": {
+        "covered": 102,
+        "total": 102,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Slider.ts": {
+      "statements": {
+        "covered": 372,
+        "total": 379
+      },
+      "functions": {
+        "covered": 14,
+        "total": 14
+      },
+      "lines": {
+        "covered": 372,
+        "total": 379
+      },
+      "branches": {
+        "covered": 93,
+        "total": 101,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Spin.ts": {
+      "statements": {
+        "covered": 97,
+        "total": 113
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 97,
+        "total": 113
+      },
+      "branches": {
+        "covered": 9,
+        "total": 14,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Step.ts": {
+      "statements": {
+        "covered": 85,
+        "total": 102
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4
+      },
+      "lines": {
+        "covered": 85,
+        "total": 102
+      },
+      "branches": {
+        "covered": 11,
+        "total": 17,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Steps.ts": {
+      "statements": {
+        "covered": 92,
+        "total": 97
+      },
+      "functions": {
+        "covered": 5,
+        "total": 5
+      },
+      "lines": {
+        "covered": 92,
+        "total": 97
+      },
+      "branches": {
+        "covered": 16,
+        "total": 24,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Switch.ts": {
+      "statements": {
+        "covered": 173,
+        "total": 208
+      },
+      "functions": {
+        "covered": 4,
+        "total": 7
+      },
+      "lines": {
+        "covered": 173,
+        "total": 208
+      },
+      "branches": {
+        "covered": 33,
+        "total": 41,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Table.ts": {
+      "statements": {
+        "covered": 94,
+        "total": 209
+      },
+      "functions": {
+        "covered": 3,
+        "total": 10
+      },
+      "lines": {
+        "covered": 94,
+        "total": 209
+      },
+      "branches": {
+        "covered": 10,
+        "total": 14,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Tabs.ts": {
+      "statements": {
+        "covered": 366,
+        "total": 372
+      },
+      "functions": {
+        "covered": 18,
+        "total": 18
+      },
+      "lines": {
+        "covered": 366,
+        "total": 372
+      },
+      "branches": {
+        "covered": 107,
+        "total": 108,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Tag.ts": {
+      "statements": {
+        "covered": 90,
+        "total": 99
+      },
+      "functions": {
+        "covered": 4,
+        "total": 5
+      },
+      "lines": {
+        "covered": 90,
+        "total": 99
+      },
+      "branches": {
+        "covered": 15,
+        "total": 18,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/TimePicker.ts": {
+      "statements": {
+        "covered": 292,
+        "total": 320
+      },
+      "functions": {
+        "covered": 23,
+        "total": 25
+      },
+      "lines": {
+        "covered": 292,
+        "total": 320
+      },
+      "branches": {
+        "covered": 77,
+        "total": 86,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Timeline.ts": {
+      "statements": {
+        "covered": 60,
+        "total": 64
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 60,
+        "total": 64
+      },
+      "branches": {
+        "covered": 6,
+        "total": 9,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/TimelineItem.ts": {
+      "statements": {
+        "covered": 93,
+        "total": 110
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4
+      },
+      "lines": {
+        "covered": 93,
+        "total": 110
+      },
+      "branches": {
+        "covered": 12,
+        "total": 18,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Toast.ts": {
+      "statements": {
+        "covered": 114,
+        "total": 157
+      },
+      "functions": {
+        "covered": 5,
+        "total": 7
+      },
+      "lines": {
+        "covered": 114,
+        "total": 157
+      },
+      "branches": {
+        "covered": 16,
+        "total": 20,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Tooltip.ts": {
+      "statements": {
+        "covered": 67,
+        "total": 156
+      },
+      "functions": {
+        "covered": 1,
+        "total": 8
+      },
+      "lines": {
+        "covered": 67,
+        "total": 156
+      },
+      "branches": {
+        "covered": 2,
+        "total": 4,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Transfer.ts": {
+      "statements": {
+        "covered": 179,
+        "total": 213
+      },
+      "functions": {
+        "covered": 14,
+        "total": 17
+      },
+      "lines": {
+        "covered": 179,
+        "total": 213
+      },
+      "branches": {
+        "covered": 29,
+        "total": 41,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Transition.ts": {
+      "statements": {
+        "covered": 64,
+        "total": 66
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4
+      },
+      "lines": {
+        "covered": 64,
+        "total": 66
+      },
+      "branches": {
+        "covered": 7,
+        "total": 9,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Tree.ts": {
+      "statements": {
+        "covered": 74,
+        "total": 186
+      },
+      "functions": {
+        "covered": 6,
+        "total": 10
+      },
+      "lines": {
+        "covered": 74,
+        "total": 186
+      },
+      "branches": {
+        "covered": 9,
+        "total": 16,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/TreeSelect.ts": {
+      "statements": {
+        "covered": 441,
+        "total": 447
+      },
+      "functions": {
+        "covered": 31,
+        "total": 32
+      },
+      "lines": {
+        "covered": 441,
+        "total": 447
+      },
+      "branches": {
+        "covered": 162,
+        "total": 173,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/Upload.ts": {
+      "statements": {
+        "covered": 243,
+        "total": 249
+      },
+      "functions": {
+        "covered": 18,
+        "total": 18
+      },
+      "lines": {
+        "covered": 243,
+        "total": 249
+      },
+      "branches": {
+        "covered": 57,
+        "total": 62,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/overlay-focus.ts": {
+      "statements": {
+        "covered": 65,
+        "total": 68
+      },
+      "functions": {
+        "covered": 7,
+        "total": 9
+      },
+      "lines": {
+        "covered": 65,
+        "total": 68
+      },
+      "branches": {
+        "covered": 18,
+        "total": 19,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/components/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/composables/index.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/composables/useControlledState.ts": {
+      "statements": {
+        "covered": 11,
+        "total": 11
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 11,
+        "total": 11
+      },
+      "branches": {
+        "covered": 5,
+        "total": 5,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/composables/useFormField.ts": {
+      "statements": {
+        "covered": 16,
+        "total": 17
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 16,
+        "total": 17
+      },
+      "branches": {
+        "covered": 7,
+        "total": 10,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/composables/useLocale.ts": {
+      "statements": {
+        "covered": 8,
+        "total": 8
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 8,
+        "total": 8
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/composables/useOverlay.ts": {
+      "statements": {
+        "covered": 20,
+        "total": 20
+      },
+      "functions": {
+        "covered": 5,
+        "total": 5
+      },
+      "lines": {
+        "covered": 20,
+        "total": 20
+      },
+      "branches": {
+        "covered": 12,
+        "total": 12,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/composables/useSlotContent.ts": {
+      "statements": {
+        "covered": 13,
+        "total": 13
+      },
+      "functions": {
+        "covered": 2,
+        "total": 3
+      },
+      "lines": {
+        "covered": 13,
+        "total": 13
+      },
+      "branches": {
+        "covered": 5,
+        "total": 7,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/index.ts": {
+      "statements": {
+        "covered": 8,
+        "total": 65
+      },
+      "functions": {
+        "covered": 0,
+        "total": 1
+      },
+      "lines": {
+        "covered": 8,
+        "total": 65
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/locale/index.ts": {
+      "statements": {
+        "covered": 36,
+        "total": 38
+      },
+      "functions": {
+        "covered": 4,
+        "total": 5
+      },
+      "lines": {
+        "covered": 36,
+        "total": 38
+      },
+      "branches": {
+        "covered": 13,
+        "total": 13,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/ui/src/locale/messages.ts": {
+      "statements": {
+        "covered": 49,
+        "total": 49
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 49,
+        "total": 49
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/api/src/index.ts": {
+      "statements": {
+        "covered": 254,
+        "total": 268
+      },
+      "functions": {
+        "covered": 19,
+        "total": 21
+      },
+      "lines": {
+        "covered": 254,
+        "total": 268
+      },
+      "branches": {
+        "covered": 71,
+        "total": 87,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/api/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/api/src/utils.ts": {
+      "statements": {
+        "covered": 168,
+        "total": 168
+      },
+      "functions": {
+        "covered": 11,
+        "total": 11
+      },
+      "lines": {
+        "covered": 168,
+        "total": 168
+      },
+      "branches": {
+        "covered": 71,
+        "total": 77,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/http-server/src/index.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/http-server/src/router.ts": {
+      "statements": {
+        "covered": 155,
+        "total": 174
+      },
+      "functions": {
+        "covered": 12,
+        "total": 16
+      },
+      "lines": {
+        "covered": 155,
+        "total": 174
+      },
+      "branches": {
+        "covered": 55,
+        "total": 65,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/http-server/src/server.ts": {
+      "statements": {
+        "covered": 263,
+        "total": 325
+      },
+      "functions": {
+        "covered": 21,
+        "total": 25
+      },
+      "lines": {
+        "covered": 263,
+        "total": 325
+      },
+      "branches": {
+        "covered": 95,
+        "total": 113,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/http-server/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/metadata/src/builder.ts": {
+      "statements": {
+        "covered": 30,
+        "total": 33
+      },
+      "functions": {
+        "covered": 8,
+        "total": 9
+      },
+      "lines": {
+        "covered": 30,
+        "total": 33
+      },
+      "branches": {
+        "covered": 8,
+        "total": 8,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/metadata/src/index.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/metadata/src/renderer.ts": {
+      "statements": {
+        "covered": 14,
+        "total": 28
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 14,
+        "total": 28
+      },
+      "branches": {
+        "covered": 1,
+        "total": 5,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/metadata/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/middleware-auth/src/auth.ts": {
+      "statements": {
+        "covered": 22,
+        "total": 22
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 22,
+        "total": 22
+      },
+      "branches": {
+        "covered": 8,
+        "total": 8,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/middleware-auth/src/index.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/middleware-auth/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/middleware-cors/src/cors.ts": {
+      "statements": {
+        "covered": 107,
+        "total": 116
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 107,
+        "total": 116
+      },
+      "branches": {
+        "covered": 30,
+        "total": 40,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/middleware-cors/src/index.ts": {
+      "statements": {
+        "covered": 3,
+        "total": 3
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 3,
+        "total": 3
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/middleware-cors/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/middleware-rate-limit/src/index.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/middleware-rate-limit/src/rate-limit.ts": {
+      "statements": {
+        "covered": 73,
+        "total": 81
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 73,
+        "total": 81
+      },
+      "branches": {
+        "covered": 16,
+        "total": 26,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/middleware-rate-limit/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/middleware/src/adapt.ts": {
+      "statements": {
+        "covered": 38,
+        "total": 38
+      },
+      "functions": {
+        "covered": 4,
+        "total": 6
+      },
+      "lines": {
+        "covered": 38,
+        "total": 38
+      },
+      "branches": {
+        "covered": 9,
+        "total": 11,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/middleware/src/chain.ts": {
+      "statements": {
+        "covered": 54,
+        "total": 56
+      },
+      "functions": {
+        "covered": 8,
+        "total": 8
+      },
+      "lines": {
+        "covered": 54,
+        "total": 56
+      },
+      "branches": {
+        "covered": 20,
+        "total": 21,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/middleware/src/composer.ts": {
+      "statements": {
+        "covered": 39,
+        "total": 59
+      },
+      "functions": {
+        "covered": 5,
+        "total": 8
+      },
+      "lines": {
+        "covered": 39,
+        "total": 59
+      },
+      "branches": {
+        "covered": 7,
+        "total": 9,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/middleware/src/context.ts": {
+      "statements": {
+        "covered": 10,
+        "total": 15
+      },
+      "functions": {
+        "covered": 1,
+        "total": 2
+      },
+      "lines": {
+        "covered": 10,
+        "total": 15
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/middleware/src/index.ts": {
+      "statements": {
+        "covered": 7,
+        "total": 7
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 7,
+        "total": 7
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/middleware/src/middleware.ts": {
+      "statements": {
+        "covered": 24,
+        "total": 39
+      },
+      "functions": {
+        "covered": 4,
+        "total": 5
+      },
+      "lines": {
+        "covered": 24,
+        "total": 39
+      },
+      "branches": {
+        "covered": 11,
+        "total": 12,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/middleware/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/router-fs/src/index.ts": {
+      "statements": {
+        "covered": 69,
+        "total": 80
+      },
+      "functions": {
+        "covered": 4,
+        "total": 7
+      },
+      "lines": {
+        "covered": 69,
+        "total": 80
+      },
+      "branches": {
+        "covered": 10,
+        "total": 13,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/router-fs/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/router-fs/src/utils.ts": {
+      "statements": {
+        "covered": 71,
+        "total": 71
+      },
+      "functions": {
+        "covered": 5,
+        "total": 5
+      },
+      "lines": {
+        "covered": 71,
+        "total": 71
+      },
+      "branches": {
+        "covered": 27,
+        "total": 28,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/router/src/components/RouterLink.ts": {
+      "statements": {
+        "covered": 90,
+        "total": 90
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 90,
+        "total": 90
+      },
+      "branches": {
+        "covered": 33,
+        "total": 34,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/router/src/components/RouterView.ts": {
+      "statements": {
+        "covered": 68,
+        "total": 68
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4
+      },
+      "lines": {
+        "covered": 68,
+        "total": 68
+      },
+      "branches": {
+        "covered": 33,
+        "total": 38,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/router/src/composables/useLink.ts": {
+      "statements": {
+        "covered": 27,
+        "total": 38
+      },
+      "functions": {
+        "covered": 1,
+        "total": 2
+      },
+      "lines": {
+        "covered": 27,
+        "total": 38
+      },
+      "branches": {
+        "covered": 6,
+        "total": 8,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/router/src/composables/useRoute.ts": {
+      "statements": {
+        "covered": 5,
+        "total": 5
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 5,
+        "total": 5
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/router/src/composables/useRouter.ts": {
+      "statements": {
+        "covered": 15,
+        "total": 15
+      },
+      "functions": {
+        "covered": 2,
+        "total": 2
+      },
+      "lines": {
+        "covered": 15,
+        "total": 15
+      },
+      "branches": {
+        "covered": 5,
+        "total": 5,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/router/src/history.ts": {
+      "statements": {
+        "covered": 325,
+        "total": 334
+      },
+      "functions": {
+        "covered": 36,
+        "total": 39
+      },
+      "lines": {
+        "covered": 325,
+        "total": 334
+      },
+      "branches": {
+        "covered": 79,
+        "total": 92,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/router/src/index.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/router/src/location.ts": {
+      "statements": {
+        "covered": 63,
+        "total": 63
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 63,
+        "total": 63
+      },
+      "branches": {
+        "covered": 19,
+        "total": 21,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/router/src/matcher.ts": {
+      "statements": {
+        "covered": 284,
+        "total": 292
+      },
+      "functions": {
+        "covered": 14,
+        "total": 14
+      },
+      "lines": {
+        "covered": 284,
+        "total": 292
+      },
+      "branches": {
+        "covered": 113,
+        "total": 123,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/router/src/router.ts": {
+      "statements": {
+        "covered": 412,
+        "total": 438
+      },
+      "functions": {
+        "covered": 30,
+        "total": 30
+      },
+      "lines": {
+        "covered": 412,
+        "total": 438
+      },
+      "branches": {
+        "covered": 158,
+        "total": 167,
+        "informational": true
+      }
+    },
+    "packages/ecosystem/packages/web-framework/packages/router/src/types.ts": {
+      "statements": {
+        "covered": 16,
+        "total": 23
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 16,
+        "total": 23
+      },
+      "branches": {
+        "covered": 2,
+        "total": 4,
+        "informational": true
+      }
+    },
+    "packages/host-contract/src/index.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/host-contract/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/reactivity/src/async-computed.ts": {
+      "statements": {
+        "covered": 71,
+        "total": 84
+      },
+      "functions": {
+        "covered": 8,
+        "total": 10
+      },
+      "lines": {
+        "covered": 71,
+        "total": 84
+      },
+      "branches": {
+        "covered": 14,
+        "total": 17,
+        "informational": true
+      }
+    },
+    "packages/reactivity/src/batch.ts": {
+      "statements": {
+        "covered": 156,
+        "total": 161
+      },
+      "functions": {
+        "covered": 11,
+        "total": 11
+      },
+      "lines": {
+        "covered": 156,
+        "total": 161
+      },
+      "branches": {
+        "covered": 49,
+        "total": 54,
+        "informational": true
+      }
+    },
+    "packages/reactivity/src/computed.ts": {
+      "statements": {
+        "covered": 100,
+        "total": 137
+      },
+      "functions": {
+        "covered": 8,
+        "total": 10
+      },
+      "lines": {
+        "covered": 100,
+        "total": 137
+      },
+      "branches": {
+        "covered": 22,
+        "total": 29,
+        "informational": true
+      }
+    },
+    "packages/reactivity/src/constants.ts": {
+      "statements": {
+        "covered": 30,
+        "total": 30
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 30,
+        "total": 30
+      },
+      "branches": {
+        "covered": 0,
+        "total": 6,
+        "informational": true
+      }
+    },
+    "packages/reactivity/src/effect-scope-registrar.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/reactivity/src/effect-scope.ts": {
+      "statements": {
+        "covered": 66,
+        "total": 76
+      },
+      "functions": {
+        "covered": 6,
+        "total": 7
+      },
+      "lines": {
+        "covered": 66,
+        "total": 76
+      },
+      "branches": {
+        "covered": 21,
+        "total": 25,
+        "informational": true
+      }
+    },
+    "packages/reactivity/src/effect.ts": {
+      "statements": {
+        "covered": 383,
+        "total": 406
+      },
+      "functions": {
+        "covered": 30,
+        "total": 30
+      },
+      "lines": {
+        "covered": 383,
+        "total": 406
+      },
+      "branches": {
+        "covered": 120,
+        "total": 129,
+        "informational": true
+      }
+    },
+    "packages/reactivity/src/index.ts": {
+      "statements": {
+        "covered": 25,
+        "total": 88
+      },
+      "functions": {
+        "covered": 1,
+        "total": 11
+      },
+      "lines": {
+        "covered": 25,
+        "total": 88
+      },
+      "branches": {
+        "covered": 2,
+        "total": 3,
+        "informational": true
+      }
+    },
+    "packages/reactivity/src/proxy-refs.ts": {
+      "statements": {
+        "covered": 19,
+        "total": 20
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 19,
+        "total": 20
+      },
+      "branches": {
+        "covered": 6,
+        "total": 7,
+        "informational": true
+      }
+    },
+    "packages/reactivity/src/reactive.ts": {
+      "statements": {
+        "covered": 428,
+        "total": 454
+      },
+      "functions": {
+        "covered": 22,
+        "total": 25
+      },
+      "lines": {
+        "covered": 428,
+        "total": 454
+      },
+      "branches": {
+        "covered": 181,
+        "total": 186,
+        "informational": true
+      }
+    },
+    "packages/reactivity/src/ref.ts": {
+      "statements": {
+        "covered": 135,
+        "total": 137
+      },
+      "functions": {
+        "covered": 24,
+        "total": 25
+      },
+      "lines": {
+        "covered": 135,
+        "total": 137
+      },
+      "branches": {
+        "covered": 40,
+        "total": 46,
+        "informational": true
+      }
+    },
+    "packages/reactivity/src/shared.ts": {
+      "statements": {
+        "covered": 29,
+        "total": 29
+      },
+      "functions": {
+        "covered": 2,
+        "total": 2
+      },
+      "lines": {
+        "covered": 29,
+        "total": 29
+      },
+      "branches": {
+        "covered": 6,
+        "total": 7,
+        "informational": true
+      }
+    },
+    "packages/reactivity/src/shared/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/reactivity/src/shared/untracked.ts": {
+      "statements": {
+        "covered": 17,
+        "total": 19
+      },
+      "functions": {
+        "covered": 3,
+        "total": 4
+      },
+      "lines": {
+        "covered": 17,
+        "total": 19
+      },
+      "branches": {
+        "covered": 3,
+        "total": 3,
+        "informational": true
+      }
+    },
+    "packages/reactivity/src/signal.ts": {
+      "statements": {
+        "covered": 252,
+        "total": 290
+      },
+      "functions": {
+        "covered": 25,
+        "total": 31
+      },
+      "lines": {
+        "covered": 252,
+        "total": 290
+      },
+      "branches": {
+        "covered": 70,
+        "total": 77,
+        "informational": true
+      }
+    },
+    "packages/reactivity/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/reactivity/src/watch.ts": {
+      "statements": {
+        "covered": 223,
+        "total": 272
+      },
+      "functions": {
+        "covered": 17,
+        "total": 19
+      },
+      "lines": {
+        "covered": 223,
+        "total": 272
+      },
+      "branches": {
+        "covered": 82,
+        "total": 92,
+        "informational": true
+      }
+    },
+    "packages/renderer/src/app.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/renderer/src/client/server-components-client.ts": {
+      "statements": {
+        "covered": 117,
+        "total": 123
+      },
+      "functions": {
+        "covered": 13,
+        "total": 13
+      },
+      "lines": {
+        "covered": 117,
+        "total": 123
+      },
+      "branches": {
+        "covered": 41,
+        "total": 48,
+        "informational": true
+      }
+    },
+    "packages/renderer/src/data/data-fetching.ts": {
+      "statements": {
+        "covered": 302,
+        "total": 306
+      },
+      "functions": {
+        "covered": 16,
+        "total": 16
+      },
+      "lines": {
+        "covered": 302,
+        "total": 306
+      },
+      "branches": {
+        "covered": 100,
+        "total": 105,
+        "informational": true
+      }
+    },
+    "packages/renderer/src/dom/dom-renderer.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/renderer/src/hydration/enhanced-hydration.ts": {
+      "statements": {
+        "covered": 319,
+        "total": 398
+      },
+      "functions": {
+        "covered": 24,
+        "total": 29
+      },
+      "lines": {
+        "covered": 319,
+        "total": 398
+      },
+      "branches": {
+        "covered": 88,
+        "total": 102,
+        "informational": true
+      }
+    },
+    "packages/renderer/src/index.ts": {
+      "statements": {
+        "covered": 207,
+        "total": 256
+      },
+      "functions": {
+        "covered": 22,
+        "total": 27
+      },
+      "lines": {
+        "covered": 207,
+        "total": 256
+      },
+      "branches": {
+        "covered": 51,
+        "total": 57,
+        "informational": true
+      }
+    },
+    "packages/renderer/src/server/server-components.ts": {
+      "statements": {
+        "covered": 190,
+        "total": 190
+      },
+      "functions": {
+        "covered": 19,
+        "total": 19
+      },
+      "lines": {
+        "covered": 190,
+        "total": 190
+      },
+      "branches": {
+        "covered": 64,
+        "total": 64,
+        "informational": true
+      }
+    },
+    "packages/renderer/src/shared/global-slot.ts": {
+      "statements": {
+        "covered": 8,
+        "total": 8
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 8,
+        "total": 8
+      },
+      "branches": {
+        "covered": 4,
+        "total": 4,
+        "informational": true
+      }
+    },
+    "packages/renderer/src/signal/index.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/renderer/src/signal/signal-renderer.ts": {
+      "statements": {
+        "covered": 120,
+        "total": 141
+      },
+      "functions": {
+        "covered": 8,
+        "total": 8
+      },
+      "lines": {
+        "covered": 120,
+        "total": 141
+      },
+      "branches": {
+        "covered": 21,
+        "total": 27,
+        "informational": true
+      }
+    },
+    "packages/renderer/src/ssr/ssr-island.ts": {
+      "statements": {
+        "covered": 379,
+        "total": 519
+      },
+      "functions": {
+        "covered": 25,
+        "total": 27
+      },
+      "lines": {
+        "covered": 379,
+        "total": 519
+      },
+      "branches": {
+        "covered": 123,
+        "total": 150,
+        "informational": true
+      }
+    },
+    "packages/renderer/src/ssr/ssr-renderer.ts": {
+      "statements": {
+        "covered": 80,
+        "total": 94
+      },
+      "functions": {
+        "covered": 5,
+        "total": 5
+      },
+      "lines": {
+        "covered": 80,
+        "total": 94
+      },
+      "branches": {
+        "covered": 33,
+        "total": 41,
+        "informational": true
+      }
+    },
+    "packages/renderer/src/ssr/ssr-stream-optimized.ts": {
+      "statements": {
+        "covered": 204,
+        "total": 262
+      },
+      "functions": {
+        "covered": 18,
+        "total": 20
+      },
+      "lines": {
+        "covered": 204,
+        "total": 262
+      },
+      "branches": {
+        "covered": 40,
+        "total": 55,
+        "informational": true
+      }
+    },
+    "packages/renderer/src/ssr/ssr-stream.ts": {
+      "statements": {
+        "covered": 269,
+        "total": 277
+      },
+      "functions": {
+        "covered": 14,
+        "total": 14
+      },
+      "lines": {
+        "covered": 269,
+        "total": 277
+      },
+      "branches": {
+        "covered": 94,
+        "total": 102,
+        "informational": true
+      }
+    },
+    "packages/renderer/src/ssr/ssr-utils.ts": {
+      "statements": {
+        "covered": 231,
+        "total": 238
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 231,
+        "total": 238
+      },
+      "branches": {
+        "covered": 37,
+        "total": 39,
+        "informational": true
+      }
+    },
+    "packages/renderer/src/unmount.ts": {
+      "statements": {
+        "covered": 71,
+        "total": 71
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4
+      },
+      "lines": {
+        "covered": 71,
+        "total": 71
+      },
+      "branches": {
+        "covered": 16,
+        "total": 16,
+        "informational": true
+      }
+    },
+    "packages/renderer/src/utils.ts": {
+      "statements": {
+        "covered": 4,
+        "total": 4
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 4,
+        "total": 4
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/renderer/src/vapor/mount-component.ts": {
+      "statements": {
+        "covered": 137,
+        "total": 175
+      },
+      "functions": {
+        "covered": 13,
+        "total": 17
+      },
+      "lines": {
+        "covered": 137,
+        "total": 175
+      },
+      "branches": {
+        "covered": 51,
+        "total": 68,
+        "informational": true
+      }
+    },
+    "packages/renderer/src/vapor/vapor-app.ts": {
+      "statements": {
+        "covered": 95,
+        "total": 112
+      },
+      "functions": {
+        "covered": 7,
+        "total": 7
+      },
+      "lines": {
+        "covered": 95,
+        "total": 112
+      },
+      "branches": {
+        "covered": 24,
+        "total": 28,
+        "informational": true
+      }
+    },
+    "packages/renderer/src/vapor/vapor-hmr.ts": {
+      "statements": {
+        "covered": 191,
+        "total": 194
+      },
+      "functions": {
+        "covered": 18,
+        "total": 19
+      },
+      "lines": {
+        "covered": 191,
+        "total": 194
+      },
+      "branches": {
+        "covered": 51,
+        "total": 52,
+        "informational": true
+      }
+    },
+    "packages/renderer/src/vapor/vapor-ssr.ts": {
+      "statements": {
+        "covered": 143,
+        "total": 211
+      },
+      "functions": {
+        "covered": 9,
+        "total": 14
+      },
+      "lines": {
+        "covered": 143,
+        "total": 211
+      },
+      "branches": {
+        "covered": 19,
+        "total": 34,
+        "informational": true
+      }
+    },
+    "packages/shared-types/src/debug.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/shared-types/src/type-utils.ts": {
+      "statements": {
+        "covered": 48,
+        "total": 48
+      },
+      "functions": {
+        "covered": 12,
+        "total": 12
+      },
+      "lines": {
+        "covered": 48,
+        "total": 48
+      },
+      "branches": {
+        "covered": 21,
+        "total": 21,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/cli/src/commands/add.ts": {
+      "statements": {
+        "covered": 159,
+        "total": 159
+      },
+      "functions": {
+        "covered": 13,
+        "total": 13
+      },
+      "lines": {
+        "covered": 159,
+        "total": 159
+      },
+      "branches": {
+        "covered": 29,
+        "total": 29,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/cli/src/commands/build.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 29
+      },
+      "functions": {
+        "covered": 0,
+        "total": 1
+      },
+      "lines": {
+        "covered": 1,
+        "total": 29
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/cli/src/commands/create.ts": {
+      "statements": {
+        "covered": 215,
+        "total": 230
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3
+      },
+      "lines": {
+        "covered": 215,
+        "total": 230
+      },
+      "branches": {
+        "covered": 58,
+        "total": 63,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/cli/src/commands/dev.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 28
+      },
+      "functions": {
+        "covered": 0,
+        "total": 1
+      },
+      "lines": {
+        "covered": 1,
+        "total": 28
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/cli/src/commands/generate.ts": {
+      "statements": {
+        "covered": 274,
+        "total": 302
+      },
+      "functions": {
+        "covered": 11,
+        "total": 11
+      },
+      "lines": {
+        "covered": 274,
+        "total": 302
+      },
+      "branches": {
+        "covered": 43,
+        "total": 74,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/cli/src/commands/plugin.ts": {
+      "statements": {
+        "covered": 215,
+        "total": 262
+      },
+      "functions": {
+        "covered": 4,
+        "total": 6
+      },
+      "lines": {
+        "covered": 215,
+        "total": 262
+      },
+      "branches": {
+        "covered": 66,
+        "total": 69,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/cli/src/commands/run.ts": {
+      "statements": {
+        "covered": 104,
+        "total": 188
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4
+      },
+      "lines": {
+        "covered": 104,
+        "total": 188
+      },
+      "branches": {
+        "covered": 27,
+        "total": 49,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/cli/src/commands/test.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 24
+      },
+      "functions": {
+        "covered": 0,
+        "total": 1
+      },
+      "lines": {
+        "covered": 1,
+        "total": 24
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/cli/src/create.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 2
+      },
+      "functions": {
+        "covered": 0,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 2
+      },
+      "branches": {
+        "covered": 0,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/cli/src/index.ts": {
+      "statements": {
+        "covered": 9,
+        "total": 13
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 9,
+        "total": 13
+      },
+      "branches": {
+        "covered": 1,
+        "total": 5,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/cli/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/cli/src/utils/fs.ts": {
+      "statements": {
+        "covered": 22,
+        "total": 34
+      },
+      "functions": {
+        "covered": 5,
+        "total": 6
+      },
+      "lines": {
+        "covered": 22,
+        "total": 34
+      },
+      "branches": {
+        "covered": 8,
+        "total": 8,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/cli/src/utils/logger.ts": {
+      "statements": {
+        "covered": 36,
+        "total": 40
+      },
+      "functions": {
+        "covered": 8,
+        "total": 9
+      },
+      "lines": {
+        "covered": 36,
+        "total": 40
+      },
+      "branches": {
+        "covered": 8,
+        "total": 10,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/cli/src/utils/package.ts": {
+      "statements": {
+        "covered": 39,
+        "total": 43
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4
+      },
+      "lines": {
+        "covered": 39,
+        "total": 43
+      },
+      "branches": {
+        "covered": 18,
+        "total": 21,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/devtools/src/api.ts": {
+      "statements": {
+        "covered": 53,
+        "total": 53
+      },
+      "functions": {
+        "covered": 17,
+        "total": 17
+      },
+      "lines": {
+        "covered": 53,
+        "total": 53
+      },
+      "branches": {
+        "covered": 17,
+        "total": 17,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/devtools/src/bridge.ts": {
+      "statements": {
+        "covered": 80,
+        "total": 113
+      },
+      "functions": {
+        "covered": 12,
+        "total": 15
+      },
+      "lines": {
+        "covered": 80,
+        "total": 113
+      },
+      "branches": {
+        "covered": 15,
+        "total": 24,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/devtools/src/component-tree.ts": {
+      "statements": {
+        "covered": 95,
+        "total": 106
+      },
+      "functions": {
+        "covered": 10,
+        "total": 12
+      },
+      "lines": {
+        "covered": 95,
+        "total": 106
+      },
+      "branches": {
+        "covered": 24,
+        "total": 27,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/devtools/src/events.ts": {
+      "statements": {
+        "covered": 59,
+        "total": 81
+      },
+      "functions": {
+        "covered": 8,
+        "total": 12
+      },
+      "lines": {
+        "covered": 59,
+        "total": 81
+      },
+      "branches": {
+        "covered": 14,
+        "total": 17,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/devtools/src/index.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/devtools/src/panel/index.ts": {
+      "statements": {
+        "covered": 68,
+        "total": 80
+      },
+      "functions": {
+        "covered": 6,
+        "total": 8
+      },
+      "lines": {
+        "covered": 68,
+        "total": 80
+      },
+      "branches": {
+        "covered": 14,
+        "total": 19,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/devtools/src/panel/performance.ts": {
+      "statements": {
+        "covered": 348,
+        "total": 353
+      },
+      "functions": {
+        "covered": 27,
+        "total": 27
+      },
+      "lines": {
+        "covered": 348,
+        "total": 353
+      },
+      "branches": {
+        "covered": 94,
+        "total": 98,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/devtools/src/panel/state-editor.ts": {
+      "statements": {
+        "covered": 255,
+        "total": 287
+      },
+      "functions": {
+        "covered": 16,
+        "total": 17
+      },
+      "lines": {
+        "covered": 255,
+        "total": 287
+      },
+      "branches": {
+        "covered": 75,
+        "total": 87,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/devtools/src/panel/time-travel.ts": {
+      "statements": {
+        "covered": 402,
+        "total": 407
+      },
+      "functions": {
+        "covered": 28,
+        "total": 28
+      },
+      "lines": {
+        "covered": 402,
+        "total": 407
+      },
+      "branches": {
+        "covered": 106,
+        "total": 122,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/devtools/src/router-integration.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 11
+      },
+      "functions": {
+        "covered": 0,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 11
+      },
+      "branches": {
+        "covered": 0,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/devtools/src/signals.ts": {
+      "statements": {
+        "covered": 41,
+        "total": 43
+      },
+      "functions": {
+        "covered": 9,
+        "total": 10
+      },
+      "lines": {
+        "covered": 41,
+        "total": 43
+      },
+      "branches": {
+        "covered": 18,
+        "total": 18,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/devtools/src/snapshots.ts": {
+      "statements": {
+        "covered": 62,
+        "total": 111
+      },
+      "functions": {
+        "covered": 8,
+        "total": 12
+      },
+      "lines": {
+        "covered": 62,
+        "total": 111
+      },
+      "branches": {
+        "covered": 16,
+        "total": 18,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/devtools/src/state.ts": {
+      "statements": {
+        "covered": 33,
+        "total": 64
+      },
+      "functions": {
+        "covered": 5,
+        "total": 12
+      },
+      "lines": {
+        "covered": 33,
+        "total": 64
+      },
+      "branches": {
+        "covered": 5,
+        "total": 5,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/devtools/src/store-integration.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 23
+      },
+      "functions": {
+        "covered": 0,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 23
+      },
+      "branches": {
+        "covered": 0,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/devtools/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/tools/packages/test-utils/src/index.ts": {
+      "statements": {
+        "covered": 302,
+        "total": 309
+      },
+      "functions": {
+        "covered": 44,
+        "total": 45
+      },
+      "lines": {
+        "covered": 302,
+        "total": 309
+      },
+      "branches": {
+        "covered": 90,
+        "total": 100,
+        "informational": true
+      }
+    },
+    "packages/vdom/src/block.ts": {
+      "statements": {
+        "covered": 57,
+        "total": 59
+      },
+      "functions": {
+        "covered": 9,
+        "total": 10
+      },
+      "lines": {
+        "covered": 57,
+        "total": 59
+      },
+      "branches": {
+        "covered": 20,
+        "total": 21,
+        "informational": true
+      }
+    },
+    "packages/vdom/src/diff.ts": {
+      "statements": {
+        "covered": 85,
+        "total": 85
+      },
+      "functions": {
+        "covered": 6,
+        "total": 6
+      },
+      "lines": {
+        "covered": 85,
+        "total": 85
+      },
+      "branches": {
+        "covered": 35,
+        "total": 35,
+        "informational": true
+      }
+    },
+    "packages/vdom/src/directives.ts": {
+      "statements": {
+        "covered": 11,
+        "total": 27
+      },
+      "functions": {
+        "covered": 1,
+        "total": 2
+      },
+      "lines": {
+        "covered": 11,
+        "total": 27
+      },
+      "branches": {
+        "covered": 1,
+        "total": 5,
+        "informational": true
+      }
+    },
+    "packages/vdom/src/fragment.ts": {
+      "statements": {
+        "covered": 36,
+        "total": 51
+      },
+      "functions": {
+        "covered": 4,
+        "total": 7
+      },
+      "lines": {
+        "covered": 36,
+        "total": 51
+      },
+      "branches": {
+        "covered": 12,
+        "total": 14,
+        "informational": true
+      }
+    },
+    "packages/vdom/src/index.ts": {
+      "statements": {
+        "covered": 1,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0
+      },
+      "lines": {
+        "covered": 1,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "informational": true
+      }
+    },
+    "packages/vdom/src/list-diff.ts": {
+      "statements": {
+        "covered": 218,
+        "total": 279
+      },
+      "functions": {
+        "covered": 13,
+        "total": 14
+      },
+      "lines": {
+        "covered": 218,
+        "total": 279
+      },
+      "branches": {
+        "covered": 79,
+        "total": 87,
+        "informational": true
+      }
+    },
+    "packages/vdom/src/patch-children.ts": {
+      "statements": {
+        "covered": 140,
+        "total": 169
+      },
+      "functions": {
+        "covered": 7,
+        "total": 8
+      },
+      "lines": {
+        "covered": 140,
+        "total": 169
+      },
+      "branches": {
+        "covered": 31,
+        "total": 37,
+        "informational": true
+      }
+    },
+    "packages/vdom/src/patch-component.ts": {
+      "statements": {
+        "covered": 272,
+        "total": 298
+      },
+      "functions": {
+        "covered": 11,
+        "total": 11
+      },
+      "lines": {
+        "covered": 272,
+        "total": 298
+      },
+      "branches": {
+        "covered": 99,
+        "total": 116,
+        "informational": true
+      }
+    },
+    "packages/vdom/src/patch-element.ts": {
+      "statements": {
+        "covered": 302,
+        "total": 309
+      },
+      "functions": {
+        "covered": 14,
+        "total": 14
+      },
+      "lines": {
+        "covered": 302,
+        "total": 309
+      },
+      "branches": {
+        "covered": 162,
+        "total": 179,
+        "informational": true
+      }
+    },
+    "packages/vdom/src/patch-fragment.ts": {
+      "statements": {
+        "covered": 159,
+        "total": 232
+      },
+      "functions": {
+        "covered": 7,
+        "total": 8
+      },
+      "lines": {
+        "covered": 159,
+        "total": 232
+      },
+      "branches": {
+        "covered": 16,
+        "total": 28,
+        "informational": true
+      }
+    },
+    "packages/vdom/src/patch-suspense.ts": {
+      "statements": {
+        "covered": 298,
+        "total": 336
+      },
+      "functions": {
+        "covered": 15,
+        "total": 16
+      },
+      "lines": {
+        "covered": 298,
+        "total": 336
+      },
+      "branches": {
+        "covered": 67,
+        "total": 90,
+        "informational": true
+      }
+    },
+    "packages/vdom/src/patch-teleport.ts": {
+      "statements": {
+        "covered": 196,
+        "total": 204
+      },
+      "functions": {
+        "covered": 5,
+        "total": 5
+      },
+      "lines": {
+        "covered": 196,
+        "total": 204
+      },
+      "branches": {
+        "covered": 19,
+        "total": 35,
+        "informational": true
+      }
+    },
+    "packages/vdom/src/patch.ts": {
+      "statements": {
+        "covered": 489,
+        "total": 506
+      },
+      "functions": {
+        "covered": 53,
+        "total": 60
+      },
+      "lines": {
+        "covered": 489,
+        "total": 506
+      },
+      "branches": {
+        "covered": 193,
+        "total": 211,
+        "informational": true
+      }
+    },
+    "packages/vdom/src/render-helpers.ts": {
+      "statements": {
+        "covered": 152,
+        "total": 154
+      },
+      "functions": {
+        "covered": 11,
+        "total": 11
+      },
+      "lines": {
+        "covered": 152,
+        "total": 154
+      },
+      "branches": {
+        "covered": 70,
+        "total": 73,
+        "informational": true
+      }
+    },
+    "packages/vdom/src/transition-entry.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/vdom/src/transition-group.ts": {
+      "statements": {
+        "covered": 434,
+        "total": 449
+      },
+      "functions": {
+        "covered": 21,
+        "total": 21
+      },
+      "lines": {
+        "covered": 434,
+        "total": 449
+      },
+      "branches": {
+        "covered": 115,
+        "total": 137,
+        "informational": true
+      }
+    },
+    "packages/vdom/src/transition.ts": {
+      "statements": {
+        "covered": 392,
+        "total": 439
+      },
+      "functions": {
+        "covered": 30,
+        "total": 30
+      },
+      "lines": {
+        "covered": 392,
+        "total": 439
+      },
+      "branches": {
+        "covered": 106,
+        "total": 119,
+        "informational": true
+      }
+    },
+    "packages/vdom/src/types.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 0
+      },
+      "branches": {
+        "covered": 1,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/vdom/src/utils.ts": {
+      "statements": {
+        "covered": 49,
+        "total": 49
+      },
+      "functions": {
+        "covered": 8,
+        "total": 8
+      },
+      "lines": {
+        "covered": 49,
+        "total": 49
+      },
+      "branches": {
+        "covered": 24,
+        "total": 25,
+        "informational": true
+      }
+    },
+    "packages/vdom/src/vnode.ts": {
+      "statements": {
+        "covered": 287,
+        "total": 338
+      },
+      "functions": {
+        "covered": 15,
+        "total": 17
+      },
+      "lines": {
+        "covered": 287,
+        "total": 338
+      },
+      "branches": {
+        "covered": 152,
+        "total": 156,
+        "informational": true
+      }
+    },
+    "packages/web/src/css-vars.ts": {
+      "statements": {
+        "covered": 310,
+        "total": 333
+      },
+      "functions": {
+        "covered": 24,
+        "total": 26
+      },
+      "lines": {
+        "covered": 310,
+        "total": 333
+      },
+      "branches": {
+        "covered": 103,
+        "total": 115,
+        "informational": true
+      }
+    },
+    "packages/web/src/index.ts": {
+      "statements": {
+        "covered": 0,
+        "total": 1
+      },
+      "functions": {
+        "covered": 0,
+        "total": 1
+      },
+      "lines": {
+        "covered": 0,
+        "total": 1
+      },
+      "branches": {
+        "covered": 0,
+        "total": 1,
+        "informational": true
+      }
+    },
+    "packages/web/src/resize-observer.ts": {
+      "statements": {
+        "covered": 70,
+        "total": 125
+      },
+      "functions": {
+        "covered": 10,
+        "total": 12
+      },
+      "lines": {
+        "covered": 70,
+        "total": 125
+      },
+      "branches": {
+        "covered": 11,
+        "total": 15,
+        "informational": true
+      }
+    }
+  },
+  "jitter": {
+    "branches": [
+      {
+        "file": "packages/common/packages/a11y/src/index.ts",
+        "values": [160, 161, 159]
+      },
+      {
+        "file": "packages/compiler/src/codegen-signal-shared.ts",
+        "values": [667, 668, 668]
+      },
+      {
+        "file": "packages/compiler/src/codegen-signal.ts",
+        "values": [355, 355, 360]
+      },
+      {
+        "file": "packages/compiler/src/codegen-ssr.ts",
+        "values": [220, 220, 219]
+      },
+      {
+        "file": "packages/compiler/src/parser-children.ts",
+        "values": [56, 55, 55]
+      },
+      {
+        "file": "packages/compiler/src/prefix-identifiers.ts",
+        "values": [89, 89, 90]
+      },
+      {
+        "file": "packages/compiler/src/transform.ts",
+        "values": [135, 134, 136]
+      },
+      {
+        "file": "packages/compiler/src/optimizations/index.ts",
+        "values": [75, 74, 75]
+      },
+      {
+        "file": "packages/compiler/src/sfc/compile.ts",
+        "values": [141, 140, 140]
+      },
+      {
+        "file": "packages/compiler/src/transforms/if.ts",
+        "values": [80, 79, 80]
+      },
+      {
+        "file": "packages/compiler/src/transforms/transform-element.ts",
+        "values": [325, 324, 323]
+      },
+      {
+        "file": "packages/component/src/component-init.ts",
+        "values": [95, 96, 95]
+      },
+      {
+        "file": "packages/component/src/component-proxy.ts",
+        "values": [100, 102, 102]
+      },
+      {
+        "file": "packages/component/src/component-setup.ts",
+        "values": [76, 77, 77]
+      },
+      {
+        "file": "packages/component/src/props.ts",
+        "values": [117, 115, 116]
+      },
+      {
+        "file": "packages/component/src/transition.ts",
+        "values": [43, 44, 44]
+      },
+      {
+        "file": "packages/core/src/create-app.ts",
+        "values": [142, 141, 141]
+      },
+      {
+        "file": "packages/dom-runtime/src/index.ts",
+        "values": [255, 255, 253]
+      },
+      {
+        "file": "packages/ecosystem/packages/plugin/src/validator.ts",
+        "values": [110, 109, 109]
+      },
+      {
+        "file": "packages/ecosystem/packages/ui/src/components/Dialog.ts",
+        "values": [68, 67, 68]
+      },
+      {
+        "file": "packages/reactivity/src/effect.ts",
+        "values": [120, 121, 121]
+      },
+      {
+        "file": "packages/reactivity/src/reactive.ts",
+        "values": [181, 181, 182]
+      },
+      {
+        "file": "packages/renderer/src/ssr/ssr-island.ts",
+        "values": [124, 123, 124]
+      },
+      {
+        "file": "packages/renderer/src/ssr/ssr-utils.ts",
+        "values": [38, 37, 37]
+      },
+      {
+        "file": "packages/vdom/src/patch-children.ts",
+        "values": [32, 31, 31]
+      },
+      {
+        "file": "packages/vdom/src/patch-fragment.ts",
+        "values": [16, 17, 16]
+      },
+      {
+        "file": "packages/vdom/src/patch-suspense.ts",
+        "values": [67, 68, 67]
+      },
+      {
+        "file": "packages/vdom/src/vnode.ts",
+        "values": [152, 153, 153]
+      },
+      {
+        "file": "packages/web/src/css-vars.ts",
+        "values": [103, 104, 104]
+      }
+    ]
+  },
+  "uninstrumented": [
+    "packages/shared-types/src/app-context.ts",
+    "packages/shared-types/src/component.ts",
+    "packages/shared-types/src/index.ts",
+    "packages/shared-types/src/ref.ts",
+    "packages/shared-types/src/renderer.ts",
+    "packages/shared-types/src/vnode.ts",
+    "packages/shared-types/src/web.ts"
+  ],
+  "basis": {
+    "authoritative": "vitest-thresholds",
+    "authoritativeLabel": "coverage.include 全分母（棘轮 lines/statements 66.5、functions 72.2、branches 86.2）",
+    "auxiliary": "instrumented-files",
+    "auxiliaryLabel": "coverage/index.html 已插桩文件口径（如 87.91%，分母更窄，不可当作全仓覆盖率）",
+    "rule": "对外文档/报告只引用 authoritative；引用 auxiliary 必须逐处标注「已插桩文件口径」"
+  }
+}

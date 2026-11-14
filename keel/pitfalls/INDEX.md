@@ -49,7 +49,7 @@ keywords: [坑库, 索引, 假绿, 门禁, 负控]
 | 残留 | [residual](core/residuals.md) |
 | mtime | [mtime](verify/dist-mtime.md) |
 | cs漏项 | [csdiff](release/changeset-vs-diff.md) |
-| 旧口径 | [cov-age](verify/coverage-snapshot-commit-staleness.md) |
+| 自比对 | [gen](verify/coverage-generate-then-verify.md) |
 | commit≠push | [push](process/commit-vs-push.md) |
 | 旧dist | [stale](verify/bundle-gate-reads-stale-dist.md) |
 | 锚点 | [anchor](verify/negative-control-anchor-drift.md) |

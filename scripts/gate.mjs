@@ -1025,28 +1025,19 @@ const GATES = [
     approx: '数分钟',
     desc:
       '全量测试 + 覆盖率（覆盖率棘轮：lines/statements 66.5、functions 72.2、branches 86.2）。' +
-      '本项之后必须紧跟 coverage:snapshot → check-coverage-snapshot：覆盖率结论只认本次现场产物',
+      '本项之后紧跟 check-coverage-baseline：与版本控制里的静态基线逐文件比对。' +
+      '★ 档内不生成基线 —— 基线只能由 node scripts/coverage-baseline.mjs --update 显式写入',
   },
   {
-    name: 'coverage:snapshot',
+    name: 'check-coverage-baseline',
     tier: 'slow',
-    cmd: ['node', 'scripts/coverage-snapshot.mjs'],
-    approx: '~0.2s',
+    cmd: ['node', 'scripts/check-coverage-baseline.mjs'],
+    approx: '~0.5s',
     desc:
-      '★ 覆盖率现场快照（2026-11-14 判据口径变更）：把**刚生成的** coverage/coverage-final.json ' +
-      '的 sha256 与当时 HEAD 写入 coverage/snapshot.json。产物早于当前树、packages/ 有未提交改动、' +
-      '或未插桩集合偏离冻结清单时**拒绝写入** —— 不再把当前 HEAD 写进用陈旧产物算出的快照',
-  },
-  {
-    name: 'check-coverage-snapshot',
-    tier: 'slow',
-    cmd: ['node', 'scripts/check-coverage-snapshot.mjs'],
-    approx: '~0.3s',
-    desc:
-      '★ 覆盖率门禁（现场产物口径）：只读本次 test:coverage 生成的 coverage/coverage-final.json，' +
-      '要求其 sha256 与生成时 HEAD **同时**匹配快照，不一致即红并提示重跑 test:coverage；' +
-      '未插桩文件必须全部在冻结清单 scripts/coverage-uninstrumented.json 内，清单外任何一个即红。' +
-      '旧「97.5% 总额阈值 / 最多 11 个文件不插桩」口径已废止；fast 档不再出现任何覆盖率数字',
+      '★ 覆盖率门禁（逐文件棘轮，ADR 0034）：只读本次 test:coverage 的 coverage-final.json ' +
+      '与受版本控制的 scripts/coverage-baseline.json（三次运行取逐文件 min，无容差），' +
+      '判据为逐文件 / 全局 covered 不低于基线、未插桩集合不新增（7 条冻结清单保持）；' +
+      'branches 只记录不参与判据。旧「字节 sha256 + HEAD 双指纹」口径已废止（拿产物跟自己比）',
   },
   {
     name: 'check-negative-controls:slow',
@@ -1056,7 +1047,7 @@ const GATES = [
     approx: '~3min',
     desc:
       '负控慢控制：循环依赖（src/dist）、lint/format 与 2s 以上的行为电池注入实验。' +
-      '★ 必须排在覆盖率三项之后 —— check-coverage-snapshot 的三向反证需要真实的现场产物；' +
+      '★ 必须排在覆盖率两项之后 —— check-coverage-baseline 的注入实验需要真实的现场产物；' +
       '分层只改变运行频率，不降低「注入必红、恢复回绿」的判据',
   },
 ];

@@ -1,22 +1,20 @@
 ---
 scope: now
 status: active
-last-verified: 2026-11-14
-updated: 2026-11-14
-keywords: [S35, P0 止血, 体积裁决, 负控, 覆盖率快照, signal 收编, 快照基线, 产物求值, core/runtime]
+last-verified: 2026-11-15
+updated: 2026-11-15
+keywords: [S35, P0 止血, 体积裁决, 负控, 覆盖率基线, 逐文件棘轮, signal 收编, 快照基线, 产物求值, core/runtime]
 ---
 
 # NOW · main
 
-## 本轮（2026-11-14）
+## 本轮（2026-11-15）
 
-- 覆盖率：现场产物+双指纹+冻结清单；fast 不报。
-- signal 收编：第 2/3 步已下沉 shared，两版只留拼写；每步 230 份快照 + 100 模板对拍。
-- 快照基线：按 `fa7beaa4`/`d839b156` 刷新；负控改拼写 22 红，还原绿。
-- optimized/for13 缺 import 已修；新增产物自洽求值门禁。
-- 读 dist 门禁标 needsDist，自动前置 freshness；stale exit 1。
-- ADR 0033：优化器拆 `signal-optimized` 子入口；first-screen 80763→74595 B。
-- 发布物：`check-release-artifacts`、`check-publish-private` 已入档；就绪单见 [readiness](../docs/release/RELEASE-READINESS-7.0.0.md)。
+- 覆盖率门禁重做（[ADR 0034](decisions/0034-coverage-per-file-ratchet-baseline.md)）：改为受版本控制的静态基线
+  `scripts/coverage-baseline.json`，逐文件/全局 statements·functions·lines `covered` 不得下降，
+  未插桩集合不新增；`branches` 仅记录不参与判据。旧「sha256 + HEAD 双指纹」是档内自比对，已删。
+- 基线由 `--update` 连跑三次 `test:coverage` 取逐文件 min（无容差），三项抖动 0 文件；
+  slow 22 项（21 命名 + 1 自动前置）。上一轮记录见 [NOW 快照](NOW-history/2026-11-14-signal收编与产物门禁.md)。
 
 ## 当前焦点
 
@@ -42,7 +40,7 @@ keywords: [S35, P0 止血, 体积裁决, 负控, 覆盖率快照, signal 收编,
 - check-ui-styles 78 条欠账（Calendar 4 / Cascader 16 / ColorPicker 9 /
   DatePicker 24 / TimePicker 12 / Upload 13），只减不增。
 - 体积债：plugin / common-error 按需加载（ADR 0029）。
-- 覆盖率（全分母实测）：lines/statements 88.58%、functions 89.53%、branches 88.03%；棘轮下限 66.5/72.2/86.2。旧口径 97.5/97.99 不可横比
+- 覆盖率（三次取 min，全分母）：54932/61988 88.617%、3886/4336 89.622%；branches 16598/18854 仅信息；棘轮 66.5/72.2/86.2。旧口径 97.5/97.99 不可横比
 
 ## 下一步
 

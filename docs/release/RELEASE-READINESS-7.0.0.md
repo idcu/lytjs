@@ -112,29 +112,73 @@ npm view @lytjs/core version          # 期望 7.0.0
 **纪律**：
 
 - 「fast 绿」只能引用为「61 项源码级门禁通过」，不得表述为「测试全绿」，也不能作为发布依据；
-- 发布前唯一有效的测试结论是 `pnpm test:coverage` 全量运行（exit 0）+ 覆盖率现场快照校验；
-  任何历史「全绿」结论引用时必须标注档位与命令。
+- 发布前唯一有效的测试结论是 `pnpm test:coverage` 全量运行（exit 0）+ `check-coverage-baseline`
+  与版本控制里的静态基线逐文件比对（ADR 0034）；任何历史「全绿」结论引用时必须标注档位与命令。
 
 ### 3.2 发布时当场对账的两个数（2026-11-15 实测）
 
-| 口径                 | 数                                                                                                | 来源                                                 |
-| -------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| slow 档项数          | **23 项** = 22 项命名 + 1 项自动前置（`check-dist-freshness`，任何含 `needsDist` 的运行都会前置） | `node scripts/gate.mjs --list`，`tier: 'slow'` 计 22 |
-| `test:coverage` 全量 | **431 个测试文件 / 9014 个用例**（全绿，exit 0）                                                  | `pnpm test:coverage` 两次连跑一致                    |
-| 覆盖率棘轮           | lines/statements **66.5**、functions **72.2**、branches **86.2**                                  | `vitest.config.ts`                                   |
+| 口径                     | 数                                                                                                               | 来源                                                 |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| slow 档项数              | **22 项** = 21 项命名 + 1 项自动前置（`check-dist-freshness`，任何含 `needsDist` 的运行都会前置）                | `node scripts/gate.mjs --list`，`tier: 'slow'` 计 21 |
+| `test:coverage` 全量     | **431 个测试文件 / 9014 个用例**（全绿，exit 0）                                                                 | `pnpm test:coverage` 三次连跑一致                    |
+| 覆盖率棘轮               | lines/statements **66.5**、functions **72.2**、branches **86.2**                                                 | `vitest.config.ts`                                   |
+| 覆盖率基线（逐文件下界） | **442 个文件**；全局 statements **54932/61988**、functions **3886/4336**、lines **54932/61988**；未插桩 **7** 条 | `scripts/coverage-baseline.json`（三次运行取 min）   |
 
-⚠️ **不要把 `check-coverage-snapshot` 的绿读成「覆盖率数字可复现」**。它比对的是
-`coverage/coverage-final.json` 的**原始字节 sha256** + 快照里的 commit（见
-[coverage-snapshot.mjs](file:///Volumes/Data/lytjs/lytjs/scripts/coverage-snapshot.mjs#L140-L150)、
-[check-coverage-snapshot.mjs](file:///Volumes/Data/lytjs/lytjs/scripts/check-coverage-snapshot.mjs#L76-L86)），
-只证明「这份产物来自当前 HEAD 这棵树」。实测同一 HEAD、连续两次全量：
-statements/functions/lines 的分母与覆盖数一致（54932/61988、3886/4336、54932/61988），
-**branches 分母逐次抖动**（16600/18851 → 16605/18856，19 个文件各 ±1~3），
-因此两次的 sha256 必然不同（`b92674f8…` vs `a4b9ec19…`）；`--no-file-parallelism` 串行复跑同样不同
-（分支 16603/18854 → 16599/18850，另有一次语句覆盖数 ±1 的时序差异，`983c8237…` vs `31be9a78…`），
-排除并发分片因素，属 v8→istanbul 分支映射的非确定性。
-操作含义：`test:coverage` 会清空 `coverage/`（含 snapshot.json），所以**每次跑完都必须按 gate 顺序**
-重跑 `coverage-snapshot` → `check-coverage-snapshot`；该门禁不能、也不应被当作复现性证明。
+⚠️ **覆盖率结论 = 现场产物 vs 版本控制里的静态基线**（`check-coverage-baseline`，ADR 0034）。
+档内不再生成基线：`test:coverage` → `check-coverage-baseline`。判据是逐文件 / 全局
+statements、functions、lines 的 `covered` 不低于基线、未插桩集合不新增（7 条冻结清单保持）。
+旧「字节 sha256 + HEAD 双指纹」口径已废止 —— 它在档内生成快照再校验快照，是拿产物跟自己比，
+删测试也绿（见 pitfall `coverage-generate-then-verify`）。
+
+三次运行实测（2026-11-15，HEAD `ce2f9967`，431 文件 / 9014 用例全绿）：
+
+| 运行 | statements               | functions              | lines                    | branches（信息项）       |
+| ---- | ------------------------ | ---------------------- | ------------------------ | ------------------------ |
+| run1 | 54932 / 61988（88.617%） | 3886 / 4336（89.622%） | 54932 / 61988（88.617%） | 16600 / 18851（88.059%） |
+| run2 | 54932 / 61988（88.617%） | 3886 / 4336（89.622%） | 54932 / 61988（88.617%） | 16598 / 18849（88.058%） |
+| run3 | 54932 / 61988（88.617%） | 3886 / 4336（89.622%） | 54932 / 61988（88.617%） | 16603 / 18854（88.061%） |
+| 基线 | **54932 / 61988**        | **3886 / 4336**        | **54932 / 61988**        | 16598 / 18854（不参与）  |
+
+逐文件抖动（存进基线的 `jitter` 字段）：`statements` / `functions` / `lines` 均 **0 个文件**，
+`branches` **29 个文件**（如 `compiler/src/transform.ts` 135 → 134 → 136）。因此参与判据的三项
+下界就是真实值，一条语句的真实下降必然低于下界 → 判死；不设任何容差。
+
+**负控三态（原文摘录，2026-11-15）**
+
+① 删掉 `packages/shared-types/tests/type-utils.test.ts` 里一条现有测试：
+
+```
+改前  ✅ 判据 1 逐文件 442 个文件：statements / functions / lines 均不低于基线
+      statements 现场 54932/61988（88.617%）  基线 54932/61988
+      ✅ 判据 2 全局 covered 不低于基线
+      ✅ 判据 3 未插桩集合未新增成员            （exit 0）
+改后  ❌ 1 个文件的 covered 低于基线（逐文件棘轮）：
+        packages/shared-types/src/type-utils.ts  statements 48 → 41 · functions 12 → 11 · lines 48 → 41
+      ❌ 全局 covered 低于基线：
+          statements 基线 54932 → 现场 54925
+          functions  基线 3886 → 现场 3885
+          lines      基线 54932 → 现场 54925            （exit 1）
+还原  ✅ 判据 1 逐文件 442 个文件：statements / functions / lines 均不低于基线
+      ✅ 判据 2 全局 covered 不低于基线            （exit 0，全局回到 54932/3886/54932）
+```
+
+② 把 `packages/shared-types/src/type-utils.ts` 临时加进 `coverage.exclude`（挤出插桩范围）：
+
+```
+改前  ✅ check-coverage-baseline 通过              （exit 0，未插桩 7 条）
+改后  ❌ 1 个基线文件不在本次产物中（被删除或挤出插桩范围）：
+        packages/shared-types/src/type-utils.ts
+      未插桩        现场 8 条 / 基线 7 条 / 冻结清单 7 条
+      ❌ 未插桩集合新增成员（不允许整体不插桩）：
+        packages/shared-types/src/type-utils.ts
+      ❌ 全局 covered 低于基线：statements 54932 → 54884、functions 3886 → 3874、lines 54932 → 54884
+                                                        （exit 1）
+还原  ✅ 判据 1 / 2 / 3 全部通过                     （exit 0，未插桩回到 7 条）
+```
+
+> 基线是**下界**：覆盖率提升不会自动入账，需要显式
+> `node scripts/coverage-baseline.mjs --update`（连跑三次取 min、打印 diff、人工 `yes` 才落盘）。
+> 这是有意的，避免数字自然上涨导致棘轮失效。禁止手工下调基线值。
 
 ## 4. 失败回滚方式
 

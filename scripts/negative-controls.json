@@ -24,6 +24,7 @@
     "check-package-exports",
     "check-package-metadata",
     "check-publish-private",
+    "check-release-workflow",
     "check-consumer-demo",
     "check-examples",
     "check-render-shapes",
@@ -57,7 +58,6 @@
     "check-security-html",
     "check-core-signal-contract",
     "check-release-parity",
-    "check-release-workflow",
     "check-runtime-version",
     "check-web-cssvars",
     "check-config-semantics",
@@ -81,17 +81,13 @@
     "format:check",
     "test",
     "test:coverage",
-    "check-coverage-snapshot"
+    "check-coverage-baseline"
   ],
   "unverified": [],
   "uninjectable": [
     {
       "name": "check-negative-controls:slow",
       "reason": "聚合运行器：本身不产生产物判据，判据由它逐项运行的慢控制覆盖"
-    },
-    {
-      "name": "coverage:snapshot",
-      "reason": "生成器：只写现场快照，本身不做判据；其正确性由 check-coverage-snapshot 的三向反证覆盖"
     }
   ]
 }
