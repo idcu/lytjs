@@ -3,7 +3,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { parse } from '../src/parser';
-import { NodeTypes, ElementTypes } from '../src/constants';
+import { NodeTypes, ElementTypes, TextModes } from '../src/constants';
 import type {
   ElementNode,
   TextNode,
@@ -326,6 +326,31 @@ describe('parser', () => {
       const ast = parse('<div></div><!-- hi -->', { comments: false });
       expect(ast.children.some((c) => c.type === NodeTypes.COMMENT)).toBe(false);
       expect(ast.children.length).toBe(1);
+    });
+  });
+
+  // C-14：ParserOptions.getTextMode 此前只声明未读取 ⇒ 自定义标签的文本模式无法覆盖。
+  describe('getTextMode', () => {
+    it('返回 RAWTEXT 时按原始文本解析子节点', () => {
+      const ast = parse('<my-raw><b>x</b></my-raw>', {
+        getTextMode: (tag) => (tag === 'my-raw' ? TextModes.RAWTEXT : TextModes.DATA),
+      });
+      const el = ast.children[0] as ElementNode;
+      expect(el.children.length).toBe(1);
+      expect((el.children[0] as TextNode).content).toBe('<b>x</b>');
+    });
+
+    it('未返回时沿用内置模式（div → DATA）', () => {
+      const seen: string[] = [];
+      const ast = parse('<div><b>x</b></div>', {
+        getTextMode: (tag) => {
+          seen.push(tag);
+          return undefined as any;
+        },
+      });
+      expect(seen).toEqual(['div', 'b']);
+      const el = ast.children[0] as ElementNode;
+      expect((el.children[0] as ElementNode).tag).toBe('b');
     });
   });
 

@@ -49,8 +49,13 @@ export function parseElement(context: ParserContext): ElementNode | undefined {
     return element;
   }
 
+  // C-14：getTextMode 此前只声明未读取 ⇒ 自定义标签无法覆盖内置文本模式。
+  //   回调返回 undefined 时回落到下面的内置规则。
   let textMode: number = TextModes.DATA;
-  if (tag === 'textarea' || tag === 'title' || tag === 'xmp') {
+  const customTextMode = context.options.getTextMode?.(tag, element.ns);
+  if (customTextMode !== undefined) {
+    textMode = customTextMode;
+  } else if (tag === 'textarea' || tag === 'title' || tag === 'xmp') {
     textMode = TextModes.RCDATA;
   } else if (
     tag === 'style' ||

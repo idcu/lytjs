@@ -226,7 +226,12 @@ interface ParserOptions {
   isCustomElement?: (tag: string) => boolean;
   /** 判断标签是否为原生 HTML 标签 */
   isNativeTag?: (tag: string) => boolean;
-  /** 获取文本模式 */
+  /**
+   * 获取标签的文本模式（DATA / RCDATA / RAWTEXT / CDATA）。
+   * 返回 `undefined` 时回落到内置规则：
+   * textarea/title/xmp → RCDATA，script/style/iframe 等 → RAWTEXT，其余 → DATA。
+   * `ns` 当前固定为 0，仅保留扩展位。
+   */
   getTextMode?: (tag: string, ns: number) => TextModes;
   /** 自定义 HTML 实体解码函数 */
   decodeEntities?: (text: string, strict: boolean) => string;
