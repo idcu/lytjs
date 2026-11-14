@@ -41,6 +41,10 @@
 - [本地使用](./guide/local-usage.md)
 - [插件开发](./guide/plugins.md)
 
+## 🔄 迁移指南
+
+- [7.0.0 迁移指南（6.9.6 → 7.0.0）](./migration/v7.0.0.md)
+
 ## 📦 包文档
 
 - [包文档](./packages/index.md)
