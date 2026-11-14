@@ -9,6 +9,7 @@ import type { ComponentInternalInstance, ComponentPublicInstance, RenderFunction
 import type { VNode } from '@lytjs/common-vnode';
 import { callCreatedHook, handleError } from './lifecycle';
 import { createComponentPublicInstance } from './component-proxy';
+import { provideToInstance, resolveInjection } from './component-inject';
 
 // ==================== 模板编译器注入点 ====================
 
@@ -102,6 +103,61 @@ function normalizeWatchHandler(
 }
 
 /**
+ * 消费 Options API 的 `inject`：解析后写入公共实例，使 `this.key` 可读。
+ * P1-26：此前 `inject` 只存在于类型声明，运行时从不读取。
+ */
+function applyOptionsInject(instance: ComponentInternalInstance): void {
+  const raw = instance.type.inject as unknown;
+  if (!raw) return;
+
+  const assign = (key: string, value: unknown): void => {
+    (instance.ctx as unknown as Record<string, unknown>)[key] = value;
+    // 代理会缓存「某个 key 属于哪一层」的判定；注入值写入后必须失效，
+    // 否则后续读取可能仍走 OTHER 分支得到 undefined。
+    if (instance.accessCache) delete instance.accessCache[key];
+  };
+
+  if (Array.isArray(raw)) {
+    for (const key of raw as string[]) {
+      assign(key, resolveInjection(instance, key));
+    }
+    return;
+  }
+  if (typeof raw !== 'object') return;
+
+  for (const key of Object.keys(raw as Record<string, unknown>)) {
+    const opt = (raw as Record<string, unknown>)[key];
+    if (typeof opt === 'string' || typeof opt === 'symbol') {
+      assign(key, resolveInjection(instance, opt));
+    } else if (opt && typeof opt === 'object' && ('from' in opt || 'default' in opt)) {
+      const options = opt as { from?: string | symbol; default?: unknown };
+      assign(key, resolveInjection<unknown>(instance, options.from ?? key, options.default));
+    } else {
+      assign(key, resolveInjection(instance, key));
+    }
+  }
+}
+
+/**
+ * 消费 Options API 的 `provide`：在子组件创建前写入当前实例的 provides。
+ * P1-26：此前 `provide` 只存在于类型声明，运行时从不读取。
+ */
+function applyOptionsProvide(instance: ComponentInternalInstance): void {
+  const raw = instance.type.provide as unknown;
+  if (!raw) return;
+
+  const provided =
+    typeof raw === 'function'
+      ? (raw as (this: unknown) => Record<PropertyKey, unknown>).call(instance.ctx)
+      : raw;
+  if (!provided || typeof provided !== 'object') return;
+
+  for (const key of Reflect.ownKeys(provided as object)) {
+    provideToInstance(instance, key, (provided as Record<PropertyKey, unknown>)[key]);
+  }
+}
+
+/**
  * 完成组件 setup：处理 data、methods、computed、render。
  *
  * 错误处理：整个 setup 过程包裹在 try-catch 中，
@@ -121,6 +177,20 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
       );
     }
     handleError(err as Error, instance, 'finishComponentSetup (createComponentPublicInstance)');
+    instance.render = () => null as unknown as VNode;
+    return;
+  }
+
+  // 步骤 1.5：消费 Options API 的 inject（P1-26）
+  try {
+    applyOptionsInject(instance);
+  } catch (err) {
+    if (__DEV__) {
+      warn(
+        `Failed to initialize inject for ${(type as Record<string, unknown>).name || '(anonymous)'}: ${(err as Error).message}`,
+      );
+    }
+    handleError(err as Error, instance, 'finishComponentSetup (inject initialization)');
     instance.render = () => null as unknown as VNode;
     return;
   }
@@ -307,6 +377,20 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
       );
     }
     handleError(err as Error, instance, 'finishComponentSetup (watch initialization)');
+    instance.render = () => null as unknown as VNode;
+    return;
+  }
+
+  // 步骤 5.5：消费 Options API 的 provide（P1-26）
+  try {
+    applyOptionsProvide(instance);
+  } catch (err) {
+    if (__DEV__) {
+      warn(
+        `Failed to initialize provide for ${(type as Record<string, unknown>).name || '(anonymous)'}: ${(err as Error).message}`,
+      );
+    }
+    handleError(err as Error, instance, 'finishComponentSetup (provide initialization)');
     instance.render = () => null as unknown as VNode;
     return;
   }

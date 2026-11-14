@@ -530,3 +530,85 @@ describe('options API effect scope', () => {
     expect(watchCalls).toBe(1);
   });
 });
+
+describe('options API provide/inject', () => {
+  const makeInstance = (
+    options: ComponentOptions,
+    parent: ComponentInternalInstance | null = null,
+  ): ComponentInternalInstance => {
+    const instance = createComponentInstance({ type: options, props: {}, children: null }, parent);
+    setupComponent(instance);
+    return instance;
+  };
+
+  it('options provide reaches child setup inject', () => {
+    const parent = makeInstance(
+      defineComponent({
+        name: 'OptionsProvider',
+        provide: { theme: 'dark' },
+      }),
+    );
+    const child = makeInstance(
+      defineComponent({
+        name: 'OptionsConsumer',
+        setup() {
+          return { theme: inject('theme') };
+        },
+      }),
+      parent,
+    );
+
+    expect(child.setupState.theme).toBe('dark');
+  });
+
+  it('options inject writes values onto public instance', () => {
+    const parent = makeInstance(
+      defineComponent({
+        name: 'CompositionProvider',
+        setup() {
+          provide('token', 'x');
+          provide('alias', 'y');
+          return {};
+        },
+      }),
+    );
+    const child = makeInstance(
+      defineComponent({
+        name: 'OptionsInjector',
+        inject: ['token', 'alias'],
+        render: () => null,
+      }),
+      parent,
+    );
+
+    expect((child.ctx as unknown as Record<string, unknown>).token).toBe('x');
+    expect((child.ctx as unknown as Record<string, unknown>).alias).toBe('y');
+  });
+
+  it('options inject object form supports from/default', () => {
+    const parent = makeInstance(
+      defineComponent({
+        name: 'CompositionProvider2',
+        setup() {
+          provide('source', 'value');
+          return {};
+        },
+      }),
+    );
+    const child = makeInstance(
+      defineComponent({
+        name: 'OptionsInjector2',
+        inject: {
+          renamed: { from: 'source' },
+          missing: { default: 'fallback' },
+        },
+        render: () => null,
+      }),
+      parent,
+    );
+
+    const ctx = child.ctx as unknown as Record<string, unknown>;
+    expect(ctx.renamed).toBe('value');
+    expect(ctx.missing).toBe('fallback');
+  });
+});

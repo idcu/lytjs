@@ -51,23 +51,37 @@ export interface InjectOptions<T = unknown> {
 export function provide<T>(key: InjectionKey<T> | string | symbol, value: T): void {
   const instance = getCurrentInstance();
   if (instance) {
-    // FIX: P2-34 添加原型链边界说明注释：
-    // 首次 provide 时，如果当前 provides 与父级共享同一个引用，
-    // 则创建以父级 provides 为原型的新对象，确保层级隔离。
-    // 这是利用 JavaScript 原型链实现 provide/inject 的核心机制：
-    // 子组件通过原型链向上查找 provides，而当前组件的 provide 会
-    // 创建一个新对象遮蔽父级同名 key，不会污染父级的 provides。
-    // 注意：Object.create(null) 创建的对象没有原型，因此不会继承
-    // Object.prototype 上的属性（如 toString、hasOwnProperty 等），
-    // 这是正确的做法，避免 key 冲突。
-    if (instance.provides === (instance.parent?.provides ?? null)) {
-      instance.provides = Object.create(
-        instance.provides as Record<string | symbol, unknown>,
-      ) as Record<string | symbol, unknown>;
-    }
-    // FIX: P0-4 修复 provide/inject symbol key 被转为 string 的问题，直接使用 key 而不进行类型断言
-    instance.provides[key as string | symbol] = value;
+    provideToInstance(instance, key, value);
   }
+}
+
+/**
+ * 向指定实例提供值（不依赖 currentInstance）。
+ * P1-26：Options API 的 `provide` 在 finishComponentSetup 阶段消费，
+ * 此时没有 currentInstance，必须能直接写目标实例。
+ */
+export function provideToInstance<T>(
+  instance: { provides: Record<string | symbol, unknown>; parent: { provides?: unknown } | null },
+  key: InjectionKey<T> | string | symbol,
+  value: T,
+): void {
+  const parentProvides = instance.parent?.provides ?? null;
+  // FIX: P2-34 添加原型链边界说明注释：
+  // 首次 provide 时，如果当前 provides 与父级共享同一个引用，
+  // 则创建以父级 provides 为原型的新对象，确保层级隔离。
+  // 这是利用 JavaScript 原型链实现 provide/inject 的核心机制：
+  // 子组件通过原型链向上查找 provides，而当前组件的 provide 会
+  // 创建一个新对象遮蔽父级同名 key，不会污染父级的 provides。
+  // 注意：Object.create(null) 创建的对象没有原型，因此不会继承
+  // Object.prototype 上的属性（如 toString、hasOwnProperty 等），
+  // 这是正确的做法，避免 key 冲突。
+  if (instance.provides === parentProvides) {
+    instance.provides = Object.create(
+      instance.provides as Record<string | symbol, unknown>,
+    ) as Record<string | symbol, unknown>;
+  }
+  // FIX: P0-4 修复 provide/inject symbol key 被转为 string 的问题，直接使用 key 而不进行类型断言
+  instance.provides[key as string | symbol] = value;
 }
 
 /**
@@ -92,7 +106,26 @@ export function inject<T>(
     // 无实例上下文 - 返回默认值
     return resolveDefault(defaultValue, options);
   }
+  return resolveInjection(instance, key, defaultValue, options);
+}
 
+/** resolveInjection 只需要实例的 provides / parent / appContext.provides 三处。 */
+export interface InjectionHost {
+  provides: Record<string | symbol, unknown>;
+  parent: InjectionHost | null;
+  appContext?: { provides?: Record<string | symbol, unknown> };
+}
+
+/**
+ * 从指定实例解析注入值（不依赖 currentInstance）。
+ * P1-26：Options API 的 `inject` 在 finishComponentSetup 阶段消费。
+ */
+export function resolveInjection<T>(
+  instance: InjectionHost,
+  key: InjectionKey<T> | string | symbol,
+  defaultValue?: T | (() => T),
+  options?: InjectOptions<T>,
+): T | undefined {
   const lookupKey = options?.from ?? key;
 
   if (options?.local) {
@@ -108,7 +141,7 @@ export function inject<T>(
   }
 
   // 沿父组件链向上查找
-  let current = instance.parent;
+  let current: InjectionHost | null = instance.parent;
   while (current) {
     const provides = current.provides as Record<string | symbol, unknown>;
     if ((lookupKey as string | symbol) in provides) {
@@ -122,7 +155,7 @@ export function inject<T>(
   //   在根组件里**永远 inject 不到**（实测：`app.provide('theme','dark')` 之后
   //   根组件的 `inject('theme')` 返回 `undefined`；只有子组件能通过父链拿到）。
   //   app 级 provides 就挂在 `appContext.provides` 上，这里补一次查找。
-  const appProvides = instance.appContext?.provides as Record<string | symbol, unknown> | undefined;
+  const appProvides = instance.appContext?.provides;
   if (appProvides && (lookupKey as string | symbol) in appProvides) {
     return appProvides[lookupKey as string] as T | undefined;
   }

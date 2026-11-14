@@ -91,7 +91,7 @@ export interface ComponentOptions<
   watch?: Record<string, (...args: unknown[]) => void>;
   methods?: Record<string, (...args: unknown[]) => unknown>;
   provide?: Record<string, unknown> | (() => Record<string, unknown>);
-  inject?: Record<string, unknown>;
+  inject?: Array<string | symbol> | Record<string, unknown>;
   mixins?: ComponentOptions[];
   extends?: ComponentOptions;
   beforeCreate?(): void;
