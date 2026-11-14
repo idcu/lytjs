@@ -372,6 +372,51 @@ const CONTROLS = {
     );
   },
 
+  'check-cross-entry-singletons': () => {
+    // 两种修法各做一次反向注入：改回普通 Symbol()、改回模块级变量 ⇒ 探针必红。
+    // 只改子入口 dist；主入口仍按 Symbol.for / globalThis 读，两份副本必须对不上。
+    const subDist = join(ROOT, 'packages/compiler/dist/signal-optimized.mjs');
+    if (!existsSync(subDist)) {
+      throw new Error('check-cross-entry-singletons：缺少 compiler dist，请先构建');
+    }
+    const cmd = [
+      'node',
+      'scripts/check-cross-entry-singletons.mjs',
+      '--only',
+      'compiler.optimized-registry',
+    ];
+
+    withPatchedFile(
+      subDist,
+      (text) => {
+        const patched = text.replace(
+          /Symbol\.for\("@lytjs\/compiler\/signal-optimized-generator"\)/,
+          'Symbol("@lytjs/compiler/signal-optimized-generator")',
+        );
+        if (patched === text) {
+          throw new Error('check-cross-entry-singletons：Symbol.for 注入点漂移');
+        }
+        return patched;
+      },
+      () => expectFail(cmd, 'check-cross-entry-singletons(Symbol.for→Symbol)'),
+    );
+
+    withPatchedFile(
+      subDist,
+      (text) => {
+        const re = /function slot\(\) \{[\s\S]*?\n\}/;
+        if (!re.test(text)) {
+          throw new Error('check-cross-entry-singletons：globalThis 槽注入点漂移');
+        }
+        return text.replace(
+          re,
+          'var __negctlSlot = {};\nfunction slot() {\n  return __negctlSlot;\n}',
+        );
+      },
+      () => expectFail(cmd, 'check-cross-entry-singletons(globalThis→模块级)'),
+    );
+  },
+
   'check-lockfile': () => {
     // 声明一条锁文件 importer 里不存在的依赖 ⇒ 「package.json ↔ pnpm-lock.yaml 一致」必红
     const file = join(ROOT, 'packages/common/packages/is/package.json');

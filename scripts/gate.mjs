@@ -885,6 +885,17 @@ const GATES = [
       '文本快照与 parity 执行器（helper 全量注入）都会掩盖缺失 import —— 本项补的就是这个盲区',
   },
   {
+    name: 'check-cross-entry-singletons',
+    tier: 'slow',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-cross-entry-singletons.mjs'],
+    approx: '~0.2s',
+    desc:
+      '★ dist 级跨入口单例（2026-11-14）：tsup splitting:false 逐入口内联，模块级可变状态每个入口一份副本。' +
+      '同一进程直接 import 全部 dist 入口，按显式探针表「写 A 读 B」断言共享；同时扫描模块级可变状态，' +
+      '未登记 / 登记失效即红（scripts/cross-entry-singletons.json 棘轮）',
+  },
+  {
     name: 'check-doc-imports',
     tier: 'slow',
     needsDist: true,

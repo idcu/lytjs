@@ -1,0 +1,1471 @@
+{
+  "updatedAt": "2026-11-14",
+  "states": {
+    "packages/adapter-web/src/web-dom-renderer.ts::domOperationQueue": {
+      "kind": "let/var",
+      "line": 33,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/adapter-web/src/web-dom-renderer.ts::isBatchScheduled": {
+      "kind": "let/var",
+      "line": 35,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/adapter-web/src/web-dom-renderer.ts::registeredCustomElements": {
+      "kind": "new Set",
+      "line": 19,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/adapter-web/src/web-host-extended.ts::cachedCapabilities": {
+      "kind": "let/var",
+      "line": 694,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/adapter-web/src/web-host.ts::isReflowScheduled": {
+      "kind": "let/var",
+      "line": 42,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/adapter-web/src/web-host.ts::pendingReflowElements": {
+      "kind": "new Set",
+      "line": 40,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/adapter-web/src/web-host.ts::reflowCache": {
+      "kind": "new WeakMap",
+      "line": 35,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/adapter-web/src/web-patch-events.ts::poolHitCount": {
+      "kind": "let/var",
+      "line": 60,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/adapter-web/src/web-patch-events.ts::poolMissCount": {
+      "kind": "let/var",
+      "line": 61,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/adapter-web/src/web-patch-events.ts::veiCache": {
+      "kind": "new WeakMap",
+      "line": 52,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/common/packages/error/src/index.ts::runtimeDevMode": {
+      "kind": "let/var",
+      "line": 496,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/common/packages/error/src/index.ts::warnedMessages": {
+      "kind": "new Set",
+      "line": 573,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/common/packages/memory/src/index.ts::globalLeakDetector": {
+      "kind": "let/var",
+      "line": 409,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/common/packages/path/src/index.ts::regexCache": {
+      "kind": "new Map",
+      "line": 129,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/common/packages/performance/src/index.ts::globalMonitor": {
+      "kind": "let/var",
+      "line": 458,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/common/packages/scheduler/src/index.ts::globalErrorHandler": {
+      "kind": "let/var",
+      "line": 39,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/common/packages/scheduler/src/index.ts::isFlushing": {
+      "kind": "let/var",
+      "line": 92,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/common/packages/scheduler/src/index.ts::isFlushPending": {
+      "kind": "let/var",
+      "line": 93,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/common/packages/scheduler/src/index.ts::maxIterations": {
+      "kind": "let/var",
+      "line": 98,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/common/packages/scheduler/src/index.ts::postFlushCbsSet": {
+      "kind": "new Set",
+      "line": 115,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/common/packages/scheduler/src/index.ts::preFlushCbsSet": {
+      "kind": "new Set",
+      "line": 113,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/common/packages/scheduler/src/index.ts::queueSet": {
+      "kind": "new Set",
+      "line": 111,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/common/packages/scheduler/src/index.ts::resolvedPromise": {
+      "kind": "let/var",
+      "line": 117,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/common/packages/string/src/index.ts::idCounter": {
+      "kind": "let/var",
+      "line": 478,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/common/packages/warn/src/index.ts::currentLevel": {
+      "kind": "let/var",
+      "line": 36,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/common/packages/warn/src/index.ts::customHandler": {
+      "kind": "let/var",
+      "line": 37,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/common/packages/warn/src/index.ts::warnedSet": {
+      "kind": "new Set",
+      "line": 38,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/compiler/src/codegen-ssr.ts::ssrLocals": {
+      "kind": "let/var",
+      "line": 69,
+      "classification": "a",
+      "entries": ["index", "ssr"],
+      "reason": "每次 generateSSR 调用内重置，同步执行，无跨调用残留"
+    },
+    "packages/compiler/src/codegen-ssr.ts::ssrMapEnabled": {
+      "kind": "let/var",
+      "line": 77,
+      "classification": "a",
+      "entries": ["index", "ssr"],
+      "reason": "每次 generateSSR 调用内重置，同步执行，无跨调用残留"
+    },
+    "packages/compiler/src/codegen-ssr.ts::ssrMapMarks": {
+      "kind": "let/var",
+      "line": 78,
+      "classification": "a",
+      "entries": ["index", "ssr"],
+      "reason": "每次 generateSSR 调用内重置，同步执行，无跨调用残留"
+    },
+    "packages/compiler/src/codegen-ssr.ts::ssrSelectModel": {
+      "kind": "let/var",
+      "line": 72,
+      "classification": "a",
+      "entries": ["index", "ssr"],
+      "reason": "每次 generateSSR 调用内重置，同步执行，无跨调用残留"
+    },
+    "packages/compiler/src/codegen-ssr.ts::usesRenderList": {
+      "kind": "let/var",
+      "line": 74,
+      "classification": "a",
+      "entries": ["index", "ssr"],
+      "reason": "每次 generateSSR 调用内重置，同步执行，无跨调用残留"
+    },
+    "packages/compiler/src/index.ts::cacheStats": {
+      "kind": "let/var",
+      "line": 110,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "仅 index 入口持有编译缓存；sfc 入口内联的是另一份自洽缓存，不跨入口读写"
+    },
+    "packages/compiler/src/index.ts::compileCache": {
+      "kind": "new Map",
+      "line": 89,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "仅 index 入口持有编译缓存；sfc 入口内联的是另一份自洽缓存，不跨入口读写"
+    },
+    "packages/compiler/src/index.ts::contentHashCache": {
+      "kind": "new Map",
+      "line": 97,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "仅 index 入口持有编译缓存；sfc 入口内联的是另一份自洽缓存，不跨入口读写"
+    },
+    "packages/compiler/src/parser-shared.ts::endTagCache": {
+      "kind": "new Map",
+      "line": 38,
+      "classification": "a",
+      "entries": ["index", "sfc"],
+      "reason": "解析缓存按入口各自自洽，跨入口最多多解析一次、不会算错"
+    },
+    "packages/compiler/src/sfc/custom-blocks.ts::processorMap": {
+      "kind": "new Map",
+      "line": 30,
+      "classification": "a",
+      "entries": ["sfc"],
+      "reason": "注册与消费都在 sfc 入口图内，主入口不暴露注册 API"
+    },
+    "packages/compiler/src/transforms/for.ts::FOR_BRANCH_ELEMENT": {
+      "kind": "Symbol()",
+      "line": 40,
+      "classification": "a",
+      "entries": ["index", "sfc"],
+      "reason": "写读都在 transform 阶段（for.ts 写、if.ts 读），同一入口图内"
+    },
+    "packages/compiler/src/warning.ts::globalWarningLevel": {
+      "kind": "let/var",
+      "line": 33,
+      "classification": "c",
+      "entries": ["index", "sfc", "signal", "ssr", "wasm"],
+      "reason": "setWarningLevel 只在主入口导出；/sfc /signal /ssr /wasm 各有副本，主入口设置对子入口编译静默不生效"
+    },
+    "packages/compiler/src/wasm/wasm-compiler.ts::warnedWasmSimulated": {
+      "kind": "let/var",
+      "line": 361,
+      "classification": "a",
+      "entries": ["wasm"],
+      "reason": "wasm 入口独占，无第二个入口读它"
+    },
+    "packages/component/src/app-factory.ts::appFactory": {
+      "kind": "let/var",
+      "line": 41,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/component/src/async-component.ts::asyncComponentStates": {
+      "kind": "new WeakMap",
+      "line": 114,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/component/src/async-component.ts::preloadedComponents": {
+      "kind": "new WeakMap",
+      "line": 100,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/component/src/async-component.ts::preloadedLoaders": {
+      "kind": "new Set",
+      "line": 108,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/component/src/builtin-components.ts::registered": {
+      "kind": "let/var",
+      "line": 67,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/component/src/builtin-registry.ts::registry": {
+      "kind": "new Map",
+      "line": 31,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/component/src/component-init.ts::templateCompiler": {
+      "kind": "let/var",
+      "line": 25,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/component/src/component-proxy.ts::warnedBuiltinComponents": {
+      "kind": "new Set",
+      "line": 24,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/component/src/component-setup.ts::propsVersionCache": {
+      "kind": "new WeakMap",
+      "line": 301,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/component/src/component-setup.ts::setupContextCache": {
+      "kind": "new WeakMap",
+      "line": 41,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/component/src/component-setup.ts::stablePropsCache": {
+      "kind": "new WeakMap",
+      "line": 317,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/component/src/component-setup.ts::uid": {
+      "kind": "let/var",
+      "line": 37,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/component/src/error-boundary.ts::activeErrorBoundaries": {
+      "kind": "new Set",
+      "line": 234,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/component/src/error-boundary.ts::globalHandlerInstalled": {
+      "kind": "let/var",
+      "line": 235,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/component/src/error-boundary.ts::globalReporter": {
+      "kind": "let/var",
+      "line": 89,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/component/src/keep-alive.ts::anonymousTypeIds": {
+      "kind": "new WeakMap",
+      "line": 562,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/component/src/keep-alive.ts::anonymousTypeIdSeed": {
+      "kind": "let/var",
+      "line": 563,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/component/src/lifecycle.ts::currentInstance": {
+      "kind": "let/var",
+      "line": 34,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/component/src/lifecycle.ts::lifecycleCallOrder": {
+      "kind": "new WeakMap",
+      "line": 38,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/component/src/suspense.ts::_linkerRegistered": {
+      "kind": "let/var",
+      "line": 19,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/component/src/suspense.ts::currentSuspenseBoundary": {
+      "kind": "let/var",
+      "line": 391,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/core-vnode/src/web-component.ts::elementContextMap": {
+      "kind": "new WeakMap",
+      "line": 43,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "elementContextMap 只在 index 入口的 web-component 流程使用"
+    },
+    "packages/core/src/common-integration.ts::_integrations": {
+      "kind": "let/var",
+      "line": 150,
+      "classification": "c",
+      "entries": ["index", "runtime"],
+      "reason": "主入口与 /runtime 各一份集成注册表；registerIntegrations 目前无人调用"
+    },
+    "packages/core/src/composition.ts::instanceCssModulesMap": {
+      "kind": "new WeakMap",
+      "line": 181,
+      "classification": "c",
+      "entries": ["index", "runtime"],
+      "reason": "实例 id / CSS Modules 映射按入口各一份；跨入口读会 miss 后重算，内部尚未混用"
+    },
+    "packages/core/src/composition.ts::instanceIdMap": {
+      "kind": "new WeakMap",
+      "line": 137,
+      "classification": "c",
+      "entries": ["index", "runtime"],
+      "reason": "实例 id / CSS Modules 映射按入口各一份；跨入口读会 miss 后重算，内部尚未混用"
+    },
+    "packages/core/src/config.ts::globalConfigManager": {
+      "kind": "let/var",
+      "line": 66,
+      "classification": "c",
+      "entries": ["index", "runtime"],
+      "reason": "主入口与 /runtime 各一份全局配置管理器；UI 两个 dist 同进程加载，setter 目前无人调用"
+    },
+    "packages/core/src/create-app-with-compiler.ts::compilerInstalled": {
+      "kind": "let/var",
+      "line": 30,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "仅 index 入口的带编译器 createApp 使用"
+    },
+    "packages/core/src/template-compiler.ts::renderCache": {
+      "kind": "new Map",
+      "line": 30,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "仅 index 入口持有模板编译缓存；ADR 0030 约定 runtime 不含编译器"
+    },
+    "packages/dom-runtime/src/events.ts::delegatedEventsMap": {
+      "kind": "new WeakMap",
+      "line": 33,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/dom-runtime/src/index.ts::activeCleanupStack": {
+      "kind": "let/var",
+      "line": 1123,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/dom-runtime/src/index.ts::batchedFns": {
+      "kind": "let/var",
+      "line": 950,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/dom-runtime/src/index.ts::delegateHandlers": {
+      "kind": "new Map",
+      "line": 1003,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/dom-runtime/src/index.ts::globalListeners": {
+      "kind": "new Set",
+      "line": 1008,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/dom-runtime/src/index.ts::rafId": {
+      "kind": "let/var",
+      "line": 951,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/dom-runtime/src/index.ts::reconcileGroupMap": {
+      "kind": "new WeakMap",
+      "line": 725,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/dom-runtime/src/index.ts::reconcileGroupMemberSet": {
+      "kind": "new WeakSet",
+      "line": 728,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/dom-runtime/src/index.ts::reconcileKeyMap": {
+      "kind": "new WeakMap",
+      "line": 722,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/devtools/src/benchmark.ts::benchmarkResults": {
+      "kind": "new Map",
+      "line": 53,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/devtools/src/componentTree.ts::componentIdCounter": {
+      "kind": "let/var",
+      "line": 10,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/devtools/src/debugEnhancer.ts::debugOptions": {
+      "kind": "let/var",
+      "line": 98,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/devtools/src/devtools.ts::devtoolsInstance": {
+      "kind": "let/var",
+      "line": 65,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/devtools/src/performance.ts::activeObservers": {
+      "kind": "let/var",
+      "line": 108,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/devtools/src/performance.ts::alertCooldowns": {
+      "kind": "new Map",
+      "line": 94,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/devtools/src/performance.ts::alertRules": {
+      "kind": "new Map",
+      "line": 88,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/devtools/src/performance.ts::currentDepth": {
+      "kind": "let/var",
+      "line": 659,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/devtools/src/performance.ts::observers": {
+      "kind": "new Set",
+      "line": 124,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/devtools/src/performance.ts::options": {
+      "kind": "let/var",
+      "line": 97,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/devtools/src/routeInspector.ts::afterEachHandler": {
+      "kind": "let/var",
+      "line": 36,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/devtools/src/routeInspector.ts::routerInstance": {
+      "kind": "let/var",
+      "line": 30,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/devtools/src/signalsInspector.ts::signalRegistry": {
+      "kind": "new Map",
+      "line": 142,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/devtools/src/signalsInspector.ts::snapshotCursor": {
+      "kind": "let/var",
+      "line": 184,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/devtools/src/storeInspector.ts::globalChangeCallbacks": {
+      "kind": "new Set",
+      "line": 23,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/devtools/src/storeInspector.ts::storeRegistry": {
+      "kind": "new Map",
+      "line": 17,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/devtools/src/storeInspector.ts::subscribers": {
+      "kind": "new Map",
+      "line": 20,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/di/src/provider-tree.ts::currentProviderNode": {
+      "kind": "let/var",
+      "line": 29,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/di/src/provider-tree.ts::globalProviderRoot": {
+      "kind": "let/var",
+      "line": 26,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/di/src/scope.ts::scopeFactory": {
+      "kind": "let/var",
+      "line": 45,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/ssr-kit/packages/cache/src/index.ts::defaultCache": {
+      "kind": "let/var",
+      "line": 541,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/ssr-kit/packages/hmr/src/index.ts::globalClient": {
+      "kind": "let/var",
+      "line": 346,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/ssr-kit/packages/ssr/src/hydration.ts::componentIdCounter": {
+      "kind": "let/var",
+      "line": 40,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/store/src/defineStore.ts::registries": {
+      "kind": "new WeakMap",
+      "line": 77,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/store/src/defineStore.ts::warnedNoPinia": {
+      "kind": "new Set",
+      "line": 93,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/store/src/pinia.ts::activePinia": {
+      "kind": "let/var",
+      "line": 15,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/ui/src/components/Message.ts::messageId": {
+      "kind": "let/var",
+      "line": 24,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/ui/src/composables/useFormField.ts::FORM_ERRORS_KEY": {
+      "kind": "Symbol()",
+      "line": 14,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/web-framework/packages/router/src/components/RouterView.ts::asyncComponentCache": {
+      "kind": "new WeakMap",
+      "line": 53,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/web-framework/packages/router/src/components/RouterView.ts::viewDepthKey": {
+      "kind": "Symbol()",
+      "line": 27,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/ecosystem/packages/web-framework/packages/router/src/composables/useRouter.ts::currentRouter": {
+      "kind": "let/var",
+      "line": 8,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/reactivity/src/batch.ts::globalBatchDepth": {
+      "kind": "let/var",
+      "line": 56,
+      "classification": "c",
+      "entries": ["index", "signal", "scope", "async"],
+      "reason": "批处理深度与 pendingScopes 按入口各一份；跨入口批处理不会合并"
+    },
+    "packages/reactivity/src/batch.ts::pendingScopes": {
+      "kind": "new Set",
+      "line": 68,
+      "classification": "c",
+      "entries": ["index", "signal", "scope", "async"],
+      "reason": "批处理深度与 pendingScopes 按入口各一份；跨入口批处理不会合并"
+    },
+    "packages/reactivity/src/computed.ts::_isSSR": {
+      "kind": "let/var",
+      "line": 193,
+      "classification": "c",
+      "entries": ["index", "signal", "scope", "async"],
+      "reason": "computed 栈/深度按入口各一份；跨入口依赖追踪分裂"
+    },
+    "packages/reactivity/src/computed.ts::computedDepth": {
+      "kind": "let/var",
+      "line": 24,
+      "classification": "c",
+      "entries": ["index", "signal", "scope", "async"],
+      "reason": "computed 栈/深度按入口各一份；跨入口依赖追踪分裂"
+    },
+    "packages/reactivity/src/computed.ts::computedStack": {
+      "kind": "new Set",
+      "line": 25,
+      "classification": "c",
+      "entries": ["index", "signal", "scope", "async"],
+      "reason": "computed 栈/深度按入口各一份；跨入口依赖追踪分裂"
+    },
+    "packages/reactivity/src/constants.ts::ComputedRefSymbol": {
+      "kind": "Symbol()",
+      "line": 13,
+      "classification": "c",
+      "entries": ["index", "signal", "scope", "async"],
+      "reason": "导出的 unique symbol 身份跨入口不同；任何基于这些 Symbol 的检测在跨入口时会失效"
+    },
+    "packages/reactivity/src/constants.ts::ITERATE_KEY": {
+      "kind": "Symbol()",
+      "line": 57,
+      "classification": "c",
+      "entries": ["index", "signal", "scope", "async"],
+      "reason": "导出的 unique symbol 身份跨入口不同；任何基于这些 Symbol 的检测在跨入口时会失效"
+    },
+    "packages/reactivity/src/constants.ts::ReactiveSymbol": {
+      "kind": "Symbol()",
+      "line": 14,
+      "classification": "c",
+      "entries": ["index", "signal", "scope", "async"],
+      "reason": "导出的 unique symbol 身份跨入口不同；任何基于这些 Symbol 的检测在跨入口时会失效"
+    },
+    "packages/reactivity/src/constants.ts::ReadonlySymbol": {
+      "kind": "Symbol()",
+      "line": 15,
+      "classification": "c",
+      "entries": ["index", "signal", "scope", "async"],
+      "reason": "导出的 unique symbol 身份跨入口不同；任何基于这些 Symbol 的检测在跨入口时会失效"
+    },
+    "packages/reactivity/src/constants.ts::RefSymbol": {
+      "kind": "Symbol()",
+      "line": 11,
+      "classification": "c",
+      "entries": ["index", "signal", "scope", "async"],
+      "reason": "导出的 unique symbol 身份跨入口不同；任何基于这些 Symbol 的检测在跨入口时会失效"
+    },
+    "packages/reactivity/src/constants.ts::ShallowRefSymbol": {
+      "kind": "Symbol()",
+      "line": 12,
+      "classification": "c",
+      "entries": ["index", "signal", "scope", "async"],
+      "reason": "导出的 unique symbol 身份跨入口不同；任何基于这些 Symbol 的检测在跨入口时会失效"
+    },
+    "packages/reactivity/src/effect-scope.ts::activeEffectScope": {
+      "kind": "let/var",
+      "line": 31,
+      "classification": "c",
+      "entries": ["index", "scope", "async"],
+      "reason": "activeEffectScope 按入口各一份；跨入口注册的 effect 不会挂到当前 scope"
+    },
+    "packages/reactivity/src/effect.ts::_trackDepth": {
+      "kind": "let/var",
+      "line": 14,
+      "classification": "c",
+      "entries": ["index", "signal", "signal-component", "scope", "async"],
+      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+    },
+    "packages/reactivity/src/effect.ts::activeEffect": {
+      "kind": "let/var",
+      "line": 13,
+      "classification": "c",
+      "entries": ["index", "signal", "signal-component", "scope", "async"],
+      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+    },
+    "packages/reactivity/src/effect.ts::asyncBatchRestorePoint": {
+      "kind": "let/var",
+      "line": 31,
+      "classification": "c",
+      "entries": ["index", "signal", "signal-component", "scope", "async"],
+      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+    },
+    "packages/reactivity/src/effect.ts::asyncBatchTokenSeq": {
+      "kind": "let/var",
+      "line": 28,
+      "classification": "c",
+      "entries": ["index", "signal", "signal-component", "scope", "async"],
+      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+    },
+    "packages/reactivity/src/effect.ts::isFirstRenderPass": {
+      "kind": "let/var",
+      "line": 40,
+      "classification": "c",
+      "entries": ["index", "signal", "signal-component", "scope", "async"],
+      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+    },
+    "packages/reactivity/src/effect.ts::isTriggerBatching": {
+      "kind": "let/var",
+      "line": 134,
+      "classification": "c",
+      "entries": ["index", "signal", "signal-component", "scope", "async"],
+      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+    },
+    "packages/reactivity/src/effect.ts::pendingAsyncBatches": {
+      "kind": "let/var",
+      "line": 29,
+      "classification": "c",
+      "entries": ["index", "signal", "signal-component", "scope", "async"],
+      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+    },
+    "packages/reactivity/src/effect.ts::shouldTrack": {
+      "kind": "let/var",
+      "line": 16,
+      "classification": "c",
+      "entries": ["index", "signal", "signal-component", "scope", "async"],
+      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+    },
+    "packages/reactivity/src/effect.ts::skippedTrackingCount": {
+      "kind": "let/var",
+      "line": 43,
+      "classification": "c",
+      "entries": ["index", "signal", "signal-component", "scope", "async"],
+      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+    },
+    "packages/reactivity/src/effect.ts::suspendedAsyncBatches": {
+      "kind": "let/var",
+      "line": 30,
+      "classification": "c",
+      "entries": ["index", "signal", "signal-component", "scope", "async"],
+      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+    },
+    "packages/reactivity/src/effect.ts::targetMap": {
+      "kind": "new WeakMap",
+      "line": 15,
+      "classification": "c",
+      "entries": ["index", "signal", "signal-component", "scope", "async"],
+      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+    },
+    "packages/reactivity/src/effect.ts::triggerBatchDepth": {
+      "kind": "let/var",
+      "line": 142,
+      "classification": "c",
+      "entries": ["index", "signal", "signal-component", "scope", "async"],
+      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+    },
+    "packages/reactivity/src/effect.ts::triggerDepth": {
+      "kind": "let/var",
+      "line": 129,
+      "classification": "c",
+      "entries": ["index", "signal", "signal-component", "scope", "async"],
+      "reason": "activeEffect/targetMap 等追踪状态在 index 与 signal/scope/async 入口各一份；主入口 effect + 子入口 signal 时订阅静默失效"
+    },
+    "packages/reactivity/src/index.ts::devToolsEnabled": {
+      "kind": "let/var",
+      "line": 203,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "devtools 订阅集合只在主入口创建与消费"
+    },
+    "packages/reactivity/src/index.ts::devToolsFlushScheduled": {
+      "kind": "let/var",
+      "line": 209,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "devtools 订阅集合只在主入口创建与消费"
+    },
+    "packages/reactivity/src/index.ts::effectRunListeners": {
+      "kind": "new Set",
+      "line": 201,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "devtools 订阅集合只在主入口创建与消费"
+    },
+    "packages/reactivity/src/index.ts::pendingEffectNotifications": {
+      "kind": "let/var",
+      "line": 208,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "devtools 订阅集合只在主入口创建与消费"
+    },
+    "packages/reactivity/src/index.ts::pendingSignalNotifications": {
+      "kind": "let/var",
+      "line": 207,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "devtools 订阅集合只在主入口创建与消费"
+    },
+    "packages/reactivity/src/index.ts::signalChangeListeners": {
+      "kind": "new Set",
+      "line": 199,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "devtools 订阅集合只在主入口创建与消费"
+    },
+    "packages/reactivity/src/reactive.ts::builtInSymbols": {
+      "kind": "new Set",
+      "line": 202,
+      "classification": "c",
+      "entries": ["index", "scope", "async"],
+      "reason": "代理缓存按入口各一份；同一对象跨入口得到不同代理，依赖收集分裂"
+    },
+    "packages/reactivity/src/reactive.ts::collectionMethodCache": {
+      "kind": "new WeakMap",
+      "line": 42,
+      "classification": "c",
+      "entries": ["index", "scope", "async"],
+      "reason": "代理缓存按入口各一份；同一对象跨入口得到不同代理，依赖收集分裂"
+    },
+    "packages/reactivity/src/reactive.ts::reactiveMap": {
+      "kind": "new WeakMap",
+      "line": 586,
+      "classification": "c",
+      "entries": ["index", "scope", "async"],
+      "reason": "代理缓存按入口各一份；同一对象跨入口得到不同代理，依赖收集分裂"
+    },
+    "packages/reactivity/src/reactive.ts::readonlyMap": {
+      "kind": "new WeakMap",
+      "line": 588,
+      "classification": "c",
+      "entries": ["index", "scope", "async"],
+      "reason": "代理缓存按入口各一份；同一对象跨入口得到不同代理，依赖收集分裂"
+    },
+    "packages/reactivity/src/reactive.ts::shallowReactiveMap": {
+      "kind": "new WeakMap",
+      "line": 587,
+      "classification": "c",
+      "entries": ["index", "scope", "async"],
+      "reason": "代理缓存按入口各一份；同一对象跨入口得到不同代理，依赖收集分裂"
+    },
+    "packages/reactivity/src/reactive.ts::shallowReadonlyMap": {
+      "kind": "new WeakMap",
+      "line": 589,
+      "classification": "c",
+      "entries": ["index", "scope", "async"],
+      "reason": "代理缓存按入口各一份；同一对象跨入口得到不同代理，依赖收集分裂"
+    },
+    "packages/reactivity/src/reactive.ts::skipMethods": {
+      "kind": "new Set",
+      "line": 179,
+      "classification": "c",
+      "entries": ["index", "scope", "async"],
+      "reason": "代理缓存按入口各一份；同一对象跨入口得到不同代理，依赖收集分裂"
+    },
+    "packages/reactivity/src/shared.ts::_rawDepth": {
+      "kind": "let/var",
+      "line": 31,
+      "classification": "c",
+      "entries": ["index", "signal", "scope", "async"],
+      "reason": "raw 深度/seen 集合按入口各一份；跨入口嵌套 raw 判定不一致"
+    },
+    "packages/reactivity/src/shared.ts::_rawSeenSet": {
+      "kind": "new Set",
+      "line": 26,
+      "classification": "c",
+      "entries": ["index", "signal", "scope", "async"],
+      "reason": "raw 深度/seen 集合按入口各一份；跨入口嵌套 raw 判定不一致"
+    },
+    "packages/reactivity/src/shared/untracked.ts::isUntracked": {
+      "kind": "let/var",
+      "line": 20,
+      "classification": "c",
+      "entries": ["index", "scope", "async"],
+      "reason": "untracked 开关按入口各一份；跨入口 untracked 不生效"
+    },
+    "packages/reactivity/src/signal.ts::activeSubscriber": {
+      "kind": "let/var",
+      "line": 68,
+      "classification": "c",
+      "entries": ["index", "signal", "signal-component", "scope", "async"],
+      "reason": "activeSubscriber/pendingNotifications 在 index 与 signal/scope/async 入口各一份；跨入口订阅静默失效"
+    },
+    "packages/reactivity/src/signal.ts::batchDepth": {
+      "kind": "let/var",
+      "line": 77,
+      "classification": "c",
+      "entries": ["index", "signal", "signal-component", "scope", "async"],
+      "reason": "activeSubscriber/pendingNotifications 在 index 与 signal/scope/async 入口各一份；跨入口订阅静默失效"
+    },
+    "packages/reactivity/src/signal.ts::isNotifying": {
+      "kind": "let/var",
+      "line": 102,
+      "classification": "c",
+      "entries": ["index", "signal", "signal-component", "scope", "async"],
+      "reason": "activeSubscriber/pendingNotifications 在 index 与 signal/scope/async 入口各一份；跨入口订阅静默失效"
+    },
+    "packages/reactivity/src/signal.ts::isSignalComputedGetter": {
+      "kind": "let/var",
+      "line": 82,
+      "classification": "c",
+      "entries": ["index", "signal", "signal-component", "scope", "async"],
+      "reason": "activeSubscriber/pendingNotifications 在 index 与 signal/scope/async 入口各一份；跨入口订阅静默失效"
+    },
+    "packages/reactivity/src/signal.ts::pendingNotifications": {
+      "kind": "new Set",
+      "line": 88,
+      "classification": "c",
+      "entries": ["index", "signal", "signal-component", "scope", "async"],
+      "reason": "activeSubscriber/pendingNotifications 在 index 与 signal/scope/async 入口各一份；跨入口订阅静默失效"
+    },
+    "packages/reactivity/src/signal.ts::pendingTriggerOps": {
+      "kind": "new Map",
+      "line": 96,
+      "classification": "c",
+      "entries": ["index", "signal", "signal-component", "scope", "async"],
+      "reason": "activeSubscriber/pendingNotifications 在 index 与 signal/scope/async 入口各一份；跨入口订阅静默失效"
+    },
+    "packages/reactivity/src/signal.ts::trackDependency": {
+      "kind": "let/var",
+      "line": 73,
+      "classification": "c",
+      "entries": ["index", "signal", "signal-component", "scope", "async"],
+      "reason": "activeSubscriber/pendingNotifications 在 index 与 signal/scope/async 入口各一份；跨入口订阅静默失效"
+    },
+    "packages/renderer/src/client/server-components-client.ts::defaultConfig": {
+      "kind": "let/var",
+      "line": 23,
+      "classification": "c",
+      "entries": ["index", "client"],
+      "reason": "defaultConfig/hydrationState 在主入口内联副本与 /client 入口各一份；水合标记跨入口读不到"
+    },
+    "packages/renderer/src/client/server-components-client.ts::hydrationState": {
+      "kind": "new Map",
+      "line": 147,
+      "classification": "c",
+      "entries": ["index", "client"],
+      "reason": "defaultConfig/hydrationState 在主入口内联副本与 /client 入口各一份；水合标记跨入口读不到"
+    },
+    "packages/renderer/src/hydration/enhanced-hydration.ts::isProcessingQueue": {
+      "kind": "let/var",
+      "line": 412,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "仅主入口的增强水合路径使用"
+    },
+    "packages/renderer/src/index.ts::pluginContextHandlers": {
+      "kind": "new Map",
+      "line": 84,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "插件表只在主入口创建与消费，子入口不暴露插件 API"
+    },
+    "packages/renderer/src/ssr/ssr-island.ts::templateRenderCache": {
+      "kind": "new WeakMap",
+      "line": 266,
+      "classification": "a",
+      "entries": ["index", "ssr"],
+      "reason": "纯渲染缓存，跨入口只影响命中率"
+    },
+    "packages/renderer/src/ssr/ssr-stream.ts::suspenseIdCounter": {
+      "kind": "let/var",
+      "line": 23,
+      "classification": "c",
+      "entries": ["index", "ssr"],
+      "reason": "suspenseIdCounter 在 index 与 /ssr 各一份；同文档混用两个入口会重复 id"
+    },
+    "packages/renderer/src/unmount.ts::cleanupHookRegistry": {
+      "kind": "new WeakMap",
+      "line": 46,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "三张卸载注册表只被主入口 import"
+    },
+    "packages/renderer/src/unmount.ts::effectSubscriptionRegistry": {
+      "kind": "new WeakMap",
+      "line": 40,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "三张卸载注册表只被主入口 import"
+    },
+    "packages/renderer/src/unmount.ts::eventListenerRegistry": {
+      "kind": "new WeakMap",
+      "line": 34,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "三张卸载注册表只被主入口 import"
+    },
+    "packages/renderer/src/vapor/mount-component.ts::renderer": {
+      "kind": "let/var",
+      "line": 39,
+      "classification": "c",
+      "entries": ["index", "vapor"],
+      "reason": "vapor 渲染器槽在主入口动态副本与 /vapor 入口各一份；跨入口设置互不可见"
+    },
+    "packages/renderer/src/vapor/vapor-hmr.ts::componentIdCounter": {
+      "kind": "let/var",
+      "line": 60,
+      "classification": "c",
+      "entries": ["index", "vapor"],
+      "reason": "HMR 组件注册表/计数器在主入口动态副本与 /vapor 入口各一份；跨入口注册彼此不可见"
+    },
+    "packages/renderer/src/vapor/vapor-hmr.ts::componentRegistry": {
+      "kind": "new Map",
+      "line": 57,
+      "classification": "c",
+      "entries": ["index", "vapor"],
+      "reason": "HMR 组件注册表/计数器在主入口动态副本与 /vapor 入口各一份；跨入口注册彼此不可见"
+    },
+    "packages/renderer/src/vapor/vapor-hmr.ts::hmrListeners": {
+      "kind": "new Set",
+      "line": 144,
+      "classification": "c",
+      "entries": ["index", "vapor"],
+      "reason": "HMR 组件注册表/计数器在主入口动态副本与 /vapor 入口各一份；跨入口注册彼此不可见"
+    },
+    "packages/tools/packages/devtools/src/bridge.ts::genericHandlers": {
+      "kind": "new Set",
+      "line": 24,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/tools/packages/devtools/src/bridge.ts::handlers": {
+      "kind": "new Map",
+      "line": 23,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/tools/packages/devtools/src/bridge.ts::isActive": {
+      "kind": "let/var",
+      "line": 25,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/tools/packages/devtools/src/component-tree.ts::components": {
+      "kind": "new Map",
+      "line": 16,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/tools/packages/devtools/src/component-tree.ts::idCounter": {
+      "kind": "let/var",
+      "line": 17,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/tools/packages/devtools/src/events.ts::isRecording": {
+      "kind": "let/var",
+      "line": 16,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/tools/packages/devtools/src/events.ts::maxEvents": {
+      "kind": "let/var",
+      "line": 15,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/tools/packages/devtools/src/panel/performance.ts::componentPerformanceMap": {
+      "kind": "new Map",
+      "line": 78,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/tools/packages/devtools/src/panel/performance.ts::currentFps": {
+      "kind": "let/var",
+      "line": 84,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/tools/packages/devtools/src/panel/performance.ts::frameCount": {
+      "kind": "let/var",
+      "line": 82,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/tools/packages/devtools/src/panel/performance.ts::isMonitoring": {
+      "kind": "let/var",
+      "line": 80,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/tools/packages/devtools/src/panel/performance.ts::lastFpsUpdate": {
+      "kind": "let/var",
+      "line": 83,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/tools/packages/devtools/src/panel/performance.ts::updateIntervalId": {
+      "kind": "let/var",
+      "line": 81,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/tools/packages/devtools/src/panel/time-travel.ts::recordingStartTime": {
+      "kind": "let/var",
+      "line": 62,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/tools/packages/devtools/src/panel/time-travel.ts::recordingStopTime": {
+      "kind": "let/var",
+      "line": 69,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/tools/packages/devtools/src/panel/time-travel.ts::unsubscribeEvents": {
+      "kind": "let/var",
+      "line": 70,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/tools/packages/devtools/src/signals.ts::signalIdCounter": {
+      "kind": "let/var",
+      "line": 30,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/tools/packages/devtools/src/signals.ts::signals": {
+      "kind": "new Map",
+      "line": 29,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/tools/packages/devtools/src/snapshots.ts::snapshotIdCounter": {
+      "kind": "let/var",
+      "line": 12,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/tools/packages/devtools/src/snapshots.ts::snapshots": {
+      "kind": "new Map",
+      "line": 11,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/tools/packages/devtools/src/state.ts::stateSubscribers": {
+      "kind": "new Set",
+      "line": 14,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/tools/packages/test-utils/src/index.ts::cleanupCallbacks": {
+      "kind": "let/var",
+      "line": 591,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "单入口包：dist 只有一个 JS 入口，模块级状态不存在逐入口副本"
+    },
+    "packages/vdom/src/block.ts::blockTrackingDelta": {
+      "kind": "let/var",
+      "line": 42,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "仅主入口渲染过程使用，同步执行"
+    },
+    "packages/vdom/src/block.ts::currentBlock": {
+      "kind": "let/var",
+      "line": 30,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "仅主入口渲染过程使用，同步执行"
+    },
+    "packages/vdom/src/list-diff.ts::registeredDOMOpsMap": {
+      "kind": "new Map",
+      "line": 66,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "DOMOperations 注册与读取都在主入口 patch 流程内；/transition 不含 list-diff"
+    },
+    "packages/vdom/src/patch-component.ts::componentRecursionDepthMap": {
+      "kind": "new WeakMap",
+      "line": 23,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "仅主入口组件 patch 流程写入与读取"
+    },
+    "packages/vdom/src/patch-component.ts::componentRenderCaches": {
+      "kind": "new WeakMap",
+      "line": 31,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "仅主入口组件 patch 流程写入与读取"
+    },
+    "packages/vdom/src/patch-suspense.ts::suspenseLinker": {
+      "kind": "let/var",
+      "line": 45,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "仅主入口 suspense 流程使用"
+    },
+    "packages/vdom/src/patch.ts::createdRenderers": {
+      "kind": "new WeakSet",
+      "line": 170,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "仅主入口 patch 流程写入与读取"
+    },
+    "packages/vdom/src/patch.ts::eventCleanupCallbacks": {
+      "kind": "new Set",
+      "line": 174,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "仅主入口 patch 流程写入与读取"
+    },
+    "packages/vdom/src/transition.ts::elementCleanupKeys": {
+      "kind": "new WeakMap",
+      "line": 73,
+      "classification": "c",
+      "entries": ["index", "transition"],
+      "reason": "transition 前缀/清理注册表在 index 与 /transition 入口各一份；跨入口设置前缀或取消过渡会失效"
+    },
+    "packages/vdom/src/transition.ts::engineCache": {
+      "kind": "new WeakMap",
+      "line": 96,
+      "classification": "c",
+      "entries": ["index", "transition"],
+      "reason": "transition 前缀/清理注册表在 index 与 /transition 入口各一份；跨入口设置前缀或取消过渡会失效"
+    },
+    "packages/vdom/src/transition.ts::globalTransitionPrefix": {
+      "kind": "let/var",
+      "line": 81,
+      "classification": "c",
+      "entries": ["index", "transition"],
+      "reason": "transition 前缀/清理注册表在 index 与 /transition 入口各一份；跨入口设置前缀或取消过渡会失效"
+    },
+    "packages/vdom/src/transition.ts::transitionCleanupMap": {
+      "kind": "new Map",
+      "line": 71,
+      "classification": "c",
+      "entries": ["index", "transition"],
+      "reason": "transition 前缀/清理注册表在 index 与 /transition 入口各一份；跨入口设置前缀或取消过渡会失效"
+    },
+    "packages/vdom/src/vnode.ts::vnodePoolHitCount": {
+      "kind": "let/var",
+      "line": 30,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "仅主入口 vnode 池计数"
+    },
+    "packages/vdom/src/vnode.ts::vnodePoolMissCount": {
+      "kind": "let/var",
+      "line": 31,
+      "classification": "a",
+      "entries": ["index"],
+      "reason": "仅主入口 vnode 池计数"
+    }
+  },
+  "probes": {
+    "compiler.optimized-registry": {
+      "write": "compiler/signal-optimized.registerSignalOptimizedGenerator()",
+      "read": "compiler.compile({optimizeSignal:true})",
+      "expect": "主入口 compile 能取到子入口注册的发射器，产物含 `_c.msg`"
+    },
+    "reactivity.effect-main_signal-sub": {
+      "write": "reactivity/signal.signal()+set()",
+      "read": "reactivity.effect()",
+      "expect": "子入口创建的 signal 被主入口 effect 订阅：set 后 effect 重跑（runs=2）"
+    },
+    "core.config-main_runtime": {
+      "write": "core.setGlobalConfig()",
+      "read": "core/runtime.getConfig()",
+      "expect": "主入口写入的全局配置，/runtime 入口可读回同一个值"
+    },
+    "renderer.hydration-main_client": {
+      "write": "renderer.getServerComponentClientFunctions().markHydrated()",
+      "read": "renderer/client.isHydrated()",
+      "expect": "主入口内联的 client 状态与 /client 入口共享：标记后两端一致"
+    },
+    "vdom.transition-prefix-main_sub": {
+      "write": "vdom.setTransitionPrefix()",
+      "read": "vdom/transition.performLeaveTransition() 生成的类名",
+      "expect": "主入口设置的前缀被子入口过渡读取：类名以 `probe-` 开头"
+    },
+    "compiler.warning-level-main_sfc": {
+      "uninjectable": true,
+      "reason": "compiler dist 用 define __DEV__:false 折叠了全部告警分支，且无子入口暴露可触发的未门控告警；dist 层无可观察输出，只能在源码别名下验证"
+    }
+  }
+}

@@ -68,6 +68,7 @@
     "check-api-snapshot",
     "check-signal-profile-snapshot",
     "check-signal-output-evaluates",
+    "check-cross-entry-singletons",
     "check-doc-imports",
     "check-circular",
     "check-circular:src",
