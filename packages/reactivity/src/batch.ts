@@ -147,8 +147,26 @@ export function batchScope<T>(callback: BatchScopeCallback<T>, options: BatchSco
       // 确保 batchAsync 的异步操作完成后再弹出作用域栈
       // FIX: P2-1 初始化 result 为 undefined 并添加运行时检查，避免非空断言
       let result: T | undefined;
+      let isThenable = false;
+      let failed = false;
+      let failure: unknown;
+
       const settled: Promise<void> = batchAsync(() => {
-        result = callback(ctx);
+        const returned = callback(ctx);
+        result = returned;
+        // ★ 2026-11-15 修（P1-12）：必须把回调返回的 thenable **交还** batchAsync。
+        //   闭包此前固定返回 void ⇒ batchAsync 看不到挂起，立刻 finish()：
+        //   批次在 `await` 之前就 flush，之后的 set 不再并入同一批次，
+        //   `ctx.committed` 也在异步工作完成前变 true（作用域边界形同虚设）。
+        if (
+          returned &&
+          (typeof returned === 'object' || typeof returned === 'function') &&
+          'then' in returned
+        ) {
+          isThenable = true;
+          return returned as unknown as Promise<void>;
+        }
+        return undefined;
       })
         .then(() => {
           ctx.committed = true;
@@ -156,8 +174,9 @@ export function batchScope<T>(callback: BatchScopeCallback<T>, options: BatchSco
         .catch((err: unknown) => {
           // ★ 2026-10-22：**不能**在 `.catch` 里 `throw` —— 这个 Promise 没有任何消费者，
           //   抛出去就是 unhandledRejection（Node 会打印警告，严格模式下直接崩）。
-          //   而 `batchScope(..., { async: true })` 的返回类型是 `T`（同步值），
-          //   错误本来就无法回传给调用方 ⇒ 交给 onError，没有就至少留下可诊断日志。
+          //   错误交给 onError / 日志；调用方通过下面返回的 Promise 拿到 rejection。
+          failed = true;
+          failure = err;
           if (onError) {
             onError(err);
           } else {
@@ -172,6 +191,16 @@ export function batchScope<T>(callback: BatchScopeCallback<T>, options: BatchSco
           pendingScopes.delete(settled);
         });
       pendingScopes.add(settled);
+
+      if (isThenable) {
+        // 回调是异步的 ⇒ 声明的返回类型 T 本身就是 `Promise<X>`。
+        // 等批次真正提交后再结算，保证 await 到的值属于已闭合的作用域；
+        // 失败时把捕获到的错误重新抛给调用方（不额外制造 unhandledRejection）。
+        return settled.then(() => {
+          if (failed) throw failure;
+          return result as T;
+        }) as unknown as T;
+      }
       // FIX: P1-6 移除对 undefined 返回值的检查，void 函数合法返回 undefined
       return result as T;
     } else {
