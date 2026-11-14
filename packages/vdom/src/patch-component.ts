@@ -163,8 +163,13 @@ export function createComponentPatch<HN, HE extends HN>(
     //
     //   现在：没有 render 时不再 return，而是继续建立 effect（首帧渲染 null）；
     //   update 里每次按当前 `component.render` 取值 —— 兑现后 update() 就能拿到真 render。
-    const resolveRenderFn = (): ((ctx: object) => VNode | VNode[] | null | undefined) | undefined =>
-      (component as unknown as { render?: (ctx: object) => VNode }).render ??
+    // render 的契约自 a73e75c3 起是 `render(_ctx, _cache)`：第二个参数是 v-memo 依赖的
+    // 跨渲染缓存。此处类型必须与调用点（传 `componentRenderCaches` 里那一份）一致，
+    // 否则 tsc 报 TS2554；历史声明只写了 `(ctx)`，落后于运行时契约。
+    const resolveRenderFn = ():
+      | ((ctx: object, cache: unknown[]) => VNode | VNode[] | null | undefined)
+      | undefined =>
+      (component as unknown as { render?: (ctx: object, cache: unknown[]) => VNode }).render ??
       (component.type as ComponentInternalRuntimeProps).render;
 
     const renderFn = resolveRenderFn();

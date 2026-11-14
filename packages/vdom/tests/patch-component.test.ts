@@ -221,6 +221,41 @@ describe('createComponentPatch', () => {
       expect(mockInstance.subTree).toBe(subTree);
     });
 
+    it('重渲染时 render 收到同一 ctx 与同一个 per-instance 缓存数组', () => {
+      const container = document.createElement('div');
+      const subTree = {
+        type: 'div',
+        el: null,
+        children: null,
+        props: null,
+      } as unknown as VNode;
+
+      const seen: { self: unknown; ctx: unknown; cache: unknown[] }[] = [];
+      const componentType = {
+        name: 'CacheComp',
+        render: vi.fn(function (this: unknown, ctxArg: unknown, cache: unknown[]) {
+          seen.push({ self: this, ctx: ctxArg, cache });
+          const vnode = { ...subTree } as unknown as VNode;
+          return vnode;
+        }),
+      };
+
+      const vnode = createComponentVNode(componentType);
+      const mockInstance = createMockComponentInstance({ type: componentType });
+      vnode.component = mockInstance;
+
+      api.mountComponent(vnode, container, null, null, null, false);
+      (mockInstance as unknown as { update: () => void }).update();
+
+      // 行为级契约：this 与第一实参都是实例 ctx；第二实参跨渲染是**同一个数组**。
+      expect(seen).toHaveLength(2);
+      expect(seen[0].self).toBe(mockInstance.ctx);
+      expect(seen[0].ctx).toBe(mockInstance.ctx);
+      expect(seen[1].ctx).toBe(mockInstance.ctx);
+      expect(Array.isArray(seen[0].cache)).toBe(true);
+      expect(seen[1].cache).toBe(seen[0].cache);
+    });
+
     // ⚠️ 2026-11-02 改写：这三条原本断言「合并结果写进了**原 subTree 对象**的 props」——
     //   那正是被修复的 P0 行为：编译器会把完全静态的模板提升成模块级常量
     //   （`const _hoisted_1 = createElementVNode(...)`，render 每次返回**同一对象**），
