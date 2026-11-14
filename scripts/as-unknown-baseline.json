@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-11-13",
-  "total": 319,
+  "updatedAt": "2026-11-14",
+  "total": 316,
   "files": {
     "packages/adapter-web/src/web-host-extended.ts": 1,
     "packages/adapter-web/src/web-host.ts": 2,
@@ -12,7 +12,6 @@
     "packages/common/packages/http/src/index.ts": 4,
     "packages/common/packages/performance/src/index.ts": 2,
     "packages/common/packages/vnode/src/index.ts": 1,
-    "packages/compiler/src/codegen-signal-optimized.ts": 1,
     "packages/compiler/src/index.ts": 1,
     "packages/compiler/src/transform.ts": 2,
     "packages/compiler/src/transforms/for.ts": 10,
@@ -21,7 +20,6 @@
     "packages/compiler/src/transforms/pre.ts": 1,
     "packages/compiler/src/transforms/slot.ts": 2,
     "packages/compiler/src/transforms/transform-element.ts": 4,
-    "packages/compiler/src/transforms/v-memo.ts": 2,
     "packages/compiler/src/wasm/wasm-generator.ts": 1,
     "packages/component/src/component-init.ts": 9,
     "packages/component/src/component-options.ts": 1,

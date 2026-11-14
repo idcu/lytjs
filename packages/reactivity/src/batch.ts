@@ -79,6 +79,17 @@ function removeScope(ctx: BatchScopeContext): void {
   if (globalBatchDepth > 0) globalBatchDepth--;
 }
 
+/**
+ * 判定回调返回值是否为 thenable。
+ *
+ * 用具名类型守卫而不是在调用点写断言：`returned` 的类型从泛型 `T` 收窄为
+ * `PromiseLike<unknown>`，后续 `Promise.resolve(...)` 无需任何类型旁路。
+ */
+function isThenable(value: unknown): value is PromiseLike<unknown> {
+  if (value === null || (typeof value !== 'object' && typeof value !== 'function')) return false;
+  return 'then' in value && typeof value.then === 'function';
+}
+
 // ============================================================
 // Core API
 // ============================================================
@@ -147,7 +158,7 @@ export function batchScope<T>(callback: BatchScopeCallback<T>, options: BatchSco
       // 确保 batchAsync 的异步操作完成后再弹出作用域栈
       // FIX: P2-1 初始化 result 为 undefined 并添加运行时检查，避免非空断言
       let result: T | undefined;
-      let isThenable = false;
+      let isThenableReturn = false;
       let failed = false;
       let failure: unknown;
 
@@ -158,13 +169,11 @@ export function batchScope<T>(callback: BatchScopeCallback<T>, options: BatchSco
         //   闭包此前固定返回 void ⇒ batchAsync 看不到挂起，立刻 finish()：
         //   批次在 `await` 之前就 flush，之后的 set 不再并入同一批次，
         //   `ctx.committed` 也在异步工作完成前变 true（作用域边界形同虚设）。
-        if (
-          returned &&
-          (typeof returned === 'object' || typeof returned === 'function') &&
-          'then' in returned
-        ) {
-          isThenable = true;
-          return returned as unknown as Promise<void>;
+        if (isThenable(returned)) {
+          isThenableReturn = true;
+          // `Promise.resolve` 会按 thenable 协议吸收它，随后只等落定、丢弃值
+          //（值已经从 `returned` 存进 `result`）。
+          return Promise.resolve(returned).then(() => undefined);
         }
         return undefined;
       })
@@ -192,14 +201,19 @@ export function batchScope<T>(callback: BatchScopeCallback<T>, options: BatchSco
         });
       pendingScopes.add(settled);
 
-      if (isThenable) {
+      if (isThenableReturn) {
         // 回调是异步的 ⇒ 声明的返回类型 T 本身就是 `Promise<X>`。
         // 等批次真正提交后再结算，保证 await 到的值属于已闭合的作用域；
         // 失败时把捕获到的错误重新抛给调用方（不额外制造 unhandledRejection）。
-        return settled.then(() => {
+        //
+        // ⚠️ 这里的一次 `as T` 无法省掉：泛型 T 不受条件类型约束，编译器推不出
+        //    「T 就是 Promise<X>」。若先转成 unknown 再断言，就等同于双重断言旁路，
+        //   本仓棘轮（check-as-unknown）明令禁止新增，故只保留单次断言并在此说明。
+        const pending = settled.then(() => {
           if (failed) throw failure;
           return result as T;
-        }) as unknown as T;
+        });
+        return pending as T;
       }
       // FIX: P1-6 移除对 undefined 返回值的检查，void 函数合法返回 undefined
       return result as T;
