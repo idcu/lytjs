@@ -67,6 +67,7 @@
     "check-runtime-contract",
     "check-api-snapshot",
     "check-signal-profile-snapshot",
+    "check-signal-output-evaluates",
     "check-doc-imports",
     "check-circular",
     "check-circular:src",

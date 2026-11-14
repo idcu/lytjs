@@ -3,7 +3,7 @@ scope: now
 status: active
 last-verified: 2026-11-14
 updated: 2026-11-14
-keywords: [S35, P0 止血, 体积裁决, 负控, 覆盖率快照, signal 收编, 快照基线, core/runtime]
+keywords: [S35, P0 止血, 体积裁决, 负控, 覆盖率快照, signal 收编, 快照基线, 产物求值, core/runtime]
 ---
 
 # NOW · main
@@ -15,13 +15,14 @@ keywords: [S35, P0 止血, 体积裁决, 负控, 覆盖率快照, signal 收编,
   两版只保留拼写；每步以 230 份逐字快照 + 100 模板对拍为验收。
 - 快照基线：已按 `fa7beaa4`（C-35g）/`d839b156`（C-35f）逐笔归因刷新；
   刷新后负控改拼写一处 ⇒ 22 处红，还原回绿（`488bf995`）。
-- 待办：慢档 needsDist 门禁未受 `check-dist-freshness` 保护，盘点后另议。
+- optimized/for13 缺 import 已修（运行时标记透传）；新增产物自洽求值门禁。
+- 口径：读 dist 的门禁全标 needsDist，运行自动前置 freshness；stale 拒跑并 exit 1。
 
 ## 当前焦点
 
 - **S35 收口**：P0 8 笔已提交 push；历史取证见 [ui-contracts-na-audit](checks/ui-contracts-na-audit.md)。
 - first-screen-runtime 基线 37648（预算 38400），见 [ADR 0029](decisions/0029-bundle-first-screen-runtime-baseline.md)。
-- `checks/rules.md` 与 `gate.mjs` 对齐 77 条（58 fast / 19 slow）。
+- `checks/rules.md` 与 `gate.mjs` 对齐 78 条（58 fast / 20 slow）。
 
 ## P0 账
 

@@ -514,6 +514,29 @@ const CONTROLS = {
     }
   },
 
+  'check-signal-output-evaluates': () => {
+    // 摘掉 optimized/for13 的 setClass import（还原缺失 import 的原形态）
+    // ⇒ 「只按产物自身 import 图求值」必红
+    const file = join(ROOT, 'scripts/signal-profile-snapshot.json');
+    withPatchedFile(
+      file,
+      (text) => {
+        const snap = JSON.parse(text);
+        const code = snap.optimized?.for13;
+        if (!code?.includes('setClass as c')) {
+          throw new Error('check-signal-output-evaluates：注入点漂移（找不到 setClass as c）');
+        }
+        snap.optimized.for13 = code.replace('setClass as c,', '');
+        return `${JSON.stringify(snap, null, 2)}\n`;
+      },
+      () =>
+        expectFail(
+          ['node', 'scripts/check-signal-output-evaluates.mjs'],
+          'check-signal-output-evaluates',
+        ),
+    );
+  },
+
   'check-dead-packages': () => {
     // 新增一个零生产引用的 common 内部包 ⇒ 「死包只减不增」必红
     const dir = join(ROOT, 'packages/common/packages/__negctl-dead-pkg');

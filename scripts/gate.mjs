@@ -54,9 +54,10 @@ const GATES = [
     cmd: ['tsx', 'scripts/check-dist-freshness.ts'],
     approx: '~0.5s',
     desc:
-      '★ 产物新鲜度（fast 档硬前置）：dist 必须比 src 新 —— vitest 的 47 条 alias 指向 dist，' +
-      'dist 过期时「测试全绿」证明的是旧产物。stale 时本档**拒跑**所有 needsDist 项（2026-10-31；' +
-      '2026-11-13 提升为硬前置，见 ADR/坑 bundle-gate-reads-stale-dist）',
+      '★ 产物新鲜度（硬前置）：dist 必须比 src 新 —— vitest 的 47 条 alias 指向 dist，' +
+      'dist 过期时「测试全绿」证明的是旧产物。stale 时**拒跑所有 needsDist 项**（不限 fast 档；' +
+      '任何含 needsDist 的运行都会自动前置本项，2026-10-31 建立 / 2026-11-14 统一口径，' +
+      '见 keel/checks/rules.md 与坑 bundle-gate-reads-stale-dist）',
   },
   {
     name: 'check-lockfile',
@@ -84,6 +85,7 @@ const GATES = [
   {
     name: 'check-render-parity',
     tier: 'fast',
+    needsDist: true,
     cmd: ['node', 'scripts/check-render-parity.mjs'],
     approx: '~1.5s',
     desc:
@@ -93,6 +95,7 @@ const GATES = [
   {
     name: 'check-list-diff',
     tier: 'fast',
+    needsDist: true,
     cmd: ['node', 'scripts/check-list-diff.mjs'],
     approx: '~1.4s',
     desc:
@@ -220,6 +223,7 @@ const GATES = [
   {
     name: 'check-package-exports',
     tier: 'fast',
+    needsDist: true,
     cmd: ['node', 'scripts/check-package-exports.mjs'],
     approx: '~1s',
     desc:
@@ -239,6 +243,7 @@ const GATES = [
   {
     name: 'check-consumer-demo',
     tier: 'fast',
+    needsDist: true,
     cmd: ['node', 'scripts/check-consumer-demo.mjs'],
     approx: '~2s',
     desc:
@@ -261,6 +266,7 @@ const GATES = [
   {
     name: 'check-render-shapes',
     tier: 'fast',
+    needsDist: true,
     cmd: ['node', 'scripts/check-render-shapes.mjs'],
     approx: '~3s',
     desc:
@@ -282,6 +288,7 @@ const GATES = [
   {
     name: 'check-component-shapes',
     tier: 'fast',
+    needsDist: true,
     cmd: ['node', 'scripts/check-component-shapes.mjs'],
     approx: '~4s',
     desc:
@@ -294,6 +301,7 @@ const GATES = [
   {
     name: 'check-render-cost',
     tier: 'fast',
+    needsDist: true,
     cmd: ['node', 'scripts/check-render-cost.mjs'],
     approx: '~3s',
     desc:
@@ -306,6 +314,7 @@ const GATES = [
   {
     name: 'check-ssr-client-parity',
     tier: 'fast',
+    needsDist: true,
     cmd: ['node', 'scripts/check-ssr-client-parity.mjs'],
     approx: '~3s',
     desc:
@@ -318,6 +327,7 @@ const GATES = [
   {
     name: 'check-package-deps',
     tier: 'fast',
+    needsDist: true,
     cmd: ['node', 'scripts/check-package-deps.mjs'],
     approx: '~2s',
     desc:
@@ -332,6 +342,7 @@ const GATES = [
   {
     name: 'check-error-paths',
     tier: 'fast',
+    needsDist: true,
     cmd: ['node', 'scripts/check-error-paths.mjs'],
     approx: '~3s',
     desc:
@@ -344,6 +355,7 @@ const GATES = [
   {
     name: 'check-di',
     tier: 'fast',
+    needsDist: true,
     cmd: ['node', 'scripts/check-di.mjs'],
     approx: '~2s',
     desc:
@@ -358,6 +370,7 @@ const GATES = [
   {
     name: 'check-cache',
     tier: 'fast',
+    needsDist: true,
     cmd: ['node', 'scripts/check-cache.mjs'],
     approx: '~2s',
     desc:
@@ -371,6 +384,7 @@ const GATES = [
   {
     name: 'check-ssr-isolation',
     tier: 'fast',
+    needsDist: true,
     cmd: ['node', 'scripts/check-ssr-isolation.mjs'],
     approx: '~3s',
     desc:
@@ -384,6 +398,7 @@ const GATES = [
   {
     name: 'check-lifecycle-release',
     tier: 'fast',
+    needsDist: true,
     cmd: ['node', 'scripts/check-lifecycle-release.mjs'],
     approx: '~3s',
     desc:
@@ -428,6 +443,7 @@ const GATES = [
   {
     name: 'check-negative-controls',
     tier: 'fast',
+    needsDist: true,
     cmd: ['node', 'scripts/check-negative-controls.mjs', '--quick'],
     approx: '~10s',
     desc:
@@ -438,6 +454,7 @@ const GATES = [
   {
     name: 'check-integration',
     tier: 'slow',
+    needsDist: true,
     cmd: ['node', 'scripts/check-integration.mjs'],
     approx: '~3s',
     desc:
@@ -447,6 +464,7 @@ const GATES = [
   {
     name: 'check-runtime-render',
     tier: 'slow',
+    needsDist: true,
     cmd: ['node', 'scripts/check-runtime-render.mjs'],
     approx: '~2s',
     desc:
@@ -788,6 +806,7 @@ const GATES = [
   {
     name: 'check-vitest-alias-dist',
     tier: 'fast',
+    needsDist: true,
     cmd: ['tsx', 'scripts/check-vitest-alias-dist.ts'],
     approx: '~2s',
     desc:
@@ -876,6 +895,7 @@ const GATES = [
   {
     name: 'check-circular',
     tier: 'slow',
+    needsDist: true,
     cmd: ['tsx', 'scripts/check-circular.ts'],
     approx: '~14s（src 模式 ~29s）',
     desc:
@@ -918,6 +938,7 @@ const GATES = [
   {
     name: 'test',
     tier: 'slow',
+    needsDist: true,
     cmd: ['pnpm', 'run', 'test'],
     approx: '数分钟',
     desc: '全量测试（不带覆盖率）',
@@ -925,6 +946,7 @@ const GATES = [
   {
     name: 'test:coverage',
     tier: 'slow',
+    needsDist: true,
     cmd: ['pnpm', 'run', 'test:coverage'],
     approx: '数分钟',
     desc:
@@ -955,6 +977,7 @@ const GATES = [
   {
     name: 'check-negative-controls:slow',
     tier: 'slow',
+    needsDist: true,
     cmd: ['node', 'scripts/check-negative-controls.mjs', '--slow'],
     approx: '~3min',
     desc:
@@ -1015,7 +1038,8 @@ if (listOnly) {
   for (const t of ['fast', 'slow']) {
     console.log(`── ${t} ──`);
     for (const g of GATES.filter((x) => x.tier === t)) {
-      console.log(`  ${g.name.padEnd(28)} ${g.approx.padEnd(22)} ${g.desc}`);
+      const mark = g.needsDist ? ' [needsDist]' : '';
+      console.log(`  ${g.name.padEnd(28)} ${g.approx.padEnd(22)} ${g.desc}${mark}`);
     }
     console.log('');
   }
@@ -1044,6 +1068,30 @@ if (tier) {
   selected = GATES.filter((g) => g.tier === 'fast');
 }
 
+// ★ 判据口径（2026-11-14）：`needsDist` 不再只对 fast 档生效。
+//   只要本次运行包含任一 needsDist 项，就先评估一次 dist 新鲜度：
+//   `build → build:fallback → check-dist-freshness → 其余`。
+//   单独点名某个 needsDist 门禁时，freshness 会被临时前置；stale 时该项拒跑并以 1 退出，
+//   不再依赖「本次恰好选了 check-dist-freshness」⇒ 不存在 distFresh === null 放行的路径。
+const needsDistSelected = selected.filter((g) => g.needsDist);
+if (needsDistSelected.length > 0) {
+  const freshness = GATES.find((g) => g.name === 'check-dist-freshness');
+  const builds = ['build', 'build:fallback']
+    .map((name) => selected.find((g) => g.name === name))
+    .filter((g) => g !== undefined);
+  const rest = selected.filter(
+    (g) => g.name !== 'check-dist-freshness' && !builds.some((b) => b.name === g.name),
+  );
+  const hadFreshness = selected.some((g) => g.name === 'check-dist-freshness');
+  selected = [...builds, freshness, ...rest];
+  if (!hadFreshness) {
+    console.log(
+      `本次包含 ${needsDistSelected.length} 项 needsDist 门禁 ⇒ 自动前置 check-dist-freshness` +
+        `${builds.length > 0 ? '（排在 build 之后）' : ''}\n`,
+    );
+  }
+}
+
 console.log(
   `门禁运行器：${selected.length} 项（${[...new Set(selected.map((g) => g.tier))].join('+')}）` +
     `${dry ? ' · dry-run' : ''}\n`,
@@ -1052,9 +1100,10 @@ console.log(
 let pass = 0;
 const failed = [];
 const skipped = [];
-// ★ fast 档硬前置：`check-dist-freshness`（登记表第一位）的结论。
-//   null = 本次没跑；true/false = 通过/过期。过期时拒跑所有 needsDist 项，
-//   避免「在旧 dist 上得出全绿/全红」的假结论（坑 bundle-gate-reads-stale-dist）。
+// ★ 硬前置：`check-dist-freshness` 的结论。true = 新鲜；false = 过期；
+//   null = 未得到结论（正常运行时不会出现，因为任何 needsDist 选择都会前置它）。
+//   `needsDist !== true` 一律不让跑：过期时等于「在旧产物上得出结论」，
+//   null 时等于「没评估就放行」——两者都禁止（坑 bundle-gate-reads-stale-dist）。
 let distFresh = null;
 const started = Date.now();
 
@@ -1066,12 +1115,17 @@ for (const g of selected) {
     console.log(`  would run: ${g.cmd.join(' ')}\n`);
     continue;
   }
-  if (g.tier === 'fast' && g.needsDist && distFresh === false) {
+  if (g.needsDist && distFresh !== true) {
     skipped.push(g.name);
-    console.log(
-      `\n⏭ ${g.name} 跳过：dist 不新鲜（前置 check-dist-freshness 未通过），` +
-        `拒绝在旧产物上运行\n`,
-    );
+    const reason =
+      distFresh === false
+        ? 'dist 不新鲜（check-dist-freshness 未通过）'
+        : '本次未得到 dist 新鲜度结论';
+    const hint =
+      g.tier === 'slow'
+        ? '先运行 `node scripts/gate.mjs build build:fallback` 重建产物'
+        : '先运行 `pnpm run build` 重建产物';
+    console.log(`\n⏭ ${g.name} 跳过：${reason}，拒绝在旧产物上运行；${hint}\n`);
     continue;
   }
   const t0 = Date.now();
