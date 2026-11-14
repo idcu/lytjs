@@ -205,6 +205,8 @@ function createTransformContext(root: RootNode, options: TransformOptions): Tran
     // scopeId 漏掉时，`transformScoped` 直接 return，scoped CSS 端到端失效。
     scopeId: options.scopeId ?? undefined,
     rendererMode: options.rendererMode ?? 'vnode',
+    // C-14e：onWarn 此前只声明未接线；透传后变换期告警可送达调用方。
+    onWarn: options.onWarn,
     // ⚠️ 同上：指令转换注册表也必须显式透传（2026-10-10 补）。
     // 漏掉它 ⇒ `compile({ directiveTransforms })` 这个公开选项**静默失效**。
     directiveTransforms: options.directiveTransforms,

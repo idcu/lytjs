@@ -409,6 +409,13 @@ export interface TransformContext {
    */
   scopeId?: string;
   /**
+   * 变换期警告回调（来自 `TransformOptions.onWarn`）。
+   *
+   * 与 `error()` 走 `onError` 对称：变换器报「不致命但需要提示」的问题时，
+   * 除既有开发期 `warn()` 外，也把同一条消息交给调用方。
+   */
+  onWarn?: (warning: string) => void;
+  /**
    * 渲染器模式（`vnode` / `signal` / `vapor`）。
    *
    * ⚠️ 2026-10-28 新增：与 `scopeId` **同族**的坑 —— 只存在于 `TransformOptions`、

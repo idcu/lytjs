@@ -280,7 +280,10 @@ interface TransformOptions {
   isTS?: boolean;
   /** 错误回调 */
   onError?: (error: Error) => void;
-  /** 警告回调 */
+  /**
+   * 变换期警告回调（非致命问题，如 v-for 参数超过 2 个）。
+   * 与既有开发期 `warn()` 输出同步触发；解析期错误走 `onError`。
+   */
   onWarn?: (warning: string) => void;
   /** 渲染模式（transform 阶段也用于分支决策）：'vnode' | 'signal' | 'vapor' */
   rendererMode?: 'vnode' | 'signal' | 'vapor';

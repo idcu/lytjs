@@ -39,6 +39,14 @@ const RE_SIMPLE_VFOR = /^(\S+)\s+(?:in|of)\s+(.+)$/;
 // 用 Symbol 键，序列化 / 遍历 / codegen 都不会看到它。
 const FOR_BRANCH_ELEMENT = Symbol('lytjs.forBranchElement');
 
+/**
+ * 变换期告警：保留既有开发期 console 通道，同时送达调用方的 `onWarn`（C-14e）。
+ */
+function warnTransform(context: TransformContext, message: string): void {
+  warn(message);
+  context.onWarn?.(message);
+}
+
 /** 若 `node` 是 v-for 生成的 renderList 调用，返回其来源元素。 */
 export function getForBranchElement(node: unknown): ElementNode | undefined {
   if (!node || typeof node !== 'object') return undefined;
@@ -142,7 +150,10 @@ export function transformFor(
     const parts = left.split(',').map((p) => p.trim());
     if (parts.length > 2) {
       if (__DEV__) {
-        warn(`v-for does not support more than 2 variables in (item, index) syntax.`);
+        warnTransform(
+          context,
+          `v-for does not support more than 2 variables in (item, index) syntax.`,
+        );
       }
     }
     itemVar = parts[0] ?? 'item';
@@ -152,7 +163,10 @@ export function transformFor(
     const parts = inner.split(',').map((p) => p.trim());
     if (parts.length > 2) {
       if (__DEV__) {
-        warn(`v-for does not support more than 2 variables in [item, index] syntax.`);
+        warnTransform(
+          context,
+          `v-for does not support more than 2 variables in [item, index] syntax.`,
+        );
       }
     }
     itemVar = parts[0] ?? 'item';
@@ -224,7 +238,8 @@ export function transformFor(
         ? codegenNode
         : (() => {
             if (__DEV__) {
-              warn(
+              warnTransform(
+                context,
                 `[lytjs/compiler] v-for: unexpected codegenNode type: ${(codegenNode as { type?: number }).type}. Expected VNodeCall or JSCallExpression.`,
               );
             }
@@ -293,7 +308,10 @@ export function transformFor(
     // 使用类型守卫验证后再断言
     if (!isTemplateChildCompatible(renderListCall)) {
       if (__DEV__) {
-        warn(`[lytjs/compiler] v-for: renderListCall is not a compatible TemplateChildNode.`);
+        warnTransform(
+          context,
+          `[lytjs/compiler] v-for: renderListCall is not a compatible TemplateChildNode.`,
+        );
       }
     }
     if (
