@@ -205,7 +205,10 @@ describe('createComponentPatch', () => {
 
       api.mountComponent(vnode, container, null, null, null, false);
 
-      expect(componentType.render).toHaveBeenCalledWith(mockInstance.ctx);
+      // render 的调用契约是 `render(_ctx, _cache)`（a73e75c3 起 v-memo 依赖第二个参数，
+      // 与编译产物 `function render(_ctx, _cache)` 一致）⇒ 断言 ctx 必须匹配，
+      // 第二参仅为每个组件实例惰性创建的缓存数组。
+      expect(componentType.render).toHaveBeenCalledWith(mockInstance.ctx, expect.any(Array));
       expect(ctx.patch).toHaveBeenCalledWith(
         null,
         subTree,
