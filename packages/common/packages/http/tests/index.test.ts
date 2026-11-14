@@ -691,4 +691,20 @@ describe('C-36 错误管线与超时', () => {
       vi.useRealTimers();
     }
   });
+
+  it('请求结算后应移除外部 signal 的 abort 监听（C-36c）', async () => {
+    // 修前：addEventListener 后从不 removeEventListener，长生命周期 signal
+    // 每发一次带超时的请求就多挂一个监听器，形成泄漏。
+    const controller = new AbortController();
+    const addSpy = vi.spyOn(controller.signal, 'addEventListener');
+    const removeSpy = vi.spyOn(controller.signal, 'removeEventListener');
+    mockFetch.mockResolvedValue(createMockResponse({ ok: 1 }));
+
+    const client = new HttpClient({ timeout: 1000 });
+    await client.get('/api/link', { signal: controller.signal });
+
+    expect(addSpy).toHaveBeenCalledWith('abort', expect.any(Function), { once: true });
+    expect(removeSpy).toHaveBeenCalledTimes(1);
+    expect(removeSpy).toHaveBeenCalledWith('abort', expect.any(Function));
+  });
 });

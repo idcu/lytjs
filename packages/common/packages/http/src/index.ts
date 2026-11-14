@@ -282,22 +282,28 @@ export class HttpClient {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
+    // C-36c：外部 signal 的监听必须在结算后移除，否则长生命周期 signal
+    // 每发一次带超时的请求就多挂一个监听器（泄漏）。
+    let onAbort: (() => void) | undefined;
     if (signal) {
       if (signal.aborted) {
         clearTimeout(timeoutId);
         throw new HttpError('Request was aborted', undefined);
       }
-      signal.addEventListener(
-        'abort',
-        () => {
-          clearTimeout(timeoutId);
-          controller.abort();
-        },
-        { once: true },
-      );
+      onAbort = () => {
+        clearTimeout(timeoutId);
+        controller.abort();
+      };
+      signal.addEventListener('abort', onAbort, { once: true });
     }
 
-    return { signal: controller.signal, dispose: () => clearTimeout(timeoutId) };
+    return {
+      signal: controller.signal,
+      dispose: () => {
+        clearTimeout(timeoutId);
+        if (signal && onAbort) signal.removeEventListener('abort', onAbort);
+      },
+    };
   }
 
   private async _fetch(
