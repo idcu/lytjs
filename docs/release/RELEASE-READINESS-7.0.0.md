@@ -128,10 +128,11 @@ npm view @lytjs/core version          # 期望 7.0.0
 [coverage-snapshot.mjs](file:///Volumes/Data/lytjs/lytjs/scripts/coverage-snapshot.mjs#L140-L150)、
 [check-coverage-snapshot.mjs](file:///Volumes/Data/lytjs/lytjs/scripts/check-coverage-snapshot.mjs#L76-L86)），
 只证明「这份产物来自当前 HEAD 这棵树」。实测同一 HEAD、连续两次全量：
-statements/functions/lines 完全一致（54932/61988、3886/4336、54932/61988），
+statements/functions/lines 的分母与覆盖数一致（54932/61988、3886/4336、54932/61988），
 **branches 分母逐次抖动**（16600/18851 → 16605/18856，19 个文件各 ±1~3），
 因此两次的 sha256 必然不同（`b92674f8…` vs `a4b9ec19…`）；`--no-file-parallelism` 串行复跑同样不同
-（`983c8237…` vs `31be9a78…`），排除并发分片因素，属 v8→istanbul 分支映射的非确定性。
+（分支 16603/18854 → 16599/18850，另有一次语句覆盖数 ±1 的时序差异，`983c8237…` vs `31be9a78…`），
+排除并发分片因素，属 v8→istanbul 分支映射的非确定性。
 操作含义：`test:coverage` 会清空 `coverage/`（含 snapshot.json），所以**每次跑完都必须按 gate 顺序**
 重跑 `coverage-snapshot` → `check-coverage-snapshot`；该门禁不能、也不应被当作复现性证明。
 
