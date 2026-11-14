@@ -1,8 +1,8 @@
 {
-  "commit": "ec099e1e38f781468edd6149eb7669bde6f35fd4",
-  "generatedAt": "2026-11-13T04:22:35.310Z",
-  "totalSrcFiles": 447,
-  "coveredSrcFiles": 438,
+  "commit": "9a60a965c6e2f7de1466d146fff70f6d7e8e60f5",
+  "generatedAt": "2026-11-14T01:48:00.880Z",
+  "totalSrcFiles": 448,
+  "coveredSrcFiles": 439,
   "threshold": 0.975,
   "basis": {
     "authoritative": "vitest-thresholds",
@@ -104,6 +104,7 @@
     "packages/compiler/src/transforms/transform-element.ts": true,
     "packages/compiler/src/transforms/v-memo.ts": true,
     "packages/compiler/src/types.ts": true,
+    "packages/compiler/src/warning.ts": true,
     "packages/compiler/src/wasm-entry.ts": true,
     "packages/compiler/src/wasm/index.ts": true,
     "packages/compiler/src/wasm/wasm-compiler.ts": true,
