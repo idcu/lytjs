@@ -500,3 +500,33 @@ describe('unmount', () => {
     expect(unmountedFn).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('options API effect scope', () => {
+  it('options watch is stopped on unmount', () => {
+    let watchCalls = 0;
+
+    const options = defineComponent({
+      name: 'OptionsScopeComp',
+      data: () => ({ count: 0 }),
+      watch: {
+        count: {
+          handler() {
+            watchCalls++;
+          },
+          flush: 'sync',
+        },
+      },
+    });
+
+    const vnode = { type: options, props: {}, children: null };
+    const instance = createComponentInstance(vnode, null);
+    setupComponent(instance);
+
+    instance.data.count = 1;
+    expect(watchCalls).toBe(1);
+
+    callUnmountedHook(instance);
+    instance.data.count = 2;
+    expect(watchCalls).toBe(1);
+  });
+});

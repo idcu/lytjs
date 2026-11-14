@@ -237,7 +237,15 @@ export function setupComponent(instance: ComponentInternalInstance): void {
         notifySuspenseChildResolved(vnode);
       });
   } else {
-    handleSetupResult(instance, setupResult);
+    // P1-21：options API 的 computed/watch 在 finishComponentSetup 里创建。
+    // 只把 `setup()` 包进 scope 不够 —— 同步 setup 返回后这里已经脱离
+    // scope.run 的同步栈，computed/watch 会落在父 scope 或无人持有的 scope，
+    // 卸载时 scope.stop() 停不掉。整个 handleSetupResult 都放进组件 scope。
+    if (instance.scope) {
+      instance.scope.run(() => handleSetupResult(instance, setupResult));
+    } else {
+      handleSetupResult(instance, setupResult);
+    }
   }
 }
 
