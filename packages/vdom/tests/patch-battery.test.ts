@@ -376,12 +376,15 @@ describe('卸载时的清理', () => {
 
     const vnode = createVNode('div', null, 'x');
     renderer.mount(vnode, container);
+    // P1-6：卸载会清 `vnode.el`（防止复用已摘除的节点），因此先留存宿主节点
+    const el = vnode.el;
     renderer.unmount(vnode);
 
     off();
 
     expect(cleanup).toHaveBeenCalledTimes(1);
-    expect(cleanup).toHaveBeenCalledWith(vnode.el);
+    expect(cleanup).toHaveBeenCalledWith(el);
+    expect(vnode.el).toBeNull();
   });
 
   it('注销后不再被调用', () => {

@@ -690,11 +690,16 @@ export function createRenderer<HN, HE extends HN>(
       invokeUnmountedHook?.(component as ComponentInternalInstance);
       // R-P0-5：组件分支此前在这里直接 return，通用的 ref 清理代码永远走不到
       clearVNodeRef(vnode, parentComponent);
+      // ★ 2026-11-15 修（P1-6）：清掉指向已销毁子树的 `el`。
+      //   否则调用方仍持有该 vnode 时，`patch()` 顶部「`n1.el === null` ⇒ 重新挂载」
+      //   的守卫永远看不到信号，会把新内容写进已摘除的旧节点。
+      vnode.el = null;
       return;
     }
 
     if (type === Fragment) {
       fragmentAPI.unmountFragment(vnode, parentComponent, parentSuspense, doRemove);
+      vnode.el = null;
       return;
     }
 
@@ -703,16 +708,19 @@ export function createRenderer<HN, HE extends HN>(
         const commentEl = getVNodeEl(vnode);
         if (commentEl) hostRemove(commentEl);
       }
+      vnode.el = null;
       return;
     }
 
     if (vnode.shapeFlag & ShapeFlags.TELEPORT) {
       teleportAPI.unmountTeleport(vnode, parentComponent, parentSuspense, doRemove);
+      vnode.el = null;
       return;
     }
 
     if (vnode.shapeFlag & ShapeFlags.SUSPENSE) {
       suspenseAPI.unmountSuspense(vnode, parentComponent, parentSuspense, doRemove);
+      vnode.el = null;
       return;
     }
 
@@ -790,6 +798,11 @@ export function createRenderer<HN, HE extends HN>(
     //   注意：有 leave 过渡时元素移除被推迟到动画结束，这里仍按「逻辑卸载」时机触发
     //   （与 Vue 的 unmounted 时机一致：vnode 生命周期结束，而非 DOM 消失）。
     invokeDirectiveHook(vnode, 'unmounted');
+
+    // ★ 2026-11-15 修（P1-6）：卸载尾部清 `el`。
+    //   必须放在指令 `unmounted` 之后 —— 钩子仍可拿到宿主节点；
+    //   清空后，`patch()` 的「`n1.el === null` ⇒ 走挂载」守卫才能真正生效。
+    vnode.el = null;
   }
 
   // ============================================================
