@@ -21,6 +21,7 @@ import type {
   CompoundExpressionNode,
   JSChildNode,
   JSCallExpression,
+  JSConditionalExpression,
   VNodeCall,
   JSObjectExpression,
   JSProperty,
@@ -1036,6 +1037,197 @@ export function processDirectiveShared(
       break;
     }
   }
+}
+
+// ============================================================
+// v-if / v-else-if / v-else 语义（signal 两版共用）
+// ============================================================
+
+/** 条件分支链的一项；`condition === null` 表示 `v-else`（无条件）。 */
+export interface ConditionalBranch {
+  condition: string | null;
+  branch: JSChildNode | TemplateChildNode | TemplateChildNode[] | string | undefined;
+}
+
+/** `planConditional` 产出的语义计划。 */
+export interface ConditionalPlan {
+  branches: ConditionalBranch[];
+  /** 分支挂载的父容器变量 */
+  containerVar: string;
+  /** 唯一 if 临时变量名（`_ifN` / `_iN`） */
+  ifVarName: string;
+  /** 末支已是 v-else：true 时不得再补 `else {…}`（否则 `if…else…else` 语法错误） */
+  trailingElse: boolean;
+  /** 预约前的 `_if_depth`，由 `finishConditionalPlan` 恢复 */
+  depth: number;
+}
+
+/**
+ * 条件语义的**方言差异**（仅三处，其余全部共享）。
+ */
+export interface ConditionalDialect {
+  /** 空条件错误（两版历史文案不同，仅拼写差异） */
+  emptyConditionError(): Error;
+  /** if 临时变量前缀（`_if` / `_i`） */
+  readonly ifVarPrefix: string;
+  /** 未显式给父容器时的缺省名（`_container` / `_n`） */
+  readonly defaultContainer: string;
+}
+
+/**
+ * 计算条件分支的语义计划（signal 两版共用）。
+ *
+ * 校验、分支链展开、`_if_depth` 预约/命名、末支兜底判定只在这里做一次；
+ * 产物拼写（换行缩进、短别名、`_ifN`/`_iN`）由各自的 `ConditionalEmitDialect` 负责。
+ */
+export function planConditional(
+  node: JSConditionalExpression,
+  varCounter: Map<string, number>,
+  parentVar: string | undefined,
+  dialect: ConditionalDialect,
+): ConditionalPlan {
+  const testExpr = getTestExpr(node.test);
+
+  // FIX: P1-L2 v-if/v-else-if 条件为空未报错
+  if (!testExpr || testExpr.trim() === '') {
+    throw dialect.emptyConditionError();
+  }
+
+  const branches: ConditionalBranch[] = [{ condition: testExpr, branch: node.consequent }];
+
+  // 递归收集 alternate 链（v-else-if / v-else）
+  let alternate = node.alternate;
+  while (alternate) {
+    if (
+      typeof alternate !== 'string' &&
+      !Array.isArray(alternate) &&
+      alternate.type === NodeTypes.JS_CONDITIONAL_EXPRESSION
+    ) {
+      const altCond = alternate as JSConditionalExpression;
+      const altTestExpr = getTestExpr(altCond.test);
+      branches.push({ condition: altTestExpr || null, branch: altCond.consequent });
+      alternate = altCond.alternate;
+    } else {
+      // v-else 分支（无条件）
+      branches.push({ condition: null, branch: alternate });
+      alternate = undefined;
+    }
+  }
+
+  const containerVar = parentVar ?? dialect.defaultContainer;
+
+  // FIX: P1-28 使用深度键生成唯一变量名，避免嵌套 v-if 冲突；
+  // FIX: P2-14 深度值始终为数字，避免 `_if_undefined`。
+  const depth = varCounter.get('_if_depth') ?? 0;
+  const ifCounterKey = `_if_${depth}`;
+  const ifVarName = `${dialect.ifVarPrefix}${varCounter.get(ifCounterKey) ?? 0}`;
+  varCounter.set(ifCounterKey, (varCounter.get(ifCounterKey) ?? 0) + 1);
+  varCounter.set('_if_depth', depth + 1);
+
+  // 末支若已是 v-else，本身就是兜底分支；再补 else 会得到 `if…else…else`。
+  const lastBranch = branches[branches.length - 1];
+  return {
+    branches,
+    containerVar,
+    ifVarName,
+    trailingElse: !lastBranch || lastBranch.condition !== null,
+    depth,
+  };
+}
+
+/** 结束条件处理：恢复 `_if_depth`（P2-12：避免同级 v-if 计数器持续增长）。 */
+export function finishConditionalPlan(
+  varCounter: Map<string, number>,
+  plan: ConditionalPlan,
+): void {
+  varCounter.set('_if_depth', plan.depth);
+}
+
+/** 一个分支的产物片段；形态由各发射器决定，shared 只保证顺序。 */
+export interface ConditionalBranchEmission {
+  /** 分支静态 HTML */
+  html: string;
+  /** effect 外的槽位变量声明（base：整行；optimized：变量名） */
+  hoist: string[];
+  /** 创建分支后、`create` 前执行的附加代码（optimized 的 claimTextSlots） */
+  createPrep?: string;
+  /** 创建期动态代码 */
+  create: string;
+  /** 保持激活期的更新代码 */
+  update: string;
+  /** `update` 之后、分支闭合前的附加代码（optimized 的 v-for 子树挂载） */
+  tail?: string;
+}
+
+/** 条件分支骨架的拼写差异（不含任何判据）。 */
+export interface ConditionalEmitDialect {
+  /** effect 前置声明 */
+  prologue(ifVar: string, emissions: ConditionalBranchEmission[]): string;
+  /** effect 开头 */
+  effectOpen(ifVar: string): string;
+  /** 分支头：`} else ` / `if (...)` / 活跃守卫 */
+  branchHead(
+    ifVar: string,
+    index: number,
+    condition: string | null,
+    locals: ReadonlySet<string>,
+  ): string;
+  /** 清理旧节点 + 创建新节点 + 空节点兜底 + 插入 */
+  mountBranch(
+    ifVar: string,
+    html: string,
+    containerVar: string,
+    anchorVar: string | undefined,
+  ): string;
+  /** 标记当前活跃分支 */
+  markActive(ifVar: string, index: number): string;
+  /** 活跃守卫块闭合 */
+  readonly branchBodyClose: string;
+  /** 保持激活期的更新包装（base 用 `else` 包裹；optimized 直接拼接） */
+  update(index: number, update: string): string;
+  /** 单个分支闭合 */
+  readonly branchClose: string;
+  /** 末支非 v-else 时的兜底清理 */
+  trailing(ifVar: string): string;
+  /** 末支是 v-else 时只闭合外层 */
+  readonly closeLast: string;
+  /** effect 收尾 */
+  readonly effectClose: string;
+}
+
+/**
+ * 按固定语义顺序拼接条件分支骨架（signal 两版共用）。
+ *
+ * 顺序：prologue → 每支 [head → mount → 标记活跃 → createPrep → create →
+ * 守卫闭合 → update → tail → 分支闭合] → 兜底/收尾。
+ */
+export function emitConditionalBranches(
+  plan: ConditionalPlan,
+  emissions: ConditionalBranchEmission[],
+  locals: ReadonlySet<string>,
+  anchorVar: string | undefined,
+  dialect: ConditionalEmitDialect,
+): string {
+  const { branches, ifVarName, containerVar } = plan;
+  let code = dialect.prologue(ifVarName, emissions);
+  code += dialect.effectOpen(ifVarName);
+
+  for (let i = 0; i < branches.length; i++) {
+    const emission = emissions[i]!;
+    code += dialect.branchHead(ifVarName, i, branches[i]!.condition, locals);
+    code += dialect.mountBranch(ifVarName, emission.html, containerVar, anchorVar);
+    code += dialect.markActive(ifVarName, i);
+    if (emission.createPrep) code += emission.createPrep;
+    code += emission.create;
+    code += dialect.branchBodyClose;
+    code += dialect.update(i, emission.update);
+    if (emission.tail) code += emission.tail;
+    code += dialect.branchClose;
+  }
+
+  code += plan.trailingElse ? dialect.trailing(ifVarName) : dialect.closeLast;
+  code += dialect.effectClose;
+  return code;
 }
 
 /** 生成列表项组件的 props 对象字面量（跳过 :key；字面量原样、表达式按 `toExpr` 前缀化）。 */

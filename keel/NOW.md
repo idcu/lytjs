@@ -1,26 +1,26 @@
 ---
 scope: now
 status: active
-last-verified: 2026-11-13
-updated: 2026-11-13
-keywords: [S35, P0 止血, 体积裁决, 负控, 覆盖率快照, core/runtime, 打包契约]
+last-verified: 2026-11-14
+updated: 2026-11-14
+keywords: [S35, P0 止血, 体积裁决, 负控, 覆盖率快照, signal 收编, 快照基线, core/runtime]
 ---
 
 # NOW · main
 
-## 本轮（2026-11-13）
+## 本轮（2026-11-14）
 
-- [ADR 0030](decisions/0030-runtime-entry-no-compiler-contract.md)：core/runtime 剥离编译器；
-  signal 模板改为抛可操作错误；新增 `@lytjs/renderer/app` 子路径。
-- 硬判据「runtime-app 不含编译器」已反证（接回 barrel ⇒ 红 + 94,170 B）。
-- 25/25 断言绿：runtime-app 33,481 / minimal-app 79,748 / first-screen-runtime 29,724 B。
-- 四道门禁与快照门禁通过，未 `--update`；示例/文档/playground 无静默失效调用。
+- 覆盖率门禁：现场产物 + sha256/HEAD 双指纹 + 逐文件冻结清单；fast 不再声称覆盖率。
+- signal 收编第 2 步：`processConditional` 校验/分支链/深度/末支兜底下沉 shared，
+  两版只保留拼写；以 HEAD 新鲜产物为基线 230 份逐字零差异，100 模板对拍绿。
+- **待裁决**：`signal-profile-snapshot.json` 自 `258b4b8d` 后未随发射器修复更新，
+  HEAD 重建即 8 处（4 模板×2）差异；本次未 `--update`，基线是否刷新请示。
 
 ## 当前焦点
 
 - **S35 收口**：P0 8 笔已提交 push；历史取证见 [ui-contracts-na-audit](checks/ui-contracts-na-audit.md)。
 - first-screen-runtime 基线 37648（预算 38400），见 [ADR 0029](decisions/0029-bundle-first-screen-runtime-baseline.md)。
-- `checks/rules.md` 与 `gate.mjs` 对齐 76 条（59 fast / 17 slow）。
+- `checks/rules.md` 与 `gate.mjs` 对齐 77 条（58 fast / 19 slow）。
 
 ## P0 账
 

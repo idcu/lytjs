@@ -42,7 +42,13 @@ import {
   processVNodeCallPropsShared,
   processDirectiveShared,
   validateExpression,
+  planConditional,
+  finishConditionalPlan,
+  emitConditionalBranches,
   type DirectiveDialect,
+  type ConditionalDialect,
+  type ConditionalEmitDialect,
+  type ConditionalBranchEmission,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { getVShowStyleTest } from './transforms/helpers';
@@ -850,6 +856,63 @@ function processDirective(
 // 使用 createTemplate + insert/remove 实现真正的 DOM 插入/移除
 // ============================================================
 
+/** 基础版条件语义差异（仅错误文案 / 变量前缀 / 缺省容器）。 */
+const BASE_CONDITIONAL_DIALECT: ConditionalDialect = {
+  emptyConditionError: () =>
+    new Error(
+      `[lytjs/compiler] v-if/v-else-if condition is empty or invalid. ` +
+        `Ensure the directive has a valid expression, e.g., v-if="condition" or v-else-if="condition".`,
+    ),
+  ifVarPrefix: '_if',
+  defaultContainer: BASE_EMIT_PROFILE.containerParam,
+};
+
+/** 基础版条件分支拼写（完整运行时名 / 换行缩进）。 */
+const BASE_CONDITIONAL_EMIT: ConditionalEmitDialect = {
+  prologue(ifVar, emissions) {
+    let code = `let ${ifVar}El = null;\n`;
+    code += `let ${ifVar}Active = -1;\n`;
+    for (const emission of emissions) {
+      if (emission.hoist.length) code += `${emission.hoist.join('\n')}\n`;
+    }
+    return code;
+  },
+  effectOpen: () => `effect(() => {\n`,
+  branchHead(ifVar, index, condition, locals) {
+    let code = index > 0 ? `    } else ` : '';
+    if (condition !== null) code += `if (${prefixIdentifiers(condition, locals)}) `;
+    code += `{\n`;
+    code += `      if (${ifVar}Active !== ${index}) {\n`;
+    return code;
+  },
+  mountBranch(ifVar, html, containerVar, anchorVar) {
+    // 移除之前的分支元素（所有分支都要清理，不能只清理第 0 支：
+    // v-if → v-else 切换时旧节点会残留在 DOM 里，且后续再也拿不到引用）
+    let code = `        if (${ifVar}El) {\n`;
+    code += `          remove(${ifVar}El);\n`;
+    code += `          ${ifVar}El = null;\n`;
+    code += `        }\n`;
+    // 创建并插入新分支元素
+    code += `        ${ifVar}El = createTemplate(${JSON.stringify(html)}).firstElementChild;\n`;
+    // FIX: P0-07 空 HTML / 纯文本 HTML 时 firstElementChild 为 null
+    code += `        if (!${ifVar}El) { ${ifVar}El = document.createComment(''); }\n`;
+    if (html.trim()) {
+      // 插入参考节点：`anchorVar` 是「原位置后面的静态兄弟元素」，
+      // 保证 v-if 分支落在模板书写的位置，而不是父容器末尾（mx04 实测）。
+      code += `      insert(${ifVar}El, ${containerVar}${anchorVar ? `, ${anchorVar}` : ''});\n`;
+    }
+    return code;
+  },
+  markActive: (ifVar, index) => `        ${ifVar}Active = ${index};\n`,
+  branchBodyClose: `      }`,
+  update: (_index, update) => (update ? ` else {\n${update}      }` : ''),
+  branchClose: `\n`,
+  trailing: (ifVar) =>
+    `    } else {\n      if (${ifVar}El) {\n        remove(${ifVar}El);\n        ${ifVar}El = null;\n        ${ifVar}Active = -1;\n      }\n    }\n`,
+  closeLast: `    }\n`,
+  effectClose: `  });`,
+};
+
 function processConditional(
   node: JSConditionalExpression,
   varCounter: Map<string, number>,
@@ -860,52 +923,8 @@ function processConditional(
   locals: ReadonlySet<string> = new Set(),
   anchorVar?: string,
 ): void {
-  const testExpr = getTestExpr(node.test);
-
-  // FIX: P1-L2 v-if/v-else-if 条件为空未报错 - 添加运行时错误抛出
-  if (!testExpr || testExpr.trim() === '') {
-    throw new Error(
-      `[lytjs/compiler] v-if/v-else-if condition is empty or invalid. ` +
-        `Ensure the directive has a valid expression, e.g., v-if="condition" or v-else-if="condition".`,
-    );
-  }
-
-  // 收集所有条件分支（v-if / v-else-if / v-else 链）
-  const branches: Array<{
-    condition: string | null; // null 表示 v-else（无条件）
-    branch: JSChildNode | TemplateChildNode | TemplateChildNode[] | string | undefined;
-  }> = [];
-
-  // 收集 consequent 分支
-  branches.push({
-    condition: testExpr,
-    branch: node.consequent,
-  });
-
-  // 递归收集 alternate 链（v-else-if / v-else）
-  let alternate = node.alternate;
-  while (alternate) {
-    if (
-      typeof alternate !== 'string' &&
-      !Array.isArray(alternate) &&
-      alternate.type === NodeTypes.JS_CONDITIONAL_EXPRESSION
-    ) {
-      const altCond = alternate as JSConditionalExpression;
-      const altTestExpr = getTestExpr(altCond.test);
-      branches.push({
-        condition: altTestExpr || null,
-        branch: altCond.consequent,
-      });
-      alternate = altCond.alternate;
-    } else {
-      // v-else 分支（无条件）
-      branches.push({
-        condition: null,
-        branch: alternate,
-      });
-      alternate = undefined;
-    }
-  }
+  const plan = planConditional(node, varCounter, parentVar, BASE_CONDITIONAL_DIALECT);
+  const { branches, ifVarName } = plan;
 
   // 为每个分支注册变量名（确保 varCounter 和 elementVars 正确递增）
   //
@@ -913,8 +932,7 @@ function processConditional(
   //   会出现多次，按「消费」计数会让第二次取值越界，直接抛
   //   `Cannot read properties of undefined (reading 'varName')`（if08 实测）。
   //   本循环只需知道「该标签是否已有变量」，不参与后续 processElement 的消费顺序。
-  for (let i = 0; i < branches.length; i++) {
-    const branchInfo = branches[i]!;
+  for (const branchInfo of branches) {
     const elInfo = extractElementFromBranch(branchInfo.branch);
     if (elInfo) {
       const existing = findExistingVar(elementVars, elInfo.tag);
@@ -925,113 +943,27 @@ function processConditional(
     }
   }
 
-  // 序列化每个分支的 HTML
-  const branchHTMLs: string[] = [];
-  for (const branchInfo of branches) {
-    const html = serializeBranchHTML(branchInfo.branch);
-    branchHTMLs.push(html);
-  }
-
-  // 确定父容器和参考节点
-  const containerVar = parentVar ?? BASE_EMIT_PROFILE.containerParam;
-  // FIX: P1-28 使用唯一计数器键确保嵌套 v-if 生成唯一变量名，
-  // 避免嵌套场景下变量名冲突
-  // FIX: P2-14 修复 `_if_undefined` 问题，确保深度值始终为数字
-  const ifDepth = varCounter.get('_if_depth') ?? 0;
-  const ifCounterKey = `_if_${ifDepth}`;
-  const ifVarName = `_if${varCounter.get(ifCounterKey) ?? 0}`;
-  varCounter.set(ifCounterKey, (varCounter.get(ifCounterKey) ?? 0) + 1);
-  varCounter.set('_if_depth', ifDepth + 1);
-
   // 预先算好每个分支的动态绑定：文本槽位变量必须声明在 effect 外，
   // 才能在「创建分支」和「分支保持激活」两条路径里共用。
-  const branchDynamics = branches.map((branchInfo, i) =>
-    buildBranchDynamics(
+  const emissions: ConditionalBranchEmission[] = branches.map((branchInfo, i) => {
+    const dyn = buildBranchDynamics(
       collectBranchDynamics(branchInfo.branch, locals),
       ifVarName,
       `${ifVarName}_b${i}`,
-    ),
-  );
+    );
+    return {
+      html: serializeBranchHTML(branchInfo.branch),
+      hoist: dyn.hoist,
+      create: dyn.create,
+      update: dyn.update,
+    };
+  });
 
   // FIX: P2-24 模板缩进保持：生成的代码保持与模板一致的缩进层级
-  // 生成条件分支的 DOM 插入/移除代码
-  let code = `let ${ifVarName}El = null;\n`;
-  code += `let ${ifVarName}Active = -1;\n`;
-  for (const dyn of branchDynamics) {
-    if (dyn.declarations) code += `${dyn.declarations}\n`;
-  }
-  code += `effect(() => {\n`;
-
-  for (let i = 0; i < branches.length; i++) {
-    const branchInfo = branches[i]!;
-    const branchHTML = branchHTMLs[i]!;
-
-    if (i > 0) {
-      code += `    } else `;
-    }
-
-    if (branchInfo.condition !== null) {
-      code += `if (${prefixIdentifiers(branchInfo.condition, locals)}) `;
-    }
-
-    code += `{\n`;
-    code += `      if (${ifVarName}Active !== ${i}) {\n`;
-
-    // 移除之前的分支元素（所有分支都要清理，不能只清理第 0 支：
-    // v-if → v-else 切换时旧节点会残留在 DOM 里，且后续再也拿不到引用）
-    code += `        if (${ifVarName}El) {\n`;
-    code += `          remove(${ifVarName}El);\n`;
-    code += `          ${ifVarName}El = null;\n`;
-    code += `        }\n`;
-
-    // 创建并插入新分支元素
-    code += `        ${ifVarName}El = createTemplate(${JSON.stringify(branchHTML)}).firstElementChild;\n`;
-    // FIX: P0-07 添加 null 检查，防止空 HTML 或纯文本 HTML 导致 firstElementChild 为 null 时崩溃
-    code += `        if (!${ifVarName}El) { ${ifVarName}El = document.createComment(''); }\n`;
-    if (branchHTML.trim()) {
-      // 插入参考节点：`anchorVar` 为「原位置后面的静态兄弟元素」，
-      // 保证 v-if 分支落在模板书写的位置，而不是父容器末尾（mx04 实测）。
-      code += `      insert(${ifVarName}El, ${containerVar}${anchorVar ? `, ${anchorVar}` : ''});\n`;
-    }
-    code += `        ${ifVarName}Active = ${i};\n`;
-
-    // 处理分支内的动态绑定（插值文本 / 动态属性 / 组件挂载）
-    const dyn = branchDynamics[i]!;
-    if (dyn.create) code += dyn.create;
-
-    code += `      }`;
-
-    // 如果分支已激活，更新动态内容（同一段代码在「保持激活」分支里再执行一次）
-    if (dyn.update) {
-      code += ` else {\n`;
-      code += dyn.update;
-      code += `      }`;
-    }
-
-    code += `\n`;
-  }
-
-  // 如果所有条件都不满足，移除元素
-  //
-  // ⚠️ 2026-09-30 修复：末支若已是 `v-else`（condition === null），它本身就是兜底分支；
-  //   再补一个 `else {…}` 会得到 `if…else…else` ⇒ **SyntaxError: Unexpected token 'else'**。
-  //   注意：无论哪种情况都必须闭合末支的外层 `{`，故此处只保留 `}`。
-  const lastBranch = branches[branches.length - 1];
-  if (!lastBranch || lastBranch.condition !== null) {
-    code += `    } else {\n`;
-    code += `      if (${ifVarName}El) {\n`;
-    code += `        remove(${ifVarName}El);\n`;
-    code += `        ${ifVarName}El = null;\n`;
-    code += `        ${ifVarName}Active = -1;\n`;
-    code += `      }\n`;
-    code += `    }\n`;
-  } else {
-    code += `    }\n`;
-  }
-  code += `  });`;
+  const code = emitConditionalBranches(plan, emissions, locals, anchorVar, BASE_CONDITIONAL_EMIT);
 
   dynamicBindings.push({
-    varName: containerVar,
+    varName: plan.containerVar,
     code,
   });
 
@@ -1039,8 +971,7 @@ function processConditional(
   // ⚠️ 这里**不再**调用 processBranchDynamics：它把 `:class` / `:style` 绑到
   //   `containerVar`（分支的**父容器**）上，而且没有做 `_ctx.` 前缀 ⇒
   //   静态 class 泄漏到父元素（if07）、动态表达式直接 `ReferenceError`（if09）。
-  // FIX: P2-12 在 processConditional 结束时递减 _if_depth，避免同级 v-if 时计数器持续增长
-  varCounter.set('_if_depth', ifDepth);
+  finishConditionalPlan(varCounter, plan);
 }
 
 // ============================================================
@@ -1258,7 +1189,7 @@ function buildBranchDynamics(
   ops: BranchDynamicOp[],
   ifVar: string,
   branchTag: string,
-): { declarations: string; create: string; update: string } {
+): { hoist: string[]; create: string; update: string } {
   const declLines: string[] = [];
   const createLines: string[] = [];
   const updateLines: string[] = [];
@@ -1346,7 +1277,7 @@ function buildBranchDynamics(
   updateLines.push(...listUpdate);
 
   return {
-    declarations: declLines.join('\n'),
+    hoist: declLines,
     create: createLines.map((line) => pad + line + '\n').join(''),
     update: updateLines.map((line) => pad + line + '\n').join(''),
   };

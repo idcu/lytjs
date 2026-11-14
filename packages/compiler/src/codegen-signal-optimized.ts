@@ -47,7 +47,13 @@ import {
   processVNodeCallPropsShared,
   processDirectiveShared,
   validateExpression,
+  planConditional,
+  finishConditionalPlan,
+  emitConditionalBranches,
   type DirectiveDialect,
+  type ConditionalDialect,
+  type ConditionalEmitDialect,
+  type ConditionalBranchEmission,
 } from './codegen-signal-shared';
 import { getMemoMeta } from './transforms/v-memo';
 import { getVShowStyleTest } from './transforms/helpers';
@@ -969,6 +975,61 @@ function containsListCall(node: unknown, depth = 0): boolean {
   return false;
 }
 
+/** 优化版条件语义差异（仅错误文案 / 变量前缀 / 缺省容器）。 */
+const OPTIMIZED_CONDITIONAL_DIALECT: ConditionalDialect = {
+  emptyConditionError: () =>
+    new Error(
+      `[lytjs/compiler] v-if/v-else-if condition is empty or invalid.` +
+        `\n  Suggestion: Provide a valid expression for v-if, e.g., v-if="isVisible" or v-if="count > 0".`,
+    ),
+  ifVarPrefix: '_i',
+  defaultContainer: OPTIMIZED_EMIT_PROFILE.containerParam,
+};
+
+/** 优化版条件分支拼写（短别名 / 紧凑版式）。 */
+function makeOptimizedConditionalEmit(options: SignalCodegenOptions): ConditionalEmitDialect {
+  const useShortNames = options.useShortNames ?? true;
+  const e = getShortName('effect', useShortNames);
+  const ins = getShortName('insert', useShortNames);
+  const rm = getShortName('remove', useShortNames);
+  // ⚠️ 2026-09-30 修复：此处必须与 import 绑定名保持一致（短名如 `t`），
+  // 旧实现硬编码长名 `createTemplate` ⇒ `ReferenceError`。
+  const ct = getShortName('createTemplate', useShortNames);
+
+  return {
+    prologue: (ifVar, emissions) => {
+      const slotDecls = emissions
+        .flatMap((emission) => emission.hoist)
+        .map((v) => `,${v}=null`)
+        .join('');
+      return `let ${ifVar}El=null,${ifVar}Idx=-1${slotDecls};`;
+    },
+    effectOpen: () => `${e}(()=>{`,
+    branchHead: (ifVar, index, condition, locals) => {
+      let code = index > 0 ? 'else ' : '';
+      if (condition !== null) code += `if(${renderExpression(condition, locals)})`;
+      code += `{if(${ifVar}Idx!==${index}){`;
+      return code;
+    },
+    mountBranch: (ifVar, html, containerVar, anchorVar) => {
+      // 所有分支切换都要清理旧节点（此前只清理第 0 支，v-if → v-else 会残留 DOM）
+      let code = `if(${ifVar}El){${rm}(${ifVar}El);${ifVar}El=null;}`;
+      code += `${ifVar}El=${ct}(${JSON.stringify(html)}).firstElementChild;`;
+      code += `if(!${ifVar}El)${ifVar}El=document.createComment('');`;
+      const target = anchorVar ? `${containerVar},${anchorVar}` : containerVar;
+      code += `${ins}(${ifVar}El,${target});`;
+      return code;
+    },
+    markActive: (ifVar, index) => `${ifVar}Idx=${index};`,
+    branchBodyClose: `}`,
+    update: (_index, update) => update,
+    branchClose: `}`,
+    trailing: (ifVar) => `else{if(${ifVar}El){${rm}(${ifVar}El);${ifVar}El=null;${ifVar}Idx=-1;}}`,
+    closeLast: '',
+    effectClose: `});`,
+  };
+}
+
 function processConditionalOptimized(
   node: JSConditionalExpression,
   varCounter: Map<string, number>,
@@ -980,56 +1041,13 @@ function processConditionalOptimized(
   options: SignalCodegenOptions,
   anchorVar?: string,
 ): void {
-  const testExpr = getTestExpr(node.test);
-
-  if (!testExpr || testExpr.trim() === '') {
-    throw new Error(
-      `[lytjs/compiler] v-if/v-else-if condition is empty or invalid.` +
-        `\n  Suggestion: Provide a valid expression for v-if, e.g., v-if="isVisible" or v-if="count > 0".`,
-    );
-  }
-
-  const branches: Array<{
-    condition: string | null;
-    branch: JSChildNode | TemplateChildNode | TemplateChildNode[] | string | undefined;
-  }> = [];
-
-  branches.push({ condition: testExpr, branch: node.consequent });
-
-  let alternate = node.alternate;
-  while (alternate) {
-    if (
-      typeof alternate !== 'string' &&
-      !Array.isArray(alternate) &&
-      alternate.type === NodeTypes.JS_CONDITIONAL_EXPRESSION
-    ) {
-      const altCond = alternate as JSConditionalExpression;
-      const altTestExpr = getTestExpr(altCond.test);
-      branches.push({ condition: altTestExpr || null, branch: altCond.consequent });
-      alternate = altCond.alternate;
-    } else {
-      branches.push({ condition: null, branch: alternate });
-      alternate = undefined;
-    }
-  }
+  const plan = planConditional(node, varCounter, parentVar, OPTIMIZED_CONDITIONAL_DIALECT);
+  const { branches, ifVarName } = plan;
 
   usedRuntime.add('effect');
   usedRuntime.add('createTemplate');
   usedRuntime.add('insert');
   usedRuntime.add('remove');
-
-  const e = getShortName('effect', options.useShortNames ?? true);
-  const ins = getShortName('insert', options.useShortNames ?? true);
-  const rm = getShortName('remove', options.useShortNames ?? true);
-  // ⚠️ 2026-09-30 修复：此处原先硬编码长名 `createTemplate`，而 import 只绑定**短名**（如 `t`）
-  // ⇒ `ReferenceError: createTemplate is not defined`。必须与 import 绑定名保持一致。
-  const ct = getShortName('createTemplate', options.useShortNames ?? true);
-
-  const containerVar = parentVar ?? OPTIMIZED_EMIT_PROFILE.containerParam;
-  const ifDepth = varCounter.get('_if_depth') ?? 0;
-  const ifVarName = `_i${varCounter.get(`_if_${ifDepth}`) ?? 0}`;
-  varCounter.set(`_if_${ifDepth}`, (varCounter.get(`_if_${ifDepth}`) ?? 0) + 1);
-  varCounter.set('_if_depth', ifDepth + 1);
 
   // 分支内动态内容：文本槽位 / 动态属性 / 子组件。旧优化版完全忽略它们。
   const branchDynamics = branches.map((b, i) =>
@@ -1041,10 +1059,6 @@ function processConditionalOptimized(
       String(i),
     ),
   );
-  const slotVars = branchDynamics.flatMap((d) =>
-    d.declarations.map((s) => s.split('=')[0]!.trim()),
-  );
-  const slotDecls = slotVars.map((v) => `,${v}=null`).join('');
 
   // v-for 的产物（RENDER_LIST）会被静态 HTML 序列化整体丢弃。
   // 对这类分支改用 vnode 子树挂载：分支壳仍走静态 HTML，子节点由
@@ -1058,11 +1072,7 @@ function processConditionalOptimized(
     return serializeVNodeCallChildrenOptimized(branchNode.children, usedRuntime, options);
   });
 
-  let code = `let ${ifVarName}El=null,${ifVarName}Idx=-1${slotDecls};${e}(()=>{`;
-  const branchHTMLs: string[] = [];
-
-  for (let i = 0; i < branches.length; i++) {
-    const branchInfo = branches[i]!;
+  const emissions: ConditionalBranchEmission[] = branches.map((branchInfo, i) => {
     const dyn = branchDynamics[i]!;
     // 仅当分支没有其它动态内容时才走 vnode 子树挂载，避免与文本槽位/属性绑定互相覆盖
     const mountChildren =
@@ -1072,31 +1082,14 @@ function processConditionalOptimized(
       dyn.updateOps.length === 0
         ? vnodeChildrenCodes[i]
         : null;
-    const branchHTML = mountChildren
+    const html = mountChildren
       ? serializeBranchHTML({
           ...(branchInfo.branch as JSChildNode),
           children: [],
         } as JSChildNode)
       : serializeBranchHTML(branchInfo.branch);
-    branchHTMLs.push(branchHTML);
 
-    if (i > 0) code += 'else ';
-    if (branchInfo.condition !== null) {
-      code += `if(${renderExpression(branchInfo.condition)})`;
-    }
-    code += `{if(${ifVarName}Idx!==${i}){`;
-    // 所有分支切换都要清理旧节点（此前只清理第 0 支，v-if → v-else 会残留 DOM）
-    code += `if(${ifVarName}El){${rm}(${ifVarName}El);${ifVarName}El=null;}`;
-    code += `${ifVarName}El=${ct}(${JSON.stringify(branchHTML)}).firstElementChild;`;
-    code += `if(!${ifVarName}El)${ifVarName}El=document.createComment('');`;
-    const target = anchorVar ? `${containerVar},${anchorVar}` : containerVar;
-    code += `${ins}(${ifVarName}El,${target});`;
-    code += `${ifVarName}Idx=${i};`;
-    code += dyn.declarations.join('');
-    code += dyn.createOps.join('');
-    code += `}`;
-    // 分支已激活时，每次 effect 都要刷新动态属性 / 文本。
-    code += dyn.updateOps.join('');
+    let tail: string | undefined;
     if (mountChildren) {
       usedRuntime.add('mountVNode');
       usedRuntime.add('createVNode');
@@ -1105,22 +1098,30 @@ function processConditionalOptimized(
       const cv = getShortName('createVNode', options.useShortNames ?? true);
       const frag = getShortName('Fragment', options.useShortNames ?? true);
       // mountVNode 内部会 clearHost，无需再手动清空
-      code += `${mv}(${cv}(${frag},null,${mountChildren}),${ifVarName}El);`;
+      tail = `${mv}(${cv}(${frag},null,${mountChildren}),${ifVarName}El);`;
     }
-    code += `}`;
-  }
 
-  // ⚠️ 2026-09-30 修复：末支若已是 `v-else`（condition === null），它自己就是兜底分支，
-  // 再补一个 `else{…}` 清理会得到 `if…else…else` ⇒ **SyntaxError: Unexpected token 'else'**。
-  const lastBranch = branches[branches.length - 1];
-  if (!lastBranch || lastBranch.condition !== null) {
-    code += `else{if(${ifVarName}El){${rm}(${ifVarName}El);${ifVarName}El=null;${ifVarName}Idx=-1;}}`;
-  }
-  code += '});';
+    return {
+      html,
+      hoist: dyn.declarations.map((s) => s.split('=')[0]!.trim()),
+      createPrep: dyn.declarations.join(''),
+      create: dyn.createOps.join(''),
+      update: dyn.updateOps.join(''),
+      tail,
+    };
+  });
 
-  dynamicBindings.push({ varName: containerVar, code });
+  const code = emitConditionalBranches(
+    plan,
+    emissions,
+    new Set(),
+    anchorVar,
+    makeOptimizedConditionalEmit(options),
+  );
 
-  varCounter.set('_if_depth', ifDepth);
+  dynamicBindings.push({ varName: plan.containerVar, code });
+
+  finishConditionalPlan(varCounter, plan);
 }
 
 // ============================================================
