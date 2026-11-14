@@ -4,7 +4,7 @@
  *
  * ## 修复前实测
  *
- * `@lytjs/vdom` 的过渡类名前缀取自**模块级变量** `globalTransitionPrefix`
+ * `@lytjs/vdom` 的过渡类名前缀取自**全局默认前缀**
  * （`packages/vdom/src/transition.ts:81`）。`@lytjs/component` 的
  * `<Transition>` / `<TransitionGroup>` 在 `performEnterTransition` /
  * `performLeaveTransition` 里只传 `props`，没有把前缀固定到当前 app。

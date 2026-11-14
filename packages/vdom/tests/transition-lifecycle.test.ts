@@ -416,3 +416,19 @@ describe('performEnterTransition / performLeaveTransition（host 分支）', () 
     expect(has(e, 'v-leave-to')).toBe(false);
   });
 });
+
+describe('前缀导出面', () => {
+  it('不再导出可写的 globalTransitionPrefix', async () => {
+    const api = await import('../src/transition');
+    // 模块级 let 在 splitting:false 下逐入口一份：外部写它只改自己那份，
+    // 而所有读取走共享槽 —— 「写了不生效」无法被探针发现，故直接删除绑定。
+    expect('globalTransitionPrefix' in api).toBe(false);
+  });
+
+  it('读走 getTransitionPrefix，写走 setTransitionPrefix', async () => {
+    const api = await import('../src/transition');
+    api.setTransitionPrefix('probe-export-surface');
+    expect(api.getTransitionPrefix()).toBe('probe-export-surface');
+    api.setTransitionPrefix('v');
+  });
+});

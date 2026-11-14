@@ -360,7 +360,7 @@ export function performGroupEnterTransition<HN, HE extends HN>(
     const props = elOrProps as TransitionGroupProps<Element>;
     const doneFn = propsOrDone as () => void;
 
-    // FIX: P1-7 使用 globalTransitionPrefix 替代硬编码的 'v'
+    // FIX: P1-7 使用跨入口共享前缀替代硬编码的 'v'
     const name = props.name ?? getTransitionPrefix();
     // ★ 2026-10-24：补齐自定义类名 —— 此前**只有泛型版**支持，DOM 版恒用 `${name}-enter-*`
     //   ⇒ `enterFromClass` / `enterActiveClass` / `enterToClass` 在 DOM 路径被静默忽略。
@@ -418,7 +418,7 @@ export function performGroupEnterTransition<HN, HE extends HN>(
     const props = propsOrDone as TransitionGroupProps<HE>;
     const doneFn = done!;
 
-    // FIX: P1-7 使用 globalTransitionPrefix 替代硬编码的 'v'
+    // FIX: P1-7 使用跨入口共享前缀替代硬编码的 'v'
     const name = props.name ?? getTransitionPrefix();
     const from = props.enterFromClass ?? `${name}-enter-from`;
     const active = props.enterActiveClass ?? `${name}-enter-active`;
@@ -525,7 +525,7 @@ export function performGroupLeaveTransition<HN, HE extends HN>(
     const props = elOrProps as TransitionGroupProps<Element>;
     const removeFn = propsOrRemove as () => void;
 
-    // FIX: P1-7 使用 globalTransitionPrefix 替代硬编码的 'v'
+    // FIX: P1-7 使用跨入口共享前缀替代硬编码的 'v'
     const name = props.name ?? getTransitionPrefix();
     // ★ 2026-10-24：补齐自定义类名（此前只有泛型版支持）
     const from = props.leaveFromClass ?? `${name}-leave-from`;
@@ -580,7 +580,7 @@ export function performGroupLeaveTransition<HN, HE extends HN>(
     const props = propsOrRemove as TransitionGroupProps<HE>;
     const removeFn = removeElement!;
 
-    // FIX: P1-7 使用 globalTransitionPrefix 替代硬编码的 'v'
+    // FIX: P1-7 使用跨入口共享前缀替代硬编码的 'v'
     const name = props.name ?? getTransitionPrefix();
     const from = props.leaveFromClass ?? `${name}-leave-from`;
     const active = props.leaveActiveClass ?? `${name}-leave-active`;

@@ -1310,13 +1310,6 @@
       "entries": ["index"],
       "reason": "仅主入口 patch 流程写入与读取"
     },
-    "packages/vdom/src/transition.ts::globalTransitionPrefix": {
-      "kind": "let/var",
-      "line": 81,
-      "classification": "c",
-      "entries": ["index", "transition"],
-      "reason": "导出的兼容快照：仅在本入口 setTransitionPrefix 时同步；所有内部/transition-group 读取已改走 getTransitionPrefix()（globalThis 槽），故跨入口行为正确"
-    },
     "packages/vdom/src/vnode.ts::vnodePoolHitCount": {
       "kind": "let/var",
       "line": 30,

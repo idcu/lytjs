@@ -9,7 +9,7 @@
  * 本文件用 `WebRendererHost`（`@lytjs/adapter-web`）走泛型路径。
  *
  * 另补 `applyFLIP` 的清理计时分支（无 transition / 'ms' / 's' / 缺省 3000ms）
- * 与 `name` 缺省回退 `globalTransitionPrefix`。
+ * 与 `name` 缺省回退 `getTransitionPrefix()`。
  */
 
 import { describe, it, expect, vi } from 'vitest';

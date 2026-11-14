@@ -1,5 +1,5 @@
 ---
-'@lytjs/vdom': patch
+'@lytjs/vdom': major
 ---
 
 修复主入口与 `/transition` 入口之间的过渡状态分叉。
@@ -12,5 +12,8 @@
 - 同一 host 会在两个入口各建一个 `TransitionEngine`
 
 现在统一放入 `globalThis` + `Symbol.for` 槽，读取走 `getTransitionPrefix()`。
-`export let globalTransitionPrefix` 保留为兼容快照；按 app 隔离的前缀仍由
-`props.name` 优先，不改变多实例语义。
+按 app 隔离的前缀仍由 `props.name` 优先，不改变多实例语义。
+
+**破坏性变更**：删除 `@lytjs/vdom/transition` 的 `globalTransitionPrefix` 导出。
+该绑定在每个入口各有一份副本，外部代码写它不会影响实际读取（写不生效比读分叉更难查）。
+迁移：读取改用 `getTransitionPrefix()`，设置改用 `setTransitionPrefix()`。

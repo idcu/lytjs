@@ -105,15 +105,13 @@ const elementCleanupKeys = () => transitionState().elementKeys;
 // 全局 transition 前缀配置
 // ============================================================
 
-// FIX: P0-3 将 globalTransitionPrefix 和 setTransitionPrefix 移到文件顶部（模块顶层）
-// FIX: P1-7 导出 globalTransitionPrefix，供 transition-group.ts 使用
-// 2026-11-14：绑定保留为兼容快照（随本入口写入同步），实际读取一律走
-// getTransitionPrefix()，避免跨入口读到各自副本。
-export let globalTransitionPrefix = transitionState().prefix;
-
+// FIX: P0-3 前缀读写统一走 transitionState()（globalThis + Symbol.for）
+// 2026-11-14：删除可写的 `export let globalTransitionPrefix`。
+// 模块级绑定在 splitting:false 下逐入口各一份，外部写它只改自己那份、读取方却走
+// 共享槽 —— 「写了不生效」比状态分叉更难查。读用 getTransitionPrefix()，写用
+// setTransitionPrefix()；不再暴露可直接赋值的绑定。
 export function setTransitionPrefix(prefix: string): void {
   transitionState().prefix = prefix;
-  globalTransitionPrefix = prefix;
 }
 
 /** 读取跨入口共享的当前前缀 */
@@ -247,7 +245,7 @@ function resolveTransitionClasses<HE>(
   props: TransitionProps<HE>,
   type: 'enter' | 'leave',
 ): { from: string; active: string; to: string } {
-  // FIX: P0-3 使用 globalTransitionPrefix 替代硬编码的 'v'
+  // FIX: P0-3 使用跨入口共享前缀替代硬编码的 'v'
   const name = props.name ?? getTransitionPrefix();
 
   if (type === 'enter') {
@@ -621,7 +619,7 @@ export function performLeaveTransition(
   done: () => void,
 ): void;
 // FIX: P0-3 修复 performLeaveTransition 函数签名被模块级代码打断的问题
-// 已移除插入在重载签名和实现签名之间的模块级代码（globalTransitionPrefix 和 setTransitionPrefix）
+// 已移除插入在重载签名和实现签名之间的模块级代码（前缀状态与 setTransitionPrefix）
 export function performLeaveTransition<HN extends object, HE extends HN>(
   hostOrEl: RendererHost<HN, HE> | Element,
   elOrProps: HE | TransitionProps<Element>,
