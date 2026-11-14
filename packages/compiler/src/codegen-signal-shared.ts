@@ -438,6 +438,21 @@ export function emitListItemProps(
   for (const prop of (props as JSObjectExpression).properties) {
     if (prop.type !== NodeTypes.JS_PROPERTY) continue;
     const jsProp = prop as JSProperty;
+    // C-35c：`v-bind="obj"`（spread）此前被当成普通属性，输出 `__spread__="[object Object]"`。
+    // 逐项写入真实属性（class/style/事件的完整语义由列表项 props 应用器后续统一）。
+    if ((jsProp as { spread?: boolean }).spread === true) {
+      const raw = (jsProp.value as SimpleExpressionNode).content;
+      const code = toExpr(raw, locals);
+      createLines.push(
+        `for (const [_k, _v] of Object.entries(${code})) { ${createExpr}.setAttribute(_k, _v); }`,
+      );
+      if (updateExpr) {
+        updateLines.push(
+          `for (const [_k, _v] of Object.entries(${code})) { ${updateExpr}.setAttribute(_k, _v); }`,
+        );
+      }
+      continue;
+    }
     if (
       jsProp.key.type !== NodeTypes.SIMPLE_EXPRESSION ||
       jsProp.value.type !== NodeTypes.SIMPLE_EXPRESSION
@@ -1184,6 +1199,12 @@ export function serializeVNodeCallShared(
       const valCode =
         prop.value && typeof prop.value.content === 'string' ? prop.value.content : null;
       if (keyCode === null || valCode === null) return null;
+      // C-35c：`v-bind="obj"` 的展开标记 —— 此前 key `__spread__` 被当普通属性输出，
+      // 运行期变成 `__spread__="[object Object]"`，真实属性一个都上不去。
+      if ((prop as { spread?: boolean }).spread === true) {
+        parts.push(`...${hooks.propValue(valCode, locals)}`);
+        continue;
+      }
       parts.push(`${keyCode}:${hooks.propValue(valCode, locals)}`);
     }
     propsCode = `{${parts.join(',')}}`;
@@ -1280,6 +1301,12 @@ export function buildComponentPropsObjectShared(
     }
     if (prop.type === NodeTypes.DIRECTIVE) {
       const dir = prop as DirectiveNode;
+      // C-35c：`v-bind="obj"`（无 arg）是对象展开，不是被忽略的无效指令。
+      if (dir.name === 'bind' && !dir.arg && dir.exp) {
+        const raw = getExpContent(dir.exp as SimpleExpressionNode);
+        if (raw) parts.push(`...${hooks.expr(raw)}`);
+        continue;
+      }
       if (!dir.arg || !dir.exp) continue;
       const key = getExpContent(dir.arg as SimpleExpressionNode);
       const raw = getExpContent(dir.exp as SimpleExpressionNode);

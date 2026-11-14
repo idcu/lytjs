@@ -1759,6 +1759,16 @@ function buildReconcileArrayCode(
           for (const prop of objExpr.properties) {
             if (prop.type !== NodeTypes.JS_PROPERTY) continue;
             const jsProp = prop as JSProperty;
+            // C-35c：`v-bind="obj"`（spread）不得作为 `__spread__` 属性输出
+            if ((jsProp as { spread?: boolean }).spread === true) {
+              const spreadCode = prefixIdentifiers(
+                (jsProp.value as SimpleExpressionNode).content,
+                itemLocals,
+              );
+              createBody += `for (const [_k, _v] of Object.entries(${spreadCode})) { ${elVar}.setAttribute(_k, _v); }`;
+              updateBody += `for (const [_k, _v] of Object.entries(${spreadCode})) { _el.setAttribute(_k, _v); }`;
+              continue;
+            }
             if (
               !jsProp.key ||
               typeof jsProp.key === 'string' ||

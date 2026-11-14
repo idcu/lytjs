@@ -2126,6 +2126,13 @@ function buildItemProps(
       continue;
     }
     const propName = key.content.replace(/^"|"$/g, '');
+    // C-35c：`v-bind="obj"`（spread）逐项写入真实属性，而不是 `__spread__` 字面量
+    if ((jsProp as { spread?: boolean }).spread === true) {
+      const spreadCode = toItemExpr(value.content, locals);
+      create += `for (const [_k, _v] of Object.entries(${spreadCode})) { ${elVar}.setAttribute(_k, _v); }`;
+      update += `for (const [_k, _v] of Object.entries(${spreadCode})) { _el.setAttribute(_k, _v); }`;
+      continue;
+    }
     if (propName === 'key') continue;
     if (
       propName.startsWith('on') &&

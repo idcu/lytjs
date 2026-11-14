@@ -170,12 +170,13 @@ describe('Signal 模式 - 子组件（两版 codegen 均已支持挂载）', () 
     });
   });
 
-  it('v-bind 对象语法（无 arg）应被忽略而不是产出非法 props', () => {
+  it('v-bind 对象语法（无 arg）应展开为 props（C-35c）', () => {
+    // 修前：整条 bind 被忽略，props 为 {}；修后展开为 { ...obj }
     const call = mountComponentCalls('<div><Child v-bind="obj"/></div>', {
       Child: {},
       obj: { a: 1 },
     })[0];
-    expect(call.props).toEqual({});
+    expect(call.props).toEqual({ a: 1 });
   });
 
   it('事件指令应编译为 onXxx prop（供组件 emit 回查）', () => {
@@ -388,4 +389,26 @@ describe('C-35b 组件动态 prop 名', () => {
     })[0];
     expect(call.props).toEqual({ title: 'T' });
   });
+});
+
+// ============================================================
+// C-35c：v-bind="obj" 的对象展开
+// ============================================================
+
+describe('C-35c v-bind 对象展开', () => {
+  for (const optimizeSignal of [false, true]) {
+    const label = optimizeSignal ? '优化版' : '基础版';
+    it(`${label}：列表项上的 v-bind="obj" 不得把 __spread__ 当属性输出`, () => {
+      // 修前：props 里是 `__spread__: _ctx.item`，DOM 上出现
+      //       `__spread__="[object Object]"`，真实属性一个都不上。
+      const handle = executeSignal(
+        compile('<ul><li v-for="item in items" v-bind="item"></li></ul>', { optimizeSignal }),
+        { items: [{ id: 'a', title: 'T' }] },
+      );
+      const li = handle.container.querySelector('li')!;
+      expect(li.getAttribute('id')).toBe('a');
+      expect(li.getAttribute('title')).toBe('T');
+      expect(li.hasAttribute('__spread__')).toBe(false);
+    });
+  }
 });
