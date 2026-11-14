@@ -16,6 +16,7 @@
  *   - `check-controlled-props` 受控组件：把 UI dist 的 `current` 受控读取改成常量 → 必红
  *   - `check-ui-styles`        样式覆盖：塞一个未在 CSS 里出现的静态类名 → 必红
  *   - `check-release-parity`  发布一致性：改一个包版本 → 「76 包版本一致」判据必红
+ *   - `check-release-workflow` 发布 workflow 平台：删掉 `[no-ci-release]` 标记 → 必红
  *   - `check-script-refs`     零引用脚本棘轮（S20）：新增一个零引用脚本 → 必红
  *   - `check-as-unknown`      as unknown as 棘轮（S22）：多写一处 → 必红
  *   - `check-api-snapshot`    API 快照（S22）：删掉一个导出名 → 必红
@@ -318,6 +319,31 @@ const CONTROLS = {
     const file = join(ROOT, 'packages/ecosystem/packages/ui/src/components/__negctl.ts');
     withTempFile(file, "export const NEGCTL_CLASS = 'lyt-negctl-missing';\n", () =>
       expectFail(['tsx', 'scripts/check-ui-styles.ts'], 'check-ui-styles'),
+    );
+  },
+
+  'check-release-workflow': () => {
+    // 远端非 GitHub 且文件头缺 [no-ci-release] ⇒「配置存在但不会触发」判据必须报红。
+    // 用 --remote 固定远端，避免本机 origin 变化让控制失效。
+    const file = join(ROOT, '.github/workflows/release.yml');
+    withPatchedFile(
+      file,
+      (text) => {
+        if (!text.includes('[no-ci-release]')) {
+          throw new Error('check-release-workflow：注入点漂移（找不到 [no-ci-release]）');
+        }
+        return text.replace('[no-ci-release]', '[negctl-removed]');
+      },
+      () =>
+        expectFail(
+          [
+            'node',
+            'scripts/check-release-workflow.mjs',
+            '--remote',
+            'git@gitee.com:lytjs/lytjs.git',
+          ],
+          'check-release-workflow',
+        ),
     );
   },
 

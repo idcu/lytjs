@@ -14,12 +14,19 @@ import { spawnSync } from 'node:child_process';
 const FILE = '.github/workflows/release.yml';
 const MARKER = '[no-ci-release]';
 
+// `--remote <url>`：负控用 —— 覆盖 origin 探测，使判据在任何远端下都可被注入验证。
+const remoteFlag = process.argv.indexOf('--remote');
+const remoteOverride = remoteFlag >= 0 ? (process.argv[remoteFlag + 1] ?? '') : null;
+
 if (!existsSync(FILE)) {
   console.log('ℹ️  未配置 release workflow，跳过。');
   process.exit(0);
 }
 
-const remote = spawnSync('git', ['remote', 'get-url', 'origin'], { encoding: 'utf-8' });
+const remote =
+  remoteOverride === null
+    ? spawnSync('git', ['remote', 'get-url', 'origin'], { encoding: 'utf-8' })
+    : { stdout: remoteOverride };
 const url = (remote.stdout || '').trim();
 
 if (url.includes('github.com')) {
