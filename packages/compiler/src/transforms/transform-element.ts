@@ -829,6 +829,60 @@ function handleVOn(
  * 已知未支持：checkbox 绑定数组（`v-model` + `:value` 的多选语义）——
  *   需要运行时 helper，留待单独设计；当前会退化为布尔语义并在产物注释中标注。
  */
+/**
+ * 组件 `v-model` 的 props 键值（transform 与 signal 发射器共用同一份语义）。
+ *
+ * 无返回表示表达式缺失，调用方应直接跳过该指令。
+ */
+export function buildComponentVModelProps(
+  prop: DirectiveNode,
+): Array<{ key: string; value: string; isStaticValue: boolean }> {
+  const expContent = getExpContent(prop.exp);
+  if (expContent === undefined) return [];
+
+  const result: Array<{ key: string; value: string; isStaticValue: boolean }> = [];
+  // ① 组件：默认走 modelValue 约定；带静态 arg 时走「属性名 / onUpdate:属性名」
+  //
+  // ⚠️ 2026-11-13 修（C-20）：此前无论 `v-model:title` 还是 `v-model.trim`，
+  //   都只产出 `modelValue` / `onUpdate:modelValue` —— arg 与修饰符被静默丢弃，
+  //   自定义 model 组件（如 `v-model:title`）收不到 `title`，也拿不到修饰符。
+  //   现在：静态 arg → `title` / `onUpdate:title`；修饰符 → `<arg>Modifiers`（默认 `modelModifiers`）。
+  const argContent = getExpContent(prop.arg);
+  const isDynamicArg =
+    prop.arg !== undefined &&
+    prop.arg.type === NodeTypes.SIMPLE_EXPRESSION &&
+    !(prop.arg as SimpleExpressionNode).isStatic;
+  const modifiers = prop.modifiers ?? [];
+  const modsValue =
+    modifiers.length > 0
+      ? JSON.stringify(Object.fromEntries(modifiers.map((m) => [m, true])))
+      : undefined;
+
+  if (argContent !== undefined && argContent !== '' && !isDynamicArg) {
+    result.push({ key: argContent, value: expContent, isStaticValue: false });
+    result.push({
+      key: `onUpdate:${argContent}`,
+      value: `$event => (${expContent} = $event)`,
+      isStaticValue: false,
+    });
+    if (modsValue !== undefined) {
+      result.push({ key: `${argContent}Modifiers`, value: modsValue, isStaticValue: true });
+    }
+    return result;
+  }
+
+  result.push({ key: 'modelValue', value: expContent, isStaticValue: false });
+  result.push({
+    key: 'onUpdate:modelValue',
+    value: `$event => (${expContent} = $event)`,
+    isStaticValue: false,
+  });
+  if (modsValue !== undefined) {
+    result.push({ key: 'modelModifiers', value: modsValue, isStaticValue: true });
+  }
+  return result;
+}
+
 function handleVModel(
   prop: DirectiveNode,
   node: ElementNode,
@@ -848,33 +902,10 @@ function handleVModel(
   };
 
   // ① 组件：默认走 modelValue 约定；带静态 arg 时走「属性名 / onUpdate:属性名」
-  //
-  // ⚠️ 2026-11-13 修（C-20）：此前无论 `v-model:title` 还是 `v-model.trim`，
-  //   都只产出 `modelValue` / `onUpdate:modelValue` —— arg 与修饰符被静默丢弃，
-  //   自定义 model 组件（如 `v-model:title`）收不到 `title`，也拿不到修饰符。
-  //   现在：静态 arg → `title` / `onUpdate:title`；修饰符 → `<arg>Modifiers`（默认 `modelModifiers`）。
   if (node.tagType === ElementTypes.COMPONENT) {
-    const argContent = getExpContent(prop.arg);
-    const isDynamicArg =
-      prop.arg !== undefined &&
-      prop.arg.type === NodeTypes.SIMPLE_EXPRESSION &&
-      !(prop.arg as SimpleExpressionNode).isStatic;
-    const modifiers = prop.modifiers ?? [];
-    const modsValue =
-      modifiers.length > 0
-        ? JSON.stringify(Object.fromEntries(modifiers.map((m) => [m, true])))
-        : undefined;
-
-    if (argContent !== undefined && argContent !== '' && !isDynamicArg) {
-      push(argContent, expContent, false);
-      push(`onUpdate:${argContent}`, `$event => (${expContent} = $event)`, false);
-      if (modsValue !== undefined) push(`${argContent}Modifiers`, modsValue, true);
-      return;
+    for (const item of buildComponentVModelProps(prop)) {
+      push(item.key, item.value, item.isStaticValue);
     }
-
-    push('modelValue', expContent, false);
-    push('onUpdate:modelValue', `$event => (${expContent} = $event)`, false);
-    if (modsValue !== undefined) push('modelModifiers', modsValue, true);
     return;
   }
 

@@ -447,3 +447,42 @@ describe('C-35d 作用域插槽 props 作用域', () => {
     });
   }
 });
+
+// ============================================================
+// C-35e：组件的 v-model / v-show 不得在组件分支被静默丢弃
+// ============================================================
+
+describe('C-35e 组件 v-model / v-show', () => {
+  for (const optimizeSignal of [false, true]) {
+    const label = optimizeSignal ? '优化版' : '基础版';
+    it(`${label}：v-model 产出 modelValue 与 onUpdate:modelValue`, () => {
+      // 修前：组件分支直接 return，props 为 {}，父状态既不传入也不回写。
+      const ctx: Record<string, unknown> = { Child: {}, msg: 'M' };
+      const call = mountComponentCalls('<div><Child v-model="msg"/></div>', ctx, {
+        optimizeSignal,
+      })[0];
+      expect(call.props?.modelValue).toBe('M');
+      expect(typeof call.props?.['onUpdate:modelValue']).toBe('function');
+      (call.props!['onUpdate:modelValue'] as (v: unknown) => void)('N');
+      expect(ctx.msg).toBe('N');
+    });
+
+    it(`${label}：v-show 折成组件 style.display`, () => {
+      const hidden = mountComponentCalls(
+        '<div><Child v-show="s"/></div>',
+        { Child: {}, s: false },
+        { optimizeSignal },
+      )[0];
+      expect(hidden.props?.style).toEqual({ display: 'none' });
+
+      const visible = mountComponentCalls(
+        '<div><Child v-show="s"/></div>',
+        { Child: {}, s: true },
+        { optimizeSignal },
+      )[0];
+      // 键必须存在、值为 undefined（修前整个 props 里没有 style 键）
+      expect(visible.props !== undefined && 'style' in visible.props).toBe(true);
+      expect(visible.props?.style).toBeUndefined();
+    });
+  }
+});

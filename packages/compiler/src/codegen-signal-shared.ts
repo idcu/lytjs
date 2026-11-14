@@ -10,7 +10,7 @@
 // 任何 helper 的**语义判据**只允许在这里修改一次；两个发射器不得再各写一份。
 
 import { NodeTypes, ElementTypes } from './constants';
-import { FRAGMENT_SENTINEL } from './transforms/transform-element';
+import { FRAGMENT_SENTINEL, buildComponentVModelProps } from './transforms/transform-element';
 import type {
   ElementNode,
   TextNode,
@@ -1293,16 +1293,32 @@ export function buildComponentPropsObjectShared(
   hooks: ComponentPropsHooks,
 ): string {
   const parts: string[] = [];
+  let stylePartIndex = -1;
+  let showExpr: string | null = null;
 
   for (const prop of node.props) {
     if (!prop) continue;
     if (prop.type === NodeTypes.ATTRIBUTE) {
       const value = prop.value ? JSON.stringify(prop.value.content) : 'true';
+      if (prop.name === 'style') stylePartIndex = parts.length;
       parts.push(`${JSON.stringify(prop.name)}:${value}`);
       continue;
     }
     if (prop.type === NodeTypes.DIRECTIVE) {
       const dir = prop as DirectiveNode;
+      // C-35e：组件分支此前直接 return，`v-model` / `v-show` 整条静默丢失。
+      // 语义与 transform 的组件分支保持一致（同一份 buildComponentVModelProps）。
+      if (dir.name === 'model') {
+        for (const item of buildComponentVModelProps(dir)) {
+          parts.push(`${JSON.stringify(item.key)}:${hooks.expr(item.value, locals)}`);
+        }
+        continue;
+      }
+      if (dir.name === 'show') {
+        const raw = getExpContent(dir.exp as SimpleExpressionNode);
+        if (raw) showExpr = `(${hooks.expr(raw, locals)}) ? undefined : { display: 'none' }`;
+        continue;
+      }
       // C-35c：`v-bind="obj"`（无 arg）是对象展开，不是被忽略的无效指令。
       if (dir.name === 'bind' && !dir.arg && dir.exp) {
         const raw = getExpContent(dir.exp as SimpleExpressionNode);
@@ -1319,6 +1335,7 @@ export function buildComponentPropsObjectShared(
         // 此前一律 `JSON.stringify(key)` ⇒ 产物 `{"k": …}`，运行期键名变成字面量 k。
         const isDynamicArg = (dir.arg as SimpleExpressionNode).isStatic === false;
         const propKey = isDynamicArg ? `[${hooks.expr(key, locals)}]` : JSON.stringify(key);
+        if (key === 'style' && !isDynamicArg) stylePartIndex = parts.length;
         parts.push(`${propKey}:${hooks.expr(raw, locals)}`);
         continue;
       }
@@ -1329,6 +1346,18 @@ export function buildComponentPropsObjectShared(
       if (dir.name === 'on') {
         parts.push(`${JSON.stringify(toComponentEventKey(key))}:${hooks.expr(raw, locals)}`);
       }
+    }
+  }
+
+  // v-show 折成组件 style prop（与 transformShow 的口径一致）；已有 style 时合并成数组，
+  // 避免对象字面量同名键后者胜导致其中一条丢失。
+  if (showExpr !== null) {
+    if (stylePartIndex >= 0) {
+      const pair = parts[stylePartIndex]!;
+      const colon = pair.indexOf(':');
+      parts[stylePartIndex] = `${pair.slice(0, colon)}:[${pair.slice(colon + 1)},${showExpr}]`;
+    } else {
+      parts.push(`"style":${showExpr}`);
     }
   }
 
