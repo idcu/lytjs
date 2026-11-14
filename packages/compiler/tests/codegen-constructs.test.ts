@@ -23,6 +23,10 @@ import { describe, it, expect } from 'vitest';
 import { compile } from '../src';
 import { executeSignal, executeSsr } from './support/execute';
 
+import { registerSignalOptimizedGenerator } from '../src/signal-optimized';
+
+registerSignalOptimizedGenerator();
+
 type Mode = { label: string; options: Record<string, unknown> };
 
 const SIGNAL_OPT: Mode = {

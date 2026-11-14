@@ -20,8 +20,8 @@ keywords: [坑库, 索引, 假绿, 门禁, 负控]
 | failed 但绿 | [alias](build/alias-missing-tests-never-run.md) |
 | 自造输入 | [self](verify/self-fulfilling-green.md) |
 | 恒真断言 | [true](verify/always-true-assertion.md) |
-| 判据绿 | [multi](verify/multi-gate-fix.md) |
-| 同 DOM | [hydra](verify/hydration-needs-difference.md) |
+| 判据 | [multi](verify/multi-gate-fix.md) |
+| DOM | [hydra](verify/hydration-needs-difference.md) |
 | 类型错 | [tsc](verify/typecheck-gap.md) |
 | Node26 jsdom | [node26](verify/node26-localstorage-hijacks-jsdom.md) |
 | bench NaN | [bench](verify/vitest-bench-harness-traps.md) |
@@ -30,26 +30,27 @@ keywords: [坑库, 索引, 假绿, 门禁, 负控]
 | 静态HTML | [static](core/static-html-slot-reuse.md) |
 | 漏抛 | [throw](verify/async-throw-escapes.md) |
 | src/dist | [ident](verify/module-identity-src-vs-dist.md) |
-| 覆盖率并发 | [cov](verify/coverage-concurrent-runs-clobber-tmp.md) |
+| 覆盖并发 | [cov](verify/coverage-concurrent-runs-clobber-tmp.md) |
 | Proxy has | [proxy](core/proxy-has-cache-poison.md) |
 | precommit | [pre](process/precommit-reverts-working-tree.md) |
 | 导入吞行 | [span](process/import-rewrite-span.md) |
 | 短别名 | [ac](core/signal-param-alias-contract.md) |
 | 计时抖动 | [flaky](verify/timing-flaky-parallel.md) |
 | 负控同源 | [negctl](verify/negctl-same-source.md) |
-| 子路径内联 | [subpath](build/subpath-external-singleton-blindspot.md) |
+| 子路径 | [subpath](build/subpath-external-singleton-blindspot.md) |
+| 预算 | [split](build/bundle-budget-split-entry-not-baseline.md) |
 | runtime 变胖 | [ns](build/namespace-dynamic-import-retains-all.md) |
 | 绑实现 | [impl](verify/test-impl-coupling.md) |
-| 跨app泄漏 | [state](core/state-leak.md) |
-| 单包假红 | [pkg](verify/pkg-config-alias-blindspot.md) |
-| 元数据多源 | [meta](process/package-metadata-drift.md) |
+| app 泄漏 | [state](core/state-leak.md) |
+| 假红 | [pkg](verify/pkg-config-alias-blindspot.md) |
+| 元数据源 | [meta](process/package-metadata-drift.md) |
 | 体积变胖 | [paths](build/tsconfig-paths-leak-into-bundler.md) |
 | TS2307 | [root](verify/undeclared-root-dep-gate.md) |
-| 残留缺陷 | [residual](core/residuals.md) |
+| 残留 | [residual](core/residuals.md) |
 | dist mtime | [mtime](verify/dist-mtime.md) |
-| 覆盖率旧口径 | [cov-age](verify/coverage-snapshot-commit-staleness.md) |
+| 旧口径 | [cov-age](verify/coverage-snapshot-commit-staleness.md) |
 | commit≠push | [push](process/commit-vs-push.md) |
 | 测旧 dist | [stale](verify/bundle-gate-reads-stale-dist.md) |
-| 负控锚点漂移 | [anchor](verify/negative-control-anchor-drift.md) |
-| 子串假通过 | [substr](verify/substring-probe-comment-false-pass.md) |
-| 首帧固定等待 | [once](verify/test-once-unreproduced.md) |
+| 锚点漂移 | [anchor](verify/negative-control-anchor-drift.md) |
+| 子串假绿 | [substr](verify/substring-probe-comment-false-pass.md) |
+| 首帧等待 | [once](verify/test-once-unreproduced.md) |

@@ -68,6 +68,11 @@ const SECURITY = new URL('../packages/common/packages/security/dist/index.mjs', 
   .href;
 
 const { compile } = await import(COMPILER);
+// ADR 0033：优化发射器已拆到子入口，门禁作为内部调用方必须显式注册（不留隐式通道）。
+const { registerSignalOptimizedGenerator } = await import(
+  new URL('../packages/compiler/dist/signal-optimized.mjs', import.meta.url).href
+);
+registerSignalOptimizedGenerator();
 const { createSignalRenderer, mountVNode } = await import(RENDERER);
 const { reactive } = await import(REACTIVITY);
 const vdomRuntime = await import(VDOM);

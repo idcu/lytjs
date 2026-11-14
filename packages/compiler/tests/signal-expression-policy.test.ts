@@ -26,6 +26,10 @@ import { describe, it, expect } from 'vitest';
 import { compile } from '../src/index';
 import { executeSignal } from './support/execute';
 
+import { registerSignalOptimizedGenerator } from '../src/signal-optimized';
+
+registerSignalOptimizedGenerator();
+
 type Variant = {
   name: string;
   /** 上下文标识符前缀：非优化版为 `_ctx`，优化版为 `_c` */

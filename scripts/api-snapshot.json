@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-13",
+  "updatedAt": "2026-11-14",
   "packages": {
     "@lytjs/adapter-web": [
       "CreateExtendedHostOptions",
@@ -172,7 +172,6 @@
       "detectServerDirective",
       "eliminateDeadCode",
       "generate",
-      "generateSignalOptimized",
       "getCacheStats",
       "getCompileCacheSize",
       "getContentHashCacheSize",

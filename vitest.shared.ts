@@ -76,6 +76,7 @@ export const sharedAliases: Record<string, string> = {
   '@lytjs/router': resolve(root, 'packages/ecosystem/packages/web-framework/packages/router/src'),
   // 子路径 alias 必须先于主包 alias 生效，且目标指 src
   '@lytjs/compiler/sfc': resolve(root, 'packages/compiler/src/sfc/index.ts'),
+  '@lytjs/compiler/signal-optimized': resolve(root, 'packages/compiler/src/signal-optimized.ts'),
   '@lytjs/compiler': resolve(root, 'packages/compiler/src'),
   '@lytjs/core-vnode': resolve(root, 'packages/core-vnode/src'),
   '@lytjs/core-signal': resolve(root, 'packages/core-signal/src'),

@@ -4,6 +4,7 @@ export default defineConfig({
   entry: {
     index: 'src/index.ts',
     signal: 'src/signal.ts',
+    'signal-optimized': 'src/signal-optimized.ts',
     ssr: 'src/ssr.ts',
     sfc: 'src/sfc-entry.ts',
     wasm: 'src/wasm-entry.ts',

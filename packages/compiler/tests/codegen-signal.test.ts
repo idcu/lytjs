@@ -8,6 +8,10 @@ import { Text } from '@lytjs/vdom';
 import { compile as compileImpl } from '../src/index';
 import { executeSignal } from './support/execute';
 
+import { registerSignalOptimizedGenerator } from '../src/signal-optimized';
+
+registerSignalOptimizedGenerator();
+
 /**
  * A04/D1：`optimizeSignal` 已默认关闭，而本文件断言的是**优化版产物**的行为。
  * 因此显式开启（断言本身未改动）；显式传 `optimizeSignal:false` 的用例会覆盖此默认值。

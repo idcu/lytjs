@@ -57,6 +57,11 @@ if (!Array.isArray(templates) || templates.length === 0) {
 }
 
 const { compile } = await import(pathToFileURL(COMPILER_PATH).href);
+// ADR 0033：优化发射器已拆到子入口，门禁作为内部调用方必须显式注册（不留隐式通道）。
+const { registerSignalOptimizedGenerator } = await import(
+  pathToFileURL(join(ROOT, 'packages/compiler/dist/signal-optimized.mjs')).href
+);
+registerSignalOptimizedGenerator();
 
 const actual = Object.fromEntries(PROFILES.map((p) => [p.name, {}]));
 const compileErrors = [];

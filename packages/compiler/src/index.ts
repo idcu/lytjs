@@ -7,8 +7,8 @@ import { parse } from './parser';
 import { transform, builtInTransforms, optimize } from './transform';
 import { generate } from './codegen';
 import { generateSignal } from './codegen-signal';
-import { generateSignalOptimized } from './codegen-signal-optimized';
 import { generateSSR } from './codegen-ssr';
+import { getSignalOptimizedGenerator } from './signal-optimized-registry';
 import type { CompilerOptions, CodegenResult, RootNode, RawSourceMap } from './types';
 
 // Server Components (Phase 1.4)
@@ -62,7 +62,7 @@ export type {
 } from './optimizations';
 
 export { parse, transform, optimize, generate };
-export { generateSignalOptimized };
+// `generateSignalOptimized` 自 ADR 0033 起只在 `@lytjs/compiler/signal-optimized` 子入口导出。
 
 // ============================================================
 // LRU 编译缓存
@@ -347,8 +347,18 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
     // ADR 0028：单语义 + 双形态。语义真源在 codegen-signal-shared.ts，
     // 两发射器只注入前缀与文本兜底（对拍 100/100、parity 115/115）。
     // 默认走基础实现；优化版仅作内部实验，8.0.0 移除公开选项与发射器。
+    // ADR 0033：优化发射器拆到 `@lytjs/compiler/signal-optimized` 子入口，
+    // 主入口只查注册表 —— 未注册时**直接报错**，不静默降级为基础实现。
     // 结构性不变量由 check-signal-authority 门禁守住。
     if (options.optimizeSignal === true) {
+      const generateSignalOptimized = getSignalOptimizedGenerator();
+      if (!generateSignalOptimized) {
+        throw new Error(
+          'compile({ optimizeSignal: true }) 需要先注册优化发射器（不会降级为基础实现）：\n' +
+            "  import { registerSignalOptimizedGenerator } from '@lytjs/compiler/signal-optimized';\n" +
+            '  registerSignalOptimizedGenerator();',
+        );
+      }
       codegenResult = generateSignalOptimized(ast, options);
     } else {
       codegenResult = generateSignal(ast, options);

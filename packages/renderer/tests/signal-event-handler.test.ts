@@ -18,6 +18,10 @@ import { createSignalRenderer } from '../src/signal/signal-renderer';
 import { compile } from '@lytjs/compiler';
 import { mountSignal } from './helpers/run-signal-code';
 
+import { registerSignalOptimizedGenerator } from '@lytjs/compiler/signal-optimized';
+
+registerSignalOptimizedGenerator();
+
 describe('SignalRenderer · @click 语义', () => {
   let container: HTMLElement;
 

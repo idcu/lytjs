@@ -1216,7 +1216,8 @@ const CONTROLS = {
     // 注入：优化实现的静态模板多写一个属性 ⇒ 两套产物执行后的 DOM 新增分叉，「新增分叉」必红。
     // 注意：静态序列化逻辑 B01d-2 已迁入共享层，改共享层会让两侧同变（分叉不产生），
     // 因此注入点必须落在**仅优化实现**的适配层（buildStaticHTMLOptimized）。
-    const file = join(ROOT, 'packages/compiler/dist/index.mjs');
+    // ADR 0033：优化发射器已拆到 `dist/signal-optimized.mjs`，注入点随之迁移。
+    const file = join(ROOT, 'packages/compiler/dist/signal-optimized.mjs');
     if (!existsSync(file)) throw new Error('check-compiler-parity：缺少 compiler dist，请先构建');
     withPatchedFile(
       file,

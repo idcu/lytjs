@@ -6,6 +6,10 @@ import { describe, it, expect } from 'vitest';
 import { compile } from '../src';
 import { executeSignal } from './support/execute';
 
+import { registerSignalOptimizedGenerator } from '../src/signal-optimized';
+
+registerSignalOptimizedGenerator();
+
 const mount = (template: string, ctx: Record<string, unknown> = {}) =>
   executeSignal(compile(template, { rendererMode: 'signal', optimizeSignal: true }), ctx);
 

@@ -18,6 +18,10 @@ import { Text } from '@lytjs/vdom';
 import { compile as compileImpl } from '../src/index';
 import { asVNode, execute, executeSignal } from './support/execute';
 
+import { registerSignalOptimizedGenerator } from '../src/signal-optimized';
+
+registerSignalOptimizedGenerator();
+
 /** A04/D1：本文件断言优化版产物，故显式开启 optimizeSignal（断言未改动）。 */
 const compile = (template: string, options: Parameters<typeof compileImpl>[1] = {}) =>
   compileImpl(template, { rendererMode: 'signal', optimizeSignal: true, ...options });

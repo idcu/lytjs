@@ -10,13 +10,13 @@ keywords: [S35, P0 止血, 体积裁决, 负控, 覆盖率快照, signal 收编,
 
 ## 本轮（2026-11-14）
 
-- 覆盖率门禁：现场产物 + sha256/HEAD 双指纹 + 逐文件冻结清单；fast 不再声称覆盖率。
+- 覆盖率：现场产物 + 双指纹 + 冻结清单；fast 不声称覆盖率。
 - signal 收编：第 2 步 `processConditional`、第 3 步 `processElement` 已下沉 shared，
   两版只保留拼写；每步以 230 份逐字快照 + 100 模板对拍为验收。
-- 快照基线：已按 `fa7beaa4`（C-35g）/`d839b156`（C-35f）逐笔归因刷新；
-  刷新后负控改拼写一处 ⇒ 22 处红，还原回绿（`488bf995`）。
+- 快照基线：按 `fa7beaa4`/`d839b156` 逐笔归因刷新；负控改拼写 ⇒ 22 红，还原回绿（`488bf995`）。
 - optimized/for13 缺 import 已修（运行时标记透传）；新增产物自洽求值门禁。
-- 口径：读 dist 的门禁全标 needsDist，运行自动前置 freshness；stale 拒跑并 exit 1。
+- 口径：读 dist 的门禁标 needsDist，自动前置 freshness；stale 拒跑 exit 1。
+- ADR 0033：优化器拆 `signal-optimized` 子入口+显式注册；first-screen 80763→74595 B。
 
 ## 当前焦点
 

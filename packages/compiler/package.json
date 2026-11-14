@@ -22,6 +22,11 @@
       "import": "./dist/signal.mjs",
       "require": "./dist/signal.cjs"
     },
+    "./signal-optimized": {
+      "types": "./dist/signal-optimized.d.ts",
+      "import": "./dist/signal-optimized.mjs",
+      "require": "./dist/signal-optimized.cjs"
+    },
     "./ssr": {
       "types": "./dist/ssr.d.ts",
       "import": "./dist/ssr.mjs",

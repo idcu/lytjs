@@ -15,6 +15,10 @@
 import { describe, it, expect } from 'vitest';
 import { compile } from '../src/index';
 
+import { registerSignalOptimizedGenerator } from '../src/signal-optimized';
+
+registerSignalOptimizedGenerator();
+
 type Opts = Record<string, unknown>;
 
 const VARIANTS: Record<string, { label: string; options: Opts }> = {

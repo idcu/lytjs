@@ -73,10 +73,15 @@ export function getVShowStyleTest(prop: JSProperty): string | undefined {
 // transform-element ↔ v-memo 的循环依赖）
 // ============================================================
 
+// ⚠️ 三个元数据键必须用 `Symbol.for`（跨打包副本同一身份）：
+// ADR 0033 把优化发射器拆到 `@lytjs/compiler/signal-optimized` 子入口，而 tsup 以
+// `splitting: false` 逐入口内联本模块 —— transform 在 `index` 副本里写元数据，
+// codegen 在子入口副本里读；普通 `Symbol()` 每份副本都是新值，读不到就**静默丢功能**
+// （实测：v-memo 守卫整体消失，产物只差 1 份，极易漏过）。
 /** 挂在 ElementNode 上的 memo 元数据键 */
-export const MEMO_KEY = Symbol('__v_memo__');
+export const MEMO_KEY = Symbol.for('@lytjs/compiler/__v_memo__');
 /** 挂在 codegen 节点上的 memo 元数据键（由 transformElement 从元素转移过来） */
-export const MEMO_CODEGEN_KEY = Symbol('__v_memo_codegen__');
+export const MEMO_CODEGEN_KEY = Symbol.for('@lytjs/compiler/__v_memo_codegen__');
 
 export interface VMemoMeta {
   /** 依赖数组表达式字符串，例如 "[count, name]" */
@@ -124,8 +129,8 @@ export function detachMemoFromCodegen(node: unknown): void {
 // 生成裸 `item` ⇒ 运行时 ReferenceError）。
 // ============================================================
 
-/** 挂在 codegen 节点上的「生成子内容时的作用域参数名」 */
-export const SCOPE_PARAMS_KEY = Symbol('__codegen_scope_params__');
+/** 挂在 codegen 节点上的「生成子内容时的作用域参数名」（同 MEMO_KEY：必须跨入口同身份） */
+export const SCOPE_PARAMS_KEY = Symbol.for('@lytjs/compiler/__codegen_scope_params__');
 
 type ScopeCarrier = { [SCOPE_PARAMS_KEY]?: string[] };
 

@@ -15,6 +15,10 @@ import { reactive } from '@lytjs/reactivity';
 import { compile } from '@lytjs/compiler';
 import { mountSignal } from './helpers/run-signal-code';
 
+import { registerSignalOptimizedGenerator } from '@lytjs/compiler/signal-optimized';
+
+registerSignalOptimizedGenerator();
+
 type Variant = { label: string; options: Record<string, unknown> };
 
 const VARIANTS: Variant[] = [
