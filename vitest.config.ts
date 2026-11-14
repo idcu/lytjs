@@ -59,7 +59,17 @@ export default defineConfig({
       exclude: [
         'packages/*/src/**/*.test.ts',
         'packages/*/src/**/*.spec.ts',
-        'packages/shared-types/**',
+        // ★ 2026-11-15：原先整体排除 `packages/shared-types/**`，把 debug.ts / type-utils.ts
+        //   的运行时代码也挡在统计外（见 scripts/coverage-uninstrumented.json 的欠账条目）。
+        //   现在只排除**纯类型/纯再导出**文件（编译为空模块，无语句可插桩），
+        //   两个含运行时代码的文件进入分母。
+        'packages/shared-types/src/app-context.ts',
+        'packages/shared-types/src/component.ts',
+        'packages/shared-types/src/index.ts',
+        'packages/shared-types/src/ref.ts',
+        'packages/shared-types/src/renderer.ts',
+        'packages/shared-types/src/vnode.ts',
+        'packages/shared-types/src/web.ts',
         'packages/_templates/**',
       ],
       // ⚠️ 阈值口径（2026-10-11 实测校正）

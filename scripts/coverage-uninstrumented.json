@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-14",
+  "updatedAt": "2026-11-15",
   "basis": "冻结清单：未插桩 src 文件必须全部在此列。清单之外的任何未插桩文件立即红；清单内文件若被插桩也必须移除（防清单腐烂）。本文件不构成「允许不写测试」的口子，只登记当前无法/暂未插桩的原因。",
   "files": [
     {
@@ -9,10 +9,6 @@
     {
       "file": "packages/shared-types/src/component.ts",
       "reason": "纯接口/类型声明（Component 等），编译为空模块，无语句可插桩"
-    },
-    {
-      "file": "packages/shared-types/src/debug.ts",
-      "reason": "含 formatDebuggerEvent 运行时代码；当前被 vitest.config.ts 的 packages/shared-types/** 排除。纳入分母会改变对外覆盖率口径与阈值，属另行评估项，本清单不宣称其不可插桩"
     },
     {
       "file": "packages/shared-types/src/index.ts",
@@ -25,10 +21,6 @@
     {
       "file": "packages/shared-types/src/renderer.ts",
       "reason": "纯接口/类型声明，编译为空模块，无语句可插桩"
-    },
-    {
-      "file": "packages/shared-types/src/type-utils.ts",
-      "reason": "含 isString/isNumber 等类型守卫运行时代码；当前被 vitest.config.ts 的 packages/shared-types/** 排除。纳入分母会改变对外覆盖率口径与阈值，属另行评估项，本清单不宣称其不可插桩"
     },
     {
       "file": "packages/shared-types/src/vnode.ts",
