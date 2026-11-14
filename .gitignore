@@ -48,6 +48,9 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
+# 本地发布进度（scripts/release.mjs 断点续跑用）
+.release-progress.json
+
 # Root markdown (only keep README, CHANGELOG, CONTRIBUTING)
 # Note: AGENTS.md is intentionally excluded from root markdown rule
 # as it contains project-specific development rules

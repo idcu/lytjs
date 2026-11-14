@@ -38,25 +38,41 @@
 
 ```bash
 pnpm install --frozen-lockfile
-node scripts/release.mjs              # dry-run：打印 HEAD / @{u}..HEAD / 工作树与命令序列
-node scripts/release.mjs --execute    # 真跑：version → build → fast → slow → pack 76 → publish → tag → push
+node scripts/release.mjs              # dry-run：git / npm 前置核对 + 命令序列
+node scripts/release.mjs --execute --otp 123456   # 真跑（账号要求写操作 2FA 时 --otp 必填）
 npm view @lytjs/core version          # 期望 7.0.0
 ```
 
 脚本固定步骤：`changeset version` → `pnpm build` → fast 档 → slow 档 →
-逐包 `npm pack` 并核对 tarball = 76 → 逐包 `npm publish <tgz>` → `git tag v7.0.0` → push tag。
-实跑前若 HEAD 之外有未推送提交、落后远端或工作树不干净，**直接拒绝**。
+逐包 `pnpm pack` 并核对 tarball = 76 → 逐包 `npm publish <tgz>` → `git tag v7.0.0` → push tag。
+
+**发布前拒绝执行的条件**（任一命中即停）：
+
+- git：工作树不干净（断点续跑时放宽）、`@{u}..HEAD` 非空、落后远端；
+- npm：`whoami` 失败，或 registry 不是 `https://registry.npmjs.org/`（镜像/私有源一律拒绝）；
+- npm：76 个包中任一 `7.0.0` 已存在（整体中止并列出包名），或版本查询失败无法判定；
+- 2FA：账号为 `auth-and-writes` 但未提供 `--otp`。
+
+**幂等与断点续跑**：publish 前逐包比对 `dist.integrity` 与本地 tgz 的 sha512，
+一致则跳过、不一致则中止；已完成/跳过记录写入 `.release-progress.json`，
+重跑从断点继续，任一包失败立即停并打印已完成 / 未完成清单。
 
 发布凭据只走环境变量 `NPM_TOKEN` / `NODE_AUTH_TOKEN`，不得写入 `.npmrc` 或仓库文档。
 
 ## 4. 失败回滚方式
 
-| 阶段                       | 处理                                                                                                                    |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| version 提交后、publish 前 | `git revert <version-commit>`（不 `reset --hard`）；若已建 tag，`git tag -d v7.0.0`                                     |
-| publish 部分成功           | 逐包 `npm publish` 非原子：脚本失败即停；修复后用 `npm publish <tgz>` 补齐未发包，已发出去的包**不回滚**，发 patch 修复 |
-| 已 push tag                | `git tag -d v7.0.0 && git push origin :refs/tags/v7.0.0`（先确认 npm 端已处理）                                         |
-| npm 撤包                   | 仅 72h 内且无 dependents 可 `npm unpublish`；默认不发撤包，走 patch                                                     |
+**tag 只在 76 个包全部 publish 成功后创建**（脚本按步骤顺序执行，publish 未完成不会进 tag 步骤）。
+因此「半发布」的残局**没有 tag 可删**，回滚手段也不是删 tag。
+
+| 阶段                       | 处理                                                                                                                                               |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| version 落盘后、publish 前 | `git checkout -- .` 丢弃本地改动即可（未提交、未发布）；若已建 tag，`git tag -d v7.0.0`                                                            |
+| publish 部分成功（无 tag） | 保留 `.release-progress.json`，修好后 `--execute` 续跑；integrity 一致的包自动跳过，不一致则中止                                                   |
+| 全部发布成功但随后发现缺陷 | **回滚 = 发 7.0.1**，不是删 tag。删 tag 不改变 npm 上已发布的 76 个包                                                                              |
+| 必须撤某个包               | `npm unpublish <pkg>@7.0.0` 仅限发布后 **72 小时内**；有 dependents 的包无法撤；同一版本号撤下后 **24 小时内不能重新发布**；默认不发撤包，走 patch |
+
+「回滚」在 npm 语义下不等于撤销：已安装 7.0.0 的用户不会因为删 tag 或撤包而回退。
+发布公告与故障说明里必须写明「修复版本号」，不要让读者以为有原子回滚。
 
 ## 5. 已知延期项
 
