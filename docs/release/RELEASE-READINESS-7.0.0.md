@@ -1,6 +1,6 @@
 # LytJS 7.0.0 发布就绪单
 
-> 状态：**就绪待 owner 放行**。本页生成时 HEAD `08e91a5b`（含 changeset 补漏）。
+> 状态：**就绪待 owner 放行**。本页生成时 HEAD `54f6e99d`（含 changeset 补漏与发布脚本）。
 > **未执行**：`changeset version` 落盘、打 tag、`npm publish`。
 > 发布唯一入口是 `node scripts/release.mjs`（默认 dry-run，见 §3）。
 
@@ -88,7 +88,205 @@ npm view @lytjs/core version          # 期望 7.0.0
 「回滚」在 npm 语义下不等于撤销：已安装 7.0.0 的用户不会因为删 tag 或撤包而回退。
 发布公告与故障说明里必须写明「修复版本号」，不要让读者以为有原子回滚。
 
-## 5. 已知延期项
+## 5. 发布后第 3 步：弃用 25 个 5.0.1 遗留包（不 unpublish）
+
+发布成功后按顺序做三步，本节是第 3 步：
+
+1. 核对 76 包 `dist-tags.latest` 全部为 `7.0.0`；
+2. 发布公告，口径纪律见本节末；
+3. **对 25 个遗留包逐个 `npm deprecate`**（本节）。
+
+### 5.1 为什么是 deprecate，不是 unpublish
+
+| 依据             | 事实                                                                                                                                                            |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 有 dependents    | `@lytjs/lytjs` / `@lytjs/plugins` / `@lytjs/components` 是 5.0.1 聚合与组件包，外部项目可能直接依赖；unpublish 会让这些项目的安装与重装直接失败                 |
+| 72 小时时限      | npm 只允许在**发布后 72 小时内** unpublish 某个版本；这 25 个包发布于 2021 年，早已超期，单版本撤不掉                                                           |
+| 整包撤除代价更大 | 整包 unpublish 需要 `--force`，且同名包 24 小时内不能重新发布，会同时破坏所有依赖者与 CI                                                                        |
+| 目标不是删除     | 目标是「用户搜到 / 装上时看到提示并转向替代包」；deprecate 保留可安装性与历史版本，只增加安装期警告，是唯一正确手段                                             |
+| 权限与时机       | deprecate 与 publish 需要同一 scope 写权限，必须在 `npm login` 后执行；且文案里的迁移指南 URL 指向 `v7.0.0` tag，**tag push 之前该 URL 404，必须放在 tag 之后** |
+
+结论：**本轮只 deprecate，不 unpublish**。真正删除只能是未来独立的、先与依赖方沟通的批次。
+
+### 5.2 文案口径
+
+- 统一结构：`5.0.1 为 2021 年遗留版本，已停止维护；<替代包/迁移说明>。迁移指南：<URL>`
+- URL 固定用：`https://gitee.com/lytjs/lytjs/blob/v7.0.0/docs/migration/v7.0.0.md`
+- 25 个包中**只有 2 个能确定替代者**；其余 23 个一律标 `[需 owner 定文案]`，不要自拟。
+
+### 5.3 完整命令清单
+
+```bash
+# 明确替代者（owner 复核文案后可直接执行）
+npm deprecate "@lytjs/components@*" "5.0.1 为 2021 年遗留版本，已停止维护；请改用 @lytjs/ui（官方 UI 组件库）。迁移指南：https://gitee.com/lytjs/lytjs/blob/v7.0.0/docs/migration/v7.0.0.md" --registry https://registry.npmjs.org/
+npm deprecate "@lytjs/plugin-vite@*" "5.0.1 为 2021 年遗留版本，已停止维护；请改用 @lytjs/bundler 的 createVitePlugin()。迁移指南：https://gitee.com/lytjs/lytjs/blob/v7.0.0/docs/migration/v7.0.0.md" --registry https://registry.npmjs.org/
+
+# 以下 23 个：[需 owner 定文案] —— 先把 <文案> 换成定稿再执行
+npm deprecate "@lytjs/lytjs@*" "<文案>" --registry https://registry.npmjs.org/              # [需 owner 定文案]
+npm deprecate "@lytjs/plugins@*" "<文案>" --registry https://registry.npmjs.org/            # [需 owner 定文案]
+npm deprecate "@lytjs/plugin-i18n@*" "<文案>" --registry https://registry.npmjs.org/        # [需 owner 定文案]
+npm deprecate "@lytjs/plugin-auth@*" "<文案>" --registry https://registry.npmjs.org/        # [需 owner 定文案]
+npm deprecate "@lytjs/plugin-logger@*" "<文案>" --registry https://registry.npmjs.org/      # [需 owner 定文案]
+npm deprecate "@lytjs/plugin-theme@*" "<文案>" --registry https://registry.npmjs.org/       # [需 owner 定文案]
+npm deprecate "@lytjs/plugin-storage@*" "<文案>" --registry https://registry.npmjs.org/     # [需 owner 定文案]
+npm deprecate "@lytjs/plugin-sdk@*" "<文案>" --registry https://registry.npmjs.org/         # [需 owner 定文案]
+npm deprecate "@lytjs/plugin-chart@*" "<文案>" --registry https://registry.npmjs.org/       # [需 owner 定文案]
+npm deprecate "@lytjs/plugin-highlight@*" "<文案>" --registry https://registry.npmjs.org/   # [需 owner 定文案]
+npm deprecate "@lytjs/plugin-virtual-list@*" "<文案>" --registry https://registry.npmjs.org/ # [需 owner 定文案]
+npm deprecate "@lytjs/plugin-registry@*" "<文案>" --registry https://registry.npmjs.org/    # [需 owner 定文案]
+npm deprecate "@lytjs/plugin-form@*" "<文案>" --registry https://registry.npmjs.org/        # [需 owner 定文案]
+npm deprecate "@lytjs/plugin-animation@*" "<文案>" --registry https://registry.npmjs.org/   # [需 owner 定文案]
+npm deprecate "@lytjs/plugin-data-fetch@*" "<文案>" --registry https://registry.npmjs.org/  # [需 owner 定文案]
+npm deprecate "@lytjs/plugin-testing@*" "<文案>" --registry https://registry.npmjs.org/     # [需 owner 定文案]
+npm deprecate "@lytjs/plugin-validation@*" "<文案>" --registry https://registry.npmjs.org/  # [需 owner 定文案]
+npm deprecate "@lytjs/plugin-data@*" "<文案>" --registry https://registry.npmjs.org/        # [需 owner 定文案]
+npm deprecate "@lytjs/ai@*" "<文案>" --registry https://registry.npmjs.org/                 # [需 owner 定文案]
+npm deprecate "@lytjs/performance@*" "<文案>" --registry https://registry.npmjs.org/        # [需 owner 定文案]
+npm deprecate "@lytjs/micro-frontend@*" "<文案>" --registry https://registry.npmjs.org/     # [需 owner 定文案]
+npm deprecate "@lytjs/vscode-extension@*" "<文案>" --registry https://registry.npmjs.org/   # [需 owner 定文案]
+npm deprecate "@lytjs/lytx@*" "<文案>" --registry https://registry.npmjs.org/               # [需 owner 定文案]
+```
+
+### 5.4 校验与可逆
+
+```bash
+# 单个校验：有输出即已标记，空输出即未生效
+npm view "@lytjs/components" deprecated --registry https://registry.npmjs.org/
+
+# 25 个批量校验
+for p in lytjs plugins components plugin-i18n plugin-auth plugin-logger plugin-theme \
+  plugin-storage plugin-sdk plugin-chart plugin-highlight plugin-virtual-list plugin-registry \
+  plugin-vite plugin-form plugin-animation plugin-data-fetch plugin-testing plugin-validation \
+  plugin-data ai performance micro-frontend vscode-extension lytx; do
+  msg=$(npm view "@lytjs/$p" deprecated --registry https://registry.npmjs.org/)
+  [ -n "$msg" ] && echo "OK   @lytjs/$p" || echo "MISS @lytjs/$p"
+done
+
+# 可逆：空字符串即撤销弃用标记
+npm deprecate "@lytjs/<pkg>@*" "" --registry https://registry.npmjs.org/
+```
+
+### 5.5 发布公告口径（纪律）
+
+- **禁止**写：「整个 scope 升到 7.0.0」「`@lytjs/*` 全量升级」「98 个包同步发布」。
+- **正确**写法：本次发布 **76 个包**升到 `7.0.0`；scope 里另有 **25 个 2021 年遗留包**（latest `5.0.1`）只做 deprecate、不升版；`config` / `di` / `plugin` 为首次发布。（发布前 scope 98 个 = 73 个 `6.9.6` + 25 个 `5.0.1`；发布后 101 = 76 个 `7.0.0` + 25 个 `5.0.1`。）
+- 迁移口径：升级用户起点是 `6.9.6`（迁移指南基线，见 §3）。
+
+## 6. 3 个首次发布包名字确认（必须在 `changeset version` 之前定）
+
+`@lytjs/config`、`@lytjs/di`、`@lytjs/plugin` 在官方源均无任何版本（本地 `version: 6.9.6` 只是工作区占位），`7.0.0` 是它们的首次发布。包名一旦发布就不能收回，只能在事后 deprecate，因此必须在 `changeset version` 前确认。
+
+### 6.1 它们为什么在 76 发布集里
+
+不是 changesets 声明，也不是「本该 private」：
+
+1. [release-set.mjs](file:///Volumes/Data/lytjs/lytjs/scripts/release-set.mjs#L91-L96)：发布根 = workspace globs 位于 `packages/` 下的包；发布集 = 发布根内 `private !== true` 且不在 `config.ignore` 的包。
+2. `.changeset/config.json` 的 `ignore` 是空数组。
+3. 三者 `package.json` 都没有 `private: true`。
+
+⇒ 三者是被**派生规则**收进发布集的；仓库内没有任何 changeset 文件点名它们。
+
+### 6.2 为什么不能改成 private
+
+它们是 7.0.0 新增的**运行时依赖**，不是内部工具：
+
+| 依赖方                                                                                         | 声明                         | 线上 6.9.6 是否已含 |
+| ---------------------------------------------------------------------------------------------- | ---------------------------- | ------------------- |
+| [core/package.json](file:///Volumes/Data/lytjs/lytjs/packages/core/package.json#L44)           | `@lytjs/config: workspace:*` | 否                  |
+| [core/package.json](file:///Volumes/Data/lytjs/lytjs/packages/core/package.json#L47)           | `@lytjs/plugin: workspace:*` | 否                  |
+| [component/package.json](file:///Volumes/Data/lytjs/lytjs/packages/component/package.json#L31) | `@lytjs/di: workspace:*`     | 否                  |
+
+`@lytjs/core@7.0.0` / `@lytjs/component@7.0.0` 发布后，用户安装时必须能从 npm 解析到这三个包；若设 `private: true`，安装链直接断。**结论：三个包必须发布，不能 private。**
+
+### 6.3 元数据一致性（对照已发布的 `@lytjs/store`）
+
+| 字段                        | config / di / plugin                          | `@lytjs/store`（已发布） | 判定                                           |
+| --------------------------- | --------------------------------------------- | ------------------------ | ---------------------------------------------- |
+| `type`                      | module                                        | module                   | 一致                                           |
+| `main` / `module` / `types` | `dist/index.{cjs,mjs,d.ts}`                   | 同                       | 一致                                           |
+| `exports`                   | `.`（types/import/require）+ `./package.json` | 同                       | 一致                                           |
+| `files`                     | `["dist", "src"]`                             | 同                       | 一致                                           |
+| `sideEffects`               | false                                         | false                    | 一致                                           |
+| `license`                   | MIT                                           | MIT                      | 一致                                           |
+| `repository`                | gitee + `directory`                           | 同                       | 一致                                           |
+| `keywords`                  | 有                                            | 有                       | 一致                                           |
+| `author`                    | 无                                            | 无                       | 一致（仓库普遍不写）                           |
+| `publishConfig`             | 无                                            | 无                       | 一致（`access: public` 由 changeset 配置提供） |
+| `private`                   | 无                                            | 无                       | 一致                                           |
+
+三者 description 均为中文、`LytJS 独立通用…系统…零框架依赖` 句式，与仓库中文优先口径一致；无需改。
+
+### 6.4 命名混淆风险（待 owner 拍板）
+
+- `@lytjs/plugin`（本次首发、插件体系核心）与线上遗留的 `@lytjs/plugins`（5.0.1 插件聚合包）只差一个 `s`；
+- 线上另有 **17 个** `@lytjs/plugin-*`（5.0.1 遗留），其中 13 个已迁出到 `gitee.com/lytjs/plugins.git`，monorepo 内已无对应目录；
+- 风险：用户搜 `plugin` 会同时看到核心包、聚合包与 17 个 5.0.1 插件，无法从名字判断谁是 7.0.0 的正主。
+
+可选处置（三选一，owner 定）：
+
+1. **保留 `@lytjs/plugin`**：靠 §5 的 deprecate 文案把遗留包引向核心包；
+2. **首发前改名**（如 `@lytjs/plugin-core`）：必须改 `package.json.name`，以及 [core/package.json](file:///Volumes/Data/lytjs/lytjs/packages/core/package.json#L47) 与 [plugin/package.json](file:///Volumes/Data/lytjs/lytjs/packages/ecosystem/packages/plugin/package.json) 的依赖声明；
+3. **暂不首发（设 private）**：会破坏 core / component 安装链，**不可行**（见 6.2）。
+
+若改名，必须在 `changeset version` 之前完成；发布后再改等于换包名重新发。
+
+### 6.5 结论（待 owner）
+
+- 元数据：与仓库已发布包一致，无需改；
+- 必须发布：是（core / component 的运行时依赖）；
+- 唯一待定项：是否接受 `@lytjs/plugin` 与 `@lytjs/plugins`、`plugin-*` 的命名混淆。
+
+## 7. 版本引用清单（只出清单，发版后一次性处理）
+
+扫描基准：2026-11-14，HEAD `54f6e99d`，匹配字面量 `6.9.6`。分类：
+
+- **A 自动更新**：`changeset version` / `pnpm install` 会改写，不要手改；
+- **B 该改**：发版后必须手改，否则文档 / 产物 / 门禁与线上不一致；
+- **C fixture 故意保留**：示例与脚手架模板故意锁 `6.9.6`，非发布阻断；
+- **D 历史记录禁改**：CHANGELOG、ADR、NOW-history、本单快照、迁移指南基线；
+- **E 本就不该出现**：数据错误或过期清单，需订正。
+
+| 位置                                                                                   | 出现数             | 分类  | 处理                                                                                           |
+| -------------------------------------------------------------------------------------- | ------------------ | ----- | ---------------------------------------------------------------------------------------------- |
+| `pnpm-lock.yaml`                                                                       | 173 行             | A     | `pnpm install` 后自动重写                                                                      |
+| 76 个发布集 `package.json` 的 `version`                                                | 76                 | A     | `changeset version`                                                                            |
+| 根 `package.json:3`                                                                    | 1                  | B     | 非发布物；建议随发版改为 `7.0.0`，不阻断                                                       |
+| `examples/package.json:3`                                                              | 1                  | B     | 非发布工程（`@lytjs/examples`），可留                                                          |
+| `README.md`                                                                            | 4（85/87/477/484） | B     | 版本说明、release-parity 注释、`v6.9.6（最新版本）` 标题                                       |
+| `docs/getting-started/quick-reference.md:4`、`for-beginners.md:4`                      | 2                  | B     | 起步文档版本号                                                                                 |
+| `docs/guide/architecture.md:3`                                                         | 1                  | **E** | 「89 个已发布包」与线上 scope 98 不符（发布后 101）；「版本统一为 v6.9.6」对 25 个遗留包不成立 |
+| `docs/ecosystem/other/compat.md:8`                                                     | 1                  | B     | 6.9.6 缺陷说明，7.0.0 修复后复核措辞                                                           |
+| `docs/contribute/roadmap/current.md`                                                   | 6                  | B/D   | 3/27/41/48 该改；164/170 是迁出历史，可留                                                      |
+| `docs/contribute/architecture/ecosystem-migration.md`                                  | 4（34/45/73/74）   | B     | 版本契约与依赖 range                                                                           |
+| `docs/SUMMARY.md:46`                                                                   | 1                  | D     | 「6.9.6 → 7.0.0」迁移描述，保留                                                                |
+| `docs/migration/v7.0.0.md`                                                             | 7                  | D     | 升级基线，保留                                                                                 |
+| `docs/release/RELEASE-READINESS-7.0.0.md`                                              | 5                  | D     | 本单快照，保留                                                                                 |
+| `.ai/QUICKSTART.md:13`、`.ai/PROJECT_CONTEXT.md:8`                                     | 2                  | B     | AI 上下文版本号                                                                                |
+| `PUBLISH-MANIFEST.md`                                                                  | 3（1/104/107）     | B/E   | 发布后更新为 7.0.0 清单，否则与 README 口径冲突                                                |
+| `keel/CONSTITUTION.md:15`                                                              | 1                  | B     | 「npm 线上 6.9.6」需改；注意 keel 字节上限                                                     |
+| 包 README 依赖表（compiler 5、component 8、dom 2、renderer 11、compat 1）              | 27                 | B     | 依赖版本表统一升到 `^7.0.0`                                                                    |
+| `packages/ecosystem/packages/ui/src/index.ts:344`                                      | 1                  | B     | 运行时导出的 `version` 常量，**建议发版前改**，否则 `ui` 自称 6.9.6                            |
+| `packages/tools/packages/cli/src/commands/create.ts`                                   | 6（+1 注释）       | C     | 脚手架模板；发版后下一个 patch 前改为读 `package.json`                                         |
+| `packages/tools/packages/cli/src/commands/run.ts:25`                                   | 1                  | C     | `FALLBACK_VERSION`                                                                             |
+| `packages/tools/packages/cli/tests/*`                                                  | 4                  | C     | 模板断言随模板同步                                                                             |
+| `scripts/check-docs.mjs:9`                                                             | 1                  | B     | 文档版本门禁常量，与文档同批改                                                                 |
+| `scripts/release-parity-expectation.json:2-3`、`release-state.json:2`                  | 3                  | B     | **发版后第 1 步更新**，否则 parity 门禁红                                                      |
+| `scripts/check-release-parity.mjs:9-10`、`scripts/gate.mjs:759`                        | 3                  | B     | 注释 / 描述文本，低优先                                                                        |
+| `examples/{data-table,router-dashboard,using-lytjs-as-dep}/package.json`               | 10（`^6.9.6`）     | C     | 与 §8「fixture 硬编码」一致，故意保留                                                          |
+| `CHANGELOG.md`                                                                         | 229 处 / 77 文件   | D     | **禁改**（历史发布记录）                                                                       |
+| `keel/decisions/**`、`keel/NOW-history/**`                                             | 多处               | D     | **禁改**（历史决策与记录）                                                                     |
+| `scripts/check-dead-packages.ts:48`、`scripts/codemod-v7.mjs:3`、`vitest.shared.ts:70` | 3                  | D     | 历史注释 / 迁移说明，保留                                                                      |
+| `packages/ecosystem/packages/compat/src/index.ts:13`                                   | 1                  | D     | 历史说明注释                                                                                   |
+
+处理顺序：
+
+1. **发版后立刻**：`release-state.json`、`release-parity-expectation.json`、`README.md:85` 的 parity 注释三者同批改为 `7.0.0`，否则 fast 门禁红；
+2. 文档与包 README 同批；
+3. CLI 模板与 `FALLBACK_VERSION` 在下一个 patch 前处理；
+4. `ui/src/index.ts` 的 `version` 建议在发版前就改；
+5. 禁止改动：CHANGELOG、ADR、NOW-history、迁移指南基线。
+
+## 8. 已知延期项
 
 ### 批次 2（4 条，均有 workaround，不占发布窗口）
 
@@ -109,9 +307,10 @@ npm view @lytjs/core version          # 期望 7.0.0
 影响：7.0.0 发布后 CLI 脚手架仍生成 `^6.9.6` 依赖。不阻断发布，但需在下个 patch 前改为
 从 `package.json` 读取当前版本（或同步升到 `^7.0.0`）。
 
-## 6. 未执行声明
+## 9. 未执行声明
 
 - 未运行 `changeset version` 落盘（此前仅隔离 worktree 干跑）。
 - 未创建 `v7.0.0` tag。
 - 未执行 `npm publish`。
+- 未执行任何 `npm deprecate`（§5 只是命令清单与文案口径）。
 - 发布动作等 owner 明确放行。
