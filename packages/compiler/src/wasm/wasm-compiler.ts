@@ -152,7 +152,7 @@ export function wasmCompile(source: string, options: WASMCompileOptions = {}): W
   const errors: WASMCompileError[] = [];
   const warnings: WASMCompileWarning[] = [];
 
-  const { mode = 'module', inline = false, ssr = false, filename = 'template.html' } = options;
+  const { mode = 'module', ssr = false, filename = 'template.html' } = options;
 
   // 1. Parse
   // FIX: P2-29 错误处理增强：添加更详细的错误上下文信息
@@ -183,7 +183,6 @@ export function wasmCompile(source: string, options: WASMCompileOptions = {}): W
     // FIX: P1-33 定义 WASM 接口类型替代 as any，使用精确的 TransformOptions 类型确保类型安全
     const transformOptions: TransformOptions = {
       ssr,
-      inline,
       onError: (error: Error) => {
         errors.push({ message: error.message, code: 'TRANSFORM_ERROR' });
       },

@@ -306,15 +306,8 @@ export interface ParserOptions {
 export interface TransformOptions {
   nodeTransforms?: NodeTransform[];
   directiveTransforms?: Record<string, DirectiveTransform>;
-  isBuiltInComponent?: (tag: string) => symbol | undefined;
-  expressionPlugins?: string[];
   scopeId?: string | null;
-  slotted?: boolean;
   ssr?: boolean;
-  inSSR?: boolean;
-  ssrCssVars?: string[];
-  inline?: boolean;
-  isTS?: boolean;
   onError?: (error: Error) => void;
   onWarn?: (warning: string) => void;
   /**

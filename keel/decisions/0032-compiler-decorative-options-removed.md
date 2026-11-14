@@ -58,3 +58,24 @@ superseded-by:
   运行时无影响。属于预期内的编译期暴露。
 - 防回归：后续门禁要求每个公开选项字段在 `src` 至少有一个真实读取点，
   零读取点即红（C-14 第 3 条）。
+
+## 增补（2026-11-14）：判据暴露的 8 个 `TransformOptions` 字段
+
+判据落地后另有 8 个字段零读取点。owner 裁决：**不接受允许清单**，逐项二选一，
+不留 `@deprecated` 空转。逐字段结论：
+
+| 字段 | 结论 | 理由 / 承载者 |
+| --- | --- | --- |
+| `isBuiltInComponent` | 删除 | 由 `src/builtin-components.ts` 与 `TransformContext.builtinComponents` 承载 |
+| `expressionPlugins` | 删除 | 自研表达式解析器无插件管线，接入属新增能力 |
+| `slotted` | 删除 | `:slotted()` 由 `transforms/scoped.ts` 按选择器处理 |
+| `inSSR` | 删除 | 由 `ssr` / `ssrMode` 合流承载 |
+| `ssrCssVars` | 删除 | 无 SSR CSS 变量注入管线，接入属新增能力 |
+| `inline` | 删除 | 产物形态由 `CodegenOptions.mode` 承载 |
+| `isTS` | 删除 | 由 SFC `<script lang="ts">` 承载，模板 codegen 不区分 TS |
+| `onWarn` | 实现（不删） | 复用 `transforms/for.ts` 既有告警通道，已透传并送达调用方（`9dcccc28`） |
+
+其余 7 个与前述 4 个同性质：**声明存在但从未生效，删除不改变任何可达行为**。
+删除后 `TransformOptions` 仅保留有读取点的字段。
+
+

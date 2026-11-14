@@ -203,7 +203,7 @@ function hasUncacheableOptions(options: CompilerOptions): boolean {
 /**
  * 构建编译缓存键，确保读取和写入使用相同的键生成逻辑。
  * FIX: P1-25 缓存键覆盖所有影响编译结果的选项，
- * 包括 source、ssrMode、rendererMode、scopeId、inline、mode 等
+ * 包括 source、ssrMode、rendererMode、scopeId、mode 等
  * FIX: P2-2 使用文件内容哈希作为 key 的一部分，提高缓存精度
  */
 function buildCompileCacheKey(source: string, options: CompilerOptions): string {

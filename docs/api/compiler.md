@@ -260,24 +260,10 @@ interface TransformOptions {
   nodeTransforms?: NodeTransform[];
   /** 自定义指令转换器 */
   directiveTransforms?: Record<string, DirectiveTransform>;
-  /** 判断是否为内置组件 */
-  isBuiltInComponent?: (tag: string) => symbol | undefined;
-  /** 表达式插件 */
-  expressionPlugins?: string[];
   /** scoped ID */
   scopeId?: string | null;
-  /** 是否处理 slot */
-  slotted?: boolean;
   /** 是否为 SSR 模式 */
   ssr?: boolean;
-  /** 是否在 SSR 上下文中 */
-  inSSR?: boolean;
-  /** SSR CSS 变量 */
-  ssrCssVars?: string[];
-  /** 是否内联模式 */
-  inline?: boolean;
-  /** 是否 TypeScript */
-  isTS?: boolean;
   /** 错误回调 */
   onError?: (error: Error) => void;
   /**
