@@ -91,6 +91,30 @@ npm view @lytjs/core version          # 期望 7.0.0
 
 发布凭据只走环境变量 `NPM_TOKEN` / `NODE_AUTH_TOKEN`，不得写入 `.npmrc` 或仓库文档。
 
+### 3.1 档位与结论的适用范围：fast 绿 ≠ 全量测试绿（2026-11-15 补）
+
+**fast 档不执行任何测试。** 原文依据：
+
+- [gate.mjs](file:///Volumes/Data/lytjs/lytjs/scripts/gate.mjs#L1013-L1029)：`test`（`pnpm run test`）与
+  `test:coverage` 两项都是 `tier: 'slow'`；
+- `node scripts/gate.mjs --tier fast` 实测 **61 项**，没有任何一项调用 vitest。名字带 vitest 的
+  `check-vitest-alias-dist` 只校验 alias 目标文件存在，不跑测试；
+- 根 [vitest.config.ts](file:///Volumes/Data/lytjs/lytjs/vitest.config.ts#L46) 的 `exclude` 只有
+  `node_modules` / `dist` / `e2e` / `playground/e2e` ⇒ `packages/ecosystem/packages/ui/tests/`
+  下的测试属于**全量**运行范围。
+
+由此可判定：`e42cc23d` 之后的「fast 61/61 全绿」是**真的**，但它对测试**零覆盖**。该提交把
+`@lytjs/ui` 版本号改为构建期 `define` 注入后，`all-components-smoke` 与 `performance` 两套测试
+实际一直红（`ReferenceError: __UI_VERSION__ is not defined`），直到 `126c9eb7` 在
+[vitest.shared.ts](file:///Volumes/Data/lytjs/lytjs/vitest.shared.ts#L87-L104) 补上同一份 define
+才恢复（134 用例）。这不是「假绿」，是**选择性执行的绿**。
+
+**纪律**：
+
+- 「fast 绿」只能引用为「61 项源码级门禁通过」，不得表述为「测试全绿」，也不能作为发布依据；
+- 发布前唯一有效的测试结论是 `pnpm test:coverage` 全量运行（exit 0）+ 覆盖率现场快照校验；
+  任何历史「全绿」结论引用时必须标注档位与命令。
+
 ## 4. 失败回滚方式
 
 **tag 只在 76 个发布包全部 publish 成功后创建**（脚本按步骤顺序执行，publish 未完成不会进 tag 步骤）。
@@ -354,6 +378,15 @@ npm deprecate "@lytjs/<pkg>@*" "" --registry https://registry.npmjs.org/
 | 编译器 C-32  | `packages/compiler/src/sfc/script-setup.ts:340-362`             | `<script setup>` 顶层 `let` 直接进模板不触发更新                                | 用 `ref` / `reactive`     |
 | 编译器 C-34  | `packages/compiler/src/client-server-boundary/index.ts:409-494` | client-server 切分两份产物都内联完整源码，收益为 0                              | 手工拆分                  |
 | 运行时 P1-12 | `packages/reactivity/src/batch.ts:143-176`                      | `batchScope(async () => 1, { async: true })` 类型声明返回 `T`，运行时是 Promise | 用 `batchScopeAsync`      |
+
+**2026-11-15 状态：四条均已修复并推送**（上表「影响 / workaround」保留为修复前口径）：
+
+| 编号         | 修复提交                | 负控（改前 → 改后 → 还原）                                |
+| ------------ | ----------------------- | --------------------------------------------------------- |
+| 运行时 P1-6  | `549500ab` + `2d43cc2c` | `expected null not to be null` → vdom 585 绿 → 同断言再红 |
+| 编译器 C-32  | `a3553a5e`              | 2 红（缺 `return { msg }`、warn 0 次）→ 4 绿 → 再红       |
+| 编译器 C-34  | `a51daf16`              | 3 红 → 3 绿 → 再红                                        |
+| 运行时 P1-12 | `9c8d2d46` + `dff5fe25` | `expected 2 to be 1` → reactivity 381 绿 → 再红           |
 
 ### fixture 硬编码 `^6.9.6`（10 处，非发布阻断）
 
