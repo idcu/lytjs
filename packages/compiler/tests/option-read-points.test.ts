@@ -206,5 +206,7 @@ describe('C-14 公开选项必须有真实读取点', () => {
     }
 
     expect(missing).toEqual([]);
-  });
+    // 该用例要创建 TS Program 并遍历 src：plain vitest 约 2s，v8 覆盖率插桩后约 6-7s，
+    // 默认 5s 超时会让 `test:coverage` 假红。
+  }, 60_000);
 });
