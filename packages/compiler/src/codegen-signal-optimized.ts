@@ -1123,7 +1123,13 @@ function emitListItemNodeOptimized(
   counter: Map<string, number>,
   createLines: string[],
   updateLines: string[],
+  options: SignalCodegenOptions,
+  usedRuntime: Set<string>,
 ): boolean {
+  // 嵌套子元素上的动态 props 走 `emitListItemProps`（共享层），
+  // 必须把本发射器的短别名与 import 登记传下去，否则产物回落到完整名
+  // `setClass` 却不会被 `usedRuntime` 标记 ⇒ 生成的 import 缺失（optimized/for13）。
+  const { runtime, mark } = optimizedDomPropRuntime(options, usedRuntime);
   return emitListItemNodeShared(
     node,
     createParent,
@@ -1134,6 +1140,8 @@ function emitListItemNodeOptimized(
     updateLines,
     toItemExpr,
     (content, loc) => `(${toItemExpr(content, loc)} ?? '')`,
+    runtime,
+    mark,
   );
 }
 
@@ -1377,6 +1385,8 @@ function processCallExpressionOptimized(
                   varCounter,
                   createLines,
                   updateLines,
+                  options,
+                  usedRuntime,
                 );
                 createBody = `${createLines.join('')}return ${elVar};`;
                 updateBody = updateLines.join('');

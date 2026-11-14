@@ -574,6 +574,8 @@ export function emitListItemNode(
   updateLines: string[],
   toExpr: ToExpr,
   toTextExpr: ToExpr = toExpr,
+  runtime?: DomPropRuntime,
+  markRuntime?: (name: keyof DomPropRuntime) => void,
 ): boolean {
   if (node === undefined || node === null) return false;
   if (Array.isArray(node)) {
@@ -588,6 +590,8 @@ export function emitListItemNode(
         updateLines,
         toExpr,
         toTextExpr,
+        runtime,
+        markRuntime,
       );
     }
     return false;
@@ -635,6 +639,8 @@ export function emitListItemNode(
         updateLines,
         toExpr,
         toTextExpr,
+        runtime,
+        markRuntime,
       );
     }
     return false;
@@ -645,7 +651,17 @@ export function emitListItemNode(
   const elVar = genVarName(tag, counter);
   createLines.push(`const ${elVar}=document.createElement(${JSON.stringify(tag)});`);
   createLines.push(`${createParent}.appendChild(${elVar});`);
-  emitListItemProps(n.props, elVar, updateExpr, locals, createLines, updateLines, toExpr);
+  emitListItemProps(
+    n.props,
+    elVar,
+    updateExpr,
+    locals,
+    createLines,
+    updateLines,
+    toExpr,
+    runtime,
+    markRuntime,
+  );
 
   // children：逐个 append，update 用 childNodes[i] 定位
   const rawKids = n.children as unknown;
@@ -664,6 +680,8 @@ export function emitListItemNode(
       updateLines,
       toExpr,
       toTextExpr,
+      runtime,
+      markRuntime,
     );
     if (emitted) childIdx++;
   }
