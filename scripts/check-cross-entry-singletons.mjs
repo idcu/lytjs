@@ -137,6 +137,22 @@ const PROBES = {
     },
   },
 
+  'compiler.warning-level-module-copies': {
+    write: "compiler/dist/index.mjs（副本 A）setWarningLevel('silent')",
+    read: '同一文件以不同 URL 查询串导入的副本 B getWarningLevel()',
+    expect:
+      '模块级状态改为 globalThis 槽后，副本 B 读回 silent；warning.ts 被 index/sfc/signal/ssr/wasm 五个入口内联，但只有主入口暴露 setter/getter',
+    async run() {
+      const mainUrl = dist('packages/compiler/dist/index.mjs');
+      const copyA = await import(`${mainUrl}?cross-entry-copy=a`);
+      const copyB = await import(`${mainUrl}?cross-entry-copy=b`);
+      copyA.setWarningLevel('silent');
+      const level = copyB.getWarningLevel();
+      copyA.setWarningLevel('warn');
+      return { ok: level === 'silent', detail: `level=${level}（期望 silent）` };
+    },
+  },
+
   'core.config-main_runtime': {
     write: 'core.setGlobalConfig()',
     read: 'core/runtime.getConfig()',

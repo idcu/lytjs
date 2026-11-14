@@ -30,7 +30,19 @@ const NUMERIC_WARNING_LEVELS: Record<NumericWarningLevel, WarningLevel> = {
   2: 'warn',
 };
 
-let globalWarningLevel: WarningLevel = 'warn';
+// 跨入口共享：warning.ts 被 index/sfc/signal/ssr/wasm 五个入口内联，
+// 模块级变量会让主入口 setWarningLevel 对子入口 compilerWarn 静默失效。
+const WARNING_LEVEL_SLOT = Symbol.for('@lytjs/compiler/warning-level');
+
+function warningLevelState(): { level: WarningLevel } {
+  const existing = Reflect.get(globalThis, WARNING_LEVEL_SLOT) as
+    | { level: WarningLevel }
+    | undefined;
+  if (existing) return existing;
+  const created = { level: 'warn' as WarningLevel };
+  Reflect.set(globalThis, WARNING_LEVEL_SLOT, created);
+  return created;
+}
 
 /**
  * 设置编译期告警级别。
@@ -38,12 +50,12 @@ let globalWarningLevel: WarningLevel = 'warn';
  * 接受字符串级别（真源）或旧文档的数值枚举（0→silent，1/2→warn）。
  */
 export function setWarningLevel(level: WarningLevel | NumericWarningLevel): void {
-  globalWarningLevel = typeof level === 'number' ? NUMERIC_WARNING_LEVELS[level] : level;
+  warningLevelState().level = typeof level === 'number' ? NUMERIC_WARNING_LEVELS[level] : level;
 }
 
 /** 读取当前告警级别（始终返回字符串真源，数值输入已被映射）。 */
 export function getWarningLevel(): WarningLevel {
-  return globalWarningLevel;
+  return warningLevelState().level;
 }
 
 /**
@@ -55,7 +67,7 @@ export function getWarningLevel(): WarningLevel {
  *   属于语义变更，不在缺陷修复范围内）。
  */
 export function compilerWarn(message: string): void {
-  const level = globalWarningLevel;
+  const level = warningLevelState().level;
   if (level === 'silent' || !getDevMode()) return;
   if (level === 'error') {
     console.error(`[LytJS]: ${message}`);

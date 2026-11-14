@@ -267,13 +267,6 @@
       "entries": ["index", "sfc"],
       "reason": "写读都在 transform 阶段（for.ts 写、if.ts 读），同一入口图内"
     },
-    "packages/compiler/src/warning.ts::globalWarningLevel": {
-      "kind": "let/var",
-      "line": 33,
-      "classification": "c",
-      "entries": ["index", "sfc", "signal", "ssr", "wasm"],
-      "reason": "setWarningLevel 只在主入口导出；/sfc /signal /ssr /wasm 各有副本，主入口设置对子入口编译静默不生效"
-    },
     "packages/compiler/src/wasm/wasm-compiler.ts::warnedWasmSimulated": {
       "kind": "let/var",
       "line": 361,
@@ -1360,9 +1353,10 @@
       "read": "vdom/transition.performLeaveTransition() 生成的类名",
       "expect": "主入口设置的前缀被子入口过渡读取：类名以 `probe-` 开头"
     },
-    "compiler.warning-level-main_sfc": {
-      "uninjectable": true,
-      "reason": "compiler dist 用 define __DEV__:false 折叠了全部告警分支，且无子入口暴露可触发的未门控告警；dist 层无可观察输出，只能在源码别名下验证"
+    "compiler.warning-level-module-copies": {
+      "write": "compiler/dist/index.mjs（副本 A）setWarningLevel('silent')",
+      "read": "同一文件以不同 URL 查询串导入的副本 B getWarningLevel()",
+      "expect": "模块级状态改为 globalThis 槽后，副本 B 读回 silent；warning.ts 被 index/sfc/signal/ssr/wasm 五个入口内联，但只有主入口暴露 setter/getter"
     }
   }
 }
