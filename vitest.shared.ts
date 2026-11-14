@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -84,10 +85,22 @@ export const sharedAliases: Record<string, string> = {
   '@lytjs/di': resolve(root, 'packages/ecosystem/packages/di/src'),
 };
 
+// `@lytjs/ui` 的版本号只在**构建期**由 tsup `define` 注入（e42cc23d，避免发版后漂移）。
+// 而测试经 alias 直接加载 `src/`，没有 tsup ⇒ 必须在这里补同一份 define，
+// 否则任何 import ui 入口的测试都会在模块求值时报
+// `ReferenceError: __UI_VERSION__ is not defined`（ui 自己的 vitest 配置也复用本文件）。
+// 取值仍来自 package.json，与 tsup.config.ts 同源，不引入第二份版本常量。
+const uiVersion = (
+  JSON.parse(
+    readFileSync(resolve(root, 'packages/ecosystem/packages/ui/package.json'), 'utf-8'),
+  ) as { version: string }
+).version;
+
 export const sharedDefine = {
   __DEV__: 'true',
   __PROD__: 'false',
   __TEST__: 'true',
+  __UI_VERSION__: JSON.stringify(uiVersion),
 } as const;
 
 export const sharedSetupFiles = [resolve(root, 'vitest.setup.ts')];
