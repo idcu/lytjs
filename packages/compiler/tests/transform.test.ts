@@ -152,11 +152,11 @@ describe('transform', () => {
   });
 
   describe('v-for renderList 回调体', () => {
-    // #13：优化版对回调体里的每个 VNODE_CALL 都生成一次 createBody（最后覆盖），
-    // 基础版只取最后一个 renderItem 生成一次。两者的 varCounter/usedRuntime 消耗
-    // 次数因此可能不同 —— 但前提是「同一回调体出现多个 VNODE_CALL」这个形态可达。
-    // transforms/for.ts 只把**一个** renderItemExpr 放进 bodyParts（多根
-    // <template v-for> 会先被包成单个 Fragment VNODE_CALL），故此处直接对 AST 取证。
+    // **结构不变量**：transforms/for.ts 只把**一个** renderItemExpr 放进 bodyParts
+    //（多根 <template v-for> 会先被包成单个 Fragment VNODE_CALL），因此回调体里
+    // 渲染项恒为 1（`v-for` + `v-if` 同元素时是包着 VNODE_CALL 的条件表达式）。
+    // 两版列表项生成器都按「一个渲染项」实现；若将来这条断言变红（>1），
+    // 先停下来决定取哪个，不要默认「最后一个」。
     function collectRenderListChildCounts(ast: unknown): number[] {
       const counts: number[] = [];
       const seen = new WeakSet<object>();
@@ -169,10 +169,15 @@ describe('transform', () => {
           const cb = args?.[1] as Record<string, unknown> | undefined;
           const children = Array.isArray(cb?.children) ? (cb.children as unknown[]) : [];
           counts.push(
-            children.filter(
-              (c) =>
-                (c as Record<string, unknown> | null | undefined)?.type === NodeTypes.VNODE_CALL,
-            ).length,
+            children.filter((c) => {
+              const type = (c as Record<string, unknown> | null | undefined)?.type;
+              if (type === NodeTypes.VNODE_CALL) return true;
+              if (type !== NodeTypes.JS_CONDITIONAL_EXPRESSION) return false;
+              const consequent = (c as Record<string, unknown>).consequent as
+                | Record<string, unknown>
+                | undefined;
+              return consequent?.type === NodeTypes.VNODE_CALL;
+            }).length,
           );
         }
         for (const value of Object.values(n)) {
@@ -184,7 +189,7 @@ describe('transform', () => {
       return counts;
     }
 
-    it('回调体最多承载一个 VNODE_CALL（多 VNODE_CALL 形态不可达）', () => {
+    it('回调体恰好承载一个渲染项（结构不变量）', () => {
       const templates = [
         '<ul><li v-for="x in xs">{{ x }}</li></ul>',
         '<ul><template v-for="x in xs"><li>{{ x }}</li><li>{{ x }}</li></template></ul>',
@@ -194,7 +199,7 @@ describe('transform', () => {
       for (const template of templates) {
         const counts = collectRenderListChildCounts(transformTemplate(template));
         expect(counts.length, template).toBeGreaterThan(0);
-        expect(Math.max(...counts), template).toBeLessThanOrEqual(1);
+        expect(Math.max(...counts), template).toBe(1);
       }
     });
   });

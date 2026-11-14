@@ -9,29 +9,18 @@
 import { NodeTypes } from './constants';
 import {
   OPTIMIZED_EMIT_PROFILE,
-  genVarName,
   isStaticPropValue,
   stripPropKeyQuotes,
   componentRef as componentRefShared,
-  componentRefExpr,
   readInterpolationExpr,
-  containsElementVNode,
-  containsConditionalNode,
-  normalizeVNodeChildren,
-  emitListItemProps as emitListItemPropsShared,
-  emitListItemNode as emitListItemNodeShared,
-  buildDomPropApply,
-  buildDomPropSpreadApply,
+  buildListItemBinding,
   type DomPropRuntime,
   buildItemComponentPropsShared,
   buildStaticHtml as buildStaticHtmlShared,
   serializeStaticHtml as serializeStaticHtmlShared,
   serializeBranchHtml as serializeBranchHtmlShared,
   buildConditionalAnchorOp,
-  buildFragmentMountCreate,
-  buildFragmentMountUpdate,
   getStaticClass,
-  getTestExpr,
   validateComponentName,
   buildComponentSlotsObjectShared,
   collectSlotVNodesShared,
@@ -54,6 +43,7 @@ import {
   type ConditionalEmitDialect,
   type ConditionalBranchEmission,
   type ElementModifierDialect,
+  type ListItemDialect,
 } from './codegen-signal-shared';
 import { getVShowStyleTest } from './transforms/helpers';
 import { FRAGMENT_SENTINEL } from './transforms/transform-element';
@@ -1090,65 +1080,70 @@ function optimizedDomPropRuntime(
   };
 }
 
-/** 本发射器（短别名 / `_c` 前缀）的列表项 props 生成。 */
-function emitListItemPropsOptimized(
-  props: unknown,
-  createExpr: string,
-  updateExpr: string | null,
-  locals: ReadonlySet<string>,
-  createLines: string[],
-  updateLines: string[],
-  options: SignalCodegenOptions,
-  usedRuntime: Set<string>,
-): void {
-  const { runtime, mark } = optimizedDomPropRuntime(options, usedRuntime);
-  emitListItemPropsShared(
-    props,
-    createExpr,
-    updateExpr,
-    locals,
-    createLines,
-    updateLines,
-    toItemExpr,
-    runtime,
-    mark,
-  );
-}
-
-/** 本发射器（短别名 / `_c` 前缀）的列表项子树生成。 */
-function emitListItemNodeOptimized(
-  node: unknown,
-  createParent: string,
-  updateExpr: string | null,
-  locals: ReadonlySet<string>,
-  counter: Map<string, number>,
-  createLines: string[],
-  updateLines: string[],
-  options: SignalCodegenOptions,
-  usedRuntime: Set<string>,
-): boolean {
-  // 嵌套子元素上的动态 props 走 `emitListItemProps`（共享层），
-  // 必须把本发射器的短别名与 import 登记传下去，否则产物回落到完整名
-  // `setClass` 却不会被 `usedRuntime` 标记 ⇒ 生成的 import 缺失（optimized/for13）。
-  const { runtime, mark } = optimizedDomPropRuntime(options, usedRuntime);
-  return emitListItemNodeShared(
-    node,
-    createParent,
-    updateExpr,
-    locals,
-    counter,
-    createLines,
-    updateLines,
-    toItemExpr,
-    (content, loc) => `(${toItemExpr(content, loc)} ?? '')`,
-    runtime,
-    mark,
-  );
-}
-
 // ============================================================
-// 优化的调用表达式处理
+// 列表项方言（优化版：短别名 / `_c` 前缀 / 紧凑单行）
 // ============================================================
+
+function optimizedListItemDialect(
+  usedRuntime: Set<string>,
+  options: SignalCodegenOptions,
+): ListItemDialect {
+  const shortNames = options.useShortNames ?? true;
+  const sn = (name: string): string => getShortName(name, shortNames);
+  const mc = sn('mountComponent');
+  const mv = sn('mountVNode');
+  const sh = sn('setHTML');
+  const cv = sn('createVNode');
+  const fg = sn('Fragment');
+  const { runtime } = optimizedDomPropRuntime(options, usedRuntime);
+  return {
+    expr: toItemExpr,
+    isStatic: isStaticPropValue,
+    warnText:
+      `[lytjs/compiler] v-for is missing a "key" attribute. ` +
+      `This may cause performance issues and incorrect DOM updates. ` +
+      `Add a unique :key binding to the v-for element, e.g., :key="item.id" or :key="index". ` +
+      `See: https://lytjs.dev/guide/template-syntax.html#v-for-key`,
+    syntax: {
+      names: { mountComponent: mc, mountVNode: mv, setHTML: sh, createVNode: cv, Fragment: fg },
+      ctxParam: OPTIMIZED_EMIT_PROFILE.ctxParam,
+      defaultContainer: OPTIMIZED_EMIT_PROFILE.containerParam,
+      join: (lines) => lines.join(''),
+      returnStmt: (varName) => `return ${varName};`,
+      elementDecl: (varName, tag) => `const ${varName}=document.createElement('${tag}');`,
+      simpleVarName: (tag) => `_${tag}`,
+      textAssign: (target, code) => `${target}.textContent=${code};`,
+      textLiteral: (text) => JSON.stringify(text),
+      mountVNode: (expr, host) => `${mv}(${expr},${host});`,
+      conditionalUpdate: (expr) => `{const _v=${expr};if(_v){${mv}(_v,_el);}else{${sh}(_el,'');}}`,
+      fragmentVNode: (children) => `${cv}(${fg},null,${children})`,
+      componentCreate: (hostVar, ref, props, slots) =>
+        `const ${hostVar}=document.createElement('div');${mc}(${ref},${props},${hostVar}${slots});return ${hostVar};`,
+      componentUpdate: (ref, props, slots) => `${mc}(${ref},${props},_el${slots});`,
+      serializeVNodeCall: (node, locals) =>
+        serializeVNodeCallOptimized(node as VNodeCall, usedRuntime, options, locals),
+      serializeVNodeCallChildren: (children, locals) =>
+        serializeVNodeCallChildrenOptimized(children, usedRuntime, options, locals),
+      serializeConditional: (node, locals) =>
+        serializeConditionalVNodeOptimized(
+          node as JSConditionalExpression,
+          usedRuntime,
+          options,
+          locals,
+        ),
+      domPropRuntime: runtime,
+      markDomProp: (name) => usedRuntime.add(name),
+      markRuntime: (name) => usedRuntime.add(name),
+      filter: (listCode, params, cond) => `(${listCode}).filter((${params.join(',')})=>(${cond}))`,
+      options: (keyExpr, params, createBody, updateBody) =>
+        `{key:(${params.join(',')})=>${keyExpr},create:(${params.join(',')})=>{${createBody}}${
+          updateBody ? `,update:(_el,${params.join(',')})=>{${updateBody}}` : ''
+        }}`,
+      binding: (containerVar, listCode, opts) =>
+        `${sn('effect')}(()=>${sn('reconcileArray')}(${containerVar},${listCode},${opts}));`,
+    },
+  };
+}
 
 function processCallExpressionOptimized(
   node: JSCallExpression,
@@ -1158,309 +1153,21 @@ function processCallExpressionOptimized(
   usedRuntime: Set<string>,
   options: SignalCodegenOptions,
   parentVar?: string,
+  // 当前调用链恒为空集，不是设计假设：嵌套作用域接入时由调用方直接传入。
+  locals: ReadonlySet<string> = new Set(),
 ): void {
-  const callee = typeof node.callee === 'string' ? node.callee : String(node.callee);
-
-  if (callee === 'RENDER_LIST' || callee === 'renderList') {
-    const sourceExpr = node.arguments[0];
-    const renderFn = node.arguments[1];
-
-    const source = getTestExpr(sourceExpr as JSChildNode | string | undefined);
-    if (!source) return;
-
-    let itemVar = 'item';
-    let itemParams: string[] = ['item'];
-    let itemLocals: ReadonlySet<string> = new Set(['item']);
-    let keyExpr = '';
-    let createBody = '';
-    let updateBody = '';
-    let renderItem: VNodeCall | null = null;
-    /** `v-for` 与 `v-if` 同元素：renderItem 被 transform 包成条件表达式 */
-    let itemCondition: JSConditionalExpression | null = null;
-
-    if (renderFn && typeof renderFn !== 'string' && !Array.isArray(renderFn)) {
-      if (renderFn.type === NodeTypes.COMPOUND_EXPRESSION) {
-        const compound = renderFn as CompoundExpressionNode;
-        // ⚠️ 2026-10-10 删除：此处原有一段 `console.log(compound.children.map(...))`
-        // 调试输出，位于 **codegen 热路径**（每个 v-for 都跑），且把编译期节点 dump 到
-        // 使用者控制台。属 P2「signal 默认路径残留调试代码」。
-        for (const child of compound.children) {
-          if (typeof child === 'string' && child.includes('=>')) {
-            const headMatch = /^\s*\(?\s*([^)]*?)\s*\)?\s*=>/.exec(child);
-            const parsed = (headMatch?.[1] ?? '')
-              .split(',')
-              .map((x) => x.trim())
-              .filter(Boolean);
-            if (parsed.length > 0) {
-              itemVar = parsed[0]!;
-              itemParams = parsed;
-            }
-          }
-        }
-        itemLocals = new Set(itemParams);
-        for (const child of compound.children) {
-          let vnode: VNodeCall | null = null;
-          if (typeof child !== 'string' && child.type === NodeTypes.VNODE_CALL) {
-            vnode = child as VNodeCall;
-          } else if (
-            typeof child !== 'string' &&
-            child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION
-          ) {
-            // `<p v-for v-if>`：条件包裹渲染项。旧实现只认 VNODE_CALL ⇒
-            // renderItem 为 null ⇒ create 回调返回 undefined ⇒ WeakMap 键非法
-            // （`Invalid value used as weak map key`）。
-            itemCondition = child as JSConditionalExpression;
-            const consequent = (child as JSConditionalExpression).consequent;
-            if (
-              consequent &&
-              typeof consequent === 'object' &&
-              !Array.isArray(consequent) &&
-              (consequent as { type?: number }).type === NodeTypes.VNODE_CALL
-            ) {
-              vnode = consequent as VNodeCall;
-            }
-          }
-          if (vnode) {
-            renderItem = vnode;
-
-            // 列表项是**组件**（tag 为裸标识符如 Row；元素的 tag 是带引号字符串 "li"）
-            const rawTag = typeof vnode.tag === 'string' ? vnode.tag : '';
-            const isComponentItem = rawTag !== '' && !/^["']/.test(rawTag);
-            if (isComponentItem) {
-              // 列表项的子节点（VNODE_CALL）→ 默认插槽内容。
-              // 注意：列表项的 children 是 VNODE_CALL（type 9），且为「单对象」而非数组，
-              // 故先归一化为数组再逐项序列化；复用既有的 serializeVNodeCallOptimized
-              // （其严格模式能递归处理 VNODE_CALL → 子节点 → TO_DISPLAY_STRING 叶子）。
-              const rawKids = vnode.children as unknown;
-              const kidList =
-                rawKids === undefined || rawKids === null
-                  ? []
-                  : Array.isArray(rawKids)
-                    ? rawKids
-                    : [rawKids];
-              const kidVNodes: string[] = [];
-              for (const kid of kidList) {
-                const code = serializeVNodeCallOptimized(kid, usedRuntime, options, itemLocals);
-                if (code) kidVNodes.push(code);
-              }
-              if (rawTag === FRAGMENT_SENTINEL) {
-                // `<template v-for>`：容器里挂 Fragment，而不是把哨兵当组件名传入。
-                // children 必须走完整 vnode 序列化：内嵌 v-if / 文本 / 拼接文本都经此，
-                // 旧实现逐个 `serializeVNodeCall` 只认 VNODE_CALL，条件节点被丢掉后
-                // Fragment 里只剩注释锚点。
-                usedRuntime.add('mountVNode');
-                usedRuntime.add('createVNode');
-                usedRuntime.add('Fragment');
-                const cv = getShortName('createVNode', options.useShortNames ?? true);
-                const fg = getShortName('Fragment', options.useShortNames ?? true);
-                const kidsCode = serializeVNodeCallChildrenOptimized(
-                  vnode.children,
-                  usedRuntime,
-                  options,
-                  itemLocals,
-                );
-                const frag = `${cv}(${fg},null,${kidsCode ?? 'null'})`;
-                const mv = getShortName('mountVNode', options.useShortNames ?? true);
-                // 每项不产生元素包裹：挂进 DocumentFragment 后返回 Fragment 自身子节点
-                // （首尾是运行时 Fragment 的注释锚点），DOM 层级与 vnode 路径一致。
-                createBody = buildFragmentMountCreate(frag, mv);
-                updateBody = buildFragmentMountUpdate(frag, mv);
-              } else {
-                usedRuntime.add('mountComponent');
-                const mc = getShortName('mountComponent', options.useShortNames ?? true);
-                const itemProps = buildItemComponentProps(vnode, itemLocals);
-                const slotsArg = kidVNodes.length
-                  ? ',{default:()=>[' + kidVNodes.join(',') + ']}'
-                  : '';
-                // C-35f：kebab 组件的 tag 是查找**表达式**，不能拼进变量名
-                //（`const _(_ctx[…])` 非法标识符 ⇒ 整模块 SyntaxError）。
-                const hostVar = genVarName('lytComp', varCounter);
-                createBody =
-                  'const ' +
-                  hostVar +
-                  "=document.createElement('div');" +
-                  mc +
-                  '(' +
-                  componentRefExpr(rawTag, OPTIMIZED_EMIT_PROFILE.ctxParam) +
-                  ',' +
-                  itemProps +
-                  ',' +
-                  hostVar +
-                  slotsArg +
-                  ');' +
-                  'return ' +
-                  hostVar +
-                  ';';
-                updateBody =
-                  mc +
-                  '(' +
-                  componentRefExpr(rawTag, OPTIMIZED_EMIT_PROFILE.ctxParam) +
-                  ',' +
-                  itemProps +
-                  ',_el' +
-                  slotsArg +
-                  ');';
-              }
-            }
-
-            const tagInfo = isComponentItem ? null : extractTagFromVNode(vnode);
-            if (tagInfo) {
-              if (containsConditionalNode(vnode.children)) {
-                // 列表项内嵌 v-if/v-else：旧实现只认文本/嵌套元素，条件节点整段丢弃。
-                const elVar = genVarName(tagInfo.tag, varCounter);
-                const createLines = [`const ${elVar}=document.createElement('${tagInfo.tag}');`];
-                const updateLines: string[] = [];
-                emitListItemPropsOptimized(
-                  vnode.props,
-                  elVar,
-                  '_el',
-                  itemLocals,
-                  createLines,
-                  updateLines,
-                  options,
-                  usedRuntime,
-                );
-                const kidList = normalizeVNodeChildren(vnode.children);
-                if (kidList.length === 1) {
-                  const expr = serializeConditionalVNodeOptimized(
-                    kidList[0],
-                    usedRuntime,
-                    options,
-                    itemLocals,
-                  );
-                  if (expr) {
-                    usedRuntime.add('mountVNode');
-                    usedRuntime.add('setHTML');
-                    const mv = getShortName('mountVNode', options.useShortNames ?? true);
-                    const sh = getShortName('setHTML', options.useShortNames ?? true);
-                    createLines.push(`${mv}(${expr},${elVar});`);
-                    // mountVNode 会先清空宿主；条件为假时必须显式清空，否则旧分支残留
-                    updateLines.push(
-                      `{const _v=${expr};if(_v){${mv}(_v,_el);}else{${sh}(_el,'');}}`,
-                    );
-                  }
-                } else {
-                  const kidsCode = serializeVNodeCallChildrenOptimized(
-                    vnode.children,
-                    usedRuntime,
-                    options,
-                    itemLocals,
-                  );
-                  if (kidsCode) {
-                    usedRuntime.add('mountVNode');
-                    usedRuntime.add('createVNode');
-                    usedRuntime.add('Fragment');
-                    const mv = getShortName('mountVNode', options.useShortNames ?? true);
-                    const cv = getShortName('createVNode', options.useShortNames ?? true);
-                    const fg = getShortName('Fragment', options.useShortNames ?? true);
-                    const frag = `${cv}(${fg},null,${kidsCode})`;
-                    createLines.push(`${mv}(${frag},${elVar});`);
-                    updateLines.push(`${mv}(${frag},_el);`);
-                  }
-                }
-                createBody = `${createLines.join('')}return ${elVar};`;
-                updateBody = updateLines.join('');
-              } else if (containsElementVNode(vnode.children)) {
-                // 列表项含嵌套元素（`<li v-for><span>{{x}}</span></li>`）：
-                // 逐层建 DOM，update 侧用 childNodes 下标定位。旧实现只认直接子文本，
-                // 嵌套内容被整段丢弃 ⇒ 每个 li 都是空的。
-                // 用计数器取名：同标签嵌套（`<div v-for><div>...`）时避免与外层重名
-                const elVar = genVarName(tagInfo.tag, varCounter);
-                const createLines = [`const ${elVar}=document.createElement('${tagInfo.tag}');`];
-                const updateLines: string[] = [];
-                emitListItemPropsOptimized(
-                  vnode.props,
-                  elVar,
-                  '_el',
-                  itemLocals,
-                  createLines,
-                  updateLines,
-                  options,
-                  usedRuntime,
-                );
-                emitListItemNodeOptimized(
-                  vnode.children,
-                  elVar,
-                  '_el',
-                  itemLocals,
-                  varCounter,
-                  createLines,
-                  updateLines,
-                  options,
-                  usedRuntime,
-                );
-                createBody = `${createLines.join('')}return ${elVar};`;
-                updateBody = updateLines.join('');
-              } else {
-                createBody = `const ${tagInfo.varName}=document.createElement('${tagInfo.tag}');`;
-
-                // 子节点内容：此前只认「字符串」和「裸 SIMPLE_EXPRESSION」两种形态，
-                // 而模板插值 `{{ item.name }}` 在 transform 后是
-                // JS_CALL_EXPRESSION(TO_DISPLAY_STRING)，于是列表项里的文本被整体丢弃
-                // （产物只剩 createElement + return）。同时旧代码把表达式写成
-                // `${itemVar}.${content}`，会产出 `item.item.name` 这种错误路径。
-                const itemText = extractItemTextExpr(vnode.children, itemLocals);
-
-                if (itemText.static !== undefined) {
-                  createBody += `${tagInfo.varName}.textContent=${itemText.static};`;
-                } else if (itemText.dynamic !== undefined) {
-                  createBody += `${tagInfo.varName}.textContent=${itemText.dynamic};`;
-                  // updates 由 reconcileArray 的 update 回调驱动，元素参数名固定为 _el
-                  updateBody += `_el.textContent=${itemText.dynamic};`;
-                }
-
-                // 属性：静态值写死，动态值在 update 里同步（:key 除外）
-                const propResult = buildItemProps(
-                  vnode,
-                  itemLocals,
-                  tagInfo.varName,
-                  options,
-                  usedRuntime,
-                );
-                createBody += propResult.create;
-                updateBody += propResult.update;
-
-                createBody += `return ${tagInfo.varName};`;
-              }
-            }
-          }
-        }
-      }
-    }
-    // :key 优先取用户表达式；缺失时回退 item.id 并提示（与 codegen-signal 非优化版一致）
-    keyExpr = extractItemKeyExpr(renderItem, itemLocals);
-    if (!keyExpr) {
-      if (__DEV__) {
-        compilerWarn(
-          `[lytjs/compiler] v-for is missing a "key" attribute. ` +
-            `This may cause performance issues and incorrect DOM updates. ` +
-            `Add a unique :key binding to the v-for element, e.g., :key="item.id" or :key="index". ` +
-            `See: https://lytjs.dev/guide/template-syntax.html#v-for-key`,
-        );
-      }
-      keyExpr = `${itemVar}.id`;
-    }
-    const containerVar = parentVar ?? OPTIMIZED_EMIT_PROFILE.containerParam;
-
-    usedRuntime.add('effect');
-    usedRuntime.add('reconcileArray');
-    const e = getShortName('effect', options.useShortNames ?? true);
-    const ra = getShortName('reconcileArray', options.useShortNames ?? true);
-
-    const updatePart = updateBody ? `,update:(_el,${itemParams.join(',')})=>{${updateBody}}` : '';
-    // `v-for` 与 `v-if` 同元素：v-if 等同一项过滤（被隐藏项不创建 DOM，与 vnode 路径一致）。
-    let listCode = renderExpression(source);
-    if (itemCondition) {
-      const cond = getExpContent(itemCondition.test as SimpleExpressionNode);
-      if (cond) {
-        listCode = `(${listCode}).filter((${itemParams.join(',')})=>(${renderExpression(cond, itemLocals)}))`;
-      }
-    }
-    dynamicBindings.push({
-      varName: containerVar,
-      code: `${e}(()=>${ra}(${containerVar},${listCode},{key:(${itemParams.join(',')})=>${keyExpr},create:(${itemParams.join(',')})=>{${createBody}}${updatePart}}));`,
-    });
-  }
+  const dialect = optimizedListItemDialect(usedRuntime, options);
+  const binding = buildListItemBinding(node, varCounter, locals, dialect);
+  if (!binding) return;
+  if (binding.warning && __DEV__) compilerWarn(binding.warning);
+  // effect / reconcileArray 由本层包装引入（列表项生成器只产 options）
+  usedRuntime.add('effect');
+  usedRuntime.add('reconcileArray');
+  const containerVar = parentVar ?? OPTIMIZED_EMIT_PROFILE.containerParam;
+  dynamicBindings.push({
+    varName: containerVar,
+    code: dialect.syntax.binding(containerVar, binding.listCode, binding.options),
+  });
 }
 
 // ============================================================
@@ -1498,14 +1205,6 @@ function getExpContent(node: SimpleExpressionNode | CompoundExpressionNode | und
       return '';
     })
     .join('');
-}
-
-function extractTagFromVNode(vnode: VNodeCall): { tag: string; varName: string } | null {
-  if (typeof vnode.tag === 'string') {
-    const tag = vnode.tag.replace(/^"|"$/g, '');
-    return { tag, varName: `_${tag}` };
-  }
-  return null;
 }
 
 function serializeBranchHTML(
@@ -1800,215 +1499,11 @@ function toItemExpr(content: string, locals: ReadonlySet<string>): string {
 }
 
 /**
- * 提取列表项元素的文本内容。
- *
- * 支持：静态字符串 / 插值（TO_DISPLAY_STRING）/ 裸表达式 / 静态文本数组。
- * 返回 `{ static }` 或 `{ dynamic }`；无法静态确定时返回空对象（不生成内容）。
- */
-function extractItemTextExpr(
-  children: VNodeCall['children'],
-  locals: ReadonlySet<string>,
-): { static?: string; dynamic?: string } {
-  if (children === undefined || children === null) return {};
-
-  if (typeof children === 'string') {
-    return { static: JSON.stringify(children) };
-  }
-
-  if (Array.isArray(children)) {
-    const parts: string[] = [];
-    let allStatic = true;
-    for (const child of children) {
-      const result = extractItemTextExpr(child as VNodeCall['children'], locals);
-      if (result.static !== undefined) {
-        parts.push(result.static);
-      } else if (result.dynamic !== undefined) {
-        parts.push(result.dynamic);
-        allStatic = false;
-      } else {
-        return {};
-      }
-    }
-    if (parts.length === 0) return {};
-    const joined = parts.join(' + ');
-    return allStatic ? { static: joined } : { dynamic: joined };
-  }
-
-  if (typeof children !== 'object') return {};
-
-  const node = children as {
-    type?: number;
-    callee?: unknown;
-    arguments?: unknown[];
-    content?: string;
-  };
-
-  if (node.type === NodeTypes.JS_CALL_EXPRESSION) {
-    const callee = typeof node.callee === 'string' ? node.callee : String(node.callee);
-    if (callee === 'TO_DISPLAY_STRING' || callee === 'toDisplayString') {
-      const arg = (node.arguments ?? [])[0] as { content?: string } | string | undefined;
-      const content = typeof arg === 'string' ? arg : arg?.content;
-      if (content) return { dynamic: toItemExpr(content, locals) };
-    }
-    return {};
-  }
-
-  // COMPOUND_EXPRESSION：`{{ k }}:{{ i }}` 在 transform 后就是这个形态，
-  // 孩子里**字符串是代码片段**（如 `" + "` / `"':' "`），必须**原样拼接**；
-  // 节点孩子则是表达式（INTERPOLATION / SIMPLE_EXPRESSION）。
-  // COMPOUND_EXPRESSION：`{{ k }}:{{ i }}` 在 transform 后就是这个形态，
-  // 孩子里**字符串是代码片段**（如 `" + "` / `"':' "`），必须**原样拼接**；
-  // 节点孩子则是表达式（INTERPOLATION / SIMPLE_EXPRESSION）。
-  if (node.type === NodeTypes.COMPOUND_EXPRESSION) {
-    const kids = (node as { children?: unknown[] }).children;
-    if (!Array.isArray(kids)) return {};
-    const parts: string[] = [];
-    let allStatic = true;
-    for (const kid of kids) {
-      if (typeof kid === 'string') {
-        parts.push(kid);
-        continue;
-      }
-      const r = extractItemTextExpr(kid as VNodeCall['children'], locals);
-      if (r.static !== undefined) {
-        parts.push(r.static);
-      } else if (r.dynamic !== undefined) {
-        parts.push(r.dynamic);
-        allStatic = false;
-      } else {
-        return {};
-      }
-    }
-    if (parts.length === 0) return {};
-    const joined = parts.join('');
-    return allStatic ? { static: joined } : { dynamic: joined };
-  }
-
-  // INTERPOLATION（本仓 NodeTypes.INTERPOLATION = 4）：内容在 `content.content`
-  if (node.type === NodeTypes.INTERPOLATION) {
-    const inner = (node as { content?: { content?: unknown } }).content;
-    const text = typeof inner?.content === 'string' ? inner.content : null;
-    if (text) return { dynamic: toItemExpr(text, locals) };
-    return {};
-  }
-
-  if (node.type === NodeTypes.SIMPLE_EXPRESSION) {
-    // 带索引形参时，子项 SIMPLE_EXPRESSION 的 content **又套一层** SIMPLE_EXPRESSION
-    const raw = (node as { content?: unknown }).content;
-    const text =
-      typeof raw === 'string'
-        ? raw
-        : typeof (raw as { content?: unknown } | undefined)?.content === 'string'
-          ? (raw as { content: string }).content
-          : null;
-    if (text) return { dynamic: toItemExpr(text, locals) };
-    return {};
-  }
-
-  return {};
-}
-
-/**
- * 提取列表项的 :key 表达式（用户未写则返回空串）
- */
-function extractItemKeyExpr(vnode: VNodeCall | null, locals: ReadonlySet<string>): string {
-  if (!vnode || !vnode.props || vnode.props.type !== NodeTypes.JS_OBJECT_EXPRESSION) return '';
-  const objExpr = vnode.props as JSObjectExpression;
-  for (const prop of objExpr.properties) {
-    if (prop.type !== NodeTypes.JS_PROPERTY) continue;
-    const jsProp = prop as JSProperty;
-    const key = jsProp.key;
-    const value = jsProp.value;
-    if (
-      key &&
-      typeof key !== 'string' &&
-      !Array.isArray(key) &&
-      key.type === NodeTypes.SIMPLE_EXPRESSION &&
-      stripPropKeyQuotes(key.content) === 'key' &&
-      value &&
-      typeof value !== 'string' &&
-      !Array.isArray(value) &&
-      value.type === NodeTypes.SIMPLE_EXPRESSION
-    ) {
-      return toItemExpr(value.content, locals);
-    }
-  }
-  return '';
-}
-
-/**
  * 生成列表项属性（跳过事件与 :key）。
  * 语义在共享 helper；这里只注入本发射器的 `_c.` 前缀。
  */
 export function buildItemComponentProps(vnode: VNodeCall, locals: ReadonlySet<string>): string {
   return buildItemComponentPropsShared(vnode, locals, toItemExpr);
-}
-
-function buildItemProps(
-  vnode: VNodeCall,
-  locals: ReadonlySet<string>,
-  elVar: string,
-  options: SignalCodegenOptions,
-  usedRuntime: Set<string>,
-): { create: string; update: string } {
-  let create = '';
-  let update = '';
-  if (!vnode.props || vnode.props.type !== NodeTypes.JS_OBJECT_EXPRESSION)
-    return { create, update };
-
-  const { runtime, mark } = optimizedDomPropRuntime(options, usedRuntime);
-  const objExpr = vnode.props as JSObjectExpression;
-  for (const prop of objExpr.properties) {
-    if (prop.type !== NodeTypes.JS_PROPERTY) continue;
-    const jsProp = prop as JSProperty;
-    const key = jsProp.key;
-    const value = jsProp.value;
-    if (
-      !key ||
-      typeof key === 'string' ||
-      Array.isArray(key) ||
-      key.type !== NodeTypes.SIMPLE_EXPRESSION ||
-      !value ||
-      typeof value === 'string' ||
-      Array.isArray(value) ||
-      value.type !== NodeTypes.SIMPLE_EXPRESSION
-    ) {
-      continue;
-    }
-    const propName = stripPropKeyQuotes(key.content);
-    // C-35c：`v-bind="obj"`（spread）逐项应用，而不是 `__spread__` 字面量
-    // C-35g：逐项分派 class/style/事件（对象 class、监听器此前全部失效）。
-    if ((jsProp as { spread?: boolean }).spread === true) {
-      const spreadCode = toItemExpr(value.content, locals);
-      mark('setAttribute');
-      mark('setClass');
-      mark('setStyle');
-      mark('createEventHandler');
-      create += buildDomPropSpreadApply(elVar, spreadCode, runtime);
-      update += buildDomPropSpreadApply('_el', spreadCode, runtime);
-      continue;
-    }
-    if (propName === 'key') continue;
-
-    const rawValue = value.content;
-    // 判「整段是否为字面量」，与基础实现同一语义（`isStaticPropValue`）。
-    // 旧实现只判首字符是否为引号：`:data-x="'a' + x.id"` 会以 `'` 开头，
-    // 被误当字面量输出成 `"'a' + x.id"`，DOM 里得到表达式源码而不是求值结果。
-    const isStaticLiteral = isStaticPropValue(rawValue);
-    const valueCode = isStaticLiteral
-      ? JSON.stringify(rawValue.replace(/^"|"$/g, ''))
-      : toItemExpr(rawValue, locals);
-    if (propName === 'class') mark('setClass');
-    else if (propName === 'style') mark('setStyle');
-    else if (/^on[A-Z]/.test(propName)) mark('createEventHandler');
-    else mark('setAttribute');
-    // 静态字面量只在 create 里写一次；动态值 create/update 都写
-    create += buildDomPropApply(elVar, propName, valueCode, runtime);
-    if (!isStaticLiteral) {
-      update += buildDomPropApply('_el', propName, valueCode, runtime);
-    }
-  }
-  return { create, update };
 }
 
 /**

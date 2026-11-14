@@ -527,6 +527,7 @@ export function emitListItemProps(
   toExpr: ToExpr,
   runtime: DomPropRuntime = FULL_DOM_PROP_RUNTIME,
   markRuntime?: (name: keyof DomPropRuntime) => void,
+  isStatic: (value: string) => boolean = isStaticPropValue,
 ): void {
   if (!props || (props as { type?: number }).type !== NodeTypes.JS_OBJECT_EXPRESSION) return;
   for (const prop of (props as JSObjectExpression).properties) {
@@ -556,7 +557,7 @@ export function emitListItemProps(
     const key = stripPropKeyQuotes((jsProp.key as SimpleExpressionNode).content);
     const value = (jsProp.value as SimpleExpressionNode).content;
     if (key === 'key') continue;
-    const valueCode = isStaticPropValue(value)
+    const valueCode = isStatic(value)
       ? JSON.stringify(value.replace(/^["']|["']$/g, ''))
       : toExpr(value, locals);
     if (key === 'class') markRuntime?.('setClass');
@@ -564,7 +565,7 @@ export function emitListItemProps(
     else if (/^on[A-Z]/.test(key)) markRuntime?.('createEventHandler');
     else markRuntime?.('setAttribute');
     createLines.push(buildDomPropApply(createExpr, key, valueCode, runtime));
-    if (!isStaticPropValue(value) && updateExpr) {
+    if (!isStatic(value) && updateExpr) {
       updateLines.push(buildDomPropApply(updateExpr, key, valueCode, runtime));
     }
   }
@@ -587,6 +588,7 @@ export function emitListItemNode(
   toTextExpr: ToExpr = toExpr,
   runtime?: DomPropRuntime,
   markRuntime?: (name: keyof DomPropRuntime) => void,
+  isStatic: (value: string) => boolean = isStaticPropValue,
 ): boolean {
   if (node === undefined || node === null) return false;
   if (Array.isArray(node)) {
@@ -603,6 +605,7 @@ export function emitListItemNode(
         toTextExpr,
         runtime,
         markRuntime,
+        isStatic,
       );
     }
     return false;
@@ -652,6 +655,7 @@ export function emitListItemNode(
         toTextExpr,
         runtime,
         markRuntime,
+        isStatic,
       );
     }
     return false;
@@ -672,6 +676,7 @@ export function emitListItemNode(
     toExpr,
     runtime,
     markRuntime,
+    isStatic,
   );
 
   // children：逐个 append，update 用 childNodes[i] 定位
@@ -693,10 +698,449 @@ export function emitListItemNode(
       toTextExpr,
       runtime,
       markRuntime,
+      isStatic,
     );
     if (emitted) childIdx++;
   }
   return true;
+}
+
+// ============================================================
+// v-for 列表项 create/update 生成器（signal 两版共用）
+// ============================================================
+
+/** 列表项产物里的运行期符号（拼写由发射器注入）。 */
+export interface ListItemRuntimeNames {
+  mountComponent: string;
+  mountVNode: string;
+  setHTML: string;
+  createVNode: string;
+  Fragment: string;
+}
+
+/**
+ * 列表项产物的**拼写钩子**：只决定「怎么写」，不决定「写什么」。
+ *
+ * 保留的是两版历史产物形态（换行 / 空格 / 引号 / 短别名 / 运行期登记）；
+ * 任何语义判据都不允许写进来。
+ */
+export interface ListItemSyntax {
+  readonly names: ListItemRuntimeNames;
+  /** 组件引用前缀（`_ctx` / `_c`） */
+  readonly ctxParam: string;
+  /** 未显式给父容器时的缺省名（`_container` / `_n`） */
+  readonly defaultContainer: string;
+  /** 语句拼接（base 块分支用 `\n`，简单分支与 optimized 用空串） */
+  join(lines: readonly string[], branch: 'block' | 'simple'): string;
+  /** 收尾语句（base 块分支以 `\nreturn` 起头，其余直接 `return`） */
+  returnStmt(varName: string, branch: 'block' | 'simple'): string;
+  /** 元素声明；`simple` 分支在 base 里是单引号拼写 */
+  elementDecl(varName: string, tag: string, branch: 'block' | 'simple'): string;
+  /** 简单列表项的变量名（base 走计数器，optimized 固定 `_<tag>`） */
+  simpleVarName(tag: string, counter: Map<string, number>): string;
+  /** 文本赋值 */
+  textAssign(target: string, code: string): string;
+  /** 静态文本字面量 */
+  textLiteral(text: string): string;
+  /** 把 vnode 挂到宿主元素 */
+  mountVNode(expr: string, host: string): string;
+  /** 条件列表项的 update 包装 */
+  conditionalUpdate(expr: string): string;
+  /** Fragment vnode 表达式 */
+  fragmentVNode(children: string): string;
+  /** 组件列表项 create 体 */
+  componentCreate(hostVar: string, ref: string, props: string, slots: string): string;
+  /** 组件列表项 update 体 */
+  componentUpdate(ref: string, props: string, slots: string): string;
+  /** vnode 序列化（本发射器的前缀 / 短别名 / usedRuntime 登记） */
+  serializeVNodeCall(node: unknown, locals: ReadonlySet<string>): string | null;
+  serializeVNodeCallChildren(children: unknown, locals: ReadonlySet<string>): string | null;
+  serializeConditional(node: unknown, locals: ReadonlySet<string>): string | null;
+  /** DOM props 运行时名（完整名 / 短别名） */
+  domPropRuntime: DomPropRuntime;
+  /** DOM props 运行时消费登记（base 无操作） */
+  markDomProp(name: keyof DomPropRuntime): void;
+  /** 其它运行期符号消费登记（base 无操作） */
+  markRuntime(name: 'mountVNode' | 'mountComponent' | 'createVNode' | 'Fragment' | 'setHTML'): void;
+  /** `.filter(...)` 包装 */
+  filter(listCode: string, params: readonly string[], cond: string): string;
+  /** options 对象拼写 */
+  options(
+    keyExpr: string,
+    params: readonly string[],
+    createBody: string,
+    updateBody: string,
+  ): string;
+  /** effect 包装 */
+  binding(containerVar: string, listCode: string, options: string): string;
+}
+
+/**
+ * 列表项方言：**三个语义判据** + 一份拼写钩子。
+ *
+ * - `expr`：表达式改写（`_ctx.` / `_c.` 前缀）
+ * - `isStatic`：整段字面量判定（两版同源，显式注入便于单测）
+ * - `warnText`：缺 `:key` 告警文案
+ */
+export interface ListItemDialect {
+  expr: ToExpr;
+  isStatic: (value: string) => boolean;
+  warnText: string;
+  syntax: ListItemSyntax;
+}
+
+/** 列表项绑定：列表源 + options 对象 + 告警（容器与 effect 包装由发射器拼）。 */
+export interface ListItemBinding {
+  listCode: string;
+  options: string;
+  /** 缺 `:key` 时的告警文案（调用方决定是否在 `__DEV__` 下发） */
+  warning: string | null;
+}
+
+/** 从 renderList 的渲染函数里取形参、渲染项与「v-for + v-if」条件。 */
+function readRenderListTail(renderFn: unknown): {
+  itemParams: string[];
+  renderItem: VNodeCall | null;
+  itemCondition: JSConditionalExpression | null;
+} {
+  let itemParams: string[] = ['item'];
+  let renderItem: VNodeCall | null = null;
+  let itemCondition: JSConditionalExpression | null = null;
+  if (
+    renderFn &&
+    typeof renderFn !== 'string' &&
+    !Array.isArray(renderFn) &&
+    (renderFn as { type?: number }).type === NodeTypes.COMPOUND_EXPRESSION
+  ) {
+    const children = (renderFn as CompoundExpressionNode).children;
+    for (const child of children) {
+      if (typeof child === 'string' && child.includes('=>')) {
+        // 解析箭头头，拿**全部**形参（索引形参此前被整段忽略）
+        const headMatch = /^\s*\(?\s*([^)]*?)\s*\)?\s*=>/.exec(child);
+        const parsed = (headMatch?.[1] ?? '')
+          .split(',')
+          .map((x) => x.trim())
+          .filter(Boolean);
+        if (parsed.length > 0) itemParams = parsed;
+      }
+    }
+    for (const child of children) {
+      if (typeof child === 'string') continue;
+      if (child.type === NodeTypes.VNODE_CALL) {
+        renderItem = child as VNodeCall;
+      } else if (child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
+        // `<p v-for v-if>`：条件包裹渲染项。只认 VNODE_CALL 会让 create 返回
+        // undefined ⇒ reconcileArray 的 WeakMap 键非法。
+        itemCondition = child as JSConditionalExpression;
+        const consequent = (child as JSConditionalExpression).consequent;
+        if (
+          consequent &&
+          typeof consequent === 'object' &&
+          !Array.isArray(consequent) &&
+          (consequent as { type?: number }).type === NodeTypes.VNODE_CALL
+        ) {
+          renderItem = consequent as VNodeCall;
+        }
+      }
+    }
+  }
+  return { itemParams, renderItem, itemCondition };
+}
+
+/** 取列表项用户写的 `:key` 表达式；未写返回 null。 */
+function readItemKeyExpr(vnode: VNodeCall | null): string | null {
+  if (!vnode || !vnode.props || vnode.props.type !== NodeTypes.JS_OBJECT_EXPRESSION) return null;
+  for (const prop of (vnode.props as JSObjectExpression).properties) {
+    if (prop.type !== NodeTypes.JS_PROPERTY) continue;
+    const jsProp = prop as JSProperty;
+    if (
+      jsProp.key &&
+      typeof jsProp.key !== 'string' &&
+      !Array.isArray(jsProp.key) &&
+      jsProp.key.type === NodeTypes.SIMPLE_EXPRESSION &&
+      stripPropKeyQuotes(jsProp.key.content) === 'key' &&
+      jsProp.value &&
+      typeof jsProp.value !== 'string' &&
+      !Array.isArray(jsProp.value) &&
+      jsProp.value.type === NodeTypes.SIMPLE_EXPRESSION
+    ) {
+      return jsProp.value.content;
+    }
+  }
+  return null;
+}
+
+/**
+ * 列表项的文本内容：静态字面量 / 动态表达式（**未加前缀**）。
+ *
+ * 顶层字符串是静态文本；COMPOUND_EXPRESSION 里的字符串是代码片段
+ * （`" + "`），原样保留；插值取原始表达式，由方言统一加前缀。
+ */
+function readItemText(children: unknown): { static?: string; dynamic?: string } {
+  if (children === undefined || children === null) return {};
+  if (typeof children === 'string') return { static: children };
+  if (Array.isArray(children)) {
+    const parts: string[] = [];
+    let allStatic = true;
+    for (const child of children) {
+      const result = readItemText(child);
+      if (result.static !== undefined) parts.push(result.static);
+      else if (result.dynamic !== undefined) {
+        parts.push(result.dynamic);
+        allStatic = false;
+      } else return {};
+    }
+    if (parts.length === 0) return {};
+    const joined = parts.join(' + ');
+    return allStatic ? { static: joined } : { dynamic: joined };
+  }
+  if (typeof children !== 'object') return {};
+  const node = children as {
+    type?: number;
+    callee?: unknown;
+    arguments?: unknown[];
+    content?: unknown;
+    children?: unknown;
+  };
+  if (node.type === NodeTypes.JS_CALL_EXPRESSION) {
+    const callee = typeof node.callee === 'string' ? node.callee : String(node.callee);
+    if (callee === 'TO_DISPLAY_STRING' || callee === 'toDisplayString') {
+      const arg = (node.arguments ?? [])[0] as { content?: string } | string | undefined;
+      const content = typeof arg === 'string' ? arg : arg?.content;
+      if (content) return { dynamic: content };
+    }
+    return {};
+  }
+  if (node.type === NodeTypes.COMPOUND_EXPRESSION) {
+    const kids = node.children;
+    if (!Array.isArray(kids)) return {};
+    const parts: string[] = [];
+    let allStatic = true;
+    for (const kid of kids) {
+      if (typeof kid === 'string') {
+        parts.push(kid);
+        continue;
+      }
+      const r = readItemText(kid);
+      if (r.static !== undefined) parts.push(r.static);
+      else if (r.dynamic !== undefined) {
+        parts.push(r.dynamic);
+        allStatic = false;
+      } else return {};
+    }
+    if (parts.length === 0) return {};
+    const joined = parts.join('');
+    return allStatic ? { static: joined } : { dynamic: joined };
+  }
+  if (node.type === NodeTypes.INTERPOLATION) {
+    const inner = (node as { content?: { content?: unknown } }).content;
+    const text = typeof inner?.content === 'string' ? inner.content : null;
+    return text ? { dynamic: text } : {};
+  }
+  if (node.type === NodeTypes.SIMPLE_EXPRESSION) {
+    // 带索引形参时，子项 SIMPLE_EXPRESSION 的 content 又套一层 SIMPLE_EXPRESSION
+    const raw = node.content;
+    const text =
+      typeof raw === 'string'
+        ? raw
+        : typeof (raw as { content?: unknown } | undefined)?.content === 'string'
+          ? (raw as { content: string }).content
+          : null;
+    return text ? { dynamic: text } : {};
+  }
+  return {};
+}
+
+/**
+ * 生成 v-for 列表项的 create/update 代码（signal 两版唯一实现）。
+ *
+ * 解析、组件/元素分派、条件/嵌套/纯文本分支、key 与告警判定只在这里做一次；
+ * 产物拼写由 `dialect.syntax` 注入，表达式改写由 `dialect.expr` 注入。
+ *
+ * `locals` 显式入参：**当前调用链恒为空集，不是设计假设**（嵌套作用域接入时
+ * 由调用方直接传入，不需要再改签名）。
+ */
+export function buildListItemBinding(
+  node: JSCallExpression,
+  varCounter: Map<string, number>,
+  locals: ReadonlySet<string>,
+  dialect: ListItemDialect,
+): ListItemBinding | null {
+  const callee = typeof node.callee === 'string' ? node.callee : String(node.callee);
+  if (callee !== 'RENDER_LIST' && callee !== 'renderList') return null;
+
+  const source = getTestExpr(node.arguments[0] as JSChildNode | string | undefined);
+  if (!source) return null;
+
+  const { itemParams, renderItem, itemCondition } = readRenderListTail(node.arguments[1]);
+  const itemVar = itemParams[0]!;
+  const itemLocals: ReadonlySet<string> = new Set(itemParams);
+  const syn = dialect.syntax;
+
+  let createBody = '';
+  let updateBody = '';
+
+  // 列表项是**组件**（tag 为裸标识符如 `Row`；元素的 tag 是带引号字符串 `"li"`）
+  const itemIsComponent =
+    !!renderItem &&
+    typeof renderItem.tag === 'string' &&
+    renderItem.tag !== '' &&
+    !/^["']/.test(renderItem.tag);
+
+  if (itemIsComponent && renderItem) {
+    const rawTag = String(renderItem.tag);
+    // kebab 组件的 tag 是查找**表达式**，直接拼进变量名会产出非法标识符
+    const hostVar = genVarName('lytComp', varCounter);
+    const itemProps = buildItemComponentPropsShared(renderItem, itemLocals, dialect.expr);
+    const kidVNodes: string[] = [];
+    for (const kid of normalizeVNodeChildren(renderItem.children)) {
+      const code = syn.serializeVNodeCall(kid, itemLocals);
+      if (code) kidVNodes.push(code);
+    }
+    const slotsArg = kidVNodes.length ? ',{default:()=>[' + kidVNodes.join(',') + ']}' : '';
+    if (rawTag === FRAGMENT_SENTINEL) {
+      // `<template v-for>`：容器里挂 Fragment。children 走完整 vnode 序列化，
+      // 内嵌 v-if / 文本 / 拼接文本都经此。
+      syn.markRuntime('mountVNode');
+      syn.markRuntime('createVNode');
+      syn.markRuntime('Fragment');
+      const kidsCode = syn.serializeVNodeCallChildren(renderItem.children, itemLocals);
+      const frag = syn.fragmentVNode(kidsCode ?? 'null');
+      createBody = buildFragmentMountCreate(frag, syn.names.mountVNode);
+      updateBody = buildFragmentMountUpdate(frag, syn.names.mountVNode);
+    } else {
+      syn.markRuntime('mountComponent');
+      const ref = componentRefExpr(rawTag, syn.ctxParam);
+      createBody = syn.componentCreate(hostVar, ref, itemProps, slotsArg);
+      updateBody = syn.componentUpdate(ref, itemProps, slotsArg);
+    }
+  } else if (renderItem && typeof renderItem.tag === 'string') {
+    const tag = renderItem.tag.replace(/^"|"$/g, '');
+    const children = renderItem.children;
+    const kidList = normalizeVNodeChildren(children);
+
+    if (containsConditionalNode(children)) {
+      // 列表项内嵌 v-if/v-else：把选中分支 vnode 挂进列表项元素；
+      // 多子节点时用 Fragment 保持顺序。
+      const elVar = genVarName(tag, varCounter);
+      const createLines = [syn.elementDecl(elVar, tag, 'block')];
+      const updateLines: string[] = [];
+      emitListItemProps(
+        renderItem.props,
+        elVar,
+        '_el',
+        itemLocals,
+        createLines,
+        updateLines,
+        dialect.expr,
+        syn.domPropRuntime,
+        syn.markDomProp,
+        dialect.isStatic,
+      );
+      if (kidList.length === 1) {
+        const expr = syn.serializeConditional(kidList[0], itemLocals);
+        if (expr) {
+          syn.markRuntime('mountVNode');
+          syn.markRuntime('setHTML');
+          createLines.push(syn.mountVNode(expr, elVar));
+          // mountVNode 会先清空宿主；条件为假时必须显式清空，否则旧分支残留
+          updateLines.push(syn.conditionalUpdate(expr));
+        }
+      } else {
+        const kidsCode = syn.serializeVNodeCallChildren(children, itemLocals);
+        if (kidsCode) {
+          syn.markRuntime('mountVNode');
+          syn.markRuntime('createVNode');
+          syn.markRuntime('Fragment');
+          const frag = syn.fragmentVNode(kidsCode);
+          createLines.push(syn.mountVNode(frag, elVar));
+          updateLines.push(syn.mountVNode(frag, '_el'));
+        }
+      }
+      createBody = syn.join(createLines, 'block') + syn.returnStmt(elVar, 'block');
+      updateBody = syn.join(updateLines, 'block');
+    } else if (containsElementVNode(children)) {
+      // 列表项含嵌套元素：逐层生成 create/update。
+      const elVar = genVarName(tag, varCounter);
+      const createLines = [syn.elementDecl(elVar, tag, 'block')];
+      const updateLines: string[] = [];
+      emitListItemProps(
+        renderItem.props,
+        elVar,
+        '_el',
+        itemLocals,
+        createLines,
+        updateLines,
+        dialect.expr,
+        syn.domPropRuntime,
+        syn.markDomProp,
+        dialect.isStatic,
+      );
+      emitListItemNode(
+        children,
+        elVar,
+        '_el',
+        itemLocals,
+        varCounter,
+        createLines,
+        updateLines,
+        dialect.expr,
+        (content, loc) => `(${dialect.expr(content, loc)} ?? '')`,
+        syn.domPropRuntime,
+        syn.markDomProp,
+        dialect.isStatic,
+      );
+      createBody = syn.join(createLines, 'block') + syn.returnStmt(elVar, 'block');
+      updateBody = syn.join(updateLines, 'block');
+    } else {
+      const elVar = syn.simpleVarName(tag, varCounter);
+      const createLines = [syn.elementDecl(elVar, tag, 'simple')];
+      const updateLines: string[] = [];
+      const text = readItemText(children);
+      if (text.static !== undefined) {
+        createLines.push(syn.textAssign(elVar, syn.textLiteral(text.static)));
+      } else if (text.dynamic !== undefined) {
+        // 循环变量保持裸名（locals），其余标识符前缀化
+        const code = dialect.expr(text.dynamic, itemLocals);
+        createLines.push(syn.textAssign(elVar, code));
+        // update 回调的参数是已存在元素 _el（由 reconcileArray 传入）
+        updateLines.push(syn.textAssign('_el', code));
+      }
+      // 处理静态 props 与非静态绑定
+      emitListItemProps(
+        renderItem.props,
+        elVar,
+        '_el',
+        itemLocals,
+        createLines,
+        updateLines,
+        dialect.expr,
+        syn.domPropRuntime,
+        syn.markDomProp,
+        dialect.isStatic,
+      );
+      createBody = syn.join(createLines, 'simple') + syn.returnStmt(elVar, 'simple');
+      updateBody = syn.join(updateLines, 'simple');
+    }
+  }
+
+  // :key 优先取用户表达式；缺失时回退 item.id 并告警
+  const userKey = readItemKeyExpr(renderItem);
+  const warning = userKey === null ? dialect.warnText : null;
+  const keyExpr = userKey === null ? `${itemVar}.id` : dialect.expr(userKey, itemLocals);
+
+  // `v-for` 与 `v-if` 同元素：v-if 等同一项过滤（被隐藏的项不创建 DOM）。
+  let listCode = dialect.expr(source, locals);
+  if (itemCondition) {
+    const condRaw =
+      typeof itemCondition.test === 'string'
+        ? itemCondition.test
+        : getExpContent(itemCondition.test as SimpleExpressionNode);
+    if (condRaw) listCode = syn.filter(listCode, itemParams, dialect.expr(condRaw, itemLocals));
+  }
+
+  const options = syn.options(keyExpr, itemParams, createBody, updateBody);
+  return { listCode, options, warning };
 }
 
 /** 取元素上的静态属性值（`name="v"`），没有则返回 null。 */

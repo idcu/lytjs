@@ -7,26 +7,15 @@ import {
   genVarName,
   getExpContent,
   isStaticPropValue,
-  stripPropKeyQuotes,
   componentRef as componentRefShared,
-  componentRefExpr,
   readInterpolationExpr,
-  containsElementVNode,
-  containsConditionalNode,
-  normalizeVNodeChildren,
-  emitListItemProps as emitListItemPropsShared,
-  emitListItemNode as emitListItemNodeShared,
-  buildDomPropApply,
-  buildDomPropSpreadApply,
-  buildItemComponentPropsShared,
+  buildListItemBinding,
+  FULL_DOM_PROP_RUNTIME,
   buildStaticHtml as buildStaticHtmlShared,
   serializeStaticHtml as serializeStaticHtmlShared,
   serializeBranchHtml as serializeBranchHtmlShared,
   buildConditionalAnchorOp,
-  buildFragmentMountCreate,
-  buildFragmentMountUpdate,
   getStaticClass,
-  getTestExpr,
   validateComponentName,
   buildComponentSlotsObjectShared,
   collectSlotVNodesShared,
@@ -49,6 +38,7 @@ import {
   type ConditionalEmitDialect,
   type ConditionalBranchEmission,
   type ElementModifierDialect,
+  type ListItemDialect,
 } from './codegen-signal-shared';
 import { getVShowStyleTest } from './transforms/helpers';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -61,7 +51,6 @@ import type {
   InterpolationNode,
   DirectiveNode,
   SimpleExpressionNode,
-  CompoundExpressionNode,
   JSChildNode,
   VNodeCall,
   JSCallExpression,
@@ -1073,8 +1062,14 @@ function collectBranchDynamics(
         const call = kid as JSCallExpression;
         const callee = typeof call.callee === 'string' ? call.callee : String(call.callee);
         if (callee === 'RENDER_LIST' || callee === 'renderList') {
-          const binding = buildReconcileArrayCode(call, new Map(), inheritedLocals);
+          const binding = buildListItemBinding(
+            call,
+            new Map(),
+            inheritedLocals,
+            BASE_LIST_ITEM_DIALECT,
+          );
           if (binding) {
+            if (binding.warning && __DEV__) compilerWarn(binding.warning);
             ops.push({
               elementIndex: selfIndex,
               kind: 'list',
@@ -1224,393 +1219,76 @@ function buildBranchDynamics(
   };
 }
 
-/** 本发射器（完整名 / `_ctx` 前缀）的列表项 props 生成。 */
-function emitListItemProps(
-  props: unknown,
-  createExpr: string,
-  updateExpr: string | null,
-  locals: ReadonlySet<string>,
-  createLines: string[],
-  updateLines: string[],
-): void {
-  emitListItemPropsShared(
-    props,
-    createExpr,
-    updateExpr,
-    locals,
-    createLines,
-    updateLines,
-    prefixIdentifiers,
-  );
-}
-
-/** 本发射器（完整名 / `_ctx` 前缀）的列表项子树生成。 */
-function emitListItemNode(
-  node: unknown,
-  createParent: string,
-  updateExpr: string | null,
-  locals: ReadonlySet<string>,
-  varCounter: Map<string, number>,
-  createLines: string[],
-  updateLines: string[],
-): boolean {
-  return emitListItemNodeShared(
-    node,
-    createParent,
-    updateExpr,
-    locals,
-    varCounter,
-    createLines,
-    updateLines,
-    prefixIdentifiers,
-    (content, loc) => `(${prefixIdentifiers(content, loc)} ?? '')`,
-  );
-}
-
-/** 本发射器（完整名 / `_ctx` 前缀）的列表项组件 props。 */
-function buildItemComponentProps(vnode: VNodeCall, locals: ReadonlySet<string>): string {
-  return buildItemComponentPropsShared(vnode, locals, prefixIdentifiers);
-}
-
 // ============================================================
-// 处理 JSCallExpression（v-for 转换结果）
+// 列表项方言（基础版：完整名 / `_ctx` 前缀 / 多行排版）
 // ============================================================
 
-function buildReconcileArrayCode(
-  node: JSCallExpression,
-  varCounter: Map<string, number>,
-  locals: ReadonlySet<string> = new Set(),
-): { listCode: string; options: string } | null {
-  const callee = typeof node.callee === 'string' ? node.callee : String(node.callee);
-
-  // RENDER_LIST 是 v-for 转换后的 callee
-  if (callee === 'RENDER_LIST' || callee === 'renderList') {
-    // 提取迭代源和渲染函数
-    const sourceExpr = node.arguments[0];
-    const renderFn = node.arguments[1];
-
-    const source = getTestExpr(sourceExpr as JSChildNode | string | undefined);
-    if (!source) return null;
-
-    // 从箭头函数（COMPOUND_EXPRESSION）中提取 item 变量名与渲染项 VNodeCall
-    let itemVar = 'item';
-    let itemParams: string[] = ['item'];
-    let itemLocals: ReadonlySet<string> = new Set(['item']);
-    let renderItem: VNodeCall | null = null;
-    /** `v-for` 与 `v-if` 同元素：renderItem 被 transform 包成条件表达式 */
-    let itemCondition: JSConditionalExpression | null = null;
-    if (renderFn && typeof renderFn !== 'string' && !Array.isArray(renderFn)) {
-      if (renderFn.type === NodeTypes.COMPOUND_EXPRESSION) {
-        const compound = renderFn as CompoundExpressionNode;
-        for (const child of compound.children) {
-          if (typeof child === 'string' && child.includes('=>')) {
-            // 解析箭头头，拿**全部**形参（索引形参此前被整段忽略）
-            const headMatch = /^\s*\(?\s*([^)]*?)\s*\)?\s*=>/.exec(child);
-            const parsed = (headMatch?.[1] ?? '')
-              .split(',')
-              .map((x) => x.trim())
-              .filter(Boolean);
-            if (parsed.length > 0) {
-              itemVar = parsed[0]!;
-              itemParams = parsed;
-            }
-          } else if (typeof child !== 'string' && child.type === NodeTypes.VNODE_CALL) {
-            renderItem = child as VNodeCall;
-          } else if (
-            typeof child !== 'string' &&
-            child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION
-          ) {
-            // `<p v-for v-if>`：条件包裹渲染项。旧实现只认 VNODE_CALL，
-            // renderItem 为 null ⇒ create 回调返回 undefined ⇒ WeakMap 键非法
-            // （`Invalid value used as weak map key`）。
-            itemCondition = child as JSConditionalExpression;
-            const consequent = (child as JSConditionalExpression).consequent;
-            if (
-              consequent &&
-              typeof consequent === 'object' &&
-              !Array.isArray(consequent) &&
-              (consequent as { type?: number }).type === NodeTypes.VNODE_CALL
-            ) {
-              renderItem = consequent as VNodeCall;
-            }
-          }
-        }
-      }
-    }
-    itemLocals = new Set(itemParams);
-
-    // 由渲染项 VNodeCall 生成通用 create / update 逻辑：
-    // 使用 document.createElement + textContent/属性绑定，替代此前硬编码的 benchmark 表格模板
-    let createBody = '';
-    let updateBody = '';
-    // 列表项是**组件**（`tag` 为裸标识符如 `Row`；元素的 `tag` 是带引号字符串 `"li"`）
-    // => 不能按元素处理；改为造容器 + `mountComponent`（与优化版同构）。
-    // 注意：`create` 回调**必须 return 容器节点**，否则 reconcileArray 里
-    // `reconcileKeyMap.set(node, …)` 会收到 undefined。
-    const itemIsComponent =
-      !!renderItem &&
-      typeof renderItem.tag === 'string' &&
-      renderItem.tag !== '' &&
-      !/^["']/.test(renderItem.tag);
-    if (itemIsComponent && renderItem) {
-      const rawTag = String(renderItem.tag);
-      // C-35f：kebab 组件的 tag 是查找**表达式**（`_ctx["my-comp"] || …`），
-      // 直接拼进变量名会产出 `const _(_ctx[…])` —— 非法标识符，整模块 SyntaxError。
-      const hostVar = genVarName('lytComp', varCounter);
-      const itemProps = buildItemComponentProps(renderItem, itemLocals);
-      // 列表项的子节点（VNODE_CALL）→ 默认插槽内容。
-      // 列表项 children 是 VNODE_CALL（type 9）且为「单对象」而非数组，先归一化为数组；
-      // 复用既有 serializeVNodeCall（严格模式递归处理 VNODE_CALL → TO_DISPLAY_STRING 叶子）。
-      const rawKids = renderItem.children as unknown;
-      const kidList =
-        rawKids === undefined || rawKids === null
-          ? []
-          : Array.isArray(rawKids)
-            ? rawKids
-            : [rawKids];
-      const kidVNodes: string[] = [];
-      for (const kid of kidList) {
-        const code = serializeVNodeCall(kid, BASE_EMIT_PROFILE.ctxPrefix, itemLocals);
-        if (code) kidVNodes.push(code);
-      }
-      const slotsArg = kidVNodes.length ? ',{default:()=>[' + kidVNodes.join(',') + ']}' : '';
-      if (rawTag === FRAGMENT_SENTINEL) {
-        // `<template v-for>`：容器里挂 Fragment，而不是把哨兵当组件名传入。
-        // children 必须走完整 vnode 序列化：内嵌 v-if / 文本 / 拼接文本都经此，
-        // 旧实现逐个 `serializeVNodeCall` 只认 VNODE_CALL，条件节点被丢掉后
-        // Fragment 里只剩注释锚点。
-        const kidsCode = serializeVNodeCallChildren(
-          renderItem.children,
-          BASE_EMIT_PROFILE.ctxPrefix,
-          itemLocals,
-        );
-        const frag = `createVNode(Fragment, null, ${kidsCode ?? 'null'})`;
-        // 每项不产生**元素**包裹：挂进 DocumentFragment 后把 Fragment 的子节点整组返回。
-        // 这组节点的首尾就是运行时 Fragment 自身的一对注释锚点，DOM 层级与 vnode 路径一致
-        //（多出的只有注释，没有任何元素）。
-        createBody = buildFragmentMountCreate(frag, 'mountVNode');
-        updateBody = buildFragmentMountUpdate(frag, 'mountVNode');
-      } else {
-        createBody =
-          'const ' +
-          hostVar +
-          " = document.createElement('div');" +
-          'mountComponent(' +
-          componentRefExpr(rawTag, BASE_EMIT_PROFILE.ctxParam) +
-          ',' +
-          itemProps +
-          ',' +
-          hostVar +
-          slotsArg +
-          ');' +
-          'return ' +
-          hostVar +
-          ';';
-        updateBody =
-          'mountComponent(' +
-          componentRefExpr(rawTag, BASE_EMIT_PROFILE.ctxParam) +
-          ',' +
-          itemProps +
-          ',_el' +
-          slotsArg +
-          ');';
-      }
-    } else if (renderItem && typeof renderItem.tag === 'string') {
-      const tag = renderItem.tag.replace(/^"|"$/g, '');
-      const elVar = genVarName(tag, varCounter);
-      const children = renderItem.children;
-      const kidList = normalizeVNodeChildren(children);
-
-      if (containsConditionalNode(children)) {
-        // 列表项内嵌 v-if/v-else：旧实现只认「文本 / 嵌套元素」，条件节点被整段丢弃，
-        // 列表项全部空渲染。这里把选中分支 vnode 挂进列表项元素；
-        // 多子节点时用 Fragment 保持顺序。
-        const createLines = [`const ${elVar} = document.createElement(${JSON.stringify(tag)});`];
-        const updateLines: string[] = [];
-        emitListItemProps(renderItem.props, elVar, '_el', itemLocals, createLines, updateLines);
-        if (kidList.length === 1) {
-          const expr = serializeConditionalVNode(
-            kidList[0],
-            BASE_EMIT_PROFILE.ctxPrefix,
-            itemLocals,
-          );
-          if (expr) {
-            createLines.push(`mountVNode(${expr}, ${elVar});`);
-            // mountVNode 会先清空宿主；条件为假时必须显式清空，否则旧分支残留
-            updateLines.push(
-              `{ const _v = ${expr}; if (_v) { mountVNode(_v, _el); } else { setHTML(_el, ''); } }`,
-            );
-          }
-        } else {
-          const kidsCode = serializeVNodeCallChildren(
-            children,
-            BASE_EMIT_PROFILE.ctxPrefix,
-            itemLocals,
-          );
-          if (kidsCode) {
-            const frag = `createVNode(Fragment, null, ${kidsCode})`;
-            createLines.push(`mountVNode(${frag}, ${elVar});`);
-            updateLines.push(`mountVNode(${frag}, _el);`);
-          }
-        }
-        createBody = `${createLines.join('\n')}\nreturn ${elVar};`;
-        updateBody = updateLines.join('\n');
-      } else if (containsElementVNode(children)) {
-        // 列表项含嵌套元素：逐层生成 create/update（旧实现只认直接子文本 ⇒ 子元素整段丢失）
-        const createLines = [`const ${elVar} = document.createElement(${JSON.stringify(tag)});`];
-        const updateLines: string[] = [];
-        emitListItemProps(renderItem.props, elVar, '_el', itemLocals, createLines, updateLines);
-        emitListItemNode(children, elVar, '_el', itemLocals, varCounter, createLines, updateLines);
-        createBody = `${createLines.join('\n')}\nreturn ${elVar};`;
-        updateBody = updateLines.join('\n');
-      } else {
-        createBody = `const ${elVar} = document.createElement('${tag}');`;
-
-        // 插值 {{ item.xxx }} 在 transform 后为 TO_DISPLAY_STRING 调用，
-        // 通过 extractChildrenText 提取表达式；静态文本则原样写入
-        const dynamicText = extractItemChildrenText(renderItem.children, itemLocals);
-        if (dynamicText) {
-          // 循环变量保持裸名（locals），其余标识符前缀化为 `_ctx.`
-          const textCode = prefixIdentifiers(dynamicText, itemLocals);
-          createBody += `${elVar}.textContent = ${textCode};`;
-          // update 回调的参数是已存在元素 _el（由 reconcileArray 传入），
-          // 不能引用 create 内的局部变量名
-          updateBody = `_el.textContent = ${textCode};`;
-        } else if (typeof children === 'string') {
-          // ⚠️ 必须先转义反斜杠再转义单引号：顺序颠倒时 `it's a\b` 会先变成
-          //   `it\'s a\b`，再被反斜杠转义二次处理成 `it\\'s a\\b`，
-          //   产物 `'it\\'s a\\b'` 语法错误（`Unexpected identifier 's'`）。
-          const escaped = children.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-          createBody += `${elVar}.textContent = '${escaped}';`;
-        }
-
-        // 处理静态 props（如 class="foo"）与非静态绑定
-        if (renderItem.props && renderItem.props.type === NodeTypes.JS_OBJECT_EXPRESSION) {
-          const objExpr = renderItem.props as JSObjectExpression;
-          for (const prop of objExpr.properties) {
-            if (prop.type !== NodeTypes.JS_PROPERTY) continue;
-            const jsProp = prop as JSProperty;
-            // C-35c：`v-bind="obj"`（spread）不得作为 `__spread__` 属性输出
-            // C-35g：逐项应用要区分 class/style/事件，统一交给共享 props 应用器。
-            if ((jsProp as { spread?: boolean }).spread === true) {
-              const spreadCode = prefixIdentifiers(
-                (jsProp.value as SimpleExpressionNode).content,
-                itemLocals,
-              );
-              createBody += buildDomPropSpreadApply(elVar, spreadCode);
-              updateBody += buildDomPropSpreadApply('_el', spreadCode);
-              continue;
-            }
-            if (
-              !jsProp.key ||
-              typeof jsProp.key === 'string' ||
-              Array.isArray(jsProp.key) ||
-              jsProp.key.type !== NodeTypes.SIMPLE_EXPRESSION ||
-              !jsProp.value ||
-              typeof jsProp.value === 'string' ||
-              Array.isArray(jsProp.value) ||
-              jsProp.value.type !== NodeTypes.SIMPLE_EXPRESSION
-            ) {
-              continue;
-            }
-            const key = stripPropKeyQuotes((jsProp.key as SimpleExpressionNode).content);
-            const value = (jsProp.value as SimpleExpressionNode).content;
-            if (key === 'key') continue; // :key 不写为 DOM 属性
-            // ⚠️ 旧判据「值里没有 `_ctx` / 没有 `(` 就算静态」会把 `:data-k="x"`
-            //   写成字面量 `data-k="x"`（for08 实测）。静态只认**字面量**，
-            //   其余一律按表达式处理并加前缀（循环变量在 locals 里保持裸名）。
-            if (!isStaticPropValue(value)) {
-              const valueCode = prefixIdentifiers(value, itemLocals);
-              // 动态绑定：create 用新元素，update 用 reconcileArray 传入的已存在元素
-              createBody += buildDomPropApply(elVar, key, valueCode);
-              updateBody += buildDomPropApply('_el', key, valueCode);
-            } else {
-              // 静态属性
-              createBody += buildDomPropApply(
-                elVar,
-                key,
-                JSON.stringify(value.replace(/^"|"$/g, '')),
-              );
-            }
-          }
-        }
-
-        createBody += `return ${elVar};`;
-      }
-    }
-
-    // 提取 :key 绑定，缺省回退到 item.id（与优化版行为一致）
-    let userKeyExpr: string | null = null;
-    if (
-      renderItem &&
-      renderItem.props &&
-      renderItem.props.type === NodeTypes.JS_OBJECT_EXPRESSION
-    ) {
-      const objExpr = renderItem.props as JSObjectExpression;
-      for (const prop of objExpr.properties) {
-        if (prop.type !== NodeTypes.JS_PROPERTY) continue;
-        const jsProp = prop as JSProperty;
-        if (
-          jsProp.key &&
-          typeof jsProp.key !== 'string' &&
-          !Array.isArray(jsProp.key) &&
-          jsProp.key.type === NodeTypes.SIMPLE_EXPRESSION &&
-          stripPropKeyQuotes(jsProp.key.content) === 'key' &&
-          jsProp.value &&
-          typeof jsProp.value !== 'string' &&
-          !Array.isArray(jsProp.value) &&
-          jsProp.value.type === NodeTypes.SIMPLE_EXPRESSION
-        ) {
-          userKeyExpr = jsProp.value.content;
-          break;
-        }
-      }
-    }
-
-    if (!userKeyExpr) {
-      if (__DEV__) {
-        compilerWarn(
-          `[lytjs/compiler] v-for is missing a "key" attribute. ` +
-            `This may cause performance issues and incorrect DOM updates. ` +
-            `Add a unique :key binding to the v-for element, e.g., :key="item.id" or :key="index". ` +
-            `See: https://lytjs.dev/guide/template-syntax.html#v-for-key`,
-        );
-      }
-    }
-
-    const keyExpr = userKeyExpr ?? `${itemVar}.id`;
-
-    // `v-for` 与 `v-if` 同元素：v-if 等同一项过滤（被隐藏的项不创建 DOM，与 vnode 路径一致）。
-    // filter 回调拿 (item, index)，因此条件里引用索引形参也成立。
-    const sourceCode = prefixIdentifiers(source, locals);
-    let listCode = sourceCode;
-    if (itemCondition) {
-      const cond =
-        typeof itemCondition.test === 'string'
-          ? itemCondition.test
-          : getExpContent(itemCondition.test as SimpleExpressionNode);
-      if (cond) {
-        listCode = `(${sourceCode}).filter((${itemParams.join(', ')}) => (${prefixIdentifiers(cond, itemLocals)}))`;
-      }
-    }
-
-    const options = `{
-      key: (${itemParams.join(', ')}) => ${keyExpr},
-      create: (${itemParams.join(', ')}) => {
+const BASE_LIST_ITEM_DIALECT: ListItemDialect = {
+  expr: prefixIdentifiers,
+  isStatic: isStaticPropValue,
+  warnText:
+    `[lytjs/compiler] v-for is missing a "key" attribute. ` +
+    `This may cause performance issues and incorrect DOM updates. ` +
+    `Add a unique :key binding to the v-for element, e.g., :key="item.id" or :key="index". ` +
+    `See: https://lytjs.dev/guide/template-syntax.html#v-for-key`,
+  syntax: {
+    names: {
+      mountComponent: 'mountComponent',
+      mountVNode: 'mountVNode',
+      setHTML: 'setHTML',
+      createVNode: 'createVNode',
+      Fragment: 'Fragment',
+    },
+    ctxParam: BASE_EMIT_PROFILE.ctxParam,
+    defaultContainer: BASE_EMIT_PROFILE.containerParam,
+    join: (lines, branch) => lines.join(branch === 'block' ? '\n' : ''),
+    returnStmt: (varName, branch) => (branch === 'block' ? '\nreturn ' : 'return ') + `${varName};`,
+    elementDecl: (varName, tag, branch) =>
+      branch === 'block'
+        ? `const ${varName} = document.createElement(${JSON.stringify(tag)});`
+        : `const ${varName} = document.createElement('${tag}');`,
+    simpleVarName: (tag, counter) => genVarName(tag, counter),
+    textAssign: (target, code) => `${target}.textContent = ${code};`,
+    // ⚠️ 必须先转义反斜杠再转义单引号：顺序颠倒时 `it's a\b` 会被二次转义。
+    textLiteral: (text) => `'${text.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`,
+    mountVNode: (expr, host) => `mountVNode(${expr}, ${host});`,
+    conditionalUpdate: (expr) =>
+      `{ const _v = ${expr}; if (_v) { mountVNode(_v, _el); } else { setHTML(_el, ''); } }`,
+    fragmentVNode: (children) => `createVNode(Fragment, null, ${children})`,
+    componentCreate: (hostVar, ref, props, slots) =>
+      `const ${hostVar} = document.createElement('div');mountComponent(${ref},${props},${hostVar}${slots});return ${hostVar};`,
+    componentUpdate: (ref, props, slots) => `mountComponent(${ref},${props},_el${slots});`,
+    serializeVNodeCall: (node, locals) =>
+      serializeVNodeCall(node as VNodeCall, BASE_EMIT_PROFILE.ctxPrefix, locals),
+    serializeVNodeCallChildren: (children, locals) =>
+      serializeVNodeCallChildren(children, BASE_EMIT_PROFILE.ctxPrefix, locals),
+    serializeConditional: (node, locals) =>
+      serializeConditionalVNode(
+        node as JSConditionalExpression,
+        BASE_EMIT_PROFILE.ctxPrefix,
+        locals,
+      ),
+    domPropRuntime: FULL_DOM_PROP_RUNTIME,
+    markDomProp: () => {},
+    markRuntime: () => {},
+    filter: (listCode, params, cond) => `(${listCode}).filter((${params.join(', ')}) => (${cond}))`,
+    options: (keyExpr, params, createBody, updateBody) => `{
+      key: (${params.join(', ')}) => ${keyExpr},
+      create: (${params.join(', ')}) => {
         ${createBody}
       }${
         updateBody
           ? `,
-      update: (_el, ${itemParams.join(', ')}) => {
+      update: (_el, ${params.join(', ')}) => {
         ${updateBody}
       }`
           : ''
       }
-    }`;
-    return { listCode, options };
-  }
-  return null;
-}
+    }`,
+    binding: (containerVar, listCode, options) =>
+      `effect(() => {\n    reconcileArray(${containerVar}, ${listCode}, ${options});\n  });`,
+  },
+};
 
 /** 顶层 v-for：在 render 里直接 `effect(() => reconcileArray(...))`。 */
 function processCallExpression(
@@ -1619,21 +1297,16 @@ function processCallExpression(
   _elementVars: Array<{ varName: string; tag: string }>,
   dynamicBindings: Array<{ varName: string; code: string }>,
   parentVar?: string,
+  // 当前调用链恒为空集，不是设计假设：嵌套作用域接入时由调用方直接传入。
   locals: ReadonlySet<string> = new Set(),
 ): void {
-  const callee = typeof node.callee === 'string' ? node.callee : String(node.callee);
-  if (callee !== 'RENDER_LIST' && callee !== 'renderList') return;
-
-  const binding = buildReconcileArrayCode(node, varCounter, locals);
+  const binding = buildListItemBinding(node, varCounter, locals, BASE_LIST_ITEM_DIALECT);
   if (!binding) return;
-
-  // 容器变量：render 的第二个形参叫 _container（见本文件 :164 生成的
-  // `export function render(_ctx, _container)`）。此处曾写死 '_ul'，
-  // 是为 ul/li 列表 demo 特判，换任何根容器都会产出 ReferenceError。
+  if (binding.warning && __DEV__) compilerWarn(binding.warning);
   const containerVar = parentVar ?? BASE_EMIT_PROFILE.containerParam;
   dynamicBindings.push({
     varName: containerVar,
-    code: `effect(() => {\n    reconcileArray(${containerVar}, ${binding.listCode}, ${binding.options});\n  });`,
+    code: BASE_LIST_ITEM_DIALECT.syntax.binding(containerVar, binding.listCode, binding.options),
   });
 }
 
@@ -1675,77 +1348,6 @@ function extractElementFromBranch(
 // ============================================================
 // Helper: 从条件分支中提取插值文本
 // ============================================================
-
-/**
- * 从列表项的 children 提取文本表达式（支持**复合内容** `{{ a }}:{{ b }}`）。
- *
- * ⚠️ 2026-09-30 修复：列表项内容此前只认「children 直接是 TO_DISPLAY_STRING」的形态，
- * 而 `{{ k }}:{{ i }}` 在 transform 后是 COMPOUND_EXPRESSION，其孩子是
- * **INTERPOLATION** 节点（本仓 NodeTypes.INTERPOLATION = 4）与**代码片段字符串**
- * （如 `" + "`）⇒ 整段内容丢失。
- */
-function extractItemChildrenText(children: unknown, locals: ReadonlySet<string>): string | null {
-  if (children === undefined || children === null) return null;
-  if (typeof children === 'string') return null;
-
-  if (Array.isArray(children)) {
-    const parts: string[] = [];
-    for (const kid of children) {
-      const r = extractItemChildrenText(kid, locals);
-      if (r === null) return null;
-      parts.push(r);
-    }
-    return parts.length ? parts.join('') : null;
-  }
-
-  const node = children as {
-    type?: number;
-    content?: unknown;
-    callee?: unknown;
-    arguments?: unknown[];
-    children?: unknown[];
-  };
-
-  if (node.type === NodeTypes.COMPOUND_EXPRESSION) {
-    // 孩子里**字符串就是代码片段**（如 `" + "` / `"':' "`），原样拼接
-    if (!Array.isArray(node.children)) return null;
-    const parts: string[] = [];
-    for (const kid of node.children) {
-      if (typeof kid === 'string') {
-        parts.push(kid);
-        continue;
-      }
-      const r = extractItemChildrenText(kid, locals);
-      if (r === null) return null;
-      parts.push(r);
-    }
-    return parts.length ? parts.join('') : null;
-  }
-
-  if (node.type === NodeTypes.INTERPOLATION) {
-    const inner = node.content as { content?: unknown } | undefined;
-    return typeof inner?.content === 'string' ? inner.content : null;
-  }
-
-  if (node.type === NodeTypes.SIMPLE_EXPRESSION) {
-    const raw = node.content;
-    if (typeof raw === 'string') return raw;
-    const nested = (raw as { content?: unknown } | undefined)?.content;
-    return typeof nested === 'string' ? nested : null;
-  }
-
-  if (node.type === NodeTypes.JS_CALL_EXPRESSION) {
-    const callee = typeof node.callee === 'string' ? node.callee : String(node.callee);
-    if (callee === 'TO_DISPLAY_STRING' || callee === 'toDisplayString') {
-      return extractItemChildrenText((node.arguments ?? [])[0], locals);
-    }
-    return null;
-  }
-
-  return null;
-}
-
-/** 列表项的 children 里是否有**嵌套元素**（`<li v-for><span>{{x}}</span></li>`）。 */
 
 /**
  * `JS_CALL_EXPRESSION` 的 RENDER_LIST 调用（v-for 在 Signal 模式的 transform 产物）
