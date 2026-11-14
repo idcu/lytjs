@@ -1434,7 +1434,8 @@ function processCallExpressionOptimized(
         compilerWarn(
           `[lytjs/compiler] v-for is missing a "key" attribute. ` +
             `This may cause performance issues and incorrect DOM updates. ` +
-            `Add a unique :key binding to the v-for element, e.g., :key="item.id" or :key="index".`,
+            `Add a unique :key binding to the v-for element, e.g., :key="item.id" or :key="index". ` +
+            `See: https://lytjs.dev/guide/template-syntax.html#v-for-key`,
         );
       }
       keyExpr = `${itemVar}.id`;
