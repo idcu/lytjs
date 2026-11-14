@@ -78,3 +78,13 @@ registerSignalOptimizedGenerator(); // 应用入口执行一次
 必须抛错（`packages/compiler/tests/signal-optimized-registration.test.ts` 断言错误消息
 含子路径与注册函数名）。把三个元数据键改回 `Symbol()` ⇒
 `check-signal-profile-snapshot` 必红（`di02/optimized` 丢 v-memo 守卫）。
+
+## 后续项（发布后候选，当前暂停）
+
+- **单发射器收编**：把基础版与优化版两套 signal codegen 合并为单一发射器，以
+  `{ expr, isStatic, warnText }` 三个方言注入差异，其余走同一份代码。
+- **暂停理由**：发布日 2026-11-30，窗口只剩 16 天；该改动量级 2000+ 行，收益主要
+  是可维护性；两版已共用语义主干。发布窗口内不动。
+- **启动前置**：发布完成；启动时仍须满足合并前后 116×2 产物逐字节 0 差异、每步
+  可判死负控（改前红 / 改后绿 / 还原再红）、`check-compiler-parity` 基线零增项、
+  `check-signal-output-evaluates` 维持当前 232/232（116×2）口径。
