@@ -61,8 +61,12 @@ jobs:
       - name: Run tests with coverage (release-required)
         run: pnpm run test:coverage -- --maxWorkers=2
 
-      # A11：覆盖率快照必须新鲜，否则上面的覆盖率数字与当前代码无因果关系
-      - name: Check coverage snapshot freshness
+      # A11：覆盖率结论只认本次现场产物 —— 先把本次 coverage-final.json 的 sha256
+      # 与当前 HEAD 写成快照，再由门禁校验两个指纹与逐文件冻结清单（2026-11-14）
+      - name: Write on-site coverage snapshot
+        run: node scripts/coverage-snapshot.mjs
+
+      - name: Check coverage snapshot (on-site artifact)
         run: node scripts/check-coverage-snapshot.mjs
 
       # A12：发布一致性（npm / tag / 76 个 package.json 三方比对）

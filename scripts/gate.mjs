@@ -436,15 +436,6 @@ const GATES = [
       '快档只跑秒级控制（--quick），慢控制与重控制分别由 slow 档与显式点名运行',
   },
   {
-    name: 'check-negative-controls:slow',
-    tier: 'slow',
-    cmd: ['node', 'scripts/check-negative-controls.mjs', '--slow'],
-    approx: '~3min',
-    desc:
-      '负控慢控制：循环依赖（src/dist）、lint/format 与 2s 以上的行为电池注入实验。' +
-      '分层只改变运行频率，不降低「注入必红、恢复回绿」的判据',
-  },
-  {
     name: 'check-integration',
     tier: 'slow',
     cmd: ['node', 'scripts/check-integration.mjs'],
@@ -704,21 +695,6 @@ const GATES = [
       'inject 对缺键伪造值 ⇒ 2 项红',
   },
   {
-    name: 'check-coverage-snapshot',
-    tier: 'fast',
-    cmd: ['node', 'scripts/check-coverage-snapshot.mjs'],
-    approx: '~0.2s',
-    desc:
-      '★ 覆盖率快照的**时效性与覆盖面**（A11）：`coverage/` 被 .gitignore 忽略，此前没人知道' +
-      '「覆盖率 xx%」对应哪个提交、覆盖了哪些文件 —— 这类数字一旦失去因果就会变成长期摆设。' +
-      '本门禁校验受版本控制的 scripts/coverage-snapshot.json：① commit 在仓库真实存在；' +
-      '② 距今 ≤ 7 天；③ 列出的文件集合 == 当前全部 src 文件（新增 src 必须补快照，否则分母被' +
-      '悄悄放大）；④ 已插桩比例 ≥ 97.5%（口径 = 出现在 coverage-final.json，与评估报告' +
-      '「437/448 文件」一致，**不是**语句执行率）。真实重跑在慢档 test:coverage；两者配合：' +
-      '慢档保证数字是真的，本项保证数字不过期。注入验证：新增 1 个 src 文件 ⇒ 红；' +
-      '快照 commit 改到 190 天前的提交 ⇒ 红；把 20 个文件标为未覆盖 ⇒ 93.32% 红',
-  },
-  {
     name: 'check-release-parity',
     tier: 'fast',
     cmd: ['node', 'scripts/check-release-parity.mjs'],
@@ -940,7 +916,40 @@ const GATES = [
     tier: 'slow',
     cmd: ['pnpm', 'run', 'test:coverage'],
     approx: '数分钟',
-    desc: '全量测试 + 覆盖率（覆盖率棘轮：branches ≥ 85%）',
+    desc:
+      '全量测试 + 覆盖率（覆盖率棘轮：lines/statements 66.5、functions 72.2、branches 86.2）。' +
+      '本项之后必须紧跟 coverage:snapshot → check-coverage-snapshot：覆盖率结论只认本次现场产物',
+  },
+  {
+    name: 'coverage:snapshot',
+    tier: 'slow',
+    cmd: ['node', 'scripts/coverage-snapshot.mjs'],
+    approx: '~0.2s',
+    desc:
+      '★ 覆盖率现场快照（2026-11-14 判据口径变更）：把**刚生成的** coverage/coverage-final.json ' +
+      '的 sha256 与当时 HEAD 写入 coverage/snapshot.json。产物早于当前树、packages/ 有未提交改动、' +
+      '或未插桩集合偏离冻结清单时**拒绝写入** —— 不再把当前 HEAD 写进用陈旧产物算出的快照',
+  },
+  {
+    name: 'check-coverage-snapshot',
+    tier: 'slow',
+    cmd: ['node', 'scripts/check-coverage-snapshot.mjs'],
+    approx: '~0.3s',
+    desc:
+      '★ 覆盖率门禁（现场产物口径）：只读本次 test:coverage 生成的 coverage/coverage-final.json，' +
+      '要求其 sha256 与生成时 HEAD **同时**匹配快照，不一致即红并提示重跑 test:coverage；' +
+      '未插桩文件必须全部在冻结清单 scripts/coverage-uninstrumented.json 内，清单外任何一个即红。' +
+      '旧「97.5% 总额阈值 / 最多 11 个文件不插桩」口径已废止；fast 档不再出现任何覆盖率数字',
+  },
+  {
+    name: 'check-negative-controls:slow',
+    tier: 'slow',
+    cmd: ['node', 'scripts/check-negative-controls.mjs', '--slow'],
+    approx: '~3min',
+    desc:
+      '负控慢控制：循环依赖（src/dist）、lint/format 与 2s 以上的行为电池注入实验。' +
+      '★ 必须排在覆盖率三项之后 —— check-coverage-snapshot 的三向反证需要真实的现场产物；' +
+      '分层只改变运行频率，不降低「注入必红、恢复回绿」的判据',
   },
 ];
 

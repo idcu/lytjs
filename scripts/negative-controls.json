@@ -1,6 +1,7 @@
 {
-  "updatedAt": "2026-11-12",
+  "updatedAt": "2026-11-14",
   "verified": [
+    "check-dist-freshness",
     "check-lockfile",
     "check-build-order",
     "check-deps",
@@ -20,7 +21,6 @@
     "check-ui-styles",
     "check-ui-contracts",
     "check-ui-i18n",
-    "check-dist-freshness",
     "check-package-exports",
     "check-package-metadata",
     "check-consumer-demo",
@@ -55,16 +55,15 @@
     "check-reactivity-semantics",
     "check-security-html",
     "check-core-signal-contract",
-    "check-coverage-snapshot",
     "check-release-parity",
     "check-web-cssvars",
     "check-config-semantics",
     "check-router-semantics",
     "check-hydration",
     "check-vitest-alias-dist",
-    "check-bundle-size",
     "build",
     "build:fallback",
+    "check-bundle-size",
     "check-runtime-contract",
     "check-api-snapshot",
     "check-signal-profile-snapshot",
@@ -75,13 +74,18 @@
     "lint:check",
     "format:check",
     "test",
-    "test:coverage"
+    "test:coverage",
+    "check-coverage-snapshot"
   ],
   "unverified": [],
   "uninjectable": [
     {
       "name": "check-negative-controls:slow",
       "reason": "聚合运行器：本身不产生产物判据，判据由它逐项运行的慢控制覆盖"
+    },
+    {
+      "name": "coverage:snapshot",
+      "reason": "生成器：只写现场快照，本身不做判据；其正确性由 check-coverage-snapshot 的三向反证覆盖"
     }
   ]
 }

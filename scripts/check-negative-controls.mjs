@@ -36,7 +36,8 @@
  *   - `check-ui-i18n`         UI i18n：把一条英文文案改成空串 → 必红
  *   - `check-bundle-size`     体积预算：把基线压到实测之下 → 必红
  *   - `check-package-exports` 发布产物：把 main 指向不存在的文件 → 必红
- *   - `check-coverage-snapshot` 覆盖率快照：把 commit 改成不存在的 sha → 必红
+ *   - `check-coverage-snapshot` 覆盖率现场产物：三向反证（移走 coverage/、旧指纹冒充、
+ *     新增未插桩 src）→ 各自必红
  *   - `check-signal-profile-snapshot` 双 profile 快照：分别篡改 base / optimized 产物 → 各自必红
  *   - `check-component-status` 组件成熟度：把 experimental 的 Table 错标 stable → 必红
  *   - `check-cache`            缓存容量：关掉 LRU 淘汰循环 →「totalSize 不超过 maxSize」必红
@@ -107,6 +108,7 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  renameSync,
   rmSync,
   statSync,
   unlinkSync,
@@ -648,16 +650,77 @@ const CONTROLS = {
   },
 
   'check-coverage-snapshot': () => {
-    // 把快照里的 commit 改成不存在的 sha ⇒ 「commit 必须真实存在」必红
-    const file = join(ROOT, 'scripts/coverage-snapshot.json');
+    // 三向反证（2026-11-14 判据口径变更后）：
+    //   ① 移走 coverage/ ⇒ 「只读现场产物」必红；
+    //   ② 用旧指纹冒充当前提交 ⇒ 双指纹必红；
+    //   ③ 新增一个不被测试覆盖的 src 文件 ⇒ 冻结清单之外必有未插桩文件，必红。
+    const coverageDir = join(ROOT, 'coverage');
+    const finalJson = join(coverageDir, 'coverage-final.json');
+    const snapshotPath = join(coverageDir, 'snapshot.json');
+    if (!existsSync(finalJson) || !existsSync(snapshotPath)) {
+      throw new Error(
+        'check-coverage-snapshot：缺少现场覆盖率产物 —— 先跑 test:coverage 再跑 node scripts/coverage-snapshot.mjs',
+      );
+    }
+    // 基线必须先是绿的，否则「注入后红」可能只是复用了已有红灯（假通过）
+    const baseline = spawnSync('node', ['scripts/check-coverage-snapshot.mjs'], {
+      cwd: ROOT,
+      stdio: 'pipe',
+      env: ENV,
+      encoding: 'utf-8',
+    });
+    if (baseline.status !== 0) {
+      throw new Error('check-coverage-snapshot：注入前基线不是绿的，无法证明红灯由注入导致');
+    }
+
+    // ① 移走 coverage/（rename 保留全部产物，恢复是瞬时的）
+    const backup = `${coverageDir}.negctl-bak`;
+    rmSync(backup, { recursive: true, force: true });
+    renameSync(coverageDir, backup);
+    try {
+      expectFail(
+        ['node', 'scripts/check-coverage-snapshot.mjs'],
+        'check-coverage-snapshot:①移走coverage',
+      );
+    } finally {
+      renameSync(backup, coverageDir);
+    }
+
+    // ② 旧指纹冒充当前提交：commit 指向父提交、sha256 归零，各自必红
     withPatchedFile(
-      file,
+      snapshotPath,
       (text) => {
-        const pkg = JSON.parse(text);
-        pkg.commit = '0000000000000000000000000000000000000000';
-        return `${JSON.stringify(pkg, null, 2)}\n`;
+        const snap = JSON.parse(text);
+        snap.commit = '0000000000000000000000000000000000000000';
+        return `${JSON.stringify(snap, null, 2)}\n`;
       },
-      () => expectFail(['node', 'scripts/check-coverage-snapshot.mjs'], 'check-coverage-snapshot'),
+      () =>
+        expectFail(
+          ['node', 'scripts/check-coverage-snapshot.mjs'],
+          'check-coverage-snapshot:②commit指纹',
+        ),
+    );
+    withPatchedFile(
+      snapshotPath,
+      (text) => {
+        const snap = JSON.parse(text);
+        snap.coverageSha256 = '0'.repeat(64);
+        return `${JSON.stringify(snap, null, 2)}\n`;
+      },
+      () =>
+        expectFail(
+          ['node', 'scripts/check-coverage-snapshot.mjs'],
+          'check-coverage-snapshot:②产物指纹',
+        ),
+    );
+
+    // ③ 新增一个不被任何测试覆盖的 src 文件 ⇒ 清单之外的未插桩文件必红
+    const uncovered = join(ROOT, 'packages/vdom/src/__negctl-uncovered.ts');
+    withTempFile(uncovered, 'export const negctlUncovered = 1;\n', () =>
+      expectFail(
+        ['node', 'scripts/check-coverage-snapshot.mjs'],
+        'check-coverage-snapshot:③新增未覆盖src',
+      ),
     );
   },
 
@@ -1562,6 +1625,8 @@ const SLOW_CONTROLS = new Set([
   'check-hydration',
   'check-lifecycle-release',
   'check-signal-profile-snapshot',
+  // 三向反证需要真实的现场覆盖率产物 ⇒ 必须排在 test:coverage 之后（gate slow 顺序已同步）
+  'check-coverage-snapshot',
 ]);
 const HEAVY_CONTROLS = new Set(['build', 'build:fallback', 'type-check', 'test', 'test:coverage']);
 

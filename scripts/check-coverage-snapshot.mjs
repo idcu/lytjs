@@ -1,28 +1,25 @@
 #!/usr/bin/env node
 /**
- * 门禁：覆盖率快照的时效性与覆盖面（A11）
+ * 门禁：覆盖率现场产物 + 双指纹 + 逐文件冻结清单（A11，2026-11-14 判据口径变更）
  *
- * ## 为什么需要这一项
+ * ## 与旧版的关键差异
  *
- * 覆盖率是唯一一个「跑一次要两分钟」的指标，因此天然容易被搁置。
- * 2026-11-05 评估时，仓库里的覆盖率快照**无法追溯**：
- * `coverage/` 被 `.gitignore` 忽略，没人知道它对应哪个提交、覆盖了哪些文件，
- * 而「覆盖率 xx%」还被写进各种汇报。这类数字一旦失去因果，就会变成长期摆设。
+ * 旧版读**受版本控制**的 `scripts/coverage-snapshot.json`，从不打开 `coverage/`：
+ * 现场产物被删掉它照样绿，快照可以无限期陈旧；97.5% 的总额阈值等价于
+ * 「最多 11 个文件可以整体不插桩」而结论不变。
  *
- * 本门禁对**受版本控制**的快照 `scripts/coverage-snapshot.json` 断言四件事：
+ * 现在本门禁**只读本次 test:coverage 生成的现场产物**，断言：
  *
- * 1. 快照里的 commit 在仓库里真实存在（不是手写的假 sha）；
- * 2. 该提交距今不超过 7 天（否则「覆盖率」描述的是旧代码）；
- * 3. 快照列出的文件集合 == 当前仓库的全部 src 文件（新增文件必须补快照，
- *    否则分母被悄悄放大而结论不变）；
- * 4. 已插桩比例 ≥ 阈值（默认 97.5%）——「已插桩」= 出现在覆盖率的文件集合里，
- *    口径与评估报告的「437/448 文件」一致；**不是**「语句执行率」（那个是另一个指标）。
+ * 1. `coverage/coverage-final.json` 存在（否则红，提示重跑 test:coverage）；
+ * 2. 其 sha256 == `coverage/snapshot.json` 里的 coverageSha256；
+ * 3. 当前 `git rev-parse HEAD` == 快照里的 commit；
+ *    —— 2/3 任一不符即红：「覆盖率产物与当前提交不匹配，请重跑 test:coverage」；
+ * 4. 当前 src 文件集合中，所有**未被插桩**的文件必须全部出现在冻结清单
+ *    `scripts/coverage-uninstrumented.json` 里；清单之外任何一个即红；
+ * 5. 冻结清单里的每一条仍须处于「未插桩」状态（防清单腐烂）。
  *
- * ## 为什么不是「重新跑一遍覆盖率」
- *
- * 重跑要 100 秒以上，属于慢档。这里只校验快照的**元数据与覆盖面**，
- * 把「真实重跑」留给 `gate --tier slow` 的 `test:coverage`；
- * 两者配合才完整：慢档负责「数字是真的」，本门禁负责「数字不过期」。
+ * 不再有总额阈值，也不再校验快照年龄 —— commit 必须等于当前 HEAD，
+ * 年龄判定已由指纹判定取代。
  *
  * ## 用法
  *
@@ -32,58 +29,63 @@
  */
 
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const SNAPSHOT_PATH = join(ROOT, 'scripts', 'coverage-snapshot.json');
-const MAX_AGE_DAYS = 7;
+const COVERAGE_DIR = join(ROOT, 'coverage');
+const FINAL_JSON = join(COVERAGE_DIR, 'coverage-final.json');
+const SNAPSHOT_PATH = join(COVERAGE_DIR, 'snapshot.json');
+const MANIFEST_PATH = join(ROOT, 'scripts', 'coverage-uninstrumented.json');
 
 const fail = (msg) => {
   console.log(`  ❌ ${msg}`);
   return false;
 };
 
-console.log('\n🔍 覆盖率快照 check-coverage-snapshot\n');
+console.log('\n🔍 覆盖率门禁 check-coverage-snapshot（现场产物口径）\n');
 
-if (!existsSync(SNAPSHOT_PATH)) {
-  console.log(
-    fail('缺少 scripts/coverage-snapshot.json —— 运行 node scripts/coverage-snapshot.mjs'),
+if (!existsSync(FINAL_JSON)) {
+  fail(
+    '缺少 coverage/coverage-final.json —— 本门禁只读本次现场产物，请先运行 ' +
+      'pnpm run test:coverage -- --maxWorkers=2',
   );
   process.exit(1);
 }
+if (!existsSync(SNAPSHOT_PATH)) {
+  fail(
+    '缺少 coverage/snapshot.json —— 在 test:coverage 之后运行 node scripts/coverage-snapshot.mjs',
+  );
+  process.exit(1);
+}
+if (!existsSync(MANIFEST_PATH)) {
+  fail('缺少冻结清单 scripts/coverage-uninstrumented.json');
+  process.exit(1);
+}
 
+const coverageBytes = readFileSync(FINAL_JSON);
+const coverage = JSON.parse(coverageBytes.toString('utf8'));
 const snapshot = JSON.parse(readFileSync(SNAPSHOT_PATH, 'utf8'));
+const manifest = JSON.parse(readFileSync(MANIFEST_PATH, 'utf8'));
+const head = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim();
+
 let ok = true;
 
-// ── 1. commit 真实存在 ────────────────────────────────────────
-let commitDate = null;
-try {
-  execFileSync('git', ['cat-file', '-e', `${snapshot.commit}^{commit}`], { cwd: ROOT });
-  commitDate = new Date(
-    execFileSync('git', ['show', '-s', '--format=%cI', snapshot.commit], {
-      cwd: ROOT,
-      encoding: 'utf8',
-    }).trim(),
-  );
-  console.log(`  commit          ${snapshot.commit}（${commitDate.toISOString()}）`);
-} catch {
-  ok = fail(`快照里的 commit ${snapshot.commit} 在仓库中不存在（快照被手改过？）`);
+// ── 1. 双指纹 ────────────────────────────────────────────────
+const coverageSha256 = createHash('sha256').update(coverageBytes).digest('hex');
+console.log(`  产物 sha256     ${coverageSha256}`);
+console.log(`  快照 sha256     ${snapshot.coverageSha256 ?? '(缺失)'}`);
+console.log(`  当前 HEAD       ${head}`);
+console.log(`  快照 commit     ${snapshot.commit ?? '(缺失)'}`);
+
+const fingerprintMismatch = snapshot.coverageSha256 !== coverageSha256 || snapshot.commit !== head;
+if (fingerprintMismatch) {
+  ok = fail('覆盖率产物与当前提交不匹配，请重跑 test:coverage（并重新生成快照）');
 }
 
-// ── 2. 时效性 ────────────────────────────────────────────────
-if (commitDate) {
-  const ageDays = (Date.now() - commitDate.getTime()) / 86400000;
-  console.log(`  快照年龄        ${ageDays.toFixed(1)} 天（上限 ${MAX_AGE_DAYS} 天）`);
-  if (ageDays > MAX_AGE_DAYS) {
-    ok = fail(
-      `快照落后 ${ageDays.toFixed(1)} 天（> ${MAX_AGE_DAYS}）—— 重新跑 test:coverage 并生成快照`,
-    );
-  }
-}
-
-// ── 3. 文件集合一致 ──────────────────────────────────────────
+// ── 2. 逐文件口径 ────────────────────────────────────────────
 function collectSrcFiles(dir, acc = []) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const full = join(dir, entry.name);
@@ -106,42 +108,32 @@ function collectSrcFiles(dir, acc = []) {
   return acc;
 }
 
-const currentFiles = collectSrcFiles(join(ROOT, 'packages')).sort();
-const snapshotFiles = Object.keys(snapshot.files ?? {});
-const currentSet = new Set(currentFiles);
-const snapshotSet = new Set(snapshotFiles);
+const srcFiles = collectSrcFiles(join(ROOT, 'packages')).sort();
+const instrumented = new Set(Object.keys(coverage).map((p) => relative(ROOT, p)));
+const uninstrumented = srcFiles.filter((f) => !instrumented.has(f)).sort();
+const frozen = new Set((manifest.files ?? []).map((e) => e.file));
 
-const added = currentFiles.filter((f) => !snapshotSet.has(f));
-const removed = snapshotFiles.filter((f) => !currentSet.has(f));
+console.log(`  src 文件        ${srcFiles.length}`);
+console.log(`  已插桩          ${srcFiles.length - uninstrumented.length}`);
+console.log(`  未插桩          ${uninstrumented.length}（冻结清单 ${frozen.size}）`);
 
-console.log(`  src 文件        ${currentFiles.length}（快照 ${snapshotFiles.length}）`);
-if (added.length > 0) {
+const outside = uninstrumented.filter((f) => !frozen.has(f));
+if (outside.length > 0) {
   ok = fail(
-    `${added.length} 个 src 文件不在快照里（新增文件必须重新生成快照）：${added.slice(0, 5).join(', ')}${added.length > 5 ? ' …' : ''}`,
-  );
-}
-if (removed.length > 0) {
-  ok = fail(
-    `${removed.length} 个快照文件已从仓库删除：${removed.slice(0, 5).join(', ')}${removed.length > 5 ? ' …' : ''}`,
+    `${outside.length} 个未插桩文件不在冻结清单内（清单外不允许整体不插桩）：\n      ` +
+      outside.join('\n      '),
   );
 }
 
-// ── 4. 覆盖比例 ──────────────────────────────────────────────
-const covered = snapshotFiles.filter((f) => snapshot.files[f]).length;
-const ratio = snapshotFiles.length > 0 ? covered / snapshotFiles.length : 0;
-const threshold = typeof snapshot.threshold === 'number' ? snapshot.threshold : 0.975;
-console.log(
-  `  已插桩          ${covered}/${snapshotFiles.length}（${(ratio * 100).toFixed(2)}%，阈值 ${(threshold * 100).toFixed(1)}%）`,
-);
-if (ratio < threshold) {
+const staleEntries = [...frozen].filter((f) => !uninstrumented.includes(f));
+if (staleEntries.length > 0) {
   ok = fail(
-    `已插桩比例 ${(ratio * 100).toFixed(2)}% 低于阈值 ${(threshold * 100).toFixed(1)}% —— 覆盖率出现回退`,
+    `${staleEntries.length} 个冻结清单条目已不再是未插桩状态（请更新清单，避免腐烂）：\n      ` +
+      staleEntries.join('\n      '),
   );
 }
 
-// ── 5. 口径声明（N01 / ADR 0028）────────────────────────────
-// 防止「已插桩文件口径 87.9%」被当成「全仓覆盖率」对外引用。
-// 真相源在 scripts/coverage-basis.mjs，生成侧与校验侧共用同一份常量。
+// ── 3. 口径声明（N01 / ADR 0028）────────────────────────────
 const { COVERAGE_BASIS, VALID_AUTHORITATIVE } = await import('./coverage-basis.mjs');
 const declared = snapshot.basis;
 console.log(`  口径声明        ${declared?.authoritative ?? '(缺失)'}`);
@@ -149,13 +141,12 @@ if (!declared || !VALID_AUTHORITATIVE.includes(declared.authoritative)) {
   ok = fail(
     `快照缺少合法 basis.authoritative（应为 ${VALID_AUTHORITATIVE.join(' / ')}）—— 重新运行 node scripts/coverage-snapshot.mjs`,
   );
+} else if (
+  declared.authoritative !== COVERAGE_BASIS.authoritative ||
+  declared.rule !== COVERAGE_BASIS.rule
+) {
+  ok = fail('快照口径声明与 scripts/coverage-basis.mjs 真相源不一致（禁止手改快照）');
 } else {
-  if (
-    declared.authoritative !== COVERAGE_BASIS.authoritative ||
-    declared.rule !== COVERAGE_BASIS.rule
-  ) {
-    ok = fail('快照口径声明与 scripts/coverage-basis.mjs 真相源不一致（禁止手改快照）');
-  }
   console.log(`  对外口径        ${COVERAGE_BASIS.authoritativeLabel}`);
   console.log(`  辅助口径        ${COVERAGE_BASIS.auxiliaryLabel}`);
 }
