@@ -6,13 +6,25 @@
 
 ## 1. 版本号
 
-- 发布集 **76** 个包，`6.9.6 → 7.0.0`（major，由 `v7-core-hardening` 等 14 个 changeset 驱动）。
+- 发布集 **76** 个包（打包与发布对象），`6.9.6 → 7.0.0`（major，由 `v7-core-hardening` 等 14 个 changeset 驱动）。
 - `changeset version` 实际会改 **78** 个 `package.json` + **78** 份 `CHANGELOG.md`：
   76 个发布集包 + 2 个 `private` 工作区包（`lytjs-npm`、`@lytjs/playground`；changesets 默认
   `privatePackages.version: true`）。后两者只升版、不发布，打包与 publish 仍只覆盖 76。
 - 根 `package.json`、`docs`、`examples/*` 不在 `changeset status` 的 releases 中，不会升版。
 - 发布集派生唯一真源：`scripts/release-set.mjs`（workspace globs + changeset ignore + private）。
   当前口径：工作区 82 包 / 发布集 76 / 配套工程 6（全部 `private: true`）。
+
+### 1.1 三个数量口径（不要混用）
+
+| 对象                          | 数量              | 含义                                                                      |
+| ----------------------------- | ----------------- | ------------------------------------------------------------------------- |
+| 升版（`changeset version`）   | **78**            | 76 个发布集包 + 2 个 private 工作区包（`lytjs-npm`、`@lytjs/playground`） |
+| 打包 / 发布（pack / publish） | **76**            | 仅发布集；private 不 `pnpm pack`、不 `npm publish`                        |
+| tag                           | **1** 个 `v7.0.0` | 仅在 76 个发布包全部 publish 成功后创建；private 不打 tag                 |
+
+`privatePackages: { version: true, tag: false }` 的含义（`.changeset/config.json` 未显式写，取默认值）：
+private 包**会被改写版本号与 CHANGELOG**，但**不发布、不打 tag**。因此「升版 78 / 发布 76」不是矛盾，
+而是两个不同对象；核对 tarball 时只认 76。
 
 ## 2. changeset 消费方式
 
@@ -53,7 +65,7 @@ npm view @lytjs/core version          # 期望 7.0.0
 - git：工作树不干净（断点续跑时放宽）、`@{u}..HEAD` 非空、落后远端；
 - npm：`whoami` 失败；所有查询与发布都显式 `--registry https://registry.npmjs.org/`，
   不读本机 `.npmrc`（镜像是缓存，会把「7.0.0 未占用」查成假绿；也无需改全局配置）；
-- npm：76 个包中任一 `7.0.0` 已存在（整体中止并列出包名），或线上查询失败无法判定；
+- npm：76 个发布包中任一 `7.0.0` 已存在（整体中止并列出包名），或线上查询失败无法判定；
 - 2FA：账号为 `auth-and-writes` 但未提供 `--otp`。
 
 **owner 侧前置（脚本无法代办）**：
@@ -81,7 +93,7 @@ npm view @lytjs/core version          # 期望 7.0.0
 
 ## 4. 失败回滚方式
 
-**tag 只在 76 个包全部 publish 成功后创建**（脚本按步骤顺序执行，publish 未完成不会进 tag 步骤）。
+**tag 只在 76 个发布包全部 publish 成功后创建**（脚本按步骤顺序执行，publish 未完成不会进 tag 步骤）。
 因此「半发布」的残局**没有 tag 可删**，回滚手段也不是删 tag。
 
 | 阶段                       | 处理                                                                                                                                               |
@@ -127,7 +139,7 @@ cp .release-progress.json /tmp/lytjs-7.0.0-progress.json 2>/dev/null || true
 
 发布成功后按顺序做三步，本节是第 3 步：
 
-1. 核对 76 包 `dist-tags.latest` 全部为 `7.0.0`；
+1. 核对 **76 个发布包**的 `dist-tags.latest` 全部为 `7.0.0`（private 包不上 npm，不查）；
 2. 发布公告，口径纪律见本节末；
 3. **对 25 个遗留包逐个 `npm deprecate`**（本节）。
 
@@ -209,14 +221,14 @@ npm deprecate "@lytjs/<pkg>@*" "" --registry https://registry.npmjs.org/
 ### 5.5 发布公告口径（纪律）
 
 - **禁止**写：「整个 scope 升到 7.0.0」「`@lytjs/*` 全量升级」「98 个包同步发布」。
-- **正确**写法：本次发布 **76 个包**升到 `7.0.0`；scope 里另有 **25 个 2021 年遗留包**（latest `5.0.1`）只做 deprecate、不升版；`config` / `di` / `plugin` 为首次发布。（发布前 scope 98 个 = 73 个 `6.9.6` + 25 个 `5.0.1`；发布后 101 = 76 个 `7.0.0` + 25 个 `5.0.1`。）
+- **正确**写法：本次发布 **76 个发布包**升到 `7.0.0` 并上 npm；scope 里另有 **25 个 2021 年遗留包**（latest `5.0.1`）只做 deprecate、不升版；`config` / `di` / `plugin` 为首次发布。另有 2 个 private 工作区包同步升版、不上 npm，公告不必提。（发布前 scope 98 个 = 73 个 `6.9.6` + 25 个 `5.0.1`；发布后 101 = 76 个 `7.0.0` + 25 个 `5.0.1`。）
 - 迁移口径：升级用户起点是 `6.9.6`（迁移指南基线，见 §3）。
 
 ## 6. 3 个首次发布包名字确认（必须在 `changeset version` 之前定）
 
 `@lytjs/config`、`@lytjs/di`、`@lytjs/plugin` 在官方源均无任何版本（本地 `version: 6.9.6` 只是工作区占位），`7.0.0` 是它们的首次发布。包名一旦发布就不能收回，只能在事后 deprecate，因此必须在 `changeset version` 前确认。
 
-### 6.1 它们为什么在 76 发布集里
+### 6.1 它们为什么在 76 个发布包里
 
 不是 changesets 声明，也不是「本该 private」：
 
@@ -287,36 +299,36 @@ npm deprecate "@lytjs/<pkg>@*" "" --registry https://registry.npmjs.org/
 - **D 历史记录禁改**：CHANGELOG、ADR、NOW-history、本单快照、迁移指南基线；
 - **E 本就不该出现**：数据错误或过期清单，需订正。
 
-| 位置                                                                                   | 出现数             | 分类 | 处理                                                     |
-| -------------------------------------------------------------------------------------- | ------------------ | ---- | -------------------------------------------------------- |
-| `pnpm-lock.yaml`                                                                       | 173 行             | A    | `pnpm install` 后自动重写                                |
-| 76 个发布集 `package.json` 的 `version`                                                | 76                 | A    | `changeset version`                                      |
-| 根 `package.json:3`                                                                    | 1                  | B    | 非发布物；建议随发版改为 `7.0.0`，不阻断                 |
-| `examples/package.json:3`                                                              | 1                  | B    | 非发布工程（`@lytjs/examples`），可留                    |
-| `README.md`                                                                            | 4（85/87/477/484） | B    | 版本说明、release-parity 注释、`v6.9.6（最新版本）` 标题 |
-| `docs/getting-started/quick-reference.md:4`、`for-beginners.md:4`                      | 2                  | B    | 起步文档版本号                                           |
-| `docs/ecosystem/other/compat.md:8`                                                     | 1                  | B    | 6.9.6 缺陷说明，7.0.0 修复后复核措辞                     |
-| `docs/contribute/roadmap/current.md`                                                   | 6                  | B/D  | 3/27/41/48 该改；164/170 是迁出历史，可留                |
-| `docs/contribute/architecture/ecosystem-migration.md`                                  | 4（34/45/73/74）   | B    | 版本契约与依赖 range                                     |
-| `docs/SUMMARY.md:46`                                                                   | 1                  | D    | 「6.9.6 → 7.0.0」迁移描述，保留                          |
-| `docs/migration/v7.0.0.md`                                                             | 7                  | D    | 升级基线，保留                                           |
-| `docs/release/RELEASE-READINESS-7.0.0.md`                                              | 5                  | D    | 本单快照，保留                                           |
-| `.ai/QUICKSTART.md:13`、`.ai/PROJECT_CONTEXT.md:8`                                     | 2                  | B    | AI 上下文版本号                                          |
-| `PUBLISH-MANIFEST.md`                                                                  | 3（1/104/107）     | B/E  | 发布后更新为 7.0.0 清单，否则与 README 口径冲突          |
-| `keel/CONSTITUTION.md:15`                                                              | 1                  | B    | 「npm 线上 6.9.6」需改；注意 keel 字节上限               |
-| 包 README 依赖表（compiler 5、component 8、dom 2、renderer 11、compat 1）              | 27                 | B    | 依赖版本表统一升到 `^7.0.0`                              |
-| `packages/ecosystem/packages/ui/src/index.ts:344`                                      | 0（已消除）        | —    | 改为构建期注入，见本节末「已消除的手写版本号」           |
-| `packages/tools/packages/cli/src/commands/create.ts`                                   | 6（+1 注释）       | C    | 脚手架模板；发版后下一个 patch 前改为读 `package.json`   |
-| `packages/tools/packages/cli/src/commands/run.ts:25`                                   | 1                  | C    | `FALLBACK_VERSION`                                       |
-| `packages/tools/packages/cli/tests/*`                                                  | 4                  | C    | 模板断言随模板同步                                       |
-| `scripts/check-docs.mjs:9`                                                             | 1                  | B    | 文档版本门禁常量，与文档同批改                           |
-| `scripts/release-parity-expectation.json:2-3`、`release-state.json:2`                  | 3                  | B    | **发版后第 1 步更新**，否则 parity 门禁红                |
-| `scripts/check-release-parity.mjs:9-10`、`scripts/gate.mjs:759`                        | 3                  | B    | 注释 / 描述文本，低优先                                  |
-| `examples/{data-table,router-dashboard,using-lytjs-as-dep}/package.json`               | 10（`^6.9.6`）     | C    | 与 §8「fixture 硬编码」一致，故意保留                    |
-| `CHANGELOG.md`                                                                         | 229 处 / 77 文件   | D    | **禁改**（历史发布记录）                                 |
-| `keel/decisions/**`、`keel/NOW-history/**`                                             | 多处               | D    | **禁改**（历史决策与记录）                               |
-| `scripts/check-dead-packages.ts:48`、`scripts/codemod-v7.mjs:3`、`vitest.shared.ts:70` | 3                  | D    | 历史注释 / 迁移说明，保留                                |
-| `packages/ecosystem/packages/compat/src/index.ts:13`                                   | 1                  | D    | 历史说明注释                                             |
+| 位置                                                                                   | 出现数             | 分类 | 处理                                                         |
+| -------------------------------------------------------------------------------------- | ------------------ | ---- | ------------------------------------------------------------ |
+| `pnpm-lock.yaml`                                                                       | 173 行             | A    | `pnpm install` 后自动重写                                    |
+| `package.json` 的 `version`（changeset 升版对象）                                      | 78                 | A    | `changeset version`（76 发布集 + 2 private；private 不发布） |
+| 根 `package.json:3`                                                                    | 1                  | B    | 非发布物；建议随发版改为 `7.0.0`，不阻断                     |
+| `examples/package.json:3`                                                              | 1                  | B    | 非发布工程（`@lytjs/examples`），可留                        |
+| `README.md`                                                                            | 4（85/87/477/484） | B    | 版本说明、release-parity 注释、`v6.9.6（最新版本）` 标题     |
+| `docs/getting-started/quick-reference.md:4`、`for-beginners.md:4`                      | 2                  | B    | 起步文档版本号                                               |
+| `docs/ecosystem/other/compat.md:8`                                                     | 1                  | B    | 6.9.6 缺陷说明，7.0.0 修复后复核措辞                         |
+| `docs/contribute/roadmap/current.md`                                                   | 6                  | B/D  | 3/27/41/48 该改；164/170 是迁出历史，可留                    |
+| `docs/contribute/architecture/ecosystem-migration.md`                                  | 4（34/45/73/74）   | B    | 版本契约与依赖 range                                         |
+| `docs/SUMMARY.md:46`                                                                   | 1                  | D    | 「6.9.6 → 7.0.0」迁移描述，保留                              |
+| `docs/migration/v7.0.0.md`                                                             | 7                  | D    | 升级基线，保留                                               |
+| `docs/release/RELEASE-READINESS-7.0.0.md`                                              | 5                  | D    | 本单快照，保留                                               |
+| `.ai/QUICKSTART.md:13`、`.ai/PROJECT_CONTEXT.md:8`                                     | 2                  | B    | AI 上下文版本号                                              |
+| `PUBLISH-MANIFEST.md`                                                                  | 3（1/104/107）     | B/E  | 发布后更新为 7.0.0 清单，否则与 README 口径冲突              |
+| `keel/CONSTITUTION.md:15`                                                              | 1                  | B    | 「npm 线上 6.9.6」需改；注意 keel 字节上限                   |
+| 包 README 依赖表（compiler 5、component 8、dom 2、renderer 11、compat 1）              | 27                 | B    | 依赖版本表统一升到 `^7.0.0`                                  |
+| `packages/ecosystem/packages/ui/src/index.ts:344`                                      | 0（已消除）        | —    | 改为构建期注入，见本节末「已消除的手写版本号」               |
+| `packages/tools/packages/cli/src/commands/create.ts`                                   | 6（+1 注释）       | C    | 脚手架模板；发版后下一个 patch 前改为读 `package.json`       |
+| `packages/tools/packages/cli/src/commands/run.ts:25`                                   | 1                  | C    | `FALLBACK_VERSION`                                           |
+| `packages/tools/packages/cli/tests/*`                                                  | 4                  | C    | 模板断言随模板同步                                           |
+| `scripts/check-docs.mjs:9`                                                             | 1                  | B    | 文档版本门禁常量，与文档同批改                               |
+| `scripts/release-parity-expectation.json:2-3`、`release-state.json:2`                  | 3                  | B    | **发版后第 1 步更新**，否则 parity 门禁红                    |
+| `scripts/check-release-parity.mjs:9-10`、`scripts/gate.mjs:759`                        | 3                  | B    | 注释 / 描述文本，低优先                                      |
+| `examples/{data-table,router-dashboard,using-lytjs-as-dep}/package.json`               | 10（`^6.9.6`）     | C    | 与 §8「fixture 硬编码」一致，故意保留                        |
+| `CHANGELOG.md`                                                                         | 229 处 / 77 文件   | D    | **禁改**（历史发布记录）                                     |
+| `keel/decisions/**`、`keel/NOW-history/**`                                             | 多处               | D    | **禁改**（历史决策与记录）                                   |
+| `scripts/check-dead-packages.ts:48`、`scripts/codemod-v7.mjs:3`、`vitest.shared.ts:70` | 3                  | D    | 历史注释 / 迁移说明，保留                                    |
+| `packages/ecosystem/packages/compat/src/index.ts:13`                                   | 1                  | D    | 历史说明注释                                                 |
 
 ### 已消除的手写版本号（发布前必修，已完成）
 
@@ -361,12 +373,39 @@ npm deprecate "@lytjs/<pkg>@*" "" --registry https://registry.npmjs.org/
 - 未执行任何 `npm deprecate`（§5 只是命令清单与文案口径）。
 - 发布动作等 owner 明确放行。
 
-## 10. 发布关键路径的提交 scope
+## 10. 提交 scope：是域值约定，不是包名
 
-- 发布关键路径上的提交一律 `type(package):`，scope 必须能对上实际改动的包名，
-  例如 `fix(ui)`，不要用近似域 `fix(component)` 代替。
-- 已发生一次：`e42cc23d` 实际改 `packages/ecosystem/packages/ui`，scope 写成 `fix(component)`。
-  历史不改，作为反例保留。
-- 现状约束：[commitlint.config.js](file:///Volumes/Data/lytjs/lytjs/commitlint.config.js#L21-L39)
-  的 `scope-enum` 只允许 13 个域值，其中没有 `ui`；要让 `fix(ui)` 通过，需先把包名加入枚举
-  （或放宽为不限制 scope）。本轮只记录，未改配置。
+- 真源：[commitlint.config.js](file:///Volumes/Data/lytjs/lytjs/commitlint.config.js#L21-L39) 的
+  `scope-enum` 是 **13 个域值**：`common`、`reactivity`、`vdom`、`compiler`、`renderer`、
+  `component`、`core`、`shared-types`、`e2e`、`docs`、`ci`、`release`、`keel`。
+  这是**域**的白名单，不是 76 个包名的白名单。
+- 本文早前版本写过「scope 必须对上包名，`fix(component)` 算反例」——**该批评是错的，已撤回**。
+  实测：`e42cc23d`（`fix(component): 版本号改为构建期注入并新增运行时版本门禁`）
+  用 `commitlint --edit` 校验退出码 0；对照组 `fix(ui)` 被拒（`scope must be one of [...]`）。
+  即 lint 在 commit-msg 生效，该提交**合规**，不是漏检。历史提交不改，也不作为反例。
+- `ui` 不在域值内。按既有约定（[commitlint-rules.md](file:///Volumes/Data/lytjs/lytjs/keel/archive/pitfalls/process/commitlint-rules.md)）：
+  `ui` 相关提交**省略 scope**，写成 `fix: ...`。`fix(component)` 能过 lint，但 `component` 域指
+  `@lytjs/component`，不指 `@lytjs/ui`；今后 ui 变更一律省略 scope。
+- **不扩充 `scope-enum`**：不把 76 个包名塞进白名单。缺的是「域 → 包」映射，见下表。
+
+| 域值           | 涵盖的包 / 路径                                                                     |
+| -------------- | ----------------------------------------------------------------------------------- |
+| `common`       | `packages/common/packages/*`：`@lytjs/common` + 33 个 `@lytjs/common-*`（共 34 个） |
+| `reactivity`   | `@lytjs/reactivity`                                                                 |
+| `vdom`         | `@lytjs/vdom`                                                                       |
+| `compiler`     | `@lytjs/compiler`                                                                   |
+| `renderer`     | `@lytjs/renderer`（DOM / SSR / Vapor 渲染后端）                                     |
+| `component`    | `@lytjs/component`（组件实例、props、emits、slots、生命周期）；**不含 `@lytjs/ui`** |
+| `core`         | `@lytjs/core`、`@lytjs/core-vnode`、`@lytjs/core-signal`                            |
+| `shared-types` | `@lytjs/shared-types`、`@lytjs/host-contract`（渲染宿主契约的类型定义）             |
+| `e2e`          | `tests/e2e/**` 与跨包端到端用例                                                     |
+| `docs`         | `docs/**`（`docs/release/**` 除外）、根 `README.md`、`.ai/**`                       |
+| `ci`           | `.github/workflows/**` 及其它 CI 配置                                               |
+| `release`      | `.changeset/**`、`scripts/release*.mjs`、`docs/release/**`、`PUBLISH-MANIFEST.md`   |
+| `keel`         | `keel/**`                                                                           |
+
+其余 32 个包（`ui`、`store`、`bundler`、`devtools`、`devtools-extension`、`config`、`di`、`plugin`、
+`compat`、`cli`、`test-utils`、`router`、`router-fs`、`http-server`、`api`、`metadata`、`middleware`、
+`middleware-auth`、`middleware-cors`、`middleware-rate-limit`、`ssr`、`ssg`、`hmr`、`html-renderer`、
+`cache`、`cache-isr`、`platform-adapter`、`runtime-edge`、`adapter-web`、`dom`、`dom-runtime`、`web`）
+**没有对应域值，一律省略 scope**，不要硬套最接近的域值。
