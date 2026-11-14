@@ -111,7 +111,8 @@ function applyOptionsInject(instance: ComponentInternalInstance): void {
   if (!raw) return;
 
   const assign = (key: string, value: unknown): void => {
-    (instance.ctx as unknown as Record<string, unknown>)[key] = value;
+    // 走 Object.assign 触发公共实例代理的 set，不引入额外类型断言。
+    Object.assign(instance.ctx, { [key]: value });
     // 代理会缓存「某个 key 属于哪一层」的判定；注入值写入后必须失效，
     // 否则后续读取可能仍走 OTHER 分支得到 undefined。
     if (instance.accessCache) delete instance.accessCache[key];
@@ -191,7 +192,7 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
       );
     }
     handleError(err as Error, instance, 'finishComponentSetup (inject initialization)');
-    instance.render = () => null as unknown as VNode;
+    instance.render = (() => null) as RenderFunction;
     return;
   }
 
@@ -391,7 +392,7 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
       );
     }
     handleError(err as Error, instance, 'finishComponentSetup (provide initialization)');
-    instance.render = () => null as unknown as VNode;
+    instance.render = (() => null) as RenderFunction;
     return;
   }
 
