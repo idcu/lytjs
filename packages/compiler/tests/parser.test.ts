@@ -281,6 +281,26 @@ describe('parser', () => {
     });
   });
 
+  // C-14：ParserOptions.isCustomElement 此前已声明但从未被读取，
+  // 导致 web component（`<my-widget>`）一律被当作 COMPONENT。
+  describe('isCustomElement', () => {
+    it('命中的 kebab 标签应判为 ELEMENT', () => {
+      const ast = parse('<my-widget></my-widget>', {
+        isCustomElement: (tag) => tag === 'my-widget',
+      });
+      const element = ast.children[0] as ElementNode;
+      expect(element.tagType).toBe(ElementTypes.ELEMENT);
+    });
+
+    it('未命中的标签保持 COMPONENT', () => {
+      const ast = parse('<my-widget></my-widget>', {
+        isCustomElement: (tag) => tag === 'other-widget',
+      });
+      const element = ast.children[0] as ElementNode;
+      expect(element.tagType).toBe(ElementTypes.COMPONENT);
+    });
+  });
+
   describe('error recovery', () => {
     it('should handle unclosed tags gracefully', () => {
       const ast = parse('<div><span>hello');

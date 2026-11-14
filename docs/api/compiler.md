@@ -221,7 +221,11 @@ interface CompilerOptions extends ParserOptions, TransformOptions, CodegenOption
 
 ```ts
 interface ParserOptions {
-  /** 判断标签是否为自定义元素 */
+  /**
+   * 判断标签是否为自定义元素（web component）。
+   * 命中时，含 `-` 的标签按原生 `ELEMENT` 解析，而不是默认的 `COMPONENT`；
+   * 仅影响元素分类，不影响属性/子节点解析。
+   */
   isCustomElement?: (tag: string) => boolean;
   /** 判断标签是否为原生 HTML 标签 */
   isNativeTag?: (tag: string) => boolean;

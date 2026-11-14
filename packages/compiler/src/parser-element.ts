@@ -108,7 +108,10 @@ function parseTag(context: ParserContext, type: number): ElementNode | undefined
 
   let tagType: (typeof ElementTypes)[keyof typeof ElementTypes] = ElementTypes.ELEMENT;
   if (isComponentTag(tag)) {
-    tagType = ElementTypes.COMPONENT;
+    // C-14：`isCustomElement` 此前只声明未读取 ⇒ web component 一律被当成组件。
+    tagType = context.options.isCustomElement?.(tag)
+      ? ElementTypes.ELEMENT
+      : ElementTypes.COMPONENT;
   } else if (tag === 'template') {
     tagType = ElementTypes.TEMPLATE;
   } else if (tag === 'slot') {
