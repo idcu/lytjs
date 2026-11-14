@@ -654,4 +654,41 @@ describe('C-36 错误管线与超时', () => {
     expect(onError).toHaveBeenCalledTimes(1);
     expect(response.data).toBe('fallback');
   });
+
+  it('超时必须覆盖响应体读取（C-36b）', async () => {
+    // 修前：fetch 一 resolve 就 clearTimeout，body 读取阶段再无超时保护，
+    // 服务端发出响应头后卡住 body 会让请求永久挂起。
+    vi.useFakeTimers();
+    try {
+      let captured: AbortSignal | undefined;
+      mockFetch.mockImplementationOnce((_input: unknown, init?: RequestInit) => {
+        captured = init?.signal ?? undefined;
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          headers: new Headers(),
+          text: () =>
+            new Promise<string>((_resolve, reject) => {
+              captured!.addEventListener('abort', () => {
+                reject(new DOMException('The operation was aborted.', 'AbortError'));
+              });
+            }),
+        } as unknown as Response);
+      });
+
+      const client = new HttpClient({ timeout: 20 });
+      const pending = client.get('/api/slow-body');
+      // 先挂上拒绝断言，避免超时 abort 时产生“未处理的拒绝”噪音
+      const rejection = expect(pending).rejects.toThrow();
+      // 先冲掉微任务，让 fetch 与 body 读取都进入等待态
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.advanceTimersByTimeAsync(30);
+
+      expect(captured?.aborted).toBe(true);
+      await rejection;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

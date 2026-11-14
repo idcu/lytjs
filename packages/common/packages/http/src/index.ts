@@ -168,19 +168,26 @@ export class HttpClient {
         }
       }
 
-      const response = await this._fetch(config);
-      let httpResponse = await this._parseResponse<T>(response, config.responseType);
+      // C-36b：超时/外部 signal 的作用域必须覆盖「响应体读取」，不能只包住 fetch ——
+      // fetch resolve 只代表响应头到达，body 读取仍可能无限挂起。
+      const abortScope = this._createAbortScope(config.signal, config.timeout);
+      try {
+        const response = await this._fetch(config, abortScope.signal);
+        let httpResponse = await this._parseResponse<T>(response, config.responseType);
 
-      // Apply response interceptors
-      for (const interceptor of this._interceptors) {
-        if (interceptor.response) {
-          httpResponse = (await interceptor.response(
-            httpResponse as HttpResponse<unknown>,
-          )) as HttpResponse<T>;
+        // Apply response interceptors
+        for (const interceptor of this._interceptors) {
+          if (interceptor.response) {
+            httpResponse = (await interceptor.response(
+              httpResponse as HttpResponse<unknown>,
+            )) as HttpResponse<T>;
+          }
         }
-      }
 
-      return httpResponse;
+        return httpResponse;
+      } finally {
+        abortScope.dispose();
+      }
     } catch (err) {
       // Apply error interceptors
       for (const interceptor of this._interceptors) {
@@ -258,62 +265,69 @@ export class HttpClient {
     return resolved;
   }
 
-  private async _fetch(config: InternalRequestConfig): Promise<Response> {
-    const { method, url, headers, body, signal, withCredentials, timeout } = config;
-
-    // Handle timeout via AbortController
-    let timeoutId: ReturnType<typeof setTimeout> | undefined;
-    let timeoutController: AbortController | undefined;
-
-    if (timeout && timeout > 0) {
-      timeoutController = new AbortController();
-      timeoutId = setTimeout(() => timeoutController!.abort(), timeout);
-
-      // Link with existing signal
-      if (signal) {
-        if (signal.aborted) {
-          clearTimeout(timeoutId);
-          throw new HttpError('Request was aborted', undefined);
-        }
-        signal.addEventListener(
-          'abort',
-          () => {
-            clearTimeout(timeoutId);
-            timeoutController!.abort();
-          },
-          { once: true },
-        );
-      }
+  /**
+   * 建立本次请求的 abort 作用域：超时控制器 + 外部 signal 链接。
+   *
+   * 返回的 `dispose` 必须在**响应体读取完成后**调用（C-36b），
+   * 否则超时只覆盖到响应头到达。
+   */
+  private _createAbortScope(
+    signal: AbortSignal | undefined,
+    timeout: number | undefined,
+  ): { signal: AbortSignal | undefined; dispose: () => void } {
+    if (!timeout || timeout <= 0) {
+      return { signal, dispose: () => {} };
     }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+    if (signal) {
+      if (signal.aborted) {
+        clearTimeout(timeoutId);
+        throw new HttpError('Request was aborted', undefined);
+      }
+      signal.addEventListener(
+        'abort',
+        () => {
+          clearTimeout(timeoutId);
+          controller.abort();
+        },
+        { once: true },
+      );
+    }
+
+    return { signal: controller.signal, dispose: () => clearTimeout(timeoutId) };
+  }
+
+  private async _fetch(
+    config: InternalRequestConfig,
+    signal: AbortSignal | undefined,
+  ): Promise<Response> {
+    const { method, url, headers, body, withCredentials } = config;
 
     const fetchOptions: RequestInit = {
       method,
       headers,
       body,
       credentials: withCredentials ? 'include' : undefined,
-      signal: timeoutController ? timeoutController.signal : signal,
+      signal,
     };
 
-    try {
-      const response = await fetch(url, fetchOptions);
+    const response = await fetch(url, fetchOptions);
 
-      if (!response.ok) {
-        const errorResponse: HttpResponse<unknown> = {
-          data: null,
-          status: response.status,
-          statusText: response.statusText,
-          headers: this._parseHeaders(response.headers),
-          ok: false,
-        };
-        throw new HttpError(`HTTP ${response.status}: ${response.statusText}`, errorResponse);
-      }
-
-      return response;
-    } finally {
-      if (timeoutId !== undefined) {
-        clearTimeout(timeoutId);
-      }
+    if (!response.ok) {
+      const errorResponse: HttpResponse<unknown> = {
+        data: null,
+        status: response.status,
+        statusText: response.statusText,
+        headers: this._parseHeaders(response.headers),
+        ok: false,
+      };
+      throw new HttpError(`HTTP ${response.status}: ${response.statusText}`, errorResponse);
     }
+
+    return response;
   }
 
   private async _parseResponse<T>(
