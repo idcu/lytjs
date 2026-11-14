@@ -175,20 +175,6 @@ function globalApiPattern(pattern: RegExp): RegExp {
 }
 
 /**
- * 判断一个标识符是否**可 import 的模块**（而不是 `window` / `document` 这类全局对象名）
- *
- * ★ 2026-10-20：修复全局检测后会有一批「全局对象名」进入 `clientImports` / `serverImports`，
- *   而生成器原来无条件写 `import '${id}';` ⇒ 会产出 `import 'document';` 这种**非法代码**。
- */
-function isImportableModule(id: string): boolean {
-  if (id.startsWith('.') || id.startsWith('/') || id.startsWith('@') || id.startsWith('node:')) {
-    return true;
-  }
-  // 裸标识符里只有 Node 内置模块（fs / path / …）才是可 import 的
-  return SERVER_ONLY_PATTERNS.some((p) => p.test(id));
-}
-
-/**
  * 从 `{` 所在下标提取**配平**的花括号内容（能处理嵌套对象）
  *
  * ★ 2026-10-20 修复：组件扫描原先用 `defineComponent\s*\(\s*\{([^}]+)\}` —— `[^}]+` 在**第一个** `}`
@@ -437,59 +423,153 @@ export function splitClientServer(source: string, options: SplitOptions = {}): S
 
 /**
  * 生成服务端代码
+ *
+ * C-34（2026-11-15）：此前 serverCode / clientCode 都把**整份源码**内联一遍，
+ * 于是客户端产物里带着服务端函数（以及 `import fs from 'fs'`），服务端产物里带着
+ * 浏览器代码 —— 「切分」名存实亡，且 `export function read` 与随后的 `export { read }`
+ * 构成重复导出（非法 ESM）。现在按分析结果**真正裁剪**：
+ * 服务端删掉客户端专用函数与客户端专用 import，反之亦然；共享部分两边各留一份。
+ * 保留的函数定义去掉行首 `export `，统一在文件末尾 `export { … }`，避免重复导出。
  */
 function generateServerCode(
-  _source: string,
-  _analysis: BoundaryAnalysis,
+  source: string,
+  analysis: BoundaryAnalysis,
   _options: SplitOptions,
 ): string {
-  const lines: string[] = [];
-
-  lines.push("'use server';");
-  lines.push('');
-
-  for (const imp of _analysis.serverImports) {
-    // ★ 2026-10-20：只对**可 import 的模块**生成 import（全局对象名不是模块）
-    if (isImportableModule(imp)) lines.push(`import '${imp}';`);
-  }
-
-  for (const fn of _analysis.serverFunctions) {
-    lines.push(`export { ${fn} };`);
-  }
-
-  lines.push('');
-  lines.push('// Server-side code');
-  lines.push(_source);
-
-  return lines.join('\n');
+  return generateSideCode(source, 'server', analysis.clientFunctions, isClientOnlyImport);
 }
 
 /**
  * 生成客户端代码
  */
 function generateClientCode(
-  _source: string,
-  _analysis: BoundaryAnalysis,
+  source: string,
+  analysis: BoundaryAnalysis,
   _options: SplitOptions,
 ): string {
+  return generateSideCode(source, 'client', analysis.serverFunctions, isServerOnlyImport);
+}
+
+/** 顶层函数定义在源码里的位置（用于按边界裁剪） */
+interface FunctionChunk {
+  name: string;
+  /** 行首（含缩进）下标 */
+  start: number;
+  /** 结尾 `}` 之后的下标 */
+  end: number;
+  exported: boolean;
+}
+
+/**
+ * 收集**顶层**函数定义的区间。
+ *
+ * 说明：`matchAll` 按出现顺序返回，嵌套函数的下标必然落在已接受的外层区间内，
+ * 用 `cursor` 跳过即可，避免父子区间互相裁剪把产物改坏。
+ */
+function collectFunctionChunks(source: string): FunctionChunk[] {
+  const re = /(^|\n)([ \t]*)(export\s+)?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/g;
+  const chunks: FunctionChunk[] = [];
+  let cursor = -1;
+
+  for (const m of source.matchAll(re)) {
+    const start = m.index! + m[1]!.length;
+    if (start < cursor) continue;
+
+    // 跳过参数列表，找到函数体的 `{`
+    let i = m.index! + m[0].length;
+    let paren = 1;
+    while (i < source.length && paren > 0) {
+      if (source[i] === '(') paren++;
+      else if (source[i] === ')') paren--;
+      i++;
+    }
+    while (i < source.length && source[i] !== '{') i++;
+    if (i >= source.length) continue;
+
+    // 配平花括号，得到函数体结束位置
+    let depth = 0;
+    for (; i < source.length; i++) {
+      if (source[i] === '{') depth++;
+      else if (source[i] === '}') {
+        depth--;
+        if (depth === 0) {
+          i++;
+          break;
+        }
+      }
+    }
+
+    chunks.push({ name: m[4]!, start, end: i, exported: Boolean(m[3]) });
+    cursor = i;
+  }
+
+  return chunks;
+}
+
+/** 单行 `import … from '…'` / `import '…'`（多行 import 保守地留在两侧） */
+const RE_IMPORT_STMT = /^[ \t]*import\b[^\n]*?from\s*['"]([^'"]+)['"][^\n]*$/gm;
+const RE_IMPORT_BARE_STMT = /^[ \t]*import\s*['"]([^'"]+)['"][^\n]*$/gm;
+
+/**
+ * 按一侧的视角裁剪源码。
+ *
+ * @param dropFunctions 该侧**不应包含**的函数名（来自边界分析）
+ * @param dropImport 该侧**不应包含**的 import 路径判定
+ */
+function generateSideCode(
+  source: string,
+  side: 'server' | 'client',
+  dropFunctions: string[],
+  dropImport: (importPath: string) => boolean,
+): string {
+  const dropFns = new Set(dropFunctions);
+  const edits: { start: number; end: number; text: string }[] = [];
+  const reExported: string[] = [];
+
+  for (const chunk of collectFunctionChunks(source)) {
+    if (dropFns.has(chunk.name)) {
+      edits.push({ start: chunk.start, end: chunk.end, text: '' });
+      continue;
+    }
+    if (chunk.exported) {
+      // 定义处去掉 `export `，末尾统一导出一次
+      const text = source.slice(chunk.start, chunk.end).replace(/^(\s*)export\s+/, '$1');
+      edits.push({ start: chunk.start, end: chunk.end, text });
+      reExported.push(chunk.name);
+    }
+  }
+
+  for (const re of [RE_IMPORT_STMT, RE_IMPORT_BARE_STMT]) {
+    for (const m of source.matchAll(re)) {
+      if (dropImport(m[1]!)) {
+        edits.push({ start: m.index!, end: m.index! + m[0].length, text: '' });
+      }
+    }
+  }
+
+  // 从后往前替换，避免下标位移
+  edits.sort((a, b) => b.start - a.start);
+  let body = source;
+  for (const e of edits) {
+    body = body.slice(0, e.start) + e.text + body.slice(e.end);
+  }
+
   const lines: string[] = [];
-
-  lines.push("'use client';");
+  lines.push(side === 'server' ? "'use server';" : "'use client';");
   lines.push('');
-
-  for (const imp of _analysis.clientImports) {
-    // ★ 2026-10-20：`window` / `document` / `fetch` 是浏览器全局，**不是模块** ⇒
-    //   生成 `import 'document';` 是非法代码。只对真模块生成 import。
-    if (isImportableModule(imp)) lines.push(`import '${imp}';`);
+  const trimmed = body.replace(/\n{3,}/g, '\n\n').trim();
+  if (trimmed) {
+    lines.push(trimmed);
+    lines.push('');
+  }
+  if (reExported.length > 0) {
+    lines.push(`export { ${reExported.join(', ')} };`);
+    lines.push('');
   }
 
-  for (const fn of _analysis.clientFunctions) {
-    lines.push(`export { ${fn} };`);
-  }
-
+  // 兼容旧产物头注释（下游脚本按它识别分块）
+  lines.push(side === 'server' ? '// Server-side code' : '// Client-side code');
   lines.push('');
-  lines.push('// Client-side code');
-  lines.push(_source);
 
   return lines.join('\n');
 }

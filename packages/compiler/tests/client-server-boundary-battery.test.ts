@@ -193,7 +193,9 @@ describe('splitClientServer', () => {
 
     // ★ 关键：`document` 是浏览器全局，不是模块 ⇒ 生成 `import 'document';` 是**非法代码**
     expect(r.clientCode).not.toContain("import 'document'");
-    expect(r.serverCode).toContain("import 'fs'");
+    // C-34：服务端 import 原样保留（含绑定名），客户端侧必须剔除
+    expect(r.serverCode).toContain("import fs from 'fs'");
+    expect(r.clientCode).not.toContain("from 'fs'");
   });
 
   it('generateTypes: false ⇒ 不产出类型定义', () => {
