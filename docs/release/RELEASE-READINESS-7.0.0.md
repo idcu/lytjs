@@ -7,8 +7,10 @@
 ## 1. 版本号
 
 - 发布集 **76** 个包，`6.9.6 → 7.0.0`（major，由 `v7-core-hardening` 等 14 个 changeset 驱动）。
-- 根 `package.json` 与 `docs` / `playground` / `benchmarks/.../lytjs-npm` / `examples/*`
-  均不在 changesets 发布集，不参与升版。
+- `changeset version` 实际会改 **78** 个 `package.json` + **78** 份 `CHANGELOG.md`：
+  76 个发布集包 + 2 个 `private` 工作区包（`lytjs-npm`、`@lytjs/playground`；changesets 默认
+  `privatePackages.version: true`）。后两者只升版、不发布，打包与 publish 仍只覆盖 76。
+- 根 `package.json`、`docs`、`examples/*` 不在 `changeset status` 的 releases 中，不会升版。
 - 发布集派生唯一真源：`scripts/release-set.mjs`（workspace globs + changeset ignore + private）。
   当前口径：工作区 82 包 / 发布集 76 / 配套工程 6（全部 `private: true`）。
 
@@ -84,13 +86,42 @@ npm view @lytjs/core version          # 期望 7.0.0
 
 | 阶段                       | 处理                                                                                                                                               |
 | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| version 落盘后、publish 前 | `git checkout -- .` 丢弃本地改动即可（未提交、未发布）；若已建 tag，`git tag -d v7.0.0`                                                            |
+| version 落盘后、publish 前 | 选路径 B（见 4.1）：留档后 `git checkout -- .`，删除 `.release-progress.json`，再重来；未发布、未建 tag                                            |
 | publish 部分成功（无 tag） | 保留 `.release-progress.json`，修好后 `--execute` 续跑；integrity 一致的包自动跳过，不一致则中止                                                   |
 | 全部发布成功但随后发现缺陷 | **回滚 = 发 7.0.1**，不是删 tag。删 tag 不改变 npm 上已发布的 76 个包                                                                              |
 | 必须撤某个包               | `npm unpublish <pkg>@7.0.0` 仅限发布后 **72 小时内**；有 dependents 的包无法撤；同一版本号撤下后 **24 小时内不能重新发布**；默认不发撤包，走 patch |
 
 「回滚」在 npm 语义下不等于撤销：已安装 7.0.0 的用户不会因为删 tag 或撤包而回退。
 发布公告与故障说明里必须写明「修复版本号」，不要让读者以为有原子回滚。
+
+### 4.1 `changeset version` 之后任一步失败：保留现场，不自动回滚
+
+`changeset version` 会改写 **78** 个 `package.json` 与 **78** 份 `CHANGELOG.md`
+（76 个发布集包 + `lytjs-npm`、`@lytjs/playground` 两个 private 工作区包）。
+之后 build / fast / slow / pack / integrity 任一步失败时，工作树已是脏的、版本已改写。
+
+- **不自动回滚**：自动 `git checkout` 会连失败证据（失败的 dist、被改写的清单）一起抹掉。
+  先留档，再决定走哪条路径。
+- 留档（不改树）：
+
+```bash
+git status --porcelain > /tmp/lytjs-7.0.0-failure-status.txt
+git diff --stat > /tmp/lytjs-7.0.0-failure-diffstat.txt
+cp .release-progress.json /tmp/lytjs-7.0.0-progress.json 2>/dev/null || true
+```
+
+**两条路径，不能混用：**
+
+| 路径         | 何时用                                                             | 操作                                                                                                                              |
+| ------------ | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| A 断点续跑   | 已发生 publish（哪怕只成功 1 个包），修复失败步骤后继续            | 保留脏树与 `.release-progress.json`；重跑 `node scripts/release.mjs --execute --otp ...`；integrity 一致的包自动跳过              |
+| B 恢复后重来 | 尚未 publish（失败在 build / fast / slow / pack / integrity 比对） | 留档后 `git checkout -- .`；`git status --porcelain` 应为空；**必须删除 `.release-progress.json`**，否则旧断点会与 6.9.6 的树混用 |
+
+- **不要在半脏树上直接 `--execute`**：树脏且没有有效断点状态时，preflight 会拒绝；
+  若手工恢复后仍留着旧 `.release-progress.json`，断点续跑分支会放宽「工作树干净」检查，
+  必须避免这种组合。
+- `git checkout -- .` 只恢复已跟踪文件；`changeset version` 删除的 changeset 文件会一并恢复。
+  执行前确认没有未提交的手工改动。
 
 ## 5. 发布后第 3 步：弃用 25 个 5.0.1 遗留包（不 unpublish）
 
@@ -119,6 +150,8 @@ deprecate 失败**不影响已发布的 76 个包**：它只是给旧版本加�
 - 统一结构：`5.0.1 为 2021 年遗留版本，已停止维护；<替代包/迁移说明>。迁移指南：<URL>`
 - URL 固定用：`https://gitee.com/lytjs/lytjs/blob/v7.0.0/docs/migration/v7.0.0.md`
 - 25 个包中**有 3 个能确定替代者**；其余 22 个一律标 `[需 owner 定文案]`，不要自拟。
+- 若发版时 owner 仍未给文案：**只执行 3 条有明确替代者的**，22 条保持未标记。
+  不要用含糊措辞补位 —— 发一条指错名字的 deprecate 比不发更糟，用户会以为新包就是那个名字。
 - `@lytjs/plugins` 的文案必须点名：**「`@lytjs/plugins` 已废弃，替代为 `@lytjs/plugin`（插件系统核心）」**（owner 拍板：`@lytjs/plugin` 是 canon，不改名）。
 
 ### 5.3 完整命令清单
@@ -327,3 +360,13 @@ npm deprecate "@lytjs/<pkg>@*" "" --registry https://registry.npmjs.org/
 - 未执行 `npm publish`。
 - 未执行任何 `npm deprecate`（§5 只是命令清单与文案口径）。
 - 发布动作等 owner 明确放行。
+
+## 10. 发布关键路径的提交 scope
+
+- 发布关键路径上的提交一律 `type(package):`，scope 必须能对上实际改动的包名，
+  例如 `fix(ui)`，不要用近似域 `fix(component)` 代替。
+- 已发生一次：`e42cc23d` 实际改 `packages/ecosystem/packages/ui`，scope 写成 `fix(component)`。
+  历史不改，作为反例保留。
+- 现状约束：[commitlint.config.js](file:///Volumes/Data/lytjs/lytjs/commitlint.config.js#L21-L39)
+  的 `scope-enum` 只允许 13 个域值，其中没有 `ui`；要让 `fix(ui)` 通过，需先把包名加入枚举
+  （或放宽为不限制 scope）。本轮只记录，未改配置。
