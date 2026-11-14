@@ -29,6 +29,8 @@ export interface ScriptSetupResult {
   setupBody: string;
   /** 需要在 setup 里 return 的绑定名 */
   bindings: string[];
+  /** C-32：顶层 `let`/`var` 绑定（会被 return，但不是响应式的） */
+  mutableBindings: string[];
   /** `props: <propsDecl>`，无则 undefined */
   propsDecl?: string;
   /** `emits: <emitsDecl>`，无则 undefined */
@@ -185,6 +187,15 @@ function findDefineCall(body: string, head: RegExp): DefineCall | undefined {
  * 而 `b` 并不在 setup 作用域里 ⇒ 运行期 ReferenceError。
  */
 const RE_DECL_ASSIGN = /(?:^|\n)(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=/g;
+/**
+ * C-32：无初始化器的顶层声明（`let msg;` / `let msg`）。
+ *
+ * 旧实现只认 `NAME = …`，`let msg;` 完全不进 bindings ⇒ 模板里的 `_ctx.msg`
+ * 恒为 undefined（静默空白），即便后面 `msg = 'hi'` 赋了值也不会渲染。
+ */
+const RE_DECL_BARE = /(?:^|\n)(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?:;|$)/g;
+/** C-32：顶层 `let` / `var` 名字 —— 用于编译期提示「可变绑定不是响应式的」。 */
+const RE_DECL_MUTABLE = /(?:^|\n)(?:let|var)\s+([A-Za-z_$][\w$]*)/g;
 const RE_DECL_DESTRUCT = /(?:^|\n)(?:const|let|var)\s*[{[][\s\S]*?[}\]]\s*=/g;
 const RE_DECL_FN = /(?:^|\n)(?:async\s+)?function\s+([A-Za-z_$][\w$]*)/g;
 const RE_DECL_CLASS = /(?:^|\n)class\s+([A-Za-z_$][\w$]*)/g;
@@ -338,11 +349,16 @@ export function compileScriptSetup(content: string): ScriptSetupResult {
 
   // 5) 收集绑定名
   const bindings = new Set<string>();
+  // C-32：顶层 `let` / `var` 名字。它们会被 return（初值可渲染），
+  // 但不是响应式的 —— setup 内的赋值不会触发重渲染，编译期需要显式提示。
+  const mutableBindings = new Set<string>();
   // import 已提升到模块作用域，但模板只认 setup 的返回值，需要一并 return。
   for (const statement of imports) {
     for (const name of importedBindings(statement)) bindings.add(name);
   }
   for (const m of body.matchAll(RE_DECL_ASSIGN)) bindings.add(m[1]!);
+  for (const m of body.matchAll(RE_DECL_BARE)) bindings.add(m[1]!);
+  for (const m of body.matchAll(RE_DECL_MUTABLE)) mutableBindings.add(m[1]!);
   for (const m of body.matchAll(RE_DECL_FN)) bindings.add(m[1]!);
   for (const m of body.matchAll(RE_DECL_CLASS)) bindings.add(m[1]!);
   for (const m of body.matchAll(RE_DECL_DESTRUCT)) {
@@ -360,6 +376,7 @@ export function compileScriptSetup(content: string): ScriptSetupResult {
     imports,
     setupBody: body,
     bindings: [...bindings],
+    mutableBindings: [...mutableBindings],
     propsDecl,
     emitsDecl,
     usesExpose,

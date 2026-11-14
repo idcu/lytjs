@@ -217,6 +217,23 @@ function generateModuleCode(opts: ModuleCodeOptions): string {
     throw new Error(`[lytjs/sfc] ${opts.filename} 的 <script setup> 无法编译：\n${msg}`);
   }
 
+  // C-32：顶层 `let`/`var` 会被 return，但**不是响应式的** —— 模板读到的只是 setup
+  // 返回时的快照，setup 内再赋值不会触发重渲染。此处不能静默：否则用户会把它当成
+  // 渲染缺陷去查。仅当该绑定真的出现在模板里时才告警，避免误伤纯局部变量。
+  if (setupInfo) {
+    const usedInTemplate = setupInfo.mutableBindings.filter((name) => {
+      const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return new RegExp(`\\b_ctx\\.${escaped}\\b`).test(opts.renderFnCode);
+    });
+    if (usedInTemplate.length > 0) {
+      console.warn(
+        `[lytjs/sfc] ${opts.filename}：模板引用了顶层可变量 ${usedInTemplate.join('、')}（let/var）。` +
+          `它不是响应式的，setup 内对它的赋值不会触发重新渲染；` +
+          `请改用 ref()/reactive()（模板会自动解包 .value）。`,
+      );
+    }
+  }
+
   if (setupInfo) {
     for (const imp of setupInfo.imports) {
       lines.push(imp);
