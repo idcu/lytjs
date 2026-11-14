@@ -152,7 +152,12 @@ const docFiles = [
  * 而「复制粘贴即触发」的那一小块是**真正值得用红门禁守住的**。
  */
 const ENFORCED_PREFIXES = ['docs/guide/', 'docs/examples/'];
-const ARCHIVED_PREFIXES = ['docs/legacy-archive/'];
+const ARCHIVED_PREFIXES = [
+  'docs/legacy-archive/',
+  // 6.x 发布公告是历史快照：示例反映当时的 API（如 shared-types 的泛型 EventEmitter）。
+  // 当前口径以 docs/migration/v7.0.0.md 与 CHANGELOG 为准，不回改历史公告。
+  'docs/community/RELEASE_v6',
+];
 
 /**
  * 已知欠账白名单（**棘轮**：允许已登记的缺失，**禁止新增**）。
@@ -282,7 +287,7 @@ console.log('文档 import 门禁 —— 接触面（README / guide / examples�
 console.log('='.repeat(72));
 console.log(
   `扫描文档：${docFiles.length} 个 md，抽出 ${found.length} 处具名 import` +
-    `（其中 ${archivedImports} 处位于 legacy-archive，已按历史归档跳过）`,
+    `（其中 ${archivedImports} 处位于归档范围：legacy-archive / 6.x 发布公告，已跳过）`,
 );
 
 if (ghostPkgs.length > 0) {
