@@ -1,6 +1,10 @@
 import { defineConfig } from 'tsup';
-import { copyFileSync } from 'fs';
+import { copyFileSync, readFileSync } from 'fs';
 import { resolve } from 'path';
+
+const pkg = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8')) as {
+  version: string;
+};
 
 export default defineConfig({
   entry: ['src/index.ts'],
@@ -13,6 +17,8 @@ export default defineConfig({
   minify: false,
   define: {
     __DEV__: 'false',
+    // 版本号只在构建期注入：手写常量会在发版后漂移，运行时读 package.json 又会进产物
+    __UI_VERSION__: JSON.stringify(pkg.version),
   },
   outExtension({ format }) {
     return {

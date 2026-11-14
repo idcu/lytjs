@@ -58,6 +58,7 @@
     "check-core-signal-contract",
     "check-release-parity",
     "check-release-workflow",
+    "check-runtime-version",
     "check-web-cssvars",
     "check-config-semantics",
     "check-router-semantics",

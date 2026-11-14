@@ -22,7 +22,7 @@ keywords: [S35, P0 止血, 体积裁决, 负控, 覆盖率快照, signal 收编,
 
 - **S35 收口**：P0 8 笔已 push；取证见 [ui-contracts-na-audit](checks/ui-contracts-na-audit.md)。
 - first-screen-runtime 基线 37648/38400（[0029](decisions/0029-bundle-first-screen-runtime-baseline.md)）。
-- `checks/rules.md` 与 `gate.mjs` 对齐 82 条（60 fast / 22 slow）。
+- `checks/rules.md` 与 `gate.mjs`：83 条（61 fast / 22 slow）。
 
 ## P0 账
 

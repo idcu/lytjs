@@ -8,13 +8,13 @@ keywords: [校验, 规则, 扩展检查, CI, 门禁]
 # 扩展检查（项目自定）
 
 > Keel 内核只做通用检查（`keel-lint.sh`）。本文件与 `scripts/gate.mjs` 的
-> `GATES` **逐条对齐**（2026-11-14：82 条 = 60 fast + 22 slow）。
+> `GATES` **逐条对齐**（2026-11-14：83 条 = 61 fast + 22 slow）。
 > 门禁名、命令、描述、耗时以 `scripts/gate.mjs` 为单一真源，本文件只做清单核对。
 > 单条执行：`node scripts/gate.mjs <name>`；整档：`--tier fast` / `--tier slow`。
 
-## 已登记的扩展检查（82）
+## 已登记的扩展检查（83）
 
-**fast（60）**
+**fast（61）**
 
 check-lockfile、check-build-order、check-deps、check-render-parity、check-list-diff、
 check-public-names、check-stale-capability-claims、check-signal-authority、
@@ -29,7 +29,7 @@ check-negative-controls、check-compiler-parity、check-hmr、check-scaffold、
 check-api-routes、check-transition-engine、check-event-semantics、check-controlled-props、
 check-dialog-a11y、check-dev-warnings、check-plugin-semantics、check-store-semantics、
 check-reactivity-semantics、check-security-html、check-core-signal-contract、
-check-release-parity、check-web-cssvars、check-config-semantics、
+check-release-parity、check-runtime-version、check-web-cssvars、check-config-semantics、
 check-router-semantics、check-hydration、check-vitest-alias-dist
 
 **slow（22）**

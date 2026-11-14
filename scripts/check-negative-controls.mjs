@@ -361,6 +361,20 @@ const CONTROLS = {
     );
   },
 
+  'check-runtime-version': () => {
+    // 只改 package.json.version、不重建 dist ⇒ 产物里的注入值仍是旧版本，必须报红
+    const file = join(ROOT, 'packages/ecosystem/packages/ui/package.json');
+    withPatchedFile(
+      file,
+      (text) => {
+        const pkg = JSON.parse(text);
+        pkg.version = '0.0.0-negctl';
+        return `${JSON.stringify(pkg, null, 2)}\n`;
+      },
+      () => expectFail(['node', 'scripts/check-runtime-version.mjs'], 'check-runtime-version'),
+    );
+  },
+
   'check-script-refs': () => {
     // S20：新增一个随机命名的零引用脚本 ⇒ 「每个脚本都有引用方」判据必须报红
     const file = join(ROOT, 'scripts', `__negctl-zero-ref-${Date.now().toString(36)}.mjs`);

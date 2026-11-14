@@ -7,6 +7,9 @@
 // 导入样式
 import './styles/index.css';
 
+// 构建期由 tsup define 注入（见 tsup.config.ts），值来自 package.json.version
+declare const __UI_VERSION__: string;
+
 // ── 组件成熟度（**单一真相源**）─────────────────────────────────────────
 // 2026-11-05 / D2：Golden 20 冻结，其余导出如实标注 experimental（保留导出）。
 // `tests/component-status.test.ts` 与 `scripts/check-component-status.mjs` 守卫。
@@ -341,7 +344,7 @@ import { RichTextEditor } from './components/RichTextEditor';
  */
 const LytUI = definePlugin({
   name: 'lytjs-ui',
-  version: '6.9.6',
+  version: __UI_VERSION__,
   description: 'LytJS 官方 UI 组件库 - 56 个组件（VNode 模式）',
   install: (app) => {
     app.component('LytButton', Button);
