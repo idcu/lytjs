@@ -11,8 +11,8 @@ keywords: [S35, P0 止血, 体积裁决, 负控, 覆盖率快照, signal 收编,
 ## 本轮（2026-11-14）
 
 - 覆盖率门禁：现场产物 + sha256/HEAD 双指纹 + 逐文件冻结清单；fast 不再声称覆盖率。
-- signal 收编第 2 步：`processConditional` 校验/分支链/深度/末支兜底下沉 shared，
-  两版只保留拼写；以 HEAD 新鲜产物为基线 230 份逐字零差异，100 模板对拍绿。
+- signal 收编：第 2 步 `processConditional`、第 3 步 `processElement` 已下沉 shared，
+  两版只保留拼写；每步以 230 份逐字快照 + 100 模板对拍为验收。
 - 快照基线：已按 `fa7beaa4`（C-35g）/`d839b156`（C-35f）逐笔归因刷新；
   刷新后负控改拼写一处 ⇒ 22 处红，还原回绿（`488bf995`）。
 - 待办：慢档 needsDist 门禁未受 `check-dist-freshness` 保护，盘点后另议。

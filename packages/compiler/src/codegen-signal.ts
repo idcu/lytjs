@@ -6,7 +6,6 @@ import {
   BASE_EMIT_PROFILE,
   genVarName,
   getExpContent,
-  isDirectTextElement,
   isStaticPropValue,
   componentRef as componentRefShared,
   componentRefExpr,
@@ -25,9 +24,7 @@ import {
   buildConditionalAnchorOp,
   buildFragmentMountCreate,
   buildFragmentMountUpdate,
-  getStaticAttr,
   getStaticClass,
-  createSimpleExpressionFor,
   getTestExpr,
   validateComponentName,
   buildComponentSlotsObjectShared,
@@ -45,12 +42,13 @@ import {
   planConditional,
   finishConditionalPlan,
   emitConditionalBranches,
+  planElement,
   type DirectiveDialect,
   type ConditionalDialect,
   type ConditionalEmitDialect,
   type ConditionalBranchEmission,
+  type ElementModifierDialect,
 } from './codegen-signal-shared';
-import { getMemoMeta } from './transforms/v-memo';
 import { getVShowStyleTest } from './transforms/helpers';
 import { prefixIdentifiers } from './prefix-identifiers';
 import { FRAGMENT_SENTINEL } from './transforms/transform-element';
@@ -504,6 +502,12 @@ function containsSlotOutlet(children: unknown): boolean {
   return false;
 }
 
+/** 基础版渲染修饰符拼写：无 `_hoisted_` 旧形态兼容，上下文前缀由 `prefixIdentifiers` 决定。 */
+const BASE_ELEMENT_MODIFIER_DIALECT: ElementModifierDialect = {
+  detectHoistedOnce: false,
+  formatMemoDeps: (deps) => prefixIdentifiers(deps, new Set()),
+};
+
 function processElement(
   node: ElementNode,
   varCounter: Map<string, number>,
@@ -515,51 +519,54 @@ function processElement(
   staticVars?: Map<ElementNode, string>,
   inheritedMemo?: string,
 ): void {
-  // v-once：沿元素树向下传递（整个子树都只渲染一次）
-  const onceMode = inheritedOnce || node.__isOnce === true;
-
-  // v-memo（B01b 移植）：transformVMemo 已把指令从 props 摘掉，只留元数据。
-  // 有自己 v-memo 的元素把「本元素 + 后代」的绑定统一包进依赖守卫；
-  // 仅继承祖先 memo 的后代**不再重复包**（否则守卫会嵌套，父依赖变化时
-  // 反复新建内层 effect）。v-once 优先级更高（与优化版一致）。
-  const memoMeta = getMemoMeta(node);
-  const memoDeps =
-    memoMeta && memoMeta.deps ? prefixIdentifiers(memoMeta.deps, new Set()) : inheritedMemo;
-  const memoMode = !onceMode && !!memoMeta?.deps;
-  // 记录本次调用前的长度，末尾统一把"新增绑定"去掉 effect 包裹
-  const bindingStart = dynamicBindings.length;
+  const plan = planElement(node, inheritedOnce, inheritedMemo, {
+    modifierDialect: BASE_ELEMENT_MODIFIER_DIALECT,
+    stopAnchorAtFirstElement: true,
+    resolveVar: (_target, kind) => {
+      // 组件 / Teleport 宿主共用 `lyt-comp` 占位（`lyt-comp` 不能进标识符 ⇒ `lytComp`）
+      if (kind === 'vnode' || kind === 'component') {
+        const entry = findExistingVar(elementVars, 'lyt-comp', consumedCount);
+        if (entry) return entry;
+        const name = genVarName('lytComp', varCounter);
+        elementVars.push({ varName: name, tag: 'lyt-comp' });
+        return name;
+      }
+      if (kind === 'slot') {
+        return (
+          findExistingVar(elementVars, 'slot', consumedCount) ?? genVarName('slotEl', varCounter)
+        );
+      }
+      const entry = findExistingVar(elementVars, node.tag, consumedCount);
+      if (entry) return entry;
+      const name = genVarName(node.tag, varCounter);
+      elementVars.push({ varName: name, tag: node.tag });
+      return name;
+    },
+    lookupAnchorVar: (el) => staticVars?.get(el),
+  });
 
   // `<Teleport>` / `<Suspense>`：产出对应 **vnode** 交给 vdom 的 patch（与优化版一致）
-  if (node.tag === 'Teleport' || node.tag === 'Suspense') {
-    const vpTag = node.tag;
-    const vpEntry = findExistingVar(elementVars, 'lyt-comp', consumedCount);
-    const vpHost = vpEntry ?? genVarName('lytComp', varCounter);
-    if (!vpEntry) elementVars.push({ varName: vpHost, tag: 'lyt-comp' });
-
+  if (plan.kind === 'vnode') {
     const vpChildren = collectSlotVNodes(node.children, BASE_EMIT_PROFILE.ctxPrefix);
     dynamicBindings.push({
-      varName: vpHost,
-      code: `mountVNode(createVNode(${vpTag},${buildComponentPropsObject(node, locals)},[${vpChildren.join(',')}]),${vpHost});`,
+      varName: plan.hostVar,
+      code: `mountVNode(createVNode(${plan.vnodeTag},${buildComponentPropsObject(node, locals)},[${vpChildren.join(',')}]),${plan.hostVar});`,
     });
     return;
   }
 
   // 组件：生成 mountComponent(_ctx.Tag, props, 占位元素)
-  if (node.tagType === ElementTypes.COMPONENT) {
-    const hostEntry = findExistingVar(elementVars, 'lyt-comp', consumedCount);
-    const hostVar = hostEntry ?? genVarName('lytComp', varCounter);
-    if (!hostEntry) elementVars.push({ varName: hostVar, tag: 'lyt-comp' });
-
+  if (plan.kind === 'component') {
     // 子内容 → 默认插槽。signal 产物本身是 DOM 操作，但 slot 契约要求返回 vnode
     // （normalizeSlotValue 会校验 `__v_isVNode`），故这里生成 vnode 构造代码。
     const slotsObj = buildComponentSlotsObject(node, BASE_EMIT_PROFILE.ctxPrefix);
     const slotsArg = slotsObj ? `,${slotsObj}` : '';
 
     dynamicBindings.push({
-      varName: hostVar,
+      varName: plan.hostVar,
       code: `mountComponent(${
         BUILTIN_COMPONENT_NAMES.has(node.tag) ? node.tag : componentRef(node.tag)
-      },${buildComponentPropsObject(node, locals)},${hostVar}${slotsArg});`,
+      },${buildComponentPropsObject(node, locals)},${plan.hostVar}${slotsArg});`,
     });
     return;
   }
@@ -567,139 +574,72 @@ function processElement(
   // `<slot/>` 出口：由运行期 `mountSlotOutlet` 把传入的插槽内容**就地**挂载进该元素。
   // 与 `mountSlot`（挂进容器、保留 `<slot>` 包装）不同：出口元素会被替换成注释锚点，
   // 插槽内容直接落在模板原位置（mx06 实测：字面量 `<slot>` 元素残留）。
-  if (node.tag === 'slot') {
-    const slotName = getStaticAttr(node, 'name') ?? 'default';
-    const slotVar =
-      findExistingVar(elementVars, 'slot', consumedCount) ?? genVarName('slotEl', varCounter);
+  if (plan.kind === 'slot') {
     dynamicBindings.push({
-      varName: slotVar,
-      code: `mountSlotOutlet(${BASE_EMIT_PROFILE.ctxParam}.$slots&&${BASE_EMIT_PROFILE.ctxParam}.$slots[${JSON.stringify(slotName)}],${slotVar});`,
+      varName: plan.hostVar,
+      code: `mountSlotOutlet(${BASE_EMIT_PROFILE.ctxParam}.$slots&&${BASE_EMIT_PROFILE.ctxParam}.$slots[${JSON.stringify(plan.slotName)}],${plan.hostVar});`,
     });
     return;
   }
 
-  // 查找已由 buildStaticHTML 分配的变量名
-  // 使用 elementVars 中已有的条目来获取变量名，而不是重新生成
-  const existingEntry = findExistingVar(elementVars, node.tag, consumedCount);
-  const varName = existingEntry ?? genVarName(node.tag, varCounter);
+  const bindingStart = dynamicBindings.length;
+  const { hostVar, tag, modifiers } = plan;
 
-  if (!existingEntry) {
-    elementVars.push({ varName, tag: node.tag });
-  }
-
-  // 处理 props（指令）- 直接从 ElementNode.props 中查找
-  for (let i = 0; i < node.props.length; i++) {
-    const prop = node.props[i];
-    if (!prop) continue;
-    if (prop.type === NodeTypes.DIRECTIVE) {
-      const dir = prop as DirectiveNode;
-      // v-text 和 v-html 在解析器中不解析 exp（解析器只对特定指令名解析 = 后面的值）
-      // 解析器会将 ="value" 解析为独立的 AttributeNode { name: '="value"', value: undefined }
-      // 所以需要从后续属性中提取值
-      if ((dir.name === 'text' || dir.name === 'html') && !dir.exp) {
-        for (let j = i + 1; j < node.props.length; j++) {
-          const nextProp = node.props[j]!;
-          if (nextProp.type === NodeTypes.ATTRIBUTE) {
-            // 匹配 ="value" 格式的属性名
-            const eqMatch = nextProp.name.match(/^="(.*)"$/);
-            if (eqMatch) {
-              dir.exp = createSimpleExpressionFor(eqMatch[1]!, dir.loc);
-              break;
-            }
-          }
-        }
-      }
-      processDirective(dir, varName, node.tag, dynamicBindings, locals, getStaticClass(node));
-    }
-  }
-
-  // 处理 codegenNode 中的属性（transform 阶段将 v-text/v-html 转换为 textContent/innerHTML 属性）
-  if (node.codegenNode && node.codegenNode.type === NodeTypes.VNODE_CALL) {
-    const vnode = node.codegenNode as VNodeCall;
-    processVNodeCallProps(vnode, varName, dynamicBindings, locals);
-  }
-
-  // 处理子节点中的动态内容
   // 插值：**每个插值写入各自的文本槽位**（由 claimTextSlots 从注释标记换来），
   // 而不是写整个元素 —— 后者会让同元素内的多个插值互相覆盖（只剩最后一个）。
   // 例外：元素只有这一个插值时，可直接 setText(元素, exp)（B01b「去注释」）。
-  const directText = isDirectTextElement(node);
   let slotsVar: string | undefined;
-  let slotIndex = 0;
-  for (let i = 0; i < node.children.length; i++) {
-    const child = node.children[i]!;
-    if (child.type === NodeTypes.INTERPOLATION) {
-      const exp = getExpContent((child as InterpolationNode).content as SimpleExpressionNode);
-      // ⚠️ 2026-09-30 修复：此前这里用「只允许简单属性路径」的白名单正则，复杂插值
-      //   （`{{ a + b }}` / `{{ ok ? 'A' : 'B' }}`）只打一条 DEV 警告后 **`continue` 静默丢弃**
-      //   ⇒ 产物里整段文本消失（与优化版曾有的缺陷同源）。现与优化版同构：
-      //   黑名单校验（拒绝危险写法）+ `prefixIdentifiers`（下方 setText 已如此）。
-      if (!exp) {
-        continue;
-      }
-      validateExpression(exp, 'interpolation');
-      if (directText) {
+  for (const op of plan.ops) {
+    if (op.kind === 'directive') {
+      processDirective(op.dir, hostVar, op.tag, dynamicBindings, locals, getStaticClass(node));
+    } else if (op.kind === 'vnodeProps') {
+      processVNodeCallProps(op.vnode, hostVar, dynamicBindings, locals);
+    } else if (op.kind === 'interpolation') {
+      // 黑名单校验（拒绝危险写法）+ `prefixIdentifiers`（下方 setText 已如此）。
+      validateExpression(op.exp, 'interpolation');
+      if (op.directText) {
         dynamicBindings.push({
-          varName,
-          code: `effect(() => setText(${varName}, ${prefixIdentifiers(exp, locals)}));`,
+          varName: hostVar,
+          code: `effect(() => setText(${hostVar}, ${prefixIdentifiers(op.exp, locals)}));`,
         });
-        continue;
-      }
-      if (!slotsVar) {
-        slotsVar = genVarName(`${node.tag}Slots`, varCounter);
+      } else {
+        if (!slotsVar) {
+          slotsVar = genVarName(`${tag}Slots`, varCounter);
+          dynamicBindings.push({
+            varName: hostVar,
+            code: `const ${slotsVar} = claimTextSlots(${hostVar});`,
+          });
+        }
         dynamicBindings.push({
-          varName,
-          code: `const ${slotsVar} = claimTextSlots(${varName});`,
+          varName: hostVar,
+          code: `effect(() => setText(${slotsVar}[${op.slotIndex}], ${prefixIdentifiers(op.exp, locals)}));`,
         });
       }
-      dynamicBindings.push({
-        varName,
-        code: `effect(() => setText(${slotsVar}[${slotIndex}], ${prefixIdentifiers(exp, locals)}));`,
-      });
-      slotIndex++;
-    } else if (child.type === NodeTypes.ELEMENT) {
+    } else if (op.kind === 'childElement') {
       processElement(
-        child as ElementNode,
+        op.child,
         varCounter,
         elementVars,
         dynamicBindings,
         consumedCount,
-        onceMode,
+        modifiers.once,
         locals,
         staticVars,
-        memoDeps,
+        modifiers.memo,
       );
-    } else if (child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
-      // 插入锚点：分支元素必须落在「原位置」，而不是父容器末尾。
-      // 用其后第一个静态兄弟元素作为 `insert(..., ref)` 的参考节点；
-      // 若后面没有静态元素（或全是动态节点）则退回追加（ref=undefined）。
-      let anchorVar: string | undefined;
-      for (let j = i + 1; j < node.children.length; j++) {
-        const sibling = node.children[j]!;
-        if (sibling.type === NodeTypes.ELEMENT) {
-          anchorVar = staticVars?.get(sibling as ElementNode);
-          break;
-        }
-      }
+    } else if (op.kind === 'conditional') {
       processConditional(
-        child as JSConditionalExpression,
+        op.child,
         varCounter,
         elementVars,
         dynamicBindings,
-        varName,
+        hostVar,
         consumedCount,
         locals,
-        anchorVar,
+        op.anchorVar,
       );
-    } else if (child.type === NodeTypes.JS_CALL_EXPRESSION) {
-      processCallExpression(
-        child as JSCallExpression,
-        varCounter,
-        elementVars,
-        dynamicBindings,
-        varName,
-        locals,
-      );
+    } else {
+      processCallExpression(op.child, varCounter, elementVars, dynamicBindings, hostVar, locals);
     }
   }
 
@@ -707,7 +647,7 @@ function processElement(
   // 守卫本身必须是 effect（需要每次依赖变化都重跑比较），内部的逐绑定 effect 去掉
   // —— 否则内层 effect 仍会独立触发，memo 形同虚设。
   // v-once 优先级更高：本元素是 v-once 时走下面的「去掉 effect 包裹」分支。
-  if (memoMode && memoDeps) {
+  if (!modifiers.once && modifiers.ownMemo && modifiers.memo) {
     const inner = dynamicBindings.slice(bindingStart);
     if (inner.length > 0) {
       const depth = varCounter.get('_memo_depth') ?? 0;
@@ -718,10 +658,10 @@ function processElement(
       dynamicBindings.length = bindingStart;
       dynamicBindings.push({
         varName: inner[0]!.varName,
-        code: `let ${memoVar}=null;effect(()=>{const _d=${memoDeps};if(!${memoVar}||${memoVar}.some((v,i)=>v!==_d[i])){${memoVar}=_d;${body}}});`,
+        code: `let ${memoVar}=null;effect(()=>{const _d=${modifiers.memo};if(!${memoVar}||${memoVar}.some((v,i)=>v!==_d[i])){${memoVar}=_d;${body}}});`,
       });
     }
-  } else if (onceMode) {
+  } else if (modifiers.once) {
     // v-once：把本次产生的绑定去掉 `effect()` 包裹 —— 只渲染一次，不建响应式边界。
     // 幂等：内层递归已处理过的绑定再处理一次也无副作用。
     for (let i = bindingStart; i < dynamicBindings.length; i++) {

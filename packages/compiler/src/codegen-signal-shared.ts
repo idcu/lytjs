@@ -11,6 +11,7 @@
 
 import { NodeTypes, ElementTypes } from './constants';
 import { FRAGMENT_SENTINEL, buildComponentVModelProps } from './transforms/transform-element';
+import { getMemoMeta } from './transforms/helpers';
 import type {
   ElementNode,
   TextNode,
@@ -1874,4 +1875,239 @@ export function processVNodeCallPropsShared(
     }
     // modelValue / onUpdate: / 其它 on*：已在 processDirective 处理，跳过
   }
+}
+
+// ============================================================
+// 元素处理语义（signal 两版共用）
+// ============================================================
+
+/** 元素分派类别：`Teleport`/`Suspense` 走 vnode、组件、`<slot/>` 出口、普通元素。 */
+export type ElementKind = 'vnode' | 'component' | 'slot' | 'element';
+
+/** v-once / v-memo 的语义计划。 */
+export interface ElementModifierPlan {
+  /** 本元素（含祖先继承）是否 v-once */
+  once: boolean;
+  /** 本元素**自己**是否声明了 v-memo（决定是否包裹整段继承绑定） */
+  ownMemo: boolean;
+  /** 生效的 v-memo 依赖（含祖先继承；已按方言前缀化） */
+  memo?: string;
+}
+
+/** 渲染修饰符的方言差异（仅拼写，不含判据）。 */
+export interface ElementModifierDialect {
+  /** 是否兼容「codegenNode 被换成 `_hoisted_N`」的旧 v-once 形态（优化版） */
+  detectHoistedOnce: boolean;
+  /** v-memo 依赖表达式 → 本发射器的上下文前缀形态 */
+  formatMemoDeps(deps: string): string;
+}
+
+/** 元素类别判定（两版共用）。 */
+export function classifyElement(node: ElementNode): ElementKind {
+  if (node.tag === 'Teleport' || node.tag === 'Suspense') return 'vnode';
+  if (node.tagType === ElementTypes.COMPONENT) return 'component';
+  if (node.tag === 'slot') return 'slot';
+  return 'element';
+}
+
+/**
+ * 计算 v-once / v-memo 的语义计划（两版共用）。
+ *
+ * v-once 优先级高于 v-memo：本元素 once 时，后代继承的 memo 不再生效。
+ */
+export function planElementModifiers(
+  node: ElementNode,
+  inheritedOnce: boolean,
+  inheritedMemo: string | undefined,
+  dialect: ElementModifierDialect,
+): ElementModifierPlan {
+  let once = inheritedOnce || node.__isOnce === true;
+
+  // 旧形态兼容：transformOnce 曾把 codegenNode 换成 `_hoisted_N` 引用。
+  if (!once && dialect.detectHoistedOnce) {
+    const maybeCodegen = node.codegenNode;
+    if (maybeCodegen && maybeCodegen.type === NodeTypes.SIMPLE_EXPRESSION) {
+      const content = maybeCodegen.content;
+      if (typeof content === 'string' && content.startsWith('_hoisted_')) {
+        once = true;
+      }
+    }
+  }
+
+  const memoMeta = getMemoMeta(node);
+  const ownMemo = !!memoMeta?.deps;
+  return {
+    once,
+    ownMemo,
+    memo: ownMemo ? dialect.formatMemoDeps(memoMeta!.deps!) : inheritedMemo,
+  };
+}
+
+/**
+ * 回填 `v-text` / `v-html` 被解析器拆开的表达式。
+ *
+ * 解析器只对特定指令名解析 `=` 后面的值，于是 `v-text="x"` 会得到一个空的
+ * `DIRECTIVE` 与一个名为 `="x"` 的独立 `ATTRIBUTE`。两版历史上各抄了一份。
+ */
+export function backfillTextDirectiveExp(node: ElementNode, index: number): void {
+  const prop = node.props[index];
+  if (!prop || prop.type !== NodeTypes.DIRECTIVE) return;
+  const dir = prop as DirectiveNode;
+  if ((dir.name !== 'text' && dir.name !== 'html') || dir.exp) return;
+  for (let j = index + 1; j < node.props.length; j++) {
+    const nextProp = node.props[j];
+    if (nextProp?.type !== NodeTypes.ATTRIBUTE) continue;
+    const eqMatch = nextProp.name.match(/^="(.*)"$/);
+    if (eqMatch) {
+      dir.exp = createSimpleExpressionFor(eqMatch[1]!, dir.loc);
+      break;
+    }
+  }
+}
+
+/**
+ * 找 v-if 的插入锚点：其后第一个可用的静态兄弟元素。
+ *
+ * `stopAtFirstElement`：基础版历史上遇到第一个**元素**兄弟就停（即使它没有
+ * 静态变量名，此时退回追加）；优化版会继续向后找第一个已登记的元素。
+ */
+export function findConditionalAnchor(
+  children: TemplateChildNode[],
+  from: number,
+  lookup: (el: ElementNode) => string | undefined,
+  stopAtFirstElement: boolean,
+): string | undefined {
+  for (let j = from; j < children.length; j++) {
+    const sibling = children[j];
+    if (sibling?.type !== NodeTypes.ELEMENT) continue;
+    const found = lookup(sibling as ElementNode);
+    if (found) return found;
+    if (stopAtFirstElement) return undefined;
+  }
+  return undefined;
+}
+
+/** 元素处理计划中的一步（顺序即语义顺序）。 */
+export type ElementOp =
+  | { kind: 'directive'; dir: DirectiveNode; hostVar: string; tag: string }
+  | { kind: 'vnodeProps'; vnode: VNodeCall; hostVar: string }
+  | {
+      kind: 'interpolation';
+      exp: string;
+      hostVar: string;
+      directText: boolean;
+      slotIndex: number;
+    }
+  | { kind: 'childElement'; child: ElementNode }
+  | { kind: 'conditional'; child: JSConditionalExpression; anchorVar?: string }
+  | { kind: 'call'; child: JSCallExpression };
+
+interface ElementPlanBase {
+  modifiers: ElementModifierPlan;
+}
+
+/** 元素处理计划；早期返回的三类不带 `ops`。 */
+export type ElementPlan =
+  | (ElementPlanBase & { kind: 'vnode'; vnodeTag: string; hostVar: string })
+  | (ElementPlanBase & { kind: 'component'; hostVar: string })
+  | (ElementPlanBase & { kind: 'slot'; slotName: string; hostVar: string })
+  | (ElementPlanBase & {
+      kind: 'element';
+      hostVar: string;
+      tag: string;
+      directText: boolean;
+      ops: ElementOp[];
+    });
+
+/** `planElement` 需要调用方提供的方言钩子（变量分配 / 锚点查找）。 */
+export interface ElementPlanHooks {
+  modifierDialect: ElementModifierDialect;
+  /** 分配（或复用）元素变量名；`kind` 决定查哪类 tag（`lyt-comp` / `slot` / 标签名） */
+  resolveVar(node: ElementNode, kind: ElementKind): string;
+  /** v-if 锚点：元素 → 静态变量名（未登记返回 undefined） */
+  lookupAnchorVar(el: ElementNode): string | undefined;
+  /** 基础版语义：遇到第一个元素兄弟即停止锚点查找 */
+  stopAnchorAtFirstElement: boolean;
+}
+
+/**
+ * 计算元素处理的语义计划（signal 两版共用）。
+ *
+ * 校验/分派/回填/锚点/子节点顺序只在这里决定一次；产物拼写
+ * （变量名、短别名、换行缩进、私有绑定桶）由各自发射器按 `ElementOp` 落地。
+ */
+export function planElement(
+  node: ElementNode,
+  inheritedOnce: boolean,
+  inheritedMemo: string | undefined,
+  hooks: ElementPlanHooks,
+): ElementPlan {
+  const modifiers = planElementModifiers(node, inheritedOnce, inheritedMemo, hooks.modifierDialect);
+  const kind = classifyElement(node);
+
+  if (kind === 'vnode') {
+    return { kind, vnodeTag: node.tag, hostVar: hooks.resolveVar(node, kind), modifiers };
+  }
+  if (kind === 'component') {
+    return { kind, hostVar: hooks.resolveVar(node, kind), modifiers };
+  }
+  if (kind === 'slot') {
+    return {
+      kind,
+      slotName: getStaticAttr(node, 'name') ?? 'default',
+      hostVar: hooks.resolveVar(node, kind),
+      modifiers,
+    };
+  }
+
+  const hostVar = hooks.resolveVar(node, kind);
+  const ops: ElementOp[] = [];
+
+  // props（指令）：v-text / v-html 的表达式先回填
+  for (let i = 0; i < node.props.length; i++) {
+    const prop = node.props[i];
+    if (!prop || prop.type !== NodeTypes.DIRECTIVE) continue;
+    backfillTextDirectiveExp(node, i);
+    ops.push({ kind: 'directive', dir: prop as DirectiveNode, hostVar, tag: node.tag });
+  }
+
+  // transform 阶段把 v-text / v-html 转成了 codegenNode 的 textContent / innerHTML
+  if (node.codegenNode && node.codegenNode.type === NodeTypes.VNODE_CALL) {
+    ops.push({ kind: 'vnodeProps', vnode: node.codegenNode as VNodeCall, hostVar });
+  }
+
+  const directText = isDirectTextElement(node);
+  let slotIndex = 0;
+  for (let i = 0; i < node.children.length; i++) {
+    const child = node.children[i]!;
+    if (child.type === NodeTypes.INTERPOLATION) {
+      const exp = getExpContent((child as InterpolationNode).content as SimpleExpressionNode);
+      if (!exp) continue;
+      ops.push({
+        kind: 'interpolation',
+        exp,
+        hostVar,
+        directText,
+        slotIndex,
+      });
+      if (!directText) slotIndex++;
+    } else if (child.type === NodeTypes.ELEMENT) {
+      ops.push({ kind: 'childElement', child: child as ElementNode });
+    } else if (child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
+      ops.push({
+        kind: 'conditional',
+        child: child as JSConditionalExpression,
+        anchorVar: findConditionalAnchor(
+          node.children,
+          i + 1,
+          hooks.lookupAnchorVar,
+          hooks.stopAnchorAtFirstElement,
+        ),
+      });
+    } else if (child.type === NodeTypes.JS_CALL_EXPRESSION) {
+      ops.push({ kind: 'call', child: child as JSCallExpression });
+    }
+  }
+
+  return { kind, hostVar, tag: node.tag, directText, ops, modifiers };
 }

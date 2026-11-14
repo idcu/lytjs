@@ -6,11 +6,10 @@
 // 带 `export` 仅为便于单测其**严格模式边界**（正常模板无法触达的防御分支），
 // 它们不经过 index.ts / signal.ts 转出，不属于公开 API。
 
-import { NodeTypes, ElementTypes } from './constants';
+import { NodeTypes } from './constants';
 import {
   OPTIMIZED_EMIT_PROFILE,
   genVarName,
-  isDirectTextElement,
   isStaticPropValue,
   componentRef as componentRefShared,
   componentRefExpr,
@@ -30,9 +29,7 @@ import {
   buildConditionalAnchorOp,
   buildFragmentMountCreate,
   buildFragmentMountUpdate,
-  getStaticAttr,
   getStaticClass,
-  createSimpleExpressionFor,
   getTestExpr,
   validateComponentName,
   buildComponentSlotsObjectShared,
@@ -50,12 +47,13 @@ import {
   planConditional,
   finishConditionalPlan,
   emitConditionalBranches,
+  planElement,
   type DirectiveDialect,
   type ConditionalDialect,
   type ConditionalEmitDialect,
   type ConditionalBranchEmission,
+  type ElementModifierDialect,
 } from './codegen-signal-shared';
-import { getMemoMeta } from './transforms/v-memo';
 import { getVShowStyleTest } from './transforms/helpers';
 import { FRAGMENT_SENTINEL } from './transforms/transform-element';
 import { prefixIdentifiers } from './prefix-identifiers';
@@ -571,6 +569,12 @@ interface ElementModifiers {
   memo?: string;
 }
 
+/** 优化版渲染修饰符拼写：兼容 `_hoisted_` 旧形态；memo 依赖改 `_c.` 前缀。 */
+const OPTIMIZED_ELEMENT_MODIFIER_DIALECT: ElementModifierDialect = {
+  detectHoistedOnce: true,
+  formatMemoDeps: (deps) => prefixIdentifiers(deps, new Set()).replace(/\b_ctx\./g, '_c.'),
+};
+
 function processElementOptimized(
   node: ElementNode,
   varCounter: Map<string, number>,
@@ -585,62 +589,43 @@ function processElementOptimized(
   // 元素照常建立响应式 effect —— 语义完全丢失。这里显式实现：
   //   v-once → 去掉 effect 包裹，只渲染一次
   //   v-memo → 用依赖数组做守卫，依赖未变则不重新渲染
-  const ownMods: ElementModifiers = { ...(mods ?? {}) };
+  const plan = planElement(node, mods?.once ?? false, mods?.memo, {
+    modifierDialect: OPTIMIZED_ELEMENT_MODIFIER_DIALECT,
+    stopAnchorAtFirstElement: false,
+    resolveVar: (_target, kind) => {
+      // 组件 / Teleport 宿主共用 `lyt-comp`；`<slot/>` 与普通元素用自身标签名
+      const tag = kind === 'vnode' || kind === 'component' ? 'lyt-comp' : node.tag;
+      const idx = findElementIndex(elementVars, tag, consumedCount);
+      return idx !== null && idx >= 0 ? elementVars[idx]!.varName : `_${elementVars.length}`;
+    },
+    lookupAnchorVar: (el) => elementVars.find((v) => v.node === el)?.varName,
+  });
+  const { modifiers } = plan;
 
-  // 注意：transformOnce / transformVMemo 已经把 v-once、v-memo 指令**从 props 里摘掉**了，
-  // 所以这里不能再去 props 里找指令，而要读转换留下的痕迹：
-  //   - v-once：transformOnce 把元素的 codegenNode 换成了 `_hoisted_N` 引用
-  //   - v-memo：transformVMemo 把依赖信息写进了元素元数据（getMemoMeta）
-  // 优先读 transformOnce 留下的**语义标记**；
-  // 兼容旧形态（codegenNode 被换成 `_hoisted_N` 引用）。
-  if (node.__isOnce) {
-    ownMods.once = true;
-  } else {
-    const maybeCodegen = node.codegenNode as unknown as
-      | { type?: number; content?: unknown }
-      | undefined;
-    if (maybeCodegen && maybeCodegen.type === NodeTypes.SIMPLE_EXPRESSION) {
-      const content = maybeCodegen.content;
-      if (typeof content === 'string' && content.startsWith('_hoisted_')) {
-        ownMods.once = true;
-      }
-    }
-  }
-
-  const memoMeta = getMemoMeta(node);
-  if (memoMeta && memoMeta.deps) {
-    ownMods.memo = prefixIdentifiers(memoMeta.deps, new Set()).replace(/\b_ctx\./g, '_c.');
-  }
-
-  // 本元素自身的绑定先收集到局部数组，随后按 once/memo 语义统一后处理
+  // 本元素自身产生的绑定先收集到局部数组，随后按 once/memo 语义统一后处理。
+  // 注意：指令 / vnode props 历史上直接写入 `dynamicBindings`，这里保持原状。
   const ownBindings: Array<{ varName: string; code: string }> = [];
-  const sink = ownMods.once || ownMods.memo ? ownBindings : dynamicBindings;
+  const sink = modifiers.once || modifiers.memo ? ownBindings : dynamicBindings;
 
   // `<Teleport>` / `<Suspense>`：产出对应 **vnode** 交给 vdom 的 patch
   // （两者的 `@lytjs/component` 组件都不是有效渲染器 —— Teleport 是空壳、
   //  Suspense 的 setup 只返回 `{ boundary }` 而非渲染函数；真正逻辑都在 vdom）
-  const vnodePathTag = node.tag === 'Teleport' || node.tag === 'Suspense' ? node.tag : null;
-  if (vnodePathTag) {
-    const vpIdx = findElementIndex(elementVars, 'lyt-comp', consumedCount);
-    const vpHost = vpIdx !== null ? elementVars[vpIdx]!.varName : `_${elementVars.length}`;
+  if (plan.kind === 'vnode') {
     usedRuntime.add('mountVNode');
     usedRuntime.add('createVNode');
-    usedRuntime.add(`vdom:${vnodePathTag}`);
+    usedRuntime.add(`vdom:${plan.vnodeTag}`);
     const mv = getShortName('mountVNode', options.useShortNames ?? true);
     const cv = getShortName('createVNode', options.useShortNames ?? true);
     const vpChildren = collectSlotVNodesOptimized(node.children, usedRuntime, options);
     sink.push({
-      varName: vpHost,
-      code: `${mv}(${cv}(${vnodePathTag},${buildComponentPropsObject(node)},[${vpChildren.join(',')}]),${vpHost});`,
+      varName: plan.hostVar,
+      code: `${mv}(${cv}(${plan.vnodeTag},${buildComponentPropsObject(node)},[${vpChildren.join(',')}]),${plan.hostVar});`,
     });
     return;
   }
 
   // 组件：生成 mountComponent(_c.Tag, props, 占位元素) 调用
-  if (node.tagType === ElementTypes.COMPONENT) {
-    const hostIdx = findElementIndex(elementVars, 'lyt-comp', consumedCount);
-    const hostVar = hostIdx !== null ? elementVars[hostIdx]!.varName : `_${elementVars.length}`;
-
+  if (plan.kind === 'component') {
     usedRuntime.add('mountComponent');
     const isBuiltin = BUILTIN_COMPONENTS.has(node.tag);
     if (isBuiltin) usedRuntime.add(`builtin:${node.tag}`);
@@ -653,8 +638,8 @@ function processElementOptimized(
     const slotsArg = slotsObj ? `,${slotsObj}` : '';
 
     sink.push({
-      varName: hostVar,
-      code: `${mc}(${compRef},${propsObj},${hostVar}${slotsArg});`,
+      varName: plan.hostVar,
+      code: `${mc}(${compRef},${propsObj},${plan.hostVar}${slotsArg});`,
     });
     return;
   }
@@ -662,143 +647,96 @@ function processElementOptimized(
   // `<slot/>` 出口：由运行期 `mountSlotOutlet` 把插槽内容**就地**挂载进模板原位置。
   // 与 `mountSlot`（挂进容器、保留字面量 `<slot>` 包装）不同（mx06 实测）——两套实现同改，
   // 否则「默认路径修好、优化路径仍错」会造成新的语义分叉。
-  if (node.tag === 'slot') {
-    const slotName = getStaticAttr(node, 'name') ?? 'default';
-    const slotIdx = findElementIndex(elementVars, node.tag, consumedCount);
-    const slotVar = slotIdx !== null ? elementVars[slotIdx]!.varName : `_${elementVars.length}`;
+  if (plan.kind === 'slot') {
     usedRuntime.add('mountSlotOutlet');
     sink.push({
-      varName: slotVar,
-      code: `mountSlotOutlet(${OPTIMIZED_EMIT_PROFILE.ctxParam}.$slots&&${OPTIMIZED_EMIT_PROFILE.ctxParam}.$slots[${JSON.stringify(slotName)}],${slotVar});`,
+      varName: plan.hostVar,
+      code: `mountSlotOutlet(${OPTIMIZED_EMIT_PROFILE.ctxParam}.$slots&&${OPTIMIZED_EMIT_PROFILE.ctxParam}.$slots[${JSON.stringify(plan.slotName)}],${plan.hostVar});`,
     });
     return;
   }
 
-  // 使用索引变量名
-  const idx = findElementIndex(elementVars, node.tag, consumedCount);
-  const varName = idx !== null ? elementVars[idx]!.varName : `_${elementVars.length}`;
+  const { hostVar, tag } = plan;
 
-  // 处理 props（指令）
-  for (let i = 0; i < node.props.length; i++) {
-    const prop = node.props[i];
-    if (!prop) continue;
-    if (prop.type === NodeTypes.DIRECTIVE) {
-      const dir = prop as DirectiveNode;
-      // 处理 v-text 和 v-html 的特殊解析
-      if ((dir.name === 'text' || dir.name === 'html') && !dir.exp) {
-        for (let j = i + 1; j < node.props.length; j++) {
-          const nextProp = node.props[j];
-          if (nextProp?.type === NodeTypes.ATTRIBUTE) {
-            const eqMatch = nextProp.name.match(/^="(.*)"$/);
-            if (eqMatch) {
-              dir.exp = createSimpleExpressionFor(eqMatch[1]!, dir.loc);
-              break;
-            }
-          }
-        }
-      }
+  // 处理子节点
+  let slotsVar: string | undefined;
+  for (const op of plan.ops) {
+    if (op.kind === 'directive') {
       processDirectiveOptimized(
-        dir,
-        varName,
-        node.tag,
+        op.dir,
+        hostVar,
+        op.tag,
         dynamicBindings,
         usedRuntime,
         options,
         getStaticClass(node),
       );
-    }
-  }
-
-  // 处理 codegenNode 中的属性
-  if (node.codegenNode && node.codegenNode.type === NodeTypes.VNODE_CALL) {
-    const vnode = node.codegenNode as VNodeCall;
-    processVNodeCallPropsOptimized(vnode, varName, dynamicBindings, usedRuntime, options);
-  }
-
-  // 处理子节点
-  const directText = isDirectTextElement(node);
-  let slotsVar: string | undefined;
-  let slotIndex = 0;
-  for (let ci = 0; ci < node.children.length; ci++) {
-    const child = node.children[ci]!;
-    if (child.type === NodeTypes.INTERPOLATION) {
-      const exp = getExpContent((child as InterpolationNode).content as SimpleExpressionNode);
-      if (!exp) {
-        continue;
-      }
+    } else if (op.kind === 'vnodeProps') {
+      processVNodeCallPropsOptimized(op.vnode, hostVar, dynamicBindings, usedRuntime, options);
+    } else if (op.kind === 'interpolation') {
       // 修复：此前非「简单属性路径」的插值会被**静默丢弃**（`continue`），
       // 现统一走 `renderExpression`（黑名单校验 + `prefixIdentifiers`）。
-      validateExpression(exp, 'interpolation');
-      const expCode = renderExpression(exp);
+      validateExpression(op.exp, 'interpolation');
+      const expCode = renderExpression(op.exp);
 
       usedRuntime.add('effect');
       usedRuntime.add('setText');
       const e = getShortName('effect', options.useShortNames ?? true);
       const st = getShortName('setText', options.useShortNames ?? true);
 
-      if (directText) {
+      if (op.directText) {
         // 元素只有一个插值子节点：元素自身就是文本宿主，直接 setText。
-        sink.push({ varName, code: `${e}(()=>${st}(${varName},${expCode}));` });
+        sink.push({ varName: hostVar, code: `${e}(()=>${st}(${hostVar},${expCode}));` });
       } else {
         // 文本 + 插值混排：静态模板里每个插值是 `<!--lyt-t-->`，运行时认领为文本节点。
         // 旧实现把整个元素的文本设成插值值 ⇒ 前后静态文本被抹掉（`Hello {{x}}!` → `Hello !`）。
         if (!slotsVar) {
-          const tagKey = String(node.tag).replace(/[^\w$]/g, '');
+          const tagKey = String(tag).replace(/[^\w$]/g, '');
           const depth = varCounter.get(`_${tagKey}Slots`) ?? 0;
           varCounter.set(`_${tagKey}Slots`, depth + 1);
           slotsVar = `_${tagKey}Slots${depth === 0 ? '' : depth}`;
           usedRuntime.add('claimTextSlots');
-          sink.push({ varName, code: `const ${slotsVar}=claimTextSlots(${varName});` });
+          sink.push({ varName: hostVar, code: `const ${slotsVar}=claimTextSlots(${hostVar});` });
         }
         sink.push({
-          varName,
-          code: `${e}(()=>${st}(${slotsVar}[${slotIndex}],${expCode}));`,
+          varName: hostVar,
+          code: `${e}(()=>${st}(${slotsVar}[${op.slotIndex}],${expCode}));`,
         });
-        slotIndex++;
       }
-    } else if (child.type === NodeTypes.ELEMENT) {
+    } else if (op.kind === 'childElement') {
       processElementOptimized(
-        child as ElementNode,
+        op.child,
         varCounter,
         elementVars,
         dynamicBindings,
         consumedCount,
         usedRuntime,
         options,
-        ownMods.once || ownMods.memo ? ownMods : undefined,
+        modifiers.once || modifiers.memo
+          ? { once: modifiers.once || undefined, memo: modifiers.memo }
+          : undefined,
       );
-    } else if (child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
-      // 插入锚点：v-if 元素之后的第一个静态兄弟（保证分支落在正确位置）。
-      let anchorVar: string | undefined;
-      for (let ni = ci + 1; ni < node.children.length; ni++) {
-        const sibling = node.children[ni];
-        if (sibling?.type !== NodeTypes.ELEMENT) continue;
-        const entry = elementVars.find((v) => v.node === sibling);
-        if (entry) {
-          anchorVar = entry.varName;
-          break;
-        }
-      }
+    } else if (op.kind === 'conditional') {
       processConditionalOptimized(
-        child as JSConditionalExpression,
+        op.child,
         varCounter,
         elementVars,
         dynamicBindings,
-        varName,
+        hostVar,
         consumedCount,
         usedRuntime,
         options,
-        anchorVar,
+        op.anchorVar,
       );
-    } else if (child.type === NodeTypes.JS_CALL_EXPRESSION) {
+    } else {
       processCallExpressionOptimized(
-        child as JSCallExpression,
+        op.child,
         varCounter,
         elementVars,
         dynamicBindings,
         usedRuntime,
         options,
-        varName,
+        hostVar,
       );
     }
   }
@@ -806,7 +744,13 @@ function processElementOptimized(
   // v-once / v-memo 的统一后处理
   if (sink === ownBindings && ownBindings.length > 0) {
     dynamicBindings.push(
-      ...applyElementModifiers(ownBindings, ownMods, varCounter, usedRuntime, options),
+      ...applyElementModifiers(
+        ownBindings,
+        { once: modifiers.once || undefined, memo: modifiers.memo },
+        varCounter,
+        usedRuntime,
+        options,
+      ),
     );
   }
 }
