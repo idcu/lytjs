@@ -49,9 +49,23 @@ npm view @lytjs/core version          # 期望 7.0.0
 **发布前拒绝执行的条件**（任一命中即停）：
 
 - git：工作树不干净（断点续跑时放宽）、`@{u}..HEAD` 非空、落后远端；
-- npm：`whoami` 失败，或 registry 不是 `https://registry.npmjs.org/`（镜像/私有源一律拒绝）；
-- npm：76 个包中任一 `7.0.0` 已存在（整体中止并列出包名），或版本查询失败无法判定；
+- npm：`whoami` 失败；所有查询与发布都显式 `--registry https://registry.npmjs.org/`，
+  不读本机 `.npmrc`（镜像是缓存，会把「7.0.0 未占用」查成假绿；也无需改全局配置）；
+- npm：76 个包中任一 `7.0.0` 已存在（整体中止并列出包名），或线上查询失败无法判定；
 - 2FA：账号为 `auth-and-writes` 但未提供 `--otp`。
+
+**owner 侧前置（脚本无法代办）**：
+
+- `npm login` 走本地凭据，**不要把 token 写进脚本参数或环境变量后贴进日志**；
+- 无需切全局 registry：脚本每条 npm 命令都显式 `--registry https://registry.npmjs.org/`。
+
+**线上事实（2026-11-14 实测，官方源）**：
+
+- 发布集 76 包：**73 个已存在，latest 全部为 6.9.6**；`@lytjs/config`、`@lytjs/di`、
+  `@lytjs/plugin` **从未发布**（7.0.0 即首次发布，无升级用户）；
+- `@lytjs` scope 另有 **25 个 5.0.1 遗留包**（`@lytjs/lytjs`、`@lytjs/plugins`、`@lytjs/components`、
+  `plugin-*` 等）不在发布集内，7.0.0 不会更新它们 —— 发布公告不要暗示「全 scope 同步升版」；
+- 迁移指南基线成立：用户起点就是 6.9.6，不需要写跨版本迁移。
 
 **幂等与断点续跑**：publish 前逐包比对 `dist.integrity` 与本地 tgz 的 sha512，
 一致则跳过、不一致则中止；已完成/跳过记录写入 `.release-progress.json`，

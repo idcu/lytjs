@@ -11,7 +11,9 @@
  *
  * 发布前核对：
  *   · git：HEAD sha、@{u}..HEAD、工作树是否干净（断点续跑时放宽工作树）；
- *   · npm：whoami 成功、registry 必须是 https://registry.npmjs.org/；
+ *   · npm：所有查询与发布都显式 `--registry https://registry.npmjs.org/`，不读本机配置
+ *     （镜像是缓存，会把「未占用」查成假绿）；whoami 必须成功；
+ *   · 线上矩阵：76 包逐个查 dist-tags.latest 与 versions，并确认 scope 可见性与权限；
  *   · 76 个包的 <version> 均未在 npm 上存在（任一存在即整体中止）；
  *   · 账号若要求写操作 2FA，必须显式 --otp。
  *
@@ -26,6 +28,12 @@ import { join, relative } from 'node:path';
 import { ROOT, getReleasePackages } from './release-set.mjs';
 
 const EXPECTED_REGISTRY = 'https://registry.npmjs.org/';
+/**
+ * 发布目标 = 官方源。所有 npm 调用（whoami / profile / view / publish）都显式带
+ * `--registry`，不读本机 `.npmrc`：镜像是缓存，滞后或漏版本会把「7.0.0 未占用」查成假绿。
+ * 同时避免为发一次版改掉全机配置。
+ */
+const REGISTRY = EXPECTED_REGISTRY;
 const STATE_FILE = join(ROOT, '.release-progress.json');
 const NPM_CONCURRENCY = 8;
 
@@ -49,13 +57,13 @@ function capture(cmd, args) {
   return { status: r.status ?? 1, out: (r.stdout || '').trim(), err: (r.stderr || '').trim() };
 }
 
-/** 异步跑 npm（用于 76 次并发查询，避免串行几分钟） */
+/** 异步跑 npm（用于 76 次并发查询，避免串行几分钟）；显式钉官方源 */
 function npmAsync(args, timeout = 30000) {
   return new Promise((resolve) => {
     execFile(
       'npm',
-      args,
-      { cwd: ROOT, encoding: 'utf-8', timeout, maxBuffer: 4 * 1024 * 1024 },
+      [...args, '--registry', REGISTRY],
+      { cwd: ROOT, encoding: 'utf-8', timeout, maxBuffer: 8 * 1024 * 1024 },
       (err, stdout, stderr) => {
         resolve({
           status: err ? (typeof err.code === 'number' ? err.code : 1) : 0,
@@ -206,43 +214,139 @@ async function detectTfa() {
   }
 }
 
+/**
+ * 线上事实：每个包的 dist-tags.latest 与完整 versions（官方源）。
+ * 同时用来判定目标版本是否已被占用 —— 占用查询与镜像无关。
+ */
+async function registryInventory() {
+  const rows = await mapLimit(packages, NPM_CONCURRENCY, async (p) => {
+    const r = await npmAsync(['view', p.name, 'dist-tags', 'versions', '--json']);
+    if (r.status !== 0) {
+      return {
+        name: p.name,
+        exists: false,
+        latest: '-',
+        versions: [],
+        error: isNotFound(r) ? null : firstLine(r.err || r.out),
+      };
+    }
+    let data = null;
+    try {
+      data = JSON.parse(r.out);
+    } catch {
+      data = null;
+    }
+    if (Array.isArray(data)) data = data[0];
+    const latest = data?.['dist-tags']?.latest ?? '-';
+    const versions = Array.isArray(data?.versions) ? data.versions : [];
+    return {
+      name: p.name,
+      exists: versions.length > 0,
+      latest,
+      versions,
+      error: data ? null : '无法解析 npm view 输出',
+    };
+  });
+
+  console.log(`\n线上矩阵（官方源 · ${packages.length} 包）`);
+  console.log(`  ${'包名'.padEnd(34)} ${'latest'.padEnd(10)} ${'版本数'.padStart(6)}  存在`);
+  for (const row of rows) {
+    console.log(
+      `  ${row.name.padEnd(34)} ${String(row.latest).padEnd(10)} ${String(
+        row.versions.length,
+      ).padStart(6)}  ${row.exists ? '是' : '否'}`,
+    );
+    if (row.error) console.log(`      ⚠️ 查询失败：${row.error}`);
+  }
+
+  const exists = rows.filter((r) => r.exists);
+  const missing = rows.filter((r) => !r.exists);
+  const latestCount = new Map();
+  for (const row of exists) latestCount.set(row.latest, (latestCount.get(row.latest) ?? 0) + 1);
+  console.log(
+    `\n  汇总：存在 ${exists.length} / 不存在 ${missing.length}；latest 分布：` +
+      ([...latestCount.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .map(([v, n]) => `${v}(${n})`)
+        .join('、') || '无'),
+  );
+  if (missing.length > 0) console.log(`  不在官方源：${missing.map((r) => r.name).join(', ')}`);
+  return rows;
+}
+
+/** scope 归属与权限（官方源）。未登录时权限字段不可作为写权限证据。 */
+async function scopeAccess() {
+  const r = await npmAsync(['access', 'list', 'packages', '@lytjs', '--json']);
+  if (r.status !== 0) return { ok: false, reason: firstLine(r.err || r.out), names: [] };
+  try {
+    const data = JSON.parse(r.out);
+    const names = Object.keys(data);
+    const modes = new Map();
+    for (const mode of Object.values(data)) modes.set(mode, (modes.get(mode) ?? 0) + 1);
+    return { ok: true, names, modes: [...modes.entries()] };
+  } catch {
+    return { ok: false, reason: '无法解析 npm access 输出', names: [] };
+  }
+}
+
 async function npmPreflight(version) {
   console.log(`\n发布前核对（npm · ${MODE}）`);
   const problems = [];
 
-  const registry = capture('npm', ['config', 'get', 'registry']).out;
-  const registryOk = normalizeRegistry(registry) === normalizeRegistry(EXPECTED_REGISTRY);
-  console.log(
-    `  registry    : ${registry || '<空>'}${registryOk ? ' ✅' : ` ❌ 期望 ${EXPECTED_REGISTRY}`}`,
-  );
-  if (!registryOk) problems.push(`registry 不是官方源（当前 ${registry || '<空>'}）`);
+  const configured = capture('npm', ['config', 'get', 'registry']).out;
+  console.log(`  发布目标    : ${REGISTRY} ✅（所有 npm 命令显式 --registry，不读本机配置）`);
+  if (normalizeRegistry(configured) !== normalizeRegistry(REGISTRY)) {
+    console.log(`  本机配置    : ${configured || '<空>'}（不影响本次发布，无需改全局配置）`);
+  } else {
+    console.log(`  本机配置    : ${configured}`);
+  }
+  // 「发布走哪儿」：真正决定落点的常量必须官方源（防止将来误改 REGISTRY）
+  if (normalizeRegistry(REGISTRY) !== normalizeRegistry(EXPECTED_REGISTRY)) {
+    problems.push(`发布目标不是官方源（${REGISTRY}）`);
+  }
 
-  const who = capture('npm', ['whoami']);
+  const who = capture('npm', ['whoami', '--registry', REGISTRY]);
   const whoOk = who.status === 0 && who.out.length > 0;
   console.log(
     `  npm whoami  : ${whoOk ? who.out : firstLine(who.err || who.out)}${whoOk ? ' ✅' : ' ❌'}`,
   );
   if (!whoOk) problems.push('npm whoami 失败（未登录或凭据失效）');
 
-  const views = await mapLimit(packages, NPM_CONCURRENCY, async (p) => ({
-    name: p.name,
-    ...(await npmAsync(['view', `${p.name}@${version}`, 'version'])),
-  }));
-  const taken = views.filter((r) => r.status === 0 && r.out);
-  const unknown = views.filter((r) => r.status !== 0 && !isNotFound(r));
+  // 「我查的是不是同一份事实」：线上矩阵与占用判定都来自官方源
+  const rows = await registryInventory();
+  const unknown = rows.filter((r) => r.error);
+  const taken = rows.filter((r) => r.versions.includes(version));
   console.log(
-    `  版本占用    : ${taken.length === 0 ? `0 个（${version} 未被占用）✅` : `${taken.length} 个已存在 ❌`}`,
+    `\n  版本占用    : ${
+      taken.length === 0 ? `0 个（${version} 未被占用，官方源）✅` : `${taken.length} 个已存在 ❌`
+    }`,
   );
   if (taken.length > 0) {
     console.log(`    已存在：${taken.map((r) => r.name).join(', ')}`);
     problems.push(`${version} 已被占用：${taken.map((r) => r.name).join(', ')}`);
   }
   if (unknown.length > 0) {
+    problems.push(`${unknown.length} 个包的线上查询失败，无法确认 ${version} 未被占用`);
+  }
+
+  const scope = await scopeAccess();
+  if (!scope.ok) {
+    console.log(`  scope @lytjs : 查询失败（${scope.reason}）`);
+    console.log('    ⚠️ 需 owner 登录后确认写权限；脚本无法据此证明可发布');
+  } else {
+    const releaseNames = new Set(packages.map((p) => p.name));
+    const extra = scope.names.filter((n) => !releaseNames.has(n));
     console.log(
-      `  无法判定    : ${unknown.length} 个（示例 ${unknown[0].name}: ` +
-        `${firstLine(unknown[0].err || unknown[0].out).slice(0, 100)}）`,
+      `  scope @lytjs : 官方源可见 ${scope.names.length} 个包；权限字段 ` +
+        scope.modes.map(([m, n]) => `${m}×${n}`).join('、'),
     );
-    problems.push(`${unknown.length} 个包的版本查询失败，无法确认 ${version} 未被占用`);
+    console.log(
+      `    发布集 ${packages.length} / scope ${scope.names.length}；scope 内不在发布集：${extra.length} 个`,
+    );
+    if (extra.length > 0) console.log(`    额外：${extra.join(', ')}`);
+    if (!whoOk) {
+      console.log('    ⚠️ 未登录：read-write 字段不能作为写权限证据，需 owner 登录后确认');
+    }
   }
 
   const tfa = await detectTfa();
@@ -355,7 +459,7 @@ async function publishAll(state, version, packDir) {
       fail(`无法确认 ${p.name}@${version} 是否已发布：${firstLine(remote.err || remote.out)}`);
     }
 
-    const args = ['publish', file, '--access', 'public'];
+    const args = ['publish', file, '--access', 'public', '--registry', REGISTRY];
     if (OTP) args.push('--otp', OTP);
     console.log(`\n$ npm ${args.join(' ')}`);
     const r = spawnSync('npm', args, { cwd: ROOT, encoding: 'utf-8', env: process.env });
@@ -404,10 +508,14 @@ function printPlan(version, packDir) {
     }`,
   );
   console.log(`\n核对 tarball：${EXECUTE ? '已核对' : `期望 ${expected} 个 .tgz`}`);
-  console.log(`\n$ npm view <name>@${version} dist.integrity   # 与本地 tgz sha512 比对`);
+  console.log(
+    `\n$ npm view <name>@${version} dist.integrity --registry ${REGISTRY}   # 与本地 tgz sha512 比对`,
+  );
   console.log('  一致 ⇒ 跳过；不一致 ⇒ 中止；不存在 ⇒ 发布');
   console.log(
-    `\n$ npm publish <每个 .tgz> --access public${OTP ? ' --otp <已提供>' : ' [--otp <6 位>]'}`,
+    `\n$ npm publish <每个 .tgz> --access public --registry ${REGISTRY}${
+      OTP ? ' --otp <已提供>' : ' [--otp <6 位>]'
+    }`,
   );
   console.log(`\n$ git tag v${version}        # 仅在 ${expected} 个包全部发布成功后`);
   console.log(`\n$ git push origin v${version}`);
