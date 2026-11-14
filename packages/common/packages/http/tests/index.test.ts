@@ -623,3 +623,35 @@ describe('@lytjs/common-http', () => {
     });
   });
 });
+
+// ============================================================
+// C-36：错误管线 / 响应体超时 / 外部 signal 监听清理
+// ============================================================
+
+describe('C-36 错误管线与超时', () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  it('请求拦截器抛错时应进入错误拦截器（C-36a）', async () => {
+    // 修前：请求拦截器在 try 之外执行，抛错直接冒泡，错误拦截器一次都不会被调用。
+    const client = new HttpClient();
+    const onError = vi.fn(() => ({
+      data: 'fallback',
+      status: 0,
+      statusText: '',
+      headers: {},
+      ok: false,
+    }));
+    client.use({
+      request: () => {
+        throw new Error('boom');
+      },
+      error: onError,
+    });
+
+    const response = await client.get('/api/guard');
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(response.data).toBe('fallback');
+  });
+});

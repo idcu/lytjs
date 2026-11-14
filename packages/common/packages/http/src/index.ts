@@ -159,14 +159,15 @@ export class HttpClient {
   ): Promise<HttpResponse<T>> {
     let config = this._buildConfig(method, url, options);
 
-    // Apply request interceptors
-    for (const interceptor of this._interceptors) {
-      if (interceptor.request) {
-        config = await interceptor.request(config);
-      }
-    }
-
     try {
+      // C-36a：请求拦截器必须在 try 内执行 —— 否则它抛出的异常直接冒泡，
+      // 错误拦截器一次都不会被调用（错误管线只覆盖 fetch/解析阶段）。
+      for (const interceptor of this._interceptors) {
+        if (interceptor.request) {
+          config = await interceptor.request(config);
+        }
+      }
+
       const response = await this._fetch(config);
       let httpResponse = await this._parseResponse<T>(response, config.responseType);
 
