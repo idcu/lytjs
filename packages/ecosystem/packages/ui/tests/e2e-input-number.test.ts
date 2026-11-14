@@ -428,6 +428,19 @@ describe('InputNumber · 键盘', () => {
 });
 
 describe('InputNumber · 受控', () => {
+  it('键入合法数字即回写 update:modelValue（不等 blur）', async () => {
+    const updates: Array<number | undefined> = [];
+    const { host } = await mountInputNumber({
+      modelValue: 1,
+      'onUpdate:modelValue': (v?: number) => updates.push(v),
+    });
+    const input = getInput(host);
+    input.value = '42';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    await flush();
+    expect(updates).toEqual([42]);
+  });
+
   it('外部 modelValue 变化同步到显示（watch 路径）', async () => {
     const { host, mv } = await mountInputNumber({ modelValue: 1 });
     expect(getInput(host).value).toBe('1');

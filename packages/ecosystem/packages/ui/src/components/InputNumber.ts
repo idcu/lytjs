@@ -164,6 +164,8 @@ export const InputNumber = defineComponent({
       const numValue = parseFloat(value);
       if (!isNaN(numValue)) {
         state.inputValue = numValue;
+        // P1-32：v-model 契约要求键入即回写；只发 input 会让父组件直到 blur 才同步。
+        emit('update:modelValue', numValue);
         emit('input', numValue);
         // ★ 2026-10-04：`emit` 本身就会去 props 里找 `onInput` 并调用（见 component/src/emit.ts）⇒ 紧随其后的直接调用是**重复触发**，已删。
       }
