@@ -9,6 +9,7 @@ import {
   isDirectTextElement,
   isStaticPropValue,
   componentRef as componentRefShared,
+  componentRefExpr,
   readInterpolationExpr,
   containsElementVNode,
   containsConditionalNode,
@@ -1631,7 +1632,9 @@ function buildReconcileArrayCode(
       !/^["']/.test(renderItem.tag);
     if (itemIsComponent && renderItem) {
       const rawTag = String(renderItem.tag);
-      const hostVar = '_' + rawTag;
+      // C-35f：kebab 组件的 tag 是查找**表达式**（`_ctx["my-comp"] || …`），
+      // 直接拼进变量名会产出 `const _(_ctx[…])` —— 非法标识符，整模块 SyntaxError。
+      const hostVar = genVarName('lytComp', varCounter);
       const itemProps = buildItemComponentProps(renderItem, itemLocals);
       // 列表项的子节点（VNODE_CALL）→ 默认插槽内容。
       // 列表项 children 是 VNODE_CALL（type 9）且为「单对象」而非数组，先归一化为数组；
@@ -1671,7 +1674,7 @@ function buildReconcileArrayCode(
           hostVar +
           " = document.createElement('div');" +
           'mountComponent(' +
-          componentRef(rawTag) +
+          componentRefExpr(rawTag, BASE_EMIT_PROFILE.ctxParam) +
           ',' +
           itemProps +
           ',' +
@@ -1682,7 +1685,13 @@ function buildReconcileArrayCode(
           hostVar +
           ';';
         updateBody =
-          'mountComponent(' + componentRef(rawTag) + ',' + itemProps + ',_el' + slotsArg + ');';
+          'mountComponent(' +
+          componentRefExpr(rawTag, BASE_EMIT_PROFILE.ctxParam) +
+          ',' +
+          itemProps +
+          ',_el' +
+          slotsArg +
+          ');';
       }
     } else if (renderItem && typeof renderItem.tag === 'string') {
       const tag = renderItem.tag.replace(/^"|"$/g, '');

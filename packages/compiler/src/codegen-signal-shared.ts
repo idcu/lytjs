@@ -374,6 +374,19 @@ export function componentRef(tag: string, ctx: string): string {
   return /^[A-Za-z_$][\w$]*$/.test(tag) ? `${ctx}.${tag}` : `${ctx}[${JSON.stringify(tag)}]`;
 }
 
+/**
+ * 组件引用代码（列表项路径用）。
+ *
+ * `tag` 既可能是裸标识符（`Row`），也可能是 transform 为 kebab 组件生成的查找表达式
+ *（`(_ctx["my-comp"] || _ctx["myComp"] || …)`）。后者不能再用 `componentRef` 包一层
+ *（会变成 `_ctx["(_ctx[…])"]`），需把上下文形参换成当前发射器的名字
+ *（基础版 `_ctx`、优化版 `_c`）。
+ */
+export function componentRefExpr(tag: string, ctx: string): string {
+  if (/^[A-Za-z_$][\w$]*$/.test(tag)) return componentRef(tag, ctx);
+  return tag.replace(/\b_ctx\b/g, ctx);
+}
+
 /** 叶子节点是否是一个插值（TO_DISPLAY_STRING / INTERPOLATION），返回表达式。 */
 export function readInterpolationExpr(node: unknown): string | null {
   if (!node || typeof node !== 'object') return null;

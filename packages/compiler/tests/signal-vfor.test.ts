@@ -486,3 +486,32 @@ describe('C-35e 组件 v-model / v-show', () => {
     });
   }
 });
+
+// ============================================================
+// C-35f：kebab 组件作为 v-for 列表项时不得生成非法标识符
+// ============================================================
+
+describe('C-35f 列表项 kebab 组件', () => {
+  for (const optimizeSignal of [false, true]) {
+    const label = optimizeSignal ? '优化版' : '基础版';
+    it(`${label}：产物是合法 JS 且逐项挂载`, () => {
+      // 修前：`const _(_ctx["my-comp"] || …) = document.createElement('div')`
+      // —— 标识符非法，整个模块 SyntaxError，列表一项都渲染不出来。
+      const calls = mountComponentCalls(
+        '<ul><my-comp v-for="x in xs" :v="x"/></ul>',
+        { 'my-comp': {}, xs: [1, 2] },
+        { optimizeSignal },
+      );
+      expect(calls.map((c) => c.props)).toEqual([{ v: 1 }, { v: 2 }]);
+    });
+
+    it(`${label}：驼峰组件列表项产物不变（回归护栏）`, () => {
+      const calls = mountComponentCalls(
+        '<ul><Row v-for="x in xs" :v="x"/></ul>',
+        { Row: {}, xs: [1, 2] },
+        { optimizeSignal },
+      );
+      expect(calls.map((c) => c.props)).toEqual([{ v: 1 }, { v: 2 }]);
+    });
+  }
+});

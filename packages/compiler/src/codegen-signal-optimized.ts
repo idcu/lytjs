@@ -13,6 +13,7 @@ import {
   isDirectTextElement,
   isStaticPropValue,
   componentRef as componentRefShared,
+  componentRefExpr,
   readInterpolationExpr,
   containsElementVNode,
   containsConditionalNode,
@@ -1447,14 +1448,16 @@ function processCallExpressionOptimized(
                 const slotsArg = kidVNodes.length
                   ? ',{default:()=>[' + kidVNodes.join(',') + ']}'
                   : '';
-                const hostVar = '_' + rawTag;
+                // C-35f：kebab 组件的 tag 是查找**表达式**，不能拼进变量名
+                //（`const _(_ctx[…])` 非法标识符 ⇒ 整模块 SyntaxError）。
+                const hostVar = genVarName('lytComp', varCounter);
                 createBody =
                   'const ' +
                   hostVar +
                   "=document.createElement('div');" +
                   mc +
                   '(' +
-                  componentRef(rawTag) +
+                  componentRefExpr(rawTag, OPTIMIZED_EMIT_PROFILE.ctxParam) +
                   ',' +
                   itemProps +
                   ',' +
@@ -1465,7 +1468,14 @@ function processCallExpressionOptimized(
                   hostVar +
                   ';';
                 updateBody =
-                  mc + '(' + componentRef(rawTag) + ',' + itemProps + ',_el' + slotsArg + ');';
+                  mc +
+                  '(' +
+                  componentRefExpr(rawTag, OPTIMIZED_EMIT_PROFILE.ctxParam) +
+                  ',' +
+                  itemProps +
+                  ',_el' +
+                  slotsArg +
+                  ');';
               }
             }
 
