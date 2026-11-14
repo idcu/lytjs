@@ -717,6 +717,37 @@ const CONTROLS = {
     );
   },
 
+  'check-publish-private': () => {
+    // 去掉 benchmark fixture 的 private ⇒ 「非发布包必须 private」必红
+    const file = join(
+      ROOT,
+      'benchmarks/js-framework-benchmark/frameworks/keyed/lytjs-npm/package.json',
+    );
+    withPatchedFile(
+      file,
+      (text) => {
+        const pkg = JSON.parse(text);
+        delete pkg.private;
+        return `${JSON.stringify(pkg, null, 2)}\n`;
+      },
+      () => expectFail(['node', 'scripts/check-publish-private.mjs'], 'check-publish-private'),
+    );
+  },
+
+  'check-release-artifacts': () => {
+    // exports 指向不存在的文件 ⇒ tarball 文件清单 / 运行时矩阵必红
+    const file = join(ROOT, 'packages/common/packages/is/package.json');
+    withPatchedFile(
+      file,
+      (text) => {
+        const pkg = JSON.parse(text);
+        pkg.exports['.'].import = './dist/__negctl-missing.mjs';
+        return `${JSON.stringify(pkg, null, 2)}\n`;
+      },
+      () => expectFail(['node', 'scripts/check-release-artifacts.mjs'], 'check-release-artifacts'),
+    );
+  },
+
   'check-coverage-snapshot': () => {
     // 三向反证（2026-11-14 判据口径变更后）：
     //   ① 移走 coverage/ ⇒ 「只读现场产物」必红；
@@ -1694,6 +1725,8 @@ const SLOW_CONTROLS = new Set([
   'check-hydration',
   'check-lifecycle-release',
   'check-signal-profile-snapshot',
+  // 发布物验收要打 76 个 tarball 并隔离安装（实测 ~20s），放慢档
+  'check-release-artifacts',
   // 三向反证需要真实的现场覆盖率产物 ⇒ 必须排在 test:coverage 之后（gate slow 顺序已同步）
   'check-coverage-snapshot',
 ]);

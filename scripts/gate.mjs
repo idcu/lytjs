@@ -258,6 +258,16 @@ const GATES = [
       'files（dist+src+bin 入口）；pnpm 版本只允许 root packageManager 一处',
   },
   {
+    name: 'check-publish-private',
+    tier: 'fast',
+    cmd: ['node', 'scripts/check-publish-private.mjs'],
+    approx: '~0.2s',
+    desc:
+      '发布集私有一致性：发布集从 pnpm-workspace.yaml + .changeset/config.json 派生（不写死包名），' +
+      '工作区内任何不在发布集的包必须 private: true；否则 changeset version 的补丁升版会把它带进 ' +
+      'changeset publish 队列（2026-11-14 benchmark fixture lytjs-npm 实证）',
+  },
+  {
     name: 'check-consumer-demo',
     tier: 'fast',
     needsDist: true,
@@ -913,6 +923,18 @@ const GATES = [
       '★ dist 级跨入口单例（2026-11-14）：tsup splitting:false 逐入口内联，模块级可变状态每个入口一份副本。' +
       '同一进程直接 import 全部 dist 入口，按显式探针表「写 A 读 B」断言共享；同时扫描模块级可变状态，' +
       '未登记 / 登记失效即红（scripts/cross-entry-singletons.json 棘轮）',
+  },
+  {
+    name: 'check-release-artifacts',
+    tier: 'slow',
+    needsDist: true,
+    cmd: ['node', 'scripts/check-release-artifacts.mjs'],
+    approx: '~20s',
+    desc:
+      '★ 发布物验收（2026-11-14）：76 包 pnpm pack → 隔离目录 npm install file:tarball → ' +
+      '静态（tarball 内 exports/main/module/types 文件存在、files 带 dist）+ 121 条 subpath ' +
+      'resolve/import/require + 类型消费 tsc --noEmit；CSS 按 target 扩展名归资产类，只验 resolve ' +
+      '与 esbuild 副作用导入，不补 .d.ts。验的是「npm 上装下来的东西」，仓内门禁覆盖不到',
   },
   {
     name: 'check-doc-imports',

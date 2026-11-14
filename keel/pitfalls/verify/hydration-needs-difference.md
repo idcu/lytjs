@@ -2,7 +2,7 @@
 scope: verify
 status: active
 severity: P2
-last-verified: 2026-10-05
+last-verified: 2026-11-14
 triggers: 1
 keywords: [hydration, 水合, 判据, 对照, 假绿, DOM]
 ---

@@ -1,6 +1,7 @@
 {
   "name": "using-lytjs-as-dependency",
   "version": "1.0.0",
+  "private": true,
   "description": "将 LytJS 作为依赖使用的示例项目",
   "type": "module",
   "scripts": {
