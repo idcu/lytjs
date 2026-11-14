@@ -1,6 +1,6 @@
 ---
 scope: meta
-status: active
+status: archived          # 2026-11-14 容量归档（内容仍有效，未撤销）
 last-verified: 2026-10-05
 keywords: [group, v-model, CheckboxGroup, RadioGroup, 暂缓]
 type: decision

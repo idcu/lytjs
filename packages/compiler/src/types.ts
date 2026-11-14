@@ -289,9 +289,7 @@ export interface DirectiveTransformResult {
 
 export interface ParserOptions {
   isCustomElement?: (tag: string) => boolean;
-  isNativeTag?: (tag: string) => boolean;
   getTextMode?: (tag: string, ns: number) => (typeof TextModes)[keyof typeof TextModes];
-  decodeEntities?: (text: string, strict: boolean) => string;
   onError?: (error: Error) => void;
   comments?: boolean;
   /**
@@ -309,14 +307,12 @@ export interface TransformOptions {
   nodeTransforms?: NodeTransform[];
   directiveTransforms?: Record<string, DirectiveTransform>;
   isBuiltInComponent?: (tag: string) => symbol | undefined;
-  isCustomElement?: (tag: string) => boolean;
   expressionPlugins?: string[];
   scopeId?: string | null;
   slotted?: boolean;
   ssr?: boolean;
   inSSR?: boolean;
   ssrCssVars?: string[];
-  bindingMetadata?: BindingMetadata;
   inline?: boolean;
   isTS?: boolean;
   onError?: (error: Error) => void;

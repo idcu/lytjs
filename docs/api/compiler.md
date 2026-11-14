@@ -224,8 +224,6 @@ interface ParserOptions {
    * 仅影响元素分类，不影响属性/子节点解析。
    */
   isCustomElement?: (tag: string) => boolean;
-  /** 判断标签是否为原生 HTML 标签 */
-  isNativeTag?: (tag: string) => boolean;
   /**
    * 获取标签的文本模式（DATA / RCDATA / RAWTEXT / CDATA）。
    * 返回 `undefined` 时回落到内置规则：
@@ -233,8 +231,6 @@ interface ParserOptions {
    * `ns` 当前固定为 0，仅保留扩展位。
    */
   getTextMode?: (tag: string, ns: number) => TextModes;
-  /** 自定义 HTML 实体解码函数 */
-  decodeEntities?: (text: string, strict: boolean) => string;
   /** 解析错误回调 */
   onError?: (error: Error) => void;
   /**
@@ -266,8 +262,6 @@ interface TransformOptions {
   directiveTransforms?: Record<string, DirectiveTransform>;
   /** 判断是否为内置组件 */
   isBuiltInComponent?: (tag: string) => symbol | undefined;
-  /** 判断是否为自定义元素 */
-  isCustomElement?: (tag: string) => boolean;
   /** 表达式插件 */
   expressionPlugins?: string[];
   /** scoped ID */
@@ -280,8 +274,6 @@ interface TransformOptions {
   inSSR?: boolean;
   /** SSR CSS 变量 */
   ssrCssVars?: string[];
-  /** 绑定元数据 */
-  bindingMetadata?: BindingMetadata;
   /** 是否内联模式 */
   inline?: boolean;
   /** 是否 TypeScript */

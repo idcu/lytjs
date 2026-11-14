@@ -183,7 +183,7 @@ function computeContentHash(content: string): string {
  * C-13：判断选项里是否含有**无法安全序列化进缓存键**的值（函数 / 对象 / 数组）。
  *
  * 缓存键只能可靠表达标量；此前把函数与对象一律折叠成 `<obj>` ⇒
- * `onError` / `bindingMetadata` / `isCustomElement` 等选项互不区分，
+ * `onError` / `isCustomElement` 等选项互不区分，
  * 携带不同闭包或绑定表的编译会互相命中：第二次编译不再 parse/transform，
  * `onError` 诊断被静默吞掉，且 AST 可能来自另一组选项。
  *
@@ -282,7 +282,7 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
   const hasCustomTransforms =
     (options.nodeTransforms && options.nodeTransforms.length > 0) ||
     (options.directiveTransforms && Object.keys(options.directiveTransforms).length > 0);
-  // C-13：函数/对象选项（onError、bindingMetadata、isCustomElement…）无法进缓存键，
+  // C-13：函数/对象选项（onError、isCustomElement…）无法进缓存键，
   // 一律不读不写缓存，否则不同选项会互相命中、诊断静默丢失。
   const cacheable = !hasCustomTransforms && !hasUncacheableOptions(options);
 
