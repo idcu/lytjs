@@ -31,6 +31,7 @@ import {
   createSimpleExpressionFor,
   getTestExpr,
   validateAttributeName,
+  validateArgContent,
   validateEventName,
   validateComponentName,
   validateIslandDirective,
@@ -872,6 +873,8 @@ function processDirectiveOptimized(
 
   validateExpression(expContent, `v-${dir.name}`);
   validateExpression(argContent, `v-${dir.name} argument`);
+  // 与基础实现对齐：参数里的单引号会破坏生成的代码/字符串字面量
+  validateArgContent(argContent);
 
   // ⚠️ 2026-09-30 修复：**动态参数/事件**（`:[dyn]` / `@[evt]`）的 `arg` 是**表达式**
   // （transform 后 `isStatic === false`），而此前一律按字面量写成 `'dyn'` / `'evt'`
@@ -884,10 +887,11 @@ function processDirectiveOptimized(
     : "''";
 
   // 与基础实现同一校验路径（判据与错误文案均来自共享层）
-  if (dir.name === 'bind' && argContent) {
+  // C-35a：动态参数的 arg 是表达式，跳过字面量名称校验。
+  if (!isDynamicArg && dir.name === 'bind' && argContent) {
     validateAttributeName(argContent, `v-bind:${argContent}`);
   }
-  if (dir.name === 'on' && argContent) {
+  if (!isDynamicArg && dir.name === 'on' && argContent) {
     validateEventName(argContent, `v-on:${argContent}`);
   }
   if (dir.name === 'island') {

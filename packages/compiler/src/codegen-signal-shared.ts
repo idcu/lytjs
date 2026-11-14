@@ -709,6 +709,20 @@ export function validateAttributeName(name: string | undefined, context: string)
   }
 }
 
+/**
+ * 指令参数的通用安全检查：参数会被原样拼进生成的代码 / 字符串字面量，
+ * 单引号会破坏产物（`:[foo'bar]` ⇒ 语法错误），因此两套发射器都拒绝。
+ * （C-35a 起与动态参数名解耦：名字白名单只校验静态字面量，本检查仍然保留。）
+ */
+export function validateArgContent(arg: string | undefined): void {
+  if (!arg) return;
+  if (arg.includes("'")) {
+    throw new Error(
+      `[lytjs/compiler] Invalid argument: "${arg}". Single quotes are not allowed in directive arguments.`,
+    );
+  }
+}
+
 /** FIX: P1-S2 v-on 事件名验证。 */
 export function validateEventName(name: string | undefined, context: string): void {
   if (!name) return;

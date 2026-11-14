@@ -27,6 +27,7 @@ import {
   createSimpleExpressionFor,
   getTestExpr,
   validateAttributeName,
+  validateArgContent,
   validateEventName,
   validateComponentName,
   validateIslandDirective,
@@ -792,16 +793,6 @@ function validateExpression(exp: string | undefined, context: string): void {
   }
 }
 
-function validateArgContent(arg: string | undefined): void {
-  if (!arg) return;
-  // 额外检查单引号，防止破坏生成的字符串字面量
-  if (arg.includes("'")) {
-    throw new Error(
-      `[lytjs/compiler] Invalid argument: "${arg}". Single quotes are not allowed in directive arguments.`,
-    );
-  }
-}
-
 // FIX: P1-S1/S2/S6/S8：属性名 / 事件名 / 组件名 / v-island 校验统一在
 // `codegen-signal-shared.ts` 实现，两套发射器共用同一判据与错误文案。
 
@@ -849,10 +840,12 @@ function processDirective(
     : "''";
 
   // FIX: P1-S1, P1-S2: 根据指令类型进行特定的名称验证
-  if (dir.name === 'bind' && argContent) {
+  // C-35a：动态参数（`:[foo.bar]` / `@[evt.name]`）的 arg 是**表达式**，
+  // 不是属性/事件字面量；用字面量白名单校验会把合法表达式误杀。
+  if (!isDynamicArg && dir.name === 'bind' && argContent) {
     validateAttributeName(argContent, `v-bind:${argContent}`);
   }
-  if (dir.name === 'on' && argContent) {
+  if (!isDynamicArg && dir.name === 'on' && argContent) {
     validateEventName(argContent, `v-on:${argContent}`);
   }
   // FIX: P1-S8: v-island 指令验证

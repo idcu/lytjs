@@ -953,3 +953,38 @@ describe('codegen-signal', () => {
     });
   });
 });
+
+// ============================================================
+// C-35a：动态参数 / 动态事件名的 arg 是表达式，不能被字面量名校验误杀
+// ============================================================
+
+describe('C-35a 动态参数名', () => {
+  for (const optimizeSignal of [false, true]) {
+    const label = optimizeSignal ? '优化版' : '基础版';
+    it(`${label}：:[foo.bar] / @[evt.name] 可编译且保留表达式`, () => {
+      // 修前：validateAttributeName('foo.bar') / validateEventName('evt.name')
+      // 直接抛 `Invalid attribute/event name`，模板无法编译。
+      const { code } = compile('<div :[foo.bar]="x" @[evt.name]="h"></div>', { optimizeSignal });
+      expect(code).toContain('foo.bar');
+      expect(code).toContain('evt.name');
+
+      // 运行期：动态属性名真的生效（不是仅“能编译”）
+      const handle = mount('<div :[foo.bar]="x"></div>', {
+        foo: { bar: 'title' },
+        x: 'hi',
+      });
+      expect(handle.html()).toBe('<div title="hi"></div>');
+    });
+  }
+
+  it('动态事件名单独可编译（两个校验点都要放行）', () => {
+    const { code } = compile('<div @[evt.name]="h"></div>');
+    expect(code).toContain('evt.name');
+  });
+
+  it('静态参数产物不变（回归护栏）', () => {
+    const { code } = compile('<div id="a" :title="t" @click="h"></div>');
+    expect(code).toContain("'title'");
+    expect(code).toContain("'click'");
+  });
+});
