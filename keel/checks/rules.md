@@ -8,13 +8,13 @@ keywords: [校验, 规则, 扩展检查, CI, 门禁]
 # 扩展检查（项目自定）
 
 > Keel 内核只做通用检查（`keel-lint.sh`）。本文件与 `scripts/gate.mjs` 的
-> `GATES` **逐条对齐**（2026-11-12：76 条 = 59 fast + 17 slow）。
+> `GATES` **逐条对齐**（2026-11-14：77 条 = 58 fast + 19 slow）。
 > 门禁名、命令、描述、耗时以 `scripts/gate.mjs` 为单一真源，本文件只做清单核对。
 > 单条执行：`node scripts/gate.mjs <name>`；整档：`--tier fast` / `--tier slow`。
 
-## 已登记的扩展检查（76）
+## 已登记的扩展检查（77）
 
-**fast（59，只读源码、无需 dist）**
+**fast（58，只读源码、无需 dist）**
 
 check-lockfile、check-build-order、check-deps、check-render-parity、check-list-diff、
 check-public-names、check-stale-capability-claims、check-signal-authority、
@@ -29,19 +29,24 @@ check-negative-controls、check-compiler-parity、check-hmr、check-scaffold、
 check-api-routes、check-transition-engine、check-event-semantics、check-controlled-props、
 check-dialog-a11y、check-dev-warnings、check-plugin-semantics、check-store-semantics、
 check-reactivity-semantics、check-security-html、check-core-signal-contract、
-check-coverage-snapshot、check-release-parity、check-web-cssvars、check-config-semantics、
+check-release-parity、check-web-cssvars、check-config-semantics、
 check-router-semantics、check-hydration、check-vitest-alias-dist
 
-**slow（17，需要 dist 或全量执行）**
+**slow（19，需要 dist 或全量执行）**
 
-check-negative-controls:slow、check-integration、check-runtime-render、check-bundle-size、
+check-integration、check-runtime-render、check-bundle-size、
 build、build:fallback、check-runtime-contract、check-api-snapshot、
 check-signal-profile-snapshot、check-doc-imports、check-circular、check-circular:src、
-type-check、lint:check、format:check、test、test:coverage
+type-check、lint:check、format:check、test、test:coverage、
+coverage:snapshot、check-coverage-snapshot、check-negative-controls:slow
 
 级别：全部 ❌ fail；触发时机以 `scripts/gate.mjs` 的 `tier` 与 CI job 为准。
 
 ## 级别变更记录
+
+- **2026-11-14｜覆盖率门禁下沉慢档（口径变更）**
+  `check-coverage-snapshot` → slow，新增 `coverage:snapshot`；fast 不再报覆盖率数字。
+  口径改为现场产物 + 双指纹 + 逐文件冻结清单（详见坑 cov-age）。
 
 - **2026-11-12｜清单真源对齐**
   此前只登记 15 条聚合项，与 `gate.mjs` 的 76 条不一致；现逐条登记全部
