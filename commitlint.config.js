@@ -34,6 +34,7 @@ export default {
         'docs',
         'ci',
         'release',
+        'keel',
       ],
     ],
     'scope-case': [2, 'always', 'lower-case'],
