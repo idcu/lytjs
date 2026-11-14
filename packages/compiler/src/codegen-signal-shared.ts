@@ -1286,7 +1286,11 @@ export function buildComponentPropsObjectShared(
       if (!key || !raw) continue;
 
       if (dir.name === 'bind') {
-        parts.push(`${JSON.stringify(key)}:${hooks.expr(raw)}`);
+        // C-35b：动态 arg（`:[k]`）是表达式，必须写成**计算键**；
+        // 此前一律 `JSON.stringify(key)` ⇒ 产物 `{"k": …}`，运行期键名变成字面量 k。
+        const isDynamicArg = (dir.arg as SimpleExpressionNode).isStatic === false;
+        const propKey = isDynamicArg ? `[${hooks.expr(key)}]` : JSON.stringify(key);
+        parts.push(`${propKey}:${hooks.expr(raw)}`);
         continue;
       }
 

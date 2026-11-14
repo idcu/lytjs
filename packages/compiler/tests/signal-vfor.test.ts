@@ -361,3 +361,31 @@ describe('Signal 模式 - 子组件（两版 codegen 均已支持挂载）', () 
     expect((asVNode(vnode.children) as { type: unknown }).type).toBe(Child);
   });
 });
+
+// ============================================================
+// C-35b：组件动态 prop 名（`:[k]`）必须是计算键，不能写成字面量 "k"
+// ============================================================
+
+describe('C-35b 组件动态 prop 名', () => {
+  for (const optimizeSignal of [false, true]) {
+    const label = optimizeSignal ? '优化版' : '基础版';
+    it(`${label}：:[k] 编译为计算键并按运行期取值`, () => {
+      // 修前：props 为 `{ "k": "T" }`（键被 JSON.stringify 成字面量），
+      // 期望是 `{ [ctx.k]: v }` ⇒ { title: 'T' }。
+      const call = mountComponentCalls(
+        '<div><Child :[k]="v"/></div>',
+        { Child: {}, k: 'title', v: 'T' },
+        { optimizeSignal },
+      )[0];
+      expect(call.props).toEqual({ title: 'T' });
+    });
+  }
+
+  it('静态 prop 名产物不变（回归护栏）', () => {
+    const call = mountComponentCalls('<div><Child :title="t"/></div>', {
+      Child: {},
+      t: 'T',
+    })[0];
+    expect(call.props).toEqual({ title: 'T' });
+  });
+});
