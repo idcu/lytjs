@@ -195,35 +195,35 @@
       "line": 69,
       "classification": "a",
       "entries": ["index", "ssr"],
-      "reason": "每次 generateSSR 调用内重置，同步执行，无跨调用残留"
+      "reason": "结构：写读都在同步函数 generateSSR 内（codegen-ssr.ts:91-223，声明无 async/await）；调用链只有 index.ts:345 compile→generateSSR 与 ssr.ts:1 再导出。每次调用在 99-103 先重置，JS 单线程下另一入口无法在本次调用中途插入，故读不到别的入口的写。"
     },
     "packages/compiler/src/codegen-ssr.ts::ssrMapEnabled": {
       "kind": "let/var",
       "line": 77,
       "classification": "a",
       "entries": ["index", "ssr"],
-      "reason": "每次 generateSSR 调用内重置，同步执行，无跨调用残留"
+      "reason": "结构：写读都在同步函数 generateSSR 内（codegen-ssr.ts:91-223，声明无 async/await）；调用链只有 index.ts:345 compile→generateSSR 与 ssr.ts:1 再导出。每次调用在 99-103 先按 options.sourceMap 重置，单线程下无跨入口交错。"
     },
     "packages/compiler/src/codegen-ssr.ts::ssrMapMarks": {
       "kind": "let/var",
       "line": 78,
       "classification": "a",
       "entries": ["index", "ssr"],
-      "reason": "每次 generateSSR 调用内重置，同步执行，无跨调用残留"
+      "reason": "结构：写读都在同步函数 generateSSR 内（codegen-ssr.ts:91-223，声明无 async/await）；调用链只有 index.ts:345 compile→generateSSR 与 ssr.ts:1 再导出。每次调用在 99-103 清空、215 再次清空，单线程下无跨入口交错。"
     },
     "packages/compiler/src/codegen-ssr.ts::ssrSelectModel": {
       "kind": "let/var",
       "line": 72,
       "classification": "a",
       "entries": ["index", "ssr"],
-      "reason": "每次 generateSSR 调用内重置，同步执行，无跨调用残留"
+      "reason": "结构：写读都在同步函数 generateSSR 调用栈内（codegen-ssr.ts:91-223，声明无 async/await）；ssrSelectModel 在 665-668 保存/恢复，只在 select 子树内临时设置，初值 undefined。index 与 /ssr 各持一份，单线程下另一入口无法在本次调用中途插入。"
     },
     "packages/compiler/src/codegen-ssr.ts::usesRenderList": {
       "kind": "let/var",
       "line": 74,
       "classification": "a",
       "entries": ["index", "ssr"],
-      "reason": "每次 generateSSR 调用内重置，同步执行，无跨调用残留"
+      "reason": "结构：写读都在同步函数 generateSSR 内（codegen-ssr.ts:91-223，声明无 async/await）；调用链只有 index.ts:345 compile→generateSSR 与 ssr.ts:1 再导出。每次调用在 99-103 置 false，单线程下无跨入口交错。"
     },
     "packages/compiler/src/index.ts::cacheStats": {
       "kind": "let/var",
@@ -251,7 +251,7 @@
       "line": 38,
       "classification": "a",
       "entries": ["index", "sfc"],
-      "reason": "解析缓存按入口各自自洽，跨入口最多多解析一次、不会算错"
+      "reason": "结构：parser-shared.ts:38-52 的纯 memo，key 是 tag 字符串，值只由 new RegExp(^</tag>) 决定，无外部可变输入；index 与 sfc 各自缓存同一映射，重复只损失命中率、不会读错值；LRU 淘汰按本入口 Map.size 独立进行。"
     },
     "packages/compiler/src/sfc/custom-blocks.ts::processorMap": {
       "kind": "new Map",
@@ -265,7 +265,7 @@
       "line": 40,
       "classification": "a",
       "entries": ["index", "sfc"],
-      "reason": "写读都在 transform 阶段（for.ts 写、if.ts 读），同一入口图内"
+      "reason": "结构：写方 transforms/for.ts:305，读方 transforms/if.ts:18/40 的 getForBranchElement；两者只由同一入口的 compile 调用链加载（index: compile→transform；sfc-entry.ts 只导出 parseSFC/compileSFC，不导出 parse/transform）。AST 不跨入口传递，两个入口各写各读。"
     },
     "packages/compiler/src/wasm/wasm-compiler.ts::warnedWasmSimulated": {
       "kind": "let/var",
@@ -1077,7 +1077,7 @@
       "line": 266,
       "classification": "a",
       "entries": ["index", "ssr"],
-      "reason": "纯渲染缓存，跨入口只影响命中率"
+      "reason": "结构：renderer/src/ssr/ssr-island.ts:266-310 的 WeakMap，key 是组件对象，值只由组件 template 与注入的编译器决定；index 与 /ssr 各自缓存，重复只多算一次模板，不读对方中间态，也不影响 SSR 输出一致性。"
     },
     "packages/renderer/src/unmount.ts::cleanupHookRegistry": {
       "kind": "new WeakMap",

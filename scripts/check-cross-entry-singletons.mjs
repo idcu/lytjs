@@ -23,7 +23,11 @@
  *   (b) 跨入口读写，当前已坏；
  *   (c) 跨入口读写，目前靠运气没暴露。
  *
- * 退出码：0 = 探针全绿且登记表与扫描一致；1 = 有失败探针 / 未登记 / 失效登记。
+ * **结构性理由口径**（2026-11-14 收紧）：`entries.length >= 2` 的状态不能只写
+ * 「单入口消费」——必须要么有探针，要么在 reason 里写清写方/读方为什么不可能落在
+ * 不同入口（文件 + 调用链 + 同步性/数据流论据）。理由少于 60 字视为未审，直接转红。
+ *
+ * 退出码：0 = 探针全绿且登记表与扫描一致；1 = 有失败探针 / 未登记 / 失效登记 / 理由过弱。
  */
 
 import { readdirSync, readFileSync } from 'node:fs';
@@ -262,6 +266,13 @@ async function main() {
     if (v.classification in counts) counts[v.classification]++;
   }
 
+  // ≥2 入口可达的状态：必须有探针，或给出结构性理由（文件/调用链），
+  // 不能只写「单入口消费」四个字。阈值只拦未审的空话，不替代人工判断。
+  const weakReasons = Object.entries(registered)
+    .filter(([, v]) => Array.isArray(v.entries) && v.entries.length >= 2)
+    .filter(([, v]) => typeof v.reason !== 'string' || v.reason.trim().length < 60)
+    .map(([k, v]) => `${k}（reason ${(v.reason ?? '').trim().length} 字）`);
+
   console.log('\n🔍 跨入口单例判据（dist 实测 + 模块级状态棘轮）');
   console.log(
     `   登记 ${Object.keys(registered).length} 项：a=${counts.a} / b=${counts.b} / c=${counts.c}` +
@@ -276,8 +287,9 @@ async function main() {
     console.log(`   ❌ 未登记模块级状态：${h.file}:${h.line} ${h.name} [${h.kind}]`);
   }
   for (const k of stale) console.log(`   ❌ 登记项已消失：${k}`);
+  for (const k of weakReasons) console.log(`   ❌ 多入口状态理由过弱（需文件/调用链）：${k}`);
 
-  const bad = failures.length + unregistered.length + stale.length;
+  const bad = failures.length + unregistered.length + stale.length + weakReasons.length;
   console.log(`   耗时 ${(performance.now() - t0).toFixed(0)} ms`);
   console.log(bad === 0 ? '✅ 跨入口状态共享与登记表全部一致\n' : `❌ ${bad} 项未通过\n`);
   process.exit(bad === 0 ? 0 : 1);
