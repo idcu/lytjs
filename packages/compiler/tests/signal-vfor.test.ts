@@ -515,3 +515,57 @@ describe('C-35f 列表项 kebab 组件', () => {
     });
   }
 });
+
+// ============================================================
+// C-35g：列表项 class/style/事件必须按语义应用，而不是一律 setAttribute
+// ============================================================
+
+describe('C-35g 列表项 class/style/事件', () => {
+  for (const optimizeSignal of [false, true]) {
+    const label = optimizeSignal ? '优化版' : '基础版';
+    it(`${label}：对象 :class 归一化为 class 字符串`, () => {
+      // 修前：setAttribute('class', {active:true}) ⇒ className 变成 "[object Object]"
+      const handle = mount(
+        '<ul><li v-for="item in items" :class="{ active: item.on }">x</li></ul>',
+        {
+          items: [
+            { id: 1, on: true },
+            { id: 2, on: false },
+          ],
+        },
+      );
+      expect(itemsOf(handle).map((li) => li.className)).toEqual(['active', '']);
+    });
+
+    it(`${label}：对象 :style 写入真实样式`, () => {
+      // 修前：setAttribute('style', {color:'red'}) ⇒ style="[object Object]"，color 为空
+      const handle = mount('<ul><li v-for="item in items" :style="{ color: item.c }">x</li></ul>', {
+        items: [{ id: 1, c: 'red' }],
+      });
+      expect(itemsOf(handle)[0].style.color).toBe('red');
+    });
+
+    it(`${label}：@click 生成真实监听器`, () => {
+      // 修前：setAttribute('onClick', fn) ⇒ 没有监听，点击不触发
+      const fn = vi.fn();
+      const handle = mount('<ul><li v-for="item in items" @click="fn(item)">x</li></ul>', {
+        items: [{ id: 1 }],
+        fn,
+      });
+      itemsOf(handle)[0].click();
+      expect(fn).toHaveBeenCalledTimes(1);
+    });
+
+    it(`${label}：v-bind 展开里的 class 与事件同样生效`, () => {
+      const fn = vi.fn();
+      const handle = mount('<ul><li v-for="item in items" v-bind="item"></li></ul>', {
+        items: [{ id: 'a', class: { row: true }, onClick: fn }],
+      });
+      const li = itemsOf(handle)[0];
+      expect(li.id).toBe('a');
+      expect(li.className).toBe('row');
+      li.click();
+      expect(fn).toHaveBeenCalledTimes(1);
+    });
+  }
+});

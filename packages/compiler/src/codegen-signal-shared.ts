@@ -438,6 +438,72 @@ export type ToExpr = (content: string, locals: ReadonlySet<string>) => string;
  *
  * `updateExpr` 为 null 表示该元素不参与更新（不会调用 reconcile update）。
  */
+/**
+ * 列表项 / 分支元素应用 DOM 属性时的运行时函数名。
+ * 基础版用完整名；优化版注入短别名（`a` / `c` / `s` / `v`）。
+ */
+export interface DomPropRuntime {
+  setAttribute: string;
+  setClass: string;
+  setStyle: string;
+  createEventHandler: string;
+}
+
+/** 基础版（完整函数名）。 */
+export const FULL_DOM_PROP_RUNTIME: DomPropRuntime = {
+  setAttribute: 'setAttribute',
+  setClass: 'setClass',
+  setStyle: 'setStyle',
+  createEventHandler: 'createEventHandler',
+};
+
+/** 事件 prop 键（`onMyEvent`）→ DOM 事件名（`my-event`）；`onClick` → `click`。 */
+export function toDomEventName(key: string): string {
+  return key
+    .slice(2)
+    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+    .toLowerCase();
+}
+
+/**
+ * 生成「把一个 props 键值应用到元素」的语句（C-35g）。
+ *
+ * 列表项此前一律 `setAttribute`：对象 class 变成 `[object Object]`、style 对象无效、
+ * `onClick` 被写成同名 HTML 属性因而没有任何监听。这里按语义分派到运行时 helper。
+ */
+export function buildDomPropApply(
+  target: string,
+  key: string,
+  valueCode: string,
+  runtime: DomPropRuntime = FULL_DOM_PROP_RUNTIME,
+): string {
+  if (key === 'class') return `${runtime.setClass}(${target}, ${valueCode});`;
+  if (key === 'style') return `${runtime.setStyle}(${target}, ${valueCode});`;
+  if (/^on[A-Z]/.test(key)) {
+    return `${runtime.createEventHandler}(${target}, ${JSON.stringify(toDomEventName(key))}, ${valueCode});`;
+  }
+  return `${runtime.setAttribute}(${target}, ${JSON.stringify(key)}, ${valueCode});`;
+}
+
+/**
+ * 生成 spread（`v-bind="obj"`）的逐项应用代码（C-35g）。
+ * 键名运行期才知道，故内联分派；语义与 `buildDomPropApply` 一致。
+ */
+export function buildDomPropSpreadApply(
+  target: string,
+  objectCode: string,
+  runtime: DomPropRuntime = FULL_DOM_PROP_RUNTIME,
+): string {
+  return (
+    `for (const [_k, _v] of Object.entries(${objectCode})) { ` +
+    `if (_k === 'class') ${runtime.setClass}(${target}, _v); ` +
+    `else if (_k === 'style') ${runtime.setStyle}(${target}, _v); ` +
+    `else if (/^on[A-Z]/.test(_k)) ${runtime.createEventHandler}(${target}, _k.slice(2)` +
+    `.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase(), _v); ` +
+    `else ${runtime.setAttribute}(${target}, _k, _v); }`
+  );
+}
+
 export function emitListItemProps(
   props: unknown,
   createExpr: string,
@@ -446,23 +512,25 @@ export function emitListItemProps(
   createLines: string[],
   updateLines: string[],
   toExpr: ToExpr,
+  runtime: DomPropRuntime = FULL_DOM_PROP_RUNTIME,
+  markRuntime?: (name: keyof DomPropRuntime) => void,
 ): void {
   if (!props || (props as { type?: number }).type !== NodeTypes.JS_OBJECT_EXPRESSION) return;
   for (const prop of (props as JSObjectExpression).properties) {
     if (prop.type !== NodeTypes.JS_PROPERTY) continue;
     const jsProp = prop as JSProperty;
     // C-35c：`v-bind="obj"`（spread）此前被当成普通属性，输出 `__spread__="[object Object]"`。
-    // 逐项写入真实属性（class/style/事件的完整语义由列表项 props 应用器后续统一）。
+    // C-35g：逐项应用时必须区分 class/style/事件，否则对象 class 与监听器仍然失效。
     if ((jsProp as { spread?: boolean }).spread === true) {
       const raw = (jsProp.value as SimpleExpressionNode).content;
       const code = toExpr(raw, locals);
-      createLines.push(
-        `for (const [_k, _v] of Object.entries(${code})) { ${createExpr}.setAttribute(_k, _v); }`,
-      );
+      markRuntime?.('setAttribute');
+      markRuntime?.('setClass');
+      markRuntime?.('setStyle');
+      markRuntime?.('createEventHandler');
+      createLines.push(buildDomPropSpreadApply(createExpr, code, runtime));
       if (updateExpr) {
-        updateLines.push(
-          `for (const [_k, _v] of Object.entries(${code})) { ${updateExpr}.setAttribute(_k, _v); }`,
-        );
+        updateLines.push(buildDomPropSpreadApply(updateExpr, code, runtime));
       }
       continue;
     }
@@ -474,19 +542,17 @@ export function emitListItemProps(
     }
     const key = (jsProp.key as SimpleExpressionNode).content.replace(/^["']|["']$/g, '');
     const value = (jsProp.value as SimpleExpressionNode).content;
-    if (key === 'key' || /^on[A-Z]/.test(key)) continue;
-    if (isStaticPropValue(value)) {
-      createLines.push(
-        `${createExpr}.setAttribute(${JSON.stringify(key)}, ${JSON.stringify(
-          value.replace(/^["']|["']$/g, ''),
-        )});`,
-      );
-    } else {
-      const code = toExpr(value, locals);
-      createLines.push(`${createExpr}.setAttribute(${JSON.stringify(key)}, ${code});`);
-      if (updateExpr) {
-        updateLines.push(`${updateExpr}.setAttribute(${JSON.stringify(key)}, ${code});`);
-      }
+    if (key === 'key') continue;
+    const valueCode = isStaticPropValue(value)
+      ? JSON.stringify(value.replace(/^["']|["']$/g, ''))
+      : toExpr(value, locals);
+    if (key === 'class') markRuntime?.('setClass');
+    else if (key === 'style') markRuntime?.('setStyle');
+    else if (/^on[A-Z]/.test(key)) markRuntime?.('createEventHandler');
+    else markRuntime?.('setAttribute');
+    createLines.push(buildDomPropApply(createExpr, key, valueCode, runtime));
+    if (!isStaticPropValue(value) && updateExpr) {
+      updateLines.push(buildDomPropApply(updateExpr, key, valueCode, runtime));
     }
   }
 }

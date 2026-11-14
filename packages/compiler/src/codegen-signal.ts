@@ -16,6 +16,8 @@ import {
   normalizeVNodeChildren,
   emitListItemProps as emitListItemPropsShared,
   emitListItemNode as emitListItemNodeShared,
+  buildDomPropApply,
+  buildDomPropSpreadApply,
   buildItemComponentPropsShared,
   buildStaticHtml as buildStaticHtmlShared,
   serializeStaticHtml as serializeStaticHtmlShared,
@@ -1769,13 +1771,14 @@ function buildReconcileArrayCode(
             if (prop.type !== NodeTypes.JS_PROPERTY) continue;
             const jsProp = prop as JSProperty;
             // C-35c：`v-bind="obj"`（spread）不得作为 `__spread__` 属性输出
+            // C-35g：逐项应用要区分 class/style/事件，统一交给共享 props 应用器。
             if ((jsProp as { spread?: boolean }).spread === true) {
               const spreadCode = prefixIdentifiers(
                 (jsProp.value as SimpleExpressionNode).content,
                 itemLocals,
               );
-              createBody += `for (const [_k, _v] of Object.entries(${spreadCode})) { ${elVar}.setAttribute(_k, _v); }`;
-              updateBody += `for (const [_k, _v] of Object.entries(${spreadCode})) { _el.setAttribute(_k, _v); }`;
+              createBody += buildDomPropSpreadApply(elVar, spreadCode);
+              updateBody += buildDomPropSpreadApply('_el', spreadCode);
               continue;
             }
             if (
@@ -1799,11 +1802,15 @@ function buildReconcileArrayCode(
             if (!isStaticPropValue(value)) {
               const valueCode = prefixIdentifiers(value, itemLocals);
               // 动态绑定：create 用新元素，update 用 reconcileArray 传入的已存在元素
-              createBody += `${elVar}.setAttribute('${key}', ${valueCode});`;
-              updateBody += `_el.setAttribute('${key}', ${valueCode});`;
+              createBody += buildDomPropApply(elVar, key, valueCode);
+              updateBody += buildDomPropApply('_el', key, valueCode);
             } else {
               // 静态属性
-              createBody += `${elVar}.setAttribute('${key}', '${value.replace(/^"|"$/g, '')}');`;
+              createBody += buildDomPropApply(
+                elVar,
+                key,
+                JSON.stringify(value.replace(/^"|"$/g, '')),
+              );
             }
           }
         }

@@ -20,6 +20,9 @@ import {
   normalizeVNodeChildren,
   emitListItemProps as emitListItemPropsShared,
   emitListItemNode as emitListItemNodeShared,
+  buildDomPropApply,
+  buildDomPropSpreadApply,
+  type DomPropRuntime,
   buildItemComponentPropsShared,
   buildStaticHtml as buildStaticHtmlShared,
   serializeStaticHtml as serializeStaticHtmlShared,
@@ -1279,6 +1282,23 @@ function processConditionalOptimized(
 // v-for 嵌套子元素的逐层建 DOM（优化版：仅注入 `_c.` 前缀）
 // ============================================================
 
+/** 本发射器的 DOM props 运行时名（短别名）与 import 登记。 */
+function optimizedDomPropRuntime(
+  options: SignalCodegenOptions,
+  usedRuntime: Set<string>,
+): { runtime: DomPropRuntime; mark: (name: keyof DomPropRuntime) => void } {
+  const useShortNames = options.useShortNames ?? true;
+  return {
+    runtime: {
+      setAttribute: getShortName('setAttribute', useShortNames),
+      setClass: getShortName('setClass', useShortNames),
+      setStyle: getShortName('setStyle', useShortNames),
+      createEventHandler: getShortName('createEventHandler', useShortNames),
+    },
+    mark: (name) => usedRuntime.add(name),
+  };
+}
+
 /** 本发射器（短别名 / `_c` 前缀）的列表项 props 生成。 */
 function emitListItemPropsOptimized(
   props: unknown,
@@ -1287,7 +1307,10 @@ function emitListItemPropsOptimized(
   locals: ReadonlySet<string>,
   createLines: string[],
   updateLines: string[],
+  options: SignalCodegenOptions,
+  usedRuntime: Set<string>,
 ): void {
+  const { runtime, mark } = optimizedDomPropRuntime(options, usedRuntime);
   emitListItemPropsShared(
     props,
     createExpr,
@@ -1296,6 +1319,8 @@ function emitListItemPropsOptimized(
     createLines,
     updateLines,
     toItemExpr,
+    runtime,
+    mark,
   );
 }
 
@@ -1493,6 +1518,8 @@ function processCallExpressionOptimized(
                   itemLocals,
                   createLines,
                   updateLines,
+                  options,
+                  usedRuntime,
                 );
                 const kidList = normalizeVNodeChildren(vnode.children);
                 if (kidList.length === 1) {
@@ -1549,6 +1576,8 @@ function processCallExpressionOptimized(
                   itemLocals,
                   createLines,
                   updateLines,
+                  options,
+                  usedRuntime,
                 );
                 emitListItemNodeOptimized(
                   vnode.children,
@@ -1580,7 +1609,13 @@ function processCallExpressionOptimized(
                 }
 
                 // 属性：静态值写死，动态值在 update 里同步（:key 除外）
-                const propResult = buildItemProps(vnode, itemLocals, tagInfo.varName);
+                const propResult = buildItemProps(
+                  vnode,
+                  itemLocals,
+                  tagInfo.varName,
+                  options,
+                  usedRuntime,
+                );
                 createBody += propResult.create;
                 updateBody += propResult.update;
 
@@ -2111,12 +2146,15 @@ function buildItemProps(
   vnode: VNodeCall,
   locals: ReadonlySet<string>,
   elVar: string,
+  options: SignalCodegenOptions,
+  usedRuntime: Set<string>,
 ): { create: string; update: string } {
   let create = '';
   let update = '';
   if (!vnode.props || vnode.props.type !== NodeTypes.JS_OBJECT_EXPRESSION)
     return { create, update };
 
+  const { runtime, mark } = optimizedDomPropRuntime(options, usedRuntime);
   const objExpr = vnode.props as JSObjectExpression;
   for (const prop of objExpr.properties) {
     if (prop.type !== NodeTypes.JS_PROPERTY) continue;
@@ -2136,33 +2174,33 @@ function buildItemProps(
       continue;
     }
     const propName = key.content.replace(/^"|"$/g, '');
-    // C-35c：`v-bind="obj"`（spread）逐项写入真实属性，而不是 `__spread__` 字面量
+    // C-35c：`v-bind="obj"`（spread）逐项应用，而不是 `__spread__` 字面量
+    // C-35g：逐项分派 class/style/事件（对象 class、监听器此前全部失效）。
     if ((jsProp as { spread?: boolean }).spread === true) {
       const spreadCode = toItemExpr(value.content, locals);
-      create += `for (const [_k, _v] of Object.entries(${spreadCode})) { ${elVar}.setAttribute(_k, _v); }`;
-      update += `for (const [_k, _v] of Object.entries(${spreadCode})) { _el.setAttribute(_k, _v); }`;
+      mark('setAttribute');
+      mark('setClass');
+      mark('setStyle');
+      mark('createEventHandler');
+      create += buildDomPropSpreadApply(elVar, spreadCode, runtime);
+      update += buildDomPropSpreadApply('_el', spreadCode, runtime);
       continue;
     }
     if (propName === 'key') continue;
-    if (
-      propName.startsWith('on') &&
-      propName.length > 2 &&
-      propName[2] === propName[2]!.toUpperCase()
-    ) {
-      continue;
-    }
 
     const rawValue = value.content;
     const isStaticLiteral = /^["']/.test(rawValue);
-    if (isStaticLiteral) {
-      // 静态字面量：只在 create 里写一次
-      const literal = rawValue.replace(/^"|"$/g, '');
-      create += `${elVar}.setAttribute(${JSON.stringify(propName)}, ${JSON.stringify(literal)});`;
-    } else {
-      // 动态绑定：create 用新建元素，update 用 reconcileArray 传入的 _el
-      const expr = toItemExpr(rawValue, locals);
-      create += `${elVar}.setAttribute(${JSON.stringify(propName)}, ${expr});`;
-      update += `_el.setAttribute(${JSON.stringify(propName)}, ${expr});`;
+    const valueCode = isStaticLiteral
+      ? JSON.stringify(rawValue.replace(/^"|"$/g, ''))
+      : toItemExpr(rawValue, locals);
+    if (propName === 'class') mark('setClass');
+    else if (propName === 'style') mark('setStyle');
+    else if (/^on[A-Z]/.test(propName)) mark('createEventHandler');
+    else mark('setAttribute');
+    // 静态字面量只在 create 里写一次；动态值 create/update 都写
+    create += buildDomPropApply(elVar, propName, valueCode, runtime);
+    if (!isStaticLiteral) {
+      update += buildDomPropApply('_el', propName, valueCode, runtime);
     }
   }
   return { create, update };
