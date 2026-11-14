@@ -2164,9 +2164,12 @@ function buildItemProps(
  * 静态属性原样写入；v-bind 的表达式按 `_c.` 前缀化（本模式上下文形参是 `_c`）。
  * 事件（v-on）暂不参与（Vapor 组件事件绑定留待后续版本）。
  */
-function buildComponentPropsObject(node: ElementNode): string {
-  return buildComponentPropsObjectShared(node, {
-    expr: (raw) => prefixIdentifiers(raw, new Set()).replace(/\b_ctx\./g, '_c.'),
+function buildComponentPropsObject(
+  node: ElementNode,
+  locals: ReadonlySet<string> = new Set(),
+): string {
+  return buildComponentPropsObjectShared(node, locals, {
+    expr: (raw, scope) => prefixIdentifiers(raw, scope).replace(/\b_ctx\./g, '_c.'),
   });
 }
 

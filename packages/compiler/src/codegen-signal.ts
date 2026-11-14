@@ -530,7 +530,7 @@ function processElement(
     const vpChildren = collectSlotVNodes(node.children, BASE_EMIT_PROFILE.ctxPrefix);
     dynamicBindings.push({
       varName: vpHost,
-      code: `mountVNode(createVNode(${vpTag},${buildComponentPropsObject(node)},[${vpChildren.join(',')}]),${vpHost});`,
+      code: `mountVNode(createVNode(${vpTag},${buildComponentPropsObject(node, locals)},[${vpChildren.join(',')}]),${vpHost});`,
     });
     return;
   }
@@ -550,7 +550,7 @@ function processElement(
       varName: hostVar,
       code: `mountComponent(${
         BUILTIN_COMPONENT_NAMES.has(node.tag) ? node.tag : componentRef(node.tag)
-      },${buildComponentPropsObject(node)},${hostVar}${slotsArg});`,
+      },${buildComponentPropsObject(node, locals)},${hostVar}${slotsArg});`,
     });
     return;
   }
@@ -2244,8 +2244,11 @@ function containsComponent(children: TemplateChildNode[]): boolean {
 /**
  * 构造传给组件的 props 对象字面量（`_ctx.` 前缀，与本 codegen 的前缀约定一致）
  */
-function buildComponentPropsObject(node: ElementNode): string {
-  return buildComponentPropsObjectShared(node, {
-    expr: (raw) => prefixIdentifiers(raw, new Set()),
+function buildComponentPropsObject(
+  node: ElementNode,
+  locals: ReadonlySet<string> = new Set(),
+): string {
+  return buildComponentPropsObjectShared(node, locals, {
+    expr: (raw, scope) => prefixIdentifiers(raw, scope),
   });
 }

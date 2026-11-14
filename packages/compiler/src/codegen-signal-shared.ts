@@ -1222,8 +1222,8 @@ export interface VNodeElementHooks {
   vnode: string;
   /** 入口即调用（优化版在此登记 `createVNode` 的运行时引用） */
   begin?: () => void;
-  /** props 对象字面量（两版上下文前缀不同） */
-  propsObject: (node: ElementNode) => string;
+  /** props 对象字面量（两版上下文前缀不同）；`locals` 用于保留作用域插槽参数 */
+  propsObject: (node: ElementNode, locals: ReadonlySet<string>) => string;
   /** 组件裸名 → 带上下文前缀的引用 */
   componentTag: (tag: string) => string;
   /** 插槽对象（组件分支专用） */
@@ -1251,7 +1251,7 @@ export function serializeVNodeElementShared(
     // 嵌套组件同样要带自己的插槽
     const nestedSlots = hooks.slots(node, locals);
     const nestedArg = nestedSlots ? `,${nestedSlots}` : '';
-    return `${hooks.vnode}(${hooks.componentTag(node.tag)},${hooks.propsObject(node)}${nestedArg})`;
+    return `${hooks.vnode}(${hooks.componentTag(node.tag)},${hooks.propsObject(node, locals)}${nestedArg})`;
   }
 
   // v-show → `style.display` 绑定。若元素另有 style/:style，则放弃该元素
@@ -1266,7 +1266,7 @@ export function serializeVNodeElementShared(
   if (showDirs.length && !showExp) return '';
 
   // 元素属性复用一个 props 构造：静态属性 + `:bind` + `@事件`（vnode 不需要 HTML 转义）
-  let attrs = node.props.length ? hooks.propsObject(node) : 'null';
+  let attrs = node.props.length ? hooks.propsObject(node, locals) : 'null';
   if (showExp) {
     const styleProp = `style:{"display":(${hooks.showExpr(showExp, locals)}?'':'none')}`;
     attrs = attrs === 'null' || attrs === '{}' ? `{${styleProp}}` : `{...${attrs},${styleProp}}`;
@@ -1278,16 +1278,18 @@ export function serializeVNodeElementShared(
 
 /** 组件 props 对象构造时唯一需要注入的差异：上下文前缀 */
 export interface ComponentPropsHooks {
-  expr: (raw: string) => string;
+  expr: (raw: string, locals: ReadonlySet<string>) => string;
 }
 
 /**
  * 构造传给组件的 props 对象字面量（两版共享）。
  *
  * 静态属性直接 JSON；`:bind` 与 `@事件` 走 `expr` 注入（基础版 `_ctx.`、优化版 `_c.`）。
+ * `locals` 必须透传：作用域插槽里 `p.y` 的 `p` 是插槽实参，不能再前缀成 `_ctx.p`。
  */
 export function buildComponentPropsObjectShared(
   node: ElementNode,
+  locals: ReadonlySet<string>,
   hooks: ComponentPropsHooks,
 ): string {
   const parts: string[] = [];
@@ -1304,7 +1306,7 @@ export function buildComponentPropsObjectShared(
       // C-35c：`v-bind="obj"`（无 arg）是对象展开，不是被忽略的无效指令。
       if (dir.name === 'bind' && !dir.arg && dir.exp) {
         const raw = getExpContent(dir.exp as SimpleExpressionNode);
-        if (raw) parts.push(`...${hooks.expr(raw)}`);
+        if (raw) parts.push(`...${hooks.expr(raw, locals)}`);
         continue;
       }
       if (!dir.arg || !dir.exp) continue;
@@ -1316,8 +1318,8 @@ export function buildComponentPropsObjectShared(
         // C-35b：动态 arg（`:[k]`）是表达式，必须写成**计算键**；
         // 此前一律 `JSON.stringify(key)` ⇒ 产物 `{"k": …}`，运行期键名变成字面量 k。
         const isDynamicArg = (dir.arg as SimpleExpressionNode).isStatic === false;
-        const propKey = isDynamicArg ? `[${hooks.expr(key)}]` : JSON.stringify(key);
-        parts.push(`${propKey}:${hooks.expr(raw)}`);
+        const propKey = isDynamicArg ? `[${hooks.expr(key, locals)}]` : JSON.stringify(key);
+        parts.push(`${propKey}:${hooks.expr(raw, locals)}`);
         continue;
       }
 
@@ -1325,7 +1327,7 @@ export function buildComponentPropsObjectShared(
       // 与 @lytjs/component 的 emit()/toHandlerKey() 约定对齐 —— 事件以 `onXxx`
       // 形式作为 prop 传入，组件内部 emit('click') 时会回查 props/attrs.onClick。
       if (dir.name === 'on') {
-        parts.push(`${JSON.stringify(toComponentEventKey(key))}:${hooks.expr(raw)}`);
+        parts.push(`${JSON.stringify(toComponentEventKey(key))}:${hooks.expr(raw, locals)}`);
       }
     }
   }

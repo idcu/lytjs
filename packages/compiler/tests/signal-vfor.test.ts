@@ -412,3 +412,38 @@ describe('C-35c v-bind 对象展开', () => {
     });
   }
 });
+
+// ============================================================
+// C-35d：作用域插槽内的 props 必须保留插槽作用域
+// ============================================================
+
+describe('C-35d 作用域插槽 props 作用域', () => {
+  for (const optimizeSignal of [false, true]) {
+    const label = optimizeSignal ? '优化版' : '基础版';
+    it(`${label}：子组件 props 不得把插槽参数前缀成 _ctx.`, () => {
+      // 修前：序列化插槽内容时 propsObject 内部恒用 `new Set()`，
+      // `p.y` 被写成 `_ctx.p.y`，运行期取不到插槽实参 ⇒ props.x = undefined。
+      const call = mountComponentCalls(
+        '<div><Comp v-slot="p"><Child :x="p.y"/></Comp></div>',
+        { Comp: {}, Child: {} },
+        { optimizeSignal },
+      )[0];
+      const [vnode] = call.slots!.default({ y: 'Y' }) as Array<{
+        props: Record<string, unknown>;
+      }>;
+      expect(vnode.props).toEqual({ x: 'Y' });
+    });
+
+    it(`${label}：插槽内元素的绑定不得把插槽参数前缀成 _ctx.`, () => {
+      const call = mountComponentCalls(
+        '<div><Comp v-slot="p"><span :title="p.y"/></Comp></div>',
+        { Comp: {} },
+        { optimizeSignal },
+      )[0];
+      const [vnode] = call.slots!.default({ y: 'Y' }) as Array<{
+        props: Record<string, unknown>;
+      }>;
+      expect(vnode.props).toEqual({ title: 'Y' });
+    });
+  }
+});
