@@ -191,9 +191,6 @@ function optimize(root: RootNode, options: TransformOptions): void;
 
 ```ts
 interface CompilerOptions extends ParserOptions, TransformOptions, CodegenOptions {
-  /** 空白处理策略：'condense'（压缩空白）或 'preserve'（保留空白） */
-  whitespace?: 'condense' | 'preserve';
-
   /**
    * 渲染模式：
    * - 'vnode'：使用 VNode diff 算法（默认）
@@ -242,6 +239,12 @@ interface ParserOptions {
    * 默认为 true。设为 false 时，所有裸指令名将被视为普通 HTML 属性。
    */
   bareDirectives?: boolean;
+  /**
+   * 空白处理策略：
+   * - 'condense'（默认）：压缩根级空白文本节点
+   * - 'preserve'：原样保留空白文本节点
+   */
+  whitespace?: 'condense' | 'preserve';
 }
 ```
 

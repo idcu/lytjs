@@ -301,6 +301,20 @@ describe('parser', () => {
     });
   });
 
+  // C-14：CompilerOptions.whitespace 此前只声明未读取 ⇒ 'preserve' 无效果。
+  describe('whitespace', () => {
+    it('默认压缩根级空白文本节点', () => {
+      const ast = parse('<div></div>   <span></span>');
+      expect(ast.children.length).toBe(2);
+    });
+
+    it("'preserve' 保留根级空白文本节点", () => {
+      const ast = parse('<div></div>   <span></span>', { whitespace: 'preserve' });
+      expect(ast.children.length).toBe(3);
+      expect((ast.children[1] as TextNode).content).toBe('   ');
+    });
+  });
+
   describe('error recovery', () => {
     it('should handle unclosed tags gracefully', () => {
       const ast = parse('<div><span>hello');

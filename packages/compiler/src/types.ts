@@ -299,6 +299,10 @@ export interface ParserOptions {
    * 设为 false 时，所有裸指令名将被视为普通 HTML 属性。
    */
   bareDirectives?: boolean;
+  /**
+   * 空白处理策略：'condense'（默认，压缩根级空白文本节点）或 'preserve'（原样保留）。
+   */
+  whitespace?: 'condense' | 'preserve';
 }
 
 export interface TransformOptions {
@@ -345,7 +349,6 @@ export interface CodegenOptions {
 }
 
 export interface CompilerOptions extends ParserOptions, TransformOptions, CodegenOptions {
-  whitespace?: 'condense' | 'preserve';
   /** 渲染模式：'vnode' 使用 VNode diff，'signal' 使用 Signal + 直接 DOM 操作，'vapor' 是 'signal' 的别名 */
   rendererMode?: 'vnode' | 'signal' | 'vapor';
   /** SSR 编译模式：启用后跳过客户端专用指令（v-on, v-model, v-show），生成 renderToString 格式代码 */

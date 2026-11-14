@@ -106,7 +106,12 @@ export function parseChildren(
   }
 
   // Handle whitespace condensing
-  if (mode === TextModes.DATA && parent.type !== NodeTypes.ELEMENT) {
+  // C-14：whitespace 此前只声明未读取；'preserve' 时原样保留空白文本节点。
+  if (
+    mode === TextModes.DATA &&
+    parent.type !== NodeTypes.ELEMENT &&
+    context.options.whitespace !== 'preserve'
+  ) {
     nodes = condenseWhitespace(nodes);
   }
 
