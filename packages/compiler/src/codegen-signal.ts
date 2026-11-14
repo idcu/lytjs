@@ -7,6 +7,7 @@ import {
   genVarName,
   getExpContent,
   isStaticPropValue,
+  stripPropKeyQuotes,
   componentRef as componentRefShared,
   componentRefExpr,
   readInterpolationExpr,
@@ -1512,7 +1513,7 @@ function buildReconcileArrayCode(
             ) {
               continue;
             }
-            const key = (jsProp.key as SimpleExpressionNode).content.replace(/^"|"$/g, '');
+            const key = stripPropKeyQuotes((jsProp.key as SimpleExpressionNode).content);
             const value = (jsProp.value as SimpleExpressionNode).content;
             if (key === 'key') continue; // :key 不写为 DOM 属性
             // ⚠️ 旧判据「值里没有 `_ctx` / 没有 `(` 就算静态」会把 `:data-k="x"`
@@ -1554,7 +1555,7 @@ function buildReconcileArrayCode(
           typeof jsProp.key !== 'string' &&
           !Array.isArray(jsProp.key) &&
           jsProp.key.type === NodeTypes.SIMPLE_EXPRESSION &&
-          jsProp.key.content.replace(/^["']|["']$/g, '') === 'key' &&
+          stripPropKeyQuotes(jsProp.key.content) === 'key' &&
           jsProp.value &&
           typeof jsProp.value !== 'string' &&
           !Array.isArray(jsProp.value) &&

@@ -71,6 +71,18 @@ describe('Signal Codegen Optimized', () => {
       ]);
     });
 
+    it('should evaluate quote-prefixed expressions in v-for item props', () => {
+      // 回归：`:data-x="'a' + x.id"` 曾因「首字符是引号 ⇒ 整段是字面量」被判成静态，
+      // 产物把表达式源码写进属性，DOM 得到 `'a' + x.id` 而不是 `a1`。
+      const handle = mount(
+        `<ul><li v-for="x in xs" :key="x.id" :data-x="'a' + x.id">{{ x.name }}</li></ul>`,
+        { xs: [{ id: 1, name: 'A' }] },
+      );
+      const li = handle.container.querySelector('li')!;
+      expect(li.getAttribute('data-x')).toBe('a1');
+      expect(li.textContent).toBe('A');
+    });
+
     it('should handle v-model directive', () => {
       const ctx: Record<string, unknown> = { value: 'V' };
       const handle = mount('<input v-model="value" />', ctx);

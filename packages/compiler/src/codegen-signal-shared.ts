@@ -321,7 +321,7 @@ export function serializeBranchHtml(
               jsProp.key.type === NodeTypes.SIMPLE_EXPRESSION &&
               jsProp.value.type === NodeTypes.SIMPLE_EXPRESSION
             ) {
-              const key = (jsProp.key as SimpleExpressionNode).content.replace(/^"|"$/g, '');
+              const key = stripPropKeyQuotes((jsProp.key as SimpleExpressionNode).content);
               const value = (jsProp.value as SimpleExpressionNode).content;
               if (isStaticPropValue(value)) {
                 attrs += ` ${key}="${escapeHtmlStatic(hooks.stripStaticQuotes(value))}"`;
@@ -369,6 +369,17 @@ export function isStaticPropValue(value: string): boolean {
   const v = value.trim();
   if (/^["'][\s\S]*["']$/.test(v)) return true;
   return /^(?:-?\d+(?:\.\d+)?|true|false|null|undefined)$/.test(v);
+}
+
+/**
+ * 去掉属性名外层的单/双引号。
+ *
+ * 属性名判据必须只有这一处：旧代码在不同发射器里各写一套，有的只去双引号，
+ * 于是单引号形态的属性名（尤其 `:key`）会被当成另一个名字 —— 表达式还是
+ * 那个表达式，判据却分叉了。
+ */
+export function stripPropKeyQuotes(name: string): string {
+  return name.replace(/^["']|["']$/g, '');
 }
 
 /** 组件引用表达式；kebab 名不是合法标识符，必须写成 `ctx["my-comp"]`。 */
@@ -542,7 +553,7 @@ export function emitListItemProps(
     ) {
       continue;
     }
-    const key = (jsProp.key as SimpleExpressionNode).content.replace(/^["']|["']$/g, '');
+    const key = stripPropKeyQuotes((jsProp.key as SimpleExpressionNode).content);
     const value = (jsProp.value as SimpleExpressionNode).content;
     if (key === 'key') continue;
     const valueCode = isStaticPropValue(value)
@@ -1275,7 +1286,7 @@ export function buildItemComponentPropsShared(
           ? String((key as { content: string }).content)
           : null;
     if (!keyName) continue;
-    const cleanKey = keyName.replace(/^["']|["']$/g, '');
+    const cleanKey = stripPropKeyQuotes(keyName);
     if (!cleanKey || cleanKey === 'key') continue;
 
     const value = prop.value as unknown;
@@ -1878,7 +1889,7 @@ export function processVNodeCallPropsShared(
       continue;
     }
 
-    const key = (jsProp.key as SimpleExpressionNode).content.replace(/^"|"$/g, '');
+    const key = stripPropKeyQuotes((jsProp.key as SimpleExpressionNode).content);
     const value = (jsProp.value as SimpleExpressionNode).content;
 
     if (key === 'textContent') {

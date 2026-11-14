@@ -456,6 +456,18 @@
       "expected": "<table><tr><td>a</td></tr><tr><td>b</td></tr></table>"
     },
     {
+      "id": "for15",
+      "group": "v-for",
+      "template": "<ul><li v-for=\"x in xs\" :key=\"x\" :data-x=\"'a' + x.id\">{{ x.name }}</li></ul>",
+      "state": {
+        "xs": [
+          { "id": 1, "name": "A" },
+          { "id": 2, "name": "B" }
+        ]
+      },
+      "expected": "<ul><li data-x=\"a1\">A</li><li data-x=\"a2\">B</li></ul>"
+    },
+    {
       "id": "bin01",
       "group": "动态属性",
       "template": "<div :id=\"i\">x</div>",

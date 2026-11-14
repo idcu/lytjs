@@ -11,6 +11,7 @@ import {
   OPTIMIZED_EMIT_PROFILE,
   genVarName,
   isStaticPropValue,
+  stripPropKeyQuotes,
   componentRef as componentRefShared,
   componentRefExpr,
   readInterpolationExpr,
@@ -1542,7 +1543,7 @@ function buildBranchComponentProps(vnode: VNodeCall, locals: ReadonlySet<string>
     if (prop.type !== NodeTypes.JS_PROPERTY) continue;
     const jsProp = prop as JSProperty;
     if (jsProp.key.type !== NodeTypes.SIMPLE_EXPRESSION) continue;
-    const key = (jsProp.key as SimpleExpressionNode).content.replace(/^"|"$/g, '');
+    const key = stripPropKeyQuotes((jsProp.key as SimpleExpressionNode).content);
     if (jsProp.value.type !== NodeTypes.SIMPLE_EXPRESSION) continue;
     entries.push(
       `${JSON.stringify(key)}:${renderExpression((jsProp.value as SimpleExpressionNode).content, locals)}`,
@@ -1635,7 +1636,7 @@ function collectBranchDynamics(
         }
         if (jsProp.key.type !== NodeTypes.SIMPLE_EXPRESSION) continue;
         if (jsProp.value.type !== NodeTypes.SIMPLE_EXPRESSION) continue;
-        const key = (jsProp.key as SimpleExpressionNode).content.replace(/^"|"$/g, '');
+        const key = stripPropKeyQuotes((jsProp.key as SimpleExpressionNode).content);
         const value = (jsProp.value as SimpleExpressionNode).content;
         const expr = toItemExpr(value, locals);
         const bareKey = key.replace(/^v-bind:/, '').replace(/^:/, '');
@@ -1922,7 +1923,7 @@ function extractItemKeyExpr(vnode: VNodeCall | null, locals: ReadonlySet<string>
       typeof key !== 'string' &&
       !Array.isArray(key) &&
       key.type === NodeTypes.SIMPLE_EXPRESSION &&
-      key.content.replace(/^"|"$/g, '') === 'key' &&
+      stripPropKeyQuotes(key.content) === 'key' &&
       value &&
       typeof value !== 'string' &&
       !Array.isArray(value) &&
@@ -1973,7 +1974,7 @@ function buildItemProps(
     ) {
       continue;
     }
-    const propName = key.content.replace(/^"|"$/g, '');
+    const propName = stripPropKeyQuotes(key.content);
     // C-35c：`v-bind="obj"`（spread）逐项应用，而不是 `__spread__` 字面量
     // C-35g：逐项分派 class/style/事件（对象 class、监听器此前全部失效）。
     if ((jsProp as { spread?: boolean }).spread === true) {
@@ -1989,7 +1990,10 @@ function buildItemProps(
     if (propName === 'key') continue;
 
     const rawValue = value.content;
-    const isStaticLiteral = /^["']/.test(rawValue);
+    // 判「整段是否为字面量」，与基础实现同一语义（`isStaticPropValue`）。
+    // 旧实现只判首字符是否为引号：`:data-x="'a' + x.id"` 会以 `'` 开头，
+    // 被误当字面量输出成 `"'a' + x.id"`，DOM 里得到表达式源码而不是求值结果。
+    const isStaticLiteral = isStaticPropValue(rawValue);
     const valueCode = isStaticLiteral
       ? JSON.stringify(rawValue.replace(/^"|"$/g, ''))
       : toItemExpr(rawValue, locals);
