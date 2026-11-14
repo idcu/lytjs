@@ -45,6 +45,9 @@ export function getTemplateCompiler(): typeof templateCompiler {
  * 其第一个参数即组件公共实例代理（`patch-component` 以 `renderFn.call(ctx, ctx)` 调用），
  * 因此**无需 bind this**。
  */
+/** 空渲染：inject/provide 初始化失败时兜底，避免 render 为 undefined。 */
+const EMPTY_RENDER: RenderFunction = () => null as unknown as VNode;
+
 function resolveTemplateRender(type: Record<string, unknown>): RenderFunction {
   const template = type.template as string;
 
@@ -59,7 +62,7 @@ function resolveTemplateRender(type: Record<string, unknown>): RenderFunction {
         `② 若你确实要用手写 render / AOT 预编译，请去掉 template 选项；` +
         `③ 或显式调用 setTemplateCompiler() 注入自己的实现。`,
     );
-    return (() => null as unknown as VNode) as RenderFunction;
+    return EMPTY_RENDER;
   }
 
   const render = templateCompiler(template) as RenderFunction & ((...a: unknown[]) => unknown);
@@ -192,7 +195,7 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
       );
     }
     handleError(err as Error, instance, 'finishComponentSetup (inject initialization)');
-    instance.render = (() => null) as RenderFunction;
+    instance.render = EMPTY_RENDER;
     return;
   }
 
@@ -392,7 +395,7 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
       );
     }
     handleError(err as Error, instance, 'finishComponentSetup (provide initialization)');
-    instance.render = (() => null) as RenderFunction;
+    instance.render = EMPTY_RENDER;
     return;
   }
 
