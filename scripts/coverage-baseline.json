@@ -1,41 +1,22 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-14T19:41:19.689Z",
-  "head": "ce2f996755e6a6eb8619197e562101e0ef239f54",
+  "updatedAt": "2026-11-15T07:57:07.591Z",
+  "head": "74660cc73276a887e4b2ddae53b1a0436f5c9b3b",
   "rule": "逐文件 covered 取三次 test:coverage 运行的最小值（下界，不设容差）；branches 只记录、不参与判据；提升需显式 --update 才会入账",
   "runs": [
     {
       "run": 1,
       "statements": {
-        "covered": 54932,
-        "total": 61988
+        "covered": 54919,
+        "total": 61975
       },
       "functions": {
-        "covered": 3886,
-        "total": 4336
+        "covered": 3885,
+        "total": 4335
       },
       "lines": {
-        "covered": 54932,
-        "total": 61988
-      },
-      "branches": {
-        "covered": 16600,
-        "total": 18851
-      }
-    },
-    {
-      "run": 2,
-      "statements": {
-        "covered": 54932,
-        "total": 61988
-      },
-      "functions": {
-        "covered": 3886,
-        "total": 4336
-      },
-      "lines": {
-        "covered": 54932,
-        "total": 61988
+        "covered": 54919,
+        "total": 61975
       },
       "branches": {
         "covered": 16598,
@@ -43,41 +24,60 @@
       }
     },
     {
-      "run": 3,
+      "run": 2,
       "statements": {
-        "covered": 54932,
-        "total": 61988
+        "covered": 54920,
+        "total": 61975
       },
       "functions": {
-        "covered": 3886,
-        "total": 4336
+        "covered": 3885,
+        "total": 4335
       },
       "lines": {
-        "covered": 54932,
-        "total": 61988
+        "covered": 54920,
+        "total": 61975
       },
       "branches": {
-        "covered": 16603,
-        "total": 18854
+        "covered": 16596,
+        "total": 18847
+      }
+    },
+    {
+      "run": 3,
+      "statements": {
+        "covered": 54919,
+        "total": 61975
+      },
+      "functions": {
+        "covered": 3885,
+        "total": 4335
+      },
+      "lines": {
+        "covered": 54919,
+        "total": 61975
+      },
+      "branches": {
+        "covered": 16600,
+        "total": 18851
       }
     }
   ],
   "global": {
     "statements": {
-      "covered": 54932,
-      "total": 61988
+      "covered": 54919,
+      "total": 61975
     },
     "functions": {
-      "covered": 3886,
-      "total": 4336
+      "covered": 3885,
+      "total": 4335
     },
     "lines": {
-      "covered": 54932,
-      "total": 61988
+      "covered": 54919,
+      "total": 61975
     },
     "branches": {
-      "covered": 16598,
-      "total": 18854,
+      "covered": 16596,
+      "total": 18851,
       "informational": true
     }
   },
@@ -781,7 +781,7 @@
       },
       "branches": {
         "covered": 126,
-        "total": 133,
+        "total": 134,
         "informational": true
       }
     },
@@ -952,7 +952,7 @@
       },
       "branches": {
         "covered": 332,
-        "total": 397,
+        "total": 398,
         "informational": true
       }
     },
@@ -971,7 +971,7 @@
       },
       "branches": {
         "covered": 667,
-        "total": 749,
+        "total": 752,
         "informational": true
       }
     },
@@ -989,8 +989,8 @@
         "total": 1084
       },
       "branches": {
-        "covered": 355,
-        "total": 408,
+        "covered": 359,
+        "total": 407,
         "informational": true
       }
     },
@@ -1008,8 +1008,8 @@
         "total": 660
       },
       "branches": {
-        "covered": 219,
-        "total": 269,
+        "covered": 218,
+        "total": 268,
         "informational": true
       }
     },
@@ -1027,7 +1027,7 @@
         "total": 506
       },
       "branches": {
-        "covered": 164,
+        "covered": 163,
         "total": 195,
         "informational": true
       }
@@ -1066,7 +1066,7 @@
       },
       "branches": {
         "covered": 56,
-        "total": 60,
+        "total": 61,
         "informational": true
       }
     },
@@ -1199,7 +1199,7 @@
       },
       "branches": {
         "covered": 55,
-        "total": 74,
+        "total": 75,
         "informational": true
       }
     },
@@ -1313,7 +1313,7 @@
       },
       "branches": {
         "covered": 89,
-        "total": 102,
+        "total": 101,
         "informational": true
       }
     },
@@ -1370,7 +1370,7 @@
       },
       "branches": {
         "covered": 140,
-        "total": 157,
+        "total": 156,
         "informational": true
       }
     },
@@ -1578,8 +1578,8 @@
         "total": 357
       },
       "branches": {
-        "covered": 134,
-        "total": 148,
+        "covered": 135,
+        "total": 147,
         "informational": true
       }
     },
@@ -1654,7 +1654,7 @@
         "total": 156
       },
       "branches": {
-        "covered": 79,
+        "covered": 80,
         "total": 92,
         "informational": true
       }
@@ -2129,7 +2129,7 @@
         "total": 208
       },
       "branches": {
-        "covered": 100,
+        "covered": 101,
         "total": 106,
         "informational": true
       }
@@ -2148,7 +2148,7 @@
         "total": 281
       },
       "branches": {
-        "covered": 76,
+        "covered": 77,
         "total": 87,
         "informational": true
       }
@@ -2300,7 +2300,7 @@
         "total": 271
       },
       "branches": {
-        "covered": 59,
+        "covered": 57,
         "total": 68,
         "informational": true
       }
@@ -2357,7 +2357,7 @@
         "total": 57
       },
       "branches": {
-        "covered": 40,
+        "covered": 39,
         "total": 42,
         "informational": true
       }
@@ -2433,7 +2433,7 @@
         "total": 119
       },
       "branches": {
-        "covered": 43,
+        "covered": 44,
         "total": 45,
         "informational": true
       }
@@ -3383,7 +3383,7 @@
         "total": 695
       },
       "branches": {
-        "covered": 253,
+        "covered": 255,
         "total": 289,
         "informational": true
       }
@@ -4980,7 +4980,7 @@
       },
       "branches": {
         "covered": 40,
-        "total": 58,
+        "total": 59,
         "informational": true
       }
     },
@@ -5986,7 +5986,7 @@
         "total": 174
       },
       "branches": {
-        "covered": 55,
+        "covered": 54,
         "total": 65,
         "informational": true
       }
@@ -6006,7 +6006,7 @@
       },
       "branches": {
         "covered": 95,
-        "total": 113,
+        "total": 114,
         "informational": true
       }
     },
@@ -7240,7 +7240,7 @@
         "total": 519
       },
       "branches": {
-        "covered": 123,
+        "covered": 124,
         "total": 150,
         "informational": true
       }
@@ -7317,7 +7317,7 @@
       },
       "branches": {
         "covered": 37,
-        "total": 39,
+        "total": 38,
         "informational": true
       }
     },
@@ -7525,7 +7525,7 @@
         "total": 230
       },
       "branches": {
-        "covered": 58,
+        "covered": 57,
         "total": 63,
         "informational": true
       }
@@ -7589,20 +7589,20 @@
     },
     "packages/tools/packages/cli/src/commands/run.ts": {
       "statements": {
-        "covered": 104,
-        "total": 188
+        "covered": 91,
+        "total": 175
       },
       "functions": {
-        "covered": 4,
-        "total": 4
+        "covered": 3,
+        "total": 3
       },
       "lines": {
-        "covered": 104,
-        "total": 188
+        "covered": 91,
+        "total": 175
       },
       "branches": {
-        "covered": 27,
-        "total": 49,
+        "covered": 21,
+        "total": 43,
         "informational": true
       }
     },
@@ -8172,7 +8172,7 @@
       },
       "branches": {
         "covered": 31,
-        "total": 37,
+        "total": 36,
         "informational": true
       }
     },
@@ -8229,7 +8229,7 @@
       },
       "branches": {
         "covered": 16,
-        "total": 28,
+        "total": 27,
         "informational": true
       }
     },
@@ -8248,7 +8248,7 @@
       },
       "branches": {
         "covered": 67,
-        "total": 90,
+        "total": 89,
         "informational": true
       }
     },
@@ -8418,8 +8418,8 @@
         "total": 338
       },
       "branches": {
-        "covered": 152,
-        "total": 156,
+        "covered": 153,
+        "total": 157,
         "informational": true
       }
     },
@@ -8482,50 +8482,58 @@
     }
   },
   "jitter": {
+    "statements": [
+      {
+        "file": "packages/ecosystem/packages/ui/src/components/Drawer.ts",
+        "values": [202, 203, 202]
+      }
+    ],
+    "lines": [
+      {
+        "file": "packages/ecosystem/packages/ui/src/components/Drawer.ts",
+        "values": [202, 203, 202]
+      }
+    ],
     "branches": [
       {
         "file": "packages/common/packages/a11y/src/index.ts",
-        "values": [160, 161, 159]
+        "values": [161, 159, 160]
+      },
+      {
+        "file": "packages/common/packages/string/src/index.ts",
+        "values": [127, 126, 126]
+      },
+      {
+        "file": "packages/compiler/src/codegen-signal-optimized.ts",
+        "values": [332, 332, 333]
       },
       {
         "file": "packages/compiler/src/codegen-signal-shared.ts",
-        "values": [667, 668, 668]
-      },
-      {
-        "file": "packages/compiler/src/codegen-signal.ts",
-        "values": [355, 355, 360]
+        "values": [667, 668, 671]
       },
       {
         "file": "packages/compiler/src/codegen-ssr.ts",
-        "values": [220, 220, 219]
+        "values": [219, 219, 218]
+      },
+      {
+        "file": "packages/compiler/src/codegen.ts",
+        "values": [163, 164, 164]
+      },
+      {
+        "file": "packages/compiler/src/index.ts",
+        "values": [57, 56, 56]
       },
       {
         "file": "packages/compiler/src/parser-children.ts",
-        "values": [56, 55, 55]
-      },
-      {
-        "file": "packages/compiler/src/prefix-identifiers.ts",
-        "values": [89, 89, 90]
-      },
-      {
-        "file": "packages/compiler/src/transform.ts",
-        "values": [135, 134, 136]
+        "values": [57, 55, 56]
       },
       {
         "file": "packages/compiler/src/optimizations/index.ts",
         "values": [75, 74, 75]
       },
       {
-        "file": "packages/compiler/src/sfc/compile.ts",
-        "values": [141, 140, 140]
-      },
-      {
-        "file": "packages/compiler/src/transforms/if.ts",
-        "values": [80, 79, 80]
-      },
-      {
         "file": "packages/compiler/src/transforms/transform-element.ts",
-        "values": [325, 324, 323]
+        "values": [323, 324, 325]
       },
       {
         "file": "packages/component/src/component-init.ts",
@@ -8533,35 +8541,43 @@
       },
       {
         "file": "packages/component/src/component-proxy.ts",
-        "values": [100, 102, 102]
+        "values": [101, 101, 102]
       },
       {
-        "file": "packages/component/src/component-setup.ts",
-        "values": [76, 77, 77]
+        "file": "packages/component/src/lifecycle.ts",
+        "values": [59, 59, 57]
       },
       {
         "file": "packages/component/src/props.ts",
-        "values": [117, 115, 116]
+        "values": [115, 116, 117]
       },
       {
-        "file": "packages/component/src/transition.ts",
-        "values": [43, 44, 44]
+        "file": "packages/component/src/slots.ts",
+        "values": [40, 40, 39]
       },
       {
         "file": "packages/core/src/create-app.ts",
         "values": [142, 141, 141]
       },
       {
-        "file": "packages/dom-runtime/src/index.ts",
-        "values": [255, 255, 253]
-      },
-      {
         "file": "packages/ecosystem/packages/plugin/src/validator.ts",
-        "values": [110, 109, 109]
+        "values": [109, 110, 109]
       },
       {
         "file": "packages/ecosystem/packages/ui/src/components/Dialog.ts",
-        "values": [68, 67, 68]
+        "values": [67, 68, 67]
+      },
+      {
+        "file": "packages/ecosystem/packages/ui/src/components/Drawer.ts",
+        "values": [40, 41, 40]
+      },
+      {
+        "file": "packages/ecosystem/packages/web-framework/packages/http-server/src/router.ts",
+        "values": [55, 55, 54]
+      },
+      {
+        "file": "packages/ecosystem/packages/web-framework/packages/http-server/src/server.ts",
+        "values": [96, 95, 96]
       },
       {
         "file": "packages/reactivity/src/effect.ts",
@@ -8569,35 +8585,19 @@
       },
       {
         "file": "packages/reactivity/src/reactive.ts",
-        "values": [181, 181, 182]
+        "values": [182, 181, 182]
       },
       {
-        "file": "packages/renderer/src/ssr/ssr-island.ts",
-        "values": [124, 123, 124]
-      },
-      {
-        "file": "packages/renderer/src/ssr/ssr-utils.ts",
-        "values": [38, 37, 37]
-      },
-      {
-        "file": "packages/vdom/src/patch-children.ts",
-        "values": [32, 31, 31]
-      },
-      {
-        "file": "packages/vdom/src/patch-fragment.ts",
-        "values": [16, 17, 16]
-      },
-      {
-        "file": "packages/vdom/src/patch-suspense.ts",
-        "values": [67, 68, 67]
+        "file": "packages/tools/packages/cli/src/commands/create.ts",
+        "values": [58, 58, 57]
       },
       {
         "file": "packages/vdom/src/vnode.ts",
-        "values": [152, 153, 153]
+        "values": [153, 153, 154]
       },
       {
         "file": "packages/web/src/css-vars.ts",
-        "values": [103, 104, 104]
+        "values": [104, 103, 104]
       }
     ]
   },
