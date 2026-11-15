@@ -14,6 +14,7 @@ keywords: [S35, P0 止血, 体积裁决, 负控, 覆盖率基线, 逐文件棘�
   statements·functions·lines 不得降，未插桩不新增，branches 仅记录。
 - 发布门禁去手工环境（workspace 派生 + 幂等补链 + 本树解析）；序列=全档门禁→version→build→升版后子集。
 - CLI 版本改构建期注入 `__CLI_VERSION__`，删回落；`check-runtime-version` 覆盖 cli ESM+CJS `--version`。
+- 覆盖率基线 `--update`（cb770be9）：run.ts 地板 91/175，判据未改；slow 22/22。
 - slow 22 项（21 命名 + 1 自动前置）。上一轮见 [NOW 快照](NOW-history/2026-11-14-signal收编与产物门禁.md)。
 
 ## 当前焦点
@@ -40,7 +41,7 @@ keywords: [S35, P0 止血, 体积裁决, 负控, 覆盖率基线, 逐文件棘�
 - check-ui-styles 78 条欠账（Calendar 4 / Cascader 16 / ColorPicker 9 /
   DatePicker 24 / TimePicker 12 / Upload 13），只减不增。
 - 体积债：plugin / common-error 按需加载（ADR 0029）。
-- 覆盖率：54932/61988、3886/4336；branches 仅信息；棘轮 66.5/72.2/86.2（ADR 0034）。
+- 覆盖率：54919/61975、3885/4335；branches 仅信息；棘轮 66.5/72.2/86.2（ADR 0034）。
 
 ## 下一步
 
@@ -49,5 +50,4 @@ keywords: [S35, P0 止血, 体积裁决, 负控, 覆盖率基线, 逐文件棘�
 
 ## 阻塞
 
-- 覆盖率基线 vs 本轮删码：cli/run.ts 已覆盖 104→91，slow 2 项红；是否 `--update` 待 owner 定。
 - 78 条裸 DOM 样式欠账缺设计输入，禁改组件 DOM。
