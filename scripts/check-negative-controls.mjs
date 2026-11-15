@@ -811,7 +811,7 @@ const CONTROLS = {
         .map((line) => line.trim().replace(/：$/, ''))
         .slice(0, 5);
       throw new Error(
-        'check-coverage-baseline：注入前本门禁即为红，负控无法判定' +
+        '注入前本门禁即为红，负控无法判定' +
           `（前置红项：${reds.length ? reds.join('；') : '未能从输出中解析'}）`,
       );
     }
