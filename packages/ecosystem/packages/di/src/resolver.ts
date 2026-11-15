@@ -16,16 +16,22 @@ export function resolveKey(key: InjectionToken<unknown> | string | symbol): stri
 }
 
 /**
- * 解析 key（考虑 from 覆盖），返回查找用的标识
+ * 定位 `from` 指定的查找起点节点（祖先锚点）。
+ *
+ * `from` 的语义是「从哪个祖先开始查」——锚点只用来**定位节点**，不参与 key 匹配；
+ * 要注入的始终是调用方传入的 `key`。
+ *
+ * ⚠️ 2026-11-15 修（P1-17）：此前 `resolveLookupKey` 把 `from` 直接当成查找 key
+ *   （`inject(TOKEN, { from: 'anchor' })` 返回的是 `anchor` 的值，而不是 TOKEN 的值），
+ *   与 `EnhancedInjectOptions.from` 声明的「从特定祖先查找」相反。
  */
-function resolveLookupKey<T>(
-  key: InjectionToken<T> | string | symbol,
-  options?: EnhancedInjectOptions<T>,
-): string | symbol {
-  if (options?.from) {
-    return resolveKey(options.from);
+function findAnchorNode(node: ProviderNode, anchorKey: string | symbol): ProviderNode | null {
+  let current: ProviderNode | null = node;
+  while (current) {
+    if (current.providers.has(anchorKey)) return current;
+    current = current.parent;
   }
-  return resolveKey(key);
+  return null;
 }
 
 /**
@@ -197,6 +203,8 @@ function lookupInChain(
  *
  * 解析顺序：当前 Provider 节点链 → 全局根节点链 → 令牌工厂 → 默认值/抛错
  * （不含组件实例级注入，组件侧通过适配器在实例级优先查找）
+ *
+ * `from` 指定**查找起点**：先沿链找到提供 `from` 标识的节点，再从该节点起查 `key`。
  */
 export function injectValue<T>(
   key: InjectionToken<T> | string | symbol,
@@ -204,22 +212,45 @@ export function injectValue<T>(
 ): T | undefined {
   const providerNode = getCurrentProviderNode();
   const actualKey = resolveKey(key);
-  const lookupKey = resolveLookupKey(key, options);
+  const anchorKey = options?.from !== undefined ? resolveKey(options.from) : undefined;
 
-  // 1. 检查当前 Provider 节点链
-  if (providerNode) {
-    const result = injectFromNode(providerNode, lookupKey, options);
-    if (result !== undefined) {
-      return result as T;
-    }
-  }
-
-  // 2. 检查全局 Provider 根节点链
+  const searchNodes: ProviderNode[] = [];
+  if (providerNode) searchNodes.push(providerNode);
   const globalRoot = getActiveProviderRoot();
-  if (globalRoot) {
-    const result = injectFromNode(globalRoot, lookupKey, options);
-    if (result !== undefined) {
-      return result as T;
+  if (globalRoot) searchNodes.push(globalRoot);
+
+  if (anchorKey !== undefined) {
+    // 1. 按 from 锚点定位起点节点，再从这里查原 key
+    let startNode: ProviderNode | null = null;
+    for (const node of searchNodes) {
+      startNode = findAnchorNode(node, anchorKey);
+      if (startNode) break;
+    }
+
+    // 显式指定了 from 却找不到锚点：报错而不是静默退回整条链（否则 from 被无声忽略）
+    if (!startNode) {
+      throw new InjectionError(actualKey, `from anchor "${String(anchorKey)}" not found`);
+    }
+
+    const anchored = injectFromNode(startNode, actualKey, options);
+    if (anchored !== undefined) {
+      return anchored as T;
+    }
+  } else {
+    // 1. 检查当前 Provider 节点链
+    if (providerNode) {
+      const result = injectFromNode(providerNode, actualKey, options);
+      if (result !== undefined) {
+        return result as T;
+      }
+    }
+
+    // 2. 检查全局 Provider 根节点链
+    if (globalRoot) {
+      const result = injectFromNode(globalRoot, actualKey, options);
+      if (result !== undefined) {
+        return result as T;
+      }
     }
   }
 

@@ -125,11 +125,17 @@ describe('查找范围：local / skipSelf / from', () => {
     expect(inInstance(child, () => inject('k', { skipSelf: true }))).toBe('parent');
   });
 
-  it('from 改写查找用的 key', () => {
-    const inst = makeInstance();
-    inInstance(inst, () => provide('realKey', 42));
+  it('from 指认祖先实例：从该实例起查原 key，而不是把 from 当 key', () => {
+    const parent = makeInstance();
+    const child = makeInstance(parent);
+    inInstance(parent, () => {
+      provide('svc', 'parent-svc');
+      provide('anchor', 42);
+    });
+    inInstance(child, () => provide('svc', 'child-svc'));
 
-    expect(inInstance(inst, () => inject('alias', { from: 'realKey' }))).toBe(42);
+    // 从提供 'anchor' 的父实例起查 'svc' ⇒ 'parent-svc'（不是 42）
+    expect(inInstance(child, () => inject('svc', { from: 'anchor' }))).toBe('parent-svc');
   });
 });
 

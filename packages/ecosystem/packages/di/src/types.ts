@@ -58,7 +58,13 @@ export interface EnhancedInjectOptions<T = unknown> {
   optional?: boolean;
   /** 默认值 */
   default?: T | (() => T);
-  /** 从特定祖先查找 */
+  /**
+   * 查找起点（祖先锚点）。
+   *
+   * 语义是「从提供该标识的祖先开始查」，用来限定查找范围；
+   * **它不参与 key 匹配**——要注入的仍是 `key` 本身。
+   * 指定了却找不到锚点时会抛 `InjectionError`（不静默忽略）。
+   */
   from?: InjectionToken<T> | string | symbol;
   /** 是否仅查找当前层级 */
   local?: boolean;

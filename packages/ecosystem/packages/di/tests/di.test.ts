@@ -173,10 +173,25 @@ describe('provideValue / injectValue', () => {
     expect(() => provideValue('bad', { lifecycle: 'singleton' } as never)).toThrow(InjectionError);
   });
 
-  it('应支持 from 覆盖查找 key', () => {
-    provideValue('alias-target', 'resolved');
+  it('from 应指定祖先锚点而不是改写查找 key', () => {
     const TOKEN = new InjectionToken<string>('token-a');
-    expect(injectValue(TOKEN, { from: 'alias-target' } as never)).toBe('resolved');
+    withProviderScope(() => {
+      provideValue(TOKEN, 'parent-token');
+      provideValue('anchor', 'anchor-value');
+      const childValue = withProviderScope(() => {
+        provideValue(TOKEN, 'child-token');
+        // 从提供 'anchor' 的祖先起查 TOKEN ⇒ 父作用域的 'parent-token'，
+        // 而不是把 'anchor' 当 key 取回 'anchor-value'
+        return injectValue(TOKEN, { from: 'anchor' });
+      });
+      expect(childValue).toBe('parent-token');
+    });
+  });
+
+  it('from 锚点不存在时应显式抛错', () => {
+    const TOKEN = new InjectionToken<string>('token-a');
+    expect(() => injectValue(TOKEN, { from: 'no-such-anchor' })).toThrow(InjectionError);
+    expect(() => injectValue(TOKEN, { from: 'no-such-anchor' })).toThrow('from anchor');
   });
 });
 

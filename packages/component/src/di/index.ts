@@ -92,6 +92,9 @@ export function provide<T>(
 
 /**
  * 从 Provider 作用域注入值（组件实例优先，其次 Provider 节点树）
+ *
+ * `options.from` 是**查找起点**（祖先锚点），不是要注入的 key 的别名：
+ * 实例链里先定位提供该锚点的实例，再从这个实例起查 `key`。
  */
 export function inject<T>(
   key: InjectionToken<T> | string | symbol,
@@ -99,21 +102,24 @@ export function inject<T>(
 ): T | undefined {
   const instance = getCurrentInstance();
   const actualKey = isInjectionToken(key) ? key.__token : key;
-  const lookupKey = options?.from
-    ? isInjectionToken(options.from)
-      ? options.from.__token
-      : options.from
-    : actualKey;
+  const anchorKey =
+    options?.from !== undefined
+      ? isInjectionToken(options.from)
+        ? options.from.__token
+        : options.from
+      : undefined;
 
   // 1. 检查组件实例级别
   if (instance) {
-    const result = injectFromInstance(
-      instance as unknown as ComponentInternalInstance,
-      lookupKey,
-      options,
-    );
-    if (result !== undefined) {
-      return result as T;
+    const startInstance =
+      anchorKey !== undefined
+        ? findInstanceAnchor(instance as unknown as ComponentInternalInstance, anchorKey)
+        : (instance as unknown as ComponentInternalInstance);
+    if (startInstance) {
+      const result = injectFromInstance(startInstance, actualKey, options);
+      if (result !== undefined) {
+        return result as T;
+      }
     }
   }
 
@@ -126,6 +132,25 @@ export function inject<T>(
   //   连 `{ local: true }` 这种限定范围查不到也不例外。
   //   调用方仍可显式传 `optional: false` 要回抛错语义。
   return injectValue(key, { optional: true, ...options });
+}
+
+/**
+ * 沿实例链定位提供 `anchorKey` 的实例（只认该实例**自己的** provides）
+ */
+function findInstanceAnchor(
+  instance: ComponentInternalInstance,
+  anchorKey: string | symbol,
+): ComponentInternalInstance | null {
+  let current: ComponentInternalInstance | null = instance;
+  while (current) {
+    const provides = current.provides as Record<string | symbol, unknown>;
+    const hasOwnProvides = current.parent ? provides !== current.parent.provides : true;
+    if (hasOwnProvides && hasOwn(provides, anchorKey as string)) {
+      return current;
+    }
+    current = current.parent as ComponentInternalInstance | null;
+  }
+  return null;
 }
 
 /**
