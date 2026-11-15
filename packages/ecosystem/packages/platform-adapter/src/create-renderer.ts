@@ -7,6 +7,7 @@
  */
 
 import { isFunction, isObject, isString } from '@lytjs/common-is';
+import { Comment, Text } from '@lytjs/common-vnode';
 import type { VNode } from '@lytjs/common-vnode';
 import type { PlatformAdapter, PlatformConfig } from './types';
 
@@ -222,15 +223,31 @@ function createHostNodeFromVNode<HN, HE extends HN>(
     return el as unknown as HN;
   }
 
-  // 文本节点
-  if (isString(children)) {
+  // 文本节点 / 注释节点按 VNode 的 symbol type 分派
+  //
+  // ⚠️ 2026-11-15 修（P1-20）：此前所有「非 string、非 function、非 null」的 type
+  //   一律当注释节点 ⇒ `Comment` 若 children 是字符串会先被当成文本渲染成可见文字，
+  //   `Fragment` 则变成内容为 "[object Object],..." 的注释——语义错误且无提示。
+  //   现在：Text/Comment 正确分派；Fragment/Teleport/未知 type 显式抛错（不静默降级）。
+  if (type === Comment) {
+    return adapter.createComment(children == null ? '' : String(children));
+  }
+
+  if (type === Text) {
+    return adapter.createText(children == null ? '' : String(children));
+  }
+
+  // 文本节点：type 为 null 且 children 是字符串（本仓库既有的纯文本 VNode 形态）
+  if (type === null && isString(children)) {
     return adapter.createText(children);
   }
 
-  // 注释节点
-  if (isFunction(type) === false && type !== null && !isString(type)) {
-    // 非 string、非 function、非 null 的 type 可能是 Comment Symbol
-    return adapter.createComment(String(children ?? ''));
+  if (!isString(type) && !isFunction(type) && type !== null) {
+    throw new Error(
+      `[platform-adapter] 不支持的 VNode type: ${String(type)}。` +
+        'createPlatformRenderer 只支持元素（string type）、Text、Comment；' +
+        '请先把 Fragment/Teleport 或自定义 type 展开成上述节点再渲染。',
+    );
   }
 
   return null;

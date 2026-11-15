@@ -12,6 +12,7 @@ import { adapterRegistry } from '../src/adapter-registry';
 import { createPlatformRenderer } from '../src/create-renderer';
 import type { PlatformAdapter, PlatformPlugin, PlatformRenderer } from '../src/types';
 import type { VNode } from '@lytjs/common-vnode';
+import { Comment, Fragment, Text } from '@lytjs/common-vnode';
 
 // ============================================================
 // 测试用 Mock 适配器
@@ -791,5 +792,41 @@ describe('platform-adapter 的元素子节点（P0 回归）', () => {
     renderer.unmount(rootA);
     expect(removed).toHaveLength(3);
     expect(removed[2]!.text).toBe('a2');
+  });
+});
+
+// ⚠️ 2026-11-15 新增（P1-20 回归）：symbol type 必须按 VNode 语义分派，不得静默当注释
+describe('VNode type 分派（P1-20 回归）', () => {
+  function renderOne(type: unknown, children: unknown): Record<string, unknown> {
+    const renderer = createPlatformRenderer(createMockAdapter('web'));
+    const container: Record<string, unknown> = {};
+    renderer.render(
+      { ...createMockVNode(), type, children } as unknown as VNode,
+      container as never,
+    );
+    return container._children as Record<string, unknown>;
+  }
+
+  it('Comment symbol 应渲染为注释节点，而不是可见文本', () => {
+    const node = renderOne(Comment, 'hidden note');
+    expect(node.type).toBe('comment');
+    expect(node.text).toBe('hidden note');
+  });
+
+  it('Text symbol 应渲染为文本节点', () => {
+    const node = renderOne(Text, 'plain');
+    expect(node.type).toBe('text');
+    expect(node.text).toBe('plain');
+  });
+
+  it('Fragment 等不支持的 type 应显式抛错，而不是静默当注释', () => {
+    const renderer = createPlatformRenderer(createMockAdapter('web'));
+    const container: Record<string, unknown> = {};
+    expect(() =>
+      renderer.render(
+        { ...createMockVNode(), type: Fragment, children: [] } as unknown as VNode,
+        container as never,
+      ),
+    ).toThrow('不支持的 VNode type');
   });
 });
