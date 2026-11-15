@@ -7,6 +7,7 @@ import {
   createComponentInstance,
   setupComponent,
   defineComponent,
+  initProps,
   normalizePropsOptions,
   resolvePropValue,
   validateType,
@@ -199,6 +200,30 @@ describe('props', () => {
     // With provided value
     const instance2 = createAndSetup(options, { config: { theme: 'dark' } });
     expect(instance2.props.config).toEqual({ theme: 'dark' });
+  });
+});
+
+describe('attrs（setup 上下文）', () => {
+  it('★ 父组件更新 attrs 后，setup 里持有的 ctx.attrs 必须读到新值', () => {
+    let captured: Record<string, unknown> | null = null;
+    const Child = defineComponent({
+      name: 'AttrsChild',
+      setup(_props, ctx) {
+        captured = ctx.attrs;
+        return () => null;
+      },
+    });
+
+    const vnode = { type: Child, props: { title: 'a', 'data-x': '1' }, children: null };
+    const instance = createComponentInstance(vnode as never, null);
+    setupComponent(instance);
+    expect(captured!.title).toBe('a');
+
+    // 模拟父组件重渲染：setupContext 缓存的是首帧对象，引用必须稳定、内容必须更新
+    initProps(instance, { title: 'b', 'data-x': '2' });
+    expect(captured!.title).toBe('b');
+    expect(captured!['data-x']).toBe('2');
+    expect(instance.attrs).toBe(captured);
   });
 });
 

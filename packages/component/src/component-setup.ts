@@ -424,6 +424,20 @@ function handleSetupResult(instance: ComponentInternalInstance, setupResult: Set
 // ==================== initProps ====================
 
 /**
+ * 把 `next` 的内容就地同步进 `target`，**保留 target 的引用**。
+ *
+ * setupContext 会长期持有首帧 attrs 对象，所以 attrs 只能内部可变、不能整体替换。
+ */
+function syncAttrs(target: Record<string, unknown>, next: Record<string, unknown>): void {
+  for (const key of Object.keys(target)) {
+    if (!hasOwn(next, key)) delete target[key];
+  }
+  for (const key of Object.keys(next)) {
+    target[key] = next[key];
+  }
+}
+
+/**
  * 初始化并验证组件实例的 props。
  */
 export function initProps(
@@ -488,7 +502,10 @@ export function initProps(
   }
 
   instance.props = props;
-  instance.attrs = attrs;
+  // ★ 2026-11-15 修（P1-22）：attrs **整体替换**会让 setupContext 里缓存的
+  //   `attrs: instance.attrs` 永远停在首帧 —— 父组件更新后子组件读到旧值。
+  //   attrs 未被冻结，改为就地同步，引用保持不变。
+  syncAttrs(instance.attrs, attrs);
   bumpPropsVersion(instance);
 }
 
