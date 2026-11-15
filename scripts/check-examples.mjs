@@ -17,7 +17,9 @@
  *
  * ## 本守卫检查什么（只做**可判定**的事）
  *
- * 1. 示例里所有 `@lytjs/*` 裸导入，必须能在本仓 `node_modules/@lytjs/` 下解析到
+ * 1. 示例里所有 `@lytjs/*` 裸导入，必须是**本仓工作区里存在的包**（包目录从
+ *    `pnpm-workspace.yaml` 派生，不经根 `node_modules/@lytjs` 这个 gitignored 手工链接；
+ *    坑 gate-depends-on-manual-env）。
  *    （`@lytjs/plugin-*` 已迁出 ⇒ 引用了就是断的，必须改掉或标注）。
  * 2. 示例不得用相对路径穿透到包源码（`../../src/...`）——那绕过了发布产物，
  *    用户复制过去必然跑不起来。
@@ -35,10 +37,12 @@
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join, relative, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadWorkspacePackages } from './release-set.mjs';
 
 const REPO = dirname(dirname(fileURLToPath(import.meta.url)));
 const EXAMPLES = join(REPO, 'examples');
-const NM_SCOPE = join(REPO, 'node_modules', '@lytjs');
+/** 包名 → 包目录（工作区真源；不依赖根 node_modules/@lytjs 链接） */
+const WORKSPACE_PKGS = new Map(loadWorkspacePackages(REPO).map((p) => [p.name, p.dir]));
 
 const EXTS = new Set(['.js', '.mjs', '.cjs', '.ts', '.tsx', '.html']);
 // 扫描时跳过的目录（构建产物、依赖）
@@ -96,8 +100,7 @@ for (const file of files) {
     // ① @lytjs 裸导入必须能解析
     const pkg = lytjsPackageOf(spec);
     if (pkg) {
-      const dir = join(NM_SCOPE, pkg.slice('@lytjs/'.length));
-      if (existsSync(dir)) {
+      if (WORKSPACE_PKGS.has(pkg)) {
         resolvedPkgs.add(pkg);
       } else {
         if (!missingPkg.has(pkg)) missingPkg.set(pkg, new Set());
