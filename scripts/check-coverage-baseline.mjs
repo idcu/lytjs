@@ -11,11 +11,21 @@
  *
  * ## 判据
  *
- *   1. 逐文件 covered ≥ 基线值（statements / functions / lines）
- *   2. 全局 covered ≥ 基线值（statements / functions / lines）
+ *   1. 逐文件 covered ≥ 基线 covered − max(0, 基线 total − 现场 total)
+ *   2. 全局   covered ≥ 基线 covered − max(0, 基线 total − 现场 total)
+ *      （statements / functions / lines；ADR 0034 2026-11-15 修订）
  *   3. 未插桩文件集合不新增成员；基线与冻结清单
  *      `scripts/coverage-uninstrumented.json` 保持一致（现有 7 条保持）
  *   4. 产物必须晚于最新源码（防止拿旧产物冒充本次结论）
+ *
+ *   ## 这条判据防什么
+ *
+ *   防的是「覆盖被削弱」，**不是**「绝对数只能涨」：
+ *     · 删死代码 ⇒ total 与 covered 同步下降 ⇒ 通过（正例：cli/run.ts 104/104 → 91/91）；
+ *     · 删测试 / 已覆盖语句失去覆盖 ⇒ total 不变、covered 下降 ⇒ 红；
+ *     · 新增未覆盖代码 ⇒ total 上升、allowance 为 0、covered 持平 ⇒ 通过，
+ *       但**比例下降必须显式打印**（不算红，不能不可见）。
+ *   不允许改成「比例不低于基线」——那会让新增未覆盖代码永远合法。
  *
  *   branches **不参与判据**：两次同码树运行的分支分母与命中数都会抖动
  *   （`branchMap` 行号移位、分支数 ±5），只打印信息项。见 ADR 0034。
@@ -107,6 +117,8 @@ if (artifactMtime < newestSrc.mtime) {
 const baselineFiles = baseline.files ?? {};
 const missing = Object.keys(baselineFiles).filter((f) => !(f in live.perFile));
 const regressions = [];
+const fileAllowances = [];
+const fileRatioDrops = [];
 let checkedFiles = 0;
 
 for (const [file, expected] of Object.entries(baselineFiles)) {
@@ -115,8 +127,28 @@ for (const [file, expected] of Object.entries(baselineFiles)) {
   checkedFiles += 1;
   const drops = [];
   for (const key of ENFORCED_KEYS) {
-    if (actual[key].covered < expected[key].covered) {
-      drops.push(`${key} ${expected[key].covered} → ${actual[key].covered}`);
+    // 允许下限：删掉的 total 等于「本来就不可能再被覆盖」的部分，covered 可以同步下降。
+    // 删测试 / 丢覆盖时 total 不变，allowance 为 0，covered 一降就红。
+    const allowance = Math.max(0, expected[key].total - actual[key].total);
+    const floor = expected[key].covered - allowance;
+    if (actual[key].covered < floor) {
+      drops.push(`${key} ${expected[key].covered} → ${actual[key].covered}（允许下限 ${floor}）`);
+    } else if (allowance > 0) {
+      fileAllowances.push(
+        `  ${file}  ${key} ${expected[key].covered}/${expected[key].total} → ` +
+          `${actual[key].covered}/${actual[key].total}（允许下限 ${floor}）`,
+      );
+    }
+    // 新增未覆盖代码：total 上升、covered 持平 ⇒ 不判红，但比例下降必须可见。
+    if (
+      actual[key].total > expected[key].total &&
+      Number(pct(actual[key])) < Number(pct(expected[key]))
+    ) {
+      fileRatioDrops.push(
+        `  ${file}  ${key} ${pct(expected[key])}% → ${pct(actual[key])}%` +
+          `（covered ${expected[key].covered} → ${actual[key].covered}，` +
+          `total ${expected[key].total} → ${actual[key].total}）`,
+      );
     }
   }
   if (drops.length) regressions.push(`  ${file}  ${drops.join(' · ')}`);
@@ -140,26 +172,52 @@ if (regressions.length) {
   );
 } else if (missing.length === 0) {
   console.log(
-    `  ✅ 判据 1 逐文件 ${checkedFiles} 个文件：statements / functions / lines 均不低于基线`,
+    `  ✅ 判据 1 逐文件 ${checkedFiles} 个文件：statements / functions / lines ` +
+      '均不低于「基线 − max(0, 基线 total − 现场 total)」',
   );
+}
+if (fileAllowances.length) {
+  console.log(`  ℹ️ 删码修正 ${fileAllowances.length} 处（total 与 covered 同步下降，不判红）：`);
+  for (const line of fileAllowances.slice(0, 10)) console.log(line);
+  if (fileAllowances.length > 10) console.log(`      …另有 ${fileAllowances.length - 10} 处`);
+}
+if (fileRatioDrops.length) {
+  console.log(`  ℹ️ 比例下降（不判红，仅可见）${fileRatioDrops.length} 处：`);
+  for (const line of fileRatioDrops.slice(0, 10)) console.log(line);
+  if (fileRatioDrops.length > 10) console.log(`      …另有 ${fileRatioDrops.length - 10} 处`);
 }
 
 // ── 2. 全局棘轮 ─────────────────────────────────────────────
 const globalDrops = [];
+const globalRatioDrops = [];
 for (const key of ENFORCED_KEYS) {
   const b = baseline.global?.[key];
   const a = live.global[key];
+  const allowance = b ? Math.max(0, b.total - a.total) : 0;
+  const floor = b ? b.covered - allowance : Infinity;
   console.log(
-    `  ${key.padEnd(10)} 现场 ${String(a.covered).padStart(6)}/${a.total}（${pct(a)}%）  基线 ${b.covered}/${b.total}`,
+    `  ${key.padEnd(10)} 现场 ${String(a.covered).padStart(6)}/${a.total}（${pct(a)}%）  ` +
+      `基线 ${b?.covered ?? '(缺失)'}/${b?.total ?? '(缺失)'}  允许下限 ${Number.isFinite(floor) ? floor : '(缺失)'}`,
   );
-  if (!b || a.covered < b.covered) {
-    globalDrops.push(`${key} 基线 ${b?.covered ?? '(缺失)'} → 现场 ${a.covered}`);
+  if (!b || a.covered < floor) {
+    globalDrops.push(
+      `${key} 基线 ${b?.covered ?? '(缺失)'}/${b?.total ?? '(缺失)'} → 现场 ` +
+        `${a.covered}/${a.total}（允许下限 ${Number.isFinite(floor) ? floor : '(缺失)'}）`,
+    );
+  } else if (a.total > b.total && Number(pct(a)) < Number(pct(b))) {
+    globalRatioDrops.push(
+      `${key} ${pct(b)}% → ${pct(a)}%（covered ${b.covered} → ${a.covered}，` +
+        `total ${b.total} → ${a.total}）`,
+    );
   }
 }
 if (globalDrops.length) {
-  ok = fail(`全局 covered 低于基线：\n      ${globalDrops.join('\n      ')}`);
+  ok = fail(`全局 covered 低于按删码修正后的下限：\n      ${globalDrops.join('\n      ')}`);
 } else {
-  console.log('  ✅ 判据 2 全局 covered 不低于基线');
+  console.log('  ✅ 判据 2 全局 covered 不低于「基线 − max(0, 基线 total − 现场 total)」');
+}
+if (globalRatioDrops.length) {
+  console.log(`  ℹ️ 全局比例下降（不判红，仅可见）：${globalRatioDrops.join('；')}`);
 }
 
 // ── 3. 未插桩集合 ───────────────────────────────────────────

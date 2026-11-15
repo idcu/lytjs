@@ -1037,8 +1037,10 @@ const GATES = [
     desc:
       '★ 覆盖率门禁（逐文件棘轮，ADR 0034）：只读本次 test:coverage 的 coverage-final.json ' +
       '与受版本控制的 scripts/coverage-baseline.json（三次运行取逐文件 min，无容差），' +
-      '判据为逐文件 / 全局 covered 不低于基线、未插桩集合不新增（7 条冻结清单保持）；' +
-      'branches 只记录不参与判据。旧「字节 sha256 + HEAD 双指纹」口径已废止（拿产物跟自己比）',
+      '判据为逐文件 / 全局 covered ≥ 基线 covered − max(0, 基线 total − 现场 total)：' +
+      '删死代码（total 与 covered 同步降）不判红，删测试或丢覆盖判红；未插桩集合不新增；' +
+      '新增未覆盖代码只打印比例下降、不判红（禁止改成比例判据）；branches 只记录。' +
+      '旧「字节 sha256 + HEAD 双指纹」口径已废止（拿产物跟自己比）',
   },
   {
     name: 'check-negative-controls:slow',
