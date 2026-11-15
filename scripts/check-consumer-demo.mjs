@@ -7,8 +7,12 @@
  *   · 条件渲染（v-if）
  *   · 子组件（props + emit）
  *   · SSR 出 HTML → 客户端 hydrate → 点击 → 校验 DOM
+ *
+ * 所有 import 都按**本文件位置**解析：worktree / 干净 clone 上校验的是本树产物，
+ * 不写死任何绝对路径（写死会让负控在非主仓路径上永远判不绿→假绿，坑 gate-depends-on-manual-env）。
  */
-import { JSDOM } from '/Volumes/Data/lytjs/lytjs/node_modules/jsdom/lib/api.js';
+const HERE = new URL('.', import.meta.url);
+const { JSDOM } = await import(new URL('../node_modules/jsdom/lib/api.js', HERE).href);
 
 const dom = new JSDOM('<!doctype html><html><body></body></html>', { url: 'http://localhost' });
 globalThis.window = dom.window;
@@ -30,10 +34,12 @@ try {
 globalThis.requestAnimationFrame = (cb) => setTimeout(() => cb(Date.now()), 0);
 globalThis.cancelAnimationFrame = (id) => clearTimeout(id);
 
-const { createApp, h, ref, installTemplateCompiler } =
-  await import('/Volumes/Data/lytjs/lytjs/packages/core/dist/index.mjs');
-const SSR =
-  await import('/Volumes/Data/lytjs/lytjs/packages/ecosystem/packages/ssr-kit/packages/ssr/dist/index.mjs');
+const { createApp, h, ref, installTemplateCompiler } = await import(
+  new URL('../packages/core/dist/index.mjs', HERE).href
+);
+const SSR = await import(
+  new URL('../packages/ecosystem/packages/ssr-kit/packages/ssr/dist/index.mjs', HERE).href
+);
 
 let fail = 0;
 const check = (name, ok, detail) => {
