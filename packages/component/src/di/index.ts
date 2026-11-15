@@ -8,7 +8,6 @@
 import { hasOwn } from '@lytjs/common-is';
 import { getCurrentInstance } from '../lifecycle';
 import { effectScope } from '@lytjs/reactivity';
-import type { ComponentInternalInstance } from '@lytjs/shared-types';
 
 import {
   InjectionToken,
@@ -112,9 +111,7 @@ export function inject<T>(
   // 1. 检查组件实例级别
   if (instance) {
     const startInstance =
-      anchorKey !== undefined
-        ? findInstanceAnchor(instance as unknown as ComponentInternalInstance, anchorKey)
-        : (instance as unknown as ComponentInternalInstance);
+      anchorKey !== undefined ? findInstanceAnchor(instance, anchorKey) : instance;
     if (startInstance) {
       const result = injectFromInstance(startInstance, actualKey, options);
       if (result !== undefined) {
@@ -135,20 +132,31 @@ export function inject<T>(
 }
 
 /**
+ * 注入链上需要的最小实例形状（只依赖 `provides` / `parent`）
+ *
+ * 组件包内部类型与 `@lytjs/shared-types` 的 `ComponentInternalInstance` 存在 vnode
+ * 字段差异，这里用结构化的最小契约承接，避免在调用点做双重断言。
+ */
+interface ProvidesChainInstance {
+  provides: Record<string | symbol, unknown>;
+  parent: ProvidesChainInstance | null;
+}
+
+/**
  * 沿实例链定位提供 `anchorKey` 的实例（只认该实例**自己的** provides）
  */
 function findInstanceAnchor(
-  instance: ComponentInternalInstance,
+  instance: ProvidesChainInstance,
   anchorKey: string | symbol,
-): ComponentInternalInstance | null {
-  let current: ComponentInternalInstance | null = instance;
+): ProvidesChainInstance | null {
+  let current: ProvidesChainInstance | null = instance;
   while (current) {
-    const provides = current.provides as Record<string | symbol, unknown>;
+    const provides = current.provides;
     const hasOwnProvides = current.parent ? provides !== current.parent.provides : true;
     if (hasOwnProvides && hasOwn(provides, anchorKey as string)) {
       return current;
     }
-    current = current.parent as ComponentInternalInstance | null;
+    current = current.parent;
   }
   return null;
 }
@@ -157,12 +165,12 @@ function findInstanceAnchor(
  * 从组件实例注入
  */
 function injectFromInstance(
-  instance: ComponentInternalInstance,
+  instance: ProvidesChainInstance,
   key: string | symbol,
   options?: EnhancedInjectOptions,
 ): unknown {
   if (options?.local) {
-    const provides = instance.provides as Record<string | symbol, unknown>;
+    const provides = instance.provides;
     const hasOwnProvides = instance.parent ? provides !== instance.parent.provides : true;
     if (hasOwnProvides && hasOwn(provides, key as string)) {
       return provides[key];
@@ -171,16 +179,16 @@ function injectFromInstance(
   }
 
   if (!options?.skipSelf) {
-    const provides = instance.provides as Record<string | symbol, unknown>;
+    const provides = instance.provides;
     if ((key as string | symbol) in provides) {
       return provides[key];
     }
   }
 
   // 向上查找
-  let current = options?.skipSelf ? instance.parent : instance.parent;
+  let current = instance.parent;
   while (current) {
-    const provides = current.provides as Record<string | symbol, unknown>;
+    const provides = current.provides;
     if ((key as string | symbol) in provides) {
       return provides[key];
     }
