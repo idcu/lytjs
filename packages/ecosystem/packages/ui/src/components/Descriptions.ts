@@ -4,7 +4,7 @@
  * 描述列表组件，支持行列合并、垂直/水平布局、自适应、插槽自定义
  */
 
-import { defineComponent } from '@lytjs/component';
+import { defineComponent, normalizeSlotValue } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/core/runtime';
 import type {
   DescriptionsSetupProps,
@@ -42,7 +42,9 @@ export const Descriptions = defineComponent({
       if (p.title || slots.title) {
         const titleContent: VNode[] = [];
         if (slots.title) {
-          titleContent.push(...slots.title());
+          // ★ P1-33：插槽允许返回单个 VNode；`...单VNode` 会抛
+          //   `Spread syntax requires ...iterable`。统一经 normalizeSlotValue 成数组。
+          titleContent.push(...normalizeSlotValue(slots.title()));
         } else {
           titleContent.push(createVNode('span', {}, String(p.title)));
         }
@@ -54,7 +56,7 @@ export const Descriptions = defineComponent({
       const bodyChildren: VNode[] = [];
 
       if (slots.default) {
-        bodyChildren.push(...slots.default());
+        bodyChildren.push(...normalizeSlotValue(slots.default()));
       }
 
       resultChildren.push(
@@ -106,14 +108,14 @@ export const DescriptionsItem = defineComponent({
     return () => {
       const labelContent: VNode[] = [];
       if (slots.label) {
-        labelContent.push(...slots.label());
+        labelContent.push(...normalizeSlotValue(slots.label()));
       } else if (p.label) {
         labelContent.push(createVNode('span', {}, String(p.label)));
       }
 
       const contentContent: VNode[] = [];
       if (slots.default) {
-        contentContent.push(...slots.default());
+        contentContent.push(...normalizeSlotValue(slots.default()));
       }
 
       return createVNode(
