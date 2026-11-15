@@ -777,8 +777,9 @@ const GATES = [
       "★ 运行时版本号一致性（2026-11-14）：`@lytjs/ui` 的插件对象曾手写 `version: '6.9.6'`，" +
       '发版后必然报旧版本；现由 tsup define 从 package.json 注入 `__UI_VERSION__`。' +
       '断言 dist 的 ESM + CJS 导出的 `LytUI.version` 等于 package.json.version；' +
+      '同样断言 `@lytjs/cli` dist 的 `--version`（ESM + CJS）等于 `LytJS CLI v<version>`；' +
       "并扫描发布集 src，禁止把自身当前版本写成 `version: 'x.y.z'` 字面量。" +
-      '负控：只改 package.json.version 不重建 ⇒ 2 项红（ESM + CJS）',
+      '负控：只改 ui / cli 的 package.json.version 不重建 ⇒ 对应断言转红',
   },
   {
     name: 'check-web-cssvars',
