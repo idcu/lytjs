@@ -173,6 +173,30 @@ describe('provideValue / injectValue', () => {
     expect(() => provideValue('bad', { lifecycle: 'singleton' } as never)).toThrow(InjectionError);
   });
 
+  it('local: true 只看当前节点，不向祖先查找', () => {
+    const KEY = 'local-key';
+    withProviderScope(() => {
+      provideValue(KEY, 'parent-value');
+      const childValue = withProviderScope(() => {
+        provideValue('other', 'x');
+        return injectValue<string>(KEY, { local: true, optional: true });
+      });
+      expect(childValue).toBeUndefined();
+    });
+  });
+
+  it('local: true 命中当前节点时正常返回', () => {
+    const KEY = 'local-key';
+    withProviderScope(() => {
+      provideValue(KEY, 'parent-value');
+      const childValue = withProviderScope(() => {
+        provideValue(KEY, 'child-value');
+        return injectValue<string>(KEY, { local: true });
+      });
+      expect(childValue).toBe('child-value');
+    });
+  });
+
   it('from 应指定祖先锚点而不是改写查找 key', () => {
     const TOKEN = new InjectionToken<string>('token-a');
     withProviderScope(() => {

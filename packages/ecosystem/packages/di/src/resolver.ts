@@ -187,6 +187,10 @@ function lookupInChain(
     if (record) return materializeRecord(node, record, seen);
   }
 
+  // ★ 2026-11-15 修（P1-18）：`local: true` 此前从未被读取 ⇒ 仍向祖先查找，
+  //   拿到调用方明确不想拿的祖先依赖。现在只看当前节点，不再沿父链上升。
+  if (options?.local) return undefined;
+
   // 向上查找父节点
   let current = node.parent;
   while (current) {
@@ -237,19 +241,30 @@ export function injectValue<T>(
       return anchored as T;
     }
   } else {
-    // 1. 检查当前 Provider 节点链
-    if (providerNode) {
-      const result = injectFromNode(providerNode, actualKey, options);
-      if (result !== undefined) {
-        return result as T;
+    // 1. local：只看当前节点自己的 provides，不向祖先（含全局根）查找
+    if (options?.local) {
+      const localNode = providerNode ?? globalRoot;
+      if (localNode) {
+        const result = injectFromNode(localNode, actualKey, options);
+        if (result !== undefined) {
+          return result as T;
+        }
       }
-    }
+    } else {
+      // 2. 检查当前 Provider 节点链
+      if (providerNode) {
+        const result = injectFromNode(providerNode, actualKey, options);
+        if (result !== undefined) {
+          return result as T;
+        }
+      }
 
-    // 2. 检查全局 Provider 根节点链
-    if (globalRoot) {
-      const result = injectFromNode(globalRoot, actualKey, options);
-      if (result !== undefined) {
-        return result as T;
+      // 3. 检查全局 Provider 根节点链
+      if (globalRoot) {
+        const result = injectFromNode(globalRoot, actualKey, options);
+        if (result !== undefined) {
+          return result as T;
+        }
       }
     }
   }
