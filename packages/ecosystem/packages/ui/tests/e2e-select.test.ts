@@ -269,6 +269,26 @@ describe('Select — 键盘', () => {
     await tick();
     expect(keys).toContain('ArrowDown');
   });
+
+  it('★ 选项上按 Enter 只触发一次选择（不再冒泡到根节点重复处理）', async () => {
+    const seen: unknown[] = [];
+    const keys: unknown[] = [];
+    const host = await mountSelect({
+      multiple: true,
+      onChange: (v: unknown) => seen.push(v),
+      onKeydown: (e: KeyboardEvent) => keys.push(e.key),
+    });
+    await open(host);
+
+    // 事件从选项冒泡到根节点：两处都绑定了 keydown ⇒ 多选时选择被切换两次（互相抵消）
+    qa(host, '.lyt-select__option')[0]!.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+    );
+    await tick();
+
+    expect(seen).toEqual([['apple']]);
+    expect(keys).toEqual(['Enter']);
+  });
 });
 
 describe('Select — 空态与 a11y', () => {

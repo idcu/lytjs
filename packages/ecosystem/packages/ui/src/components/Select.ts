@@ -279,15 +279,24 @@ export const Select = defineComponent({
     };
 
     const handleOptionKeydown = (event: KeyboardEvent, option: SelectOption) => {
+      // ★ 2026-11-15 修（P1-34）：冒泡策略 —— 选项上的按键**由本函数独占处理**。
+      //   根节点也绑定了 handleKeydown，选项事件冒泡过去会二次处理：
+      //   多选时选择被切换两次（互相抵消）、方向键一次跳两格。
+      //   这里阻止冒泡，需要复用根逻辑的分支改为显式调用 handleKeydown；
+      //   用户回调 p.onKeydown 在每个分支恰好转发一次（与修复前冒泡路径的调用次数一致）。
+      event.stopPropagation();
+
       if (event.key === 'Tab') {
         isOpen.set(false);
         p.onVisibleChange?.(false);
+        p.onKeydown?.(event);
         return;
       }
 
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
         handleSelect(option);
+        p.onKeydown?.(event);
         return;
       }
 
