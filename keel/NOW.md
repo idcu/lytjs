@@ -10,11 +10,12 @@ keywords: [S35, P0 止血, 体积裁决, 负控, 覆盖率基线, 逐文件棘�
 
 ## 本轮（2026-11-15）
 
-- 覆盖率门禁重做（[ADR 0034](decisions/0034-coverage-per-file-ratchet-baseline.md)）：改为受版本控制的静态基线
-  `scripts/coverage-baseline.json`，逐文件/全局 statements·functions·lines `covered` 不得下降，
-  未插桩集合不新增；`branches` 仅记录不参与判据。旧「sha256 + HEAD 双指纹」是档内自比对，已删。
-- 基线由 `--update` 连跑三次 `test:coverage` 取逐文件 min（无容差），三项抖动 0 文件；
-  slow 22 项（21 命名 + 1 自动前置）。上一轮记录见 [NOW 快照](NOW-history/2026-11-14-signal收编与产物门禁.md)。
+- 覆盖率门禁重做（[ADR 0034](decisions/0034-coverage-per-file-ratchet-baseline.md)）：静态基线
+  `scripts/coverage-baseline.json`，逐文件/全局 statements·functions·lines 不得下降，未插桩不新增；
+  `branches` 仅记录。基线=三次 `--update` 取逐文件 min（无容差），三项抖动 0 文件。
+- 发布门禁去手工环境：`check-package-exports`/`check-examples` 按 workspace 派生，`gate.mjs` 幂等补链，
+  `check-consumer-demo` 去绝对路径；发布序列改为「全档门禁 → version → build → 升版后子集」。
+- slow 22 项（21 命名 + 1 自动前置）。上一轮见 [NOW 快照](NOW-history/2026-11-14-signal收编与产物门禁.md)。
 
 ## 当前焦点
 
@@ -49,5 +50,4 @@ keywords: [S35, P0 止血, 体积裁决, 负控, 覆盖率基线, 逐文件棘�
 
 ## 阻塞
 
-- 78 条裸 DOM 样式欠账缺设计输入，本轮禁止改组件 DOM（删类名）。
-- 覆盖率并发/safe-delete → 单包复核/reportsDirectory。
+- 78 条裸 DOM 样式欠账缺设计输入，禁改组件 DOM。

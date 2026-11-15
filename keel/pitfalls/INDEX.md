@@ -2,10 +2,10 @@
 scope: meta
 status: active
 last-verified: 2026-11-12
-keywords: [坑库, 索引, 假绿, 门禁, 负控]
+keywords: [坑库, 索引, 负控]
 ---
 
-| 症状（grep 用） | → 文件 |
+| 症状 | → 文件 |
 |---|---|
 | 平行 | [parallel](core/parallel-impl-only-one-fixed.md) |
 | 循环 | [circ](core/circular-deps-three-layers.md) |
@@ -30,7 +30,6 @@ keywords: [坑库, 索引, 假绿, 门禁, 负控]
 | 静态 | [static](core/static-html-slot-reuse.md) |
 | 漏抛 | [throw](verify/async-throw-escapes.md) |
 | src/dist | [ident](verify/module-identity-src-vs-dist.md) |
-| 覆盖 | [cov](verify/coverage-concurrent-runs-clobber-tmp.md) |
 | Proxy | [proxy](core/proxy-has-cache-poison.md) |
 | pre | [pre](process/precommit-reverts-working-tree.md) |
 | 吞行 | [span](process/import-rewrite-span.md) |
@@ -42,18 +41,16 @@ keywords: [坑库, 索引, 假绿, 门禁, 负控]
 | runtime胖 | [ns](build/namespace-dynamic-import-retains-all.md) |
 | 绑实现 | [impl](verify/test-impl-coupling.md) |
 | app | [state](core/state-leak.md) |
-| 假红 | [pkg](verify/pkg-config-alias-blindspot.md) |
-| 元数据 | [meta](process/package-metadata-drift.md) |
+| 假红/元数据 | [pkg](verify/pkg-config-alias-blindspot.md) [meta](process/package-metadata-drift.md) |
 | 变胖 | [paths](build/tsconfig-paths-leak-into-bundler.md) |
 | TS2307 | [root](verify/undeclared-root-dep-gate.md) |
 | 残留 | [residual](core/residuals.md) |
 | mtime | [mtime](verify/dist-mtime.md) |
 | cs漏项 | [csdiff](release/changeset-vs-diff.md) |
-| 自比对 | [gen](verify/coverage-generate-then-verify.md) |
-| commit≠push | [push](process/commit-vs-push.md) |
+| 自比对/commit≠push | [gen](verify/coverage-generate-then-verify.md) [push](process/commit-vs-push.md) |
 | 旧dist | [stale](verify/bundle-gate-reads-stale-dist.md) |
 | 锚点 | [anchor](verify/negative-control-anchor-drift.md) |
 | 子串 | [substr](verify/substring-probe-comment-false-pass.md) |
-| 首帧 | [once](verify/test-once-unreproduced.md) |
-| 长跑 | [sentinel](process/long-gate-must-wait-sentinel.md) |
+| 首帧/长跑 | [once](verify/test-once-unreproduced.md) [sentinel](process/long-gate-must-wait-sentinel.md) |
+| 顺序 | [env](verify/gate-depends-on-manual-env.md) |
 | 跨入口 | [shared](build/cross-entry-module-state-duplicated.md) |
