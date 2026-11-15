@@ -14,8 +14,8 @@ superseded-by:
 - 决策：
   1. **禁止「生成即校验」**：档内不得生成被判对象。基线 `scripts/coverage-baseline.json`
      受版本控制，只能由 `coverage-baseline.mjs --update` 写入（打印逐文件 diff + 人工 yes）。
-  2. **逐文件棘轮，不用字节哈希**：逐文件 statements/functions/lines `covered` 与全局
-     `covered` 不得低于基线；未插桩集合不得新增（7 条冻结清单保持）。
+  2. **逐文件棘轮，不用字节哈希**：逐文件与全局 statements/functions/lines 的
+     `covered` ≥ 基线 `covered` − max(0, 基线 total − 现场 total)；未插桩集合不得新增。
   3. **基线取三次 `test:coverage` 的逐文件最小值**，不设任何容差。
   4. **`branches` 不参与判据**，只作信息项存进基线。
   5. slow 档删除 `coverage:snapshot`，只留 `test:coverage` → `check-coverage-baseline`。
@@ -28,31 +28,27 @@ superseded-by:
 sha256 + HEAD 写进快照 → `check-coverage-snapshot` 校验二者。
 三个输入同源，判据恒真：删测试、把源文件挤出范围都仍绿；「严格感」只约束流程顺序。
 
+## 判据修正（2026-11-15）：允许删码，不允许削弱覆盖
+
+下限 = 基线 covered − max(0, 基线 total − 现场 total)。语义是防「覆盖被削弱」，
+**不是**「绝对数只能涨」：删死代码 ⇒ total 与 covered 同步降 ⇒ 通过（正例 `cli/run.ts`
+104/104 → 91/91）；删测试 / 已覆盖语句失去覆盖 ⇒ total 不变、covered 降 ⇒ 红；
+新增未覆盖代码 ⇒ allowance 0、covered 持平 ⇒ 通过，但比例下降必须在输出里显式打印。
+**禁止**比例判据：那会让新增未覆盖代码永远合法。
+
 ## 为什么字节哈希不成立
 
-同码树 A/B（2026-11-15，HEAD `ce2f9967`）：
-
-| 运行 | `coverage-final.json` sha256（截断） |
-| --- | --- |
-| 并行 1 | `b92674f8…` |
-| 并行 2 | `a4b9ec19…` |
-| 串行 1 | `983c8237…` |
-| 串行 2 | `31be9a78…` |
-
-四次全不同。根因是 v8→istanbul 分支映射非确定：`branchMap` 行号移位、`branches` 分母
-逐次变化（+5/+5）、部分文件命中 ±1~3。字节哈希把噪声当回归（假红），又因自比对抓不到真回归。
+同码树四次跑 `coverage-final.json` 的 sha256 全不同（`b92674f8…`/`a4b9ec19…`/`983c8237…`/`31be9a78…`）。
+根因是 v8→istanbul 分支映射非确定：`branchMap` 行号移位、`branches` 分母逐次 +5/+5、部分文件命中 ±1~3。
+字节哈希把噪声当回归（假红），又因自比对抓不到真回归。
 
 ## 为什么用下界（三次取 min）
 
 容差会掩盖真实下降：设 1 就看不到一条语句的下降。改为 `--update` 连跑三次，逐文件取
 `covered` 最小值：单次向上抖动不假红，真实下降必然低于下界 ⇒ 红。
 
-| 运行 | statements | functions | lines | branches（信息项） |
-| --- | --- | --- | --- | --- |
-| run1 | 54932/61988 | 3886/4336 | 54932/61988 | 16600/18851 |
-| run2 | 54932/61988 | 3886/4336 | 54932/61988 | 16598/18849 |
-| run3 | 54932/61988 | 3886/4336 | 54932/61988 | 16603/18854 |
-| 基线 | **54932/61988** | **3886/4336** | **54932/61988** | 16598/18854（不参与） |
+三跑逐文件取 min：statements 54932/61988、functions 3886/4336、lines 54932/61988 三次一致；
+branches 只在 16598~16603/18849~18854 间抖（不参与判据）。
 
 逐文件抖动（存 `jitter`）：三项均 **0 个文件**；branches **29 个**
 （如 `transform.ts` 135→134→136）。故三项下界即真实值，一条语句的
@@ -70,16 +66,12 @@ sha256 + HEAD 写进快照 → `check-coverage-snapshot` 校验二者。
 - `check-coverage-baseline.mjs`：只读现场产物与静态基线；产物早于最新源码即红。
 - slow：`test:coverage` → `check-coverage-baseline`，档内无生成项。
 
-## 负控（三态原文见就绪单 §3.2）
+## 负控
 
-1. 删 `packages/shared-types/tests/type-utils.test.ts` 的 `createObjectTypeGuard` 用例
-   ⇒ 该文件 48→41（functions 12→11）⇒ 逐文件棘轮红；恢复回绿。
-2. 把 `packages/shared-types/src/type-utils.ts` 加进 `coverage.exclude`
-   ⇒ 未插桩 7→8 ⇒ 红；恢复回绿。
-3. 复现 `e42cc23d` 的 `__UI_VERSION__` 静默失效（移除 `vitest.shared.ts` 的 define）：
-   默认 `test:coverage` 失败即不写产物 ⇒ 红在「缺少 coverage-final.json」；
-   加 `--coverage.reportOnFailure=true` 强制出产物 ⇒ 44 个 ui 文件 covered 下降
-   （`Alert` 96→18、`Calendar` 181→25），全局 statements 54932→53013 ⇒ 红；恢复回绿。
-   结论：套件崩掉既走「产物缺失」也走「逐文件下降」，两条都判死，无假绿。
+1. 删 `type-utils.test.ts` 的 `createObjectTypeGuard` 用例 ⇒ 48→41 ⇒ 红；恢复回绿。
+2. 加进 `coverage.exclude` ⇒ 未插桩 7→8 ⇒ 红；恢复回绿。
+3. 删已覆盖死代码（`cli/run.ts` 104→91）⇒ 绿（allowance=13）；新增未覆盖函数在基线一致的文件上 ⇒ 比例降、不判红且打印。
+   注意：当前树删码已占 allowance，新增未覆盖代码按 1:1 消耗它（实测全局短 7 ⇒ 红），处置待 owner 定。
+4. 套件崩掉：缺产物 ⇒ 红；强制出产物则 44 个 ui 文件 covered 降（`Alert` 96→18）⇒ 红。
 
 不做：档内重生基线、回退字节哈希、设容差、branches 入判据。
