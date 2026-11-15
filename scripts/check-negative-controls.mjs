@@ -796,7 +796,25 @@ const CONTROLS = {
     if (!existsSync(join(ROOT, 'coverage/coverage-final.json'))) {
       throw new Error('check-coverage-baseline：缺少现场覆盖率产物 —— 先跑 pnpm run test:coverage');
     }
-    runOrThrow(baselineCheck, 'check-coverage-baseline:注入前基线');
+    // 注入前必须是绿的，否则负控无从判定。这里不能复用 runOrThrow 的
+    // 「现场恢复失败」措辞 —— 那会把「本来就已经红」误说成「恢复失败」。
+    const pre = spawnSync(baselineCheck[0], baselineCheck.slice(1), {
+      cwd: ROOT,
+      stdio: 'pipe',
+      env: ENV,
+      encoding: 'utf-8',
+    });
+    if (pre.status !== 0) {
+      const reds = `${pre.stdout ?? ''}\n${pre.stderr ?? ''}`
+        .split('\n')
+        .filter((line) => line.includes('❌') && !/^❌ check-coverage-baseline 失败/.test(line))
+        .map((line) => line.trim().replace(/：$/, ''))
+        .slice(0, 5);
+      throw new Error(
+        'check-coverage-baseline：注入前本门禁即为红，负控无法判定' +
+          `（前置红项：${reds.length ? reds.join('；') : '未能从输出中解析'}）`,
+      );
+    }
 
     // ① 删掉 createObjectTypeGuard 用例 ⇒ type-utils.ts 的该守卫与箭头函数不再被覆盖
     const testFile = join(ROOT, 'packages/shared-types/tests/type-utils.test.ts');
