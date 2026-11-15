@@ -10,11 +10,10 @@ keywords: [S35, P0 止血, 体积裁决, 负控, 覆盖率基线, 逐文件棘�
 
 ## 本轮（2026-11-15）
 
-- 覆盖率门禁重做（[ADR 0034](decisions/0034-coverage-per-file-ratchet-baseline.md)）：静态基线
-  `scripts/coverage-baseline.json`，逐文件/全局 statements·functions·lines 不得下降，未插桩不新增；
-  `branches` 仅记录。基线=三次 `--update` 取逐文件 min（无容差），三项抖动 0 文件。
-- 发布门禁去手工环境：`check-package-exports`/`check-examples` 按 workspace 派生，`gate.mjs` 幂等补链，
-  `check-consumer-demo` 去绝对路径；发布序列改为「全档门禁 → version → build → 升版后子集」。
+- 覆盖率门禁重做（[ADR 0034](decisions/0034-coverage-per-file-ratchet-baseline.md)）：静态基线逐文件/全局
+  statements·functions·lines 不得降，未插桩不新增，branches 仅记录。
+- 发布门禁去手工环境（workspace 派生 + 幂等补链 + 本树解析）；序列=全档门禁→version→build→升版后子集。
+- CLI 版本改构建期注入 `__CLI_VERSION__`，删回落；`check-runtime-version` 覆盖 cli ESM+CJS `--version`。
 - slow 22 项（21 命名 + 1 自动前置）。上一轮见 [NOW 快照](NOW-history/2026-11-14-signal收编与产物门禁.md)。
 
 ## 当前焦点
@@ -41,7 +40,7 @@ keywords: [S35, P0 止血, 体积裁决, 负控, 覆盖率基线, 逐文件棘�
 - check-ui-styles 78 条欠账（Calendar 4 / Cascader 16 / ColorPicker 9 /
   DatePicker 24 / TimePicker 12 / Upload 13），只减不增。
 - 体积债：plugin / common-error 按需加载（ADR 0029）。
-- 覆盖率（三次取 min，全分母）：54932/61988 88.617%、3886/4336 89.622%；branches 16598/18854 仅信息；棘轮 66.5/72.2/86.2。旧口径 97.5/97.99 不可横比
+- 覆盖率：54932/61988、3886/4336；branches 仅信息；棘轮 66.5/72.2/86.2（ADR 0034）。
 
 ## 下一步
 
@@ -50,4 +49,5 @@ keywords: [S35, P0 止血, 体积裁决, 负控, 覆盖率基线, 逐文件棘�
 
 ## 阻塞
 
+- 覆盖率基线 vs 本轮删码：cli/run.ts 已覆盖 104→91，slow 2 项红；是否 `--update` 待 owner 定。
 - 78 条裸 DOM 样式欠账缺设计输入，禁改组件 DOM。
