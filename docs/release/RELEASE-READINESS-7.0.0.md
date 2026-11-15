@@ -57,8 +57,22 @@ node scripts/release.mjs --execute --otp 123456   # 真跑（账号要求写操�
 npm view @lytjs/core version          # 期望 7.0.0
 ```
 
-脚本固定步骤：`changeset version` → `pnpm build` → fast 档 → slow 档 →
-逐包 `pnpm pack` 并核对 tarball = 76 → 逐包 `npm publish <tgz>` → `git tag v7.0.0` → push tag。
+脚本固定步骤：fast 档 → slow 档（**升版前**门禁，含 `check-release-parity`）→
+`pnpm changeset version` → `pnpm build` → 升版后子集（`check-dist-freshness`、
+`check-runtime-version`、`check-api-snapshot`、`check-bundle-size`、`check-release-artifacts`、
+`test`）→ 逐包 `pnpm pack` 并核对 tarball = 76 → 逐包 `npm publish <tgz>` →
+`git tag v7.0.0` → push tag。
+
+**为什么门禁在升版之前**：`check-release-parity` 断言「包版本 == `release-parity-expectation.json`
+声明版本，且改动被 changeset 覆盖」；`changeset version` 之后这两个前提按设计失效。
+因此顺序本身表达语义 —— **没有任何 env / flag 可以跳过单个门禁**。升版后只重跑被判对象
+会随版本号/重构建而改变的那几项；覆盖率、源码级判据、负控在升版前那轮已经成立。
+
+**工作区链接**：根 `package.json` 不依赖任何子包，`pnpm install` **不会**创建根
+`node_modules/@lytjs`（gitignored 的一次性手工链接，见 §3.3）。`gate.mjs` 每次运行前会
+幂等补链（`scripts/link-workspace-packages.mjs`，离线、<0.1s、不参与计数、无跳过开关），
+因此无需额外手工步骤；但 `check-package-exports` / `check-examples` 本身已改为按 workspace
+glob 派生包目录，**不读**那个目录。
 
 **发布前拒绝执行的条件**（任一命中即停）：
 
@@ -74,8 +88,8 @@ npm view @lytjs/core version          # 期望 7.0.0
 - 无需切全局 registry：脚本每条 npm 命令都显式 `--registry https://registry.npmjs.org/`。
 
 **发布前必修（顺序固定）**：`@lytjs/ui` 的运行时版本已改为 tsup 构建期注入（见 §7）。
-`changeset version` 之后必须重新构建，注入值才会随 `package.json` 更新；脚本现有
-`changeset version → build` 顺序已满足，不要调换。
+`changeset version` 之后必须重新构建，注入值才会随 `package.json` 更新；脚本
+`changeset version → build → 升版后子集` 顺序已满足，不要调换。
 
 **线上事实（2026-11-14 实测，官方源）**：
 
@@ -200,17 +214,45 @@ statements、functions、lines 的 `covered` 不低于基线、未插桩集合�
 > `node scripts/coverage-baseline.mjs --update`（连跑三次取 min、打印 diff、人工 `yes` 才落盘）。
 > 这是有意的，避免数字自然上涨导致棘轮失效。禁止手工下调基线值。
 
+### 3.3 顺序相关性红的根因：门禁依赖 gitignored 手工链接（2026-11-15 定位）
+
+7.0.0 彩排首跑 fast 曾出现「`check-package-exports` 76 条 `Cannot find module` +
+`check-examples` 解析到 0 个 @lytjs 包」，单独复跑却全绿。根因两条，均为确定性：
+
+1. **根 `node_modules/@lytjs` 不是 pnpm 产物。** 根 `package.json` 不依赖子包，`pnpm install`
+   后该目录不存在；它由 `scripts/link-workspace-packages.mjs` 手工建立且被 gitignore。
+   首跑时它不存在 ⇒ 两项判死；整档跑到 `check-negative-controls` 的 `check-bundle-size`
+   负控（该门禁内部调用补链脚本）时把链接补上 ⇒ 之后任何"单独复跑"都绿。
+   证据：worktree 内该目录 mtime 落在整档运行中途，且链向本 worktree（非主仓）。
+2. **`check-consumer-demo` 曾写死 `/Volumes/Data/lytjs/...`**，在 worktree 上加载的是主仓
+   dist，负控注入本树 dist 自然不可见 ⇒ "注入后仍绿"的假绿。
+
+复现（确定性，不依赖"再跑一次"）：
+
+```bash
+rm -rf node_modules/@lytjs
+node scripts/check-package-exports.mjs   # 旧实现：76 条 Cannot find module
+node scripts/check-examples.mjs          # 旧实现：解析到 0 个 @lytjs 包
+node scripts/link-workspace-packages.mjs # 补链后两项立刻转绿
+```
+
+现行判据：门禁不得依赖 out-of-band 产物（ADR 0035，
+坑 [gate-depends-on-manual-env](file:///Volumes/Data/lytjs/lytjs/keel/pitfalls/verify/gate-depends-on-manual-env.md)）。
+`check-package-exports` / `check-examples` 改为按 workspace globs 派生包目录；`gate.mjs`
+补链只作兜底。
+
 ## 4. 失败回滚方式
 
 **tag 只在 76 个发布包全部 publish 成功后创建**（脚本按步骤顺序执行，publish 未完成不会进 tag 步骤）。
 因此「半发布」的残局**没有 tag 可删**，回滚手段也不是删 tag。
 
-| 阶段                       | 处理                                                                                                                                               |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| version 落盘后、publish 前 | 选路径 B（见 4.1）：留档后 `git checkout -- .`，删除 `.release-progress.json`，再重来；未发布、未建 tag                                            |
-| publish 部分成功（无 tag） | 保留 `.release-progress.json`，修好后 `--execute` 续跑；integrity 一致的包自动跳过，不一致则中止                                                   |
-| 全部发布成功但随后发现缺陷 | **回滚 = 发 7.0.1**，不是删 tag。删 tag 不改变 npm 上已发布的 76 个包                                                                              |
-| 必须撤某个包               | `npm unpublish <pkg>@7.0.0` 仅限发布后 **72 小时内**；有 dependents 的包无法撤；同一版本号撤下后 **24 小时内不能重新发布**；默认不发撤包，走 patch |
+| 阶段                        | 处理                                                                                                                                                            |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 升版前门禁失败（fast/slow） | 树未被改写（version 尚未落盘）。修根因后整档重跑；**禁止**用 env/flag 跳过单条门禁。若报错只在一处出现、复跑即绿，先按 §3.3 查环境（链接 / 路径），不要重试结案 |
+| version 落盘后、publish 前  | 选路径 B（见 4.1）：留档后 `git checkout -- .`，删除 `.release-progress.json`，再重来；未发布、未建 tag                                                         |
+| publish 部分成功（无 tag）  | 保留 `.release-progress.json`，修好后 `--execute` 续跑；integrity 一致的包自动跳过，不一致则中止                                                                |
+| 全部发布成功但随后发现缺陷  | **回滚 = 发 7.0.1**，不是删 tag。删 tag 不改变 npm 上已发布的 76 个包                                                                                           |
+| 必须撤某个包                | `npm unpublish <pkg>@7.0.0` 仅限发布后 **72 小时内**；有 dependents 的包无法撤；同一版本号撤下后 **24 小时内不能重新发布**；默认不发撤包，走 patch              |
 
 「回滚」在 npm 语义下不等于撤销：已安装 7.0.0 的用户不会因为删 tag 或撤包而回退。
 发布公告与故障说明里必须写明「修复版本号」，不要让读者以为有原子回滚。
@@ -219,7 +261,7 @@ statements、functions、lines 的 `covered` 不低于基线、未插桩集合�
 
 `changeset version` 会改写 **78** 个 `package.json` 与 **78** 份 `CHANGELOG.md`
 （76 个发布集包 + `lytjs-npm`、`@lytjs/playground` 两个 private 工作区包）。
-之后 build / fast / slow / pack / integrity 任一步失败时，工作树已是脏的、版本已改写。
+之后 build / 升版后子集（`after-version`）/ pack / integrity 任一步失败时，工作树已是脏的、版本已改写。
 
 - **不自动回滚**：自动 `git checkout` 会连失败证据（失败的 dist、被改写的清单）一起抹掉。
   先留档，再决定走哪条路径。
@@ -233,10 +275,10 @@ cp .release-progress.json /tmp/lytjs-7.0.0-progress.json 2>/dev/null || true
 
 **两条路径，不能混用：**
 
-| 路径         | 何时用                                                             | 操作                                                                                                                              |
-| ------------ | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
-| A 断点续跑   | 已发生 publish（哪怕只成功 1 个包），修复失败步骤后继续            | 保留脏树与 `.release-progress.json`；重跑 `node scripts/release.mjs --execute --otp ...`；integrity 一致的包自动跳过              |
-| B 恢复后重来 | 尚未 publish（失败在 build / fast / slow / pack / integrity 比对） | 留档后 `git checkout -- .`；`git status --porcelain` 应为空；**必须删除 `.release-progress.json`**，否则旧断点会与 6.9.6 的树混用 |
+| 路径         | 何时用                                                            | 操作                                                                                                                              |
+| ------------ | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| A 断点续跑   | 已发生 publish（哪怕只成功 1 个包），修复失败步骤后继续           | 保留脏树与 `.release-progress.json`；重跑 `node scripts/release.mjs --execute --otp ...`；integrity 一致的包自动跳过              |
+| B 恢复后重来 | 尚未 publish（失败在 build / 升版后子集 / pack / integrity 比对） | 留档后 `git checkout -- .`；`git status --porcelain` 应为空；**必须删除 `.release-progress.json`**，否则旧断点会与 6.9.6 的树混用 |
 
 - **不要在半脏树上直接 `--execute`**：树脏且没有有效断点状态时，preflight 会拒绝；
   若手工恢复后仍留着旧 `.release-progress.json`，断点续跑分支会放宽「工作树干净」检查，

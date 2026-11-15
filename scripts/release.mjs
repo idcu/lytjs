@@ -6,8 +6,14 @@
  * --execute / --write：真跑；任一步失败立即停止，不续跑、不吞错误。
  * --otp <6 位>：账号要求写操作 2FA 时必填；缺失会在发布前被拒绝。
  *
- * 固定步骤：changeset version → build → fast → slow → pack 核对 76 →
+ * 固定步骤：fast 档 → slow 档（两项都是**升版前**门禁，含 check-release-parity）→
+ *           changeset version → build → 升版后子集 → pack 核对 76 →
  *           逐包 npm publish → git tag v<version> → push tag。
+ *
+ * 为什么门禁在前、升版在后：`check-release-parity` 断言「包版本 == 声明版本，且改动被
+ * changeset 覆盖」，`changeset version` 之后这两个前提按设计失效。顺序本身表达语义，
+ * 不提供任何跳过单个门禁的 env / flag。升版后只重跑那些**被判对象随版本号或重建而变**的项
+ * （构建期版本常量、dist API 快照、dist 体积、pack 产物、全量测试）。
  *
  * 发布前核对：
  *   · git：HEAD sha、@{u}..HEAD、工作树是否干净（断点续跑时放宽工作树）；
@@ -36,6 +42,21 @@ const EXPECTED_REGISTRY = 'https://registry.npmjs.org/';
 const REGISTRY = EXPECTED_REGISTRY;
 const STATE_FILE = join(ROOT, '.release-progress.json');
 const NPM_CONCURRENCY = 8;
+
+/**
+ * 升版后子集：只有这些门禁的**被判对象**会因「版本号改写 + 重构建」而变 ——
+ * 构建期注入的版本常量、dist 级 API 快照、dist 字节体积、pack 产物、跑 dist alias 的
+ * 全量测试。其余项判源码 / changeset / 覆盖率，升版前那轮已经成立，重复跑不增加信息。
+ * `check-release-parity` 不在此列：它属于升版前门禁（版本号与 changeset 消费状态的前提）。
+ */
+const AFTER_VERSION_GATES = [
+  'check-dist-freshness',
+  'check-runtime-version',
+  'check-api-snapshot',
+  'check-bundle-size',
+  'check-release-artifacts',
+  'test',
+];
 
 const EXECUTE = process.argv.includes('--execute') || process.argv.includes('--write');
 const MODE = EXECUTE ? 'EXECUTE' : 'DRY-RUN';
@@ -498,10 +519,14 @@ async function publishAll(state, version, packDir) {
 function printPlan(version, packDir) {
   console.log(`\n计划：${expected} 个发布包 → ${version}（tag v${version}）`);
   console.log(`\n步骤（失败即停；进度写 ${relative(ROOT, STATE_FILE)}）：`);
-  console.log('\n$ pnpm changeset version');
-  console.log('\n$ pnpm build');
   console.log('\n$ node scripts/gate.mjs --tier fast');
   console.log('\n$ node scripts/gate.mjs --tier slow');
+  console.log('\n$ pnpm changeset version');
+  console.log('\n$ pnpm build');
+  console.log(`\n$ node scripts/gate.mjs ${AFTER_VERSION_GATES.join(' ')}`);
+  console.log(
+    `\n   （子集只覆盖被判对象随版本号/重建而变的项；check-dist-freshness 显式列出，不重跑其余源码级门禁）`,
+  );
   console.log(
     `\n$ pnpm -r --filter <${expected} 个发布包> pack --pack-destination ${
       packDir ?? '<临时目录>'
@@ -553,6 +578,8 @@ if (!EXECUTE) {
     saveState(state);
   };
 
+  await step('fast', () => run('node', ['scripts/gate.mjs', '--tier', 'fast']));
+  await step('slow', () => run('node', ['scripts/gate.mjs', '--tier', 'slow']));
   await step('version', () => {
     run('pnpm', ['changeset', 'version']);
     const actual = JSON.parse(
@@ -563,8 +590,7 @@ if (!EXECUTE) {
     }
   });
   await step('build', () => run('pnpm', ['build']));
-  await step('fast', () => run('node', ['scripts/gate.mjs', '--tier', 'fast']));
-  await step('slow', () => run('node', ['scripts/gate.mjs', '--tier', 'slow']));
+  await step('after-version', () => run('node', ['scripts/gate.mjs', ...AFTER_VERSION_GATES]));
 
   const packDir = ensurePack(state);
   await publishAll(state, version, packDir);
