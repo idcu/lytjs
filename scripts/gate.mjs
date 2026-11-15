@@ -1162,6 +1162,24 @@ console.log(
     `${dry ? ' · dry-run' : ''}\n`,
 );
 
+// ★ 工作区链接兜底：根 package.json 不依赖任何子包（private 聚合仓），`pnpm install`
+//   不会创建根 `node_modules/@lytjs`；它是由 `link-workspace-packages.mjs` 建立的
+//   gitignored 目录。任何依赖它的门禁都必须能在干净 clone 上复现，因此每次运行前
+//   幂等补链（<0.1s，离线）。这不是门禁项：不参与 pass/fail 计数，也没有跳过开关。
+if (!dry) {
+  const link = spawnSync(resolveCmd('node'), ['scripts/link-workspace-packages.mjs'], {
+    cwd: ROOT,
+    stdio: 'inherit',
+    env: ENV,
+  });
+  if (link.status !== 0) {
+    console.error(
+      '\n❌ 工作区链接建立失败（scripts/link-workspace-packages.mjs），拒绝在环境不完整的前提下运行门禁\n',
+    );
+    process.exit(1);
+  }
+}
+
 let pass = 0;
 const failed = [];
 const skipped = [];
