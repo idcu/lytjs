@@ -52,8 +52,11 @@ console.log('\n🔍 覆盖率基线门禁 check-coverage-baseline（逐文件棘
 
 if (!existsSync(FINAL_JSON)) {
   fail(
-    '缺少 coverage/coverage-final.json —— 本门禁只读本次现场产物，请先运行 ' +
-      'pnpm run test:coverage',
+    '缺少 coverage/coverage-final.json —— 本门禁只读本次现场产物。两种常见原因：' +
+      '① 测试自己挂了（vitest 默认 coverage.reportOnFailure=false，失败即不落产物，' +
+      '此时重跑 test:coverage 仍会挂）；② 覆盖率根本没跑。先看 pnpm run test:coverage ' +
+      '的退出码与用例数；若要区分两者，可用 ' +
+      'vitest run --coverage --coverage.reportOnFailure=true 强制出产物再判',
   );
   process.exit(1);
 }
