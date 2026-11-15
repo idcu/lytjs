@@ -41,6 +41,30 @@ describe('原型链安全', () => {
     expect(config.set('a.b', 1)).toBe(true);
     expect(config.get('a.b')).toBe(1);
   });
+
+  it('★ set("toString.x") 不能写进共享内建函数（必须抛错）', () => {
+    const config = new ConfigManager({});
+    const shared = Object.prototype.toString as unknown as Record<string, unknown>;
+    const before = Object.getOwnPropertyNames(shared).slice();
+
+    // `isObject` 把 function 也算对象 ⇒ 此前会顺着 `target['toString']` 拿到
+    // Object.prototype.toString 并往这个**共享函数**上挂属性，进程内所有对象可见。
+    expect(() => config.set('toString.pollutedC', 'yes')).toThrow(TypeError);
+    expect(shared.pollutedC).toBeUndefined();
+    expect(Object.getOwnPropertyNames(shared)).toEqual(before);
+
+    // 正常路径不受影响
+    expect(config.set('a.x', 1)).toBe(true);
+    expect(config.get('a.x')).toBe(1);
+  });
+
+  it('★ merge({ toString: ... }) 同样不能写进共享内建函数', () => {
+    const config = new ConfigManager({});
+    expect(() => config.merge({ toString: { pollutedD: 'yes' } } as never)).toThrow(TypeError);
+    expect(
+      (Object.prototype.toString as unknown as Record<string, unknown>).pollutedD,
+    ).toBeUndefined();
+  });
 });
 
 describe('读的隔离性', () => {

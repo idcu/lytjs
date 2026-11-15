@@ -2,7 +2,7 @@
 // @lytjs/config - 配置管理器（纯通用实现，零框架依赖）
 
 import { deepClone } from '@lytjs/common-object';
-import { hasChanged, isObject } from '@lytjs/common-is';
+import { hasChanged, isFunction, isObject } from '@lytjs/common-is';
 import { FORBIDDEN_KEYS } from './proto-keys';
 
 // ============================================================
@@ -191,9 +191,29 @@ export class ConfigManager {
 
     // 遍历路径创建嵌套对象
     for (const key of keys) {
-      if (!isObject(target[key])) {
-        target[key] = {};
+      // ⚠️ 2026-11-15 修（P1-16）：`isObject` 把 function 也算对象 ⇒
+      //   `set('toString.x', 1)` 会顺着 `target['toString']` 拿到**共享内建函数**，
+      //   把 `x` 挂到 `Object.prototype.toString` 上（进程内所有对象可见）。
+      //   判据：路径段只能落在**自有的、非函数的对象**里；命中继承成员或函数一律抛错，
+      //   不能静默覆盖成新对象（那会把用户的配置悄悄藏起来，也掩盖攻击）。
+      if (hasOwn(target, key)) {
+        const current = target[key];
+        if (isObject(current) && !isFunction(current)) {
+          target = current as ConfigObject;
+          continue;
+        }
+        if (isFunction(current)) {
+          throw new TypeError(
+            `[ConfigManager] 拒绝写入 "${path}"：路径段 "${key}" 是共享函数，写入会污染进程级状态`,
+          );
+        }
+        // 自有标量 ⇒ 保持原行为：替换为对象后继续
+      } else if (key in target) {
+        throw new TypeError(
+          `[ConfigManager] 拒绝写入 "${path}"：路径段 "${key}" 来自原型链（共享内建对象）`,
+        );
       }
+      target[key] = {};
       target = target[key] as ConfigObject;
     }
 
@@ -410,6 +430,13 @@ export class ConfigManager {
         return;
       }
       const fullPath = prefix ? `${prefix}.${key}` : key;
+      // 同 set()：继承成员（toString / valueOf …）与函数是共享内建对象，
+      // 递归进去等于往进程级状态上写（`merge({ toString: { x: 1 } })`）。
+      if ((!hasOwn(target, key) && key in target) || isFunction(target[key])) {
+        throw new TypeError(
+          `[ConfigManager] 拒绝合并 "${fullPath}"：路径段 "${key}" 命中共享内建对象`,
+        );
+      }
       if (isObject(target[key]) && isObject(value)) {
         this.deepMergeNotify(
           target[key] as ConfigObject,
