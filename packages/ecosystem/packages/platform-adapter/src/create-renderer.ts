@@ -66,8 +66,12 @@ export function createPlatformRenderer<HN, HE extends HN>(
   adapter: PlatformAdapter<HN, HE>,
   config?: PlatformConfig,
 ): PlatformRenderer<HN, HE> {
-  // 当前容器中已渲染的子节点引用
-  let currentChild: HN | null = null;
+  // 每个容器已渲染的子节点引用
+  //
+  // ⚠️ 2026-11-15 修（P1-19）：此前是单个 `currentChild` 变量 ⇒ 同一 renderer
+  //   渲染第二个容器时会把**第一个容器**的内容当成"已有内容"删掉，两个容器交替
+  //   渲染时互相串。现在按容器记录（WeakMap：容器销毁即可回收）。
+  const renderedChildren = new WeakMap<object, HN>();
 
   const renderer: PlatformRenderer<HN, HE> = {
     /**
@@ -78,15 +82,15 @@ export function createPlatformRenderer<HN, HE extends HN>(
      * 如果容器中已有内容，会先卸载再重新渲染。
      */
     render(vnode: VNode, container: HN): void {
-      // 先卸载已有内容
-      if (currentChild !== null) {
+      // 先卸载该容器中已有的内容（只影响这个容器）
+      if (renderedChildren.has(container as unknown as object)) {
         this.unmount(container);
       }
 
       const node = createHostNodeFromVNode(adapter, vnode);
       if (node !== null) {
         adapter.insert(node, container, null);
-        currentChild = node;
+        renderedChildren.set(container as unknown as object, node);
       }
 
       if (config?.debug) {
@@ -98,10 +102,11 @@ export function createPlatformRenderer<HN, HE extends HN>(
     /**
      * 卸载容器中的内容
      */
-    unmount(_container: HN): void {
-      if (currentChild !== null) {
-        adapter.remove(currentChild);
-        currentChild = null;
+    unmount(container: HN): void {
+      const child = renderedChildren.get(container as unknown as object);
+      if (child !== undefined) {
+        adapter.remove(child);
+        renderedChildren.delete(container as unknown as object);
       }
 
       if (config?.debug) {

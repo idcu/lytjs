@@ -756,4 +756,40 @@ describe('platform-adapter 的元素子节点（P0 回归）', () => {
     expect(div.children).toHaveLength(1);
     expect(div.children[0]!.tag).toBe('em');
   });
+
+  // ⚠️ 2026-11-15 新增（P1-19 回归）：同一 renderer 多容器交替渲染不得串
+  it('两个容器交替渲染时互不删除对方内容', () => {
+    const { adapter, make } = createFakeAdapter();
+    const removed: FakeEl[] = [];
+    adapter.remove = (child) => {
+      removed.push(child);
+    };
+
+    const renderer = createPlatformRenderer(adapter);
+    const rootA = make('#rootA');
+    const rootB = make('#rootB');
+    const render = (text: string, container: FakeEl) =>
+      renderer.render({ type: 'div', props: {}, children: text } as unknown as VNode, container);
+
+    render('a1', rootA);
+    render('b1', rootB);
+
+    // 渲染 B 不能动 A 的已渲染节点
+    expect(removed).toHaveLength(0);
+    expect(rootA.children).toHaveLength(1);
+    expect(rootB.children).toHaveLength(1);
+
+    // 重新渲染 A 只删 A 自己的旧节点
+    render('a2', rootA);
+    expect(removed).toHaveLength(1);
+    expect(removed[0]!.text).toBe('a1');
+
+    // unmount 也只作用于指定容器
+    renderer.unmount(rootB);
+    expect(removed).toHaveLength(2);
+    expect(removed[1]!.text).toBe('b1');
+    renderer.unmount(rootA);
+    expect(removed).toHaveLength(3);
+    expect(removed[2]!.text).toBe('a2');
+  });
 });
