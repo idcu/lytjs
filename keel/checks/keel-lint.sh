@@ -654,7 +654,12 @@ fi
 while IFS= read -r f; do
   base_set "$f"; base=$BASE
   case "$base" in INDEX.md|_template*) continue ;; esac
-  grep -qxF "$f" "$refd" || fail_msg "孤儿（未被任何热区文档链接引用）: ${f#"$KEEL_DIR"/}"
+  # v3.5 修正：`find "$KEEL_DIR"` 在 KEEL_DIR="." 时输出 `./INDEX.md`，而段 9 的
+  # refd 经过上面的 norm() 已是「无前缀」路径（`INDEX.md`）—— 两种表示恒不相等，
+  # 于是自述的「keel 内调用、默认 `.`」模式会 100% 误报孤儿（实测 89 条）。
+  # 归一化不是放宽判据：只统一路径前缀，比较的仍是同一个文件。
+  cmp="${f#./}"
+  grep -qxF "$cmp" "$refd" || fail_msg "孤儿（未被任何热区文档链接引用）: ${f#"$KEEL_DIR"/}"
 done < "$HOTLINES"
 
 echo "── 10. 陈旧（last-verified / NOW updated；豁免类目见 §9.4）"
