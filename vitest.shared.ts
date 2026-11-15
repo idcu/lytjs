@@ -96,11 +96,20 @@ const uiVersion = (
   ) as { version: string }
 ).version;
 
+// `@lytjs/cli` 同理：`src/commands/run.ts` 的 `__CLI_VERSION__` 由 tsup define 注入，
+// 测试经 alias 加载 src 时没有 tsup ⇒ 这里补同一份 define，取值同样来自 package.json。
+const cliVersion = (
+  JSON.parse(readFileSync(resolve(root, 'packages/tools/packages/cli/package.json'), 'utf-8')) as {
+    version: string;
+  }
+).version;
+
 export const sharedDefine = {
   __DEV__: 'true',
   __PROD__: 'false',
   __TEST__: 'true',
   __UI_VERSION__: JSON.stringify(uiVersion),
+  __CLI_VERSION__: JSON.stringify(cliVersion),
 } as const;
 
 export const sharedSetupFiles = [resolve(root, 'vitest.setup.ts')];

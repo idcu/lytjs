@@ -214,9 +214,9 @@ describe('@lytjs/cli', () => {
     it('should show version for --version', async () => {
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
       await runCli(['--version']);
-      // 版本号应来自 package.json（此前测试锁死 6.0.0，而实现也是硬编码 6.0.0，
-      // 两者一起把"CLI 报错版本"这个缺陷掩盖了 6 个 minor 版本）
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining(cliPkg.version));
+      // 版本号由构建期 define 从 package.json 注入（`__CLI_VERSION__`），测试侧 define
+      // 同源于同一份 package.json；断言必须逐字相等，不能用 stringContaining 放过前缀匹配
+      expect(consoleSpy).toHaveBeenCalledWith(`LytJS CLI v${cliPkg.version}`);
       consoleSpy.mockRestore();
     });
 
